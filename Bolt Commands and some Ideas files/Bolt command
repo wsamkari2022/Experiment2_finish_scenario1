@@ -1,0 +1,978 @@
+Modify my existing experiment project and build a new **Block 5** as the **main simulation block**.
+
+Do NOT rebuild the whole project from scratch.
+Integrate this into the current experiment flow.
+
+Keep all previous blocks (1–4) and their profiling logic.
+Block 5 must use the existing user profile that was built from previous blocks.
+
+==================================================
+HIGH-LEVEL GOAL
+==================================================
+
+Build **Block 5: Public Emergency / Scarce-Resource Simulation**
+
+This block should use **all sensitivity / threshold-tree variables** collected from previous blocks as a **user profile**.
+
+The system must:
+1. load the participant’s previously computed sensitivity profile
+2. build 3 new public-emergency scenarios
+3. give each scenario several options (up to 5)
+4. assign each option a sensitivity profile across the same dimensions
+5. rank those options based on similarity to the participant’s profile
+6. show why each option is ranked where it is
+7. visually explain the ranking using **meter bars**
+8. place a **small marker line** on each meter bar showing the participant’s own threshold / sensitivity score
+9. let the participant choose one option per scenario
+10. save the results cleanly
+11. show a final Block 5 summary page
+
+This is the **main simulation**, so it should feel polished, professional, elegant, and much richer visually than the earlier profiling blocks.
+
+==================================================
+PART 1 — USE THE EXISTING USER PROFILE
+==================================================
+
+Block 5 must use the sensitivity / threshold-tree values already computed from earlier blocks.
+
+Load them primarily from:
+- `ranked_threshold_tree`
+- `final_moral_analysis`
+- `moral_profile_insights`
+
+Use the ranked threshold tree as the main source of truth when possible.
+
+--------------------------------------------------
+1A. Sensitivity dimensions to use
+--------------------------------------------------
+
+Use these exact participant-profile dimensions:
+
+1. `directnessSensitivity`
+2. `vulnerabilityProtectionSensitivity`
+3. `groupSizeSensitivity`
+4. `contextSensitivity`
+5. `gainResponsivenessSensitivity`
+6. `stakeholderPerspectiveShiftSensitivity`
+7. `outcomeAggregationSensitivity`
+
+Important:
+In Block 5, use the generalized label:
+**Vulnerability protection sensitivity**
+NOT worker vulnerability protection sensitivity.
+
+These 7 dimensions must be used both for:
+- the participant profile
+- the option fingerprints in Block 5
+
+--------------------------------------------------
+1B. Participant profile extraction
+--------------------------------------------------
+
+Create a helper module such as:
+- `block5Profile.ts`
+
+Create a normalized profile object:
+
+```ts id="pcl8an"
+type Block5SensitivityKey =
+  | 'directnessSensitivity'
+  | 'vulnerabilityProtectionSensitivity'
+  | 'groupSizeSensitivity'
+  | 'contextSensitivity'
+  | 'gainResponsivenessSensitivity'
+  | 'stakeholderPerspectiveShiftSensitivity'
+  | 'outcomeAggregationSensitivity';
+type Block5UserProfileDimension = {
+  key: Block5SensitivityKey;
+  label: string;
+  score: number; // 0-100
+  rank: number; // 1 = strongest sensitivity
+  weight: number; // derived from rank
+  sourceBlocks: string[];
+};
+type Block5UserProfile = {
+  generatedAt: string;
+  dimensions: Block5UserProfileDimension[];
+  topThreeKeys: Block5SensitivityKey[];
+  topSensitivityKey: Block5SensitivityKey;
+};
+
+Extract these from ranked_threshold_tree.nodesSorted.
+
+Use the participant’s existing ranked tree to preserve continuity with earlier profiling.
+
+1C. Weights based on profile ranking
+
+Derive weights from rank.
+
+Use exact formula:
+
+const weight = (8 - rank) / 28;
+
+That gives:
+
+rank 1 = 0.25
+rank 2 = 0.214...
+rank 3 = 0.179...
+rank 4 = 0.143...
+rank 5 = 0.107...
+rank 6 = 0.071...
+rank 7 = 0.036...
+
+This ensures the participant’s strongest sensitivities matter most during ranking.
+
+==================================================
+PART 2 — BLOCK 5 FLOW AND NAVIGATION
+
+Integrate Block 5 into the existing experiment flow.
+
+Current profile/analysis pages from earlier blocks should remain intact.
+
+After the current FinalMoralAnalysisPage, update the CTA flow:
+
+keep the profile analysis page
+add a button:
+Start main simulation
+route to a new component:
+Block5PublicEmergencySimulation
+
+At the end of Block 5, show:
+Block5SimulationSummaryPage
+
+So the flow becomes:
+
+Blocks 1–4
+-> FinalMoralAnalysisPage
+-> Block5PublicEmergencySimulation
+-> Block5SimulationSummaryPage
+
+==================================================
+PART 3 — BLOCK 5 VISUAL STYLE
+
+This is very important.
+
+The earlier user-profiling blocks use:
+
+centered cards
+dark theme
+black backgrounds
+
+I do NOT want Block 5 to use that same style.
+
+Block 5 should feel like a richer simulation experience.
+
+3A. Layout requirement
+
+For Block 5:
+
+do NOT use a centered card layout
+do NOT use a plain black theme
+do NOT make the main content look like the earlier blocks
+
+Use a full-page, wide layout using Chakra design system style.
+
+Preferred structure:
+
+full viewport height
+large scenario header area
+split layout or dashboard-like layout
+left side: scenario context / instructions / progress / profile summary
+right side: ranked options list
+elegant spacing
+layered panels / glass-like overlays
+subtle shadows and depth
+
+Use Chakra components such as:
+
+Box
+Flex
+Grid
+Stack
+Accordion
+Progress
+Badge
+Tooltip
+Divider
+Button
+Text
+Heading
+Collapse
+3B. Scenario-specific themes
+
+Each of the 3 scenarios must have its own unique dark gradient theme with shadow.
+
+Scenario 1 — Limited cancer treatment allocation
+
+Theme:
+
+dark red gradient
+elegant shadow
+serious and urgent visual tone
+
+Use colors roughly like:
+
+deep burgundy
+wine red
+dark crimson
+muted red accents
+
+Example gradient direction:
+linear(to-br, #190707, #3A0D12, #5B1620)
+
+Scenario 2 — Flood evacuation priority
+
+Theme:
+
+dark green gradient
+subtle depth and shadow
+urgent but grounded tone
+
+Use colors roughly like:
+
+forest green
+dark olive
+muted emerald
+
+Example:
+linear(to-br, #06140E, #113122, #1C4B36)
+
+Scenario 3 — Water contamination response
+
+Theme:
+
+dark blue gradient
+layered shadow
+crisis-response tone
+
+Use colors roughly like:
+
+midnight blue
+steel blue
+deep cyan-blue accents
+
+Example:
+linear(to-br, #05111E, #0B2740, #14476B)
+
+Use each theme only inside its own scenario screen.
+Block 5 should visually transform between scenarios.
+
+==================================================
+PART 4 — BLOCK 5 SCENARIOS
+
+Build exactly these 3 scenarios.
+
+Each scenario should have:
+
+title
+short context paragraph
+5 options
+each option has a sensitivity fingerprint across the 7 dimensions
+
+The scenario text should be understandable to laypeople and academics.
+Keep the language clear and realistic.
+The trade-offs must be strong and morally meaningful.
+
+4A. Scenario 1 — Limited Cancer Treatment Allocation
+
+Title:
+Limited Cancer Treatment Allocation
+
+Scenario description:
+A hospital system has access to a promising new cancer treatment, but the supply is far too limited for all patients who could benefit this month. You are part of the emergency allocation team and must choose the policy that will determine how the available treatment is allocated.
+
+Use the dark red gradient theme.
+
+Create these 5 options:
+
+Option 1
+
+ID: cancer_max_survival_gain
+Title: Prioritize patients with the highest expected survival gain
+Summary:
+Allocate treatment first to patients who are predicted to gain the most total medical benefit.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 55
+vulnerabilityProtectionSensitivity: 30
+groupSizeSensitivity: 65
+contextSensitivity: 45
+gainResponsivenessSensitivity: 80
+stakeholderPerspectiveShiftSensitivity: 35
+outcomeAggregationSensitivity: 95
+Option 2
+
+ID: cancer_prioritize_vulnerable
+Title: Prioritize medically and socially vulnerable patients
+Summary:
+Allocate treatment first to patients who are both medically fragile and least able to access alternatives.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 70
+vulnerabilityProtectionSensitivity: 95
+groupSizeSensitivity: 50
+contextSensitivity: 60
+gainResponsivenessSensitivity: 35
+stakeholderPerspectiveShiftSensitivity: 55
+outcomeAggregationSensitivity: 45
+Option 3
+
+ID: cancer_weighted_lottery
+Title: Use a weighted lottery with extra priority for vulnerable patients
+Summary:
+Use a fair lottery system, but give additional weight to patients facing greater vulnerability.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 82
+vulnerabilityProtectionSensitivity: 75
+groupSizeSensitivity: 60
+contextSensitivity: 70
+gainResponsivenessSensitivity: 45
+stakeholderPerspectiveShiftSensitivity: 85
+outcomeAggregationSensitivity: 55
+Option 4
+
+ID: cancer_contextual_reserve
+Title: Reserve part of the supply for hard-to-reach or later-arriving high-risk patients
+Summary:
+Allocate most treatment by clinical benefit, but reserve a portion to reduce context-based disadvantage.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 68
+vulnerabilityProtectionSensitivity: 78
+groupSizeSensitivity: 58
+contextSensitivity: 88
+gainResponsivenessSensitivity: 50
+stakeholderPerspectiveShiftSensitivity: 65
+outcomeAggregationSensitivity: 60
+Option 5
+
+ID: cancer_first_come_first_served
+Title: Use first-come, first-served allocation
+Summary:
+Distribute treatment in the order patients arrive, without weighting by vulnerability or projected benefit.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 88
+vulnerabilityProtectionSensitivity: 25
+groupSizeSensitivity: 35
+contextSensitivity: 30
+gainResponsivenessSensitivity: 20
+stakeholderPerspectiveShiftSensitivity: 25
+outcomeAggregationSensitivity: 25
+4B. Scenario 2 — Flood Evacuation Priority
+
+Title:
+Flood Evacuation Priority
+
+Scenario description:
+Severe flooding is approaching several neighborhoods, and evacuation resources are limited. There are not enough buses, rescue teams, or hours left to evacuate everyone immediately. You must choose the evacuation policy that should guide the next phase of the emergency response.
+
+Use the dark green gradient theme.
+
+Create these 5 options:
+
+Option 1
+
+ID: flood_largest_neighborhoods
+Title: Evacuate the largest neighborhoods first
+Summary:
+Prioritize the areas where the largest number of people can be moved most quickly.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 45
+vulnerabilityProtectionSensitivity: 35
+groupSizeSensitivity: 95
+contextSensitivity: 40
+gainResponsivenessSensitivity: 55
+stakeholderPerspectiveShiftSensitivity: 30
+outcomeAggregationSensitivity: 90
+Option 2
+
+ID: flood_vulnerable_groups_first
+Title: Evacuate hospitals, elderly residents, disabled residents, and low-mobility families first
+Summary:
+Prioritize the people least able to self-protect or evacuate without help.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 65
+vulnerabilityProtectionSensitivity: 98
+groupSizeSensitivity: 45
+contextSensitivity: 70
+gainResponsivenessSensitivity: 30
+stakeholderPerspectiveShiftSensitivity: 55
+outcomeAggregationSensitivity: 50
+Option 3
+
+ID: flood_highest_risk_zones
+Title: Evacuate the highest-risk flood zones first
+Summary:
+Prioritize the areas facing the most immediate physical danger, even if they contain fewer people overall.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 92
+vulnerabilityProtectionSensitivity: 60
+groupSizeSensitivity: 55
+contextSensitivity: 95
+gainResponsivenessSensitivity: 35
+stakeholderPerspectiveShiftSensitivity: 45
+outcomeAggregationSensitivity: 60
+Option 4
+
+ID: flood_balanced_mixed_plan
+Title: Use a balanced mixed plan
+Summary:
+Split resources across vulnerable groups, highest-risk zones, and large-population areas to avoid overcommitting to one principle.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 75
+vulnerabilityProtectionSensitivity: 82
+groupSizeSensitivity: 78
+contextSensitivity: 85
+gainResponsivenessSensitivity: 45
+stakeholderPerspectiveShiftSensitivity: 88
+outcomeAggregationSensitivity: 75
+Option 5
+
+ID: flood_reserve_capacity
+Title: Keep a reserve fleet for likely secondary flooding while evacuating the most exposed areas first
+Summary:
+Use part of the response immediately, but reserve part of the system for expected worsening conditions.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 70
+vulnerabilityProtectionSensitivity: 58
+groupSizeSensitivity: 52
+contextSensitivity: 90
+gainResponsivenessSensitivity: 60
+stakeholderPerspectiveShiftSensitivity: 50
+outcomeAggregationSensitivity: 68
+4C. Scenario 3 — Water Contamination Response
+
+Title:
+Water Contamination Response
+
+Scenario description:
+A city discovers dangerous contamination in its water system. Officials cannot protect every area and every institution at once. You must choose the response policy that will guide the first phase of protection and emergency distribution.
+
+Use the dark blue gradient theme.
+
+Create these 5 options:
+
+Option 1
+
+ID: water_protect_critical_sites
+Title: Protect hospitals, schools, elder-care facilities, and dialysis centers first
+Summary:
+Prioritize institutions serving people who face the greatest health risk from unsafe water.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 72
+vulnerabilityProtectionSensitivity: 97
+groupSizeSensitivity: 40
+contextSensitivity: 68
+gainResponsivenessSensitivity: 35
+stakeholderPerspectiveShiftSensitivity: 55
+outcomeAggregationSensitivity: 48
+Option 2
+
+ID: water_shutoff_highest_contamination
+Title: Shut off the highest-contamination zones immediately and deliver emergency clean water there
+Summary:
+Take the strongest immediate action where danger is most direct, even if it creates disruption.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 95
+vulnerabilityProtectionSensitivity: 72
+groupSizeSensitivity: 55
+contextSensitivity: 92
+gainResponsivenessSensitivity: 28
+stakeholderPerspectiveShiftSensitivity: 42
+outcomeAggregationSensitivity: 62
+Option 3
+
+ID: water_largest_neighborhoods
+Title: Protect the largest neighborhoods first
+Summary:
+Prioritize the approach that reaches the largest number of residents as quickly as possible.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 50
+vulnerabilityProtectionSensitivity: 38
+groupSizeSensitivity: 96
+contextSensitivity: 44
+gainResponsivenessSensitivity: 55
+stakeholderPerspectiveShiftSensitivity: 35
+outcomeAggregationSensitivity: 92
+Option 4
+
+ID: water_balanced_targeted_response
+Title: Issue a citywide boil-water advisory plus targeted clean-water delivery to high-risk households
+Summary:
+Combine a broad warning with more focused aid to reduce both total risk and unequal burden.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 80
+vulnerabilityProtectionSensitivity: 88
+groupSizeSensitivity: 74
+contextSensitivity: 87
+gainResponsivenessSensitivity: 46
+stakeholderPerspectiveShiftSensitivity: 82
+outcomeAggregationSensitivity: 72
+Option 5
+
+ID: water_restore_system_first
+Title: Stabilize the central treatment plant first to restore safe water sooner citywide
+Summary:
+Prioritize the option most likely to restore system-wide safety faster, even if some households remain exposed longer in the short term.
+
+Sensitivity fingerprint:
+
+directnessSensitivity: 58
+vulnerabilityProtectionSensitivity: 52
+groupSizeSensitivity: 84
+contextSensitivity: 78
+gainResponsivenessSensitivity: 70
+stakeholderPerspectiveShiftSensitivity: 40
+outcomeAggregationSensitivity: 86
+==================================================
+PART 5 — BLOCK 5 DATA TYPES
+
+Create types like these:
+
+type Block5OptionFingerprint = Record<Block5SensitivityKey, number>;
+type Block5ScenarioOption = {
+  id: string;
+  title: string;
+  summary: string;
+  fingerprint: Block5OptionFingerprint;
+  fitScore?: number;
+  candidate?: boolean;
+  rank?: number;
+  topMatchReasons?: string[];
+  tensionPoints?: string[];
+};
+type Block5ScenarioTheme = {
+  gradient: string;
+  accent: string;
+  shadow: string;
+};
+type Block5Scenario = {
+  id: string;
+  title: string;
+  description: string;
+  theme: Block5ScenarioTheme;
+  options: Block5ScenarioOption[];
+};
+type Block5ScenarioResult = {
+  scenarioId: string;
+  selectedOptionId: string;
+  selectedRank: number;
+  topRankedOptionId: string;
+  selectedWasTopCandidate: boolean;
+  selectedWasCandidate: boolean;
+  rankedOptionIds: string[];
+  fitScoresByOptionId: Record<string, number>;
+  candidateStatusByOptionId: Record<string, boolean>;
+  viewedExplanationOptionIds: string[];
+  timeMs: number;
+};
+type Block5Results = {
+  completed: boolean;
+  completedAt: string;
+  userProfile: Block5UserProfile;
+  scenarioResults: Block5ScenarioResult[];
+};
+==================================================
+PART 6 — CANDIDATE FILTERING AND RANKING LOGIC
+
+This is the most important analytical logic.
+
+I want option ranking to be personalized and explainable.
+
+6A. Candidate filter using the participant’s strongest sensitivities
+
+Use the participant’s top 3 sensitivities from the ranked threshold tree as the “gatekeeper” sensitivities.
+
+Let:
+
+top1
+top2
+top3
+
+For each option, compute whether it passes threshold-like gates.
+
+Gate rules
+
+For each of the top 3 profile sensitivities:
+
+the option “passes” that sensitivity if:
+optionScore >= Math.max(30, userScore - 25)
+
+Then determine candidate status:
+
+An option is a candidate if:
+
+it passes the participant’s top sensitivity
+it passes at least 2 of the top 3 sensitivities
+
+Store gate diagnostics so they can be shown in the explanation.
+
+6B. Weighted fit score
+
+For every option, compute a weighted fit score.
+
+For each sensitivity dimension:
+
+match = 100 - Math.abs(userScore - optionScore)
+
+Then compute:
+
+weightedFitScore = sum(match * dimensionWeight)
+
+Use the user profile rank-derived weights from Part 1C.
+
+Then apply:
+
++5 bonus if the option passes all top 3 sensitivity gates
+-8 penalty if it fails the participant’s top sensitivity gate
+
+Clamp final fit score to 0–100.
+
+6C. Ranking
+
+Sort options in this order:
+
+all candidate options, sorted by fit score descending
+all non-candidate options, sorted by fit score descending
+
+Then assign display ranks:
+
+1, 2, 3, 4, 5
+
+Show clearly:
+
+which option is the top-ranked candidate
+which options are still candidates
+which options are lower-fit / non-candidates
+==================================================
+PART 7 — EXPLANATION DESIGN FOR EACH OPTION
+
+This is a core requirement.
+
+Each option card should show a brief summary first.
+Then the participant can expand a collapsible explanation.
+
+7A. Collapsed option card
+
+For each option show:
+
+rank number
+option title
+1–2 sentence summary
+fit score badge
+candidate badge:
+“Top candidate”
+“Candidate”
+“Lower fit”
+short top match reason line
+button:
+Why is this ranked here?
+
+Use elegant styling and scenario-specific accents.
+
+7B. Expanded collapsible explanation
+
+When expanded, show:
+
+Section 1 — Matching summary
+top 3 matched sensitivities
+1–2 tension points
+gate status for top 3 sensitivities
+
+Example:
+
+Passed your strongest sensitivity
+Passed 2 of your top 3 sensitivities
+Lower fit on outcome aggregation
+Section 2 — Meter bars
+
+This is required.
+
+Show one horizontal meter bar for each of the 7 sensitivity dimensions.
+
+Each meter bar must show:
+
+the option’s score as the filled bar
+the participant’s own score as a small thin vertical marker line on the same bar
+labels for both:
+Option: 74
+You: 82
+closeness text such as:
+“Very close match”
+“Moderate mismatch”
+“Far below your profile”
+“Above your profile”
+
+These meter bars must be visually clean, elegant, and readable.
+
+Small marker line requirement
+
+The participant’s threshold / sensitivity score must appear as a small vertical line marker overlaid on each bar.
+
+Use:
+
+a thin white or light marker line
+optional tooltip on hover:
+Your profile: 82
+Meter bar component
+
+Create a reusable component:
+SensitivityMeterBar
+
+Props:
+
+label
+optionScore
+userScore
+accentColor
+showClosenessText
+
+Implementation notes:
+
+use Chakra Box with position="relative"
+inner fill width based on optionScore
+overlay marker line with position="absolute" and left: ${userScore}%
+labels above or below
+7C. Optional profile line legend
+
+Add a tiny legend somewhere in the expanded explanation:
+
+colored bar = option score
+thin marker line = your profile score
+==================================================
+PART 8 — BLOCK 5 SCREEN LAYOUT
+
+Create a main component:
+Block5PublicEmergencySimulation
+
+This should manage the 3 scenarios sequentially.
+
+8A. Per-scenario layout
+
+Each scenario page should use a full-page layout, not a centered card.
+
+Suggested layout:
+
+outer full-screen background gradient
+top progress row:
+Scenario 1 of 3
+scenario title
+progress indicator
+left column (sticky on desktop):
+scenario description
+small participant-profile summary
+top 3 sensitivities chips
+note that options are ranked based on earlier responses
+right column:
+ranked list of 5 option panels
+each with collapsible explanation
+selection buttons
+
+Use responsive behavior:
+
+mobile: stack vertically
+desktop: 2-column layout
+8B. Small participant-profile summary in each scenario
+
+In the left column, show:
+
+Your strongest sensitivities
+top 3 sensitivity labels with scores
+Example:
+Directness sensitivity — 88
+Vulnerability protection sensitivity — 81
+Group-size sensitivity — 73
+
+Also show a small note:
+The options below are ranked based on how closely they align with your earlier response profile. You can still choose any option.
+
+==================================================
+PART 9 — USER ACTIONS IN BLOCK 5
+
+The participant should still have agency.
+The ranking is advisory, not mandatory.
+
+For each scenario, let the participant:
+
+inspect the options
+expand as many explanations as they want
+choose one option
+
+Each option card should have:
+Choose this option
+
+Once chosen:
+
+highlight it
+ask for confirmation in a small inline confirmation area or modal
+then allow:
+Confirm choice and continue
+
+Do NOT ask too many extra questions.
+Keep the experience smooth.
+
+Record:
+
+selected option
+selected rank
+top-ranked option
+whether selected option was a candidate
+explanation panels viewed
+time spent
+==================================================
+PART 10 — BLOCK 5 SUMMARY PAGE
+
+After the 3 scenarios are completed, show:
+Block5SimulationSummaryPage
+
+Purpose:
+Summarize what the participant chose in each scenario and how those choices related to their profile-based ranking.
+
+10A. Summary page content
+
+Show:
+
+header:
+Main Simulation Complete
+subtitle:
+Your choices across the public emergency scenarios have been recorded.
+
+Then show one summary panel per scenario:
+
+scenario title
+selected option
+rank of selected option
+top-ranked option
+whether participant chose the top-ranked option
+short line:
+“Your choice closely matched your earlier profile”
+“Your choice differed from the highest-ranked candidate”
+“Your choice favored a different moral trade-off than your earlier profile predicted”
+
+Generate careful, non-judgmental text.
+
+Also show a compact recap of the top 3 sensitivities that were used for ranking.
+
+Add button:
+Finish experiment
+
+Call:
+handleFinishExperiment()
+
+Also log results to console for debugging.
+
+==================================================
+PART 11 — PERSISTENCE AND STORAGE
+
+Save progress in:
+
+block5_public_emergency_progress
+
+Save final results in:
+
+block5_public_emergency_results
+
+If the page reloads:
+
+restore the current scenario
+restore rankings
+restore selected options if already chosen
+restore expanded explanation state where reasonable
+==================================================
+PART 12 — HELPER MODULES
+
+Create helper modules if needed:
+
+block5Profile.ts
+block5Scenarios.ts
+block5Ranking.ts
+block5Meters.tsx
+block5Summary.ts
+block5Types.ts
+==================================================
+PART 13 — IMPORTANT INTERPRETATION NOTES
+
+For Block 5 option fingerprints, the numeric scores mean:
+
+How much the option supports or satisfies that sensitivity dimension
+
+Examples:
+
+High vulnerabilityProtectionSensitivity score on an option means the option strongly protects vulnerable people.
+High outcomeAggregationSensitivity score means the option strongly maximizes total benefit or total people helped.
+High directnessSensitivity score means the option better avoids direct harsh harm or highly intrusive intervention.
+High contextSensitivity score means the option is more context-aware or nuanced.
+High gainResponsivenessSensitivity score means the option is more responsive to efficiency, scarce-resource preservation, or broader system incentives.
+High stakeholderPerspectiveShiftSensitivity score means the option better integrates multiple stakeholder viewpoints.
+High groupSizeSensitivity score means the option pays more attention to how many people are affected.
+
+Use this interpretation consistently in the ranking logic and the UI explanations.
+
+==================================================
+PART 14 — PROFESSIONAL / ELEGANT UX REQUIREMENTS
+
+Make Block 5 visually elegant and professional.
+
+Requirements:
+
+Chakra design system style
+full-page immersive layout
+not black/plain
+not centered cards like the earlier blocks
+unique gradient theme per scenario
+layered panels with subtle transparency or glass effect where appropriate
+elegant shadows
+refined typography
+smooth transitions between scenarios
+subtle hover states
+collapsible explanations with polished animation
+strong visual hierarchy
+
+Make the simulation look distinct from the earlier profiling sections.
+
+==================================================
+PART 15 — WHAT I WANT BUILT NOW
+
+Build the full implementation now, including:
+
+Block5PublicEmergencySimulation
+the 3 scenarios exactly as specified
+the 5 options per scenario
+the user-profile loader from previous blocks
+the candidate filter
+the weighted ranking logic
+the collapsible explanation system
+the meter bars with participant threshold marker lines
+the scenario-specific full-page gradient themes
+the selection flow
+Block5SimulationSummaryPage
+localStorage persistence
+clean modular TypeScript code
+professional and elegant Chakra-based styling
+
+Please modify the existing project accordingly rather than rebuilding from zero.
