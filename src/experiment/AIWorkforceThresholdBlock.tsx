@@ -22,7 +22,6 @@ import { ProgressBar } from "./ProgressBar";
 import { AIWorkforceCompletionScreen } from "./AIWorkforceCompletionScreen";
 import { GlowSpan } from "./GlowSpan";
 import {
-  AI_WORKFORCE_LEGACY_ALIAS_KEY,
   AI_WORKFORCE_PROGRESS_KEY,
   AI_WORKFORCE_RESULTS_KEY,
   FIXED_HARM_PHRASE,
@@ -38,66 +37,6 @@ import {
   type AIWorkforceThresholdKey,
   type RolloutAction,
 } from "./aiWorkforceTypes";
-
-import type {
-  ProductLaunchBlockResults,
-  LaunchThresholdResult,
-  ThresholdKey,
-  ProductLaunchChoiceRecord,
-} from "./productLaunchTypes";
-
-/**
- * Converts AI workforce block results to the legacy productLaunch shape required
- * by downstream analysis in profileAnalysis.ts, which still consumes the old type.
- * Field names are mapped (e.g. gain → profit, approve → launch) and group type keys
- * are translated ("low_buffer" → "vulnerable", everything else → "wealthy").
- */
-function toProductLaunchShape(
-  results: AIWorkforceBlockResults,
-): ProductLaunchBlockResults {
-  const mapGt = (k: string) => (k === "low_buffer" ? "vulnerable" : "wealthy");
-  const thresholds = {} as ProductLaunchBlockResults["thresholds"];
-  (Object.keys(results.thresholds) as Array<keyof typeof results.thresholds>).forEach(
-    (origKey) => {
-      const t = results.thresholds[origKey];
-      const legacyKey =
-        `threshold_${mapGt(t.groupTypeKey)}_${t.groupSizeKey}` as ThresholdKey;
-      const lt: LaunchThresholdResult = {
-        groupTypeKey: mapGt(t.groupTypeKey) as "vulnerable" | "wealthy",
-        groupTypeLabel: t.groupTypeLabel,
-        groupSizeKey: t.groupSizeKey,
-        groupSizeLabel: t.groupSizeLabel,
-        groupSizeCount: t.groupSizeCount,
-        accepted: t.accepted,
-        thresholdProfit: t.thresholdGain,
-        thresholdProfitLabel: t.thresholdGainLabel,
-        thresholdProfitIndex: t.thresholdGainIndex,
-        thresholdBeyondRange: t.thresholdBeyondRange,
-        blockedByPriorNonAcceptance: t.blockedByPriorNonAcceptance,
-        startedAtProfitIndex: t.startedAtGainIndex,
-      };
-      thresholds[legacyKey] = lt;
-    },
-  );
-  const history: ProductLaunchChoiceRecord[] = results.history.map((r) => ({
-    groupTypeKey: mapGt(r.groupTypeKey) as "vulnerable" | "wealthy",
-    groupTypeLabel: r.groupTypeLabel,
-    groupSizeKey: r.groupSizeKey,
-    groupSizeLabel: r.groupSizeLabel,
-    groupSizeCount: r.groupSizeCount,
-    profitIndex: r.gainIndex,
-    profitValue: r.gainValue,
-    profitLabel: r.gainLabel,
-    action: r.action === "approve" ? "launch" : "do_not_launch",
-    timestamp: r.timestamp,
-  }));
-  return {
-    completed: results.completed,
-    completedAt: results.completedAt,
-    thresholds,
-    history,
-  };
-}
 
 /** Milliseconds to hold the transitioning state when moving between full scenarios. */
 const TRANSITION_MS = 900;
@@ -240,7 +179,7 @@ function WorkerGroupInfoIcon({
   );
 }
 
-export function AIWorkforceThresholdBlock({ onContinue }: Props) {
+export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) {
   // Restore in-progress session from localStorage, falling back to INITIAL_STATE.
   const [state, setState] = useState<InProgressState>(() => {
     try {
@@ -332,9 +271,8 @@ export function AIWorkforceThresholdBlock({ onContinue }: Props) {
   /**
    * Finalises the threshold matrix by filling any cells that were never explicitly
    * resolved (e.g. gaps left by early termination) with blocked results. Serialises
-   * the completed AIWorkforceBlockResults to AI_WORKFORCE_RESULTS_KEY and also writes
-   * the legacy-shaped version to AI_WORKFORCE_LEGACY_ALIAS_KEY so that profileAnalysis.ts
-   * can consume it without modification. Cleans up the in-progress key afterward.
+   * the completed AIWorkforceBlockResults to AI_WORKFORCE_RESULTS_KEY (the single,
+   * canonical Block-3 storage key) and cleans up the in-progress key afterward.
    */
   const completeBlock = useCallback((finalState: InProgressState) => {
     const thresholds: AIWorkforceThresholdsMap = {} as AIWorkforceThresholdsMap;
@@ -353,21 +291,17 @@ export function AIWorkforceThresholdBlock({ onContinue }: Props) {
       completedAt: new Date().toISOString(),
       thresholds,
       history: finalState.history,
+      participantId, // unified session id (MongoDB join key)
     };
     try {
-      const serialized = JSON.stringify(results);
-      localStorage.setItem(AI_WORKFORCE_RESULTS_KEY, serialized);
-      localStorage.setItem(
-        AI_WORKFORCE_LEGACY_ALIAS_KEY,
-        JSON.stringify(toProductLaunchShape(results)),
-      );
+      localStorage.setItem(AI_WORKFORCE_RESULTS_KEY, JSON.stringify(results));
       localStorage.removeItem(AI_WORKFORCE_PROGRESS_KEY);
     } catch {
       // ignore
     }
     setFinalResults(results);
     setCompleted(true);
-  }, []);
+  }, [participantId]);
 
   /**
    * State machine for the two possible participant actions on each scenario.
@@ -789,12 +723,12 @@ export function AIWorkforceThresholdBlock({ onContinue }: Props) {
                 size="xl"
                 onClick={() => handleChoice(btn.key)}
                 disabled={isTransitioning || !!transitionMessage}
-                bg="gray.900"
+                bg="blue.600"
                 color="white"
-                _hover={{ bg: "gray.800" }}
+                _hover={{ bg: "blue.500" }}
                 _active={{ bg: "gray.950" }}
                 _disabled={{
-                  bg: "gray.900",
+                  bg: "blue.600",
                   color: "white",
                   opacity: 0.6,
                   cursor: "not-allowed",

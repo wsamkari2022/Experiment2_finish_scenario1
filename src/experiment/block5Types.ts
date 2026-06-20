@@ -231,6 +231,45 @@ export interface APARecord {
   originalOptionId: string;         // the misaligned option that triggered APA
 }
 
+/** ---- Behavioral telemetry (additive; does NOT affect scoring) ---- */
+
+/** How a scenario's CVR step ended (final committed path). */
+export type CVROutcome =
+  | "endorsed-strong"
+  | "endorsed-weak"
+  | "went-to-APA"
+  | "exited"
+  | "none";
+
+/** How a scenario's APA step ended (final committed path). */
+export type APAOutcome = "committed" | "exited" | "none";
+
+/**
+ * Per-scenario behavioral telemetry, captured inside the Block-5 component from the handlers
+ * it already has (select, preview, expand, CVR yes/no/back, APA open/back/confirm). These are
+ * pure observation counters + timestamps — they never change the decision logic or scoring.
+ */
+export interface Block5ScenarioTelemetry {
+  cvrTriggered: boolean;     // the chosen path showed a CVR vignette at least once
+  apaTriggered: boolean;     // the APA panel opened at least once
+  cvrVisits: number;         // times the CVR vignette was shown (incl. re-entries)
+  apaVisits: number;         // times the APA panel opened
+  cvrOutcome: CVROutcome;
+  apaOutcome: APAOutcome;
+  /** = optionChanges + cvrBackouts + apaBackouts + finalDecisionChanges (clean "how much did they waver"). */
+  numberOfSwitches: number;
+  initialSelections: number; // distinct options opened into the decision view
+  optionChanges: number;     // went back and chose a DIFFERENT option
+  cvrBackouts: number;       // left the CVR vignette via "change my mind"
+  apaBackouts: number;       // left APA via "take me back to all options"
+  finalDecisionChanges: number; // picked an APA final option, then changed it before committing
+  timeToFirstSelectionMs: number | null; // deliberation before the first pick
+  previewImpactOpens: number; // used "Preview impact"
+  optionExpands: number;     // expanded an option card to read details
+  cvrDwellMs: number;        // time reflecting inside the CVR vignette
+  apaDwellMs: number;        // time reflecting inside the APA flow
+}
+
 /** ---- Results ---- */
 export interface Block5ScenarioResult {
   scenarioId: string;
@@ -265,6 +304,8 @@ export interface Block5ScenarioResult {
   apa?: APARecord;
   /** the exact stakeholder voice text shown in the CVR vignette this scenario (for analysis). */
   cvrStakeholderShown?: string;
+  /** behavioral telemetry for this scenario (visits, switches, dwell) — does not affect scoring. */
+  telemetry?: Block5ScenarioTelemetry;
 }
 
 export interface Block5Results {
@@ -278,6 +319,10 @@ export interface Block5Results {
   stability?: number;
   stabilityLevel?: string;
   performance?: number;
+  /** behavioral telemetry totals across all scenarios (additive; does not affect scoring). */
+  totalCvrVisits?: number;
+  totalApaVisits?: number;
+  totalSwitches?: number;
 }
 
 export const BLOCK5_PROGRESS_KEY = "block5_public_emergency_progress";

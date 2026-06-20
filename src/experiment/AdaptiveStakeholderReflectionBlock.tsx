@@ -50,6 +50,8 @@ export interface Block4CompletionPayload {
   vignettesShown: { id: string; title: string; direction: string }[];
   mostInfluentialPerspective: string;
   completedAt: string;
+  /** unified anonymous session id (= getSessionId()); the MongoDB join key. */
+  participantId?: string;
 }
 
 /** Props for AdaptiveStakeholderReflectionBlock. */
@@ -81,6 +83,7 @@ interface Props {
  * analysis, always selecting opposing-direction vignettes to maximise reflective tension.
  */
 export function AdaptiveStakeholderReflectionBlock({
+  participantId,
   profile,
   analysis,
   seedCase,
@@ -190,11 +193,27 @@ export function AdaptiveStakeholderReflectionBlock({
    */
   const handleComplete = useCallback(() => {
     if (!finalDecision || !finalConfidence || !mostInfluential) return;
+    // Map the most-influential perspective to how its voice is affected by the
+    // participant's final decision: a rejection-leaning voice speaks for the harmed
+    // workers; an acceptance-leaning voice speaks for the benefiting organisation.
+    // This feeds the engine's secondary vulnerability / gain signals (Approved Change 5).
+    const influentialDirection =
+      mostInfluential === perspectiveOne.title ? firstDirection
+        : mostInfluential === perspectiveTwo.title ? secondDirection
+          : null;
+    const influentialValence: "harmed" | "benefited" | null =
+      influentialDirection === "toward_rejection" ? "harmed"
+        : influentialDirection === "toward_acceptance" ? "benefited"
+          : null;
+
     const decisions: Block4DecisionRecord = {
       initialDecision,
       midDecision,
       finalDecision,
       confidence: finalConfidence,
+      initialConfidence: initialConfidence ?? undefined,
+      reportedInfluence: !!mostInfluential,
+      influentialValence,
     };
     const payload: Block4CompletionPayload = {
       seedCase,
@@ -207,10 +226,13 @@ export function AdaptiveStakeholderReflectionBlock({
       ],
       mostInfluentialPerspective: mostInfluential,
       completedAt: new Date().toISOString(),
+      participantId, // unified session id (MongoDB join key)
     };
     onContinue(payload);
   }, [
+    participantId,
     initialDecision,
+    initialConfidence,
     midDecision,
     finalDecision,
     finalConfidence,
@@ -345,6 +367,9 @@ function Screen1InitialDecision({
       shadow="lg"
     >
       <VStack gap="6" align="stretch">
+        <Heading size="md" color="fg" lineHeight="short">
+          {title}
+        </Heading>
         <Text color="fg" fontSize="md" lineHeight="tall">
           {body}
         </Text>
@@ -356,26 +381,26 @@ function Screen1InitialDecision({
           <HStack gap="4" justify="center" wrap="wrap">
             <Button
               size="lg"
-              bg={decision === "proceed" ? "green.700" : "bg.subtle"}
-              color={decision === "proceed" ? "white" : "fg"}
-              _hover={{ bg: decision === "proceed" ? "green.600" : "bg.muted" }}
+              bg={decision === "proceed" ? "green.600" : "green.subtle"}
+              color={decision === "proceed" ? "white" : "green.fg"}
+              _hover={{ bg: decision === "proceed" ? "green.700" : "green.muted" }}
               rounded="lg"
               px="8"
               borderWidth="1px"
-              borderColor={decision === "proceed" ? "green.700" : "border"}
+              borderColor={decision === "proceed" ? "green.600" : "green.muted"}
               onClick={() => setDecision("proceed")}
             >
               Approve the policy
             </Button>
             <Button
               size="lg"
-              bg={decision === "do_not_proceed" ? "red.700" : "bg.subtle"}
-              color={decision === "do_not_proceed" ? "white" : "fg"}
-              _hover={{ bg: decision === "do_not_proceed" ? "red.600" : "bg.muted" }}
+              bg={decision === "do_not_proceed" ? "red.600" : "red.subtle"}
+              color={decision === "do_not_proceed" ? "white" : "red.fg"}
+              _hover={{ bg: decision === "do_not_proceed" ? "red.700" : "red.muted" }}
               rounded="lg"
               px="8"
               borderWidth="1px"
-              borderColor={decision === "do_not_proceed" ? "red.700" : "border"}
+              borderColor={decision === "do_not_proceed" ? "red.600" : "red.muted"}
               onClick={() => setDecision("do_not_proceed")}
             >
               Do not approve the policy
@@ -395,12 +420,12 @@ function Screen1InitialDecision({
                   size="md"
                   minW="12"
                   onClick={() => setConfidence(v)}
-                  bg={confidence === v ? "blue.600" : "bg.subtle"}
-                  color={confidence === v ? "white" : "fg"}
-                  _hover={{ bg: confidence === v ? "blue.500" : "bg.muted" }}
+                  bg={confidence === v ? "blue.600" : "blue.subtle"}
+                  color={confidence === v ? "white" : "blue.fg"}
+                  _hover={{ bg: confidence === v ? "blue.500" : "blue.muted" }}
                   rounded="lg"
                   borderWidth="1px"
-                  borderColor={confidence === v ? "blue.600" : "border"}
+                  borderColor={confidence === v ? "blue.600" : "blue.muted"}
                 >
                   {v}
                 </Button>
@@ -413,9 +438,10 @@ function Screen1InitialDecision({
           <HStack justify="center" animationName="fade-in" animationDuration="moderate">
             <Button
               size="lg"
-              bg="gray.900"
+              colorPalette="blue"
+              bg="blue.600"
               color="white"
-              _hover={{ bg: "gray.800" }}
+              _hover={{ bg: "blue.500" }}
               rounded="lg"
               px="10"
               onClick={() => onSubmit(decision, confidence)}
@@ -597,26 +623,26 @@ function Screen3FinalDecision({
           <HStack gap="4" justify="center" wrap="wrap">
             <Button
               size="lg"
-              bg={decision === "proceed" ? "green.700" : "bg.subtle"}
-              color={decision === "proceed" ? "white" : "fg"}
-              _hover={{ bg: decision === "proceed" ? "green.600" : "bg.muted" }}
+              bg={decision === "proceed" ? "green.600" : "green.subtle"}
+              color={decision === "proceed" ? "white" : "green.fg"}
+              _hover={{ bg: decision === "proceed" ? "green.700" : "green.muted" }}
               rounded="lg"
               px="8"
               borderWidth="1px"
-              borderColor={decision === "proceed" ? "green.700" : "border"}
+              borderColor={decision === "proceed" ? "green.600" : "green.muted"}
               onClick={() => setDecision("proceed")}
             >
               Approve the policy
             </Button>
             <Button
               size="lg"
-              bg={decision === "do_not_proceed" ? "red.700" : "bg.subtle"}
-              color={decision === "do_not_proceed" ? "white" : "fg"}
-              _hover={{ bg: decision === "do_not_proceed" ? "red.600" : "bg.muted" }}
+              bg={decision === "do_not_proceed" ? "red.600" : "red.subtle"}
+              color={decision === "do_not_proceed" ? "white" : "red.fg"}
+              _hover={{ bg: decision === "do_not_proceed" ? "red.700" : "red.muted" }}
               rounded="lg"
               px="8"
               borderWidth="1px"
-              borderColor={decision === "do_not_proceed" ? "red.700" : "border"}
+              borderColor={decision === "do_not_proceed" ? "red.600" : "red.muted"}
               onClick={() => setDecision("do_not_proceed")}
             >
               Do not approve
@@ -636,12 +662,12 @@ function Screen3FinalDecision({
                   size="md"
                   minW="12"
                   onClick={() => setConfidence(v)}
-                  bg={confidence === v ? "blue.600" : "bg.subtle"}
-                  color={confidence === v ? "white" : "fg"}
-                  _hover={{ bg: confidence === v ? "blue.500" : "bg.muted" }}
+                  bg={confidence === v ? "blue.600" : "blue.subtle"}
+                  color={confidence === v ? "white" : "blue.fg"}
+                  _hover={{ bg: confidence === v ? "blue.500" : "blue.muted" }}
                   rounded="lg"
                   borderWidth="1px"
-                  borderColor={confidence === v ? "blue.600" : "border"}
+                  borderColor={confidence === v ? "blue.600" : "blue.muted"}
                 >
                   {v}
                 </Button>
@@ -663,10 +689,10 @@ function Screen3FinalDecision({
                   variant="outline"
                   justifyContent="flex-start"
                   textAlign="left"
-                  bg={influential === opt ? "blue.600" : "bg.panel"}
-                  color={influential === opt ? "white" : "fg"}
-                  borderColor={influential === opt ? "blue.600" : "border"}
-                  _hover={{ bg: influential === opt ? "blue.500" : "bg.subtle" }}
+                  bg={influential === opt ? "purple.600" : "purple.subtle"}
+                  color={influential === opt ? "white" : "purple.fg"}
+                  borderColor={influential === opt ? "purple.600" : "purple.muted"}
+                  _hover={{ bg: influential === opt ? "purple.700" : "purple.muted" }}
                   rounded="lg"
                   px="5"
                   py="3"
@@ -682,22 +708,43 @@ function Screen3FinalDecision({
         )}
 
         {allSelected && (
-          <HStack justify="center" pt="2" animationName="fade-in" animationDuration="moderate">
+          <Box
+            animationName="fade-in"
+            animationDuration="moderate"
+            borderWidth="2px"
+            borderColor="purple.400"
+            bg="purple.subtle"
+            rounded="xl"
+            p={{ base: "4", md: "5" }}
+            mt="1"
+          >
+            <Badge colorPalette="purple" variant="solid" rounded="md" mb="2" px="2">
+              Final step
+            </Badge>
+            <Text fontWeight="semibold" color="fg" fontSize="md" mb="1">
+              This is your final decision.
+            </Text>
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="4">
+              Recording it saves your decision and confidence and continues to your profile.
+              You won't be able to change it afterward.
+            </Text>
             <Button
               size="lg"
-              bg="gray.900"
-              color="white"
-              _hover={{ bg: "gray.800" }}
+              w="full"
+              colorPalette="purple"
+              bg="purple.solid"
+              color="purple.contrast"
+              _hover={{ opacity: 0.9 }}
               rounded="lg"
-              px="10"
+              fontWeight="semibold"
               onClick={() => {
                 onSubmit(decision, confidence, influential);
                 setTimeout(() => onComplete(), 50);
               }}
             >
-              Submit
+              Record my final decision
             </Button>
-          </HStack>
+          </Box>
         )}
       </VStack>
     </Box>

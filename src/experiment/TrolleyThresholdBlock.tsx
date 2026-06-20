@@ -188,6 +188,7 @@ export function TrolleyThresholdBlock({
       };
 
       const results: TrolleyBlockResults = {
+        participantId,
         completed: true,
         completedAt: new Date().toISOString(),
         leverThreshold,
@@ -205,7 +206,7 @@ export function TrolleyThresholdBlock({
       setFinalResults(results);
       setTrolleyBlockCompleted(true);
     },
-    [],
+    [participantId],
   );
 
   /**
@@ -582,12 +583,12 @@ export function TrolleyThresholdBlock({
                   }
                 }}
                 disabled={isTransitioning || !!transitionMessage}
-                bg="gray.900"
+                bg="blue.600"
                 color="white"
-                _hover={{ bg: "gray.800" }}
+                _hover={{ bg: "blue.500" }}
                 _active={{ bg: "gray.950" }}
                 _disabled={{
-                  bg: "gray.900",
+                  bg: "blue.600",
                   color: "white",
                   opacity: 0.6,
                   cursor: "not-allowed",

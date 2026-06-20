@@ -34,12 +34,12 @@ interface ScenarioCVRContent {
  * (per the design: "someone close" stays identical everywhere). One is chosen at random.
  */
 const CLOSE_WHO: WhoVariant[] = [
-  { lead: "Imagine this patient is your mother.", label: "your mother" },
-  { lead: "Imagine this patient is your father.", label: "your father" },
-  { lead: "Imagine this patient is your son.", label: "your son" },
-  { lead: "Imagine this patient is your daughter.", label: "your daughter" },
-  { lead: "Imagine this patient is your spouse.", label: "your spouse" },
-  { lead: "Imagine this patient is your best friend.", label: "your best friend" },
+  { lead: "Imagine this affected person is your mother.", label: "your mother" },
+  { lead: "Imagine this affected person is your father.", label: "your father" },
+  { lead: "Imagine this affected person is your son.", label: "your son" },
+  { lead: "Imagine this affected person is your daughter.", label: "your daughter" },
+  { lead: "Imagine this affected person is your spouse.", label: "your spouse" },
+  { lead: "Imagine this affected person is your best friend.", label: "your best friend" },
 ];
 
 const CANCER: ScenarioCVRContent = {
@@ -68,6 +68,66 @@ const CANCER: ScenarioCVRContent = {
       { lead: "Another member of the allocation board, reviewing the outcome, reminds you the choice was yours to make:", label: "another member of the allocation board" },
       { lead: "The hospital manager points to the consequences of the policy you chose — and that the call was yours:", label: "the hospital manager" },
       { lead: "Someone else in charge weighs the consequences of your decision, and notes it was yours alone:", label: "someone else in charge" },
+    ],
+  },
+};
+
+const FLOOD: ScenarioCVRContent = {
+  anchorNoun: "buses and rescue hours",
+  valuePhrase: {
+    vulnerabilityProtectionSensitivity: "the residents who most need help to escape",
+    groupSizeSensitivity: "much of the larger population who could be reached",
+    gainResponsivenessSensitivity: "the places where each trip would save the most people",
+    outcomeAggregationSensitivity: "the largest total number saved from the worst of the flood",
+  },
+  framingClause: {
+    context:
+      "the reason some streets rank lower here is circumstance, not worth — where people live, the roads, and who can self-evacuate shape the very numbers the rule uses",
+    directness:
+      "this is not the flood deciding — your own rule is what sends the boats away from them",
+  },
+  whoLead: {
+    close: CLOSE_WHO,
+    group: [
+      { lead: "A resident whose street is going under stops you about your decision:", label: "a flooded-out resident" },
+      { lead: "A rescue-boat volunteer questions the plan you set:", label: "the rescue volunteer" },
+      { lead: "The evacuation-shelter coordinator raises a concern about your decision:", label: "the shelter coordinator" },
+      { lead: "The emergency dispatcher pushes back on your decision:", label: "the dispatcher" },
+    ],
+    system: [
+      { lead: "Another member of the emergency-operations command reminds you the call was yours to make:", label: "another command member" },
+      { lead: "The city's disaster-response director points to the consequences of the policy you chose — and that the decision was yours:", label: "the disaster-response director" },
+      { lead: "Someone else in charge of the evacuation weighs the outcome of your decision, and notes it was yours alone:", label: "someone else in charge" },
+    ],
+  },
+};
+
+const WATER: ScenarioCVRContent = {
+  anchorNoun: "crews and clean-water supplies",
+  valuePhrase: {
+    vulnerabilityProtectionSensitivity: "the people whose health is most at risk from unsafe water",
+    groupSizeSensitivity: "much of the larger population who could be protected",
+    gainResponsivenessSensitivity: "the places where each crew-hour removes the most exposure",
+    outcomeAggregationSensitivity: "the largest total amount of illness prevented across the city",
+  },
+  framingClause: {
+    context:
+      "the reason some areas rank lower here is circumstance, not worth — where the pipes run, who is already sick, and who can boil water shape the very numbers the rule uses",
+    directness:
+      "this is not the contamination deciding — your own rule is what sends the clean water away from them",
+  },
+  whoLead: {
+    close: CLOSE_WHO,
+    group: [
+      { lead: "A parent in an affected household stops you about your decision:", label: "a parent in an affected household" },
+      { lead: "A nurse at an affected clinic questions the plan you set:", label: "the clinic nurse" },
+      { lead: "The water-utility field engineer raises a concern about your decision:", label: "the utility engineer" },
+      { lead: "The neighborhood public-health officer pushes back on your decision:", label: "the public-health officer" },
+    ],
+    system: [
+      { lead: "Another member of the water-response board reminds you the call was yours to make:", label: "another board member" },
+      { lead: "The city public-health director points to the consequences of the policy you chose — and that the decision was yours:", label: "the public-health director" },
+      { lead: "Someone else in charge of the response weighs the outcome of your decision, and notes it was yours alone:", label: "someone else in charge" },
     ],
   },
 };
@@ -101,6 +161,8 @@ const GENERIC: ScenarioCVRContent = {
 
 const CONTENT: Record<string, ScenarioCVRContent> = {
   cancer_treatment_allocation: CANCER,
+  flood_evacuation_priority: FLOOD,
+  water_contamination_response: WATER,
 };
 
 function genericSeed(): OptionCVRSeed {

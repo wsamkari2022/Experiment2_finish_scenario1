@@ -1,132 +1,99 @@
 /**
- * profileAnalysis.ts — Derive a MoralProfile from Blocks 1–3
+ * profileAnalysis.ts — Interim Blocks-1–3 descriptive snapshot (the "MoralProfile")
  *
- * This is the core analysis module. It converts raw block results into a
- * normalised MoralProfile (6 numeric scores + boolean flags) that drives:
- * - The MoralProfileInsightsPage display
- * - Block-4 scenario and perspective personalisation
- * - The FinalMoralAnalysisPage written observations
- * - The ThresholdTree dimension calculations
+ * This builds the INTERIM profile shown on the Insights page (after Block 3, before
+ * Block 4) and used to personalise the Block-4 scenario. It is a descriptive
+ * snapshot of Blocks 1–3 only.
  *
- * All scores are in [0, 1]. Higher always means "more of that trait".
- * Comparable indices map accepted thresholds to their 0-based position in the
- * option ladder; "sentinel" values (equal to the step count) represent
- * "threshold beyond range" — never accepted even at the highest option.
+ * It is NOT the authoritative seven-sensitivity User Value Profile — that is built
+ * from all four blocks in thresholdTree.ts (buildThresholdTree) and is the single
+ * source of truth fed to Block 5. Both modules now derive Block-3 quantities from
+ * ONE place: computeAIWorkforceAnalysis (aiWorkforceAnalysis.ts).
+ *
+ * Migration note (Approved Change 1): Block 3 is the "AI-Workforce Rollout" block.
+ * The legacy "Product Launch" vocabulary (vulnerable/wealthy/profit) has been fully
+ * removed — fields now use AI-Workforce concepts (low-buffer/high-buffer/gain).
+ *
+ * All scores are in [0, 1]; higher always means "more of that trait". Comparable
+ * indices map an accepted threshold to its 0-based rung; a sentinel equal to the
+ * ladder length means "never accepted even at the top rung".
  */
 
 import { AMOUNT_LABELS } from "./constants";
 import { SAVED_LIVES_OPTIONS } from "./trolleyTypes";
-import {
-  GROUP_SIZES,
-  GROUP_TYPES,
-  PROFIT_OPTIONS,
-  thresholdKeyFor,
-  type GroupSizeKey,
-  type GroupTypeKey,
-} from "./productLaunchTypes";
 import type { MoneyBlockResults, ThresholdResult } from "./types";
 import type {
   BridgeThresholdResult,
   LeverThresholdResult,
   TrolleyBlockResults,
 } from "./trolleyTypes";
-import type {
-  LaunchThresholdResult,
-  ProductLaunchBlockResults,
-} from "./productLaunchTypes";
+import {
+  WORKER_GROUP_SIZES,
+  aiWorkforceThresholdKeyFor,
+  type AIWorkforceBlockResults,
+  type WorkerGroupSizeKey,
+} from "./aiWorkforceTypes";
+import { computeAIWorkforceAnalysis, GAIN_STEPS } from "./aiWorkforceAnalysis";
 
-/** Total number of steps in the Block 1 amount ladder. Used as the sentinel "beyond range" value. */
+/** Total rungs in the Block 1 money ladder. Sentinel value for "never kept". */
 export const MONEY_STEPS = AMOUNT_LABELS.length;
 
-/** Total number of steps in the Block 2 lives ladder. */
+/** Total rungs in the Block 2 saved-lives ladder. Sentinel value for "never acted". */
 export const TROLLEY_STEPS = SAVED_LIVES_OPTIONS.length;
 
-/** Total number of steps in the Block 3 gain ladder. */
-export const PRODUCT_STEPS = PROFIT_OPTIONS.length;
+/** Total rungs in the Block 3 gain ladder. Re-exported so display code has one constant. */
+export { GAIN_STEPS };
 
-/**
- * Returns the comparable index for a Block 1 threshold.
- * Accepted → thresholdAmountIndex (0..MONEY_STEPS-1)
- * Not accepted or null → MONEY_STEPS (sentinel: beyond range)
- */
+/** Comparable index for a Block 1 threshold (accepted → rung; else MONEY_STEPS sentinel). */
 export function toMoneyComparableIndex(t: ThresholdResult | null): number {
   if (!t) return MONEY_STEPS;
   if (!t.accepted || t.thresholdAmountIndex === null) return MONEY_STEPS;
   return t.thresholdAmountIndex;
 }
 
-/**
- * Returns the comparable index for a Block 2 lever threshold.
- * Accepted → thresholdIndex (0..TROLLEY_STEPS-1)
- * Not accepted or null → TROLLEY_STEPS
- */
-export function toTrolleyComparableIndex(
-  t: LeverThresholdResult | null,
-): number {
+/** Comparable index for a Block 2 lever threshold (accepted → rung; else TROLLEY_STEPS). */
+export function toTrolleyComparableIndex(t: LeverThresholdResult | null): number {
   if (!t) return TROLLEY_STEPS;
   if (!t.accepted || t.thresholdIndex === null) return TROLLEY_STEPS;
   return t.thresholdIndex;
 }
 
-/**
- * Returns the comparable index for a Block 2 bridge threshold.
- * Accepted → thresholdIndex (0..TROLLEY_STEPS-1)
- * Not accepted or null → TROLLEY_STEPS
- */
-export function toBridgeComparableIndex(
-  t: BridgeThresholdResult | null,
-): number {
+/** Comparable index for a Block 2 bridge threshold (accepted → rung; else TROLLEY_STEPS). */
+export function toBridgeComparableIndex(t: BridgeThresholdResult | null): number {
   if (!t) return TROLLEY_STEPS;
   if (!t.accepted || t.thresholdIndex === null) return TROLLEY_STEPS;
   return t.thresholdIndex;
 }
 
-/**
- * Returns the comparable index for a Block 3 threshold.
- * Accepted → thresholdProfitIndex (0..PRODUCT_STEPS-1)
- * Blocked by prior non-acceptance → PRODUCT_STEPS (treated same as beyond range)
- * Not accepted or null → PRODUCT_STEPS
- */
-export function toProductComparableIndex(
-  t: LaunchThresholdResult | null,
-): number {
-  if (!t) return PRODUCT_STEPS;
-  if (t.blockedByPriorNonAcceptance) return PRODUCT_STEPS;
-  if (!t.accepted || t.thresholdProfitIndex === null) return PRODUCT_STEPS;
-  return t.thresholdProfitIndex;
-}
-
-/**
- * Normalises an index to [0, 1] by dividing by the total step count.
- * A result of 0 means index 0 (accepted at the lowest option);
- * a result approaching 1 means the threshold was at or beyond the highest option.
- */
+/** Normalises an index to [0,1] by dividing by the ladder length. */
 function norm(idx: number, steps: number): number {
   return Math.max(0, Math.min(1, idx / steps));
 }
 
 /**
- * The full moral profile derived from all three quantitative blocks.
+ * The interim Blocks-1–3 descriptive snapshot.
  *
  * Numeric scores (all 0–1):
- *   vulnerabilitySensitivityScore      — does context of vulnerability raise the bar?
- *   wealthContextPermissivenessScore   — more permissive when counterparty is wealthy?
- *   harmReluctanceScore                — general reluctance to cause harm (both trolley phases)
- *   directnessAversionScore            — higher bar for direct vs. indirect harm?
- *   scaleSensitivityScore              — do thresholds shift with group size?
- *   consistencyAcrossDomainsScore      — are vulnerability signals consistent across blocks?
+ *   vulnerabilitySensitivityScore     — does a vulnerable context raise the bar?
+ *                                       (Block 1 shelter-vs-neutral + Block 3 low- vs high-buffer)
+ *   wealthContextPermissivenessScore  — more permissive when the counterparty is wealthy? (Block 1)
+ *   harmReluctanceScore               — general reluctance to cause harm (Block 2, both phases)
+ *   directnessAversionScore           — higher bar for direct vs indirect harm? (Block 2)
+ *   scaleSensitivityScore             — threshold shifts with group size? (Block 3 low-buffer spread)
+ *   consistencyAcrossDomainsScore     — do the vulnerability signals agree across blocks?
  *
- * Boolean flags (derived from the scores and raw indices):
- *   protectsVulnerableStrongly         — vulnerability sensitivity ≥ 0.62 OR shelter beyond range
- *   refusedBridge                      — never pushed in the bridge phase
- *   refusedLever                       — never pulled in the lever phase
- *   refusedAnyProduct                  — at least one Block-3 cell was never accepted
- *   refusedAllVulnerableProducts       — every low-buffer cell was never accepted
+ * Flags:
+ *   protectsVulnerableStrongly        — vulnerabilitySensitivity ≥ 0.62 OR shelter beyond range
+ *   refusedBridge / refusedLever      — never acted in that Block-2 phase
+ *   refusedAnyRollout                 — at least one Block-3 cell was never approved
+ *   refusedAllLowBufferRollouts       — every low-buffer cell was never approved
+ *   mostRestrictiveLowBufferSize      — low-buffer group size that required the highest gain
  *
- * Raw index snapshots (used by downstream analysis and display):
- *   moneyIndices     — { sidewalk, wealthy, shelter } comparable indices
- *   trolleyIndices   — { lever, bridge } comparable indices
- *   productIndices   — all 6 (groupType × groupSize) comparable indices
+ * Raw snapshots (for the calculation modal / analysis):
+ *   moneyIndices        — { sidewalk, wealthy, shelter }
+ *   trolleyIndices      — { lever, bridge }
+ *   aiWorkforceIndices  — all 6 (workerGroup × size) comparable gain indices,
+ *                         keyed threshold_lowbuffer_small … threshold_highbuffer_large
  */
 export interface MoralProfile {
   vulnerabilitySensitivityScore: number;
@@ -138,190 +105,123 @@ export interface MoralProfile {
   protectsVulnerableStrongly: boolean;
   refusedBridge: boolean;
   refusedLever: boolean;
-  refusedAnyProduct: boolean;
-  refusedAllVulnerableProducts: boolean;
-  dominantVulnerableGroupSize: GroupSizeKey | null;
+  refusedAnyRollout: boolean;
+  refusedAllLowBufferRollouts: boolean;
+  mostRestrictiveLowBufferSize: WorkerGroupSizeKey | null;
   moneyIndices: Record<string, number>;
   trolleyIndices: { lever: number; bridge: number };
-  productIndices: Partial<Record<string, number>>;
+  aiWorkforceIndices: Partial<Record<string, number>>;
+  /**
+   * Idea B (light secondary): prosocial-donation signal from Block 1's exact non-keep action.
+   * 1 = chose "donate" in the shelter context · 0.5 = donated in any context · 0 = never donated.
+   * Used ONLY as a small boost to Vulnerability protection (not Context). Return/Leave map to no
+   * sensitivity (no honesty/passivity dimension exists) and are kept for descriptive analysis only.
+   */
+  block1DonationSignal: number;
 }
 
 /**
- * Computes the average comparable index across all three group sizes for a given group type.
- * Used as a summary signal for Block-3 permissiveness per worker category.
- */
-function avgProductIndex(
-  results: ProductLaunchBlockResults,
-  groupType: GroupTypeKey,
-): number {
-  const values = GROUP_SIZES.map((gs) =>
-    toProductComparableIndex(
-      results.thresholds[thresholdKeyFor(groupType, gs.key)] ?? null,
-    ),
-  );
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-/**
- * deriveMoralProfile — the main entry point for this module.
- *
- * Takes the completed results from all three quantitative blocks and returns a
- * MoralProfile. Called by MoralProfileInsightsPage once all three blocks are done.
- *
- * Score derivations:
- *
- * vulnerabilitySensitivityScore
- *   = 0.5 + 0.5 × (0.5 × vulnProductGap + 0.5 × moneyVulnGap)
- *   where vulnProductGap = (avgVulnerableIdx − avgWealthyIdx) / PRODUCT_STEPS
- *         moneyVulnGap   = norm(shelterIdx) − norm(sidewalkIdx)
- *   Higher → more reluctant to approve/keep when vulnerable people are affected.
- *
- * wealthContextPermissivenessScore
- *   = 0.5 + 0.5 × (norm(sidewalkIdx) − norm(wealthyIdx))
- *   Higher → threshold drops in a wealthy context (more permissive toward the wealthy).
- *
- * harmReluctanceScore
- *   = 0.5 × norm(leverIdx) + 0.5 × norm(bridgeIdx)
- *   Higher → pulled the lever / pushed at a higher number of lives (more reluctant to cause any harm).
- *
- * directnessAversionScore
- *   = (bridgeIdx − leverIdx) / TROLLEY_STEPS + 0.5
- *   Higher → needed more lives at risk to push than to pull (acts of direct harm need higher justification).
- *
- * scaleSensitivityScore
- *   = (max(vulnIndices) − min(vulnIndices)) / PRODUCT_STEPS
- *   Higher → threshold moved substantially as group size grew.
- *
- * consistencyAcrossDomainsScore
- *   = 1 − √(variance of 3 normalised vulnerability signals) × 2
- *   The three signals are: money vulnerability norm, product vulnerability norm, harm reluctance norm.
- *   Higher → all three signals point in the same direction.
+ * deriveMoralProfile — builds the interim snapshot from Blocks 1–3.
+ * Block-3 quantities come from computeAIWorkforceAnalysis (single source of truth).
  */
 export function deriveMoralProfile(
   money: MoneyBlockResults,
   trolley: TrolleyBlockResults,
-  product: ProductLaunchBlockResults,
+  aiWorkforce: AIWorkforceBlockResults,
 ): MoralProfile {
   const sidewalkIdx = toMoneyComparableIndex(money.thresholds.threshold_sidewalk);
-  const wealthyIdx  = toMoneyComparableIndex(money.thresholds.threshold_wealthy);
-  const shelterIdx  = toMoneyComparableIndex(money.thresholds.threshold_shelter);
+  const wealthyIdx = toMoneyComparableIndex(money.thresholds.threshold_wealthy);
+  const shelterIdx = toMoneyComparableIndex(money.thresholds.threshold_shelter);
 
-  const leverIdx  = toTrolleyComparableIndex(trolley.leverThreshold);
+  // ── Idea B: prosocial-donation signal from Block 1's exact non-keep action ──
+  // "donate near the shelter" = prosocial toward the vulnerable (strong); any donation = mild.
+  // Return/Leave carry no sensitivity (no honesty/passivity dimension) — recorded for analysis only.
+  const donations = money.history.filter((h) => h.action === "donate");
+  const block1DonationSignal = donations.some((h) => h.contextKey === "shelter")
+    ? 1
+    : donations.length > 0
+      ? 0.5
+      : 0;
+
+  const leverIdx = toTrolleyComparableIndex(trolley.leverThreshold);
   const bridgeIdx = toBridgeComparableIndex(trolley.bridgeThreshold);
 
-  const avgVulnerable = avgProductIndex(product, "vulnerable");
-  const avgWealthy    = avgProductIndex(product, "wealthy");
+  // ── Block 3 — derived once via the canonical analysis ──
+  const ai = computeAIWorkforceAnalysis(aiWorkforce);
+  const avgLowBuffer = ai.avgLowBufferIndex;
+  const avgHighBuffer = ai.avgHighBufferIndex;
 
-  // ── Vulnerability sensitivity ────────────────────────────────────────────
-  // How much does a vulnerable context (shelter, low-buffer workers) raise the bar?
-  const vulnProductGap = (avgVulnerable - avgWealthy) / PRODUCT_STEPS;
-  const moneyVulnGap   = norm(shelterIdx, MONEY_STEPS) - norm(sidewalkIdx, MONEY_STEPS);
-  const vulnerabilitySensitivityScore = Math.max(
-    0,
-    Math.min(1, 0.5 + 0.5 * (0.5 * vulnProductGap + 0.5 * moneyVulnGap)),
+  // Flatten the per-cell indices into a stable, analysis-ready map.
+  const aiWorkforceIndices: Partial<Record<string, number>> = {};
+  (["low_buffer", "high_buffer"] as const).forEach((gt) => {
+    WORKER_GROUP_SIZES.forEach((gs) => {
+      const key = aiWorkforceThresholdKeyFor(gt, gs.key);
+      aiWorkforceIndices[key] = ai.indexByKey[gt]?.[gs.key] ?? GAIN_STEPS;
+    });
+  });
+
+  // ── Vulnerability sensitivity ──
+  // Demanded more gain to harm low-buffer than high-buffer workers (Block 3),
+  // and/or a higher bar to keep money outside a shelter than on a neutral sidewalk (Block 1).
+  const bufferGap = (avgLowBuffer - avgHighBuffer) / GAIN_STEPS;
+  const moneyVulnGap = norm(shelterIdx, MONEY_STEPS) - norm(sidewalkIdx, MONEY_STEPS);
+  const vulnerabilitySensitivityScore = clamp01(
+    0.5 + 0.5 * (0.5 * bufferGap + 0.5 * moneyVulnGap),
   );
 
-  // ── Wealth context permissiveness ────────────────────────────────────────
-  // Positive when the sidewalk threshold is higher than the wealthy threshold
-  // (i.e. more lenient when the counterparty appears wealthy).
-  const wealthContextPermissivenessScore = Math.max(
-    0,
-    Math.min(
-      1,
-      0.5 + 0.5 * (norm(sidewalkIdx, MONEY_STEPS) - norm(wealthyIdx, MONEY_STEPS)),
-    ),
+  // ── Wealth-context permissiveness ── (more lenient when counterparty is wealthy)
+  const wealthContextPermissivenessScore = clamp01(
+    0.5 + 0.5 * (norm(sidewalkIdx, MONEY_STEPS) - norm(wealthyIdx, MONEY_STEPS)),
   );
 
-  // ── Harm reluctance ──────────────────────────────────────────────────────
-  // Average of normalised lever and bridge indices; high = needs many lives saved before acting.
-  const leverRefused  = leverIdx >= TROLLEY_STEPS;
+  // ── Harm reluctance ── (needs many lives saved before acting; both phases equal weight)
+  const leverRefused = leverIdx >= TROLLEY_STEPS;
   const bridgeRefused = bridgeIdx >= TROLLEY_STEPS;
-  const harmReluctanceScore = Math.max(
-    0,
-    Math.min(
-      1,
-      0.5 * (leverIdx / TROLLEY_STEPS) + 0.5 * (bridgeIdx / TROLLEY_STEPS),
-    ),
+  const harmReluctanceScore = clamp01(
+    0.5 * (leverIdx / TROLLEY_STEPS) + 0.5 * (bridgeIdx / TROLLEY_STEPS),
   );
 
-  // ── Directness aversion ──────────────────────────────────────────────────
-  // Positive gap → needed more lives to push than to pull.
-  // Centred at 0.5 so that equal thresholds = 0.5 (not averse, not the reverse).
-  const directnessAversionScore = Math.max(
-    0,
-    Math.min(1, (bridgeIdx - leverIdx) / TROLLEY_STEPS + 0.5),
-  );
+  // ── Directness aversion ── (needed more lives to push than to pull; 0.5 = equal)
+  const directnessAversionScore = clamp01((bridgeIdx - leverIdx) / TROLLEY_STEPS + 0.5);
 
-  // ── Scale sensitivity ────────────────────────────────────────────────────
-  // How much did the vulnerable-group threshold shift across the three group sizes?
-  const vulnSmall  = toProductComparableIndex(product.thresholds.threshold_vulnerable_small  ?? null);
-  const vulnMedium = toProductComparableIndex(product.thresholds.threshold_vulnerable_medium ?? null);
-  const vulnLarge  = toProductComparableIndex(product.thresholds.threshold_vulnerable_large  ?? null);
-  const scaleSpread = Math.max(vulnSmall, vulnMedium, vulnLarge) -
-    Math.min(vulnSmall, vulnMedium, vulnLarge);
-  const scaleSensitivityScore = Math.max(
-    0,
-    Math.min(1, scaleSpread / PRODUCT_STEPS),
-  );
+  // ── Scale sensitivity ── (how far the low-buffer threshold moved across sizes)
+  const scaleSensitivityScore = clamp01(ai.lowBufferSpread / GAIN_STEPS);
 
-  // ── Consistency across domains ───────────────────────────────────────────
-  // Three normalised signals all measuring "how much does vulnerability affect behaviour?"
-  // If they agree, the participant is consistent; high variance → low consistency.
-  const moneyVulnNorm      = 1 - norm(shelterIdx, MONEY_STEPS);   // low index → more protective
-  const productVulnNorm    = 1 - avgVulnerable / PRODUCT_STEPS;    // low avg → more protective
+  // ── Consistency across domains ── (do the three vulnerability signals agree?)
+  const moneyVulnNorm = 1 - norm(shelterIdx, MONEY_STEPS);
+  const lowBufferVulnNorm = 1 - avgLowBuffer / GAIN_STEPS;
   const harmReluctanceNorm = harmReluctanceScore;
-  const meanSens = (moneyVulnNorm + productVulnNorm + harmReluctanceNorm) / 3;
+  const meanSens = (moneyVulnNorm + lowBufferVulnNorm + harmReluctanceNorm) / 3;
   const variance =
     (Math.pow(moneyVulnNorm - meanSens, 2) +
-      Math.pow(productVulnNorm - meanSens, 2) +
+      Math.pow(lowBufferVulnNorm - meanSens, 2) +
       Math.pow(harmReluctanceNorm - meanSens, 2)) /
     3;
-  const consistencyAcrossDomainsScore = Math.max(
-    0,
-    Math.min(1, 1 - Math.sqrt(variance) * 2),
-  );
+  const consistencyAcrossDomainsScore = clamp01(1 - Math.sqrt(variance) * 2);
 
-  // ── Boolean flags ────────────────────────────────────────────────────────
+  // ── Flags ──
   const protectsVulnerableStrongly =
     vulnerabilitySensitivityScore >= 0.62 || shelterIdx >= MONEY_STEPS;
 
-  const refusedAllVulnerableProducts =
-    GROUP_SIZES.every((gs) => {
-      const r = product.thresholds[thresholdKeyFor("vulnerable", gs.key)];
-      return !r || !r.accepted;
-    });
-
-  const refusedAnyProduct = GROUP_TYPES.some((gt) =>
-    GROUP_SIZES.some((gs) => {
-      const r = product.thresholds[thresholdKeyFor(gt.key, gs.key)];
-      return !r || !r.accepted;
-    }),
+  // A cell counts as "not approved" when its comparable index hits the sentinel.
+  const lowBufferIdx = WORKER_GROUP_SIZES.map(
+    (gs) => aiWorkforceIndices[aiWorkforceThresholdKeyFor("low_buffer", gs.key)] ?? GAIN_STEPS,
+  );
+  const refusedAllLowBufferRollouts = lowBufferIdx.every((i) => i >= GAIN_STEPS);
+  const refusedAnyRollout = Object.values(aiWorkforceIndices).some(
+    (i) => (i ?? GAIN_STEPS) >= GAIN_STEPS,
   );
 
-  // Which vulnerable-group size had the highest (most restrictive) threshold index?
-  const vulnSizes: { key: GroupSizeKey; idx: number }[] = GROUP_SIZES.map(
+  // Which low-buffer size required the highest gain (most restrictive)?
+  const lowBufferSizes: { key: WorkerGroupSizeKey; idx: number }[] = WORKER_GROUP_SIZES.map(
     (gs) => ({
       key: gs.key,
-      idx: toProductComparableIndex(
-        product.thresholds[thresholdKeyFor("vulnerable", gs.key)] ?? null,
-      ),
+      idx: aiWorkforceIndices[aiWorkforceThresholdKeyFor("low_buffer", gs.key)] ?? GAIN_STEPS,
     }),
   );
-  vulnSizes.sort((a, b) => b.idx - a.idx);
-  const dominantVulnerableGroupSize = vulnSizes[0]?.idx > 0
-    ? vulnSizes[0].key
-    : null;
-
-  // Build full product index map for display in ProfileCalculationModal
-  const productIndices: Partial<Record<string, number>> = {};
-  GROUP_TYPES.forEach((gt) => {
-    GROUP_SIZES.forEach((gs) => {
-      const key = thresholdKeyFor(gt.key, gs.key);
-      productIndices[key] = toProductComparableIndex(
-        product.thresholds[key] ?? null,
-      );
-    });
-  });
+  lowBufferSizes.sort((a, b) => b.idx - a.idx);
+  const mostRestrictiveLowBufferSize =
+    lowBufferSizes[0] && lowBufferSizes[0].idx > 0 ? lowBufferSizes[0].key : null;
 
   return {
     vulnerabilitySensitivityScore,
@@ -333,23 +233,22 @@ export function deriveMoralProfile(
     protectsVulnerableStrongly,
     refusedBridge: bridgeRefused,
     refusedLever: leverRefused,
-    refusedAnyProduct,
-    refusedAllVulnerableProducts,
-    dominantVulnerableGroupSize,
-    moneyIndices: {
-      sidewalk: sidewalkIdx,
-      wealthy:  wealthyIdx,
-      shelter:  shelterIdx,
-    },
+    refusedAnyRollout,
+    refusedAllLowBufferRollouts,
+    mostRestrictiveLowBufferSize,
+    moneyIndices: { sidewalk: sidewalkIdx, wealthy: wealthyIdx, shelter: shelterIdx },
     trolleyIndices: { lever: leverIdx, bridge: bridgeIdx },
-    productIndices,
+    aiWorkforceIndices,
+    block1DonationSignal,
   };
 }
 
-/**
- * Returns a human-readable strength label for any 0–1 score.
- * Used in plain-language observations throughout the analysis pages.
- */
+/** Clamp to [0,1]; NaN → 0. */
+function clamp01(v: number): number {
+  return Number.isNaN(v) ? 0 : Math.max(0, Math.min(1, v));
+}
+
+/** Human-readable strength label for any 0–1 score. */
 export function describeScore(score: number): string {
   if (score >= 0.75) return "strong";
   if (score >= 0.55) return "moderate";

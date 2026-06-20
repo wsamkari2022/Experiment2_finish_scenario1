@@ -57,9 +57,10 @@ export function CompletionScreen({ results, onContinue }: CompletionScreenProps)
       <Button
         size="xl"
         onClick={onContinue}
-        bg="gray.900"
+        colorPalette="blue"
+        bg="blue.600"
         color="white"
-        _hover={{ bg: "gray.800" }}
+        _hover={{ bg: "blue.500" }}
         rounded="lg"
         fontWeight="medium"
         alignSelf="center"

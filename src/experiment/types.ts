@@ -61,8 +61,10 @@ export interface MoneyChoiceRecord {
  * never reached (should not happen in normal flow, but is typed defensively).
  */
 export interface MoneyBlockResults {
+  /** Stable participant/session id — carried on every record for future MongoDB joins. */
+  participantId?: string;
   completed: boolean;
-  completedAt: string;   // ISO-8601
+  completedAt: string;   // ISO-8601 — when the block was completed (analysis timestamp)
   thresholds: {
     threshold_sidewalk: ThresholdResult | null;
     threshold_wealthy:  ThresholdResult | null;

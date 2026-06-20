@@ -130,6 +130,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
   const completeMoneyBlock = useCallback(
     (finalThresholds: ThresholdsState, finalHistory: MoneyChoiceRecord[]) => {
       const results: MoneyBlockResults = {
+        participantId,
         completed: true,
         completedAt: new Date().toISOString(),
         thresholds: finalThresholds,
@@ -143,7 +144,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
       setFinalResults(results);
       setMoneyBlockCompleted(true);
     },
-    [],
+    [participantId],
   );
 
   /**
@@ -421,12 +422,12 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
                 size="xl"
                 onClick={() => handleChoice(btn.key)}
                 disabled={isTransitioning || !!transitionMessage}
-                bg="gray.900"
+                bg="blue.600"
                 color="white"
-                _hover={{ bg: "gray.800" }}
+                _hover={{ bg: "blue.500" }}
                 _active={{ bg: "gray.950" }}
                 _disabled={{
-                  bg: "gray.900",
+                  bg: "blue.600",
                   color: "white",
                   opacity: 0.6,
                   cursor: "not-allowed",

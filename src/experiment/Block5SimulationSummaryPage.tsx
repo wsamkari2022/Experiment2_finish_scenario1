@@ -7,11 +7,10 @@
  * recontextualized vignette).
  */
 
-import { useCallback } from "react";
 import {
   Badge, Box, Button, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuRotateCcw, LuTrendingUp, LuScale, LuTarget } from "react-icons/lu";
+import { LuCheck, LuArrowRight, LuTrendingUp, LuScale, LuTarget } from "react-icons/lu";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL } from "./block5CVR";
 import { POLICY_DIM_KEYS } from "./block5Types";
@@ -19,6 +18,8 @@ import type { AlignmentLevel, Block5Results, Block5ScenarioResult } from "./bloc
 
 interface Props {
   results: Block5Results;
+  /** Advance to the post-experiment feedback page (the finish/reset now lives after feedback). */
+  onContinueToFeedback: () => void;
 }
 
 const LEVEL_PALETTE: Record<AlignmentLevel, string> = {
@@ -64,16 +65,7 @@ function MeasureCard({ icon, label, value, sub, hint, palette }: {
   );
 }
 
-export function Block5SimulationSummaryPage({ results }: Props) {
-  const handleFinish = useCallback(() => {
-    console.log("Block 5 final results:", results);
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch { /* ignore */ }
-    window.location.reload();
-  }, [results]);
-
+export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: Props) {
   // Only the 4 policy/value sensitivities (not the CVR-framing dimensions), strongest first.
   const topDimensions = results.userProfile.dimensions
     .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key))
@@ -174,10 +166,12 @@ export function Block5SimulationSummaryPage({ results }: Props) {
         <Separator borderColor="border.subtle" />
 
         <Box textAlign="center" pb="4">
-          <Text color="fg.muted" fontSize="md" mb="6">Thank you for completing the full experiment.</Text>
-          <Button onClick={handleFinish} size="lg" bg="gray.900" color="white" _hover={{ bg: "gray.800" }} rounded="lg" px="8" gap="2">
-            <Icon><LuRotateCcw /></Icon>
-            Finish experiment
+          <Text color="fg.muted" fontSize="md" mb="6">
+            One last step — please share your feedback on the experience.
+          </Text>
+          <Button onClick={onContinueToFeedback} size="lg" colorPalette="pink" rounded="lg" px="8" gap="2">
+            Continue to feedback
+            <Icon><LuArrowRight /></Icon>
           </Button>
         </Box>
       </VStack>

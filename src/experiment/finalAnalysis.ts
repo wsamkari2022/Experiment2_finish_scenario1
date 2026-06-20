@@ -34,7 +34,23 @@ export interface Block4DecisionRecord {
   initialDecision: "proceed" | "do_not_proceed" | null;
   midDecision:     "proceed" | "do_not_proceed" | null;
   finalDecision:   "proceed" | "do_not_proceed" | null;
-  confidence: number;   // 1–5, where 5 is most confident
+  confidence: number;   // 1–5, FINAL-decision confidence (kept name for backward compatibility)
+
+  // ── Enriched stakeholder-reflection signals (Approved Change 5) ──
+  // All optional so older stored records (which only had the four fields above)
+  // still parse. When present they feed a richer Stakeholder-shift score and two
+  // defensible secondary signals (vulnerability / gain). See userValueModel.md.
+  /** 1–5 confidence recorded with the INITIAL decision (before hearing stakeholders). */
+  initialConfidence?: number;
+  /** Whether the participant named a perspective as most influential. */
+  reportedInfluence?: boolean;
+  /**
+   * How the most-influential stakeholder is affected by the participant's FINAL decision:
+   *  - "harmed"    → the influential voice is the party the decision harms (e.g. displaced workers)
+   *  - "benefited" → the influential voice is the party the decision benefits (e.g. the organisation)
+   *  - null        → not applicable / not recorded
+   */
+  influentialValence?: "harmed" | "benefited" | null;
 }
 
 /**
@@ -90,16 +106,15 @@ export function classifyStyle(
   ) {
     return "more outcome-focused / utilitarian-leaning";
   }
-  if (
-    decisions.initialDecision &&
-    decisions.finalDecision &&
-    decisions.initialDecision !== decisions.finalDecision
-  ) {
-    return "mixed or context-sensitive";
+  // If Block 4 produced no usable decision data, say so explicitly instead of
+  // guessing a style (implements the previously-unreachable "insufficient data").
+  if (!decisions.initialDecision && !decisions.finalDecision) {
+    return "insufficient data";
   }
-  if (profile.consistencyAcrossDomainsScore < 0.4) {
-    return "mixed or context-sensitive";
-  }
+  // Otherwise the pattern is best described as mixed / context-sensitive: the
+  // decision shifted, cross-block consistency was low, or no single named style
+  // dominated. (The previous code had three branches that all returned this —
+  // collapsed to one clear default.)
   return "mixed or context-sensitive";
 }
 

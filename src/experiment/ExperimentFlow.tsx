@@ -9,15 +9,19 @@ import type { Block4CompletionPayload } from "./AdaptiveStakeholderReflectionBlo
 import { FinalMoralAnalysisPage } from "./FinalMoralAnalysisPage";
 import { Block5PublicEmergencySimulation } from "./Block5PublicEmergencySimulation";
 import { Block5SimulationSummaryPage } from "./Block5SimulationSummaryPage";
+import { UserFeedbackPage } from "./UserFeedbackPage";
+import { GlobalStepper } from "./GlobalStepper";
+import { getSessionId } from "./session";
+import { markStage } from "./telemetry";
 import { extractBlock5Profile } from "./block5Profile";
 import { buildThresholdTree } from "./thresholdTree";
-import { BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY } from "./block5Types";
+import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import type { Block5Results } from "./block5Types";
 import type { TrolleyBlockResults } from "./trolleyTypes";
 import type { MoneyBlockResults } from "./types";
 import type { AIWorkforceBlockResults } from "./aiWorkforceTypes";
-import { AI_WORKFORCE_RESULTS_KEY, AI_WORKFORCE_PROGRESS_KEY, AI_WORKFORCE_LEGACY_ALIAS_KEY } from "./aiWorkforceTypes";
-import { computeAIWorkforceAnalysis, type AIWorkforceAnalysis } from "./aiWorkforceAnalysis";
+import { AI_WORKFORCE_RESULTS_KEY } from "./aiWorkforceTypes";
+import type { AIWorkforceAnalysis } from "./aiWorkforceAnalysis";
 import type { MoralProfile } from "./profileAnalysis";
 import type {
   ScenarioContext,
@@ -44,7 +48,8 @@ type Stage =
   | "transition_final_block5"
   | "block5"
   | "transition_block5_summary"
-  | "block5_summary";
+  | "block5_summary"
+  | "feedback";
 
 /** Lookup set used to detect whether the current stage is a transient spinner. */
 const STAGES_WITH_TRANSITION: Stage[] = [
@@ -77,11 +82,6 @@ interface InsightsPayload {
   analysis: AIWorkforceAnalysis | null;
 }
 
-/** Generates a new UUID for this participant's session. */
-function generateSessionId(): string {
-  return crypto.randomUUID();
-}
-
 /** Safely reads and parses a JSON value from localStorage; returns null on any failure. */
 function readJson<T>(key: string): T | null {
   try {
@@ -109,35 +109,6 @@ function getRestoredStage(): Stage {
   }
 }
 
-/** Complete list of localStorage keys used by the experiment; wiped on a new session. */
-const EXPERIMENT_STORAGE_KEYS = [
-  "money_block_results",
-  "trolley_block_results",
-  "product_launch_block_results",
-  AI_WORKFORCE_RESULTS_KEY,
-  AI_WORKFORCE_PROGRESS_KEY,
-  AI_WORKFORCE_LEGACY_ALIAS_KEY,
-  "moral_profile_insights",
-  "block4_reflection_results",
-  "final_analysis_results",
-  BLOCK5_PROGRESS_KEY,
-  BLOCK5_RESULTS_KEY,
-  STORAGE_KEY_STAGE,
-  STORAGE_KEY_INSIGHTS,
-  STORAGE_KEY_BLOCK4,
-];
-
-/** Removes all experiment localStorage keys to start fresh on a new session. */
-function clearExperimentData() {
-  for (const key of EXPERIMENT_STORAGE_KEYS) {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // ignore
-    }
-  }
-}
-
 /**
  * ExperimentFlow — top-level orchestrator for the four-block experiment.
  *
@@ -152,24 +123,13 @@ function clearExperimentData() {
  *   (transition) → final_analysis
  */
 export function ExperimentFlow() {
-  /** Stable UUID for this browser session; cleared automatically when a new session starts. */
-  const [participantId] = useState<string>(() => {
-    try {
-      const saved = sessionStorage.getItem("experiment_participant_id");
-      if (saved) return saved;
-    } catch {
-      // ignore
-    }
-    // New session: clear any leftover data from a previous session
-    clearExperimentData();
-    const id = generateSessionId();
-    try {
-      sessionStorage.setItem("experiment_participant_id", id);
-    } catch {
-      // ignore
-    }
-    return id;
-  });
+  /**
+   * The unified, anonymous session id for this participant (see session.ts). Generated once and
+   * persisted in LocalStorage, so it stays stable across refreshes — giving one id per participant
+   * for the whole run. A new participant begins only on Start-Over / Finish (which clears storage).
+   * Threaded into every block as `participantId` and stored as `session_id` on the new records.
+   */
+  const [participantId] = useState<string>(() => getSessionId());
 
   /** Current stage; restored from localStorage so refresh resumes where the user left off. */
   const [stage, setStage] = useState<Stage>(getRestoredStage);
@@ -197,6 +157,13 @@ export function ExperimentFlow() {
     } catch {
       // ignore
     }
+  }, [stage]);
+
+  // Telemetry: time each content stage. Marks "start" when a stage renders and "end" when we
+  // leave it (effect cleanup). markStage ignores transition spinners, so only real stages count.
+  useEffect(() => {
+    markStage(stage, "start");
+    return () => markStage(stage, "end");
   }, [stage]);
 
   /** Called when Block 1 completes; moves to the transition spinner before Block 2. */
@@ -228,9 +195,14 @@ export function ExperimentFlow() {
     setStage("transition_insights_block4");
   }, []);
 
-  /** Called when Block 4 completes; stores the payload and moves to Final Analysis. */
+  /** Called when Block 4 completes; persists the payload (carrying session_id) and moves on. */
   const handleBlock4Continue = useCallback(
     (payload: Block4CompletionPayload) => {
+      try {
+        localStorage.setItem(STORAGE_KEY_BLOCK4, JSON.stringify(payload));
+      } catch {
+        // ignore
+      }
       setBlock4Payload(payload);
       setStage("transition_block4_final");
     },
@@ -246,6 +218,16 @@ export function ExperimentFlow() {
   const handleBlock5Complete = useCallback((results: Block5Results) => {
     setBlock5Results(results);
     setStage("transition_block5_summary");
+  }, []);
+
+  /** Results summary → feedback page (direct; it's a deliberate button, not an auto-advance). */
+  const handleContinueToFeedback = useCallback(() => {
+    setStage("feedback");
+  }, []);
+
+  /** Feedback page → back to the results summary. */
+  const handleBackToSummary = useCallback(() => {
+    setStage("block5_summary");
   }, []);
 
   // Auto-advance from each transition stage to its target stage after TRANSITION_MS.
@@ -268,10 +250,13 @@ export function ExperimentFlow() {
 
   if (stage === "money") {
     return (
-      <MoneyThresholdBlock
-        participantId={participantId}
-        onContinue={handleMoneyContinue}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <MoneyThresholdBlock
+          participantId={participantId}
+          onContinue={handleMoneyContinue}
+        />
+      </>
     );
   }
 
@@ -297,52 +282,67 @@ export function ExperimentFlow() {
 
   if (stage === "trolley") {
     return (
-      <TrolleyThresholdBlock
-        participantId={participantId}
-        onContinue={handleTrolleyContinue}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <TrolleyThresholdBlock
+          participantId={participantId}
+          onContinue={handleTrolleyContinue}
+        />
+      </>
     );
   }
 
   if (stage === "product") {
     return (
-      <AIWorkforceThresholdBlock
-        participantId={participantId}
-        onContinue={handleProductContinue}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <AIWorkforceThresholdBlock
+          participantId={participantId}
+          onContinue={handleProductContinue}
+        />
+      </>
     );
   }
 
   if (stage === "insights") {
     return (
-      <MoralProfileInsightsPage
-        participantId={participantId}
-        onContinue={handleInsightsContinue}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <MoralProfileInsightsPage
+          participantId={participantId}
+          onContinue={handleInsightsContinue}
+        />
+      </>
     );
   }
 
   if (stage === "block4" && insights) {
     return (
-      <AdaptiveStakeholderReflectionBlock
-        participantId={participantId}
-        profile={insights.profile}
-        analysis={insights.analysis}
-        seedCase={insights.seedCase}
-        scenarioContext={insights.scenarioContext}
-        onContinue={handleBlock4Continue}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <AdaptiveStakeholderReflectionBlock
+          participantId={participantId}
+          profile={insights.profile}
+          analysis={insights.analysis}
+          seedCase={insights.seedCase}
+          scenarioContext={insights.scenarioContext}
+          onContinue={handleBlock4Continue}
+        />
+      </>
     );
   }
 
   if (stage === "final_analysis" && insights && block4Payload) {
     return (
-      <FinalMoralAnalysisPage
-        participantId={participantId}
-        profile={insights.profile}
-        block4={block4Payload}
-        onStartBlock5={handleStartBlock5}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <FinalMoralAnalysisPage
+          participantId={participantId}
+          profile={insights.profile}
+          block4={block4Payload}
+          onStartBlock5={handleStartBlock5}
+        />
+      </>
     );
   }
 
@@ -359,7 +359,22 @@ export function ExperimentFlow() {
   }
 
   if (stage === "block5_summary" && block5Results) {
-    return <Block5SimulationSummaryPage results={block5Results} />;
+    return (
+      <Block5SimulationSummaryPage
+        results={block5Results}
+        onContinueToFeedback={handleContinueToFeedback}
+      />
+    );
+  }
+
+  if (stage === "feedback") {
+    return (
+      <UserFeedbackPage
+        results={block5Results}
+        sessionId={participantId}
+        onBack={handleBackToSummary}
+      />
+    );
   }
 
   // Fallback: if we're on a later stage but required data isn't in memory

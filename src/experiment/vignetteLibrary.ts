@@ -43,7 +43,7 @@ export function renderBlock4Scenario(
 ): string {
   const template = BLOCK4_SCENARIOS[domain];
   const groupLabel =
-    ctx.groupType === "vulnerable"
+    ctx.groupType === "low_buffer"
       ? "low-buffer workers with limited alternatives"
       : "high-buffer workers with stronger alternatives";
   const sizeLabel =
@@ -53,7 +53,7 @@ export function renderBlock4Scenario(
         ? "a medium group of about 1,000 workers"
         : "a large group of about 100,000 workers";
   return template.body
-    .replace("[GAIN]", ctx.profitLabel)
+    .replace("[GAIN]", ctx.gainLabel)
     .replace("[GROUP_TYPE]", groupLabel)
     .replace("[GROUP_SIZE]", sizeLabel);
 }

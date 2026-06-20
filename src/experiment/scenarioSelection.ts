@@ -18,7 +18,7 @@
  */
 
 import type { MoralProfile } from "./profileAnalysis";
-import type { GroupSizeKey, GroupTypeKey } from "./productLaunchTypes";
+import type { WorkerGroupKey, WorkerGroupSizeKey } from "./aiWorkforceTypes";
 
 /**
  * All available scenario domains. Only "ai_workforce_rollout" is currently
@@ -109,7 +109,7 @@ export const DOMAINS: Record<ScenarioDomain, DomainDescriptor> = {
  * - `note`        — a short interpretive sentence about what this seed suggests
  */
 export interface SeedCase {
-  source: "money" | "trolley_lever" | "trolley_bridge" | "product";
+  source: "money" | "trolley_lever" | "trolley_bridge" | "ai_workforce";
   descriptor: string;
   indexSignal: number;
   note: string;
@@ -128,9 +128,9 @@ export interface SeedCase {
 export function selectSeedCase(profile: MoralProfile): SeedCase {
   const { moneyIndices, trolleyIndices, protectsVulnerableStrongly } = profile;
 
-  if (profile.refusedAllVulnerableProducts) {
+  if (profile.refusedAllLowBufferRollouts) {
     return {
-      source: "product",
+      source: "ai_workforce",
       descriptor:
         "your pattern of not approving AI workforce rollouts that would seriously displace low-buffer workers, across every level of financial gain offered",
       indexSignal: 0,
@@ -202,9 +202,9 @@ export function selectDomain(_profile: MoralProfile): DomainDescriptor {
  */
 export interface ScenarioContext {
   domain: DomainDescriptor;
-  groupType: GroupTypeKey;
-  groupSize: GroupSizeKey;
-  profitLabel: string;
+  groupType: WorkerGroupKey;
+  groupSize: WorkerGroupSizeKey;
+  gainLabel: string;
 }
 
 /**
@@ -223,12 +223,11 @@ export function buildScenarioContext(
   profile: MoralProfile,
   domain: DomainDescriptor,
 ): ScenarioContext {
-  const groupType: GroupTypeKey = profile.protectsVulnerableStrongly
-    ? "vulnerable"
-    : profile.vulnerabilitySensitivityScore >= 0.5
-      ? "vulnerable"
-      : "wealthy";
-  const groupSize: GroupSizeKey = profile.dominantVulnerableGroupSize ?? "medium";
-  const profitLabel = "$10 million";
-  return { domain, groupType, groupSize, profitLabel };
+  const groupType: WorkerGroupKey =
+    profile.protectsVulnerableStrongly || profile.vulnerabilitySensitivityScore >= 0.5
+      ? "low_buffer"
+      : "high_buffer";
+  const groupSize: WorkerGroupSizeKey = profile.mostRestrictiveLowBufferSize ?? "medium";
+  const gainLabel = "$10 million";
+  return { domain, groupType, groupSize, gainLabel };
 }

@@ -27,12 +27,9 @@ import { TROLLEY_RESULTS_STORAGE_KEY } from "./trolleyTypes";
 import { AI_WORKFORCE_RESULTS_KEY, type AIWorkforceBlockResults } from "./aiWorkforceTypes";
 import type { MoneyBlockResults } from "./types";
 import type { TrolleyBlockResults } from "./trolleyTypes";
-import type { ProductLaunchBlockResults } from "./productLaunchTypes";
 
 /** localStorage key for the summarised insights payload (domain key + timestamp). */
 const STORAGE_KEY_INSIGHTS = "moral_profile_insights";
-/** localStorage key for the Block 3 legacy product-launch shape written by AIWorkforceThresholdBlock. */
-const PRODUCT_STORAGE_KEY = "product_launch_block_results";
 
 /**
  * Props for MoralProfileInsightsPage.
@@ -83,14 +80,13 @@ export function MoralProfileInsightsPage({
   const data = useMemo(() => {
     const money = readJson<MoneyBlockResults>(SESSION_KEY_RESULTS);
     const trolley = readJson<TrolleyBlockResults>(TROLLEY_RESULTS_STORAGE_KEY);
-    const product = readJson<ProductLaunchBlockResults>(PRODUCT_STORAGE_KEY);
-    if (!money || !trolley || !product) return null;
-    const profile = deriveMoralProfile(money, trolley, product);
+    const aiResults = readJson<AIWorkforceBlockResults>(AI_WORKFORCE_RESULTS_KEY);
+    if (!money || !trolley || !aiResults) return null;
+    const profile = deriveMoralProfile(money, trolley, aiResults);
     const seedCase = selectSeedCase(profile);
     const domain = selectDomain(profile);
     const scenarioContext = buildScenarioContext(profile, domain);
-    const aiResults = readJson<AIWorkforceBlockResults>(AI_WORKFORCE_RESULTS_KEY);
-    const analysis = aiResults ? computeAIWorkforceAnalysis(aiResults) : null;
+    const analysis = computeAIWorkforceAnalysis(aiResults);
     return { profile, seedCase, domain, scenarioContext, analysis };
   }, []);
 
@@ -103,6 +99,7 @@ export function MoralProfileInsightsPage({
       return;
     }
     const payload = {
+      participantId,
       profile: data.profile,
       seedCase: data.seedCase,
       domain: data.domain.key,
@@ -114,7 +111,7 @@ export function MoralProfileInsightsPage({
       // ignore
     }
     setLoading(false);
-  }, [data]);
+  }, [data, participantId]);
 
   if (loading) {
     return (
@@ -298,9 +295,10 @@ export function MoralProfileInsightsPage({
               analysis: data.analysis,
             })
           }
-          bg="gray.900"
+          colorPalette="blue"
+          bg="blue.600"
           color="white"
-          _hover={{ bg: "gray.800" }}
+          _hover={{ bg: "blue.500" }}
           rounded="lg"
           fontWeight="medium"
           alignSelf="center"

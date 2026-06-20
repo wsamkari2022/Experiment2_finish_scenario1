@@ -52,13 +52,10 @@ src/
     ─── Type definitions ───
     types.ts               – Block 1 types
     trolleyTypes.ts        – Block 2 types
-    productLaunchTypes.ts  – Block 3 types (original naming)
-    aiWorkforceTypes.ts    – Block 3 types (current naming, extends product launch)
+    aiWorkforceTypes.ts    – Block 3 types (AI-Workforce; the only Block 3 type module)
     block5Types.ts         – Block 5 types
     ─── Constants ───
     constants.ts           – Block 1 amounts and contexts
-  lib/
-    supabase.ts            – Supabase client singleton
   components/ui/           – Chakra UI snippet components
 ```
 
@@ -1036,14 +1033,17 @@ Horizontal bar visualisation used in Block 5 showing:
 
 ---
 
-## Supabase Integration
+## Storage (LocalStorage only; MongoDB-ready)
 
-The project has Supabase configured (`src/lib/supabase.ts`) and several migration files exist for:
-- `money_threshold_results` — Block 1 results table
-- `trolley_threshold_results` — Block 2 results table
-- `product_launch_threshold_results` / AI workforce tables — Block 3
+The app persists **exclusively to `localStorage`** — there is no active database. Supabase and the
+Bolt scaffolding have been **removed entirely**: the `@supabase/supabase-js` dependency, `src/lib/supabase.ts`,
+the `supabase/migrations` SQL files, the `.bolt/` config, and the `bolt.new` meta tags are all gone.
 
-However, the current front-end implementation does **not** actively write to Supabase during the experiment flow; it writes exclusively to `localStorage`. The database tables are provisioned but the write logic has not been wired up in the block components.
+Each block writes one analysis-ready results object (carrying `participantId` + `completedAt`) under a
+canonical key (`money_block_results`, `trolley_block_results`, `ai_workforce_block_results`,
+`block4_reflection_results`, `block5_public_emergency_results`). These map 1:1 to future MongoDB
+collections — see `USER_VALUE_PROFILE_MODEL.md` §10. To add MongoDB later, introduce a thin persistence
+layer that ships these same objects; no scoring code needs to change.
 
 ---
 

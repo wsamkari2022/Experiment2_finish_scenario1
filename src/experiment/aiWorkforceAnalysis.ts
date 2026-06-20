@@ -1,9 +1,9 @@
 /**
  * aiWorkforceAnalysis.ts — Block 3 score computation
  *
- * Computes five 0–100 scores from the Block 3 (AI Workforce Rollout) threshold
- * matrix. These scores supplement the MoralProfile (which uses the legacy
- * productLaunchTypes shape) and are displayed on the Insights page.
+ * Computes five 0–100 scores from the Block 3 (AI-Workforce Rollout) threshold
+ * matrix. This module is the SINGLE SOURCE OF TRUTH for Block-3 derived quantities
+ * (average indices, spreads); both profileAnalysis.ts and thresholdTree.ts consume it.
  *
  * All scores are clamp-rounded integers in [0, 100].
  * Higher scores always mean "more of that tendency" — see each score's comment.

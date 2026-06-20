@@ -16,6 +16,7 @@ import type { MoralProfile } from "./profileAnalysis";
 import type { Block4CompletionPayload } from "./AdaptiveStakeholderReflectionBlock";
 import { buildThresholdTree } from "./thresholdTree";
 import { RankedThresholdTree } from "./RankedThresholdTree";
+import { FEEDBACK_ARCHIVE_KEY } from "./feedbackTypes";
 import {
   AI_WORKFORCE_RESULTS_KEY,
   WORKER_GROUPS,
@@ -143,10 +144,16 @@ function ThresholdRecap({ results }: { results: AIWorkforceBlockResults }) {
   );
 }
 
-/** Wipes all localStorage and sessionStorage to reset the experiment for a fresh run. */
+/**
+ * Wipes all localStorage and sessionStorage to reset the experiment for a fresh run,
+ * but PRESERVES the append-only feedback archive so previously-completed participants'
+ * data on a shared device is never lost before it can be exported.
+ */
 function clearAllSessionData() {
   try {
+    const archive = localStorage.getItem(FEEDBACK_ARCHIVE_KEY);
     localStorage.clear();
+    if (archive) localStorage.setItem(FEEDBACK_ARCHIVE_KEY, archive);
   } catch {
     // ignore
   }
@@ -404,9 +411,10 @@ export function FinalMoralAnalysisPage({
             <Button
               onClick={onStartBlock5}
               size="lg"
-              bg="gray.900"
+              colorPalette="blue"
+              bg="blue.600"
               color="white"
-              _hover={{ bg: "gray.800" }}
+              _hover={{ bg: "blue.500" }}
               rounded="lg"
               px="8"
               gap="2"

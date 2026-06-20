@@ -92,8 +92,10 @@ export interface TrolleyBlockSummary {
  * in which case the bridge phase is skipped entirely.
  */
 export interface TrolleyBlockResults {
+  /** Stable participant/session id — carried on every record for future MongoDB joins. */
+  participantId?: string;
   completed: boolean;
-  completedAt: string;   // ISO-8601
+  completedAt: string;   // ISO-8601 — when the block was completed (analysis timestamp)
   leverThreshold: LeverThresholdResult;
   bridgeThreshold: BridgeThresholdResult | null;
   summary: TrolleyBlockSummary;

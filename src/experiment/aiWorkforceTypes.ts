@@ -5,9 +5,9 @@
  * that causes serious job displacement?" The scenario is varied across two worker
  * group types and three group sizes, producing a 2×3 matrix of threshold results.
  *
- * Naming note: this block was originally called "Product Launch". The types file
- * productLaunchTypes.ts still exists for backwards compatibility with stored data
- * and profileAnalysis.ts. New code should use this file.
+ * Naming note: this block was originally called "Product Launch". That legacy
+ * vocabulary and the productLaunchTypes file have been fully removed — this is now
+ * the only Block-3 type module (Approved Change 1).
  */
 
 /** The two worker group classifications tested in Block 3. */
@@ -187,6 +187,8 @@ export interface AIWorkforceBlockResults {
   completedAt: string;   // ISO-8601
   thresholds: AIWorkforceThresholdsMap;
   history: AIWorkforceChoiceRecord[];
+  /** unified anonymous session id (= getSessionId()); the MongoDB join key. */
+  participantId?: string;
 }
 
 /**
@@ -208,7 +210,7 @@ export const AI_WORKFORCE_RESULTS_KEY = "ai_workforce_block_results";
 export const AI_WORKFORCE_PROGRESS_KEY = "ai_workforce_block_progress";
 
 /**
- * Legacy alias key used by toProductLaunchShape() to write a ProductLaunchBlockResults-
- * shaped copy of the results for backwards compatibility with profileAnalysis.ts.
+ * Naming note: this block was originally "Product Launch". The legacy alias key and
+ * the ProductLaunch types have been fully removed — Block 3 now writes ONLY to
+ * AI_WORKFORCE_RESULTS_KEY in the AI-Workforce vocabulary (Approved Change 1).
  */
-export const AI_WORKFORCE_LEGACY_ALIAS_KEY = "product_launch_block_results";

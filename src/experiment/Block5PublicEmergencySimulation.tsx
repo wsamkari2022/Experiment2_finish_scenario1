@@ -22,7 +22,7 @@
  * mount and always starts at Scenario 1, preserving the Blocks 1–4 profile.
  */
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Badge, Box, Button, Flex, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
 } from "@chakra-ui/react";
@@ -41,6 +41,7 @@ import {
   type AlignmentLevel, type Block5Results, type Block5Scenario, type Block5ScenarioResult,
   type Block5UserProfile, type CVREndorsement, type Block5MetricKey, type Block5MetricProfile,
   type Block5PolicyDimKey, type CVRCoordinate, type WhoVariant,
+  type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
   BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
 } from "./block5Types";
 
@@ -138,6 +139,75 @@ function topMetricChanges(current: Block5MetricProfile, projected: Block5MetricP
     .slice(0, n);
 }
 
+/* ---------------- Behavioral telemetry (additive; never affects scoring) ---------------- */
+
+/**
+ * Mutable per-scenario telemetry accumulator. Kept in a ref and mutated by the existing
+ * handlers (select / preview / expand / CVR yes-no-back / APA open-back-confirm). The clean
+ * Block5ScenarioTelemetry is assembled from this at commit time, then the accumulator is
+ * reset for the next scenario. None of this touches the decision logic or the scoring.
+ */
+interface TelemetryAccum {
+  startedAt: number;
+  cvrVisits: number;
+  apaVisits: number;
+  optionChanges: number;
+  cvrBackouts: number;
+  apaBackouts: number;
+  finalDecisionChanges: number;
+  previewImpactOpens: number;
+  optionExpands: number;
+  timeToFirstSelectionMs: number | null;
+  cvrDwellMs: number;
+  apaDwellMs: number;
+  distinct: Set<string>;     // distinct options opened into the decision view
+  lastSelectedId: string | null;
+  cvrShownAt: number | null; // timestamp the CVR vignette became visible (null when not showing)
+  apaShownAt: number | null; // timestamp the APA panel opened (null when not open)
+}
+
+function newTelemetryAccum(): TelemetryAccum {
+  return {
+    startedAt: Date.now(),
+    cvrVisits: 0, apaVisits: 0, optionChanges: 0, cvrBackouts: 0, apaBackouts: 0,
+    finalDecisionChanges: 0, previewImpactOpens: 0, optionExpands: 0,
+    timeToFirstSelectionMs: null, cvrDwellMs: 0, apaDwellMs: 0,
+    distinct: new Set(), lastSelectedId: null, cvrShownAt: null, apaShownAt: null,
+  };
+}
+
+/** Assembles the immutable, stored telemetry for a finished scenario from the accumulator. */
+function buildScenarioTelemetry(
+  t: TelemetryAccum,
+  opts: { cvrFired: boolean; cvrOutcome: CVROutcome; apaOutcome: APAOutcome },
+): Block5ScenarioTelemetry {
+  const now = Date.now();
+  let cvrDwellMs = t.cvrDwellMs;
+  let apaDwellMs = t.apaDwellMs;
+  // Defensively close any dwell timer left open (e.g. committed straight from a panel).
+  if (t.cvrShownAt != null) cvrDwellMs += Math.max(0, now - t.cvrShownAt);
+  if (t.apaShownAt != null) apaDwellMs += Math.max(0, now - t.apaShownAt);
+  return {
+    cvrTriggered: opts.cvrFired,
+    apaTriggered: t.apaVisits > 0,
+    cvrVisits: t.cvrVisits,
+    apaVisits: t.apaVisits,
+    cvrOutcome: opts.cvrOutcome,
+    apaOutcome: opts.apaOutcome,
+    numberOfSwitches: t.optionChanges + t.cvrBackouts + t.apaBackouts + t.finalDecisionChanges,
+    initialSelections: t.distinct.size,
+    optionChanges: t.optionChanges,
+    cvrBackouts: t.cvrBackouts,
+    apaBackouts: t.apaBackouts,
+    finalDecisionChanges: t.finalDecisionChanges,
+    timeToFirstSelectionMs: t.timeToFirstSelectionMs,
+    previewImpactOpens: t.previewImpactOpens,
+    optionExpands: t.optionExpands,
+    cvrDwellMs,
+    apaDwellMs,
+  };
+}
+
 export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Props) {
   // Issue 3: always start fresh at Scenario 1 on mount/refresh (no mid-block resume).
   const [progress, setProgress] = useState<ProgressState>(() => ({
@@ -151,6 +221,11 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   useEffect(() => {
     try { localStorage.removeItem(BLOCK5_PROGRESS_KEY); } catch { /* ignore */ }
   }, []);
+
+  // Per-scenario behavioral telemetry accumulator (additive observation only — never affects
+  // the decision logic or scoring). Reset for each new scenario in finalizeScenario.
+  const telRef = useRef<TelemetryAccum | null>(null);
+  if (telRef.current === null) telRef.current = newTelemetryAccum();
 
   const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
@@ -192,16 +267,34 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   const toggleExpand = useCallback((id: string) => {
     setExpandedOptions((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        if (telRef.current) telRef.current.optionExpands += 1; // info-seeking signal
+      }
       return next;
     });
   }, []);
 
   const togglePreview = useCallback((id: string) => {
-    setPreviewOptionId((cur) => (cur === id ? null : id));
+    setPreviewOptionId((cur) => {
+      const opening = cur !== id;
+      if (opening && telRef.current) telRef.current.previewImpactOpens += 1; // info-seeking signal
+      return opening ? id : null;
+    });
   }, []);
 
   const handleSelect = useCallback((id: string) => {
+    // --- telemetry (observation only): first-selection time, distinct opens, genuine changes ---
+    const t = telRef.current;
+    if (t) {
+      if (t.timeToFirstSelectionMs === null) t.timeToFirstSelectionMs = Date.now() - t.startedAt;
+      if (t.lastSelectedId !== null && t.lastSelectedId !== id) t.optionChanges += 1;
+      t.lastSelectedId = id;
+      t.distinct.add(id);
+    }
+
     setSelectedOptionId(id);
     setPreviewOptionId(null);
     setStep("review");
@@ -212,10 +305,55 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     // Lock in a random stakeholder voice now (only for a misaligned choice that triggers CVR),
     // so the vignette and the Q2 questions all reference the SAME person and it won't change on re-render.
     const opt = labeled.find((o) => o.id === id);
-    setCvrWho(scenario && opt && isMisaligned(opt.level)
+    const misaligned = !!(scenario && opt && isMisaligned(opt.level));
+    if (misaligned && t) {
+      t.cvrVisits += 1;          // the CVR vignette is about to be shown
+      t.cvrShownAt = Date.now(); // start CVR dwell timer
+    }
+    setCvrWho(misaligned && scenario && opt
       ? pickWhoVariant(scenario, cvrCoordinate(opt, profile).who)
       : null);
   }, [labeled, scenario, profile]);
+
+  // --- CVR / APA telemetry handlers (wrap the existing step transitions; logic unchanged) ---
+  const handleCvrYes = useCallback(() => {
+    const t = telRef.current;
+    if (t && t.cvrShownAt != null) { t.cvrDwellMs += Math.max(0, Date.now() - t.cvrShownAt); t.cvrShownAt = null; }
+    setStep("q1");
+  }, []);
+
+  const handleCvrNo = useCallback(() => {
+    const t = telRef.current;
+    const now = Date.now();
+    if (t) {
+      if (t.cvrShownAt != null) { t.cvrDwellMs += Math.max(0, now - t.cvrShownAt); t.cvrShownAt = null; }
+      t.apaVisits += 1;     // the APA panel is opening
+      t.apaShownAt = now;   // start APA dwell timer
+    }
+    setStep("apa");
+  }, []);
+
+  const handleCvrBackout = useCallback(() => {
+    const t = telRef.current;
+    if (t) {
+      if (t.cvrShownAt != null) { t.cvrDwellMs += Math.max(0, Date.now() - t.cvrShownAt); t.cvrShownAt = null; }
+      t.cvrBackouts += 1;
+    }
+    resetFlow();
+  }, [resetFlow]);
+
+  const handleApaBail = useCallback(() => {
+    const t = telRef.current;
+    if (t) {
+      if (t.apaShownAt != null) { t.apaDwellMs += Math.max(0, Date.now() - t.apaShownAt); t.apaShownAt = null; }
+      t.apaBackouts += 1;
+    }
+    resetFlow();
+  }, [resetFlow]);
+
+  const handleFinalDecisionChange = useCallback(() => {
+    if (telRef.current) telRef.current.finalDecisionChanges += 1;
+  }, []);
 
   // Records a finished scenario and advances (or completes Block 5). Shared by all paths.
   const finalizeScenario = useCallback((result: Block5ScenarioResult, nextProfile: Block5UserProfile) => {
@@ -233,6 +371,10 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
         vci: vci.value, vciLevel: vci.level,
         stability: stab.value, stabilityLevel: stab.level,
         performance: averagePerformance(nextResults),
+        // Behavioral telemetry totals (additive; do not affect scoring).
+        totalCvrVisits: nextResults.reduce((s, r) => s + (r.telemetry?.cvrVisits ?? 0), 0),
+        totalApaVisits: nextResults.reduce((s, r) => s + (r.telemetry?.apaVisits ?? 0), 0),
+        totalSwitches: nextResults.reduce((s, r) => s + (r.telemetry?.numberOfSwitches ?? 0), 0),
       };
       try {
         localStorage.setItem(BLOCK5_RESULTS_KEY, JSON.stringify(finalResults));
@@ -248,6 +390,7 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
       profile: nextProfile,
       firstChoiceId: null,
     });
+    telRef.current = newTelemetryAccum(); // fresh telemetry for the next scenario
     setExpandedOptions(new Set());
     setPreviewOptionId(null);
     resetFlow();
@@ -292,6 +435,19 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
       performanceScore: performanceScore(opt),
       metrics: optionMetrics(opt),
       cvrStakeholderShown: cvrWho?.label,
+      telemetry: telRef.current
+        ? buildScenarioTelemetry(telRef.current, {
+            cvrFired: isMisaligned(opt.level),
+            cvrOutcome: !isMisaligned(opt.level)
+              ? "none"
+              : opts.endorsement === "strong"
+                ? "endorsed-strong"
+                : opts.endorsement === "weak"
+                  ? "endorsed-weak"
+                  : "none",
+            apaOutcome: "none",
+          })
+        : undefined,
     };
 
     finalizeScenario(result, opts.nextProfile);
@@ -341,6 +497,13 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
         originalOptionId: payload.originalOptionId,
       },
       cvrStakeholderShown: cvrWho?.label,
+      telemetry: telRef.current
+        ? buildScenarioTelemetry(telRef.current, {
+            cvrFired: true,
+            cvrOutcome: "went-to-APA",
+            apaOutcome: "committed",
+          })
+        : undefined,
     };
     finalizeScenario(result, nextProfile);
   }, [scenario, userProfile, expandedOptions, progress, cvrWho, finalizeScenario]);
@@ -500,6 +663,11 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
           onConfirmEndorsement={handleConfirmEndorsement}
           onApaCommit={handleApaCommit}
           onChangeMyMind={resetFlow}
+          onCvrYes={handleCvrYes}
+          onCvrNo={handleCvrNo}
+          onCvrBackout={handleCvrBackout}
+          onApaBail={handleApaBail}
+          onFinalDecisionChange={handleFinalDecisionChange}
         />
       )}
     </Box>
@@ -727,6 +895,7 @@ function FlowOverlay({
   option, profile, scenario, accent, whoVariant, step, setStep,
   tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, q2Guided, setQ2Guided,
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
+  onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange,
 }: {
   option: LabeledOption; profile: Block5UserProfile; scenario: Block5Scenario; accent: string;
   whoVariant: WhoVariant | null;
@@ -735,6 +904,9 @@ function FlowOverlay({
   q1Strong: boolean | null; setQ1Strong: (b: boolean) => void;
   q2Guided: boolean | null; setQ2Guided: (b: boolean) => void;
   onKeep: () => void; onConfirmEndorsement: () => void; onApaCommit: (p: ApaCommitPayload) => void; onChangeMyMind: () => void;
+  // Telemetry wrappers for the CVR/APA transitions (observation only — same navigation).
+  onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
+  onApaBail: () => void; onFinalDecisionChange: () => void;
 }) {
   const misaligned = isMisaligned(option.level);
   const coord = misaligned ? cvrCoordinate(option, profile) : null;
@@ -808,13 +980,13 @@ function FlowOverlay({
               <Text fontSize="2xs" color="#b794f4" fontWeight="bold">▍ who is affected</Text>
             </HStack>
             <HStack gap="3" wrap="wrap">
-              <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={() => setStep("q1")} fontSize="xs">
+              <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={onCvrYes} fontSize="xs">
                 Yes, I would still choose this
               </Button>
-              <Button size="sm" variant="outline" borderColor="whiteAlpha.300" color="whiteAlpha.800" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={() => setStep("apa")} fontSize="xs">
+              <Button size="sm" variant="outline" borderColor="whiteAlpha.300" color="whiteAlpha.800" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onCvrNo} fontSize="xs">
                 No, I would not
               </Button>
-              <Button size="sm" variant="ghost" color="whiteAlpha.500" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
+              <Button size="sm" variant="ghost" color="whiteAlpha.500" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onCvrBackout} fontSize="xs">
                 Change my mind
               </Button>
             </HStack>
@@ -885,8 +1057,9 @@ function FlowOverlay({
             accent={accent}
             coord={coord}
             whoVariant={whoVariant}
-            onBail={onChangeMyMind}
+            onBail={onApaBail}
             onCommit={onApaCommit}
+            onFinalDecisionChange={onFinalDecisionChange}
           />
         )}
       </Box>
@@ -942,7 +1115,7 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
   );
 }
 
-function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail, onCommit }: {
+function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail, onCommit, onFinalDecisionChange }: {
   option: LabeledOption;
   profile: Block5UserProfile;
   scenario: Block5Scenario;
@@ -951,6 +1124,8 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
   whoVariant: WhoVariant;
   onBail: () => void;
   onCommit: (p: ApaCommitPayload) => void;
+  /** telemetry: called when the user picks an APA final option then backs out to choose again. */
+  onFinalDecisionChange: () => void;
 }) {
   const TEAL = "#4fd1c5";
   const ORANGE = "#f6ad55";
@@ -1062,7 +1237,7 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
                 Yes, this is my decision
               </Button>
               <Button size="sm" variant="ghost" color="whiteAlpha.600" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" fontSize="xs"
-                onClick={() => { setSection4(null); setStage("options"); }}>
+                onClick={() => { onFinalDecisionChange(); setSection4(null); setStage("options"); }}>
                 No, let me pick a different option
               </Button>
             </HStack>
