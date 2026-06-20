@@ -306,6 +306,12 @@ export interface Block5ScenarioResult {
   cvrStakeholderShown?: string;
   /** behavioral telemetry for this scenario (visits, switches, dwell) — does not affect scoring. */
   telemetry?: Block5ScenarioTelemetry;
+  /**
+   * The participant's 4 policy-value scores (0–100) AFTER this scenario's profile update.
+   * Captured so the results view can plot how each value evolved across the journey
+   * (Before Block 5 → after S1 → after S2 → after S3). Additive; does not affect scoring.
+   */
+  policySnapshotAfter?: Record<Block5PolicyDimKey, number>;
 }
 
 export interface Block5Results {

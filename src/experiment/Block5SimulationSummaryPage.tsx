@@ -7,14 +7,16 @@
  * recontextualized vignette).
  */
 
+import { useState } from "react";
 import {
   Badge, Box, Button, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuArrowRight, LuTrendingUp, LuScale, LuTarget } from "react-icons/lu";
+import { LuCheck, LuArrowRight, LuChartColumn, LuTrendingUp, LuScale, LuTarget } from "react-icons/lu";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL } from "./block5CVR";
 import { POLICY_DIM_KEYS } from "./block5Types";
 import type { AlignmentLevel, Block5Results, Block5ScenarioResult } from "./block5Types";
+import { Block5VisualizationsView } from "./Block5VisualizationsView";
 
 interface Props {
   results: Block5Results;
@@ -66,6 +68,18 @@ function MeasureCard({ icon, label, value, sub, hint, palette }: {
 }
 
 export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: Props) {
+  /** When true, swap this summary for the full-screen "Your experiment in charts" view. */
+  const [showCharts, setShowCharts] = useState(false);
+  if (showCharts) {
+    return (
+      <Block5VisualizationsView
+        results={results}
+        onBack={() => setShowCharts(false)}
+        onContinueToFeedback={onContinueToFeedback}
+      />
+    );
+  }
+
   // Only the 4 policy/value sensitivities (not the CVR-framing dimensions), strongest first.
   const topDimensions = results.userProfile.dimensions
     .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key))
@@ -100,6 +114,18 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
           <MeasureCard icon={<LuTarget />} palette="teal" label="Performance"
             value={`${performance}`} hint="Average outcome quality of the policies you chose (separate from how well they matched your values)." />
         </Grid>
+
+        {/* See-your-journey-in-charts entry point */}
+        <Box textAlign="center">
+          <Button onClick={() => setShowCharts(true)} size="lg" colorPalette="purple" variant="outline"
+            rounded="xl" gap="2" px="7">
+            <Icon><LuChartColumn /></Icon>
+            View your results as charts
+          </Button>
+          <Text fontSize="xs" color="fg.muted" mt="2">
+            See your full journey — values, choices, consistency, and time — in six simple charts.
+          </Text>
+        </Box>
 
         {/* Profile recap */}
         <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" p={{ base: "5", md: "6" }}>

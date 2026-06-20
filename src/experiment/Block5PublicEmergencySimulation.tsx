@@ -176,6 +176,15 @@ function newTelemetryAccum(): TelemetryAccum {
   };
 }
 
+/** Extracts the 4 policy-value scores (0–100) from a profile, for the evolution snapshot. */
+function policyScoresOf(profile: Block5UserProfile): Record<Block5PolicyDimKey, number> {
+  const out = {} as Record<Block5PolicyDimKey, number>;
+  for (const k of POLICY_DIM_KEYS) {
+    out[k] = profile.dimensions.find((d) => d.key === k)?.score ?? 0;
+  }
+  return out;
+}
+
 /** Assembles the immutable, stored telemetry for a finished scenario from the accumulator. */
 function buildScenarioTelemetry(
   t: TelemetryAccum,
@@ -357,6 +366,8 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
   // Records a finished scenario and advances (or completes Block 5). Shared by all paths.
   const finalizeScenario = useCallback((result: Block5ScenarioResult, nextProfile: Block5UserProfile) => {
+    // Snapshot the 4 policy values AFTER this scenario's update, for the evolution chart.
+    result.policySnapshotAfter = policyScoresOf(nextProfile);
     const nextResults = [...progress.scenarioResults, result];
     const nextIndex = progress.currentScenarioIndex + 1;
     if (nextIndex >= BLOCK5_SCENARIOS.length) {
