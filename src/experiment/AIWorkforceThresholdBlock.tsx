@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlock123Surfaces } from "./block123Theme";
 import {
   Badge,
   Box,
@@ -180,6 +181,7 @@ function WorkerGroupInfoIcon({
 }
 
 export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) {
+  const surf = useBlock123Surfaces(); // coordinated light-mode surfaces (dark unchanged)
   // Restore in-progress session from localStorage, falling back to INITIAL_STATE.
   const [state, setState] = useState<InProgressState>(() => {
     try {
@@ -526,7 +528,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
       <Stack gap="4" w="full">
         {/* Static context — smaller, neutral box */}
         <Box
-          bg="bg.panel"
+          bg={surf.cardBg}
           borderWidth="1px"
           borderColor="border.subtle"
           rounded="lg"
@@ -599,7 +601,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
     return (
       <Box
         minH="100vh"
-        bg="bg"
+        bg={surf.pageBg}
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -609,7 +611,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
         <Box
           w="full"
           maxW="3xl"
-          bg="bg.panel"
+          bg={surf.cardBg}
           borderWidth="1px"
           borderColor="border"
           shadow="lg"
@@ -628,7 +630,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
   return (
     <Box
       minH="100vh"
-      bg="bg"
+      bg={surf.pageBg}
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -638,7 +640,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
       <Box
         w="full"
         maxW="3xl"
-        bg="bg.panel"
+        bg={surf.cardBg}
         borderWidth="1px"
         borderColor="border"
         shadow="lg"
@@ -687,7 +689,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
           </HStack>
 
           <Box
-            bg="bg.subtle"
+            bg={surf.subtleBg}
             borderWidth="1px"
             borderColor="border.subtle"
             rounded="xl"
@@ -760,9 +762,10 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
  * block. Accepts an optional `compact` prop to reduce padding in tighter layouts.
  */
 export function WorkerTermsPanel({ compact = false }: { compact?: boolean }) {
+  const surf = useBlock123Surfaces();
   return (
     <Box
-      bg="bg.subtle"
+      bg={surf.subtleBg}
       borderWidth="1px"
       borderColor="border.subtle"
       rounded="xl"

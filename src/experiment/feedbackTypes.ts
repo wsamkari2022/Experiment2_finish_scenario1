@@ -27,7 +27,7 @@ export const FEEDBACK_KEY = "vrds_feedback_record";
  * participant's data is lost before it can be exported to MongoDB.
  */
 export const FEEDBACK_ARCHIVE_KEY = "vrds_feedback_archive";
-export const FEEDBACK_SCHEMA_VERSION = 1;
+export const FEEDBACK_SCHEMA_VERSION = 2; // v2: feedback Likert scale is 1–7 (was 1–5 in v1)
 export const EXPERIMENT_ID = "vrds_experiment_2";
 
 /* ----------------------------- Question definitions ----------------------------- */
@@ -202,9 +202,9 @@ function mean(values: number[]): number {
   return finite.reduce((s, v) => s + v, 0) / finite.length;
 }
 
-/** Reverse a 1–5 Likert response so higher = better well-being. */
+/** Reverse a 1–7 Likert response so higher = better well-being (1↔7, 2↔6, 3↔5, 4 stays). */
 export function reverseLikert(x: number): number {
-  return 6 - x;
+  return 8 - x;
 }
 
 /**
@@ -273,9 +273,9 @@ export function computeWellbeing(
     wellbeingComposite: round2(composite),
     wellbeingPlusInsight: round2(plusInsight),
     scoring: {
-      scale: "1to5_agree",
+      scale: "1to7_agree",
       reverseScored: WELLBEING_REVERSE_CODES,
-      reverseFormula: "6 - x",
+      reverseFormula: "8 - x",
       compositeSubscales: WELLBEING_COMPOSITE_SUBSCALES as string[],
       compositeFormula: "mean of subscale means",
     },

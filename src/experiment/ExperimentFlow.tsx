@@ -13,6 +13,7 @@ import { UserFeedbackPage } from "./UserFeedbackPage";
 import { GlobalStepper } from "./GlobalStepper";
 import { getSessionId } from "./session";
 import { markStage } from "./telemetry";
+import { useScrollToTop } from "./useScrollToTop";
 import { extractBlock5Profile } from "./block5Profile";
 import { buildThresholdTree } from "./thresholdTree";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
@@ -165,6 +166,9 @@ export function ExperimentFlow() {
     markStage(stage, "start");
     return () => markStage(stage, "end");
   }, [stage]);
+
+  // Every stage opens at the top of the page (not wherever the previous stage was scrolled).
+  useScrollToTop(stage);
 
   /** Called when Block 1 completes; moves to the transition spinner before Block 2. */
   const handleMoneyContinue = useCallback((_results: MoneyBlockResults) => {

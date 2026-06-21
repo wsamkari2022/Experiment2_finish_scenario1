@@ -40,33 +40,50 @@ interface Props {
 
 /* ------------------------------- small inputs ------------------------------- */
 
-function LikertRow({ q, value, onChange, accent }: {
-  q: FeedbackQuestion; value: number | undefined; onChange: (v: number) => void; accent: string;
+/** 1–7 Likert. The end boxes (1 and 7) carry their label INSIDE the box, above the number;
+ *  boxes 2–6 show the number only. `invalid` highlights an unanswered required row on submit. */
+function LikertRow({ q, value, onChange, accent, invalid }: {
+  q: FeedbackQuestion; value: number | undefined; onChange: (v: number) => void; accent: string; invalid?: boolean;
 }) {
   const low = q.likertLow ?? WELLBEING_LIKERT_LOW;
   const high = q.likertHigh ?? WELLBEING_LIKERT_HIGH;
   return (
-    <Box>
-      <Text fontSize="sm" color="fg" mb="2" lineHeight="tall">{q.text}</Text>
-      <HStack gap="2" wrap="wrap" align="center">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Button key={n} onClick={() => onChange(n)} size="sm" minW="9" px="0"
-            colorPalette={accent} variant={value === n ? "solid" : "outline"}
-            rounded="lg" fontWeight="semibold">
-            {n}
-          </Button>
-        ))}
-        <Text fontSize="2xs" color="fg.muted" ml="1">{low} → {high}</Text>
+    <Box id={`fq-${q.code}`} rounded="lg" transition="all 0.15s"
+      borderWidth={invalid ? "1px" : "0"} borderColor={invalid ? "red.solid" : "transparent"}
+      bg={invalid ? "red.subtle" : "transparent"} p={invalid ? "3" : "0"}>
+      <Text fontSize="sm" color="fg" mb="2.5" lineHeight="tall">{q.text}</Text>
+      <HStack gap="1.5" wrap="wrap" align="stretch">
+        {[1, 2, 3, 4, 5, 6, 7].map((n) => {
+          const selected = value === n;
+          const isEnd = n === 1 || n === 7;
+          return (
+            <Button key={n} onClick={() => onChange(n)}
+              colorPalette={accent} variant={selected ? "solid" : "outline"}
+              rounded="lg" h="14" py="1.5" px={isEnd ? "2" : "0"} minW={isEnd ? "20" : "10"}
+              display="flex" flexDirection="column" justifyContent="center" gap="0.5">
+              {isEnd && (
+                <Text fontSize="2xs" lineHeight="1.15" fontWeight="semibold" textAlign="center"
+                  whiteSpace="normal" color={selected ? "white" : "fg.muted"}>
+                  {n === 1 ? low : high}
+                </Text>
+              )}
+              <Text fontSize="md" fontWeight="bold" lineHeight="1">{n}</Text>
+            </Button>
+          );
+        })}
       </HStack>
+      {invalid && <Text fontSize="2xs" color="red.fg" mt="1.5" fontWeight="medium">Please choose a rating to continue.</Text>}
     </Box>
   );
 }
 
-function YesNoRow({ q, value, onChange, accent }: {
-  q: FeedbackQuestion; value: FeedbackAnswer | undefined; onChange: (v: "yes" | "no") => void; accent: string;
+function YesNoRow({ q, value, onChange, accent, invalid }: {
+  q: FeedbackQuestion; value: FeedbackAnswer | undefined; onChange: (v: "yes" | "no") => void; accent: string; invalid?: boolean;
 }) {
   return (
-    <Box>
+    <Box id={`fq-${q.code}`} rounded="lg" transition="all 0.15s"
+      borderWidth={invalid ? "1px" : "0"} borderColor={invalid ? "red.solid" : "transparent"}
+      bg={invalid ? "red.subtle" : "transparent"} p={invalid ? "3" : "0"}>
       <Text fontSize="sm" color="fg" mb="2" lineHeight="tall">{q.text}</Text>
       <HStack gap="2">
         <Button onClick={() => onChange("yes")} size="sm" colorPalette={accent}
@@ -74,6 +91,7 @@ function YesNoRow({ q, value, onChange, accent }: {
         <Button onClick={() => onChange("no")} size="sm" colorPalette={accent}
           variant={value === "no" ? "solid" : "outline"} rounded="lg" px="5">No</Button>
       </HStack>
+      {invalid && <Text fontSize="2xs" color="red.fg" mt="1.5" fontWeight="medium">Please choose Yes or No to continue.</Text>}
     </Box>
   );
 }
@@ -120,14 +138,35 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
     setAnswers((prev) => ({ ...prev, [code]: value }));
   }, []);
 
-  // The Well-being composite requires all 20 Likert items, so we make them the only hard gate.
-  const wellbeingAnswered = WELLBEING_ITEMS.filter((i) => typeof answers[i.code] === "number").length;
-  const wellbeingComplete = wellbeingAnswered === WELLBEING_ITEMS.length;
-
   const num = (code: string): number | undefined =>
     typeof answers[code] === "number" ? (answers[code] as number) : undefined;
   const str = (code: string): string | undefined =>
     typeof answers[code] === "string" ? (answers[code] as string) : undefined;
+
+  /** A choice answer is present when it's a Likert number or "yes"/"no". */
+  const isAnswered = useCallback((code: string): boolean => {
+    const v = answers[code];
+    return v !== undefined && v !== "";
+  }, [answers]);
+
+  /**
+   * Every VISIBLE choice question (Likert + Yes/No) is required. Open-ended questions are
+   * optional, and conditional sections that aren't shown (CVR/APA) are never required.
+   */
+  const requiredCodes = useMemo(() => {
+    const choice = (qs: FeedbackQuestion[]) => qs.filter((q) => q.type !== "open").map((q) => q.code);
+    const codes: string[] = [];
+    if (showCvr) codes.push(...choice(CVR_QUESTIONS));
+    if (showApa) codes.push(...choice(APA_QUESTIONS));
+    codes.push(...choice(TOOL_RATINGS));
+    codes.push(...choice(TOOL_CLOSERS));
+    codes.push(...WELLBEING_ITEMS.map((i) => i.code));
+    return codes;
+  }, [showCvr, showApa]);
+
+  const missingCount = requiredCodes.filter((c) => !isAnswered(c)).length;
+  const answeredCount = requiredCodes.length - missingCount;
+  const allRequiredAnswered = missingCount === 0;
 
   const collect = useCallback((qs: FeedbackQuestion[]): Record<string, FeedbackAnswer> => {
     const out: Record<string, FeedbackAnswer> = {};
@@ -139,10 +178,14 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
   }, [answers]);
 
   const handleSubmit = useCallback(() => {
-    if (!wellbeingComplete) {
+    // Block submission until every VISIBLE choice question is answered; send the user to the
+    // first unanswered one. Open-ended and hidden conditional questions are never required.
+    const missing = requiredCodes.filter((c) => !isAnswered(c));
+    if (missing.length > 0) {
       setShowValidation(true);
-      // Scroll the well-being section into view so the participant can finish it.
-      try { document.getElementById("wellbeing-section")?.scrollIntoView({ behavior: "smooth", block: "start" }); } catch { /* ignore */ }
+      try {
+        document.getElementById(`fq-${missing[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch { /* ignore */ }
       return;
     }
 
@@ -171,7 +214,7 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
     saveFeedbackRecord(record);
     setSubmitted(true);
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
-  }, [answers, collect, results, sessionId, showApa, showCvr, wellbeingComplete]);
+  }, [answers, collect, isAnswered, requiredCodes, results, sessionId, showApa, showCvr]);
 
   /** Finish: reset for a fresh participant but PRESERVE the archived records for export. */
   const handleFinish = useCallback(() => {
@@ -231,9 +274,9 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
             subtitle="In some scenarios, after you chose an option that went against your usual values, you saw a short reflection: the same decision re-framed, plus the perspective of an affected person. These questions are about that step.">
             {CVR_QUESTIONS.map((q) =>
               q.type === "likert" ? (
-                <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="teal" />
+                <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="teal" invalid={showValidation && !isAnswered(q.code)} />
               ) : q.type === "yesno" ? (
-                <YesNoRow key={q.code} q={q} value={answers[q.code]} onChange={(v) => setAnswer(q.code, v)} accent="teal" />
+                <YesNoRow key={q.code} q={q} value={answers[q.code]} onChange={(v) => setAnswer(q.code, v)} accent="teal" invalid={showValidation && !isAnswered(q.code)} />
               ) : (
                 <OpenRow key={q.code} q={q} value={str(q.code)} onChange={(v) => setAnswer(q.code, v)} />
               ),
@@ -248,9 +291,9 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
             subtitle="In some scenarios you went through a short value-clarification step that asked which value you wanted the system to weight, then showed you the options that fit it. These questions are about that step.">
             {APA_QUESTIONS.map((q) =>
               q.type === "likert" ? (
-                <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="purple" />
+                <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="purple" invalid={showValidation && !isAnswered(q.code)} />
               ) : q.type === "yesno" ? (
-                <YesNoRow key={q.code} q={q} value={answers[q.code]} onChange={(v) => setAnswer(q.code, v)} accent="purple" />
+                <YesNoRow key={q.code} q={q} value={answers[q.code]} onChange={(v) => setAnswer(q.code, v)} accent="purple" invalid={showValidation && !isAnswered(q.code)} />
               ) : (
                 <OpenRow key={q.code} q={q} value={str(q.code)} onChange={(v) => setAnswer(q.code, v)} />
               ),
@@ -261,18 +304,18 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
         {/* ③ Decision-support tools (always) */}
         <SectionCard accent="orange" eyebrow="Decision-support tools"
           title="The tools & the experiment design"
-          subtitle="How helpful was each tool you saw while making your decisions? (1 = not helpful, 5 = very helpful)">
+          subtitle="How helpful was each tool you saw while making your decisions? (1 = not helpful, 7 = very helpful)">
           <Stack gap="4">
             {TOOL_RATINGS.map((q) => (
-              <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="orange" />
+              <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="orange" invalid={showValidation && !isAnswered(q.code)} />
             ))}
           </Stack>
           <Separator borderColor="border.subtle" />
           {TOOL_CLOSERS.map((q) =>
             q.type === "likert" ? (
-              <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="orange" />
+              <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="orange" invalid={showValidation && !isAnswered(q.code)} />
             ) : q.type === "yesno" ? (
-              <YesNoRow key={q.code} q={q} value={answers[q.code]} onChange={(v) => setAnswer(q.code, v)} accent="orange" />
+              <YesNoRow key={q.code} q={q} value={answers[q.code]} onChange={(v) => setAnswer(q.code, v)} accent="orange" invalid={showValidation && !isAnswered(q.code)} />
             ) : (
               <OpenRow key={q.code} q={q} value={str(q.code)} onChange={(v) => setAnswer(q.code, v)} />
             ),
@@ -283,14 +326,15 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
         <Box id="wellbeing-section">
           <SectionCard accent="pink" eyebrow="Learning insight & well-being"
             title="How this experience was for you"
-            subtitle="Please rate how much you agree with each statement (1 = strongly disagree, 5 = strongly agree). All 20 are needed to compute your well-being summary.">
+            subtitle="Please rate how much you agree with each statement (1 = strongly disagree, 7 = strongly agree). Every statement is required.">
             <HStack gap="2" color="pink.fg">
               <Icon><LuSparkles /></Icon>
               <Text fontSize="xs" fontWeight="semibold">Part A — Learning & decisions</Text>
             </HStack>
             {WELLBEING_ITEMS.slice(0, 11).map((item) => (
               <LikertRow key={item.code} q={{ code: item.code, text: item.text, type: "likert" }}
-                value={num(item.code)} onChange={(v) => setAnswer(item.code, v)} accent="pink" />
+                value={num(item.code)} onChange={(v) => setAnswer(item.code, v)} accent="pink"
+                invalid={showValidation && !isAnswered(item.code)} />
             ))}
             <Separator borderColor="border.subtle" />
             <HStack gap="2" color="pink.fg">
@@ -299,7 +343,8 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
             </HStack>
             {WELLBEING_ITEMS.slice(11).map((item) => (
               <LikertRow key={item.code} q={{ code: item.code, text: item.text, type: "likert" }}
-                value={num(item.code)} onChange={(v) => setAnswer(item.code, v)} accent="pink" />
+                value={num(item.code)} onChange={(v) => setAnswer(item.code, v)} accent="pink"
+                invalid={showValidation && !isAnswered(item.code)} />
             ))}
             <Separator borderColor="border.subtle" />
             <Stack gap="4">
@@ -312,10 +357,10 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
 
         {/* Submit */}
         <Box textAlign="center" pt="2" pb="8">
-          {showValidation && !wellbeingComplete && (
-            <Text color="red.fg" fontSize="sm" mb="3">
-              Please answer all {WELLBEING_ITEMS.length} well-being statements
-              ({wellbeingAnswered}/{WELLBEING_ITEMS.length} done) before submitting.
+          {showValidation && !allRequiredAnswered && (
+            <Text color="red.fg" fontSize="sm" mb="3" fontWeight="medium">
+              Please answer the {missingCount} highlighted question{missingCount === 1 ? "" : "s"} before submitting —
+              we've taken you to the first one. (Open-ended questions are optional.)
             </Text>
           )}
           <Button onClick={handleSubmit} size="lg" colorPalette="pink" rounded="lg" px="10" gap="2">
@@ -323,9 +368,9 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
             Submit feedback
           </Button>
           <Text fontSize="xs" color="fg.muted" mt="3">
-            {wellbeingComplete
-              ? "All set — thank you."
-              : `Well-being statements answered: ${wellbeingAnswered}/${WELLBEING_ITEMS.length}`}
+            {allRequiredAnswered
+              ? "All required questions answered — thank you."
+              : `Required questions answered: ${answeredCount}/${requiredCodes.length} (open-ended are optional)`}
           </Text>
         </Box>
       </VStack>

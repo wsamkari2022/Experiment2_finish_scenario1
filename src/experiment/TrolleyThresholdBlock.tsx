@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlock123Surfaces } from "./block123Theme";
 import {
   Badge,
   Box,
@@ -77,6 +78,7 @@ export function TrolleyThresholdBlock({
   participantId,
   onContinue,
 }: TrolleyThresholdBlockProps) {
+  const surf = useBlock123Surfaces(); // coordinated light-mode surfaces (dark unchanged)
   /** Core session state machine — updated on every choice. */
   const [state, setState] = useState<InProgressState>(INITIAL_STATE);
   /** Whether the full block (both phases) has been completed and results are ready. */
@@ -448,7 +450,7 @@ export function TrolleyThresholdBlock({
     return (
       <Box
         minH="100vh"
-        bg="bg"
+        bg={surf.pageBg}
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -458,7 +460,7 @@ export function TrolleyThresholdBlock({
         <Box
           w="full"
           maxW="3xl"
-          bg="bg.panel"
+          bg={surf.cardBg}
           borderWidth="1px"
           borderColor="border"
           shadow="lg"
@@ -486,7 +488,7 @@ export function TrolleyThresholdBlock({
   return (
     <Box
       minH="100vh"
-      bg="bg"
+      bg={surf.pageBg}
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -496,7 +498,7 @@ export function TrolleyThresholdBlock({
       <Box
         w="full"
         maxW="3xl"
-        bg="bg.panel"
+        bg={surf.cardBg}
         borderWidth="1px"
         borderColor="border"
         shadow="lg"
@@ -544,7 +546,7 @@ export function TrolleyThresholdBlock({
           </VStack>
 
           <Box
-            bg="bg.subtle"
+            bg={surf.subtleBg}
             borderWidth="1px"
             borderColor="border.subtle"
             rounded="xl"

@@ -5,9 +5,11 @@ import {
   Button,
   HStack,
   Heading,
+  Icon,
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { LuMessageSquare, LuMessagesSquare } from "react-icons/lu";
 import { ProgressBar } from "./ProgressBar";
 import type { MoralProfile } from "./profileAnalysis";
 import type { AIWorkforceAnalysis } from "./aiWorkforceAnalysis";
@@ -22,6 +24,7 @@ import {
   type VignetteDirection,
 } from "./vignetteLibrary";
 import type { Block4DecisionRecord } from "./finalAnalysis";
+import { useScrollToTop } from "./useScrollToTop";
 
 /** Participant's binary policy choice: approve ("proceed") or reject ("do_not_proceed"). */
 type Decision = "proceed" | "do_not_proceed";
@@ -92,6 +95,9 @@ export function AdaptiveStakeholderReflectionBlock({
 }: Props) {
   /** Index into STEP_ORDER; drives which of the three screens is currently rendered. */
   const [stepIndex, setStepIndex] = useState(0);
+
+  // Each of the three screens opens at the top of the page.
+  useScrollToTop(stepIndex);
 
   /** Decision recorded before any stakeholder perspectives are shown (Screen 1). */
   const [initialDecision, setInitialDecision] = useState<Decision | null>(null);
@@ -471,6 +477,9 @@ function Screen2Perspective({
   /** Called with the participant's updated decision after reading the perspective. */
   onSubmit: (d: Decision) => void;
 }) {
+  /** Mid-decision (select-then-Continue, matching Screens 1 & 3 for a consistent feel). */
+  const [decision, setDecision] = useState<Decision | null>(null);
+
   return (
     <Box
       bg="bg.panel"
@@ -482,18 +491,24 @@ function Screen2Perspective({
     >
       <VStack gap="6" align="stretch">
         <VStack gap="2" align="stretch">
-          <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
-            A perspective to consider
-          </Text>
+          <HStack gap="2" color="teal.fg">
+            <Icon boxSize="4"><LuMessageSquare /></Icon>
+            <Text fontSize="xs" fontWeight="semibold" textTransform="uppercase" letterSpacing="wider">
+              A perspective to consider
+            </Text>
+          </HStack>
           <Heading size="md" color="fg">
             {perspective.title}
           </Heading>
         </VStack>
 
+        {/* First perspective — TEAL box, visually distinct from the amber second perspective. */}
         <Box
-          bg="bg.subtle"
+          bg="teal.subtle"
           borderWidth="1px"
-          borderColor="border.subtle"
+          borderColor="teal.muted"
+          borderLeftWidth="4px"
+          borderLeftColor="teal.solid"
           rounded="xl"
           px={{ base: "5", md: "6" }}
           py="5"
@@ -510,28 +525,49 @@ function Screen2Perspective({
           <HStack gap="4" justify="center" wrap="wrap">
             <Button
               size="lg"
-              bg="green.700"
-              color="white"
-              _hover={{ bg: "green.600" }}
+              bg={decision === "proceed" ? "green.600" : "green.subtle"}
+              color={decision === "proceed" ? "white" : "green.fg"}
+              _hover={{ bg: decision === "proceed" ? "green.700" : "green.muted" }}
               rounded="lg"
               px="8"
-              onClick={() => onSubmit("proceed")}
+              borderWidth="1px"
+              borderColor={decision === "proceed" ? "green.600" : "green.muted"}
+              onClick={() => setDecision("proceed")}
             >
               Approve the policy
             </Button>
             <Button
               size="lg"
-              bg="red.700"
-              color="white"
-              _hover={{ bg: "red.600" }}
+              bg={decision === "do_not_proceed" ? "red.600" : "red.subtle"}
+              color={decision === "do_not_proceed" ? "white" : "red.fg"}
+              _hover={{ bg: decision === "do_not_proceed" ? "red.700" : "red.muted" }}
               rounded="lg"
               px="8"
-              onClick={() => onSubmit("do_not_proceed")}
+              borderWidth="1px"
+              borderColor={decision === "do_not_proceed" ? "red.600" : "red.muted"}
+              onClick={() => setDecision("do_not_proceed")}
             >
               Do not approve
             </Button>
           </HStack>
         </VStack>
+
+        {decision && (
+          <HStack justify="center" animationName="fade-in" animationDuration="moderate">
+            <Button
+              size="lg"
+              colorPalette="blue"
+              bg="blue.600"
+              color="white"
+              _hover={{ bg: "blue.500" }}
+              rounded="lg"
+              px="10"
+              onClick={() => onSubmit(decision)}
+            >
+              Continue
+            </Button>
+          </HStack>
+        )}
       </VStack>
     </Box>
   );
@@ -595,18 +631,24 @@ function Screen3FinalDecision({
     >
       <VStack gap="6" align="stretch">
         <VStack gap="2" align="stretch">
-          <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
-            A second perspective
-          </Text>
+          <HStack gap="2" color="orange.fg">
+            <Icon boxSize="4"><LuMessagesSquare /></Icon>
+            <Text fontSize="xs" fontWeight="semibold" textTransform="uppercase" letterSpacing="wider">
+              A second, different perspective
+            </Text>
+          </HStack>
           <Heading size="md" color="fg">
             {perspective.title}
           </Heading>
         </VStack>
 
+        {/* Second perspective — AMBER box, visually distinct from the teal first perspective. */}
         <Box
-          bg="bg.subtle"
+          bg="orange.subtle"
           borderWidth="1px"
-          borderColor="border.subtle"
+          borderColor="orange.muted"
+          borderLeftWidth="4px"
+          borderLeftColor="orange.solid"
           rounded="xl"
           px={{ base: "5", md: "6" }}
           py="5"

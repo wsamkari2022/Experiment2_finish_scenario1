@@ -36,6 +36,9 @@ import {
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
 } from "./block5CVR";
 import { getCVRStory, pickWhoVariant } from "./block5CVRContent";
+import { useScrollToTop } from "./useScrollToTop";
+import { useColorMode } from "@/components/ui/color-mode";
+import { getBlock5Palette, type Block5Palette } from "./block5Palette";
 import {
   METRIC_KEYS, METRIC_LABELS, METRIC_HOVER, POLICY_DIM_KEYS, POLICY_DIM_EXPLAIN,
   type AlignmentLevel, type Block5Results, type Block5Scenario, type Block5ScenarioResult,
@@ -71,6 +74,14 @@ const LEVEL_COLOR: Record<AlignmentLevel, string> = {
   weakly_aligned: "#ECC94B",
   misaligned: "#ED8936",
   strongly_misaligned: "#F56565",
+};
+
+/** Darker alignment colours for legibility on LIGHT cards (the dark decision modal keeps the bright set). */
+const LEVEL_COLOR_LIGHT: Record<AlignmentLevel, string> = {
+  aligned: "#16a34a",
+  weakly_aligned: "#ca8a04",
+  misaligned: "#ea580c",
+  strongly_misaligned: "#dc2626",
 };
 
 /**
@@ -235,6 +246,12 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   // the decision logic or scoring). Reset for each new scenario in finalizeScenario.
   const telRef = useRef<TelemetryAccum | null>(null);
   if (telRef.current === null) telRef.current = newTelemetryAccum();
+
+  // Each scenario opens at the top of the page.
+  useScrollToTop(progress.currentScenarioIndex);
+
+  // Colour-mode-aware palette source (resolved after the scenario guard below).
+  const { colorMode } = useColorMode();
 
   const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
@@ -540,6 +557,9 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
   if (!scenario) return null;
 
+  // Resolved colour palette for the current mode (fresh light theme / cleaned dark theme).
+  const pal = getBlock5Palette(scenario, colorMode === "light" ? "light" : "dark");
+
   // Show ONLY the 4 policy/value sensitivities (these drive policy fit), strongest first.
   // Directness, Context, and Stakeholder are CVR-framing dimensions — they only shape the
   // vignette, so they are deliberately not shown to the participant here.
@@ -554,24 +574,24 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   };
 
   return (
-    <Box minH="100dvh" style={{ background: scenario.theme.gradient }} px={{ base: "4", md: "6", lg: "8" }} py={{ base: "6", md: "8" }}>
+    <Box minH="100dvh" style={{ background: pal.pageBg }} px={{ base: "4", md: "6", lg: "8" }} py={{ base: "6", md: "8" }}>
       {/* Header */}
       <VStack gap="2" mb="5" maxW="7xl" mx="auto">
         <HStack gap="3" justify="center" wrap="wrap">
-          <Badge bg="whiteAlpha.100" color="whiteAlpha.800" px="3" py="1" rounded="full" fontSize="xs" fontWeight="semibold" letterSpacing="wider" textTransform="uppercase">
+          <Badge bg={pal.badgeBg} color={pal.text} px="3" py="1" rounded="full" fontSize="xs" fontWeight="semibold" letterSpacing="wider" textTransform="uppercase">
             Scenario {progress.currentScenarioIndex + 1} of {BLOCK5_SCENARIOS.length}
           </Badge>
-          <Badge bg="whiteAlpha.50" color="whiteAlpha.600" px="3" py="1" rounded="full" fontSize="xs">
+          <Badge bg={pal.surfaceSubtle} color={pal.textMuted} px="3" py="1" rounded="full" fontSize="xs">
             Block 5: Public Emergency Simulation
           </Badge>
         </HStack>
-        <Heading size={{ base: "xl", md: "2xl" }} color="white" fontWeight="bold" textAlign="center" letterSpacing="tight">
+        <Heading size={{ base: "xl", md: "2xl" }} color={pal.headerText} fontWeight="bold" textAlign="center" letterSpacing="tight">
           {scenario.title}
         </Heading>
         <HStack gap="2" mt="1">
           {BLOCK5_SCENARIOS.map((_, i) => (
             <Box key={i} w="3" h="3" rounded="full"
-              bg={i < progress.currentScenarioIndex ? "whiteAlpha.700" : i === progress.currentScenarioIndex ? scenario.theme.accent : "whiteAlpha.200"}
+              bg={i < progress.currentScenarioIndex ? pal.dotDone : i === progress.currentScenarioIndex ? pal.accent : pal.dotTodo}
               transition="background 0.3s ease" />
           ))}
         </HStack>
@@ -580,49 +600,49 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
       {/* Sticky cumulative performance dashboard (issues 1 & 2) */}
       <Box position="sticky" top="2" zIndex="30" maxW="7xl" mx="auto" mb="6">
         <MetricsDashboard current={cumulative} projected={projected} previewTitle={previewOption?.title ?? null}
-          accent={scenario.theme.accent} completedCount={progress.scenarioResults.length} />
+          accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} />
       </Box>
 
       <Grid templateColumns={{ base: "1fr", lg: "320px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
         {/* Sidebar (not sticky, to avoid overlapping the pinned dashboard) */}
-        <Box bg="whiteAlpha.50" backdropFilter="blur(8px)" borderWidth="1px" borderColor="whiteAlpha.100" rounded="2xl" p={{ base: "5", md: "6" }} shadow="lg">
+        <Box bg={pal.sidebarBg} backdropFilter={pal.backdropBlur} borderWidth="1px" borderColor={pal.sidebarBorder} rounded="2xl" p={{ base: "5", md: "6" }} style={{ boxShadow: pal.sidebarShadow }}>
           <VStack align="stretch" gap="5">
             <Box>
-              <Text fontSize="2xs" fontWeight="bold" color={scenario.theme.accent} textTransform="uppercase" letterSpacing="widest" mb="2">
+              <Text fontSize="2xs" fontWeight="bold" color={pal.accent} textTransform="uppercase" letterSpacing="widest" mb="2">
                 The scenario
               </Text>
-              <Text fontSize="sm" color="whiteAlpha.700" lineHeight="tall">{scenario.description}</Text>
+              <Text fontSize="sm" color={pal.textMuted} lineHeight="tall">{scenario.description}</Text>
             </Box>
             {scenario.factBase && (
-              <Box bg="blackAlpha.400" borderWidth="1px" borderColor={scenario.theme.accent} borderLeftWidth="4px" rounded="lg" px="4" py="3">
+              <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.accent} borderLeftWidth="4px" rounded="lg" px="4" py="3">
                 <HStack gap="2" mb="1.5">
-                  <Icon color={scenario.theme.accent} boxSize="4"><LuTriangleAlert /></Icon>
-                  <Text fontSize="2xs" fontWeight="bold" color="whiteAlpha.800" textTransform="uppercase" letterSpacing="wider">The situation right now</Text>
+                  <Icon color={pal.accent} boxSize="4"><LuTriangleAlert /></Icon>
+                  <Text fontSize="2xs" fontWeight="bold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">The situation right now</Text>
                 </HStack>
-                <Text fontSize="sm" color="whiteAlpha.900" lineHeight="tall" fontWeight="medium">{scenario.factBase}</Text>
+                <Text fontSize="sm" color={pal.text} lineHeight="tall" fontWeight="medium">{scenario.factBase}</Text>
               </Box>
             )}
-            <Separator borderColor="whiteAlpha.100" />
+            <Separator borderColor={pal.separator} />
             <Box>
               <HStack gap="2" mb="3">
-                <Icon color={scenario.theme.accent}><LuShield /></Icon>
-                <Text fontSize="xs" fontWeight="semibold" color="whiteAlpha.800" textTransform="uppercase" letterSpacing="wider">Your value priorities</Text>
+                <Icon color={pal.accent}><LuShield /></Icon>
+                <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">Your value priorities</Text>
               </HStack>
               <VStack align="stretch" gap="2">
                 {topDimensions.map((d) => (
                   <Box key={d.key} position="relative" cursor="help"
                     onMouseEnter={() => setHoveredDim(d.key)} onMouseLeave={() => setHoveredDim(null)}>
                     <HStack justify="space-between">
-                      <Text fontSize="xs" color={hoveredDim === d.key ? "whiteAlpha.900" : "whiteAlpha.600"}
-                        style={{ textDecoration: "underline dotted", textDecorationColor: "rgba(255,255,255,0.28)", textUnderlineOffset: "2px" }}>
+                      <Text fontSize="xs" color={hoveredDim === d.key ? pal.text : pal.textMuted}
+                        style={{ textDecoration: "underline dotted", textDecorationColor: pal.textFaint, textUnderlineOffset: "2px" }}>
                         {d.label}
                       </Text>
-                      <Badge bg="whiteAlpha.100" color="whiteAlpha.900" rounded="md" px="2" fontSize="xs" fontFamily="mono">{d.score}</Badge>
+                      <Badge bg={pal.badgeBg} color={pal.text} rounded="md" px="2" fontSize="xs" fontFamily="mono">{d.score}</Badge>
                     </HStack>
                     {hoveredDim === d.key && (
                       <Box position="absolute" top="100%" left="0" mt="1.5" zIndex="20"
-                        bg="gray.900" bgImage="linear-gradient(160deg, #1b1e28, #13151c)" color="whiteAlpha.900"
-                        borderWidth="1px" borderColor="whiteAlpha.200" rounded="lg" px="3" py="2"
+                        bg={pal.tooltipBg} color={pal.tooltipText}
+                        borderWidth="1px" borderColor={pal.tooltipBorder} rounded="lg" px="3" py="2"
                         fontSize="2xs" lineHeight="tall" w="240px" shadow="xl">
                         {POLICY_DIM_EXPLAIN[d.key as Block5PolicyDimKey]}
                       </Box>
@@ -631,8 +651,8 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
                 ))}
               </VStack>
             </Box>
-            <Box bg="whiteAlpha.50" borderWidth="1px" borderColor="whiteAlpha.100" rounded="xl" px="4" py="3">
-              <Text fontSize="xs" color="whiteAlpha.500" lineHeight="tall">
+            <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl" px="4" py="3">
+              <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
                 Every option stays available. Each is labeled by how well it fits your earlier
                 responses — but you can choose any of them. Use “Preview impact” to see how an
                 option would change your performance above.
@@ -644,15 +664,15 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
         {/* Options */}
         <VStack align="stretch" gap="4">
           <Box>
-            <Text fontSize="2xs" fontWeight="bold" color={scenario.theme.accent} textTransform="uppercase" letterSpacing="widest">
+            <Text fontSize="2xs" fontWeight="bold" color={pal.accent} textTransform="uppercase" letterSpacing="widest">
               The options — choose one policy
             </Text>
-            <Text fontSize="xs" color="whiteAlpha.500" mt="1">
+            <Text fontSize="xs" color={pal.textFaint} mt="1">
               All {labeled.length} options are available. Each shows how well it fits your value priorities (left).
             </Text>
           </Box>
           {labeled.map((opt) => (
-            <OptionCard key={opt.id} option={opt} profile={profile} accent={scenario.theme.accent}
+            <OptionCard key={opt.id} option={opt} profile={profile} accent={pal.accent} pal={pal}
               expanded={expandedOptions.has(opt.id)} onToggle={() => toggleExpand(opt.id)}
               onSelect={() => handleSelect(opt.id)}
               isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
@@ -664,7 +684,7 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
       {selectedOption && step && (
         <FlowOverlay
-          option={selectedOption} profile={profile} scenario={scenario} accent={scenario.theme.accent}
+          option={selectedOption} profile={profile} scenario={scenario} accent={pal.accent}
           whoVariant={cvrWho}
           step={step} setStep={setStep}
           tradeoffAck={tradeoffAck} setTradeoffAck={setTradeoffAck}
@@ -687,12 +707,13 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
 /* ---------------- Cumulative performance dashboard ---------------- */
 
-function MetricsDashboard({ current, projected, previewTitle, accent, completedCount }: {
+function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal }: {
   current: Block5MetricProfile;
   projected: Block5MetricProfile | null;
   previewTitle: string | null;
   accent: string;
   completedCount: number;
+  pal: Block5Palette;
 }) {
   const [hovered, setHovered] = useState<Block5MetricKey | null>(null);
   const [showInfo, setShowInfo] = useState(false);
@@ -702,6 +723,9 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
   const overall = metricProfileScore(display);
   const baseOverall = metricProfileScore(current);
   const overallDelta = overall - baseOverall;
+  // Delta colours tuned for legibility in each mode.
+  const pos = pal.mode === "light" ? "#15803d" : "#86efac";
+  const neg = pal.mode === "light" ? "#b91c1c" : "#fca5a5";
 
   const label = isPreview
     ? `Projected if you choose: ${previewTitle}`
@@ -710,18 +734,20 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
       : `Your performance — average of ${completedCount} scenario${completedCount > 1 ? "s" : ""} so far`;
 
   return (
-    <Box bg="blackAlpha.700" backdropFilter="blur(14px)" borderWidth="1px"
-      borderColor={isPreview ? accent : "whiteAlpha.200"} rounded="2xl" p={{ base: "4", md: "5" }} shadow="2xl" transition="border-color 0.2s ease">
+    <Box bg={pal.dashBg} backdropFilter={pal.backdropBlur} borderWidth="1px"
+      borderColor={isPreview ? accent : pal.dashBorder}
+      borderTopWidth="3px" borderTopColor={isPreview ? accent : pal.dashTopBorder}
+      rounded="2xl" p={{ base: "4", md: "5" }} style={{ boxShadow: pal.dashShadow }} transition="border-color 0.2s ease">
       <HStack justify="space-between" mb="2" wrap="wrap" gap="2">
         <HStack gap="2">
           <Icon color={accent}>{isPreview ? <LuEye /> : <LuGauge />}</Icon>
-          <Text fontSize="xs" fontWeight="semibold" color="whiteAlpha.800" textTransform="uppercase" letterSpacing="wider">{label}</Text>
+          <Text fontSize="xs" fontWeight="bold" color={pal.dashTitleColor} textTransform="uppercase" letterSpacing="wider">{label}</Text>
           <Button
             aria-label="How this works"
             size="2xs"
             variant="ghost"
-            color={infoOpened ? "whiteAlpha.600" : "#f6e05e"}
-            _hover={{ bg: "whiteAlpha.100", color: "white" }}
+            color={infoOpened ? pal.textMuted : accent}
+            _hover={{ bg: pal.surfaceSubtle, color: pal.text }}
             rounded="full"
             px="1"
             minW="auto"
@@ -734,7 +760,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
         <HStack gap="2">
           {isPreview && overallDelta !== 0 && (
             <Badge bg="transparent" borderWidth="1px" rounded="md" px="2" fontSize="2xs" fontWeight="bold"
-              color={overallDelta > 0 ? "green.300" : "red.300"} borderColor={overallDelta > 0 ? "green.400" : "red.400"}>
+              color={overallDelta > 0 ? pos : neg} borderColor={overallDelta > 0 ? pos : neg}>
               {overallDelta > 0 ? `▲ +${overallDelta}` : `▼ ${overallDelta}`}
             </Badge>
           )}
@@ -743,8 +769,8 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
       </HStack>
 
       {showInfo && (
-        <Box bg="whiteAlpha.100" borderWidth="1px" borderColor="whiteAlpha.200" rounded="lg" px="4" py="3" mb="3">
-          <Text fontSize="xs" color="whiteAlpha.800" lineHeight="tall">
+        <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="lg" px="4" py="3" mb="3">
+          <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
             These 8 bars show how good your chosen policies are overall (total benefit, fairness, protecting the
             vulnerable, and so on), each 0–100. When you confirm a choice, its scores are <b>averaged</b> into these
             bars — so they can never go above 100. “Preview impact” shows what the average <b>would become</b> if you
@@ -755,7 +781,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
       )}
 
       {!showInfo && (
-        <Text fontSize="xs" color="whiteAlpha.500" mb="3" lineHeight="tall">
+        <Text fontSize="xs" color={pal.textFaint} mb="3" lineHeight="tall">
           {isPreview
             ? "Preview only — your choice isn't saved until you confirm it."
             : completedCount === 0
@@ -771,25 +797,25 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
           return (
             <Box key={k} position="relative" onMouseEnter={() => setHovered(k)} onMouseLeave={() => setHovered(null)} cursor="default">
               <HStack justify="space-between" mb="1">
-                <Text fontSize="2xs" color="whiteAlpha.600" lineClamp={1}>{METRIC_LABELS[k]}</Text>
+                <Text fontSize="2xs" color={pal.textMuted} lineClamp={1}>{METRIC_LABELS[k]}</Text>
                 <HStack gap="1">
                   {isPreview && delta !== 0 && (
-                    <Text fontSize="2xs" fontWeight="bold" color={delta > 0 ? "green.300" : "red.300"}>
+                    <Text fontSize="2xs" fontWeight="bold" color={delta > 0 ? pos : neg}>
                       {delta > 0 ? `+${delta}` : delta}
                     </Text>
                   )}
-                  <Text fontSize="2xs" color="whiteAlpha.800" fontFamily="mono">{val}</Text>
+                  <Text fontSize="2xs" color={pal.text} fontFamily="mono">{val}</Text>
                 </HStack>
               </HStack>
-              <Box h="2" bg="whiteAlpha.100" rounded="full" overflow="visible" position="relative">
+              <Box h="2" bg={pal.metricTrack} rounded="full" overflow="visible" position="relative">
                 <Box h="full" w={`${val}%`} bg={accent} rounded="full" transition="width 0.4s ease" />
                 {isPreview && (
-                  <Box position="absolute" top="-1px" h="calc(100% + 2px)" w="2px" bg="whiteAlpha.700" rounded="full" style={{ left: `${current[k]}%` }} title={`Now: ${current[k]}`} />
+                  <Box position="absolute" top="-1px" h="calc(100% + 2px)" w="2px" bg={pal.textMuted} rounded="full" style={{ left: `${current[k]}%` }} title={`Now: ${current[k]}`} />
                 )}
               </Box>
               {hovered === k && (
-                <Box position="absolute" top="100%" left="0" mt="1" zIndex="10" bg="gray.900" color="whiteAlpha.900"
-                  borderWidth="1px" borderColor="whiteAlpha.200" rounded="md" px="3" py="2" fontSize="2xs" w="220px" shadow="xl">
+                <Box position="absolute" top="100%" left="0" mt="1" zIndex="10" bg={pal.tooltipBg} color={pal.tooltipText}
+                  borderWidth="1px" borderColor={pal.tooltipBorder} rounded="md" px="3" py="2" fontSize="2xs" w="220px" shadow="xl">
                   {METRIC_HOVER[k]}
                 </Box>
               )}
@@ -803,45 +829,47 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
 
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled }: {
-  option: LabeledOption; profile: Block5UserProfile; accent: string;
+function OptionCard({ option, profile, accent, pal, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled }: {
+  option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
   expanded: boolean; onToggle: () => void; onSelect: () => void;
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
 }) {
-  const levelColor = LEVEL_COLOR[option.level];
+  const levelColor = (pal.mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[option.level];
+  const pos = pal.mode === "light" ? "#15803d" : "#86efac";
+  const neg = pal.mode === "light" ? "#b91c1c" : "#fca5a5";
   return (
-    <Box bg="whiteAlpha.50" backdropFilter="blur(8px)" borderWidth={isPreviewing ? "2px" : "1px"}
-      borderColor={isPreviewing ? accent : "whiteAlpha.100"} rounded="2xl" p={{ base: "5", md: "6" }} shadow="lg"
-      opacity={disabled ? 0.5 : 1} transition="all 0.2s ease" _hover={disabled ? {} : { borderColor: "whiteAlpha.300" }}>
+    <Box bg={pal.cardBg} backdropFilter={pal.backdropBlur} borderWidth={isPreviewing ? "2px" : "1px"}
+      borderColor={isPreviewing ? accent : pal.cardBorder} rounded="2xl" p={{ base: "5", md: "6" }} style={{ boxShadow: pal.cardShadow }}
+      opacity={disabled ? 0.5 : 1} transition="all 0.2s ease" _hover={disabled ? {} : { borderColor: pal.cardHoverBorder }}>
       <Flex justify="space-between" align="start" gap="4" wrap="wrap">
         <VStack align="start" gap="1" minW="0" flex="1">
-          <Text color="white" fontWeight="semibold" fontSize="md" lineHeight="short">{option.title}</Text>
-          <Text color="whiteAlpha.600" fontSize="sm" lineHeight="tall">{option.summary}</Text>
+          <Text color={pal.text} fontWeight="semibold" fontSize="md" lineHeight="short">{option.title}</Text>
+          <Text color={pal.textMuted} fontSize="sm" lineHeight="tall">{option.summary}</Text>
         </VStack>
         <VStack align="end" gap="1" flexShrink={0}>
           <Badge bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
             {ALIGNMENT_LABEL[option.level]}
           </Badge>
-          <Badge bg="whiteAlpha.100" color="whiteAlpha.800" rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono">Align {option.matchScore}</Badge>
-          <Badge bg="whiteAlpha.100" color="whiteAlpha.800" rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono">Perf {option.performance}</Badge>
+          <Badge bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono">Align {option.matchScore}</Badge>
+          <Badge bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono">Perf {option.performance}</Badge>
         </VStack>
       </Flex>
 
       {option.consequence && (
         <HStack mt="3" gap="2" align="start">
-          <Icon color="whiteAlpha.500" mt="0.5" boxSize="3.5"><LuTriangleAlert /></Icon>
-          <Text fontSize="xs" color="whiteAlpha.600" lineHeight="tall">{option.consequence}</Text>
+          <Icon color={pal.textFaint} mt="0.5" boxSize="3.5"><LuTriangleAlert /></Icon>
+          <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{option.consequence}</Text>
         </HStack>
       )}
 
       {/* Inline impact (issue 1: visible without scrolling to the top dashboard) */}
       {impact && (
-        <Box mt="3" bg="blackAlpha.400" borderWidth="1px" borderColor={accent} rounded="lg" px="3" py="2">
+        <Box mt="3" bg={pal.panelDeep} borderWidth="1px" borderColor={accent} rounded="lg" px="3" py="2">
           <HStack justify="space-between" mb="1" wrap="wrap" gap="1">
-            <Text fontSize="2xs" color="whiteAlpha.700" textTransform="uppercase" letterSpacing="wider">Impact on your overall performance</Text>
-            <Text fontSize="xs" fontWeight="bold" color="white">
+            <Text fontSize="2xs" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">Impact on your overall performance</Text>
+            <Text fontSize="xs" fontWeight="bold" color={pal.text}>
               {impact.baseOverall} → {impact.overall}{" "}
-              <Text as="span" color={impact.overall >= impact.baseOverall ? "green.300" : "red.300"}>
+              <Text as="span" color={impact.overall >= impact.baseOverall ? pos : neg}>
                 ({impact.overall >= impact.baseOverall ? `▲ +${impact.overall - impact.baseOverall}` : `▼ ${impact.overall - impact.baseOverall}`})
               </Text>
             </Text>
@@ -849,41 +877,41 @@ function OptionCard({ option, profile, accent, expanded, onToggle, onSelect, isP
           {impact.changes.length > 0 && (
             <HStack gap="2" wrap="wrap">
               {impact.changes.map((c) => (
-                <Badge key={c.label} bg="whiteAlpha.100" rounded="md" px="2" fontSize="2xs" color={c.delta > 0 ? "green.300" : "red.300"}>
+                <Badge key={c.label} bg={pal.badgeBg} rounded="md" px="2" fontSize="2xs" color={c.delta > 0 ? pos : neg}>
                   {c.label} {c.delta > 0 ? `+${c.delta}` : c.delta}
                 </Badge>
               ))}
             </HStack>
           )}
-          <Text fontSize="2xs" color="whiteAlpha.500" mt="1">Preview only — not saved until you confirm.</Text>
+          <Text fontSize="2xs" color={pal.textFaint} mt="1">Preview only — not saved until you confirm.</Text>
         </Box>
       )}
 
       <HStack mt="4" gap="3" wrap="wrap">
-        <Button size="sm" variant="ghost" color="whiteAlpha.700" _hover={{ bg: "whiteAlpha.100", color: "white" }} rounded="lg" onClick={onToggle} gap="1" fontSize="xs">
+        <Button size="sm" variant="ghost" color={pal.textMuted} _hover={{ bg: pal.surfaceSubtle, color: pal.text }} rounded="lg" onClick={onToggle} gap="1" fontSize="xs">
           {expanded ? "Hide details" : "See value & metric details"}
           <Icon boxSize="3.5">{expanded ? <LuChevronUp /> : <LuChevronDown />}</Icon>
         </Button>
         <Button size="sm" variant="outline"
-          borderColor={isPreviewing ? accent : "whiteAlpha.300"} color={isPreviewing ? accent : "whiteAlpha.700"}
-          bg={isPreviewing ? "whiteAlpha.100" : "transparent"}
-          _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onPreview} disabled={disabled} gap="1" fontSize="xs">
+          borderColor={isPreviewing ? accent : pal.cardBorder} color={isPreviewing ? accent : pal.textMuted}
+          bg={isPreviewing ? pal.surfaceSubtle : "transparent"}
+          _hover={{ bg: pal.surfaceSubtle }} rounded="lg" onClick={onPreview} disabled={disabled} gap="1" fontSize="xs">
           <Icon boxSize="3.5"><LuEye /></Icon>
           {isPreviewing ? "Previewing impact" : "Preview impact"}
         </Button>
-        <Button size="sm" bg="whiteAlpha.100" color="white" _hover={{ bg: "whiteAlpha.200" }} rounded="lg" onClick={onSelect} disabled={disabled} fontSize="xs">
+        <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={onSelect} disabled={disabled} fontSize="xs" fontWeight="semibold">
           Choose this option
         </Button>
       </HStack>
 
       {expanded && (
-        <Box mt="4" pt="4" borderTopWidth="1px" borderColor="whiteAlpha.100">
-          <Text fontSize="xs" fontWeight="semibold" color="whiteAlpha.700" textTransform="uppercase" letterSpacing="wider" mb="2">
+        <Box mt="4" pt="4" borderTopWidth="1px" borderColor={pal.separator}>
+          <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
             How this option fits your values
           </Text>
-          <Text fontSize="2xs" color="whiteAlpha.500" mb="3" lineHeight="tall">
-            The white line is your priority for each value. A bar that reaches or passes the line satisfies that value;
-            a red gap below the line is a shortfall that lowers alignment.
+          <Text fontSize="2xs" color={pal.textFaint} mb="3" lineHeight="tall">
+            The marker line is your priority for each value. A bar that reaches or passes the line satisfies that value;
+            a gap below the line is a shortfall that lowers alignment.
           </Text>
           <VStack align="stretch" gap="3">
             {POLICY_DIM_KEYS.map((k) => {

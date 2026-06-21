@@ -17,6 +17,7 @@ import { ALIGNMENT_LABEL } from "./block5CVR";
 import { POLICY_DIM_KEYS } from "./block5Types";
 import type { AlignmentLevel, Block5Results, Block5ScenarioResult } from "./block5Types";
 import { Block5VisualizationsView } from "./Block5VisualizationsView";
+import { useScrollToTop } from "./useScrollToTop";
 
 interface Props {
   results: Block5Results;
@@ -70,6 +71,8 @@ function MeasureCard({ icon, label, value, sub, hint, palette }: {
 export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: Props) {
   /** When true, swap this summary for the full-screen "Your experiment in charts" view. */
   const [showCharts, setShowCharts] = useState(false);
+  // Opening or closing the charts view starts at the top.
+  useScrollToTop(showCharts);
   if (showCharts) {
     return (
       <Block5VisualizationsView

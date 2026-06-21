@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlock123Surfaces } from "./block123Theme";
 import {
   Box,
   Button,
@@ -67,6 +68,7 @@ interface MoneyThresholdBlockProps {
  * participant chooses to keep, establishing a threshold per context.
  */
 export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThresholdBlockProps = {}) {
+  const surf = useBlock123Surfaces(); // coordinated light-mode surfaces (dark unchanged)
   /** Index into CONTEXTS for the location scenario currently being presented. */
   const [currentContextIndex, setCurrentContextIndex] = useState(0);
   /** Index into AMOUNT_LABELS/AMOUNT_VALUES for the amount currently on screen. */
@@ -322,7 +324,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
     return (
       <Box
         minH="100vh"
-        bg="bg"
+        bg={surf.pageBg}
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -332,7 +334,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
         <Box
           w="full"
           maxW="3xl"
-          bg="bg.panel"
+          bg={surf.cardBg}
           borderWidth="1px"
           borderColor="border"
           shadow="lg"
@@ -348,7 +350,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
   return (
     <Box
       minH="100vh"
-      bg="bg"
+      bg={surf.pageBg}
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -358,7 +360,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
       <Box
         w="full"
         maxW="3xl"
-        bg="bg.panel"
+        bg={surf.cardBg}
         borderWidth="1px"
         borderColor="border"
         shadow="lg"
@@ -392,7 +394,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
           </VStack>
 
           <Box
-            bg="bg.subtle"
+            bg={surf.subtleBg}
             borderWidth="1px"
             borderColor="border.subtle"
             rounded="xl"
