@@ -1,6 +1,7 @@
 import type { AIWorkforceAnalysis } from "./aiWorkforceAnalysis";
 import type { MoralProfile } from "./profileAnalysis";
 import type { ScenarioContext } from "./scenarioSelection";
+import { WORKER_GROUPS, WORKER_GROUP_SIZES } from "./aiWorkforceTypes";
 
 export type Block4ScenarioDomain =
   | "ai_shift_scheduling_policy"
@@ -42,16 +43,16 @@ export function renderBlock4Scenario(
   ctx: ScenarioContext,
 ): string {
   const template = BLOCK4_SCENARIOS[domain];
+  // Single source of truth: these labels come from the Block 3 definitions, so Block 4
+  // always describes the worker group and group size in exactly the same words Block 3 used.
   const groupLabel =
-    ctx.groupType === "low_buffer"
-      ? "low-buffer workers with limited alternatives"
-      : "high-buffer workers with stronger alternatives";
+    WORKER_GROUPS.find((g) => g.key === ctx.groupType)?.label ?? "entry-level workers";
+  // No article here: all four templates above already read "across a [GROUP_SIZE]", and the
+  // Block 3 labels are bare noun phrases ("group of about 1,000 workers"). Prepending "a " as
+  // well produced "across a a group of about 1,000 workers" in the participant-facing vignette.
   const sizeLabel =
-    ctx.groupSize === "small"
-      ? "a small group of about 10 workers"
-      : ctx.groupSize === "medium"
-        ? "a medium group of about 1,000 workers"
-        : "a large group of about 100,000 workers";
+    WORKER_GROUP_SIZES.find((s) => s.key === ctx.groupSize)?.label ??
+    "group of about 10 workers";
   return template.body
     .replace("[GAIN]", ctx.gainLabel)
     .replace("[GROUP_TYPE]", groupLabel)
@@ -218,7 +219,7 @@ export const STAKEHOLDER_PERSPECTIVES: StakeholderPerspectiveCard[] = [
     applicableGroupTypes: ["any"],
     applicableGroupSizes: ["any"],
     template:
-      "A community advocate may point out that when many workers with limited buffers are affected at once, the harm no longer remains individual; it becomes a wider social and economic burden.",
+      "A community advocate may point out that when many entry-level workers are affected at once, the harm no longer remains individual; it becomes a wider social and economic burden.",
   },
   {
     id: "harm_small_group_vivid_1",

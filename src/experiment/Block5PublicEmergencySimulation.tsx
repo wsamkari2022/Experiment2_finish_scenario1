@@ -24,9 +24,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  Badge, Box, Button, Flex, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
+  Badge, Box, Button, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge } from "react-icons/lu";
+import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend } from "./block5Meters";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
@@ -34,9 +34,11 @@ import {
   optionMetrics, applyEndorsementUpdates, applyValueBump, applyApaUpdates, scenarioVciScore,
   performanceScore, computeVCI, computeStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
+  chooseFraming, otherFraming, framingSensitivityKey,
 } from "./block5CVR";
-import { getCVRStory, pickWhoVariant } from "./block5CVRContent";
+import { getCVRStory, pickWhoVariant, getCVRFramingClauses } from "./block5CVRContent";
 import { useScrollToTop } from "./useScrollToTop";
+import { Block5OptionCompare } from "./Block5OptionCompare";
 import { useColorMode } from "@/components/ui/color-mode";
 import { getBlock5Palette, type Block5Palette } from "./block5Palette";
 import {
@@ -45,6 +47,7 @@ import {
   type Block5UserProfile, type CVREndorsement, type Block5MetricKey, type Block5MetricProfile,
   type Block5PolicyDimKey, type CVRCoordinate, type WhoVariant,
   type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
+  type CVRFraming, type FramingAdjust,
   BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
 } from "./block5Types";
 
@@ -61,7 +64,7 @@ interface ProgressState {
   firstChoiceId: string | null;
 }
 
-type FlowStep = "review" | "q1" | "q2" | "apa" | "confirm";
+type FlowStep = "review" | "q1" | "apa" | "confirm";
 
 interface PreviewImpact {
   overall: number;
@@ -89,17 +92,34 @@ const LEVEL_COLOR_LIGHT: Record<AlignmentLevel, string> = {
  *   a = same-numbers anchor (gold) · v = the violated VALUE (teal) ·
  *   f = the FRAMING context/directness (orange) · w = WHO appears, salience (purple) ·
  *   b = plain bold (e.g. the harm).
+ *
+ * Two sets: bright tones for the DARK modal, darker tones for the LIGHT modal (so the highlights
+ * stay legible whichever colour mode is active). Pick with cvrMarks(colorMode).
  */
-const CVR_MARK: Record<string, { color?: string; bold?: boolean; italic?: boolean }> = {
+type MarkSet = Record<string, { color?: string; bold?: boolean; italic?: boolean }>;
+const CVR_MARK_DARK: MarkSet = {
   a: { color: "#f6e05e", bold: true },
   v: { color: "#4fd1c5", bold: true, italic: true },
   f: { color: "#f6ad55", bold: true, italic: true },
   w: { color: "#b794f4", bold: true, italic: true },
   b: { bold: true },
 };
+const CVR_MARK_LIGHT: MarkSet = {
+  // Four clearly distinct hue families (gold · teal · red · violet) so "same numbers" and
+  // "the framing" can never be confused on a light background.
+  a: { color: "#a16207", bold: true },               // gold (yellow-700) — same numbers
+  v: { color: "#0f766e", bold: true, italic: true }, // teal-700 — the value
+  f: { color: "#dc2626", bold: true, italic: true }, // red-600 — the framing
+  w: { color: "#7c3aed", bold: true, italic: true }, // violet-600 — who is affected
+  b: { bold: true },
+};
+/** The mark colours for the current colour mode. */
+function cvrMarks(mode: "light" | "dark"): MarkSet {
+  return mode === "light" ? CVR_MARK_LIGHT : CVR_MARK_DARK;
+}
 
 /** Parse {x|text} markup into coloured, emphasised spans so the cube dimensions stand out. */
-function renderCVRMarkup(text: string): ReactNode[] {
+function renderCVRMarkup(text: string, marks: MarkSet): ReactNode[] {
   const nodes: ReactNode[] = [];
   const re = /\{([avfwb])\|([^}]*)\}/g;
   let last = 0;
@@ -107,7 +127,7 @@ function renderCVRMarkup(text: string): ReactNode[] {
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) nodes.push(text.slice(last, m.index));
-    const s = CVR_MARK[m[1]];
+    const s = marks[m[1]];
     nodes.push(
       <Text as="span" key={key++} color={s.color} fontWeight={s.bold ? "bold" : undefined} fontStyle={s.italic ? "italic" : undefined}>
         {m[2]}
@@ -123,7 +143,7 @@ const VALUE_NAME: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity: "Vulnerability protection",
   groupSizeSensitivity: "Group-size",
   gainResponsivenessSensitivity: "Gain responsiveness",
-  outcomeAggregationSensitivity: "Outcome aggregation",
+  outcomeAggregationSensitivity: "Outcome aggregation (Utility)",
 };
 const VALUE_BENEFIT: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity: "protecting the patients who are worst-off or least able to cope",
@@ -140,6 +160,11 @@ interface ApaCommitPayload {
   q2Influenced: boolean;
   q3Value: Block5PolicyDimKey;
   originalOptionId: string;
+  // Dual-perspective (NO path): which lens changed their mind (+20), and the snapshot for storage.
+  altViewGenerated: boolean;
+  framingShownFirst: CVRFraming;
+  framingSelected: CVRFraming | null;
+  framingAdjust: FramingAdjust | null;
 }
 
 function topMetricChanges(current: Block5MetricProfile, projected: Block5MetricProfile, n: number) {
@@ -168,6 +193,8 @@ interface TelemetryAccum {
   finalDecisionChanges: number;
   previewImpactOpens: number;
   optionExpands: number;
+  /** times the participant opened the two-radar option comparison in this scenario. */
+  compareChartsOpens: number;
   timeToFirstSelectionMs: number | null;
   cvrDwellMs: number;
   apaDwellMs: number;
@@ -181,7 +208,7 @@ function newTelemetryAccum(): TelemetryAccum {
   return {
     startedAt: Date.now(),
     cvrVisits: 0, apaVisits: 0, optionChanges: 0, cvrBackouts: 0, apaBackouts: 0,
-    finalDecisionChanges: 0, previewImpactOpens: 0, optionExpands: 0,
+    finalDecisionChanges: 0, previewImpactOpens: 0, optionExpands: 0, compareChartsOpens: 0,
     timeToFirstSelectionMs: null, cvrDwellMs: 0, apaDwellMs: 0,
     distinct: new Set(), lastSelectedId: null, cvrShownAt: null, apaShownAt: null,
   };
@@ -195,6 +222,21 @@ function policyScoresOf(profile: Block5UserProfile): Record<Block5PolicyDimKey, 
   }
   return out;
 }
+
+/** Extracts the two reflection-lens sensitivities (0–100) for the Directness/Context evolution chart. */
+function framingScoresOf(profile: Block5UserProfile): { directnessSensitivity: number; contextSensitivity: number } {
+  const score = (key: string) => profile.dimensions.find((d) => d.key === key)?.score ?? 0;
+  return {
+    directnessSensitivity: score("directnessSensitivity"),
+    contextSensitivity: score("contextSensitivity"),
+  };
+}
+
+/** Participant-facing name + plain-English gloss for each reflection lens. */
+const FRAMING_META: Record<CVRFraming, { name: string; gloss: string }> = {
+  directness: { name: "Directness", gloss: "it's your own rule, your responsibility" },
+  context: { name: "Context", gloss: "circumstances shaped the numbers" },
+};
 
 /** Assembles the immutable, stored telemetry for a finished scenario from the accumulator. */
 function buildScenarioTelemetry(
@@ -223,6 +265,7 @@ function buildScenarioTelemetry(
     timeToFirstSelectionMs: t.timeToFirstSelectionMs,
     previewImpactOpens: t.previewImpactOpens,
     optionExpands: t.optionExpands,
+    compareChartsOpens: t.compareChartsOpens,
     cvrDwellMs,
     apaDwellMs,
   };
@@ -264,6 +307,13 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   const [cvrWho, setCvrWho] = useState<WhoVariant | null>(null);
   // Which sidebar value the user is hovering, to show its plain-English explanation.
   const [hoveredDim, setHoveredDim] = useState<string | null>(null);
+  // Is the two-radar "compare all options" overlay open? Reset per scenario like every other
+  // per-scenario UI flag, so it never carries over into the next scenario.
+  const [compareChartsOpen, setCompareChartsOpen] = useState(false);
+  // Dual-perspective (Directness ↔ Context): did the participant generate the OTHER lens, and
+  // (YES path) which lens did they say did NOT influence keeping the option? Both reset per option.
+  const [altViewGenerated, setAltViewGenerated] = useState(false);
+  const [framingChoiceYes, setFramingChoiceYes] = useState<CVRFraming | null>(null);
 
   const scenario = BLOCK5_SCENARIOS[progress.currentScenarioIndex];
   const profile = progress.profile;
@@ -288,6 +338,8 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     setTradeoffAck(false);
     setQ1Strong(null);
     setQ2Guided(null);
+    setAltViewGenerated(false);
+    setFramingChoiceYes(null);
   }, []);
 
   const toggleExpand = useCallback((id: string) => {
@@ -311,6 +363,11 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     });
   }, []);
 
+  const openCompareCharts = useCallback(() => {
+    if (telRef.current) telRef.current.compareChartsOpens += 1; // info-seeking signal
+    setCompareChartsOpen(true);
+  }, []);
+
   const handleSelect = useCallback((id: string) => {
     // --- telemetry (observation only): first-selection time, distinct opens, genuine changes ---
     const t = telRef.current;
@@ -327,6 +384,8 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     setTradeoffAck(false);
     setQ1Strong(null);
     setQ2Guided(null);
+    setAltViewGenerated(false);   // a fresh CVR starts with only the first lens
+    setFramingChoiceYes(null);
     setProgress((p) => (p.firstChoiceId ? p : { ...p, firstChoiceId: id }));
     // Lock in a random stakeholder voice now (only for a misaligned choice that triggers CVR),
     // so the vignette and the Q2 questions all reference the SAME person and it won't change on re-render.
@@ -383,8 +442,10 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
   // Records a finished scenario and advances (or completes Block 5). Shared by all paths.
   const finalizeScenario = useCallback((result: Block5ScenarioResult, nextProfile: Block5UserProfile) => {
-    // Snapshot the 4 policy values AFTER this scenario's update, for the evolution chart.
+    // Snapshot the 4 policy values + the two reflection lenses AFTER this scenario's update,
+    // so the results view can chart how each evolved across the journey.
     result.policySnapshotAfter = policyScoresOf(nextProfile);
+    result.framingSnapshotAfter = framingScoresOf(nextProfile);
     const nextResults = [...progress.scenarioResults, result];
     const nextIndex = progress.currentScenarioIndex + 1;
     if (nextIndex >= BLOCK5_SCENARIOS.length) {
@@ -421,6 +482,7 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     telRef.current = newTelemetryAccum(); // fresh telemetry for the next scenario
     setExpandedOptions(new Set());
     setPreviewOptionId(null);
+    setCompareChartsOpen(false);
     resetFlow();
   }, [progress, userProfile, onComplete, resetFlow]);
 
@@ -436,7 +498,25 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     const alignedToOriginal = origLevel === "aligned" || origLevel === "weakly_aligned";
     const coord = isMisaligned(opt.level) ? cvrCoordinate(opt, profile) : undefined;
 
+    // Dual-perspective record (YES / keep path). Only populated for a misaligned option, and the
+    // selection/−20 only when the participant generated the other lens and answered the question.
+    const framingFields: Partial<Block5ScenarioResult> = {};
+    if (isMisaligned(opt.level)) {
+      const shownFirst = chooseFraming(profile);
+      framingFields.cvrFramingShownFirst = shownFirst;
+      if (altViewGenerated) {
+        framingFields.cvrAltViewGenerated = true;
+        framingFields.cvrFramingShownSecond = otherFraming(shownFirst);
+        if (framingChoiceYes) {
+          framingFields.cvrFramingSelected = framingChoiceYes;
+          framingFields.cvrFramingSelectedRole = "not_influential";
+          framingFields.cvrFramingAdjustment = { sensitivityKey: framingSensitivityKey(framingChoiceYes), delta: -20 };
+        }
+      }
+    }
+
     const result: Block5ScenarioResult = {
+      ...framingFields,
       scenarioId: scenario.id,
       selectedOptionId: opt.id,
       selectedRank: opt.rank,
@@ -479,7 +559,7 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     };
 
     finalizeScenario(result, opts.nextProfile);
-  }, [scenario, userProfile, profile, labeled, expandedOptions, progress, cvrWho, finalizeScenario]);
+  }, [scenario, userProfile, profile, labeled, expandedOptions, progress, cvrWho, altViewGenerated, framingChoiceYes, finalizeScenario]);
 
   // APA committed a final decision: apply the (pending) APA profile updates and record the chosen option.
   const handleApaCommit = useCallback((payload: ApaCommitPayload) => {
@@ -492,7 +572,23 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     const origLevel = origLabeled.find((o) => o.id === opt.id)?.level;
     const alignedToOriginal = origLevel === "aligned" || origLevel === "weakly_aligned";
 
+    // Dual-perspective record (NO / APA path). The +20 itself is already baked into
+    // payload.pendingProfile by APAPanel; here we just store what happened for analysis.
+    const apaFramingFields: Partial<Block5ScenarioResult> = {
+      cvrFramingShownFirst: payload.framingShownFirst,
+    };
+    if (payload.altViewGenerated) {
+      apaFramingFields.cvrAltViewGenerated = true;
+      apaFramingFields.cvrFramingShownSecond = otherFraming(payload.framingShownFirst);
+      if (payload.framingSelected) {
+        apaFramingFields.cvrFramingSelected = payload.framingSelected;
+        apaFramingFields.cvrFramingSelectedRole = "influential";
+        apaFramingFields.cvrFramingAdjustment = payload.framingAdjust ?? undefined;
+      }
+    }
+
     const result: Block5ScenarioResult = {
+      ...apaFramingFields,
       scenarioId: scenario.id,
       selectedOptionId: opt.id,
       selectedRank: opt.rank,
@@ -541,19 +637,29 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     // Keeping the relative best fit (now labeled "Aligned") reinforces its value by +15;
     // weakly-aligned by +10. Both clamped to 100.
     const points = selectedOption.level === "aligned" ? 15 : selectedOption.level === "weakly_aligned" ? 10 : 0;
-    const nextProfile = points > 0 ? applyValueBump(profile, selectedOption, points) : profile;
+    // Everyday scenarios teach the profile less than a life-and-death one (scenario.stakesWeight).
+    const nextProfile = points > 0
+      ? applyValueBump(profile, selectedOption, points, scenario?.stakesWeight ?? 1)
+      : profile;
     commitChoice(selectedOption, { nextProfile, endorsement: "n/a", stakeholderGuided: null });
-  }, [selectedOption, profile, commitChoice]);
+  }, [selectedOption, profile, scenario, commitChoice]);
 
   const handleConfirmEndorsement = useCallback(() => {
     if (!selectedOption || q1Strong === null || q2Guided === null) return;
-    const nextProfile = applyEndorsementUpdates(profile, selectedOption, q1Strong, q2Guided);
+    // Dual-perspective: −20 to the lens the participant said did NOT influence keeping the option
+    // (only when they generated the other lens and answered). Committed here, with the endorsement.
+    const framingAdjust: FramingAdjust | null = altViewGenerated && framingChoiceYes
+      ? { sensitivityKey: framingSensitivityKey(framingChoiceYes), delta: -20 }
+      : null;
+    const nextProfile = applyEndorsementUpdates(
+      profile, selectedOption, q1Strong, q2Guided, framingAdjust, scenario?.stakesWeight ?? 1,
+    );
     commitChoice(selectedOption, {
       nextProfile,
       endorsement: q1Strong ? "strong" : "weak",
       stakeholderGuided: q2Guided,
     });
-  }, [selectedOption, profile, q1Strong, q2Guided, commitChoice]);
+  }, [selectedOption, profile, scenario, q1Strong, q2Guided, altViewGenerated, framingChoiceYes, commitChoice]);
 
   if (!scenario) return null;
 
@@ -604,62 +710,80 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
       </Box>
 
       <Grid templateColumns={{ base: "1fr", lg: "320px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
-        {/* Sidebar (not sticky, to avoid overlapping the pinned dashboard) */}
-        <Box bg={pal.sidebarBg} backdropFilter={pal.backdropBlur} borderWidth="1px" borderColor={pal.sidebarBorder} rounded="2xl" p={{ base: "5", md: "6" }} style={{ boxShadow: pal.sidebarShadow }}>
-          <VStack align="stretch" gap="5">
-            <Box>
-              <Text fontSize="2xs" fontWeight="bold" color={pal.accent} textTransform="uppercase" letterSpacing="widest" mb="2">
-                The scenario
-              </Text>
-              <Text fontSize="sm" color={pal.textMuted} lineHeight="tall">{scenario.description}</Text>
-            </Box>
-            {scenario.factBase && (
-              <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.accent} borderLeftWidth="4px" rounded="lg" px="4" py="3">
-                <HStack gap="2" mb="1.5">
-                  <Icon color={pal.accent} boxSize="4"><LuTriangleAlert /></Icon>
-                  <Text fontSize="2xs" fontWeight="bold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">The situation right now</Text>
-                </HStack>
-                <Text fontSize="sm" color={pal.text} lineHeight="tall" fontWeight="medium">{scenario.factBase}</Text>
+        {/* Sidebar column — the scenario panel, with the comparison-charts button beneath it. */}
+        <VStack align="stretch" gap="4">
+          <Box bg={pal.sidebarBg} backdropFilter={pal.backdropBlur} borderWidth="1px" borderColor={pal.sidebarBorder} rounded="2xl" p={{ base: "5", md: "6" }} style={{ boxShadow: pal.sidebarShadow }}>
+            <VStack align="stretch" gap="5">
+              <Box>
+                <Text fontSize="2xs" fontWeight="bold" color={pal.accent} textTransform="uppercase" letterSpacing="widest" mb="2">
+                  The scenario
+                </Text>
+                <Text fontSize="sm" color={pal.textMuted} lineHeight="tall">{scenario.description}</Text>
               </Box>
-            )}
-            <Separator borderColor={pal.separator} />
-            <Box>
-              <HStack gap="2" mb="3">
-                <Icon color={pal.accent}><LuShield /></Icon>
-                <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">Your value priorities</Text>
-              </HStack>
-              <VStack align="stretch" gap="2">
-                {topDimensions.map((d) => (
-                  <Box key={d.key} position="relative" cursor="help"
-                    onMouseEnter={() => setHoveredDim(d.key)} onMouseLeave={() => setHoveredDim(null)}>
-                    <HStack justify="space-between">
-                      <Text fontSize="xs" color={hoveredDim === d.key ? pal.text : pal.textMuted}
-                        style={{ textDecoration: "underline dotted", textDecorationColor: pal.textFaint, textUnderlineOffset: "2px" }}>
-                        {d.label}
-                      </Text>
-                      <Badge bg={pal.badgeBg} color={pal.text} rounded="md" px="2" fontSize="xs" fontFamily="mono">{d.score}</Badge>
-                    </HStack>
-                    {hoveredDim === d.key && (
-                      <Box position="absolute" top="100%" left="0" mt="1.5" zIndex="20"
-                        bg={pal.tooltipBg} color={pal.tooltipText}
-                        borderWidth="1px" borderColor={pal.tooltipBorder} rounded="lg" px="3" py="2"
-                        fontSize="2xs" lineHeight="tall" w="240px" shadow="xl">
-                        {POLICY_DIM_EXPLAIN[d.key as Block5PolicyDimKey]}
-                      </Box>
-                    )}
-                  </Box>
-                ))}
-              </VStack>
-            </Box>
-            <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl" px="4" py="3">
-              <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                Every option stays available. Each is labeled by how well it fits your earlier
-                responses — but you can choose any of them. Use “Preview impact” to see how an
-                option would change your performance above.
-              </Text>
-            </Box>
-          </VStack>
-        </Box>
+              {scenario.factBase && (
+                <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.accent} borderLeftWidth="4px" rounded="lg" px="4" py="3">
+                  <HStack gap="2" mb="1.5">
+                    <Icon color={pal.accent} boxSize="4"><LuTriangleAlert /></Icon>
+                    <Text fontSize="2xs" fontWeight="bold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">The situation right now</Text>
+                  </HStack>
+                  <Text fontSize="sm" color={pal.text} lineHeight="tall" fontWeight="medium">{scenario.factBase}</Text>
+                </Box>
+              )}
+              <Separator borderColor={pal.separator} />
+              <Box>
+                <HStack gap="2" mb="3">
+                  <Icon color={pal.accent}><LuShield /></Icon>
+                  <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">Your value priorities</Text>
+                </HStack>
+                <VStack align="stretch" gap="2">
+                  {topDimensions.map((d) => (
+                    <Box key={d.key} position="relative" cursor="help"
+                      onMouseEnter={() => setHoveredDim(d.key)} onMouseLeave={() => setHoveredDim(null)}>
+                      <HStack justify="space-between">
+                        <Text fontSize="xs" color={hoveredDim === d.key ? pal.text : pal.textMuted}
+                          style={{ textDecoration: "underline dotted", textDecorationColor: pal.textFaint, textUnderlineOffset: "2px" }}>
+                          {d.label}
+                        </Text>
+                        <Badge bg={pal.badgeBg} color={pal.text} rounded="md" px="2" fontSize="xs" fontFamily="mono">{d.score}</Badge>
+                      </HStack>
+                      {hoveredDim === d.key && (
+                        <Box position="absolute" top="100%" left="0" mt="1.5" zIndex="20"
+                          bg={pal.tooltipBg} color={pal.tooltipText}
+                          borderWidth="1px" borderColor={pal.tooltipBorder} rounded="lg" px="3" py="2"
+                          fontSize="2xs" lineHeight="tall" w="240px" shadow="xl">
+                          {POLICY_DIM_EXPLAIN[d.key as Block5PolicyDimKey]}
+                        </Box>
+                      )}
+                    </Box>
+                  ))}
+                </VStack>
+              </Box>
+              <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl" px="4" py="3">
+                <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
+                  Every option stays available. Each is labeled by how well it fits your earlier
+                  responses — but you can choose any of them. Use “Preview impact” to see how an
+                  option would change your performance above.
+                </Text>
+              </Box>
+            </VStack>
+          </Box>
+
+          {/* Opens the two-radar comparison of all six options (see Block5OptionCompare). */}
+          <Button
+            size="md" variant="outline" w="full" rounded="xl" gap="2"
+            borderWidth="1px" borderColor={pal.accent} color={pal.accent}
+            bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
+            _hover={{ bg: pal.surfaceSubtle }}
+            style={{ boxShadow: pal.sidebarShadow }}
+            onClick={openCompareCharts}
+          >
+            <Icon boxSize="4"><LuChartSpline /></Icon>
+            <Text fontSize="sm" fontWeight="semibold">Compare all options on charts</Text>
+          </Button>
+          <Text fontSize="2xs" color={pal.textFaint} textAlign="center" px="2" lineHeight="tall">
+            Two radar charts: what each option achieves, and what each one prioritises.
+          </Text>
+        </VStack>
 
         {/* Options */}
         <VStack align="stretch" gap="4">
@@ -682,6 +806,21 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
         </VStack>
       </Grid>
 
+      {compareChartsOpen && (
+        // Keyed by scenario so the overlay's "which options are visible" state is rebuilt
+        // from scratch for each scenario's option set rather than carried across.
+        <Block5OptionCompare
+          key={scenario.id}
+          scenario={scenario}
+          options={labeled}
+          yourPolicyScores={policyScoresOf(profile)}
+          cumulative={cumulative}
+          completedCount={progress.scenarioResults.length}
+          pal={pal}
+          onClose={() => setCompareChartsOpen(false)}
+        />
+      )}
+
       {selectedOption && step && (
         <FlowOverlay
           option={selectedOption} profile={profile} scenario={scenario} accent={pal.accent}
@@ -699,6 +838,11 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
           onCvrBackout={handleCvrBackout}
           onApaBail={handleApaBail}
           onFinalDecisionChange={handleFinalDecisionChange}
+          altViewGenerated={altViewGenerated}
+          onAltGenerated={() => setAltViewGenerated(true)}
+          framingChoiceYes={framingChoiceYes}
+          setFramingChoiceYes={setFramingChoiceYes}
+          mode={pal.mode}
         />
       )}
     </Box>
@@ -855,11 +999,47 @@ function OptionCard({ option, profile, accent, pal, expanded, onToggle, onSelect
         </VStack>
       </Flex>
 
-      {option.consequence && (
-        <HStack mt="3" gap="2" align="start">
-          <Icon color={pal.textFaint} mt="0.5" boxSize="3.5"><LuTriangleAlert /></Icon>
-          <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{option.consequence}</Text>
-        </HStack>
+      {/*
+        THE TRADE-OFF — the most important thing on the card.
+        This used to be a single muted line that participants skipped straight past. It is now an
+        inset, colour-coded panel: what you GAIN in green, what you GIVE UP in red, and the moral
+        question underneath. Both halves are visible BEFORE the participant chooses, which is the
+        whole point of the block — they should feel the cost of the option, not discover it after.
+      */}
+      {(option.gains || option.consequence || option.givesUp) && (
+        <Box mt="4" bg={pal.tradeoffBg} borderWidth="1px" borderColor={pal.tradeoffBorder}
+          rounded="xl" px={{ base: "3.5", md: "4" }} py="3">
+          <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase"
+            color={pal.textFaint} mb="2.5">
+            The trade-off
+          </Text>
+          <Stack gap="2.5">
+            <HStack align="start" gap="2.5">
+              <Icon color={pal.gainColor} boxSize="4" mt="0.5" flexShrink={0}><LuCheck /></Icon>
+              <Text fontSize="sm" color={pal.text} lineHeight="tall">
+                <Text as="span" fontWeight="bold" color={pal.gainColor}>You gain — </Text>
+                {option.gains ?? option.consequence}
+              </Text>
+            </HStack>
+            {option.givesUp && (
+              <HStack align="start" gap="2.5">
+                <Icon color={pal.costColor} boxSize="4" mt="0.5" flexShrink={0}><LuTriangleAlert /></Icon>
+                <Text fontSize="sm" color={pal.text} lineHeight="tall">
+                  <Text as="span" fontWeight="bold" color={pal.costColor}>You give up — </Text>
+                  {option.givesUp}
+                </Text>
+              </HStack>
+            )}
+          </Stack>
+          {option.moralTension && (
+            <HStack align="start" gap="2.5" mt="3" pt="2.5" borderTopWidth="1px" borderTopColor={pal.separator}>
+              <Icon color={pal.textFaint} boxSize="3.5" mt="0.5" flexShrink={0}><LuScale /></Icon>
+              <Text fontSize="xs" fontStyle="italic" color={pal.textMuted} lineHeight="tall">
+                {option.moralTension}
+              </Text>
+            </HStack>
+          )}
+        </Box>
       )}
 
       {/* Inline impact (issue 1: visible without scrolling to the top dashboard) */}
@@ -917,14 +1097,324 @@ function OptionCard({ option, profile, accent, pal, expanded, onToggle, onSelect
             {POLICY_DIM_KEYS.map((k) => {
               const dim = profile.dimensions.find((d) => d.key === k);
               return (
-                <SensitivityMeterBar key={k} label={dim?.label ?? k} optionScore={option.fingerprint[k]} userScore={dim?.score ?? 50} accentColor={accent} />
+                <SensitivityMeterBar key={k} label={dim?.label ?? k} optionScore={option.fingerprint[k]} userScore={dim?.score ?? 50} accentColor={accent} mode={pal.mode} />
               );
             })}
           </VStack>
-          <Box mt="3"><MeterLegend /></Box>
+          <Box mt="3"><MeterLegend mode={pal.mode} /></Box>
         </Box>
       )}
     </Box>
+  );
+}
+
+/* ---------------- CVR vignette: LLM-style "thinking → streaming" reveal ---------------- */
+
+interface CVRSeg { text: string; color?: string; bold?: boolean; italic?: boolean }
+
+/** Parses {x|…} CVR markup into styled segments (same colour key as renderCVRMarkup). */
+function parseCVRSegments(text: string, marks: MarkSet): CVRSeg[] {
+  const segs: CVRSeg[] = [];
+  const re = /\{([avfwb])\|([^}]*)\}/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) segs.push({ text: text.slice(last, m.index) });
+    const s = marks[m[1]];
+    segs.push({ text: m[2], color: s.color, bold: s.bold, italic: s.italic });
+    last = re.lastIndex;
+  }
+  if (last < text.length) segs.push({ text: text.slice(last) });
+  return segs;
+}
+
+/** Renders the first `shown` characters across styled segments (preserving per-segment colour). */
+function renderCVRSegmentsUpTo(segs: CVRSeg[], shown: number): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let consumed = 0;
+  let key = 0;
+  for (const s of segs) {
+    if (consumed >= shown) break;
+    const slice = s.text.slice(0, shown - consumed);
+    nodes.push(
+      <Text as="span" key={key++} color={s.color} fontWeight={s.bold ? "bold" : undefined} fontStyle={s.italic ? "italic" : undefined}>
+        {slice}
+      </Text>,
+    );
+    consumed += s.text.length;
+  }
+  return nodes;
+}
+
+/** Types one marked-up CVR line letter-by-letter, then calls onComplete once. */
+function Typed({ text, marks, accent, onComplete, fontSize, color, fontWeight, lineHeight, mb }: {
+  text: string; marks: MarkSet; accent: string; onComplete?: () => void;
+  fontSize?: string; color?: string; fontWeight?: string; lineHeight?: string; mb?: string;
+}) {
+  const segs = useMemo(() => parseCVRSegments(text, marks), [text, marks]);
+  const total = useMemo(() => segs.reduce((n, s) => n + s.text.length, 0), [segs]);
+  const [shown, setShown] = useState(0);
+  const fired = useRef(false);
+  useEffect(() => {
+    if (shown >= total) return;
+    const id = setTimeout(() => setShown((s) => Math.min(total, s + 2)), 16); // ~2 chars / 16ms (LLM stream feel)
+    return () => clearTimeout(id);
+  }, [shown, total]);
+  useEffect(() => {
+    if (total > 0 && shown >= total && !fired.current) { fired.current = true; onComplete?.(); }
+  }, [shown, total, onComplete]);
+  return (
+    <Text fontSize={fontSize} color={color} fontWeight={fontWeight} lineHeight={lineHeight} mb={mb}>
+      {renderCVRSegmentsUpTo(segs, shown)}
+      {shown < total && (
+        <Box as="span" style={{ display: "inline-block", width: "2px", height: "1em", background: accent, marginLeft: "2px", verticalAlign: "text-bottom", opacity: 0.9 }} />
+      )}
+    </Text>
+  );
+}
+
+/** Cycling "…" used by the thinking indicator. */
+function AnimatedDots() {
+  const [n, setN] = useState(1);
+  useEffect(() => {
+    const id = setInterval(() => setN((x) => (x % 3) + 1), 420);
+    return () => clearInterval(id);
+  }, []);
+  return <>{".".repeat(n)}</>;
+}
+
+/** The "system is thinking" indicator shown before a reflection streams in. */
+function CVRThinking({ accent, label = "Reflecting on your choice" }: { accent: string; label?: string }) {
+  return (
+    <HStack gap="3" py="7" justify="center" animationName="fade-in" animationDuration="moderate">
+      <Spinner size="sm" color={accent} />
+      <Icon color={accent} boxSize="4" animation="glow-ring 1.6s ease-in-out infinite"><LuSparkles /></Icon>
+      <Text fontSize="sm" color="fg.muted" fontStyle="italic">
+        {label}<AnimatedDots />
+      </Text>
+    </HStack>
+  );
+}
+
+/** Two-pill segmented control to switch box 1 between the two generated reflection lenses. */
+function ViewToggle({ current, framingFirst, framingSecond, accent, onSelect }: {
+  current: "first" | "second"; framingFirst: CVRFraming; framingSecond: CVRFraming; accent: string;
+  onSelect: (v: "first" | "second") => void;
+}) {
+  const pill = (view: "first" | "second", framing: CVRFraming) => {
+    const active = current === view;
+    return (
+      <Button size="2xs" rounded="full" px="3" fontSize="2xs" fontWeight="bold"
+        bg={active ? accent : "transparent"} color={active ? "white" : "fg.muted"}
+        _hover={active ? {} : { bg: "bg.muted", color: "fg" }}
+        onClick={() => onSelect(view)}>
+        {FRAMING_META[framing].name}
+      </Button>
+    );
+  };
+  return (
+    <HStack gap="0.5" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="full" p="0.5">
+      {pill("first", framingFirst)}
+      {pill("second", framingSecond)}
+    </HStack>
+  );
+}
+
+/**
+ * Side-by-side comparison of the two reflection lenses, using the exact framing clauses the
+ * participant saw. Shown next to the dual-perspective question so the choice is unmistakable.
+ */
+function FramingComparisonTable({ scenario, mode }: { scenario: Block5Scenario; mode: "light" | "dark" }) {
+  const clauses = getCVRFramingClauses(scenario);
+  const markColor = cvrMarks(mode).f.color;
+  const cell = (framing: CVRFraming) => (
+    <Box flex="1" minW="0" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="lg" px="3" py="2.5">
+      <Text fontSize="2xs" fontWeight="bold" color="fg" mb="1">
+        <Text as="span" color={markColor}>▍</Text> {FRAMING_META[framing].name}
+        <Text as="span" color="fg.subtle" fontWeight="normal"> — {FRAMING_META[framing].gloss}</Text>
+      </Text>
+      <Text fontSize="2xs" color="fg.muted" fontStyle="italic" lineHeight="tall">“{clauses[framing]}”</Text>
+    </Box>
+  );
+  return (
+    <Stack gap="1.5">
+      <Text fontSize="2xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
+        The two perspectives you saw
+      </Text>
+      <Stack direction={{ base: "column", md: "row" }} gap="2" align="stretch">
+        {cell("directness")}
+        {cell("context")}
+      </Stack>
+    </Stack>
+  );
+}
+
+/**
+ * CVRReveal — presents the recontextualization + stakeholder vignette like a streaming LLM
+ * answer: a random 2–5s "thinking" pause, then box 1 fades in and types, then box 2 fades in
+ * and types, then the legend, then the response buttons. A "Skip" control reveals it all at once.
+ */
+function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
+  story: ReturnType<typeof getCVRStory>;
+  /** the SAME vignette with the framing flipped (the other reflection lens). */
+  altStory: ReturnType<typeof getCVRStory>;
+  framingFirst: CVRFraming;
+  factBase?: string;
+  level: AlignmentLevel;
+  accent: string;
+  /** colour mode — picks the bright (dark) vs darker (light) CVR highlight colours. */
+  mode: "light" | "dark";
+  /** called once when the participant generates the alternate lens (lifts state to FlowOverlay). */
+  onAltGenerated: () => void;
+  onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
+}) {
+  type Phase = "thinking" | "box1" | "box2" | "legend" | "done";
+  const [phase, setPhase] = useState<Phase>("thinking");
+  const [b2Step, setB2Step] = useState(0); // 0 = typing stakeholder, 1 = typing question, 2 = done
+  const [skipped, setSkipped] = useState(false);
+
+  // Dual-perspective: alt-view generation state + which lens box 1 currently shows.
+  type AltState = "none" | "regenThinking" | "regenTyping" | "ready";
+  const [altState, setAltState] = useState<AltState>("none");
+  const [currentView, setCurrentView] = useState<"first" | "second">("first");
+  const framingSecond = otherFraming(framingFirst);
+  const marks = cvrMarks(mode); // mode-aware highlight colours for the vignette markup
+  const levelColor = (mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[level];
+
+  // Random "thinking" wait (2–5s) on every arrival, then begin generating the first view.
+  useEffect(() => {
+    const ms = 2000 + Math.random() * 3000;
+    const id = setTimeout(() => setPhase("box1"), ms);
+    return () => clearTimeout(id);
+  }, []);
+
+  // Once the legend shows, reveal the answer buttons a beat later.
+  useEffect(() => {
+    if (phase !== "legend") return;
+    const id = setTimeout(() => setPhase("done"), 450);
+    return () => clearTimeout(id);
+  }, [phase]);
+
+  // Generating the other lens: a short "thinking" pause (~1.5–3s) then box 1 re-types.
+  useEffect(() => {
+    if (altState !== "regenThinking") return;
+    const ms = 1500 + Math.random() * 1500;
+    const id = setTimeout(() => setAltState("regenTyping"), ms);
+    return () => clearTimeout(id);
+  }, [altState]);
+
+  const skip = useCallback(() => { setSkipped(true); setB2Step(2); setPhase("done"); }, []);
+  const generateAlt = useCallback(() => { setAltState("regenThinking"); }, []);
+
+  const showBox1 = skipped || phase !== "thinking";
+  const showBox2 = skipped || phase === "box2" || phase === "legend" || phase === "done";
+  const showLegend = skipped || phase === "legend" || phase === "done";
+  const showButtons = skipped || phase === "done";
+  const revealComplete = skipped || phase === "done";
+
+  // Box-1 content: initial typing of the first lens → alt-view thinking/typing → settled full text.
+  let box1Inner: ReactNode;
+  if (phase === "box1" && !skipped && altState === "none") {
+    box1Inner = (
+      <Typed text={story.recontext} marks={marks} accent={accent} fontSize="sm" color="fg" lineHeight="tall"
+        onComplete={() => setPhase("box2")} />
+    );
+  } else if (altState === "regenThinking") {
+    box1Inner = <CVRThinking accent={accent} label={`Reframing through the ${FRAMING_META[framingSecond].name} lens`} />;
+  } else if (altState === "regenTyping") {
+    box1Inner = (
+      <Typed text={altStory.recontext} marks={marks} accent={accent} fontSize="sm" color="fg" lineHeight="tall"
+        onComplete={() => { setAltState("ready"); setCurrentView("second"); onAltGenerated(); }} />
+    );
+  } else {
+    const recontext = currentView === "first" ? story.recontext : altStory.recontext;
+    box1Inner = <Text fontSize="sm" color="fg" lineHeight="tall">{renderCVRMarkup(recontext, marks)}</Text>;
+  }
+
+  return (
+    <Stack gap="4">
+      <HStack justify="space-between" align="center" gap="2">
+        <Badge alignSelf="start" bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
+          {ALIGNMENT_LABEL[level]} with your values
+        </Badge>
+        {/* Top-right control: Skip (during the first reveal) → Generate the other view → switch toggle. */}
+        <Box flexShrink={0}>
+          {!skipped && phase !== "done" && (
+            <Button size="2xs" variant="ghost" color="fg.subtle" _hover={{ bg: "bg.subtle", color: "fg.muted" }} rounded="md" fontSize="2xs" onClick={skip}>
+              Skip ›
+            </Button>
+          )}
+          {revealComplete && altState === "none" && (
+            <Button size="xs" rounded="full" px="3.5" py="1" fontWeight="bold" fontSize="2xs"
+              bgImage="linear-gradient(135deg, #7c3aed, #4338ca)" color="white" _hover={{ opacity: 0.92 }}
+              boxShadow="0 0 0 1px rgba(124,58,237,0.4)" animation="glow-ring 1.8s ease-in-out infinite"
+              onClick={generateAlt}>
+              ✨ Generate the {FRAMING_META[framingSecond].name} view
+            </Button>
+          )}
+          {(altState === "regenThinking" || altState === "regenTyping") && (
+            <Text fontSize="2xs" color="fg.subtle" fontStyle="italic">Generating…</Text>
+          )}
+          {altState === "ready" && (
+            <ViewToggle current={currentView} framingFirst={framingFirst} framingSecond={framingSecond}
+              accent={accent} onSelect={setCurrentView} />
+          )}
+        </Box>
+      </HStack>
+
+      {phase === "thinking" && !skipped && <CVRThinking accent={accent} />}
+
+      {showBox1 && (
+        <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3" animationName="fade-in" animationDuration="moderate">
+          {factBase && (
+            <Text fontSize="2xs" color="fg.subtle" fontStyle="italic" mb="2">{factBase}</Text>
+          )}
+          {box1Inner}
+        </Box>
+      )}
+
+      {showBox2 && (
+        <Box bg="purple.subtle" borderWidth="1px" borderColor="purple.muted" rounded="xl" px="4" py="4" animationName="fade-in" animationDuration="moderate">
+          {skipped || b2Step >= 1 ? (
+            <Text fontSize="sm" color="fg" lineHeight="tall" mb="3">{renderCVRMarkup(story.stakeholder, marks)}</Text>
+          ) : (
+            <Typed text={story.stakeholder} marks={marks} accent={accent} fontSize="sm" color="fg" lineHeight="tall" mb="3"
+              onComplete={() => setB2Step(1)} />
+          )}
+          {(skipped || b2Step >= 1) && (
+            skipped || b2Step >= 2 ? (
+              <Text fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall">{renderCVRMarkup(story.reendorseQuestion, marks)}</Text>
+            ) : (
+              <Typed text={story.reendorseQuestion} marks={marks} accent={accent} fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall"
+                onComplete={() => { setB2Step(2); setPhase("legend"); }} />
+            )
+          )}
+        </Box>
+      )}
+
+      {showLegend && (
+        <HStack gap="3" wrap="wrap" animationName="fade-in" animationDuration="moderate">
+          <Text fontSize="2xs" color={marks.a.color} fontWeight="bold">▍ same numbers</Text>
+          <Text fontSize="2xs" color={marks.v.color} fontWeight="bold">▍ the value</Text>
+          <Text fontSize="2xs" color={marks.f.color} fontWeight="bold">▍ the framing</Text>
+          <Text fontSize="2xs" color={marks.w.color} fontWeight="bold">▍ who is affected</Text>
+        </HStack>
+      )}
+
+      {showButtons && (
+        <HStack gap="3" wrap="wrap" animationName="fade-in" animationDuration="moderate">
+          <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={onCvrYes} fontSize="xs">
+            Yes, I would still choose this
+          </Button>
+          <Button size="sm" variant="outline" borderColor="border.emphasized" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onCvrNo} fontSize="xs">
+            No, I would not
+          </Button>
+          <Button size="sm" variant="ghost" color="fg.subtle" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onCvrBackout} fontSize="xs">
+            Change my mind
+          </Button>
+        </HStack>
+      )}
+    </Stack>
   );
 }
 
@@ -935,8 +1425,11 @@ function FlowOverlay({
   tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, q2Guided, setQ2Guided,
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
   onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange,
+  altViewGenerated, onAltGenerated, framingChoiceYes, setFramingChoiceYes, mode,
 }: {
   option: LabeledOption; profile: Block5UserProfile; scenario: Block5Scenario; accent: string;
+  /** colour mode for the modal (light/dark-aware surfaces + CVR highlight colours). */
+  mode: "light" | "dark";
   whoVariant: WhoVariant | null;
   step: FlowStep; setStep: (s: FlowStep) => void;
   tradeoffAck: boolean; setTradeoffAck: (b: boolean) => void;
@@ -946,38 +1439,48 @@ function FlowOverlay({
   // Telemetry wrappers for the CVR/APA transitions (observation only — same navigation).
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
   onApaBail: () => void; onFinalDecisionChange: () => void;
+  // Dual-perspective (Directness ↔ Context): generation flag + the YES-path "did NOT influence" answer.
+  altViewGenerated: boolean; onAltGenerated: () => void;
+  framingChoiceYes: CVRFraming | null; setFramingChoiceYes: (f: CVRFraming) => void;
 }) {
   const misaligned = isMisaligned(option.level);
   const coord = misaligned ? cvrCoordinate(option, profile) : null;
   const story = coord && whoVariant ? getCVRStory(scenario, option, coord, whoVariant) : null;
+  // The same vignette through the OTHER lens (framing flipped) — used for the generate/compare feature.
+  const framingFirst: CVRFraming | null = coord ? coord.framing : null;
+  const altStory = coord && whoVariant
+    ? getCVRStory(scenario, option, { ...coord, framing: otherFraming(coord.framing) }, whoVariant)
+    : null;
+  // Alignment colour tuned for the current modal background (bright on dark, darker on light).
+  const levelColor = (mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[option.level];
 
   // Backdrop is intentionally NOT click-to-close: the participant must use an explicit,
   // recorded button to leave CVR/APA, so we never lose or corrupt their interaction data.
   return (
     <Box position="fixed" inset="0" bg="blackAlpha.700" backdropFilter="blur(4px)" zIndex="50"
       display="flex" alignItems="center" justifyContent="center" p="4">
-      <Box bg="gray.900" bgImage="linear-gradient(160deg, #1b1e28, #13151c)" borderWidth="1px" borderColor="whiteAlpha.200" rounded="2xl" p={{ base: "5", md: "7" }}
+      <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "7" }}
         maxW="2xl" w="full" maxH="90dvh" overflowY="auto" shadow="2xl">
-        <Text fontSize="xs" color="whiteAlpha.500" textTransform="uppercase" letterSpacing="wider" mb="1">Your choice</Text>
-        <Heading size="md" color="white" mb="2">{option.title}</Heading>
-        {option.consequence && <Text fontSize="sm" color="whiteAlpha.600" mb="4" lineHeight="tall">{option.consequence}</Text>}
-        <Separator borderColor="whiteAlpha.100" mb="4" />
+        <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">Your choice</Text>
+        <Heading size="md" color="fg" mb="2">{option.title}</Heading>
+        {option.consequence && <Text fontSize="sm" color="fg.muted" mb="4" lineHeight="tall">{option.consequence}</Text>}
+        <Separator borderColor="border" mb="4" />
 
         {step === "review" && !misaligned && (
           <Stack gap="4">
-            <Badge alignSelf="start" bg="transparent" color={LEVEL_COLOR[option.level]} borderWidth="1px" borderColor={LEVEL_COLOR[option.level]} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
+            <Badge alignSelf="start" bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
               {ALIGNMENT_LABEL[option.level]} with your values
             </Badge>
-            <Text fontSize="sm" color="whiteAlpha.800" lineHeight="tall">
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
               This option fits your earlier priorities. Before you confirm, take a moment with what it gives up.
             </Text>
-            <Box bg="whiteAlpha.50" borderWidth="1px" borderColor="whiteAlpha.100" rounded="xl" px="4" py="3">
-              <Text fontSize="xs" color="whiteAlpha.500" mb="1">What this trades away</Text>
-              <Text fontSize="sm" color="whiteAlpha.800">{option.givesUp ?? option.consequence}</Text>
+            <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
+              <Text fontSize="xs" color="fg.subtle" mb="1">What this trades away</Text>
+              <Text fontSize="sm" color="fg.muted">{option.givesUp ?? option.consequence}</Text>
             </Box>
             <Button size="sm" variant="outline" alignSelf="start"
-              borderColor={tradeoffAck ? accent : "whiteAlpha.300"} color={tradeoffAck ? accent : "whiteAlpha.700"}
-              bg={tradeoffAck ? "whiteAlpha.100" : "transparent"} rounded="lg" onClick={() => setTradeoffAck(!tradeoffAck)} gap="2" fontSize="xs">
+              borderColor={tradeoffAck ? accent : "border.emphasized"} color={tradeoffAck ? accent : "fg.muted"}
+              bg={tradeoffAck ? "bg.subtle" : "transparent"} rounded="lg" onClick={() => setTradeoffAck(!tradeoffAck)} gap="2" fontSize="xs">
               <Icon boxSize="3.5"><LuCheck /></Icon>
               {tradeoffAck ? "I've considered the trade-off" : "Tap to acknowledge the trade-off"}
             </Button>
@@ -985,82 +1488,84 @@ function FlowOverlay({
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" onClick={onKeep} disabled={!tradeoffAck} fontSize="xs">
                 Keep this choice
               </Button>
-              <Button size="sm" variant="ghost" color="whiteAlpha.600" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
+              <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
                 Change my mind
               </Button>
             </HStack>
           </Stack>
         )}
 
-        {step === "review" && misaligned && story && (
-          <Stack gap="4">
-            <Badge alignSelf="start" bg="transparent" color={LEVEL_COLOR[option.level]} borderWidth="1px" borderColor={LEVEL_COLOR[option.level]} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
-              {ALIGNMENT_LABEL[option.level]} with your values
-            </Badge>
-            {/* The recontextualized scenario — same trade-off & numbers, re-framed. */}
-            <Box bg="whiteAlpha.50" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
-              {scenario.factBase && (
-                <Text fontSize="2xs" color="whiteAlpha.500" fontStyle="italic" mb="2">{scenario.factBase}</Text>
-              )}
-              <Text fontSize="sm" color="whiteAlpha.900" lineHeight="tall">{renderCVRMarkup(story.recontext)}</Text>
+        {step === "review" && misaligned && story && altStory && framingFirst && (
+          <CVRReveal
+            story={story}
+            altStory={altStory}
+            framingFirst={framingFirst}
+            factBase={scenario.factBase}
+            level={option.level}
+            accent={accent}
+            mode={mode}
+            onAltGenerated={onAltGenerated}
+            onCvrYes={onCvrYes}
+            onCvrNo={onCvrNo}
+            onCvrBackout={onCvrBackout}
+          />
+        )}
+
+        {/* Unified YES page: the former q1 + q2 on one page, plus the dual-perspective question
+            (only if the participant generated the other lens). Then → confirm. */}
+        {step === "q1" && coord && whoVariant && (
+          <Stack gap="5">
+            <Text fontSize="xs" color={accent} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
+              Confirm keeping this option
+            </Text>
+
+            <Box>
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="2">
+                This option focuses most on <Text as="span" fontWeight="bold" color="fg">{shortMainValue(option)}</Text>. Do you genuinely value this?
+              </Text>
+              <Stack gap="2">
+                <ApaChoice selected={q1Strong === true} accent={accent} onClick={() => setQ1Strong(true)}>Yes, I value this</ApaChoice>
+                <ApaChoice selected={q1Strong === false} accent={accent} onClick={() => setQ1Strong(false)}>Not really, but I'm keeping my choice</ApaChoice>
+              </Stack>
             </Box>
 
-            {/* A distinct, unlabeled box: the stakeholder vignette + the re-endorsement question. */}
-            <Box bg="rgba(122,79,208,0.16)" borderWidth="1px" borderColor="rgba(183,148,244,0.45)" rounded="xl" px="4" py="4">
-              <Text fontSize="sm" color="whiteAlpha.900" lineHeight="tall" mb="3">{renderCVRMarkup(story.stakeholder)}</Text>
-              <Text fontSize="md" color="white" fontWeight="semibold" lineHeight="tall">{renderCVRMarkup(story.reendorseQuestion)}</Text>
+            <Box>
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="2">
+                {coord.who === "close"
+                  ? `Did imagining this person as ${whoVariant.label} guide your decision?`
+                  : `Did hearing from ${whoVariant.label} guide your decision?`}
+              </Text>
+              <HStack gap="2" wrap="wrap">
+                <ApaChoice selected={q2Guided === true} accent={accent} onClick={() => setQ2Guided(true)} compact>Yes, it guided me</ApaChoice>
+                <ApaChoice selected={q2Guided === false} accent={accent} onClick={() => setQ2Guided(false)} compact>No, it did not</ApaChoice>
+              </HStack>
             </Box>
 
-            {/* Subtle key so the colours map to the CVR-cube dimensions. */}
-            <HStack gap="3" wrap="wrap">
-              <Text fontSize="2xs" color="#f6e05e" fontWeight="bold">▍ same numbers</Text>
-              <Text fontSize="2xs" color="#4fd1c5" fontWeight="bold">▍ the value</Text>
-              <Text fontSize="2xs" color="#f6ad55" fontWeight="bold">▍ the framing</Text>
-              <Text fontSize="2xs" color="#b794f4" fontWeight="bold">▍ who is affected</Text>
-            </HStack>
-            <HStack gap="3" wrap="wrap">
-              <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={onCvrYes} fontSize="xs">
-                Yes, I would still choose this
+            {altViewGenerated && (
+              <Box>
+                <FramingComparisonTable scenario={scenario} mode={mode} />
+                <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="3" mb="2">
+                  You looked at this from two perspectives. <Text as="span" fontWeight="bold" color="fg">Which one did NOT play a part</Text> in your decision to keep this option?
+                </Text>
+                <Stack gap="2">
+                  <ApaChoice selected={framingChoiceYes === "directness"} accent={accent} onClick={() => setFramingChoiceYes("directness")}>
+                    The <b>Directness</b> view didn't influence me — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
+                  </ApaChoice>
+                  <ApaChoice selected={framingChoiceYes === "context"} accent={accent} onClick={() => setFramingChoiceYes("context")}>
+                    The <b>Context</b> view didn't influence me — <Text as="span" color="fg.subtle">{FRAMING_META.context.gloss}</Text>
+                  </ApaChoice>
+                </Stack>
+              </Box>
+            )}
+
+            <HStack gap="3" wrap="wrap" pt="1">
+              <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" fontSize="xs"
+                disabled={q1Strong === null || q2Guided === null || (altViewGenerated && framingChoiceYes === null)}
+                onClick={() => setStep("confirm")}>
+                Continue
               </Button>
-              <Button size="sm" variant="outline" borderColor="whiteAlpha.300" color="whiteAlpha.800" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onCvrNo} fontSize="xs">
-                No, I would not
-              </Button>
-              <Button size="sm" variant="ghost" color="whiteAlpha.500" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onCvrBackout} fontSize="xs">
+              <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" fontSize="xs" onClick={onChangeMyMind}>
                 Change my mind
-              </Button>
-            </HStack>
-          </Stack>
-        )}
-
-        {step === "q1" && (
-          <Stack gap="4">
-            <Text fontSize="sm" color="whiteAlpha.800" lineHeight="tall">
-              This option focuses most on <b style={{ color: "white" }}>{shortMainValue(option)}</b>. Do you really value this?
-            </Text>
-            <HStack gap="3" wrap="wrap">
-              <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={() => { setQ1Strong(true); setStep("q2"); }} fontSize="xs">
-                Yes, I really value this
-              </Button>
-              <Button size="sm" variant="outline" borderColor="whiteAlpha.300" color="whiteAlpha.800" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={() => { setQ1Strong(false); setStep("q2"); }} fontSize="xs">
-                Not really, but I keep my choice
-              </Button>
-            </HStack>
-          </Stack>
-        )}
-
-        {step === "q2" && coord && whoVariant && (
-          <Stack gap="4">
-            <Text fontSize="sm" color="whiteAlpha.800" lineHeight="tall">
-              {coord.who === "close"
-                ? `Did imagining this patient as ${whoVariant.label} guide your decision?`
-                : `Did hearing from ${whoVariant.label} guide your decision?`}
-            </Text>
-            <HStack gap="3" wrap="wrap">
-              <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={() => { setQ2Guided(true); setStep("confirm"); }} fontSize="xs">
-                Yes, it guided me
-              </Button>
-              <Button size="sm" variant="outline" borderColor="whiteAlpha.300" color="whiteAlpha.800" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={() => { setQ2Guided(false); setStep("confirm"); }} fontSize="xs">
-                No, it did not
               </Button>
             </HStack>
           </Stack>
@@ -1068,20 +1573,21 @@ function FlowOverlay({
 
         {step === "confirm" && (
           <Stack gap="4">
-            <Text fontSize="sm" color="whiteAlpha.800" lineHeight="tall">
-              You're confirming <b style={{ color: "white" }}>{option.title}</b>. Your value profile will be updated to reflect this for the next scenario.
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+              You're confirming <Text as="span" fontWeight="bold" color="fg">{option.title}</Text>. Your value profile will be updated to reflect this for the next scenario.
             </Text>
-            <Box bg="whiteAlpha.50" borderWidth="1px" borderColor="whiteAlpha.100" rounded="xl" px="4" py="3">
-              <Text fontSize="xs" color="whiteAlpha.600" lineHeight="tall">
+            <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
+              <Text fontSize="xs" color="fg.muted" lineHeight="tall">
                 {q1Strong ? "Strong endorsement (+30 to this value, −20 to your previous top value)." : "Kept choice (+15 to this value, −10 to your previous top value)."}{" "}
                 {q2Guided ? "Stakeholder sensitivity +25." : "Stakeholder sensitivity −25."}
+                {altViewGenerated && framingChoiceYes && ` ${FRAMING_META[framingChoiceYes].name} lens −20 (it didn't affect this choice).`}
               </Text>
             </Box>
             <HStack gap="3" wrap="wrap">
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" onClick={onConfirmEndorsement} fontSize="xs">
                 Confirm choice and continue
               </Button>
-              <Button size="sm" variant="ghost" color="whiteAlpha.600" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
+              <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
                 Change my mind
               </Button>
             </HStack>
@@ -1099,6 +1605,9 @@ function FlowOverlay({
             onBail={onApaBail}
             onCommit={onApaCommit}
             onFinalDecisionChange={onFinalDecisionChange}
+            altViewGenerated={altViewGenerated}
+            framingFirst={coord.framing}
+            mode={mode}
           />
         )}
       </Box>
@@ -1126,24 +1635,21 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
       fontWeight="normal"
       lineHeight="1.55"
       w={compact ? "auto" : "full"}
-      color="whiteAlpha.900"
-      bgImage={selected
-        ? `linear-gradient(145deg, ${accent}52, ${accent}1f)`
-        : "linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.035))"}
-      borderColor={selected ? accent : "whiteAlpha.300"}
+      color="fg"
+      bg={selected ? `${accent}22` : "bg.subtle"}
+      borderColor={selected ? accent : "border"}
       borderWidth={selected ? "2px" : "1px"}
-      boxShadow={selected ? `0 0 0 1px ${accent}73, 0 10px 26px ${accent}4d` : "0 2px 10px rgba(0,0,0,0.35)"}
+      boxShadow={selected ? `0 0 0 1px ${accent}55` : "none"}
       transition="all 0.15s ease"
       _hover={selected ? {} : {
-        bgImage: "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06))",
-        borderColor: "whiteAlpha.400",
+        bg: "bg.muted",
+        borderColor: "border.emphasized",
         transform: "translateY(-1px)",
-        boxShadow: "0 8px 18px rgba(0,0,0,0.45)",
       }}
     >
       <HStack gap="3" align="flex-start" w="full">
         <Box flexShrink={0} mt="0.5" w="5" h="5" rounded="full"
-          borderWidth="2px" borderColor={selected ? accent : "whiteAlpha.400"}
+          borderWidth="2px" borderColor={selected ? accent : "border.emphasized"}
           bg={selected ? accent : "transparent"}
           display="flex" alignItems="center" justifyContent="center">
           {selected && <Icon boxSize="3" color="white"><LuCheck /></Icon>}
@@ -1154,7 +1660,7 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
   );
 }
 
-function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail, onCommit, onFinalDecisionChange }: {
+function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, mode }: {
   option: LabeledOption;
   profile: Block5UserProfile;
   scenario: Block5Scenario;
@@ -1165,28 +1671,48 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
   onCommit: (p: ApaCommitPayload) => void;
   /** telemetry: called when the user picks an APA final option then backs out to choose again. */
   onFinalDecisionChange: () => void;
+  /** dual-perspective: did the participant generate the other lens, and which lens was shown first. */
+  altViewGenerated: boolean;
+  framingFirst: CVRFraming;
+  /** colour mode — light/dark-aware surfaces + highlight colours. */
+  mode: "light" | "dark";
 }) {
-  const TEAL = "#4fd1c5";
-  const ORANGE = "#f6ad55";
-  const PURPLE = "#b794f4";
+  // Highlight colours for the value-name spans, tuned for the current modal background.
+  const marks = cvrMarks(mode);
+  const TEAL = marks.v.color as string;     // the participant's leaning value
+  const ORANGE = marks.f.color as string;   // the option's value
+  const PURPLE = marks.w.color as string;   // the stakeholder
 
   const topValue = violatedValue(option, profile);
   const optValue = optionMainValue(option);
 
   const [stage, setStage] = useState<"questions" | "options" | "confirm">("questions");
   const [q1, setQ1] = useState<"endorse" | "context" | "unsure" | null>(null);
-  const [confidence, setConfidence] = useState(3);
+  // No default — the participant must choose a confidence level (it is a required answer).
+  const [confidence, setConfidence] = useState<number | null>(null);
   const [q2, setQ2] = useState<boolean | null>(null);
   const [q3, setQ3] = useState<Block5PolicyDimKey | null>(null);
+  // Dual-perspective (NO path): which lens changed the participant's mind toward rejecting (→ +20).
+  const [framingInfluential, setFramingInfluential] = useState<CVRFraming | null>(null);
   const [section4, setSection4] = useState<LabeledOption | null>(null);
   // When true, show the "you'll lose your answers" warning instead of leaving immediately.
   const [confirmBail, setConfirmBail] = useState(false);
 
-  const ready = q1 !== null && q2 !== null && q3 !== null;
+  // The +20 to the lens that changed their mind — only when generated AND answered. Pending until commit.
+  const framingAdjust = useMemo<FramingAdjust | null>(
+    () => (altViewGenerated && framingInfluential
+      ? { sensitivityKey: framingSensitivityKey(framingInfluential), delta: 20 }
+      : null),
+    [altViewGenerated, framingInfluential],
+  );
+
+  const ready = q1 !== null && confidence !== null && q2 !== null && q3 !== null && (!altViewGenerated || framingInfluential !== null);
 
   const pending = useMemo(
-    () => (q1 !== null && q2 !== null && q3 !== null ? applyApaUpdates(profile, option, q1, q2, q3) : profile),
-    [q1, q2, q3, profile, option],
+    () => (q1 !== null && q2 !== null && q3 !== null
+      ? applyApaUpdates(profile, option, q1, q2, q3, framingAdjust, scenario.stakesWeight ?? 1)
+      : profile),
+    [q1, q2, q3, profile, option, framingAdjust, scenario],
   );
 
   const matching = useMemo<LabeledOption[]>(() => {
@@ -1204,13 +1730,13 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
   if (confirmBail) {
     return (
       <Stack gap="5" align="center" textAlign="center" py="4">
-        <Box w="14" h="14" rounded="full" bg="rgba(246,173,85,0.16)" borderWidth="1px" borderColor="rgba(246,173,85,0.5)"
+        <Box w="14" h="14" rounded="full" bg="orange.subtle" borderWidth="1px" borderColor="orange.muted"
           display="flex" alignItems="center" justifyContent="center">
-          <Icon boxSize="7" color="#f6ad55"><LuTriangleAlert /></Icon>
+          <Icon boxSize="7" color="orange.fg"><LuTriangleAlert /></Icon>
         </Box>
         <Box>
-          <Text fontSize="lg" color="white" fontWeight="semibold" mb="2">Go back and clear your answers?</Text>
-          <Text fontSize="sm" color="whiteAlpha.700" lineHeight="tall" maxW="sm" mx="auto">
+          <Text fontSize="lg" color="fg" fontWeight="semibold" mb="2">Go back and clear your answers?</Text>
+          <Text fontSize="sm" color="fg.muted" lineHeight="tall" maxW="sm" mx="auto">
             If you go back to all the options, everything you selected on this page will be cleared. None of it will be saved.
           </Text>
         </Box>
@@ -1219,7 +1745,7 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
             boxShadow={`0 8px 20px ${accent}59`} onClick={() => setConfirmBail(false)}>
             Stay on this page
           </Button>
-          <Button variant="ghost" color="whiteAlpha.600" _hover={{ bg: "whiteAlpha.100" }} rounded="xl" fontSize="sm" onClick={onBail}>
+          <Button variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="xl" fontSize="sm" onClick={onBail}>
             Go back anyway
           </Button>
         </Stack>
@@ -1234,16 +1760,16 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
         <Text fontSize="xs" color={accent} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">Make your decision</Text>
         {stage === "options" && q3 !== null && (
           <Stack gap="3">
-            <Text fontSize="sm" color="whiteAlpha.800" lineHeight="tall">
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
               These options best fit {vSpan(q3, accent)} — the value you just prioritized.
             </Text>
             <Stack gap="2">
               {matching.map((o) => (
-                <Box key={o.id} bg="whiteAlpha.50" borderWidth="1px" borderColor="whiteAlpha.200" rounded="xl" px="4" py="3">
+                <Box key={o.id} bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3">
                   <HStack justify="space-between" align="start" gap="3" wrap="wrap">
                     <VStack align="start" gap="1" flex="1" minW="0">
-                      <Text color="white" fontWeight="semibold" fontSize="sm" lineHeight="short">{o.title}</Text>
-                      <Badge bg="transparent" color={LEVEL_COLOR[o.level]} borderWidth="1px" borderColor={LEVEL_COLOR[o.level]} rounded="md" px="2" fontSize="2xs" fontWeight="bold">
+                      <Text color="fg" fontWeight="semibold" fontSize="sm" lineHeight="short">{o.title}</Text>
+                      <Badge bg="transparent" color={(mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[o.level]} borderWidth="1px" borderColor={(mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[o.level]} rounded="md" px="2" fontSize="2xs" fontWeight="bold">
                         {ALIGNMENT_LABEL[o.level]}
                       </Badge>
                     </VStack>
@@ -1255,27 +1781,29 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
                 </Box>
               ))}
             </Stack>
-            <Button size="sm" variant="ghost" color="whiteAlpha.600" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" alignSelf="start" fontSize="xs" onClick={() => setConfirmBail(true)}>
+            <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" alignSelf="start" fontSize="xs" onClick={() => setConfirmBail(true)}>
               None of these — take me back to all options
             </Button>
           </Stack>
         )}
-        {stage === "confirm" && section4 && q1 !== null && q2 !== null && q3 !== null && (
+        {stage === "confirm" && section4 && q1 !== null && confidence !== null && q2 !== null && q3 !== null && (
           <Stack gap="4">
-            <Box bg="whiteAlpha.50" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
-              <Text fontSize="xs" color="whiteAlpha.500" mb="1">Your final decision</Text>
-              <Text fontSize="sm" color="white" fontWeight="semibold">{section4.title}</Text>
+            <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
+              <Text fontSize="xs" color="fg.subtle" mb="1">Your final decision</Text>
+              <Text fontSize="sm" color="fg" fontWeight="semibold">{section4.title}</Text>
             </Box>
-            <Text fontSize="md" color="white" fontWeight="semibold">Make this your final decision for this scenario?</Text>
+            <Text fontSize="md" color="fg" fontWeight="semibold">Make this your final decision for this scenario?</Text>
             <HStack gap="3" wrap="wrap">
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" fontSize="xs"
                 onClick={() => onCommit({
                   finalOption: section4, pendingProfile: pending,
                   q1, confidence, q2Influenced: q2, q3Value: q3, originalOptionId: option.id,
+                  altViewGenerated, framingShownFirst: framingFirst,
+                  framingSelected: framingInfluential, framingAdjust,
                 })}>
                 Yes, this is my decision
               </Button>
-              <Button size="sm" variant="ghost" color="whiteAlpha.600" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" fontSize="xs"
+              <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" fontSize="xs"
                 onClick={() => { onFinalDecisionChange(); setSection4(null); setStage("options"); }}>
                 No, let me pick a different option
               </Button>
@@ -1289,17 +1817,17 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
   // ----- Sections 1–3: clarification -----
   return (
     <Stack gap="4">
-      <Box bg="whiteAlpha.100" borderWidth="1px" borderColor="whiteAlpha.200" rounded="xl" px="4" py="3">
-        <Text fontSize="xs" color="whiteAlpha.600" textTransform="uppercase" letterSpacing="wider" fontWeight="bold" mb="1">Value clarification</Text>
-        <Text fontSize="sm" color="whiteAlpha.800" lineHeight="tall">
+      <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3">
+        <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold" mb="1">Value clarification</Text>
+        <Text fontSize="sm" color="fg.muted" lineHeight="tall">
           We noticed something worth a closer look — a couple of your choices point in different directions.
           There are <b>no right or wrong answers</b> here; this step just helps the system represent your
           priorities the way you truly mean them.
         </Text>
       </Box>
 
-      <Box bg="whiteAlpha.50" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
-        <Text fontSize="sm" color="whiteAlpha.800" lineHeight="tall">
+      <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
+        <Text fontSize="sm" color="fg.muted" lineHeight="tall">
           Across your responses you've leaned most toward {vSpan(topValue, TEAL)} — caring about <i>{VALUE_BENEFIT[topValue]}</i>.
           In this scenario you chose an option built around {vSpan(optValue, ORANGE)}, which prioritizes <i>{VALUE_BENEFIT[optValue]}</i>.
           That's the tension we'd like you to clarify.
@@ -1307,7 +1835,7 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
       </Box>
 
       <Box>
-        <Text fontSize="sm" color="white" fontWeight="semibold" mb="2">When you made this choice, which is closer to the truth?</Text>
+        <Text fontSize="sm" color="fg" fontWeight="semibold" mb="2">When you made this choice, which is closer to the truth?</Text>
         <Stack gap="2">
           <ApaChoice selected={q1 === "endorse"} accent={accent} onClick={() => setQ1("endorse")}>
             I genuinely value {vSpan(optValue, ORANGE)} more than {vSpan(topValue, TEAL)} now.
@@ -1320,22 +1848,22 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
           </ApaChoice>
         </Stack>
         <HStack gap="2" mt="3" wrap="wrap">
-          <Text fontSize="xs" color="whiteAlpha.600">How sure are you?</Text>
+          <Text fontSize="xs" color="fg.muted">How sure are you?</Text>
           {[1, 2, 3, 4, 5].map((n) => (
             <Button key={n} minW="9" h="9" px="0" rounded="lg" fontSize="sm" fontWeight="semibold"
-              borderWidth="1px" borderColor={confidence === n ? accent : "whiteAlpha.200"}
-              bg={confidence === n ? accent : "whiteAlpha.100"} color="white"
+              borderWidth="1px" borderColor={confidence === n ? accent : "border"}
+              bg={confidence === n ? accent : "bg.subtle"} color={confidence === n ? "white" : "fg"}
               boxShadow={confidence === n ? `0 4px 12px ${accent}66` : "none"}
-              _hover={{ bg: confidence === n ? accent : "whiteAlpha.200" }}
+              _hover={{ bg: confidence === n ? accent : "bg.muted" }}
               onClick={() => setConfidence(n)}>{n}</Button>
           ))}
-          <Text fontSize="2xs" color="whiteAlpha.400">(1 = not sure · 5 = very sure)</Text>
+          <Text fontSize="2xs" color="fg.subtle">(1 = not sure · 5 = very sure)</Text>
         </HStack>
       </Box>
 
       <Box>
-        <Text fontSize="sm" color="white" fontWeight="semibold" mb="2">
-          {coord.who === "close" ? "Did imagining this patient as " : "Did hearing from "}
+        <Text fontSize="sm" color="fg" fontWeight="semibold" mb="2">
+          {coord.who === "close" ? "Did imagining this person as " : "Did hearing from "}
           <Text as="span" color={PURPLE} fontWeight="bold" fontStyle="italic">{whoVariant.label}</Text>
           {" influence your thinking here?"}
         </Text>
@@ -1346,23 +1874,40 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
       </Box>
 
       <Box>
-        <Text fontSize="sm" color="white" fontWeight="semibold" mb="2">
+        <Text fontSize="sm" color="fg" fontWeight="semibold" mb="2">
           Pick the one value you most want the system to weight for you — you'll then see the options that fit it:
         </Text>
         <Stack gap="2">
           {POLICY_DIM_KEYS.map((k) => (
             <ApaChoice key={k} selected={q3 === k} accent={accent} onClick={() => setQ3(k)}>
-              <b>{VALUE_NAME[k]}</b> — <Text as="span" color="whiteAlpha.600">{VALUE_BENEFIT[k]}</Text>
+              <b>{VALUE_NAME[k]}</b> — <Text as="span" color="fg.subtle">{VALUE_BENEFIT[k]}</Text>
             </ApaChoice>
           ))}
         </Stack>
       </Box>
 
+      {altViewGenerated && (
+        <Box>
+          <FramingComparisonTable scenario={scenario} mode={mode} />
+          <Text fontSize="sm" color="fg" fontWeight="semibold" mt="3" mb="2">
+            You looked at this from two perspectives. Which one most <Text as="span" color={PURPLE} fontWeight="bold">changed your mind</Text> toward not keeping this option?
+          </Text>
+          <Stack gap="2">
+            <ApaChoice selected={framingInfluential === "directness"} accent={accent} onClick={() => setFramingInfluential("directness")}>
+              The <b>Directness</b> view changed my mind — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
+            </ApaChoice>
+            <ApaChoice selected={framingInfluential === "context"} accent={accent} onClick={() => setFramingInfluential("context")}>
+              The <b>Context</b> view changed my mind — <Text as="span" color="fg.subtle">{FRAMING_META.context.gloss}</Text>
+            </ApaChoice>
+          </Stack>
+        </Box>
+      )}
+
       <HStack gap="3" pt="1" wrap="wrap">
         <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" fontSize="xs" disabled={!ready} onClick={() => setStage("options")}>
           Continue
         </Button>
-        <Button size="sm" variant="ghost" color="whiteAlpha.600" _hover={{ bg: "whiteAlpha.100" }} rounded="lg" fontSize="xs" onClick={() => setConfirmBail(true)}>
+        <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" fontSize="xs" onClick={() => setConfirmBail(true)}>
           Take me back to all options
         </Button>
       </HStack>

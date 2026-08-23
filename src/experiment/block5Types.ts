@@ -159,10 +159,18 @@ export interface Block5ScenarioOption {
   fingerprint: Block5OptionFingerprint;
   /** v3: the 8 performance metrics for this option (separate from alignment). */
   metrics?: Block5MetricProfile;
+  /**
+   * v4 — the TRADE-OFF block shown prominently on every option card. Participants were
+   * overlooking a single muted `consequence` line, so the gain and the cost are now separate,
+   * colour-coded fields rendered before the choice is made.
+   */
+  /** What the participant clearly WINS by choosing this. One short sentence. */
+  gains?: string;
   /** v3: one-line "what it gives / what it gives up" shown on every selection. */
   consequence?: string;
-  /** v3: longer card fields (optional). */
+  /** What the participant clearly LOSES — the other half of the trade-off. */
   givesUp?: string;
+  /** The moral question the option raises, shown under the trade-off block. */
   moralTension?: string;
   /** v3.2: concrete material for the CVR vignette (see OptionCVRSeed). */
   cvrSeed?: OptionCVRSeed;
@@ -188,10 +196,31 @@ export interface Block5Scenario {
   options: Block5ScenarioOption[];
   /** v3.2: the shared, fixed "world" (same numbers for every option) that the CVR re-presents. */
   factBase?: string;
+  /**
+   * How much this scenario's decisions are allowed to teach the profile, 0–1 (default 1).
+   *
+   * Every profile update the scenario can produce is multiplied by this weight, so the strength
+   * of the evidence scales with what is actually at stake. The everyday scenarios (travel, food)
+   * use 0.5: a participant's dinner choice is real evidence about their moral priorities, but it
+   * should not move the profile as far as a decision about who receives a scarce cancer dose.
+   * Applied in block5CVR.ts by applyValueBump / applyEndorsementUpdates / applyApaUpdates.
+   */
+  stakesWeight?: number;
 }
 
 /** ---- CVR Cube ---- */
 export type CVRFraming = "context" | "directness";
+
+/**
+ * A pending one-off adjustment to a reflection-lens sensitivity (Directness or Context),
+ * produced by the dual-perspective question and applied only when the participant confirms.
+ *  - YES path: −20 to the lens that did NOT influence keeping the option.
+ *  - NO  path: +20 to the lens that DID change their mind to reject it.
+ */
+export interface FramingAdjust {
+  sensitivityKey: "directnessSensitivity" | "contextSensitivity";
+  delta: number;
+}
 /** Who appears in the vignette (derived from stakeholder sensitivity, inverse map). */
 export type SalienceWho = "close" | "group" | "system";
 
@@ -265,6 +294,7 @@ export interface Block5ScenarioTelemetry {
   finalDecisionChanges: number; // picked an APA final option, then changed it before committing
   timeToFirstSelectionMs: number | null; // deliberation before the first pick
   previewImpactOpens: number; // used "Preview impact"
+  compareChartsOpens: number; // opened the two-radar "compare all options" charts
   optionExpands: number;     // expanded an option card to read details
   cvrDwellMs: number;        // time reflecting inside the CVR vignette
   apaDwellMs: number;        // time reflecting inside the APA flow
@@ -312,6 +342,33 @@ export interface Block5ScenarioResult {
    * (Before Block 5 → after S1 → after S2 → after S3). Additive; does not affect scoring.
    */
   policySnapshotAfter?: Record<Block5PolicyDimKey, number>;
+
+  /* ---- CVR dual-perspective (Directness ↔ Context) — see block5CVR + CVRReveal ----
+   * All optional and only populated when the participant engaged the dual-perspective feature.
+   * If the alternate view is never generated, these stay undefined and behaviour is unchanged. */
+
+  /** Which reflection lens was shown FIRST (the larger of Directness/Context at the time). */
+  cvrFramingShownFirst?: CVRFraming;
+  /** True only if the participant generated the OTHER lens (gate for all dual-perspective logic). */
+  cvrAltViewGenerated?: boolean;
+  /** The lens generated SECOND (the opposite of the first), if any. */
+  cvrFramingShownSecond?: CVRFraming;
+  /** The lens the participant SELECTED in the dual-perspective question. */
+  cvrFramingSelected?: CVRFraming;
+  /**
+   * What the selection meant:
+   *  - "not_influential" → YES path: the lens that did NOT influence keeping the option (→ −20)
+   *  - "influential"     → NO path: the lens that DID change their mind to reject it (→ +20)
+   */
+  cvrFramingSelectedRole?: "not_influential" | "influential";
+  /** The committed sensitivity change for the selected lens (e.g. {key:"contextSensitivity", delta:-20}). */
+  cvrFramingAdjustment?: FramingAdjust;
+
+  /**
+   * Snapshot of the two reflection-lens sensitivities (0–100) AFTER this scenario's update,
+   * so the results view can chart how Directness vs Context evolved across the scenarios.
+   */
+  framingSnapshotAfter?: { directnessSensitivity: number; contextSensitivity: number };
 }
 
 export interface Block5Results {

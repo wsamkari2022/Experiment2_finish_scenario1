@@ -45,7 +45,8 @@ const LABEL_MAP: Record<Block5SensitivityKey, string> = {
   contextSensitivity: "Context sensitivity",
   gainResponsivenessSensitivity: "Gain responsiveness sensitivity",
   stakeholderPerspectiveShiftSensitivity: "Stakeholder perspective shift sensitivity",
-  outcomeAggregationSensitivity: "Outcome-aggregation sensitivity",
+  // See the note in thresholdTree.ts — display wording only; the key is unchanged.
+  outcomeAggregationSensitivity: "Outcome-aggregation (Utility) sensitivity",
 };
 
 /**

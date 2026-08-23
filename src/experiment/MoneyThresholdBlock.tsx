@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useBlock123Surfaces } from "./block123Theme";
 import {
   Box,
@@ -21,7 +21,14 @@ import type {
   ThresholdResult,
 } from "./types";
 import { ProgressBar } from "./ProgressBar";
+import { ScenarioImage } from "./ScenarioImage";
+import { moneyScenarioImage, moneyScenarioImagesFor } from "./scenarioImages";
 import { CompletionScreen } from "./CompletionScreen";
+import {
+  SHOW_INTER_BLOCK_PAGES,
+  useAutoAdvance,
+} from "./interBlockPages";
+import { InterBlockPause } from "./InterBlockPause";
 import { GlowSpan } from "./GlowSpan";
 
 /** Duration in milliseconds for between-context transition pauses. */
@@ -93,37 +100,89 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
   /** Numeric value of the amount currently displayed, used for threshold records. */
   const currentAmountValue = AMOUNT_VALUES[currentAmountIndex];
 
-  // Glow key tracking: increment only when a value changes after initial mount
-  /** Previous amount label, stored to detect changes for glow animation triggers. */
-  const prevAmountLabel = useRef<string | null>(null);
-  /** Previous context key, stored to detect changes for glow animation triggers. */
-  const prevContextKey = useRef<string | null>(null);
-  /** Counter incremented each time the displayed amount changes; drives GlowSpan re-animation. */
-  const amountGlowKey = useRef(0);
-  /** Counter incremented each time the context changes; drives GlowSpan re-animation. */
-  const contextGlowKey = useRef(0);
-  /** Dummy state used solely to force a re-render after mutating glow key refs. */
-  const [, forceGlowRender] = useState(0);
+  /**
+   * Illustration for the current (context, amount) pair, or null when this context has no
+   * artwork — in which case the question below renders full-width exactly as it always did.
+   */
+  const scenarioImageSrc = moneyScenarioImage(currentContext.key, currentAmountValue);
 
   /**
-   * Tracks changes to the displayed amount and context between renders,
-   * incrementing the corresponding glow key refs to trigger glow animations
-   * on GlowSpan elements whenever those values change.
+   * Preload every illustration for the current context as soon as the context opens.
+   *
+   * The images are only ~50 KB each (the whole Block 1 set is ~420 KB), so fetching them up
+   * front is cheap and it means the picture swap between questions is a cache hit rather than
+   * a network round trip. Without this the participant would see a blank frame for a moment on
+   * each choice, which reads as lag at exactly the point where their answer is being recorded.
    */
   useEffect(() => {
-    let changed = false;
-    if (prevAmountLabel.current !== null && prevAmountLabel.current !== currentAmountLabel) {
-      amountGlowKey.current += 1;
-      changed = true;
-    }
-    if (prevContextKey.current !== null && prevContextKey.current !== currentContext?.key) {
-      contextGlowKey.current += 1;
-      changed = true;
-    }
-    prevAmountLabel.current = currentAmountLabel;
-    prevContextKey.current = currentContext?.key ?? null;
-    if (changed) forceGlowRender((n) => n + 1);
-  }, [currentAmountLabel, currentContext?.key]);
+    const sources = moneyScenarioImagesFor(currentContext.key, AMOUNT_VALUES);
+    const preloaded = sources.map((src) => {
+      const img = new window.Image();
+      img.src = src;
+      return img;
+    });
+    // Dropping the references is enough to cancel any in-flight decode on unmount.
+    return () => { preloaded.length = 0; };
+  }, [currentContext.key]);
+
+  /**
+   * Glow bookkeeping — done DURING RENDER, not in an effect.
+   *
+   * This is React's documented "adjusting state when a prop changes" pattern: compare the value
+   * this render against the value last render, and if it moved, bump the counter immediately.
+   * Setting state during render of the SAME component is legal and cheap — React throws the
+   * in-progress render away and re-runs it before committing anything to the DOM, so the
+   * participant never sees an intermediate frame.
+   *
+   * It replaces an effect that did the same comparison after paint. That version worked, but it
+   * committed one render with the new value and the OLD glow counter, then a second render to
+   * correct it — the extra pass `react-hooks/set-state-in-effect` warns about. Doing it during
+   * render means the counter is already right in the first committed frame.
+   *
+   * The "previous" trackers must be state rather than refs for the same reason the counters
+   * are: a ref cannot be written during render. Each is seeded with the CURRENT value, so
+   * nothing glows on first mount — there is no earlier question to contrast against.
+   */
+  /** The amount shown last render, for detecting a change. */
+  const [prevAmountLabel, setPrevAmountLabel] = useState(currentAmountLabel);
+  /** The context shown last render, for detecting a change. */
+  const [prevContextKey, setPrevContextKey] = useState<string | null>(
+    currentContext?.key ?? null,
+  );
+  /**
+   * Glow counters.
+   *
+   * These are plain STATE, not refs. They are read during render (passed to GlowSpan as its
+   * `key`, which is what replays the highlight animation), and a value that render depends on
+   * is state by definition — React does not re-render when a ref is mutated, which is why the
+   * earlier ref-based version also needed a dummy `forceGlowRender` state alongside it purely
+   * to schedule the render. Using state directly does the same job in one step: the update IS
+   * the re-render trigger, so the extra hook is gone.
+   *
+   * Behaviour is unchanged — the same integer sequence reaches GlowSpan, at the same moments.
+   * (Reading a ref during render is also what `react-hooks/refs` flags: it is unsafe under
+   * StrictMode's double-render and under concurrent rendering, where the value read during
+   * render may not be the value that gets committed.)
+   */
+  /** Bumped each time the displayed amount changes; drives GlowSpan re-animation. */
+  const [amountGlowKey, setAmountGlowKey] = useState(0);
+  /** Bumped each time the context changes; drives GlowSpan re-animation. */
+  const [contextGlowKey, setContextGlowKey] = useState(0);
+
+  /*
+   * Highlights whatever just changed, so the participant can see at a glance how this question
+   * differs from the last one:
+   *   - the AMOUNT glows when the ladder escalates (they declined, so the sum went up);
+   *   - the CONTEXT phrase glows when the scenario moves to a new location.
+   * The two are tracked separately so only the part that actually changed lights up.
+   */
+  const currentContextKey = currentContext?.key ?? null;
+  if (prevAmountLabel !== currentAmountLabel || prevContextKey !== currentContextKey) {
+    if (prevAmountLabel !== currentAmountLabel) setAmountGlowKey((n) => n + 1);
+    if (prevContextKey !== currentContextKey) setContextGlowKey((n) => n + 1);
+    setPrevAmountLabel(currentAmountLabel);
+    setPrevContextKey(currentContextKey);
+  }
 
   /**
    * Finalises the experiment: assembles the MoneyBlockResults object,
@@ -259,6 +318,16 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
     onContinue?.(finalResults);
   }, [finalResults, onContinue]);
 
+  /**
+   * HIDDEN COMPLETION SCREEN — presses Continue automatically.
+   *
+   * Placed AFTER the effect that writes this block's results to LocalStorage, so the save is
+   * guaranteed to have happened before the flow advances (effects run in declaration order).
+   * When SHOW_INTER_BLOCK_PAGES is true this never fires and the summary screen is shown as
+   * originally built. See interBlockPages.ts.
+   */
+  useAutoAdvance(!SHOW_INTER_BLOCK_PAGES && moneyBlockCompleted && !!finalResults, handleContinue);
+
   /** Resolves the Chakra color token for the context location phrase highlight. */
   const contextPhraseColor = useMemo(() => {
     const colors: Record<string, string> = {
@@ -296,11 +365,11 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
       return (
         <Text fontSize={{ base: "xl", md: "2xl" }} color="fg" lineHeight="tall">
           {beforeAmount}
-          <GlowSpan glowKey={amountGlowKey.current} glowColor="green.400" fontWeight="bold" color="green.400">
+          <GlowSpan glowKey={amountGlowKey} glowColor="green.400" fontWeight="bold" color="green.400">
             {currentAmountLabel}
           </GlowSpan>
           {phraseParts[0]}
-          <GlowSpan glowKey={contextGlowKey.current} glowColor={contextPhraseColor} fontWeight="semibold" color={contextPhraseColor}>
+          <GlowSpan glowKey={contextGlowKey} glowColor={contextPhraseColor} fontWeight="semibold" color={contextPhraseColor}>
             {contextPhrase}
           </GlowSpan>
           {phraseParts[1]}
@@ -311,13 +380,22 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
     return (
       <Text fontSize={{ base: "xl", md: "2xl" }} color="fg" lineHeight="tall">
         {beforeAmount}
-        <GlowSpan glowKey={amountGlowKey.current} glowColor="green.400" fontWeight="bold" color="green.400">
+        <GlowSpan glowKey={amountGlowKey} glowColor="green.400" fontWeight="bold" color="green.400">
           {currentAmountLabel}
         </GlowSpan>
         {afterAmount}
       </Text>
     );
-  }, [currentContext, currentAmountLabel, contextPhrase, contextPhraseColor, amountGlowKey.current, contextGlowKey.current]);
+  }, [currentContext, currentAmountLabel, contextPhrase, contextPhraseColor, amountGlowKey, contextGlowKey]);
+
+  /*
+   * Hidden mode: skip this block's summary screen and show the same pause the flow itself uses,
+   * so the participant sees one continuous spinner into the next block rather than a flash of a
+   * summary they were not meant to read. useAutoAdvance above is what moves us on.
+   */
+  if (moneyBlockCompleted && finalResults && !SHOW_INTER_BLOCK_PAGES) {
+    return <InterBlockPause />;
+  }
 
   /* Render the completion screen once all contexts are done. */
   if (moneyBlockCompleted && finalResults) {
@@ -393,27 +471,57 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
             </Text>
           </VStack>
 
+          {/*
+            * Scenario panel. With an illustration it is a two-column row (picture beside the
+            * question on md+, stacked on a phone); without one it is the original centred
+            * single column, so contexts that have no artwork are unchanged.
+            *
+            * The `key` deliberately does NOT include the amount index any more. Re-keying on
+            * every amount remounted the whole panel — including the picture — which restarted
+            * the image element from scratch and undid the point of preloading. Keying on the
+            * context alone keeps the fade for the part that should fade (the question text,
+            * which carries its own key) while letting the picture cross-fade in place.
+            */}
           <Box
             bg={surf.subtleBg}
             borderWidth="1px"
             borderColor="border.subtle"
             rounded="xl"
-            p={{ base: "6", md: "8" }}
-            textAlign="center"
+            p={{ base: "5", md: "6" }}
             minH="160px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            key={`${currentContextIndex}-${currentAmountIndex}-${transitionMessage ?? ""}`}
+            key={`${currentContextIndex}-${transitionMessage ?? ""}`}
             animationName="fade-in"
             animationDuration="moderate"
           >
             {transitionMessage ? (
-              <Text fontSize="lg" color="fg.muted" fontStyle="italic">
-                {transitionMessage}
-              </Text>
+              <Box minH="120px" display="flex" alignItems="center" justifyContent="center">
+                <Text fontSize="lg" color="fg.muted" fontStyle="italic">
+                  {transitionMessage}
+                </Text>
+              </Box>
+            ) : scenarioImageSrc ? (
+              <SimpleGrid
+                columns={{ base: 1, md: 2 }}
+                gap={{ base: "5", md: "6" }}
+                alignItems="center"
+              >
+                <ScenarioImage
+                  src={scenarioImageSrc}
+                  alt={`Illustration of the scenario: ${currentContext.scenario(currentAmountLabel)}`}
+                  bg={surf.cardBg}
+                />
+                <Box textAlign={{ base: "center", md: "left" }}>{scenarioElements}</Box>
+              </SimpleGrid>
             ) : (
-              scenarioElements
+              <Box
+                minH="120px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                textAlign="center"
+              >
+                {scenarioElements}
+              </Box>
             )}
           </Box>
 

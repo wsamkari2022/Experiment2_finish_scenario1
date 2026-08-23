@@ -120,8 +120,13 @@ export interface TimingSummary {
   block5TotalMs: number;
   summaryMs: number;
   feedbackMs: number;
-  /** Per-Block-5-scenario time, filled from the Block-5 results (not from stage timing). */
-  block5: { scenario1Ms: number; scenario2Ms: number; scenario3Ms: number };
+  /**
+   * Per-Block-5-scenario time in presentation order, filled from the Block-5 results (not from
+   * stage timing). This is an ARRAY so the record always covers however many scenarios the deck
+   * holds. It previously used fixed scenario1Ms/2Ms/3Ms fields, which silently discarded the
+   * timing of any scenario past the third — a data-loss bug once Block 5 grew to five.
+   */
+  block5: { scenarioMs: number[] };
 }
 
 /**
@@ -150,11 +155,7 @@ export function buildTimingSummary(scenarioMsList: number[] = []): TimingSummary
     block5TotalMs: dur("block5"),
     summaryMs: dur("block5_summary"),
     feedbackMs: dur("feedback"),
-    block5: {
-      scenario1Ms: scenarioMsList[0] ?? 0,
-      scenario2Ms: scenarioMsList[1] ?? 0,
-      scenario3Ms: scenarioMsList[2] ?? 0,
-    },
+    block5: { scenarioMs: [...scenarioMsList] },
   };
 }
 

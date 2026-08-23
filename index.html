@@ -17,6 +17,30 @@
         35%  { box-shadow: 0 0 0 3px rgba(246, 224, 94, 0.6), 0 0 12px 3px rgba(246, 224, 94, 0.5); }
         100% { box-shadow: 0 0 0 0 rgba(246, 224, 94, 0); }
       }
+
+      /*
+       * goal-beacon — the slow breathing halo on the "Main study" marker at the end of the
+       * progress bar. It marks the destination the participant is working towards, so unlike
+       * glow-pulse / glow-ring (which are one-shot "this just changed" signals) it loops.
+       * Kept deliberately slow and low-amplitude: it sits in a sticky header for the whole
+       * session and must read as ambient, never as an alert.
+       *
+       * Defined here rather than in a component for the same reason as the two above: Chakra's
+       * css-in-js pipeline can mangle keyframe bodies.
+       */
+      @keyframes goal-beacon {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.45), 0 0 10px 1px rgba(168, 85, 247, 0.25); }
+        50%      { box-shadow: 0 0 0 7px rgba(168, 85, 247, 0),  0 0 20px 5px rgba(168, 85, 247, 0.45); }
+      }
+      .vrds-goal-beacon { animation: goal-beacon 3.2s ease-in-out infinite; }
+
+      /* Participants who have asked their OS for less motion get the halo without the movement. */
+      @media (prefers-reduced-motion: reduce) {
+        .vrds-goal-beacon {
+          animation: none;
+          box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3), 0 0 14px 2px rgba(168, 85, 247, 0.3);
+        }
+      }
     </style>
 </head>
   <body>

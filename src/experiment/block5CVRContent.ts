@@ -33,14 +33,34 @@ interface ScenarioCVRContent {
  * LOW / close salience — a loved one. This list is SHARED across ALL scenarios
  * (per the design: "someone close" stays identical everywhere). One is chosen at random.
  */
+/**
+ * LOW / close salience — the person the participant feels closest to. SHARED across ALL scenarios.
+ *
+ * v4 (advisor request): family members were removed. Naming a mother or a son makes the vignette
+ * land differently depending on a participant's own family situation, which adds noise we cannot
+ * control. It is replaced by a long-standing, chosen relationship of the same emotional weight —
+ * someone known for twenty years and cared about — which every participant can picture equally.
+ * The three variants say the same thing in different words so repeats do not feel mechanical.
+ */
 const CLOSE_WHO: WhoVariant[] = [
-  { lead: "Imagine this affected person is your mother.", label: "your mother" },
-  { lead: "Imagine this affected person is your father.", label: "your father" },
-  { lead: "Imagine this affected person is your son.", label: "your son" },
-  { lead: "Imagine this affected person is your daughter.", label: "your daughter" },
-  { lead: "Imagine this affected person is your spouse.", label: "your spouse" },
-  { lead: "Imagine this affected person is your best friend.", label: "your best friend" },
+  { lead: "Imagine this affected person is someone you have known for twenty years, someone you care about.", label: "someone you have known for twenty years" },
+  { lead: "Imagine this affected person is someone you have been close to for twenty years, and still care about deeply.", label: "someone you have been close to for twenty years" },
+  { lead: "Imagine this affected person is someone who has been in your life for twenty years, and matters to you.", label: "someone who has been in your life for twenty years" },
 ];
+
+/**
+ * v4 (advisor request): two extra voices that extend the social-distance ladder, appended to
+ * every scenario. MEDIUM gains a one-year acquaintance; HIGH gains a complete stranger. Together
+ * with CLOSE_WHO this gives a clean gradient of social closeness — twenty years, one year, just met.
+ */
+const KNOWN_A_YEAR: WhoVariant = {
+  lead: "Someone you have known for about a year, who is affected by this, raises a concern with you:",
+  label: "someone you have known for a year",
+};
+const JUST_MET: WhoVariant = {
+  lead: "Someone you have only just met, who is affected by your decision, considers what it led to, and notes the choice was yours alone:",
+  label: "someone you just met",
+};
 
 const CANCER: ScenarioCVRContent = {
   anchorNoun: "20 doses",
@@ -63,11 +83,13 @@ const CANCER: ScenarioCVRContent = {
       { lead: "The nurse on the ward raises a concern about your decision:", label: "the nurse" },
       { lead: "The treating doctor questions the decision you made:", label: "the treating doctor" },
       { lead: "The ward's oncology doctor, speaking for the patients on the floor, tells you:", label: "the ward's oncology doctor" },
+      KNOWN_A_YEAR,
     ],
     system: [
       { lead: "Another member of the allocation board, reviewing the outcome, reminds you the choice was yours to make:", label: "another member of the allocation board" },
       { lead: "The hospital manager points to the consequences of the policy you chose — and that the call was yours:", label: "the hospital manager" },
       { lead: "Someone else in charge weighs the consequences of your decision, and notes it was yours alone:", label: "someone else in charge" },
+      JUST_MET,
     ],
   },
 };
@@ -93,11 +115,13 @@ const FLOOD: ScenarioCVRContent = {
       { lead: "A rescue-boat volunteer questions the plan you set:", label: "the rescue volunteer" },
       { lead: "The evacuation-shelter coordinator raises a concern about your decision:", label: "the shelter coordinator" },
       { lead: "The emergency dispatcher pushes back on your decision:", label: "the dispatcher" },
+      KNOWN_A_YEAR,
     ],
     system: [
       { lead: "Another member of the emergency-operations command reminds you the call was yours to make:", label: "another command member" },
       { lead: "The city's disaster-response director points to the consequences of the policy you chose — and that the decision was yours:", label: "the disaster-response director" },
       { lead: "Someone else in charge of the evacuation weighs the outcome of your decision, and notes it was yours alone:", label: "someone else in charge" },
+      JUST_MET,
     ],
   },
 };
@@ -123,11 +147,95 @@ const WATER: ScenarioCVRContent = {
       { lead: "A nurse at an affected clinic questions the plan you set:", label: "the clinic nurse" },
       { lead: "The water-utility field engineer raises a concern about your decision:", label: "the utility engineer" },
       { lead: "The neighborhood public-health officer pushes back on your decision:", label: "the public-health officer" },
+      KNOWN_A_YEAR,
     ],
     system: [
       { lead: "Another member of the water-response board reminds you the call was yours to make:", label: "another board member" },
       { lead: "The city public-health director points to the consequences of the policy you chose — and that the decision was yours:", label: "the public-health director" },
       { lead: "Someone else in charge of the response weighs the outcome of your decision, and notes it was yours alone:", label: "someone else in charge" },
+      JUST_MET,
+    ],
+  },
+};
+
+/**
+ * TRAVEL — everyday scenario 1.
+ *
+ * The four `valuePhrase` entries follow the same rule as the crisis scenarios: each one names a
+ * PERSON, GROUP or SHARED GOOD that the chosen option sacrifices, phrased positively so it reads
+ * correctly after "What it trades away is …". They must never describe a benefit to the
+ * participant themselves, and never be phrased as a negative ("the least pollution"), because
+ * neither can be sacrificed in a sentence.
+ *
+ * `framingClause` mirrors the crisis wording too: the CONTEXT clause explains why some people
+ * rank lower through circumstance rather than worth; the DIRECTNESS clause puts the responsibility
+ * on the participant's own rule rather than on the system.
+ */
+const TRAVEL: ScenarioCVRContent = {
+  anchorNoun: "1,300 miles and the Friday deadline",
+  valuePhrase: {
+    vulnerabilityProtectionSensitivity: "the people who most need protection from what this journey leaves behind",
+    groupSizeSensitivity: "much of the wider public who share this route and depend on it",
+    gainResponsivenessSensitivity: "the good this journey could have done for everything it costs",
+    outcomeAggregationSensitivity: "the larger overall good this journey could have done for everyone it touches",
+  },
+  framingClause: {
+    context:
+      "the reason some places rank lower here is circumstance, not worth — the railway was never built there, and the motorway was routed through the poorest streets",
+    directness:
+      "this is not the transport system deciding — your own booking is what moves this journey's cost onto them",
+  },
+  whoLead: {
+    close: CLOSE_WHO,
+    group: [
+      { lead: "A parent whose child's school sits beside the motorway stops you about your decision:", label: "a parent beside the motorway" },
+      { lead: "The driver of the service you did not take questions the choice you made:", label: "the driver of the route you skipped" },
+      { lead: "A resident living under the approach path raises a concern about your decision:", label: "a resident under the flight path" },
+      { lead: "Someone from a town that has just lost its last bus pushes back on your decision:", label: "someone from the town with no bus" },
+      KNOWN_A_YEAR,
+    ],
+    system: [
+      { lead: "A regional transport planner, reviewing the outcome, reminds you the choice was yours to make:", label: "the regional transport planner" },
+      { lead: "The city's air-quality director points to the consequences of the option you chose — and that the decision was yours:", label: "the air-quality director" },
+      { lead: "Someone else responsible for the corridor weighs the outcome of your decision, and notes it was yours alone:", label: "someone else responsible for the corridor" },
+      JUST_MET,
+    ],
+  },
+};
+
+/**
+ * MEAL — everyday scenario 2. Same construction rules as TRAVEL and the crisis scenarios: every
+ * value phrase names something that can genuinely be given up, and the framing clauses speak
+ * about the people behind the numbers rather than about the options.
+ */
+const MEAL: ScenarioCVRContent = {
+  anchorNoun: "four plates and the $80",
+  valuePhrase: {
+    vulnerabilityProtectionSensitivity: "the people in this food chain who most need protection",
+    groupSizeSensitivity: "much of the larger number this budget could have fed",
+    gainResponsivenessSensitivity: "the good this evening could have done for the money and the hours it costs",
+    outcomeAggregationSensitivity: "the larger overall good this meal could have done for everyone it touches",
+  },
+  framingClause: {
+    context:
+      "the reason some people rank lower here is circumstance, not worth — who is paid by the piece, and whose water grew the food, shape the numbers the rule uses",
+    directness:
+      "this is not the food system deciding — your own order is what takes this meal's cost out of them",
+  },
+  whoLead: {
+    close: CLOSE_WHO,
+    group: [
+      { lead: "The driver who carried your order up three floors pushes back on your decision:", label: "the driver who carried it" },
+      { lead: "A cook at the kitchen you passed over questions the choice you made:", label: "a cook" },
+      { lead: "A worker from the field that grew this food raises a concern about your decision:", label: "a worker in the field" },
+      { lead: "A farmer from the market you walked past stops you about your decision:", label: "a farmer at the market" },
+      KNOWN_A_YEAR,
+    ],
+    system: [
+      { lead: "A food-policy researcher, reviewing the outcome, reminds you the choice was yours to make:", label: "a food-policy researcher" },
+      { lead: "The city's food director points to the consequences of the option you chose — and that the decision was yours:", label: "the city food director" },
+      { lead: "Someone else responsible for the food supply weighs the outcome of your decision, and notes it was yours alone:", label: "someone else responsible for the food supply" },
+      JUST_MET,
     ],
   },
 };
@@ -151,15 +259,19 @@ const GENERIC: ScenarioCVRContent = {
     group: [
       { lead: "A frontline responder, speaking for those affected, tells you:", label: "a frontline responder" },
       { lead: "Someone directly affected raises a concern about your decision:", label: "someone directly affected" },
+      KNOWN_A_YEAR,
     ],
     system: [
       { lead: "Another decision-maker, reviewing the outcome, reminds you the choice was yours:", label: "another decision-maker" },
       { lead: "Someone else in charge weighs the consequences of your decision, and notes it was yours alone:", label: "someone else in charge" },
+      JUST_MET,
     ],
   },
 };
 
 const CONTENT: Record<string, ScenarioCVRContent> = {
+  travel_mode_choice: TRAVEL,
+  meal_hosting_choice: MEAL,
   cancer_treatment_allocation: CANCER,
   flood_evacuation_priority: FLOOD,
   water_contamination_response: WATER,
@@ -219,6 +331,15 @@ export function getCVRStory(
     stakeholder,
     reendorseQuestion,
   };
+}
+
+/**
+ * Returns the two framing clauses (context + directness) for a scenario, exactly as they appear
+ * in the CVR vignette. Used by the dual-perspective comparison table so the participant sees the
+ * precise wording of each lens when answering which one did / did not influence them.
+ */
+export function getCVRFramingClauses(scenario: Block5Scenario): Record<CVRFraming, string> {
+  return (CONTENT[scenario.id] ?? GENERIC).framingClause;
 }
 
 /** Short label for who appeared (used by the Q2 stakeholder question + logging). */

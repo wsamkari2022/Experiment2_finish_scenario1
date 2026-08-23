@@ -3,9 +3,10 @@
  * per colour mode. This makes Block 5 genuinely colour-mode-aware: a fresh, colourful LIGHT
  * theme and a cleaned, flat DARK theme — not a pale copy of one another.
  *
- * Design system: each scenario keeps an identity hue (Cancer = violet, Flood = emerald,
- * Water = blue). One light recipe + one dark recipe are parameterised by that hue + a tinted
- * background, so all three scenarios stay coordinated and only the hue changes.
+ * Design system: each scenario keeps an identity hue (Travel = amber, Meal = rose,
+ * Cancer = violet, Flood = emerald, Water = blue). One light recipe + one dark recipe are
+ * parameterised by that hue + a tinted background, so every scenario stays coordinated and
+ * only the hue changes.
  *
  * This file only produces COLOURS. It contains no decision logic, scoring, or scenario data.
  */
@@ -33,6 +34,12 @@ export interface Block5Palette {
   sidebarShadow: string;
   surfaceSubtle: string;
   panelDeep: string;
+  /** inset panel used for the option-card TRADE-OFF block (must read against cardBg). */
+  tradeoffBg: string;
+  tradeoffBorder: string;
+  /** gain / cost accents for the trade-off block, tuned per colour mode. */
+  gainColor: string;
+  costColor: string;
   // badges
   badgeBg: string;
   badgeText: string;
@@ -63,6 +70,26 @@ interface HueSpec {
 }
 
 const HUES: Record<string, HueSpec> = {
+  // Getting to Fairhaven (everyday · travel) -> amber. Warm, open-road, daylight; deliberately
+  // unlike the three crisis hues so participants feel the change of register immediately.
+  travel_mode_choice: {
+    accentLight: "#b45309",
+    accentDark: "#f59e0b",
+    bgLight:
+      "radial-gradient(900px 460px at 10% -10%, #fef3c7, transparent 60%), radial-gradient(760px 520px at 108% 116%, #fed7aa, transparent 55%), linear-gradient(155deg, #fffbeb, #fefce8 50%, #fef3c7)",
+    bgDark:
+      "radial-gradient(900px 420px at 12% -10%, rgba(217,119,6,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(120,53,15,0.40), transparent 55%), linear-gradient(155deg, #17110a, #2a1c0b 50%, #4a3210)",
+  },
+  // Dinner for Four (everyday · food) -> rose. Warm and domestic, and far enough from the red
+  // "strongly misaligned" badge to stay unambiguous.
+  meal_hosting_choice: {
+    accentLight: "#be185d",
+    accentDark: "#f472b6",
+    bgLight:
+      "radial-gradient(900px 460px at 10% -10%, #fce7f3, transparent 60%), radial-gradient(760px 520px at 108% 116%, #fbcfe8, transparent 55%), linear-gradient(155deg, #fdf2f8, #fff1f2 50%, #fce7f3)",
+    bgDark:
+      "radial-gradient(900px 420px at 12% -10%, rgba(190,24,93,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(88,12,45,0.42), transparent 55%), linear-gradient(155deg, #170a10, #2c0f1d 50%, #4a1730)",
+  },
   // Cancer → violet (calm, dignified, distinct from emerald/blue; avoids alarming red).
   cancer_treatment_allocation: {
     accentLight: "#7c3aed",
@@ -126,6 +153,10 @@ export function getBlock5Palette(scenario: Block5Scenario, mode: Block5Mode): Bl
       sidebarShadow: "0 8px 30px rgba(15,23,42,0.07)",
       surfaceSubtle: "rgba(255,255,255,0.7)",
       panelDeep: "rgba(255,255,255,0.85)",
+      tradeoffBg: "#f8fafc",
+      tradeoffBorder: "#e2e8f0",
+      gainColor: "#15803d",
+      costColor: "#b91c1c",
       badgeBg: "rgba(15,23,42,0.06)",
       badgeText: "#334155",
       dashBg: "#ffffff",
@@ -162,6 +193,10 @@ export function getBlock5Palette(scenario: Block5Scenario, mode: Block5Mode): Bl
     sidebarShadow: "none",
     surfaceSubtle: "rgba(255,255,255,0.06)",
     panelDeep: "rgba(0,0,0,0.4)",
+    tradeoffBg: "rgba(255,255,255,0.045)",
+    tradeoffBorder: "rgba(255,255,255,0.13)",
+    gainColor: "#86efac",
+    costColor: "#fca5a5",
     badgeBg: "rgba(255,255,255,0.1)",
     badgeText: "rgba(255,255,255,0.85)",
     dashBg: "rgba(17,20,28,0.86)",

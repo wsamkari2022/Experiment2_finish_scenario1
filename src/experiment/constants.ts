@@ -14,6 +14,19 @@ import type { ContextDef } from "./types";
  * Used for display in the scenario sentence and in threshold result records.
  * Index 0 = $0.25, index 7 = $10,000.
  */
+/**
+ * BLOCK 1 LADDER — the escalating sums of found money.
+ *
+ * Eight rungs, roughly logarithmic, spanning trivial ($0.25) to life-changing ($10,000). The
+ * span matters more than the exact values: the bottom rung must be small enough that almost
+ * nobody feels a dilemma, and the top large enough that almost nobody is indifferent, so that
+ * most participants' threshold falls strictly inside the ladder rather than at an end.
+ *
+ * Only the ORDINAL POSITION of a rung is ever used in scoring (see toMoneyComparableIndex), so
+ * these figures can be re-chosen without changing any formula. Adding or removing a rung DOES
+ * change MONEY_STEPS, which normalises every Block 1 signal — and it invalidates the calibration
+ * tables in sensitivityCalibration.ts, which must then be regenerated.
+ */
 export const AMOUNT_LABELS: readonly string[] = [
   "$0.25",
   "$1",
@@ -41,6 +54,19 @@ export const AMOUNT_VALUES: readonly number[] = [
  * Order matters: sidewalk → wealthy → shelter. The sequence moves from a
  * morally neutral context to a context that tests wealth-related permissiveness,
  * then to a context that tests vulnerability sensitivity.
+ */
+/**
+ * BLOCK 1 CONTEXTS — the three places the money is found.
+ *
+ * These are UNORDERED categories, not a scale: a neutral sidewalk, outside a wealthy financial
+ * district office, and outside a homeless shelter. They are chosen to vary the likely NEED of
+ * whoever lost the money while holding the act itself constant.
+ *
+ * Because they are unordered, context sensitivity is measured as the RANGE across them rather
+ * than a slope — there is no direction in which a slope would point. Contrast Block 3's group
+ * sizes, which are ordered and therefore get a signed slope. See thresholdTree.ts.
+ *
+ * Each context restarts the ladder at $0.25, so the three thresholds are independent.
  */
 export const CONTEXTS: readonly ContextDef[] = [
   {

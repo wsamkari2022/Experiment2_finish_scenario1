@@ -1,15 +1,16 @@
 /**
  * Block5VisualizationsView — the optional "Your Experiment in Charts" view, opened from
- * the final results page (after Scenario 3, before the Feedback Page).
+ * the final results page (after the last Block-5 scenario, before the Feedback Page).
  *
- * Six charts, each showing ONE idea, with clear plain-English labels, a "How to read this"
+ * Seven charts, each showing ONE idea, with clear plain-English labels, a "How to read this"
  * hint, a meaningful legend, and a short personalized caption:
  *   1. Radar   — your value profile before vs after Block 5 (shape + stability)
- *   2. Line    — how your four values shifted across the journey (Before → S1 → S2 → S3)
+ *   2. Line    — how your four values shifted across the journey (Before → after each scenario)
  *   3. Bars    — your final choice & how well it fit your values, per scenario
  *   4. Line    — how consistent your choices were across the scenarios
  *   5. Bars    — how much you reconsidered inside each scenario
  *   6. Bars    — where your time went across the whole experiment
+ *   7. Line    — how your two reflection lenses (Directness vs Context) shifted
  *
  * Read-only: it renders values already stored in the Block-5 results + the stage timer.
  * It computes no experiment logic and changes nothing about scoring or the flow.
@@ -50,6 +51,11 @@ const VALUE_LABEL: Record<Block5PolicyDimKey, string> = {
 const PHASE_COLOR = { profiling: "#6366f1", simulation: "#0d9488" };
 
 function scoreOf(profile: Block5UserProfile | undefined, key: Block5PolicyDimKey): number {
+  return profile?.dimensions.find((d) => d.key === key)?.score ?? 0;
+}
+
+/** Reads any sensitivity score by key (used for the Directness/Context reflection lenses). */
+function dimScoreOf(profile: Block5UserProfile | undefined, key: string): number {
   return profile?.dimensions.find((d) => d.key === key)?.score ?? 0;
 }
 
@@ -134,8 +140,40 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     if (d > moverDelta) { moverDelta = d; moverLabel = VALUE_LABEL[k]; }
   }
   const evoCaption = moverDelta < 3
-    ? "Your four values held remarkably steady across all three scenarios."
+    ? `Your four values held remarkably steady across all ${n} scenarios.`
     : `“${moverLabel}” moved the most across the journey (by ${Math.round(moverDelta)} points).`;
+
+  /* 7 · Line: how your two reflection lenses (Directness vs Context) shifted across the journey.
+     These only move when you generated and compared the alternate perspective inside a reflection. */
+  const lensX = ["Before", ...scenarios.map((_, i) => `After S${i + 1}`)];
+  const lensSeries: LineSeries[] = [
+    {
+      name: "Directness — your responsibility",
+      color: SERIES_COLORS[3],
+      values: [
+        dimScoreOf(before, "directnessSensitivity"),
+        ...scenarios.map((r) => r.framingSnapshotAfter?.directnessSensitivity ?? dimScoreOf(after, "directnessSensitivity")),
+      ],
+    },
+    {
+      name: "Context — circumstances",
+      color: SERIES_COLORS[0],
+      values: [
+        dimScoreOf(before, "contextSensitivity"),
+        ...scenarios.map((r) => r.framingSnapshotAfter?.contextSensitivity ?? dimScoreOf(after, "contextSensitivity")),
+      ],
+    },
+  ];
+  const lensMoved =
+    Math.abs(dimScoreOf(after, "directnessSensitivity") - dimScoreOf(before, "directnessSensitivity")) +
+    Math.abs(dimScoreOf(after, "contextSensitivity") - dimScoreOf(before, "contextSensitivity"));
+  const finalDirectness = dimScoreOf(after, "directnessSensitivity");
+  const finalContext = dimScoreOf(after, "contextSensitivity");
+  const lensCaption = lensMoved < 1
+    ? "Your two reflection lenses stayed exactly where they started — you didn't lean on one over the other."
+    : finalContext >= finalDirectness
+      ? "By the end, your Context lens (the circumstances behind the numbers) carried more weight."
+      : "By the end, your Directness lens (your own responsibility for the outcome) carried more weight.";
 
   /* 3 · Bars: final choice & alignment per scenario */
   const choiceBars: HBar[] = scenarios.map((r, i) => ({
@@ -176,9 +214,13 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     { label: "Insights", value: timing.insightsMs, color: PHASE_COLOR.profiling, phase: "profiling" },
     { label: "Block 4", value: timing.block4Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
     { label: "Final analysis", value: timing.finalAnalysisMs, color: PHASE_COLOR.profiling, phase: "profiling" },
-    { label: "Scenario 1", value: timing.block5.scenario1Ms, color: PHASE_COLOR.simulation, phase: "simulation" },
-    { label: "Scenario 2", value: timing.block5.scenario2Ms, color: PHASE_COLOR.simulation, phase: "simulation" },
-    { label: "Scenario 3", value: timing.block5.scenario3Ms, color: PHASE_COLOR.simulation, phase: "simulation" },
+    // One row per Block-5 scenario, however many the deck holds (was hardcoded to three).
+    ...timing.block5.scenarioMs.map((ms, i) => ({
+      label: `Scenario ${i + 1}`,
+      value: ms,
+      color: PHASE_COLOR.simulation,
+      phase: "simulation" as const,
+    })),
   ];
   const timeBars: HBar[] = rawTimeBars
     .filter((b) => b.value > 0)
@@ -211,7 +253,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
         <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: "5", md: "6" }}>
           {/* 1 · Radar */}
           <ChartCard index={1} title="Your values: before vs after Block 5"
-            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from Blocks 1–4); the <b>dashed</b> shape is where you ended after the three scenarios. The closer the two shapes match, the more <b>stable</b> your values stayed.</>}
+            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from Blocks 1–4); the <b>dashed</b> shape is where you ended after the scenarios. The closer the two shapes match, the more <b>stable</b> your values stayed.</>}
             caption={stabilityCaption}>
             <RadarChart axes={radarAxes} series={radarSeries} max={100} />
             <ChartLegend items={radarSeries.map((s) => ({ label: s.name, color: s.color, dashed: s.dashed }))} />
@@ -277,6 +319,14 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
               { label: "Value profiling (Blocks 1–4)", color: PHASE_COLOR.profiling },
               { label: "Simulation (Block 5)", color: PHASE_COLOR.simulation },
             ]} />
+          </ChartCard>
+
+          {/* 7 · Reflection lenses (Directness vs Context) evolution */}
+          <ChartCard index={7} title="How your two reflection lenses shifted"
+            howTo={<>When a choice went against your values, the reflection could be framed two ways — <b>Directness</b> (it's your own rule, your responsibility) and <b>Context</b> (circumstances shaped the numbers). If you generated and compared both, the lens that swayed (or didn't) you was nudged. Each line traces one lens from before Block 5 through each scenario.</>}
+            caption={lensCaption}>
+            <LineChart xLabels={lensX} series={lensSeries} max={100} />
+            <ChartLegend items={lensSeries.map((s) => ({ label: s.name, color: s.color }))} />
           </ChartCard>
         </SimpleGrid>
 

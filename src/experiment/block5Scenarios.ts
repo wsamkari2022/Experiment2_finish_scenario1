@@ -1,7 +1,24 @@
 /**
- * block5Scenarios.ts — The public-emergency scenarios and their options.
+ * block5Scenarios.ts — The Block-5 scenarios and their options, in presentation order.
  *
- * v3 (CVR Cube): Scenario 1 (cancer) now has 6 trade-off-heavy options, each with:
+ * v4 — the deck is a MORAL-STAKES GRADIENT of five scenarios:
+ *   1. Getting to Fairhaven  (everyday · travel)   stakesWeight 0.5
+ *   2. Dinner for Four       (everyday · food)     stakesWeight 0.5
+ *   3. Cancer Treatment Allocation   (crisis)      stakesWeight 1 (default)
+ *   4. Flood Evacuation Priority     (crisis)      stakesWeight 1
+ *   5. Water Contamination Response  (crisis)      stakesWeight 1
+ *
+ * The first two are FIRST-PERSON decisions with a DIFFUSE externality: the participant keeps
+ * the benefit and the cost is spread thinly over distant, statistical, future people. The last
+ * three are THIRD-PARTY allocations under acute scarcity. Running both lets the study test
+ * whether CVR and APA move people when the harm is psychologically distant, not just when it
+ * is concentrated and immediate — and whether the same person applies the same moral
+ * priorities to a dinner and to a dose.
+ *
+ * `stakesWeight` scales every profile update the scenario can produce (see block5CVR.ts), so an
+ * everyday choice teaches the profile only half as much as a life-and-death one.
+ *
+ * Every scenario keeps the same structure — 6 trade-off-heavy options, each with:
  *   - a 4-dimension POLICY fingerprint (vulnerability, group-size, gain, aggregation)
  *     used for alignment (the other 3 fingerprint dims are kept for back-compat only),
  *   - 8 generic PERFORMANCE metrics (separate from alignment),
@@ -13,6 +30,314 @@
 import type { Block5Scenario } from "./block5Types";
 
 export const BLOCK5_SCENARIOS: Block5Scenario[] = [
+  {
+    id: "travel_mode_choice",
+    stakesWeight: 0.5,
+    factBase:
+      "Riverside and Fairhaven are 1,300 miles apart, and you must arrive by Friday evening. Every option meets that deadline — they differ only in who carries the cost besides you.",
+    title: "Getting to Fairhaven",
+    description:
+      "You have to be in Fairhaven by Friday evening for a three-day work trip, and you are arranging the journey yourself. Long-distance travel always sends its cost somewhere: to your wallet, to your calendar, or to the people who live along the route. You must choose the option you would genuinely book.",
+    theme: {
+      gradient: "radial-gradient(900px 420px at 12% -10%, rgba(217,119,6,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(120,53,15,0.40), transparent 55%), linear-gradient(155deg, #17110a, #2a1c0b 50%, #4a3210)",
+      accent: "#D97706",
+      shadow: "0 8px 32px rgba(217, 119, 6, 0.15)",
+    },
+    options: [
+      {
+        id: "travel_rural_lifeline_bus",
+        cvrSeed: {
+          rule: "adds about eight hours to the journey by stopping in every town",
+          identifiedCase: "The person waiting for you arranged the evening around your arrival, and those extra hours take it away",
+          harm: "You arrive late, and far too tired to give them the time you promised",
+        },
+        title: "Take the slow bus that stops in every town",
+        summary: "This service stops in dozens of small towns along the route. For many people living there, it is the only public transport available.",
+        gains: "Your ticket helps keep a route running that many people depend on and cannot replace.",
+        consequence: "You help keep a service alive for people with no alternative. But the journey takes about eight hours longer than the express, and you arrive worn out.",
+        givesUp: "Eight extra hours and most of your energy. You reach Fairhaven late and exhausted.",
+        moralTension: "Is eight hours of your own time worth protecting someone else's only way to travel?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 45,
+          gainResponsivenessSensitivity: 18, outcomeAggregationSensitivity: 39,
+          directnessSensitivity: 60, contextSensitivity: 72, stakeholderPerspectiveShiftSensitivity: 62,
+        },
+        metrics: {
+          totalBenefit: 58, harmReduction: 70, fairnessEquity: 88, vulnerableProtection: 96,
+          resourceEfficiency: 48, feasibility: 62, longTermImpact: 82, predictability: 60,
+        },
+      },
+      {
+        id: "travel_express_coach",
+        cvrSeed: {
+          rule: "fills a seat on the express and skips every small town on the way",
+          identifiedCase: "One person in a town the express drives straight past has no car of their own, and the local service they depend on loses one more fare",
+          harm: "When that route closes next year, they lose the only way they had to leave town",
+        },
+        title: "Take the direct express bus",
+        summary: "One full coach runs straight through with no stops. It is the cheapest ticket available, and it moves many people using very little fuel per passenger.",
+        gains: "The lowest price of any option, and the least fuel burned for each person travelling.",
+        consequence: "You pay the least and share the journey with many others. But the express skips the small towns, and their local service loses the income it needs to survive.",
+        givesUp: "The small towns. Every passenger the express carries is income the local service never receives.",
+        moralTension: "Is the cheapest shared journey still fair if its efficiency slowly removes the service others depend on?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 52, groupSizeSensitivity: 93,
+          gainResponsivenessSensitivity: 41, outcomeAggregationSensitivity: 51,
+          directnessSensitivity: 42, contextSensitivity: 46, stakeholderPerspectiveShiftSensitivity: 38,
+        },
+        metrics: {
+          totalBenefit: 84, harmReduction: 72, fairnessEquity: 66, vulnerableProtection: 48,
+          resourceEfficiency: 92, feasibility: 88, longTermImpact: 70, predictability: 82,
+        },
+      },
+      {
+        id: "travel_intercity_train",
+        cvrSeed: {
+          rule: "puts the journey on rails and accepts the timetable",
+          identifiedCase: "The friend you are travelling to see had planned two days out with you, and the fare has already taken what those days were meant to cost",
+          harm: "They spend the trip suggesting things you have to keep saying no to",
+        },
+        title: "Take the overnight train",
+        summary: "The train produces far less pollution than anything else here. You get a proper seat, room to work, and you sleep through much of the journey.",
+        gains: "The lowest pollution of any option, plus a comfortable overnight trip you can work or sleep through.",
+        consequence: "You cause the least environmental damage and travel in real comfort. But the fare costs noticeably more, and the timetable decides when you leave.",
+        givesUp: "Money and flexibility. The ticket is well above the bus, and you still need local transport at both ends.",
+        moralTension: "Is lower pollution worth paying more, when a cheaper option delivers you just as reliably?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 58, groupSizeSensitivity: 59,
+          gainResponsivenessSensitivity: 33, outcomeAggregationSensitivity: 73,
+          directnessSensitivity: 50, contextSensitivity: 58, stakeholderPerspectiveShiftSensitivity: 45,
+        },
+        metrics: {
+          totalBenefit: 88, harmReduction: 86, fairnessEquity: 72, vulnerableProtection: 60,
+          resourceEfficiency: 78, feasibility: 70, longTermImpact: 94, predictability: 76,
+        },
+      },
+      {
+        id: "travel_direct_flight",
+        cvrSeed: {
+          rule: "returns almost two days to you by putting the journey in the air",
+          identifiedCase: "A child doing homework beneath the approach path counts the ninth aircraft of the evening",
+          harm: "The air on their walk to school carries what this flight leaves behind",
+        },
+        title: "Take the direct flight",
+        summary: "The flight covers 1,300 miles in about three hours. Compared with every other option here, it hands almost two full days back to you.",
+        gains: "Almost two full days returned to you. No other option comes close on time.",
+        consequence: "You save more time than any other option can offer. But the flight produces the most pollution, and the noise and poor air settle on the neighbourhoods beneath the approach path.",
+        givesUp: "Clean air and quiet for the people living below. This option pollutes far more than any other on the list.",
+        moralTension: "How many hours of your own time are worth the air another family breathes every day?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 32, groupSizeSensitivity: 47,
+          gainResponsivenessSensitivity: 79, outcomeAggregationSensitivity: 11,
+          directnessSensitivity: 68, contextSensitivity: 40, stakeholderPerspectiveShiftSensitivity: 30,
+        },
+        metrics: {
+          totalBenefit: 62, harmReduction: 34, fairnessEquity: 40, vulnerableProtection: 28,
+          resourceEfficiency: 74, feasibility: 92, longTermImpact: 24, predictability: 80,
+        },
+      },
+      {
+        id: "travel_solo_ev_rental",
+        cvrSeed: {
+          rule: "puts one more private car on the road for the whole 1,300 miles",
+          identifiedCase: "A miner who dug the metal in this car's battery works long shifts and will never own a car themselves",
+          harm: "The cleaner journey you paid for still begins with their working day",
+        },
+        title: "Rent an electric car and drive alone",
+        summary: "You drive door to door on your own schedule, and the car releases no exhaust fumes while you are driving.",
+        gains: "Complete independence. You choose your own departure, route and stops, with no exhaust fumes on the road.",
+        consequence: "You keep full control of the journey and drive cleanly. But 1,300 miles means stopping to recharge four or five times, and the battery was built from metals mined in harsh conditions.",
+        givesUp: "Time and money. Recharging adds roughly three hours across the trip, and this is the most expensive option per person.",
+        moralTension: "If you make the same journey in a cleaner vehicle, have you really made a different choice?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 55,
+          gainResponsivenessSensitivity: 41, outcomeAggregationSensitivity: 37,
+          directnessSensitivity: 55, contextSensitivity: 55, stakeholderPerspectiveShiftSensitivity: 48,
+        },
+        metrics: {
+          totalBenefit: 62, harmReduction: 64, fairnessEquity: 58, vulnerableProtection: 58,
+          resourceEfficiency: 56, feasibility: 64, longTermImpact: 62, predictability: 66,
+        },
+      },
+      {
+        id: "travel_shared_car_ride",
+        cvrSeed: {
+          rule: "puts four people in one car and divides everything by four",
+          identifiedCase: "A child living on the street the car detours through to collect the fourth passenger breathes the extra sixty miles",
+          harm: "Splitting the cost four ways does not take those miles off their street",
+        },
+        title: "Share a car with three other people",
+        summary: "Four passengers travel together in one vehicle, splitting the fuel, the cost and the emissions four ways.",
+        gains: "One car instead of four. Every cost, including the pollution, is divided between four people.",
+        consequence: "Your share of the cost and the pollution is low, often lower than driving an electric car alone. But you give up control of the schedule, the route and the company.",
+        givesUp: "Your privacy and your independence. You cannot choose when to leave, and you spend around twenty hours in a small car with three strangers, in conversation you may not want.",
+        moralTension: "Is sharing the journey worth twenty hours of company you did not choose?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 50, groupSizeSensitivity: 61,
+          gainResponsivenessSensitivity: 42, outcomeAggregationSensitivity: 45,
+          directnessSensitivity: 48, contextSensitivity: 52, stakeholderPerspectiveShiftSensitivity: 58,
+        },
+        metrics: {
+          totalBenefit: 76, harmReduction: 74, fairnessEquity: 70, vulnerableProtection: 56,
+          resourceEfficiency: 84, feasibility: 60, longTermImpact: 74, predictability: 58,
+        },
+      },
+    ],
+  },
+  {
+    id: "meal_hosting_choice",
+    stakesWeight: 0.5,
+    factBase:
+      "You have $80 and about two hours after work. Every option feeds all four people — they differ only in who else pays for the meal.",
+    title: "Dinner for Four",
+    description:
+      "Four people are sitting down to dinner at your home tonight, and you are deciding what to put in front of them. Every meal sends its money somewhere: to a farm, a kitchen, a delivery driver, or a supermarket shelf, and each of those places treats people differently. You must choose the meal you would genuinely make.",
+    theme: {
+      gradient: "radial-gradient(900px 420px at 12% -10%, rgba(190,24,93,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(88,12,45,0.42), transparent 55%), linear-gradient(155deg, #170a10, #2c0f1d 50%, #4a1730)",
+      accent: "#BE185D",
+      shadow: "0 8px 32px rgba(190, 24, 93, 0.15)",
+    },
+    options: [
+      {
+        id: "meal_fair_wage_kitchen",
+        cvrSeed: {
+          rule: "pays the kitchen properly and buys less food with the same money",
+          identifiedCase: "One guest who came straight from work finds the plates visibly smaller, and eats last and least",
+          harm: "They leave your table hungry so that the people who cooked could be paid fairly",
+        },
+        title: "Order from a kitchen that pays its staff properly",
+        summary: "This kitchen pays every worker a living wage and does not rely on tips to make up the difference. That commitment shows in its prices.",
+        gains: "Every dollar you spend reaches the people who prepared the food, at a wage they can live on.",
+        consequence: "The people who cooked your meal are paid fairly. But the same budget buys roughly a third less food, so the portions are noticeably smaller.",
+        givesUp: "Quantity. Smaller portions, no dessert, and a forty-minute wait for the order.",
+        moralTension: "Is a fair wage for the person cooking worth your guests leaving the table still hungry?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 43,
+          gainResponsivenessSensitivity: 23, outcomeAggregationSensitivity: 33,
+          directnessSensitivity: 62, contextSensitivity: 74, stakeholderPerspectiveShiftSensitivity: 66,
+        },
+        metrics: {
+          totalBenefit: 58, harmReduction: 76, fairnessEquity: 96, vulnerableProtection: 96,
+          resourceEfficiency: 44, feasibility: 70, longTermImpact: 80, predictability: 66,
+        },
+      },
+      {
+        id: "meal_bulk_home_pot",
+        cvrSeed: {
+          rule: "stretches the budget across as many plates as it will cover",
+          identifiedCase: "One guest who travelled a long way for this evening spends most of it watching you work at the stove",
+          harm: "They came to spend the evening with you, and they spend it waiting",
+        },
+        title: "Cook a large pot of simple food",
+        summary: "Rice, beans, onions and time. Inexpensive ingredients that stretch a long way and leave plenty over.",
+        gains: "Enough food for all four tonight, with leftovers covering the next two days.",
+        consequence: "You feed more people for less money than any other option. But it takes your entire evening and produces a plain meal nobody will remember.",
+        givesUp: "Two hours of your evening, and any sense of occasion. It fills people up and little more.",
+        moralTension: "Is feeding the greatest number worth being too tired to enjoy the evening you cooked for?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 56, groupSizeSensitivity: 93,
+          gainResponsivenessSensitivity: 33, outcomeAggregationSensitivity: 49,
+          directnessSensitivity: 45, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 40,
+        },
+        metrics: {
+          totalBenefit: 86, harmReduction: 70, fairnessEquity: 78, vulnerableProtection: 60,
+          resourceEfficiency: 96, feasibility: 62, longTermImpact: 72, predictability: 74,
+        },
+      },
+      {
+        id: "meal_seasonal_plant_menu",
+        cvrSeed: {
+          rule: "keeps the meal local, seasonal and almost entirely plant-based",
+          identifiedCase: "Two guests eat politely around the edges of a plate they did not choose",
+          harm: "A meal meant to bring four people together quietly leaves two of them out",
+        },
+        title: "Cook a seasonal plant-based menu",
+        summary: "Vegetables grown nearby and in season, with almost no meat. This uses the least land, water and energy of anything here.",
+        gains: "The smallest impact on land, water and climate of any option available to you.",
+        consequence: "This is clearly the best meal for the environment. But it demands real skill and time, and two of your guests would have preferred meat.",
+        givesUp: "Time, skill, and everyone's approval. Two guests will eat politely while wishing you had served something else.",
+        moralTension: "Is the lowest environmental cost worth serving people a meal they did not want?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 58, groupSizeSensitivity: 55,
+          gainResponsivenessSensitivity: 31, outcomeAggregationSensitivity: 73,
+          directnessSensitivity: 52, contextSensitivity: 60, stakeholderPerspectiveShiftSensitivity: 48,
+        },
+        metrics: {
+          totalBenefit: 78, harmReduction: 84, fairnessEquity: 70, vulnerableProtection: 62,
+          resourceEfficiency: 74, feasibility: 56, longTermImpact: 96, predictability: 60,
+        },
+      },
+      {
+        id: "meal_delivery_feast",
+        cvrSeed: {
+          rule: "buys the evening back and asks someone else to carry it upstairs",
+          identifiedCase: "The driver bringing your order is on their thirty-first delivery tonight, and this one pays about $2.40 plus whatever tip you add",
+          harm: "The evening you bought was carried up three floors by someone who cannot afford to stop",
+        },
+        title: "Order a large delivery everyone enjoys",
+        summary: "The food arrives within twenty minutes and everyone gets exactly what they asked for, leaving the whole evening free for your guests.",
+        gains: "Twenty minutes, everyone's first choice, and a whole evening spent with your guests rather than your stove.",
+        consequence: "You gain the entire evening and please everyone at the table. But the driver earns around $2.40 for the delivery, and the meal arrives in single-use packaging at the end of a very long supply chain.",
+        givesUp: "The people at the far end of the order. Low pay for the driver, packaging waste, and the least transparent supply chain here.",
+        moralTension: "How much of another person's working conditions is a free evening worth to you?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 30, groupSizeSensitivity: 49,
+          gainResponsivenessSensitivity: 79, outcomeAggregationSensitivity: 13,
+          directnessSensitivity: 66, contextSensitivity: 44, stakeholderPerspectiveShiftSensitivity: 34,
+        },
+        metrics: {
+          totalBenefit: 66, harmReduction: 38, fairnessEquity: 34, vulnerableProtection: 26,
+          resourceEfficiency: 70, feasibility: 96, longTermImpact: 28, predictability: 84,
+        },
+      },
+      {
+        id: "meal_half_and_half",
+        cvrSeed: {
+          rule: "splits the difference and commits to nothing",
+          identifiedCase: "One worker in the cheap supply chain is still paid the same low rate for half of your table's food",
+          harm: "Their conditions do not change, and you paid more for something that never reached them",
+        },
+        title: "Cook half and buy half",
+        summary: "An hour in the kitchen, with the rest bought ready-made. A respectable spread, nobody disappointed, and the budget intact.",
+        gains: "A good meal for only an hour of work, with nothing anyone at the table could object to.",
+        consequence: "You avoid every serious drawback. But half the meal still comes from the same industrial supply chain as the cheapest option.",
+        givesUp: "Any real commitment. It sidesteps every worst case and improves nothing.",
+        moralTension: "Is choosing the middle a decision, or a way of avoiding one?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 57,
+          gainResponsivenessSensitivity: 41, outcomeAggregationSensitivity: 35,
+          directnessSensitivity: 52, contextSensitivity: 54, stakeholderPerspectiveShiftSensitivity: 46,
+        },
+        metrics: {
+          totalBenefit: 64, harmReduction: 62, fairnessEquity: 60, vulnerableProtection: 58,
+          resourceEfficiency: 60, feasibility: 66, longTermImpact: 58, predictability: 68,
+        },
+      },
+      {
+        id: "meal_pantry_rescue",
+        cvrSeed: {
+          rule: "builds the meal out of food that was going to be thrown away",
+          identifiedCase: "One guest who eats only a narrow range of food finds almost nothing on the table",
+          harm: "They sit through the evening with bread while everyone else eats properly",
+        },
+        title: "Cook from your cupboard and rescued surplus",
+        summary: "Whatever is already in your kitchen, combined with a box of surplus food a shop would otherwise throw out tonight.",
+        gains: "Food that was hours from being thrown away gets eaten instead, at the lowest cost of any option.",
+        consequence: "You stop good food from being wasted and spend almost nothing. But you have little control over the menu, and some ingredients must be used immediately.",
+        givesUp: "Control and predictability. Mismatched ingredients, several close to spoiling, and no guarantee every guest finds something they will eat.",
+        moralTension: "Is preventing waste worth serving guests a meal you could not plan in advance?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 52, groupSizeSensitivity: 59,
+          gainResponsivenessSensitivity: 35, outcomeAggregationSensitivity: 45,
+          directnessSensitivity: 48, contextSensitivity: 56, stakeholderPerspectiveShiftSensitivity: 52,
+        },
+        metrics: {
+          totalBenefit: 72, harmReduction: 76, fairnessEquity: 68, vulnerableProtection: 58,
+          resourceEfficiency: 92, feasibility: 58, longTermImpact: 78, predictability: 46,
+        },
+      },
+    ],
+  },
   {
     id: "cancer_treatment_allocation",
     factBase:
@@ -35,20 +360,21 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Maximize total lives saved",
         summary: "Give the treatment to the mix of patients that saves the most lives overall.",
-        consequence: "Saves the most lives overall, but skips the worst-off.",
-        givesUp: "The worst-off: low-odds and late-diagnosed patients are passed over.",
-        moralTension: "Efficiency vs. fairness.",
+        gains: "The largest number of lives saved this month.",
+        consequence: "More people survive than with any other policy. But patients whose odds are low, often because they were diagnosed late, are passed over.",
+        givesUp: "The worst-off. Patients with low survival odds and late diagnoses receive nothing.",
+        moralTension: "Is saving the greatest number the right goal, even when the people left out are the ones the system already failed?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 25,
-          groupSizeSensitivity: 75,
-          gainResponsivenessSensitivity: 80,
-          outcomeAggregationSensitivity: 95,
+          vulnerabilityProtectionSensitivity: 52,
+          groupSizeSensitivity: 69,
+          gainResponsivenessSensitivity: 43,
+          outcomeAggregationSensitivity: 73,
           directnessSensitivity: 55,
           contextSensitivity: 45,
           stakeholderPerspectiveShiftSensitivity: 35,
         },
         metrics: {
-          totalBenefit: 95, harmReduction: 80, fairnessEquity: 45, vulnerableProtection: 30,
+          totalBenefit: 95, harmReduction: 80, fairnessEquity: 45, vulnerableProtection: 46,
           resourceEfficiency: 90, feasibility: 85, longTermImpact: 70, predictability: 82,
         },
       },
@@ -61,14 +387,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Protect the most vulnerable first",
         summary: "Give the treatment to the sickest and least-served patients first.",
-        consequence: "Helps those most in need, but saves fewer overall.",
-        givesUp: "Total lives saved may be lower; some doses go to low-odds patients.",
-        moralTension: "Compassion vs. total benefit.",
+        gains: "Protection for the patients who are sickest and least able to cope.",
+        consequence: "The patients in the worst condition are treated first. But because their odds are lower, fewer people survive overall.",
+        givesUp: "Total lives saved. Some doses go to patients who are unlikely to recover.",
+        moralTension: "Do you treat the people who need help most, even if that means fewer people survive?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 95,
-          groupSizeSensitivity: 45,
-          gainResponsivenessSensitivity: 30,
-          outcomeAggregationSensitivity: 25,
+          vulnerabilityProtectionSensitivity: 97,
+          groupSizeSensitivity: 43,
+          gainResponsivenessSensitivity: 23,
+          outcomeAggregationSensitivity: 21,
           directnessSensitivity: 70,
           contextSensitivity: 60,
           stakeholderPerspectiveShiftSensitivity: 55,
@@ -87,14 +414,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Maximize life-years (treat the best responders)",
         summary: "Give the treatment to patients who would gain the most years of life.",
-        consequence: "Most years of life saved, but deprioritizes older patients.",
-        givesUp: "Older and lower-response patients are deprioritized (feels like ageism).",
-        moralTension: "Life-years vs. equal worth.",
+        gains: "The greatest number of future years of life saved.",
+        consequence: "Each dose is used where it adds the most years of life. But this favours younger patients, and older patients are pushed down the list.",
+        givesUp: "Older patients. A life with fewer years left is counted as worth less.",
+        moralTension: "Is a year of life the right way to measure a person, when it means the old always lose?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 30,
-          groupSizeSensitivity: 55,
-          gainResponsivenessSensitivity: 92,
-          outcomeAggregationSensitivity: 80,
+          vulnerabilityProtectionSensitivity: 35,
+          groupSizeSensitivity: 53,
+          gainResponsivenessSensitivity: 78,
+          outcomeAggregationSensitivity: 47,
           directnessSensitivity: 55,
           contextSensitivity: 50,
           stakeholderPerspectiveShiftSensitivity: 35,
@@ -113,14 +441,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Equal-chance lottery (small boost for vulnerable)",
         summary: "Everyone eligible gets a chance; vulnerable patients get slightly better odds.",
-        consequence: "Fair and unbiased, but ignores who would benefit most.",
-        givesUp: "Ignores who would benefit most; the outcome is left to luck.",
-        moralTension: "Equality vs. outcomes.",
+        gains: "An equal, unbiased chance for every eligible patient.",
+        consequence: "Nobody is judged or ranked, and every patient has a real chance. But doses may go to the people who benefit least.",
+        givesUp: "Results. Chance decides, so doses can be used where they do very little good.",
+        moralTension: "Is treating everyone equally worth accepting a worse outcome for everyone?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 60,
-          groupSizeSensitivity: 85,
+          vulnerabilityProtectionSensitivity: 58,
+          groupSizeSensitivity: 93,
           gainResponsivenessSensitivity: 25,
-          outcomeAggregationSensitivity: 45,
+          outcomeAggregationSensitivity: 29,
           directnessSensitivity: 82,
           contextSensitivity: 70,
           stakeholderPerspectiveShiftSensitivity: 85,
@@ -139,20 +468,21 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Reserve a share for hard-to-reach / underserved patients",
         summary: "Hold back some doses for rural and underserved patients others miss.",
-        consequence: "Reaches the overlooked, but helps fewer and may waste doses.",
-        givesUp: "Helps fewer people; some reserved doses may go unused.",
-        moralTension: "Equity vs. efficiency / waste.",
+        gains: "Doses finally reach communities that are usually overlooked.",
+        consequence: "Groups that normally miss out finally get a share. But holding doses in reserve means fewer are used, and some may be wasted.",
+        givesUp: "Reach and certainty. Fewer patients are treated, and reserved doses may go unused.",
+        moralTension: "Is correcting an old unfairness worth using fewer doses today?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 85,
-          groupSizeSensitivity: 35,
+          vulnerabilityProtectionSensitivity: 62,
+          groupSizeSensitivity: 55,
           gainResponsivenessSensitivity: 35,
-          outcomeAggregationSensitivity: 30,
+          outcomeAggregationSensitivity: 33,
           directnessSensitivity: 68,
           contextSensitivity: 88,
           stakeholderPerspectiveShiftSensitivity: 65,
         },
         metrics: {
-          totalBenefit: 58, harmReduction: 70, fairnessEquity: 85, vulnerableProtection: 90,
+          totalBenefit: 58, harmReduction: 70, fairnessEquity: 76, vulnerableProtection: 68,
           resourceEfficiency: 45, feasibility: 55, longTermImpact: 75, predictability: 45,
         },
       },
@@ -165,20 +495,21 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Prioritize essential workers / caregivers",
         summary: "Give the treatment first to people others depend on (key workers, caregivers).",
-        consequence: "Keeps society running, but can skip the sickest.",
-        givesUp: "Can skip the sickest; treats people as 'useful'.",
-        moralTension: "Social value vs. equal worth.",
+        gains: "Hospitals and key services keep running for everyone.",
+        consequence: "Protecting key workers keeps the whole health system running for the whole city. But it can push the sickest patients down the list.",
+        givesUp: "The sickest patients, and the idea that every life counts the same.",
+        moralTension: "Is it right to treat people according to how useful they are to everyone else?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 40,
-          groupSizeSensitivity: 78,
-          gainResponsivenessSensitivity: 60,
-          outcomeAggregationSensitivity: 70,
+          vulnerabilityProtectionSensitivity: 56,
+          groupSizeSensitivity: 61,
+          gainResponsivenessSensitivity: 41,
+          outcomeAggregationSensitivity: 43,
           directnessSensitivity: 60,
           contextSensitivity: 55,
           stakeholderPerspectiveShiftSensitivity: 50,
         },
         metrics: {
-          totalBenefit: 75, harmReduction: 70, fairnessEquity: 55, vulnerableProtection: 45,
+          totalBenefit: 75, harmReduction: 70, fairnessEquity: 55, vulnerableProtection: 55,
           resourceEfficiency: 78, feasibility: 75, longTermImpact: 82, predictability: 72,
         },
       },
@@ -206,12 +537,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Evacuate the largest neighborhoods first",
         summary: "Send the buses where they can move the greatest number of people in the hours that remain.",
+        gains: "The greatest number of people moved to safety.",
         consequence: "Moves the most people to safety overall — but the few who cannot self-evacuate are reached last, if at all.",
         givesUp: "The worst-off: disabled, elderly, and isolated residents who depend on a bus that may never come.",
         moralTension: "Is saving the greatest number worth knowingly leaving behind the ones who most needed help to escape?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 32, groupSizeSensitivity: 96,
-          gainResponsivenessSensitivity: 48, outcomeAggregationSensitivity: 78,
+          vulnerabilityProtectionSensitivity: 32, groupSizeSensitivity: 93,
+          gainResponsivenessSensitivity: 31, outcomeAggregationSensitivity: 55,
           directnessSensitivity: 45, contextSensitivity: 40, stakeholderPerspectiveShiftSensitivity: 30,
         },
         metrics: {
@@ -228,12 +560,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Evacuate those who cannot escape on their own first",
         summary: "Send rescue teams first to hospitals, care homes, and low-mobility families — the people who cannot flee without help.",
+        gains: "The people who cannot escape without help are reached first.",
         consequence: "Protects those who literally cannot save themselves — but each rescue is slow, so far fewer people are moved per hour.",
         givesUp: "Total reach and speed: many who could have been saved wait as resources go to a difficult few.",
         moralTension: "Do you protect those who cannot flee, even if more people drown in the time it takes to carry a few to safety?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 48,
-          gainResponsivenessSensitivity: 45, outcomeAggregationSensitivity: 48,
+          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 45,
+          gainResponsivenessSensitivity: 28, outcomeAggregationSensitivity: 25,
           directnessSensitivity: 65, contextSensitivity: 70, stakeholderPerspectiveShiftSensitivity: 55,
         },
         metrics: {
@@ -250,12 +583,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Evacuate the deadliest zones first",
         summary: "Concentrate everything on the areas where the flood is most likely to kill, to prevent the greatest number of deaths.",
+        gains: "The largest number of deaths prevented.",
         consequence: "Prevents the most deaths — but whole lower-risk streets are skipped entirely, even ones you could have reached.",
         givesUp: "Reachable 'safer' areas get nothing; people there are written off because their danger score was lower.",
         moralTension: "If you can prevent the most deaths by ignoring the 'safer' streets, is it right to abandon them completely?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 58, groupSizeSensitivity: 50,
-          gainResponsivenessSensitivity: 46, outcomeAggregationSensitivity: 96,
+          vulnerabilityProtectionSensitivity: 58, groupSizeSensitivity: 47,
+          gainResponsivenessSensitivity: 29, outcomeAggregationSensitivity: 73,
           directnessSensitivity: 92, contextSensitivity: 95, stakeholderPerspectiveShiftSensitivity: 44,
         },
         metrics: {
@@ -272,12 +606,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Send each rescue boat where it saves the most people per trip",
         summary: "Direct every scarce boat-hour to wherever it pulls the most people out of danger for the effort spent.",
+        gains: "The most rescues possible from a very small fleet.",
         consequence: "Squeezes the most rescues from a tiny fleet — but anyone hard to reach is passed over because they 'cost too much' per trip.",
         givesUp: "The isolated and far-flung: long flooded lanes and lone houses the math says are not worth the trip.",
         moralTension: "Efficiency saves more people overall — but is it just to abandon someone simply because reaching them is expensive?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 35, groupSizeSensitivity: 60,
-          gainResponsivenessSensitivity: 95, outcomeAggregationSensitivity: 70,
+          vulnerabilityProtectionSensitivity: 35, groupSizeSensitivity: 57,
+          gainResponsivenessSensitivity: 78, outcomeAggregationSensitivity: 47,
           directnessSensitivity: 60, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 35,
         },
         metrics: {
@@ -294,12 +629,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Split the fleet across every priority at once",
         summary: "Divide resources so vulnerable groups, the deadliest zones, and the largest neighborhoods all receive some help.",
+        gains: "Every group gets some help, and no group is completely abandoned.",
         consequence: "No group is completely abandoned — but spread this thin, the fleet reaches none of them in time, and likely saves fewer overall than a focused plan.",
         givesUp: "Decisiveness and total rescues: refusing to prioritize can cost lives a committed plan would have saved.",
         moralTension: "Is refusing to choose who matters most a fair compromise — or an indecision that quietly costs the most lives of all?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 60,
-          gainResponsivenessSensitivity: 56, outcomeAggregationSensitivity: 58,
+          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 57,
+          gainResponsivenessSensitivity: 39, outcomeAggregationSensitivity: 35,
           directnessSensitivity: 72, contextSensitivity: 82, stakeholderPerspectiveShiftSensitivity: 90,
         },
         metrics: {
@@ -316,12 +652,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Hold back part of the fleet for the predicted second surge",
         summary: "Commit part of the response now, but reserve capacity for the larger flooding the forecast says is still to come.",
+        gains: "Boats kept ready in case a second, worse surge arrives.",
         consequence: "Could save more across the whole disaster — but people in danger right now wait while rescue boats sit idle for a surge that may not arrive.",
         givesUp: "Certain help for people endangered now, traded for protection against an uncertain worse tomorrow.",
         moralTension: "Do you gamble present lives on a forecast, sparing capacity for a second wave that might never come?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 46, groupSizeSensitivity: 46,
-          gainResponsivenessSensitivity: 58, outcomeAggregationSensitivity: 66,
+          vulnerabilityProtectionSensitivity: 46, groupSizeSensitivity: 43,
+          gainResponsivenessSensitivity: 41, outcomeAggregationSensitivity: 43,
           directnessSensitivity: 70, contextSensitivity: 92, stakeholderPerspectiveShiftSensitivity: 50,
         },
         metrics: {
@@ -353,12 +690,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Protect hospitals, dialysis centers, and elder-care first",
         summary: "Send the crews and clean water first to the institutions serving people who would be harmed most by unsafe water.",
+        gains: "Safe water for the people whose health is most fragile.",
         consequence: "Shields those whose health is most fragile — but far fewer households are reached, and most of the city waits.",
         givesUp: "Total reach: the majority keep drinking unsafe water while resources protect a vulnerable few.",
         moralTension: "Do you guard the people unsafe water would harm most, even though it leaves the great majority exposed?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 46,
-          gainResponsivenessSensitivity: 44, outcomeAggregationSensitivity: 48,
+          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 43,
+          gainResponsivenessSensitivity: 27, outcomeAggregationSensitivity: 25,
           directnessSensitivity: 70, contextSensitivity: 74, stakeholderPerspectiveShiftSensitivity: 56,
         },
         metrics: {
@@ -375,12 +713,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Protect the largest neighborhoods first",
         summary: "Reach the greatest number of residents with clean water as quickly as the crews allow.",
+        gains: "Safe water reaches the greatest number of households, fastest.",
         consequence: "Gets safe water to the most people fastest — but fragile institutions and small clinics are overlooked.",
         givesUp: "The most fragile: hospitals, dialysis, and care homes serving those least able to cope with exposure.",
         moralTension: "Is reaching the most people worth leaving the sites that protect the most fragile until last?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 34, groupSizeSensitivity: 96,
-          gainResponsivenessSensitivity: 50, outcomeAggregationSensitivity: 80,
+          vulnerabilityProtectionSensitivity: 34, groupSizeSensitivity: 93,
+          gainResponsivenessSensitivity: 33, outcomeAggregationSensitivity: 57,
           directnessSensitivity: 48, contextSensitivity: 42, stakeholderPerspectiveShiftSensitivity: 32,
         },
         metrics: {
@@ -397,12 +736,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Treat the highest-contamination zones first",
         summary: "Concentrate the crews where contamination is worst, to prevent the greatest total amount of illness across the city.",
+        gains: "The largest amount of illness prevented across the city.",
         consequence: "Prevents the most illness overall — but lower-contamination areas are skipped entirely, even ones easily reached.",
         givesUp: "Reachable lower-risk districts get nothing; people there are written off because their exposure was smaller.",
         moralTension: "If you can prevent the most illness by ignoring the 'cleaner' districts, is it right to abandon them completely?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 58, groupSizeSensitivity: 50,
-          gainResponsivenessSensitivity: 46, outcomeAggregationSensitivity: 96,
+          vulnerabilityProtectionSensitivity: 58, groupSizeSensitivity: 47,
+          gainResponsivenessSensitivity: 29, outcomeAggregationSensitivity: 73,
           directnessSensitivity: 95, contextSensitivity: 92, stakeholderPerspectiveShiftSensitivity: 44,
         },
         metrics: {
@@ -419,12 +759,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Send each crew where it removes the most exposure per hour",
         summary: "Direct every scarce crew-hour to wherever it cuts the most contamination exposure for the effort spent.",
+        gains: "The most illness prevented for every crew-hour spent.",
         consequence: "Prevents the most illness per crew-hour — but scattered, hard-to-reach households are passed over as 'low yield.'",
         givesUp: "The isolated and far-flung: small clusters the math judges are not worth a crew's time.",
         moralTension: "Efficiency protects more people overall — but is it fair to skip households simply because reaching them is costly?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 35, groupSizeSensitivity: 58,
-          gainResponsivenessSensitivity: 96, outcomeAggregationSensitivity: 70,
+          vulnerabilityProtectionSensitivity: 35, groupSizeSensitivity: 55,
+          gainResponsivenessSensitivity: 79, outcomeAggregationSensitivity: 47,
           directnessSensitivity: 58, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 36,
         },
         metrics: {
@@ -441,12 +782,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Citywide boil-water advisory plus thin targeted delivery",
         summary: "Warn the whole city and divide clean-water delivery across vulnerable, high-contamination, and large areas alike.",
+        gains: "Some protection for every group in the city.",
         consequence: "No group is fully abandoned — but a boil order many cannot follow, plus delivery spread this thin, likely prevents less illness than a focused plan.",
         givesUp: "Effectiveness and decisiveness: hedging can protect fewer people than committing to one clear priority.",
         moralTension: "Is a fair-to-everyone compromise the responsible choice — or an indecision that quietly protects the fewest?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 60,
-          gainResponsivenessSensitivity: 56, outcomeAggregationSensitivity: 58,
+          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 57,
+          gainResponsivenessSensitivity: 39, outcomeAggregationSensitivity: 35,
           directnessSensitivity: 68, contextSensitivity: 80, stakeholderPerspectiveShiftSensitivity: 90,
         },
         metrics: {
@@ -463,12 +805,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Restore the central treatment system first",
         summary: "Put the crews on fixing the source so the whole city gets safe water sooner overall, accepting longer exposure in the meantime.",
+        gains: "A permanent fix that makes the whole network safe again.",
         consequence: "Solves it at the root for everyone sooner — but while crews repair the plant, people, especially the vulnerable, stay exposed now.",
         givesUp: "Immediate protection: people in danger today wait while effort goes to the system-wide fix.",
         moralTension: "Do you fix the source for everyone's sake, even though it leaves the most vulnerable exposed the longest right now?",
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 46, groupSizeSensitivity: 50,
-          gainResponsivenessSensitivity: 58, outcomeAggregationSensitivity: 66,
+          vulnerabilityProtectionSensitivity: 46, groupSizeSensitivity: 47,
+          gainResponsivenessSensitivity: 41, outcomeAggregationSensitivity: 43,
           directnessSensitivity: 66, contextSensitivity: 94, stakeholderPerspectiveShiftSensitivity: 50,
         },
         metrics: {

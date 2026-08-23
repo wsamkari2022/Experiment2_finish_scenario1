@@ -16,7 +16,7 @@ import { Box } from "@chakra-ui/react";
 
 const AXIS = "currentColor";
 /** Inherits the app's light/dark text colour so currentColor is theme-aware. */
-const SVG_STYLE: React.CSSProperties = { display: "block", color: "var(--chakra-colors-fg)" };
+const SVG_STYLE: React.CSSProperties = { display: "block", height: "auto", color: "var(--chakra-colors-fg)" };
 
 /* --------------------------------- Radar --------------------------------- */
 
@@ -32,8 +32,21 @@ export interface RadarSeries {
  * Radar / spider chart for a small set of axes (e.g. the 4 policy values) with one or
  * more overlaid series. Great for comparing the SHAPE of two profiles (before vs after).
  */
-export function RadarChart({ axes, series, max = 100 }: {
-  axes: string[]; series: RadarSeries[]; max?: number;
+export function RadarChart({ axes, series, max = 100, fillOpacity = 0.14, showDots = true, axisColor = AXIS }: {
+  axes: string[];
+  series: RadarSeries[];
+  max?: number;
+  /**
+   * Colour of the rings, spokes and spoke labels. Defaults to `currentColor`, which resolves
+   * to the app-wide `--chakra-colors-fg` token — correct whenever the chart's surface follows
+   * the app's colour mode. Pass an explicit colour when the surrounding surface is painted
+   * from a palette of its own, so the axes cannot end up dark-on-dark.
+   */
+  axisColor?: string;
+  /** Polygon fill alpha. Lower it when many series overlap so the shapes stay readable. */
+  fillOpacity?: number;
+  /** Vertex dots read well for 1-2 series; they clutter once several overlap. */
+  showDots?: boolean;
 }) {
   // Wide viewBox so the left/right spoke labels (e.g. "Greatest overall benefit") fit fully
   // inside the SVG instead of being clipped at the edges.
@@ -50,9 +63,9 @@ export function RadarChart({ axes, series, max = 100 }: {
     s.values.map((v, i) => pt(i, Math.max(0, Math.min(1, v / max))).join(",")).join(" ");
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={SVG_STYLE}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={SVG_STYLE}>
       {ringFracs.map((f) => (
-        <polygon key={f} points={polyFor(f)} fill="none" stroke={AXIS} strokeOpacity={0.14} strokeWidth={1} />
+        <polygon key={f} points={polyFor(f)} fill="none" stroke={axisColor} strokeOpacity={0.14} strokeWidth={1} />
       ))}
       {axes.map((label, i) => {
         const [x, y] = pt(i, 1);
@@ -67,8 +80,8 @@ export function RadarChart({ axes, series, max = 100 }: {
         const l2 = words.slice(mid).join(" ");
         return (
           <g key={label}>
-            <line x1={cx} y1={cy} x2={x} y2={y} stroke={AXIS} strokeOpacity={0.18} strokeWidth={1} />
-            <text x={lx} y={ly} textAnchor={anchor} fontSize={12} fontWeight={600} fill={AXIS} fillOpacity={0.85}>
+            <line x1={cx} y1={cy} x2={x} y2={y} stroke={axisColor} strokeOpacity={0.18} strokeWidth={1} />
+            <text x={lx} y={ly} textAnchor={anchor} fontSize={12} fontWeight={600} fill={axisColor} fillOpacity={0.85}>
               <tspan x={lx} dy={`${dy}em`}>{l1}</tspan>
               {l2 && <tspan x={lx} dy="1.05em">{l2}</tspan>}
             </text>
@@ -77,9 +90,9 @@ export function RadarChart({ axes, series, max = 100 }: {
       })}
       {series.map((s) => (
         <g key={s.name}>
-          <polygon points={seriesPoly(s)} fill={s.color} fillOpacity={0.14} stroke={s.color}
+          <polygon points={seriesPoly(s)} fill={s.color} fillOpacity={fillOpacity} stroke={s.color}
             strokeWidth={2.5} strokeDasharray={s.dashed ? "5 3" : undefined} strokeLinejoin="round" />
-          {s.values.map((v, i) => {
+          {showDots && s.values.map((v, i) => {
             const [x, y] = pt(i, Math.max(0, Math.min(1, v / max)));
             return <circle key={i} cx={x} cy={y} r={3.5} fill={s.color} />;
           })}
@@ -110,7 +123,7 @@ export function HBarChart({ bars, max, unitHint }: { bars: HBar[]; max: number; 
   const H = padT + bars.length * rowH + padB;
   const scale = (v: number) => (max <= 0 ? 0 : Math.max(0, Math.min(1, v / max)) * plotW);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={SVG_STYLE}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={SVG_STYLE}>
       {unitHint && <text x={labelW + padL} y={12} fontSize={10} fill={AXIS} fillOpacity={0.5}>{unitHint}</text>}
       {bars.map((b, i) => {
         const y = padT + i * rowH;
@@ -142,7 +155,7 @@ export function VBarChart({ bars, max }: { bars: VBar[]; max: number }) {
   const barW = Math.min(64, slot * 0.55);
   const scale = (v: number) => (max <= 0 ? 0 : Math.max(0, Math.min(1, v / max)) * plotH);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={SVG_STYLE}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={SVG_STYLE}>
       <line x1={padL} y1={H - padB} x2={W - padR} y2={H - padB} stroke={AXIS} strokeOpacity={0.18} />
       {bars.map((b, i) => {
         const cxSlot = padL + slot * i + slot / 2;
@@ -167,7 +180,7 @@ export interface LineSeries { name: string; color: string; values: number[]; }
 export interface RefLine { value: number; label: string; }
 
 /**
- * Multi-series line chart over shared, ordered x categories (e.g. Before → S1 → S2 → S3).
+ * Multi-series line chart over shared, ordered x categories (e.g. Before → after each scenario).
  * Used both for a single trajectory (with an optional dashed reference line) and for the
  * 4-value evolution. Y axis is fixed 0..max with light gridlines.
  */
@@ -183,7 +196,7 @@ export function LineChart({ xLabels, series, max = 100, refLine }: {
   const y = (v: number) => padT + plotH * (1 - Math.max(0, Math.min(1, v / max)));
   const ticks = [0, 25, 50, 75, 100].filter((t) => t <= max);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" style={SVG_STYLE}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={SVG_STYLE}>
       {ticks.map((t) => (
         <g key={t}>
           <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} stroke={AXIS} strokeOpacity={0.1} />

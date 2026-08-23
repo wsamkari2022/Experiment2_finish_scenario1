@@ -27,7 +27,7 @@ export const FEEDBACK_KEY = "vrds_feedback_record";
  * participant's data is lost before it can be exported to MongoDB.
  */
 export const FEEDBACK_ARCHIVE_KEY = "vrds_feedback_archive";
-export const FEEDBACK_SCHEMA_VERSION = 2; // v2: feedback Likert scale is 1–7 (was 1–5 in v1)
+export const FEEDBACK_SCHEMA_VERSION = 3; // v3: timing.block5 is scenarioMs[] (5 scenarios); v2 = 1–7 Likert
 export const EXPERIMENT_ID = "vrds_experiment_2";
 
 /* ----------------------------- Question definitions ----------------------------- */
@@ -56,6 +56,15 @@ export const CVR_QUESTIONS: FeedbackQuestion[] = [
   { code: "CVR_confidence", type: "likert", text: "After the value reflection, my confidence in my choice went…", likertLow: "Much lower", likertHigh: "Much higher" },
   { code: "CVR_changed", type: "yesno", text: "Did the value reflection change your final choice or your values?" },
   { code: "CVR_open", type: "open", text: "What part of the value reflection was most helpful or most confusing?" },
+];
+
+/**
+ * ① CVR dual-perspective — extra questions shown ONLY if the participant generated the alternate
+ * lens (Directness ↔ Context) in at least one reflection. Rendered inside the CVR section.
+ */
+export const DUAL_VIEW_QUESTIONS: FeedbackQuestion[] = [
+  { code: "CVR_dual_helpful", type: "likert", text: "Being able to generate and compare a second perspective (Directness vs Context) helped me reflect more carefully on my choice." },
+  { code: "CVR_dual_changed", type: "yesno", text: "Did comparing the two perspectives change how you felt about your choice?" },
 ];
 
 /** ② APA — shown only when the APA value-clarification panel opened. */
@@ -339,6 +348,11 @@ export function shouldShowCvrSection(results: Block5Results | null): boolean {
   if (!results) return false;
   if ((results.totalCvrVisits ?? 0) > 0) return true;
   return results.scenarioResults.some((r) => r.cvrFired || (r.telemetry?.cvrVisits ?? 0) > 0);
+}
+
+/** Whether the dual-perspective questions should be shown (alt lens generated in any scenario). */
+export function usedDualPerspective(results: Block5Results | null): boolean {
+  return !!results && results.scenarioResults.some((r) => r.cvrAltViewGenerated);
 }
 
 /** Whether the APA feedback section should be shown (the APA panel opened at least once). */

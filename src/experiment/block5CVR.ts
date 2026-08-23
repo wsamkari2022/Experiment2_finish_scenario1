@@ -25,6 +25,7 @@ import type {
   CVRCoordinate,
   CVREndorsement,
   CVRFraming,
+  FramingAdjust,
   SalienceWho,
 } from "./block5Types";
 
@@ -45,6 +46,30 @@ function scoreOf(profile: Block5UserProfile, key: string): number {
  *
  *   alignment = 100 − Σ (user/100) × max(0, user − option)
  */
+/**
+ * ALIGNMENT — how well one option fits one participant, on the four POLICY values only.
+ *
+ * WHAT:  penalty = Σ over the 4 policy dims of  (u / 100) x max(0, u − f)
+ *        score   = 100 − penalty
+ * where u is the participant's score on that value and f is the option's fingerprint on it.
+ *
+ * WHY ONLY SHORTFALLS COUNT — max(0, u − f): an option is penalised only when it delivers LESS
+ * than the participant demands. Exceeding their bar costs nothing: you are not punished for
+ * caring more than required. This is a THRESHOLD-SATISFACTION model, not a distance model. A
+ * distance model would penalise an option for protecting the vulnerable "too much", which is not
+ * a coherent thing to hold against it.
+ *
+ * WHY THE PENALTY IS WEIGHTED BY u/100: a shortfall on a value you hold strongly should hurt
+ * more than the same shortfall on one you barely hold. This is exactly why the seven dimensions
+ * had to be put on a common ruler first (see sensitivityCalibration.ts): before that, a value
+ * scoring 14 by construction contributed a fifth as much as one scoring 47, purely because of
+ * how it happened to be measured — not because the participant cared less.
+ *
+ * WHY ONLY FOUR OF THE SEVEN: the other three are not policy demands. Context and directness
+ * choose the CVR's framing lens; stakeholder chooses whose voice appears. Mixing them into
+ * alignment would be comparing "what I demand of a policy" with "what kind of reflection moves
+ * me", which are different questions.
+ */
 export function policyAlignmentScore(option: Block5ScenarioOption, profile: Block5UserProfile): number {
   let penalty = 0;
   for (const k of POLICY_DIM_KEYS) {
@@ -60,6 +85,20 @@ export function policyAlignmentScore(option: Block5ScenarioOption, profile: Bloc
  * Rank-based label (v3.3): an option's position in the scenario ranking decides its level,
  * which guarantees a spread for any profile. For 6 options with the default rule this gives
  * 1 Aligned / 1 Weakly / 2 Misaligned / 2 Strongly.
+ */
+/**
+ * Turns an option's RANK POSITION into its alignment label.
+ *
+ * WHAT: with 6 options and the current rule, exactly 1 Aligned / 1 Weakly aligned /
+ * 2 Misaligned / 2 Strongly misaligned. The CVR fires on the bottom four.
+ *
+ * WHY RANK AND NOT AN ABSOLUTE CUTOFF: absolute score bands would give some participants six
+ * "aligned" options and therefore no reflection at all, and others six "misaligned" ones. The
+ * experiment needs every participant to face the same structure of choices — one clear fit, one
+ * near fit, and four that cost them something — regardless of how demanding their profile is.
+ * Ranking guarantees that spread for everyone.
+ *
+ * Options are NEVER hidden or removed; the label is information, not a filter.
  */
 export function rankLabel(index: number, total: number): AlignmentLevel {
   const a = ALIGNMENT_RANK_RULE.aligned;
@@ -137,14 +176,54 @@ export function violatedValue(option: Block5ScenarioOption, profile: Block5UserP
   return best;
 }
 
-/** Framing = the participant's bigger of context vs directness sensitivity. */
+/** Framing = the participant's bigger of context vs directness sensitivity (the lens shown FIRST). */
+/**
+ * Picks which reflection lens the CVR uses — the FRAMING pair.
+ *
+ * WHAT: whichever of context sensitivity or directness sensitivity is higher.
+ *
+ * WHY THESE TWO AND ONLY THESE TWO: they are the two dimensions that describe HOW a participant
+ * is moved rather than WHAT they demand. Someone whose answers shift with the situation gets the
+ * context lens ("the reason some people rank lower here is circumstance, not worth"); someone
+ * whose answers shift with their own causal role gets the directness lens ("this is not the
+ * system deciding — your own choice is what moves the cost onto them").
+ *
+ * This is a direct numeric comparison between two dimensions, which is only meaningful because
+ * both are on the common ruler (see sensitivityCalibration.ts). Before calibration this
+ * comparison was decided largely by which formula produced bigger numbers.
+ */
 export function chooseFraming(profile: Block5UserProfile): CVRFraming {
   return scoreOf(profile, "contextSensitivity") >= scoreOf(profile, "directnessSensitivity")
     ? "context"
     : "directness";
 }
 
+/** The opposite reflection lens (used to generate the alternate CVR view). */
+export function otherFraming(framing: CVRFraming): CVRFraming {
+  return framing === "context" ? "directness" : "context";
+}
+
+/** Maps a reflection lens to the profile sensitivity key it adjusts. */
+export function framingSensitivityKey(framing: CVRFraming): FramingAdjust["sensitivityKey"] {
+  return framing === "directness" ? "directnessSensitivity" : "contextSensitivity";
+}
+
 /** Who appears = INVERSE map of stakeholder sensitivity (low→close, high→system). */
+/**
+ * Picks whose voice speaks in the CVR vignette — the VOICE group.
+ *
+ * WHAT: an INVERSE map of stakeholder sensitivity. Low → "close" (someone you have known twenty
+ * years); middle → "group" (an affected community member); high → "system" (a distant official).
+ *
+ * WHY INVERSE: the point is to give each participant the voice most likely to actually reach
+ * them. Someone barely moved by stakeholder perspectives needs the closest, most personal voice
+ * to feel anything; someone already highly moved will register even a distant systemic one.
+ *
+ * KNOWN LIMITATION: the cutoffs assume the stakeholder score spreads across the range. It does
+ * not — the underlying Block 4 measure is near-binary, so in practice this returns "close" for
+ * about 81% of participants. The cutoffs are not the fault; the measure is. See the Block 4
+ * notes in thresholdTree.ts.
+ */
 export function chooseWho(profile: Block5UserProfile): SalienceWho {
   const s = scoreOf(profile, "stakeholderPerspectiveShiftSensitivity");
   if (s < 40) return "close";
@@ -166,9 +245,26 @@ function cloneProfile(p: Block5UserProfile): Block5UserProfile {
   return { ...p, dimensions: p.dimensions.map((d) => ({ ...d })) };
 }
 
+/**
+ * Applies one profile update, scaled by how much room the score has left to move.
+ *
+ * A raw `delta` is not added directly. It is multiplied by the fraction of the range still
+ * available in that direction — `(100 − score)/100` for a gain, `score/100` for a loss — so a
+ * dimension already near a bound moves only a little, while a mid-range dimension moves almost
+ * the full step. This is the standard proportional (Rescorla–Wagner) update form.
+ *
+ * Why: with five scenarios each able to add +30, a plain additive rule drives every dimension a
+ * consistent participant touches to 0 or 100 by about the third scenario, after which the
+ * carry-over between scenarios becomes invisible (verified by simulation: 2 of 3 tracked
+ * dimensions pinned at 3 scenarios, 3 of 3 at five). Proportional updating cannot reach a bound,
+ * so the profile keeps responding right through Scenario 5 while preserving every ordering —
+ * a strong endorser still ends clearly above a weak one.
+ */
 function bump(p: Block5UserProfile, key: string, delta: number): void {
   const dim = p.dimensions.find((d) => d.key === key);
-  if (dim) dim.score = clamp(dim.score + delta);
+  if (!dim) return;
+  const headroom = delta >= 0 ? (100 - dim.score) / 100 : dim.score / 100;
+  dim.score = clamp(dim.score + delta * headroom);
 }
 
 function recompute(p: Block5UserProfile): void {
@@ -187,19 +283,29 @@ function displacedTopValue(p: Block5UserProfile, option: Block5ScenarioOption): 
   return sorted[0] ?? null;
 }
 
-/** Misaligned + YES: endorsed value +30/+15, displaced #1 value −20/−10, stakeholder ±25. */
+/**
+ * Misaligned + YES: endorsed value +30/+15, displaced #1 value −20/−10, stakeholder ±25.
+ *
+ * `framingAdjust` (optional) is the dual-perspective change — applied ONLY when the participant
+ * generated the other lens and answered the new question. On the YES path it is −20 to the lens
+ * that did NOT influence keeping the option. Passing null/undefined keeps the original behaviour.
+ */
 export function applyEndorsementUpdates(
   profile: Block5UserProfile,
   option: Block5ScenarioOption,
   q1Strong: boolean,
   q2Guided: boolean,
+  framingAdjust?: FramingAdjust | null,
+  stakesWeight = 1,
 ): Block5UserProfile {
   const p = cloneProfile(profile);
+  const w = stakesWeight;
   const endorsed = optionMainValue(option);
   const displaced = displacedTopValue(p, option);
-  bump(p, endorsed, q1Strong ? 30 : 15);
-  if (displaced && displaced !== endorsed) bump(p, displaced, q1Strong ? -20 : -10);
-  bump(p, "stakeholderPerspectiveShiftSensitivity", q2Guided ? 25 : -25);
+  bump(p, endorsed, (q1Strong ? 30 : 15) * w);
+  if (displaced && displaced !== endorsed) bump(p, displaced, (q1Strong ? -20 : -10) * w);
+  bump(p, "stakeholderPerspectiveShiftSensitivity", (q2Guided ? 25 : -25) * w);
+  if (framingAdjust) bump(p, framingAdjust.sensitivityKey, framingAdjust.delta * w);
   recompute(p);
   return p;
 }
@@ -215,19 +321,24 @@ export function applyApaUpdates(
   q1: "endorse" | "context" | "unsure",
   stakeholderInfluenced: boolean,
   prioritizedValue: Block5PolicyDimKey,
+  framingAdjust?: FramingAdjust | null,
+  stakesWeight = 1,
 ): Block5UserProfile {
   const p = cloneProfile(profile);
+  const w = stakesWeight;
   const optionValue = optionMainValue(misalignedOption);
   const topValue = violatedValue(misalignedOption, profile);
   if (q1 === "endorse") {
-    bump(p, optionValue, 15);
-    if (topValue !== optionValue) bump(p, topValue, -10);
+    bump(p, optionValue, 15 * w);
+    if (topValue !== optionValue) bump(p, topValue, -10 * w);
   } else if (q1 === "context") {
-    bump(p, optionValue, 5);
-    if (topValue !== optionValue) bump(p, topValue, 10);
+    bump(p, optionValue, 5 * w);
+    if (topValue !== optionValue) bump(p, topValue, 10 * w);
   }
-  bump(p, "stakeholderPerspectiveShiftSensitivity", stakeholderInfluenced ? 25 : -25);
-  bump(p, prioritizedValue, 10);
+  bump(p, "stakeholderPerspectiveShiftSensitivity", (stakeholderInfluenced ? 25 : -25) * w);
+  bump(p, prioritizedValue, 10 * w);
+  // Dual-perspective: NO path = +20 to the lens that changed their mind (only when answered).
+  if (framingAdjust) bump(p, framingAdjust.sensitivityKey, framingAdjust.delta * w);
   recompute(p);
   return p;
 }
@@ -237,9 +348,10 @@ export function applyValueBump(
   profile: Block5UserProfile,
   option: Block5ScenarioOption,
   points: number,
+  stakesWeight = 1,
 ): Block5UserProfile {
   const p = cloneProfile(profile);
-  bump(p, optionMainValue(option), points);
+  bump(p, optionMainValue(option), points * stakesWeight);
   recompute(p);
   return p;
 }

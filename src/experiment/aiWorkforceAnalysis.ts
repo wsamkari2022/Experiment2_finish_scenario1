@@ -37,6 +37,18 @@ export function clamp0to100(value: number): number {
  * A higher index means a higher gain was required before approving.
  * GAIN_STEPS acts as the sentinel for "never approved".
  */
+/**
+ * Turns one Block 3 cell into a COMPARABLE INDEX. Same contract as the Block 1 and Block 2
+ * helpers: the accepted rung, or GAIN_STEPS for "never approved, even at $100 million".
+ *
+ * blockedByPriorNonAcceptance also maps to the sentinel. That flag can only appear on records
+ * collected under the ORIGINAL methodology, where refusing at one group size auto-filled the
+ * larger sizes without asking. Every cell is presented now, so new data never sets it — the
+ * branch is retained purely so older records still parse. See blocksLegacyMethodology.ts.
+ *
+ * About 14% of cells hit the sentinel in practice, which is the largest source of censoring in
+ * the instrument.
+ */
 export function toGainComparableIndex(
   t: AIWorkforceThresholdResult | null | undefined,
 ): number {
@@ -68,6 +80,36 @@ function avgIndexForGroup(
  * for a given worker group type. A large spread indicates that the participant's threshold
  * shifted substantially as group size grew.
  */
+/**
+ * SIZE SLOPE for one worker group: the threshold demanded for the LARGEST group minus the
+ * threshold demanded for the SMALLEST, in ladder rungs. Signed, so the sign says which way the
+ * participant moved and the magnitude says how far.
+ *
+ * This replaces `spreadForGroup` (max − min) as the basis for group-size sensitivity. The range
+ * is not a measure of sensitivity to SIZE, because it is non-negative by construction and
+ * therefore grows with any variation at all, including variation that has nothing to do with
+ * size. Measured on uniformly random answers — a responder with no preferences whatsoever —
+ * the range scores 57/100 for "group-size sensitivity", and in 54% of those cases it reports
+ * sensitivity where the actual small-to-large trend is flat or negative. It was reading noise
+ * as signal. The slope scores the same random responder 13/100.
+ *
+ * The slope is also a proper main effect of group size in the 2x3 design, which makes it
+ * orthogonal to the worker-type contrast: the correlation between the group-size and
+ * vulnerability signals falls from −0.16 to −0.04 once this is used.
+ */
+function sizeSlopeForGroup(
+  results: AIWorkforceBlockResults,
+  groupType: WorkerGroupKey,
+): number {
+  const idx = (gs: (typeof WORKER_GROUP_SIZES)[number]) =>
+    toGainComparableIndex(
+      results.thresholds[aiWorkforceThresholdKeyFor(groupType, gs.key)],
+    );
+  const smallest = WORKER_GROUP_SIZES[0];
+  const largest = WORKER_GROUP_SIZES[WORKER_GROUP_SIZES.length - 1];
+  return idx(largest) - idx(smallest);
+}
+
 function spreadForGroup(
   results: AIWorkforceBlockResults,
   groupType: WorkerGroupKey,
@@ -103,8 +145,9 @@ export interface AIWorkforceAnalysis {
   highBufferPermissivenessScore: number;
 
   /**
-   * How much the threshold shifted as group size grew from ~10 to ~100,000.
-   * Average of the spread for both worker group types.
+   * How much the threshold ROSE as group size grew from ~10 to ~100,000, as a proportion of
+   * the ladder. Built from the signed size slope, clamped at zero: demanding more gain for a
+   * larger group is the direction that means "the number of people affected moves me".
    */
   sizeEscalationSensitivityScore: number;
 
@@ -120,11 +163,24 @@ export interface AIWorkforceAnalysis {
   /** Raw average index for the high-buffer group (used in formulas and display). */
   avgHighBufferIndex: number;
 
-  /** Spread (max−min) of indices across group sizes for low-buffer workers. */
+  /**
+   * Spread (max−min) of indices across group sizes. DESCRIPTIVE ONLY — retained for the
+   * derivation tables. Not used for scoring; see `sizeSlope` and `sizeSlopeForGroup`.
+   */
   lowBufferSpread: number;
-
-  /** Spread (max−min) of indices across group sizes for high-buffer workers. */
+  /** Descriptive only — see lowBufferSpread. */
   highBufferSpread: number;
+
+  /**
+   * Signed size slope in ladder rungs: threshold for the largest group minus the smallest,
+   * averaged over both worker groups. Positive = demanded more gain as the group grew.
+   * This is the basis of group-size sensitivity.
+   */
+  sizeSlope: number;
+  /** Signed size slope for the entry-level (low_buffer) group alone. */
+  sizeSlopeLowBuffer: number;
+  /** Signed size slope for the senior-level (high_buffer) group alone. */
+  sizeSlopeHighBuffer: number;
 
   /**
    * Per-cell breakdown of comparable indices, keyed by worker group type and group size.
@@ -164,12 +220,16 @@ export function computeAIWorkforceAnalysis(
   );
 
   // 4. Size escalation sensitivity: average spread of indices across sizes (both groups).
-  //    Formula: 100 × avgSpread / GAIN_STEPS
+  //    Formula: 100 × max(0, sizeSlope) / GAIN_STEPS
   const spreadLB  = spreadForGroup(results, "low_buffer");
   const spreadHB  = spreadForGroup(results, "high_buffer");
-  const avgSpread = (spreadLB + spreadHB) / 2;
+  // Signed main effect of group size, averaged over both worker groups. This — not avgSpread —
+  // is what the group-size sensitivity score is built from; see sizeSlopeForGroup.
+  const slopeLB   = sizeSlopeForGroup(results, "low_buffer");
+  const slopeHB   = sizeSlopeForGroup(results, "high_buffer");
+  const sizeSlope = (slopeLB + slopeHB) / 2;
   const sizeEscalationSensitivityScore = clamp0to100(
-    100 * (avgSpread / GAIN_STEPS),
+    100 * (Math.max(0, sizeSlope) / GAIN_STEPS),
   );
 
   // 5. Worker context sensitivity: how different were LB and HB approval thresholds overall?
@@ -201,6 +261,9 @@ export function computeAIWorkforceAnalysis(
     avgHighBufferIndex: avgHighBuffer,
     lowBufferSpread: spreadLB,
     highBufferSpread: spreadHB,
+    sizeSlope,
+    sizeSlopeLowBuffer: slopeLB,
+    sizeSlopeHighBuffer: slopeHB,
     indexByKey,
   };
 }

@@ -3,16 +3,35 @@
  *
  * Block 2 has two sequential phases:
  *   1. Lever phase — how many lives at risk before the participant pulls a lever?
- *   2. Bridge phase — at the *same* number found in the lever phase, will the participant
- *      push someone off a bridge? Tests whether the directness of the harm changes the decision.
+ *   2. Bridge phase — how many lives at risk before the participant pushes someone off a
+ *      bridge? Tests whether the DIRECTNESS of the harm changes the decision.
  *
- * Both phases share the same escalating lives-saved ladder (SAVED_LIVES_OPTIONS).
+ * Both phases share the same escalating lives-saved ladder (SAVED_LIVES_OPTIONS), and under
+ * the current methodology both walk that ladder INDEPENDENTLY from rung 0.
+ *
+ * METHODOLOGY: originally the bridge phase started at the rung where the lever was accepted
+ * (a matched pair) and was skipped when the lever was never accepted. That is switchable —
+ * see `blocksLegacyMethodology.ts` for the full rationale and the one-line revert.
  */
 
 /**
  * The escalating ladder of lives that would be saved by acting.
- * The lever phase starts at index 0; the bridge phase starts at the index
- * where the lever was accepted (so both scenarios test the same threshold).
+ *
+ * CURRENT: both phases start at index 0, so each threshold is measured over the whole
+ * ladder and the bridge threshold is free to land above, equal to, or below the lever.
+ * ORIGINAL: the bridge phase started at the index where the lever was accepted, which made
+ * `bridge >= lever` an artifact of the procedure rather than a finding.
+ */
+/**
+ * BLOCK 2 LADDER — the number of lives that acting would save.
+ *
+ * Eight rungs from 1 (no net gain — acting kills one to save one) to 10,000. The bottom rung is
+ * deliberately a non-dilemma so that anyone acting there is telling us something extreme, and
+ * the top is large enough that refusing it is equally informative.
+ *
+ * BOTH PHASES walk this same ladder from rung 0, independently. Only the ordinal position is
+ * used in scoring. Changing the number of rungs changes TROLLEY_STEPS and invalidates the
+ * calibration tables in sensitivityCalibration.ts.
  */
 export const SAVED_LIVES_OPTIONS: readonly number[] = [
   1, 2, 5, 10, 50, 100, 1000, 10000,
@@ -52,19 +71,42 @@ export interface LeverThresholdResult extends TrolleyThresholdResult {
 
 /**
  * Bridge phase threshold — extends base with comparison data relative to the lever result.
- * - `startedAtSameValueAsLever` — the number of lives the bridge phase started from
- *   (equal to the lever accepted value; included for clarity in output)
- * - `consistencyAtSameNumber` — true if the bridge was also accepted at the same number
- *   as the lever (no directness aversion at that specific count)
- * - `directnessGap` — bridgeAcceptedValue − leverAcceptedValue; positive means the
- *   participant needed more lives at risk to push than to pull
+ * - `startedAtSameValueAsLever` — the number of lives the bridge phase started from.
+ *   CURRENT methodology: always the first rung (1), because the bridge starts independently.
+ *   ORIGINAL methodology: the lever's accepted value. The field name is kept unchanged so
+ *   that previously-collected records stay readable under the same schema.
+ * - `consistencyAtSameNumber` — true if the bridge threshold equals the lever threshold.
+ *   Under the current methodology this is a genuine comparison of two independently
+ *   measured thresholds rather than a check against a shared starting point.
+ * - `directnessGap` — bridgeAcceptedValue − leverAcceptedValue, in LIVES. Positive means
+ *   more lives were needed to push than to pull. CAN NOW BE NEGATIVE (the participant
+ *   pushed at a lower number than they pulled), which the original design made impossible.
+ *   Note the lives ladder is highly non-linear (1 → 10,000), so prefer `directnessGapIndex`
+ *   for any quantitative analysis.
+ * - `directnessGapIndex` — the same gap expressed in LADDER RUNGS (signed, −8…+8). This is
+ *   the linear, analysis-ready version of `directnessGap`. A phase refused at every rung
+ *   counts as `SAVED_LIVES_OPTIONS.length`, matching the "never accepted" sentinel used by
+ *   `toTrolleyComparableIndex` and by the Directness sensitivity in `thresholdTree.ts`.
+ * - `directnessDirection` — a plain label for the sign of the gap, so analysis never has to
+ *   re-derive it: "aversion" (needed more lives at stake to push), "reverse" (needed fewer —
+ *   only observable now that the two phases are independent), or "none" (identical thresholds,
+ *   which includes refusing both phases outright). "incomplete" is retained only for records
+ *   collected under the ORIGINAL methodology, where the bridge phase could be skipped.
  */
 export interface BridgeThresholdResult extends TrolleyThresholdResult {
   scenarioType: "bridge";
   startedAtSameValueAsLever: number | null;
   consistencyAtSameNumber: boolean | null;
   directnessGap: number | null;
+  /** Signed gap in ladder rungs (bridgeIndex − leverIndex). Optional: absent on records
+   *  collected before this field existed. */
+  directnessGapIndex?: number | null;
+  /** Sign of the gap as a label. Optional for the same backward-compatibility reason. */
+  directnessDirection?: DirectnessDirection;
 }
+
+/** Which way the bridge threshold sat relative to the lever threshold. */
+export type DirectnessDirection = "aversion" | "none" | "reverse" | "incomplete";
 
 /** A single choice record written to history on every button click in either phase. */
 export interface TrolleyChoiceRecord {
@@ -83,13 +125,20 @@ export interface TrolleyBlockSummary {
   leverAcceptedValue: number | null;
   bridgeAcceptedValue: number | null;
   consistencyAtSameNumber: boolean | null;
+  /** Gap in LIVES (may be negative — see BridgeThresholdResult). */
   directnessGap: number | null;
+  /** Gap in ladder RUNGS, signed. The analysis-ready form. */
+  directnessGapIndex?: number | null;
+  /** Sign of the gap as a label. */
+  directnessDirection?: DirectnessDirection;
 }
 
 /**
  * The complete output of Block 2, saved to localStorage and passed to profileAnalysis.
- * `bridgeThreshold` is null only when the lever was never accepted (beyond range),
- * in which case the bridge phase is skipped entirely.
+ *
+ * CURRENT methodology: the bridge phase always runs, so `bridgeThreshold` is always
+ * present. It stays nullable because records collected under the ORIGINAL methodology —
+ * where the bridge was skipped whenever the lever was never accepted — must still parse.
  */
 export interface TrolleyBlockResults {
   /** Stable participant/session id — carried on every record for future MongoDB joins. */

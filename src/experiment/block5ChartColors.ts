@@ -16,3 +16,26 @@ export const ALIGN_COLORS: Record<string, string> = {
   misaligned: "#ea580c",
   strongly_misaligned: "#dc2626",
 };
+
+/**
+ * Six-colour categorical palette for the per-scenario option comparison, tuned per colour
+ * mode: the 600-level hues below read strongly on a light card but go muddy on a dark one,
+ * so dark mode uses the 300/400-level counterparts of the SAME six hues. The hues are spread
+ * around the wheel (blue · teal · green · amber · red · violet) so no two neighbours are
+ * confusable — a lesson from the earlier legend fix, where amber and orange sat ~5° apart and
+ * could not be told apart in Light Mode. Colour is always paired with the option's title in
+ * both the toggle list and the legend.
+ */
+export const OPTION_SERIES_COLORS: Record<"light" | "dark", string[]> = {
+  light: ["#1d4ed8", "#0f766e", "#4d7c0f", "#b45309", "#b91c1c", "#6d28d9"],
+  dark: ["#60a5fa", "#2dd4bf", "#a3e635", "#fbbf24", "#f87171", "#c4b5fd"],
+};
+
+/**
+ * Neutral grey for the dashed "this is you" reference series, deliberately outside the
+ * categorical palette so it never reads as one more option.
+ */
+export const REFERENCE_SERIES_COLOR: Record<"light" | "dark", string> = {
+  light: "#475569",
+  dark: "#94a3b8",
+};

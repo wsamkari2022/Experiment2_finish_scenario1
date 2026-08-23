@@ -28,85 +28,122 @@ export interface GainOption {
 /** Definition of a worker group type, including the hover-card definition shown to participants. */
 export interface WorkerGroupOption {
   key: WorkerGroupKey;
-  label: string;        // full sentence used inline (e.g. "low-buffer workers with limited alternatives")
+  label: string;        // used inline in the scenario sentence (e.g. "entry-level workers")
   shortLabel: string;   // short form for the info hover card header
+  /** One-line gloss shown next to shortLabel in the terms panel. */
+  tagline: string;
   definition: string;   // definition text shown in the hover card
 }
 
 /** Definition of a group size tier. */
 export interface WorkerGroupSizeOption {
   key: WorkerGroupSizeKey;
-  label: string;        // full sentence used inline (e.g. "small group of about 10 workers")
+  label: string;        // head-count phrase used inline (e.g. "group of about 10 workers")
   shortLabel: string;   // compact label used in summary tables
   count: number;        // approximate number of affected workers
 }
 
 /**
- * The six escalating financial gain levels tested in Block 3.
- * The scenario starts at $1M and escalates when the participant declines.
- * When a participant approves, the accepted index carries forward to the next
- * group size (same group type) — so the block does not restart from $1M for each cell.
+ * The six escalating financial gain levels tested in Block 3. Every cell of the
+ * (worker group x group size) matrix starts at the FIRST rung and escalates only when the
+ * participant declines — see `blocksLegacyMethodology.ts`.
+ *
+ * The ladder spans eight orders of magnitude ($1 -> $100M) so that it brackets the whole
+ * plausible range: the first rung is deliberately trivial, which makes an approval there a
+ * strong signal that the harm barely registers, while the top rung is large enough that
+ * refusing it is an equally strong signal in the other direction.
+ *
+ * SCORING NOTE: every downstream calculation uses the ORDINAL INDEX of the rung (0..5),
+ * never the dollar figure — see `toGainComparableIndex` in aiWorkforceAnalysis.ts. The
+ * rungs are treated as six evenly-spaced steps. Do NOT average or subtract `thresholdGain`
+ * dollar values; on a ladder this skewed the result would be meaningless.
  */
 export const GAIN_OPTIONS: readonly GainOption[] = [
+  { value: 1,           label: "$1" },
+  { value: 10_000,      label: "$10,000" },
+  { value: 100_000,     label: "$100,000" },
   { value: 1_000_000,   label: "$1 million" },
-  { value: 5_000_000,   label: "$5 million" },
   { value: 10_000_000,  label: "$10 million" },
-  { value: 25_000_000,  label: "$25 million" },
-  { value: 50_000_000,  label: "$50 million" },
   { value: 100_000_000, label: "$100 million" },
 ];
 
 /**
- * The two worker group types. Presented in this order: low_buffer first, then high_buffer.
- * Low-buffer workers have fewer savings and fewer job alternatives — they absorb job
- * displacement with more difficulty than high-buffer workers.
+ * The two worker group types, presented in this order: the more replaceable group first.
+ *
+ * The contrast is SENIORITY / REPLACEABILITY: entry-level workers hold junior or routine
+ * roles that an AI system can take over with little difficulty, while senior-level workers
+ * are experienced specialists — including the engineers who build the AI itself — whose
+ * expertise is hard to replace. Entry-level workers therefore absorb job displacement with
+ * more difficulty, which is what makes them the more vulnerable group in this block.
+ *
+ * NAMING NOTE — the internal keys are still `low_buffer` and `high_buffer`, and the stored
+ * threshold keys are still `threshold_lowbuffer_*` / `threshold_highbuffer_*`. Only the
+ * participant-facing wording changed. The mapping is:
+ *
+ *     low_buffer   ->  "entry-level workers"    (more replaceable, more vulnerable)
+ *     high_buffer  ->  "senior-level workers"   (less replaceable, less vulnerable)
+ *
+ * The keys were deliberately left alone so that already-saved records, the analysis helpers
+ * (`avgLowBufferIndex` / `avgHighBufferIndex`) and the vulnerability formula in
+ * thresholdTree.ts all keep working unchanged. Keep this mapping in mind when reading
+ * exported data.
  */
 export const WORKER_GROUPS: readonly WorkerGroupOption[] = [
   {
     key: "low_buffer",
-    label: "low-buffer workers with limited alternatives",
-    shortLabel: "Low-buffer workers",
+    label: "entry-level workers",
+    shortLabel: "Entry-level workers",
+    tagline: "junior or routine roles that AI can readily take over",
     definition:
-      "Workers who have less savings or financial reserve, and fewer realistic job alternatives if their current work is reduced or replaced.",
+      "Workers in junior or routine roles that an AI system can take over with little difficulty. They usually have less savings or financial reserve, and fewer realistic job alternatives if their current work is reduced or replaced.",
   },
   {
     key: "high_buffer",
-    label: "high-buffer workers with stronger alternatives",
-    shortLabel: "High-buffer workers",
+    label: "senior-level workers",
+    shortLabel: "Senior-level workers",
+    tagline: "experienced specialists, such as the engineers who build AI systems",
     definition:
-      "Workers who have more savings or financial reserve, and stronger realistic job alternatives if their current work is reduced or replaced.",
+      "Experienced specialists — for example, the engineers who design and maintain these AI systems. Their expertise is difficult to replace, and they usually have more savings or financial reserve, and stronger realistic job alternatives if their current work is reduced or replaced.",
   },
 ];
 
 /**
- * Disclaimer shown alongside the worker group info icon.
- * Clarifies that "buffer" is about financial resilience, not personal worth.
+ * Disclaimer shown alongside the worker group info icon. Clarifies that the terms describe
+ * how replaceable a ROLE is and how much disruption a worker can absorb — not the personal
+ * worth of the people in it.
  */
 export const WORKER_GROUP_DISCLAIMER =
-  "These terms describe how much disruption a worker can absorb if their job changes. They are not judgments about personal worth.";
+  "These terms describe how easily a role can be taken over by an AI system, and how much disruption a worker can absorb if their job changes. They are not judgments about personal worth.";
 
 /**
- * The three group sizes, presented in this order within each worker group type.
- * The gain index carries forward from size to size within a group type:
- * if a participant approved at $10M for a small group, the medium group starts at $10M.
+ * The three group sizes, presented in this order within each worker group type. Each one
+ * starts its own gain ladder at the first rung — nothing carries over from the previous
+ * size (see `blocksLegacyMethodology.ts`).
+ *
+ * WORDING: the labels state the head-count and nothing else. The adjectives "small",
+ * "medium" and "large" were removed from the participant-facing text because they are
+ * evaluative framing supplied by the instrument rather than facts about the scenario —
+ * calling 10 workers "small" invites the participant to treat that harm as minor before
+ * they have weighed it themselves. The number alone lets them make that judgement.
+ * The `key` values are unchanged, so stored data and analysis code are unaffected.
  */
 export const WORKER_GROUP_SIZES: readonly WorkerGroupSizeOption[] = [
   {
     key: "small",
-    label: "small group of about 10 workers",
-    shortLabel: "Small (~10)",
+    label: "group of about 10 workers",
+    shortLabel: "~10 workers",
     count: 10,
   },
   {
     key: "medium",
-    label: "medium group of about 1,000 workers",
-    shortLabel: "Medium (~1,000)",
+    label: "group of about 1,000 workers",
+    shortLabel: "~1,000 workers",
     count: 1000,
   },
   {
     key: "large",
-    label: "large group of about 100,000 workers",
-    shortLabel: "Large (~100,000)",
+    label: "group of about 100,000 workers",
+    shortLabel: "~100,000 workers",
     count: 100000,
   },
 ];

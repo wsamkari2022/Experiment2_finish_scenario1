@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
   Heading,
   HStack,
   Icon,
-  Spinner,
   Stack,
   Text,
   VStack,
@@ -27,6 +26,12 @@ import { TROLLEY_RESULTS_STORAGE_KEY } from "./trolleyTypes";
 import { AI_WORKFORCE_RESULTS_KEY, type AIWorkforceBlockResults } from "./aiWorkforceTypes";
 import type { MoneyBlockResults } from "./types";
 import type { TrolleyBlockResults } from "./trolleyTypes";
+
+import {
+  SHOW_INTER_BLOCK_PAGES,
+  useAutoAdvance,
+} from "./interBlockPages";
+import { InterBlockPause } from "./InterBlockPause";
 
 /** localStorage key for the summarised insights payload (domain key + timestamp). */
 const STORAGE_KEY_INSIGHTS = "moral_profile_insights";
@@ -68,16 +73,16 @@ export function MoralProfileInsightsPage({
   participantId,
   onContinue,
 }: MoralProfileInsightsPageProps) {
-  /** True while the profile is being derived from localStorage (shown as spinner). */
-  const [loading, setLoading] = useState(true);
-  /** Non-null if any required earlier block results are missing. */
-  const [error, setError] = useState<string | null>(null);
-
   /**
-   * Derives the MoralProfile, seed case, domain, scenario context, and AI analysis
-   * from the saved block results. Returns null if any required results are missing.
+   * Derives the MoralProfile, seed case, domain, scenario context, and AI analysis from the
+   * saved block results. Returns null if any required results are missing.
+   *
+   * A lazy `useState` initialiser rather than `useMemo(fn, [])`: both compute exactly once on
+   * mount, but the state form says so honestly. `useMemo` is a performance hint that React is
+   * free to discard and recompute, which is the wrong contract for a one-time read of an
+   * external store — and it is what `react-hooks/preserve-manual-memoization` was objecting to.
    */
-  const data = useMemo(() => {
+  const [data] = useState(() => {
     const money = readJson<MoneyBlockResults>(SESSION_KEY_RESULTS);
     const trolley = readJson<TrolleyBlockResults>(TROLLEY_RESULTS_STORAGE_KEY);
     const aiResults = readJson<AIWorkforceBlockResults>(AI_WORKFORCE_RESULTS_KEY);
@@ -88,16 +93,25 @@ export function MoralProfileInsightsPage({
     const scenarioContext = buildScenarioContext(profile, domain);
     const analysis = computeAIWorkforceAnalysis(aiResults);
     return { profile, seedCase, domain, scenarioContext, analysis };
-  }, []);
+  });
 
+  /**
+   * Derived, not stored. `data` is computed synchronously above, so whether the earlier blocks
+   * are missing is already known on the first render — there is nothing to wait for.
+   *
+   * There used to be a `loading` state initialised to true, plus an effect that set it false
+   * (and set an error message) immediately after mount. That produced a spinner which was
+   * painted for a single frame before being replaced, i.e. a loading indicator for work that
+   * was already finished, and it was what tripped `react-hooks/set-state-in-effect`. Deriving
+   * the message removes the state, the effect and the phantom spinner in one go.
+   */
+  const error = data
+    ? null
+    : "We could not load your earlier responses. Please refresh to try again.";
+
+  /** Persists the derived snapshot for later blocks. Side effect only — no state updates. */
   useEffect(() => {
-    if (!data) {
-      setError(
-        "We could not load your earlier responses. Please refresh to try again.",
-      );
-      setLoading(false);
-      return;
-    }
+    if (!data) return;
     const payload = {
       participantId,
       profile: data.profile,
@@ -110,26 +124,34 @@ export function MoralProfileInsightsPage({
     } catch {
       // ignore
     }
-    setLoading(false);
   }, [data, participantId]);
 
-  if (loading) {
-    return (
-      <Box
-        minH="100vh"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-      >
-        <VStack gap="4">
-          <Spinner size="lg" color="fg.muted" />
-          <Text color="fg.muted" fontStyle="italic">
-            Reviewing your responses so far...
-          </Text>
-        </VStack>
-      </Box>
-    );
-  }
+  /**
+   * Hands Blocks 1-3's derived data to Block 4.
+   *
+   * Lifted out of the Continue button's onClick so that the human click and the automatic
+   * advance below share ONE implementation. If they were separate, hiding the page could
+   * silently forward a different payload than showing it does — the exact class of bug that
+   * would be invisible until the data was analysed months later.
+   */
+  const handleContinue = useCallback(() => {
+    if (!data) return;
+    onContinue({
+      profile: data.profile,
+      seedCase: data.seedCase,
+      scenarioContext: data.scenarioContext,
+      analysis: data.analysis,
+    });
+  }, [data, onContinue]);
+
+  /**
+   * HIDDEN PAGE — presses Continue automatically.
+   *
+   * Deliberately placed AFTER the persist effect above: effects run in declaration order, so
+   * the insights snapshot is guaranteed to be in LocalStorage before Block 4 begins. Every
+   * derivation on this page still runs; only the display is suppressed. See interBlockPages.ts.
+   */
+  useAutoAdvance(!SHOW_INTER_BLOCK_PAGES && !!data, handleContinue);
 
   if (error || !data) {
     return (
@@ -145,7 +167,16 @@ export function MoralProfileInsightsPage({
     );
   }
 
-  const { profile, seedCase, domain, scenarioContext } = data;
+  /*
+   * Hidden mode. Everything above has already happened — profile, seed case, domain and
+   * scenario context are derived, the snapshot is saved, and the move to Block 4 is queued.
+   * Only the reading of it is withheld from the participant.
+   */
+  if (!SHOW_INTER_BLOCK_PAGES) {
+    return <InterBlockPause />;
+  }
+
+  const { profile, seedCase, domain } = data;
 
   return (
     <Box
@@ -287,14 +318,7 @@ export function MoralProfileInsightsPage({
 
         <Button
           size="xl"
-          onClick={() =>
-            onContinue({
-              profile,
-              seedCase,
-              scenarioContext,
-              analysis: data.analysis,
-            })
-          }
+          onClick={handleContinue}
           colorPalette="blue"
           bg="blue.600"
           color="white"

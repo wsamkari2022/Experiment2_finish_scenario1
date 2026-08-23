@@ -45,6 +45,27 @@ export const TROLLEY_STEPS = SAVED_LIVES_OPTIONS.length;
 export { GAIN_STEPS };
 
 /** Comparable index for a Block 1 threshold (accepted → rung; else MONEY_STEPS sentinel). */
+/**
+ * Turns one Block 1 threshold into a COMPARABLE INDEX — the rung at which the participant
+ * changed their mind, or the "never" sentinel.
+ *
+ * WHAT: the accepted rung (0 … MONEY_STEPS-1), or MONEY_STEPS when they never kept the money —
+ * one step beyond the top rung.
+ *
+ * WHY THE INDEX AND NOT THE DOLLAR AMOUNT: the ladder is not linear in dollars ($0.25 → $10,000),
+ * so averaging or subtracting the amounts would be meaningless. Every calculation in the model
+ * uses the ordinal position, treating the rungs as equal steps of "one notch more persuasion
+ * required". This is the standard reading of a staircase instrument, and it is why the ladder
+ * values can be re-chosen without touching a single formula.
+ *
+ * WHY A SENTINEL ONE STEP BEYOND THE TOP: someone who refuses every rung is more demanding than
+ * someone who accepted at the last one, so they must sort above them. MONEY_STEPS is the
+ * smallest value that guarantees this.
+ *
+ * KNOWN LIMITATION — CENSORED DATA: "I would not keep it at any amount" is stored as though it
+ * were exactly one notch above $10,000, and then averaged with real thresholds. The direction is
+ * right; the magnitude is a floor, not a measurement. Worth stating in the methods chapter.
+ */
 export function toMoneyComparableIndex(t: ThresholdResult | null): number {
   if (!t) return MONEY_STEPS;
   if (!t.accepted || t.thresholdAmountIndex === null) return MONEY_STEPS;
@@ -181,11 +202,32 @@ export function deriveMoralProfile(
     0.5 * (leverIdx / TROLLEY_STEPS) + 0.5 * (bridgeIdx / TROLLEY_STEPS),
   );
 
-  // ── Directness aversion ── (needed more lives to push than to pull; 0.5 = equal)
+  // ── Directness AVERSION ── (needed more lives to push than to pull; 0.5 = equal)
+  //
+  // DELIBERATELY DIFFERENT from the "Directness sensitivity" in thresholdTree.ts. Do not
+  // "fix" one to match the other — they measure two different things:
+  //
+  //   directnessAversionScore (here)  — SIGNED, centred on 0.5. Answers "which way did this
+  //     participant lean?": above 0.5 = more reluctant to push than to pull, below 0.5 = more
+  //     willing to push than to pull. Descriptive only; feeds the interim profile preview and
+  //     scenario selection, neither of which ranks it against other dimensions.
+  //
+  //   directness sensitivity (thresholdTree) — MAGNITUDE, |gap|, 0-baseline. Answers "how much
+  //     did directness move this participant at all?". It is RANKED and WEIGHTED against the
+  //     other six sensitivities in Block 5, so it must sit on the same 0 = "did not move me"
+  //     footing as the rest; a 0.5-centred score there would inflate directness for everyone.
+  //
+  // Since Block 2's two phases became independent, a below-0.5 value is genuinely reachable
+  // here for the first time (see blocksLegacyMethodology.ts). Under the original paired design
+  // the bridge could not be accepted below the lever, so this score could never fall below 0.5.
   const directnessAversionScore = clamp01((bridgeIdx - leverIdx) / TROLLEY_STEPS + 0.5);
 
   // ── Scale sensitivity ── (how far the low-buffer threshold moved across sizes)
-  const scaleSensitivityScore = clamp01(ai.lowBufferSpread / GAIN_STEPS);
+  // Signed slope, clamped at zero — see sizeSlopeForGroup in aiWorkforceAnalysis.ts for why
+  // the unsigned range was replaced (it scored a random responder 57/100).
+  const scaleSensitivityScore = clamp01(
+    Math.max(0, ai.sizeSlopeLowBuffer) / GAIN_STEPS,
+  );
 
   // ── Consistency across domains ── (do the three vulnerability signals agree?)
   const moneyVulnNorm = 1 - norm(shelterIdx, MONEY_STEPS);

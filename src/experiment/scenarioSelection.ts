@@ -132,7 +132,7 @@ export function selectSeedCase(profile: MoralProfile): SeedCase {
     return {
       source: "ai_workforce",
       descriptor:
-        "your pattern of not approving AI workforce rollouts that would seriously displace low-buffer workers, across every level of financial gain offered",
+        "your pattern of not approving AI workforce rollouts that would seriously displace entry-level workers, across every level of financial gain offered",
       indexSignal: 0,
       note:
         "this tentatively suggests a firm boundary around foreseeable harm to workers with limited alternatives",

@@ -23,10 +23,10 @@ import { LuArrowLeft, LuCheck, LuMessageSquare, LuRotateCcw, LuSparkles } from "
 import type { Block5Results } from "./block5Types";
 import { markStage } from "./telemetry";
 import {
-  APA_QUESTIONS, CVR_QUESTIONS, TOOL_CLOSERS, TOOL_RATINGS,
+  APA_QUESTIONS, CVR_QUESTIONS, DUAL_VIEW_QUESTIONS, TOOL_CLOSERS, TOOL_RATINGS,
   WELLBEING_ITEMS, WELLBEING_OPEN_ENDED, WELLBEING_LIKERT_LOW, WELLBEING_LIKERT_HIGH,
   assembleFeedbackRecord, computeWellbeing, saveFeedbackRecord,
-  shouldShowApaSection, shouldShowCvrSection,
+  shouldShowApaSection, shouldShowCvrSection, usedDualPerspective,
   FEEDBACK_ARCHIVE_KEY,
   type FeedbackAnswer, type FeedbackAnswers, type FeedbackQuestion,
 } from "./feedbackTypes";
@@ -133,6 +133,7 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
 
   const showCvr = useMemo(() => shouldShowCvrSection(results), [results]);
   const showApa = useMemo(() => shouldShowApaSection(results), [results]);
+  const showDual = useMemo(() => usedDualPerspective(results), [results]); // dual-perspective questions
 
   const setAnswer = useCallback((code: string, value: FeedbackAnswer) => {
     setAnswers((prev) => ({ ...prev, [code]: value }));
@@ -157,12 +158,13 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
     const choice = (qs: FeedbackQuestion[]) => qs.filter((q) => q.type !== "open").map((q) => q.code);
     const codes: string[] = [];
     if (showCvr) codes.push(...choice(CVR_QUESTIONS));
+    if (showDual) codes.push(...choice(DUAL_VIEW_QUESTIONS));
     if (showApa) codes.push(...choice(APA_QUESTIONS));
     codes.push(...choice(TOOL_RATINGS));
     codes.push(...choice(TOOL_CLOSERS));
     codes.push(...WELLBEING_ITEMS.map((i) => i.code));
     return codes;
-  }, [showCvr, showApa]);
+  }, [showCvr, showApa, showDual]);
 
   const missingCount = requiredCodes.filter((c) => !isAnswered(c)).length;
   const answeredCount = requiredCodes.length - missingCount;
@@ -205,7 +207,7 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
       decisionSupport: { ...collect(TOOL_RATINGS), ...collect(TOOL_CLOSERS) },
       wellbeing: computeWellbeing(wbItems, wbOpen),
     };
-    if (showCvr) feedback.cvr = collect(CVR_QUESTIONS);
+    if (showCvr) feedback.cvr = { ...collect(CVR_QUESTIONS), ...(showDual ? collect(DUAL_VIEW_QUESTIONS) : {}) };
     if (showApa) feedback.apa = collect(APA_QUESTIONS);
 
     // Close out the feedback-stage timer so feedbackMs / totalExperimentMs include this page.
@@ -214,7 +216,7 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
     saveFeedbackRecord(record);
     setSubmitted(true);
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
-  }, [answers, collect, isAnswered, requiredCodes, results, sessionId, showApa, showCvr]);
+  }, [answers, collect, isAnswered, requiredCodes, results, sessionId, showApa, showCvr, showDual]);
 
   /** Finish: reset for a fresh participant but PRESERVE the archived records for export. */
   const handleFinish = useCallback(() => {
@@ -280,6 +282,22 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
               ) : (
                 <OpenRow key={q.code} q={q} value={str(q.code)} onChange={(v) => setAnswer(q.code, v)} />
               ),
+            )}
+            {/* Dual-perspective questions — only if the participant generated the alternate lens. */}
+            {showDual && (
+              <>
+                <Separator borderColor="border.subtle" />
+                <Text fontSize="xs" fontWeight="semibold" color="teal.fg" textTransform="uppercase" letterSpacing="wider">
+                  Comparing the two perspectives
+                </Text>
+                {DUAL_VIEW_QUESTIONS.map((q) =>
+                  q.type === "likert" ? (
+                    <LikertRow key={q.code} q={q} value={num(q.code)} onChange={(v) => setAnswer(q.code, v)} accent="teal" invalid={showValidation && !isAnswered(q.code)} />
+                  ) : (
+                    <YesNoRow key={q.code} q={q} value={answers[q.code]} onChange={(v) => setAnswer(q.code, v)} accent="teal" invalid={showValidation && !isAnswered(q.code)} />
+                  ),
+                )}
+              </>
             )}
           </SectionCard>
         )}

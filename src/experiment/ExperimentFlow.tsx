@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { Box, Spinner, Text, VStack } from "@chakra-ui/react";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -11,6 +10,9 @@ import { Block5PublicEmergencySimulation } from "./Block5PublicEmergencySimulati
 import { Block5SimulationSummaryPage } from "./Block5SimulationSummaryPage";
 import { UserFeedbackPage } from "./UserFeedbackPage";
 import { GlobalStepper } from "./GlobalStepper";
+import { SHOW_INTER_BLOCK_PAGES } from "./interBlockPages";
+import { InterBlockPause } from "./InterBlockPause";
+import { captureParticipantRecord } from "./participantRecord";
 import { getSessionId } from "./session";
 import { markStage } from "./telemetry";
 import { useScrollToTop } from "./useScrollToTop";
@@ -213,10 +215,29 @@ export function ExperimentFlow() {
     [],
   );
 
-  /** Called when FinalMoralAnalysisPage user clicks "Start main simulation"; advances to Block 5. */
+  /**
+   * Block 4 → Block 5 boundary. THE DATA HAND-OFF POINT.
+   *
+   * Everything Blocks 1-4 measure is final by the time this runs, and nothing Block 5 does can
+   * change it, so this is where the whole participant record is assembled into one document and
+   * stored. Today that means LocalStorage; participantRecord.ts documents the single-function
+   * change that turns it into a database write.
+   *
+   * Note this fires whether the Final Analysis page was shown or hidden: in hidden mode the page
+   * still mounts, still derives and persists the threshold tree, and then calls this itself.
+   *
+   * The try/catch is deliberate. A failure to SAVE must never stop a participant from reaching
+   * Block 5 — their answers are already written under the per-block keys, so the record can be
+   * rebuilt later from the same browser by calling buildParticipantRecord again.
+   */
   const handleStartBlock5 = useCallback(() => {
+    try {
+      captureParticipantRecord(participantId);
+    } catch {
+      // Storage failures are logged nowhere and blocked nothing, by design.
+    }
     setStage("transition_final_block5");
-  }, []);
+  }, [participantId]);
 
   /** Called when all 3 Block 5 scenarios are completed. */
   const handleBlock5Complete = useCallback((results: Block5Results) => {
@@ -264,24 +285,13 @@ export function ExperimentFlow() {
     );
   }
 
+  /*
+   * The same pause component the hidden between-block pages render. Sharing one definition is
+   * what makes a hidden page indistinguishable from an ordinary transition: the spinner never
+   * changes appearance, so there is no visual seam where a summary screen used to be.
+   */
   if (STAGES_WITH_TRANSITION.includes(stage)) {
-    return (
-      <Box
-        minH="100vh"
-        bg="bg"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        px={{ base: "4", md: "6" }}
-      >
-        <VStack gap="4" animationName="fade-in" animationDuration="moderate">
-          <Spinner size="lg" color="fg.muted" />
-          <Text color="fg.muted" fontSize="lg" fontStyle="italic">
-            Moving to the next section...
-          </Text>
-        </VStack>
-      </Box>
-    );
+    return <InterBlockPause />;
   }
 
   if (stage === "trolley") {
@@ -311,7 +321,9 @@ export function ExperimentFlow() {
   if (stage === "insights") {
     return (
       <>
-        <GlobalStepper stage={stage} />
+        {/* The stepper is suppressed while this page is hidden: it is sticky and would otherwise
+            appear over the pause spinner, showing a phase that is not in the visible bar. */}
+        {SHOW_INTER_BLOCK_PAGES && <GlobalStepper stage={stage} />}
         <MoralProfileInsightsPage
           participantId={participantId}
           onContinue={handleInsightsContinue}
@@ -339,7 +351,8 @@ export function ExperimentFlow() {
   if (stage === "final_analysis" && insights && block4Payload) {
     return (
       <>
-        <GlobalStepper stage={stage} />
+        {/* Suppressed while hidden — see the note on the insights stage above. */}
+        {SHOW_INTER_BLOCK_PAGES && <GlobalStepper stage={stage} />}
         <FinalMoralAnalysisPage
           participantId={participantId}
           profile={insights.profile}

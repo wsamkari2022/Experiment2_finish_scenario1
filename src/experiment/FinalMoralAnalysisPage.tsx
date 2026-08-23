@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Badge,
   Box,
@@ -24,6 +24,12 @@ import {
   aiWorkforceThresholdKeyFor,
   type AIWorkforceBlockResults,
 } from "./aiWorkforceTypes";
+
+import {
+  SHOW_INTER_BLOCK_PAGES,
+  useAutoAdvance,
+} from "./interBlockPages";
+import { InterBlockPause } from "./InterBlockPause";
 
 /** localStorage key used to persist the final analysis payload once it has been generated. */
 const STORAGE_KEY_FINAL = "final_moral_analysis";
@@ -201,11 +207,19 @@ export function FinalMoralAnalysisPage({
     [profile, aiResults, block4.decisions],
   );
 
-  /** Guards the one-time localStorage write so it only runs on the initial render. */
-  const [persisted, setPersisted] = useState(false);
+  /**
+   * Guards the one-time localStorage write.
+   *
+   * A REF, not state: this flag is never read during render — it only stops the effect below
+   * from writing twice. Holding it in state meant every mount paid for an extra render whose
+   * only effect was to flip a boolean nothing displays, and setting state synchronously inside
+   * an effect is what `react-hooks/set-state-in-effect` warns about (it can cascade renders).
+   * Reading and writing a ref inside an effect is safe; only reading one during RENDER is not.
+   */
+  const persistedRef = useRef(false);
 
   useEffect(() => {
-    if (persisted) return;
+    if (persistedRef.current) return;
     const completedAt = new Date().toISOString();
     const payload = {
       analysis,
@@ -218,8 +232,27 @@ export function FinalMoralAnalysisPage({
     } catch {
       // ignore
     }
-    setPersisted(true);
-  }, [analysis, tree, persisted]);
+    persistedRef.current = true;
+  }, [analysis, tree]);
+
+  /** Stable wrapper so the auto-advance effect below does not see a new function every render. */
+  const handleAutoStartBlock5 = useCallback(() => {
+    onStartBlock5?.();
+  }, [onStartBlock5]);
+
+  /**
+   * HIDDEN PAGE — presses "Start main simulation" automatically.
+   *
+   * Placed AFTER the persist effect, so the threshold tree is written before Block 5 starts.
+   * Guarded on onStartBlock5 as well: without that prop this page is a terminal screen with
+   * nowhere to advance to, and auto-advancing would leave a spinner forever.
+   *
+   * This page is the most important one to hide. It displays the ranked seven-sensitivity tree,
+   * which is the very quantity Block 5 then uses to decide which options are labelled misaligned
+   * for this participant. Showing someone the scoring key immediately before scoring them with
+   * it would compromise Block 5 as a measurement. See interBlockPages.ts.
+   */
+  useAutoAdvance(!SHOW_INTER_BLOCK_PAGES && !!onStartBlock5, handleAutoStartBlock5);
 
   const { initialDecision, midDecision, finalDecision, confidence } =
     block4.decisions;
@@ -242,6 +275,17 @@ export function FinalMoralAnalysisPage({
       : midDecision && initialDecision && midDecision !== initialDecision
         ? "You briefly shifted after the first stakeholder but returned to your initial view. This may suggest an empathetic pull balanced against a stable underlying value."
         : "Your decision remained stable across both stakeholder vignettes. This can reflect a settled value, though it is also worth considering whether each perspective was given equal weight.";
+
+  /*
+   * Hidden mode. The analysis and the threshold tree are computed and saved above; the advance
+   * to Block 5 is queued. Only the participant-facing report is withheld.
+   *
+   * Note the onStartBlock5 condition: when this page is rendered with no onward destination it
+   * is a terminal results screen, and it is always shown.
+   */
+  if (!SHOW_INTER_BLOCK_PAGES && onStartBlock5) {
+    return <InterBlockPause />;
+  }
 
   return (
     <Box

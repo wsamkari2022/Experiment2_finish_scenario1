@@ -285,9 +285,9 @@ score = clamp(0,1,  0.5 + 0.5 × (0.5×buffer_gap + 0.5×money_gap))
                     workers. A wider spread means more sensitivity to scale.
                   </Text>
                   <Stack gap="2" mb="4">
-                    <DataRow label="Low-buffer · Small (~10)" value={lbSmall < GAIN_STEPS ? (GAIN_OPTIONS[lbSmall]?.label ?? `idx ${lbSmall}`) : "Never approved"} accent={lbSmall < GAIN_STEPS ? "success" : "error"} />
-                    <DataRow label="Low-buffer · Medium (~1,000)" value={lbMedium < GAIN_STEPS ? (GAIN_OPTIONS[lbMedium]?.label ?? `idx ${lbMedium}`) : "Never approved"} accent={lbMedium < GAIN_STEPS ? "success" : "error"} />
-                    <DataRow label="Low-buffer · Large (~100,000)" value={lbLarge < GAIN_STEPS ? (GAIN_OPTIONS[lbLarge]?.label ?? `idx ${lbLarge}`) : "Never approved"} accent={lbLarge < GAIN_STEPS ? "success" : "error"} />
+                    <DataRow label="Entry-level · ~10 workers" value={lbSmall < GAIN_STEPS ? (GAIN_OPTIONS[lbSmall]?.label ?? `idx ${lbSmall}`) : "Never approved"} accent={lbSmall < GAIN_STEPS ? "success" : "error"} />
+                    <DataRow label="Entry-level · ~1,000 workers" value={lbMedium < GAIN_STEPS ? (GAIN_OPTIONS[lbMedium]?.label ?? `idx ${lbMedium}`) : "Never approved"} accent={lbMedium < GAIN_STEPS ? "success" : "error"} />
+                    <DataRow label="Entry-level · ~100,000 workers" value={lbLarge < GAIN_STEPS ? (GAIN_OPTIONS[lbLarge]?.label ?? `idx ${lbLarge}`) : "Never approved"} accent={lbLarge < GAIN_STEPS ? "success" : "error"} />
                   </Stack>
                   <FormulaBox>
 {`spread = max(${lbSmall}, ${lbMedium}, ${lbLarge}) − min(${lbSmall}, ${lbMedium}, ${lbLarge}) = ${scaleSpread}
@@ -305,7 +305,7 @@ score = clamp(0,1,  spread / ${GAIN_STEPS}) = ${fmt(profile.scaleSensitivityScor
                   </Text>
                   <Stack gap="2" mb="4">
                     <DataRow label="Money signal (1 − shelter_norm)" value={fmt(moneyVulnNorm)} />
-                    <DataRow label="Low-buffer signal (1 − avg_norm)" value={fmt(lowBufferVulnNorm)} />
+                    <DataRow label="Entry-level signal (1 − avg_norm)" value={fmt(lowBufferVulnNorm)} />
                     <DataRow label="Harm reluctance signal" value={fmt(harmReluctanceNorm)} />
                     <DataRow label="Variance" value={fmt(variance)} />
                   </Stack>
