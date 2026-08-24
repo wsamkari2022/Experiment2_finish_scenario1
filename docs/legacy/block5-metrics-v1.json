@@ -1,0 +1,316 @@
+{
+ "note": "Archive of the ORIGINAL 8-metric performance values, taken immediately before the metric redesign. This project is not a git repository; without this file these numbers are unrecoverable.",
+ "archivedAt": "2026-08-24T00:21:46.911Z",
+ "metricKeys": [
+  "totalBenefit",
+  "harmReduction",
+  "fairnessEquity",
+  "vulnerableProtection",
+  "resourceEfficiency",
+  "feasibility",
+  "longTermImpact",
+  "predictability"
+ ],
+ "byOptionId": {
+  "travel_rural_lifeline_bus": {
+   "totalBenefit": 58,
+   "harmReduction": 70,
+   "fairnessEquity": 88,
+   "vulnerableProtection": 96,
+   "resourceEfficiency": 48,
+   "feasibility": 62,
+   "longTermImpact": 82,
+   "predictability": 60
+  },
+  "travel_express_coach": {
+   "totalBenefit": 84,
+   "harmReduction": 72,
+   "fairnessEquity": 66,
+   "vulnerableProtection": 48,
+   "resourceEfficiency": 92,
+   "feasibility": 88,
+   "longTermImpact": 70,
+   "predictability": 82
+  },
+  "travel_intercity_train": {
+   "totalBenefit": 88,
+   "harmReduction": 86,
+   "fairnessEquity": 72,
+   "vulnerableProtection": 60,
+   "resourceEfficiency": 78,
+   "feasibility": 70,
+   "longTermImpact": 94,
+   "predictability": 76
+  },
+  "travel_direct_flight": {
+   "totalBenefit": 62,
+   "harmReduction": 34,
+   "fairnessEquity": 40,
+   "vulnerableProtection": 28,
+   "resourceEfficiency": 74,
+   "feasibility": 92,
+   "longTermImpact": 24,
+   "predictability": 80
+  },
+  "travel_solo_ev_rental": {
+   "totalBenefit": 62,
+   "harmReduction": 64,
+   "fairnessEquity": 58,
+   "vulnerableProtection": 58,
+   "resourceEfficiency": 56,
+   "feasibility": 64,
+   "longTermImpact": 62,
+   "predictability": 66
+  },
+  "travel_shared_car_ride": {
+   "totalBenefit": 76,
+   "harmReduction": 74,
+   "fairnessEquity": 70,
+   "vulnerableProtection": 56,
+   "resourceEfficiency": 84,
+   "feasibility": 60,
+   "longTermImpact": 74,
+   "predictability": 58
+  },
+  "meal_fair_wage_kitchen": {
+   "totalBenefit": 58,
+   "harmReduction": 76,
+   "fairnessEquity": 96,
+   "vulnerableProtection": 96,
+   "resourceEfficiency": 44,
+   "feasibility": 70,
+   "longTermImpact": 80,
+   "predictability": 66
+  },
+  "meal_bulk_home_pot": {
+   "totalBenefit": 86,
+   "harmReduction": 70,
+   "fairnessEquity": 78,
+   "vulnerableProtection": 60,
+   "resourceEfficiency": 96,
+   "feasibility": 62,
+   "longTermImpact": 72,
+   "predictability": 74
+  },
+  "meal_seasonal_plant_menu": {
+   "totalBenefit": 78,
+   "harmReduction": 84,
+   "fairnessEquity": 70,
+   "vulnerableProtection": 62,
+   "resourceEfficiency": 74,
+   "feasibility": 56,
+   "longTermImpact": 96,
+   "predictability": 60
+  },
+  "meal_delivery_feast": {
+   "totalBenefit": 66,
+   "harmReduction": 38,
+   "fairnessEquity": 34,
+   "vulnerableProtection": 26,
+   "resourceEfficiency": 70,
+   "feasibility": 96,
+   "longTermImpact": 28,
+   "predictability": 84
+  },
+  "meal_half_and_half": {
+   "totalBenefit": 64,
+   "harmReduction": 62,
+   "fairnessEquity": 60,
+   "vulnerableProtection": 58,
+   "resourceEfficiency": 60,
+   "feasibility": 66,
+   "longTermImpact": 58,
+   "predictability": 68
+  },
+  "meal_pantry_rescue": {
+   "totalBenefit": 72,
+   "harmReduction": 76,
+   "fairnessEquity": 68,
+   "vulnerableProtection": 58,
+   "resourceEfficiency": 92,
+   "feasibility": 58,
+   "longTermImpact": 78,
+   "predictability": 46
+  },
+  "cancer_max_total_lives": {
+   "totalBenefit": 95,
+   "harmReduction": 80,
+   "fairnessEquity": 45,
+   "vulnerableProtection": 46,
+   "resourceEfficiency": 90,
+   "feasibility": 85,
+   "longTermImpact": 70,
+   "predictability": 82
+  },
+  "cancer_prioritize_vulnerable": {
+   "totalBenefit": 65,
+   "harmReduction": 78,
+   "fairnessEquity": 80,
+   "vulnerableProtection": 95,
+   "resourceEfficiency": 55,
+   "feasibility": 70,
+   "longTermImpact": 65,
+   "predictability": 58
+  },
+  "cancer_max_life_years": {
+   "totalBenefit": 90,
+   "harmReduction": 75,
+   "fairnessEquity": 50,
+   "vulnerableProtection": 35,
+   "resourceEfficiency": 88,
+   "feasibility": 80,
+   "longTermImpact": 90,
+   "predictability": 80
+  },
+  "cancer_weighted_lottery": {
+   "totalBenefit": 60,
+   "harmReduction": 65,
+   "fairnessEquity": 92,
+   "vulnerableProtection": 65,
+   "resourceEfficiency": 60,
+   "feasibility": 90,
+   "longTermImpact": 55,
+   "predictability": 50
+  },
+  "cancer_reserve_underserved": {
+   "totalBenefit": 58,
+   "harmReduction": 70,
+   "fairnessEquity": 76,
+   "vulnerableProtection": 68,
+   "resourceEfficiency": 45,
+   "feasibility": 55,
+   "longTermImpact": 75,
+   "predictability": 45
+  },
+  "cancer_essential_workers": {
+   "totalBenefit": 75,
+   "harmReduction": 70,
+   "fairnessEquity": 55,
+   "vulnerableProtection": 55,
+   "resourceEfficiency": 78,
+   "feasibility": 75,
+   "longTermImpact": 82,
+   "predictability": 72
+  },
+  "flood_largest_neighborhoods": {
+   "totalBenefit": 94,
+   "harmReduction": 78,
+   "fairnessEquity": 40,
+   "vulnerableProtection": 26,
+   "resourceEfficiency": 90,
+   "feasibility": 90,
+   "longTermImpact": 64,
+   "predictability": 86
+  },
+  "flood_vulnerable_groups_first": {
+   "totalBenefit": 60,
+   "harmReduction": 80,
+   "fairnessEquity": 84,
+   "vulnerableProtection": 97,
+   "resourceEfficiency": 50,
+   "feasibility": 66,
+   "longTermImpact": 66,
+   "predictability": 56
+  },
+  "flood_highest_risk_zones": {
+   "totalBenefit": 90,
+   "harmReduction": 95,
+   "fairnessEquity": 46,
+   "vulnerableProtection": 56,
+   "resourceEfficiency": 82,
+   "feasibility": 70,
+   "longTermImpact": 60,
+   "predictability": 58
+  },
+  "flood_efficient_rescue": {
+   "totalBenefit": 84,
+   "harmReduction": 76,
+   "fairnessEquity": 38,
+   "vulnerableProtection": 32,
+   "resourceEfficiency": 97,
+   "feasibility": 84,
+   "longTermImpact": 64,
+   "predictability": 82
+  },
+  "flood_balanced_mixed_plan": {
+   "totalBenefit": 64,
+   "harmReduction": 70,
+   "fairnessEquity": 80,
+   "vulnerableProtection": 64,
+   "resourceEfficiency": 50,
+   "feasibility": 54,
+   "longTermImpact": 66,
+   "predictability": 52
+  },
+  "flood_reserve_capacity": {
+   "totalBenefit": 66,
+   "harmReduction": 64,
+   "fairnessEquity": 56,
+   "vulnerableProtection": 50,
+   "resourceEfficiency": 64,
+   "feasibility": 62,
+   "longTermImpact": 88,
+   "predictability": 50
+  },
+  "water_protect_critical_sites": {
+   "totalBenefit": 60,
+   "harmReduction": 80,
+   "fairnessEquity": 84,
+   "vulnerableProtection": 97,
+   "resourceEfficiency": 50,
+   "feasibility": 66,
+   "longTermImpact": 66,
+   "predictability": 56
+  },
+  "water_largest_neighborhoods": {
+   "totalBenefit": 94,
+   "harmReduction": 78,
+   "fairnessEquity": 42,
+   "vulnerableProtection": 28,
+   "resourceEfficiency": 90,
+   "feasibility": 90,
+   "longTermImpact": 64,
+   "predictability": 86
+  },
+  "water_shutoff_highest_contamination": {
+   "totalBenefit": 90,
+   "harmReduction": 95,
+   "fairnessEquity": 46,
+   "vulnerableProtection": 56,
+   "resourceEfficiency": 82,
+   "feasibility": 70,
+   "longTermImpact": 60,
+   "predictability": 58
+  },
+  "water_efficient_exposure": {
+   "totalBenefit": 84,
+   "harmReduction": 76,
+   "fairnessEquity": 38,
+   "vulnerableProtection": 32,
+   "resourceEfficiency": 97,
+   "feasibility": 84,
+   "longTermImpact": 64,
+   "predictability": 82
+  },
+  "water_balanced_targeted_response": {
+   "totalBenefit": 64,
+   "harmReduction": 70,
+   "fairnessEquity": 80,
+   "vulnerableProtection": 64,
+   "resourceEfficiency": 50,
+   "feasibility": 54,
+   "longTermImpact": 66,
+   "predictability": 52
+  },
+  "water_restore_system_first": {
+   "totalBenefit": 70,
+   "harmReduction": 64,
+   "fairnessEquity": 58,
+   "vulnerableProtection": 46,
+   "resourceEfficiency": 66,
+   "feasibility": 60,
+   "longTermImpact": 92,
+   "predictability": 52
+  }
+ }
+}

@@ -358,29 +358,25 @@ export function applyValueBump(
 
 /* ---------------- Performance metrics ---------------- */
 
+/**
+ * An option's five performance metrics.
+ *
+ * There is no fallback any more, and that is the point. This used to read
+ * `option.metrics ?? deriveMetrics(option)`, and deriveMetrics copied the option's FINGERPRINT
+ * into its metrics — totalBenefit = outcomeAggregation, vulnerableProtection =
+ * vulnerabilityProtection. That is where the duplication came from: the metrics stopped being a
+ * second view of the option and became the same numbers under a second heading. `metrics` is now
+ * a required field on Block5ScenarioOption, so a new scenario cannot silently inherit its own
+ * fingerprint. See docs/BLOCK5_METRIC_REDESIGN_PLAN.md.
+ */
 export function optionMetrics(option: Block5ScenarioOption): Block5MetricProfile {
-  return option.metrics ?? deriveMetrics(option);
+  return option.metrics;
 }
 
 export function performanceScore(option: Block5ScenarioOption): number {
   const m = optionMetrics(option);
   const sum = METRIC_KEYS.reduce((a, k) => a + (m[k] ?? 0), 0);
   return Math.round(sum / METRIC_KEYS.length);
-}
-
-/** Placeholder metric derivation for scenarios whose metrics aren't authored yet (S2/S3). */
-function deriveMetrics(option: Block5ScenarioOption): Block5MetricProfile {
-  const fp = option.fingerprint;
-  return {
-    totalBenefit: fp.outcomeAggregationSensitivity,
-    harmReduction: Math.round((fp.vulnerabilityProtectionSensitivity + fp.directnessSensitivity) / 2),
-    fairnessEquity: Math.round((fp.vulnerabilityProtectionSensitivity + fp.stakeholderPerspectiveShiftSensitivity) / 2),
-    vulnerableProtection: fp.vulnerabilityProtectionSensitivity,
-    resourceEfficiency: fp.gainResponsivenessSensitivity,
-    feasibility: clamp(Math.round((fp.directnessSensitivity + (100 - fp.contextSensitivity)) / 2)),
-    longTermImpact: fp.contextSensitivity,
-    predictability: Math.round((fp.directnessSensitivity + fp.gainResponsivenessSensitivity) / 2),
-  };
 }
 
 /* ---------------- Measures: graded VCI + Stability ---------------- */

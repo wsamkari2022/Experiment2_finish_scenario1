@@ -79,7 +79,9 @@ const BLOCK4_KEY = "block4_reflection_results";
  * meaning changed. Analysis code can then tell records apart instead of guessing from content.
  * Changing a formula does not require a bump; changing what is stored does.
  */
-export const PARTICIPANT_RECORD_SCHEMA_VERSION = 1;
+// v2 (2026-08-23): the Block 5 performance metrics went from eight keys to five, so any record
+// written under v1 carries a different metric shape. See docs/BLOCK5_METRIC_REDESIGN_PLAN.md.
+export const PARTICIPANT_RECORD_SCHEMA_VERSION = 2;
 
 /**
  * Everything Blocks 1-4 produced for one participant.

@@ -9,8 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "validate:block5": "node tools/validate_block5.cjs",
-    "check:images": "node tools/check_scenario_images.mjs"
+    "validate:block5": "node tools/validate_block5.cjs && node tools/validate_block5_metrics.mjs",
+    "check:images": "node tools/check_scenario_images.mjs",
+    "validate:metrics": "node tools/validate_block5_metrics.mjs"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.34.0",

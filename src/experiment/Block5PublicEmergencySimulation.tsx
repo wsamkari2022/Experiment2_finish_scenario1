@@ -24,7 +24,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  Badge, Box, Button, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
+  Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
 import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend } from "./block5Meters";
@@ -40,11 +40,11 @@ import { getCVRStory, pickWhoVariant, getCVRFramingClauses } from "./block5CVRCo
 import { useScrollToTop } from "./useScrollToTop";
 import { Block5OptionCompare } from "./Block5OptionCompare";
 import { useColorMode } from "@/components/ui/color-mode";
-import { getBlock5Palette, type Block5Palette } from "./block5Palette";
+import { getBlock5Palette, onAccentText, type Block5Palette } from "./block5Palette";
 import {
-  METRIC_KEYS, METRIC_LABELS, METRIC_HOVER, POLICY_DIM_KEYS, POLICY_DIM_EXPLAIN,
+  METRIC_KEYS, METRIC_LABELS, metricMeaning, POLICY_DIM_KEYS, POLICY_DIM_EXPLAIN,
   type AlignmentLevel, type Block5Results, type Block5Scenario, type Block5ScenarioResult,
-  type Block5UserProfile, type CVREndorsement, type Block5MetricKey, type Block5MetricProfile,
+  type Block5UserProfile, type CVREndorsement, type Block5MetricProfile,
   type Block5PolicyDimKey, type CVRCoordinate, type WhoVariant,
   type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
   type CVRFraming, type FramingAdjust,
@@ -307,6 +307,71 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   const [cvrWho, setCvrWho] = useState<WhoVariant | null>(null);
   // Which sidebar value the user is hovering, to show its plain-English explanation.
   const [hoveredDim, setHoveredDim] = useState<string | null>(null);
+
+  /**
+   * Keeps the scenario panel parked immediately below the sticky performance dashboard.
+   *
+   * WHY: the scenario and the live situation are what every option has to be judged against,
+   * but they sat in a column that scrolled away as soon as the participant started reading the
+   * six option cards — so the thing being decided ABOUT was off-screen for most of the decision.
+   * Making the panel sticky keeps it in view the whole time.
+   *
+   * WHY IT IS MEASURED RATHER THAN A FIXED NUMBER: the dashboard above is itself sticky, and its
+   * height changes with the viewport (its metric grid rewraps) and with whether a preview is
+   * active. A hard-coded offset would either leave a gap or let the panel slide under it.
+   *
+   * WHY A CSS VARIABLE AND NOT STATE: this writes straight to the DOM, so a resize repositions
+   * the panel without re-rendering a component that owns the whole simulation — and it keeps
+   * the observer out of React's render cycle entirely.
+   */
+  const dashRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const sideRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const dash = dashRef.current;
+    const grid = gridRef.current;
+    const side = sideRef.current;
+    if (!dash || !grid || !side) return;
+
+    const apply = () => {
+      const dashH = Math.round(dash.getBoundingClientRect().height);
+      grid.style.setProperty("--b5-dash-h", `${dashH}px`);
+
+      /*
+       * Stick ONLY if the whole panel fits in what is left of the viewport.
+       *
+       * A sticky element taller than its available space is a trap: it pins to the top and its
+       * overflowing bottom can never be scrolled to. Capping its height and giving it an inner
+       * scrollbar looked like the fix, but it is worse — it silently truncated "The situation
+       * right now" mid-sentence and buried the value priorities behind a scrollbar most people
+       * will never notice. Nothing on this panel is optional enough to hide.
+       *
+       * So the measurement decides. When it fits, the participant gets the scenario alongside
+       * every option. When it does not, the column simply scrolls with the page, which is how it
+       * behaved before and hides nothing. LG-and-up only; below that the layout is one column.
+       *
+       * scrollHeight (not offsetHeight) is the natural content height, which is what we need
+       * even while the element is currently stuck.
+       */
+      const available = window.innerHeight - dashH - 48;
+      const fits = side.scrollHeight <= available;
+      const next = fits ? "on" : "off";
+      // Only write on change: this element is observed below, and a no-op write would still
+      // schedule another observer callback.
+      if (side.dataset.stick !== next) side.dataset.stick = next;
+    };
+
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(dash);
+    ro.observe(side);
+    // The fit also changes when the window gets shorter, which no ResizeObserver here sees.
+    window.addEventListener("resize", apply);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
   // Is the two-radar "compare all options" overlay open? Reset per scenario like every other
   // per-scenario UI flag, so it never carries over into the next scenario.
   const [compareChartsOpen, setCompareChartsOpen] = useState(false);
@@ -704,29 +769,80 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
       </VStack>
 
       {/* Sticky cumulative performance dashboard (issues 1 & 2) */}
-      <Box position="sticky" top="2" zIndex="30" maxW="7xl" mx="auto" mb="6">
+      <Box ref={dashRef} position="sticky" top="2" zIndex="30" maxW="7xl" mx="auto" mb="6">
         <MetricsDashboard current={cumulative} projected={projected} previewTitle={previewOption?.title ?? null}
-          accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} />
+          accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} scenarioId={scenario.id} />
       </Box>
 
-      <Grid templateColumns={{ base: "1fr", lg: "320px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
-        {/* Sidebar column — the scenario panel, with the comparison-charts button beneath it. */}
-        <VStack align="stretch" gap="4">
-          <Box bg={pal.sidebarBg} backdropFilter={pal.backdropBlur} borderWidth="1px" borderColor={pal.sidebarBorder} rounded="2xl" p={{ base: "5", md: "6" }} style={{ boxShadow: pal.sidebarShadow }}>
-            <VStack align="stretch" gap="5">
-              <Box>
-                <Text fontSize="2xs" fontWeight="bold" color={pal.accent} textTransform="uppercase" letterSpacing="widest" mb="2">
-                  The scenario
-                </Text>
-                <Text fontSize="sm" color={pal.textMuted} lineHeight="tall">{scenario.description}</Text>
-              </Box>
+      <Grid ref={gridRef} templateColumns={{ base: "1fr", lg: "352px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
+        {/*
+          Sidebar column.
+
+          It has NO height cap and NO inner scroll: everything in it is always fully rendered.
+          It becomes sticky only when the effect above has measured that it fits in the space
+          below the dashboard — see the comment there for why that measurement matters.
+        */}
+        <VStack
+          ref={sideRef}
+          align="stretch" gap="4"
+          css={{
+            "@media (min-width: 62em)": {
+              "&[data-stick='on']": {
+                position: "sticky",
+                top: "calc(var(--b5-dash-h, 132px) + 1.5rem)",
+              },
+            },
+          }}
+        >
+          {/*
+            The scenario card. The advisor's note was that this did not catch the eye, and it did
+            not: a 5%-white panel, a 2xs label and body copy in the muted text colour made the
+            most important content on the page the faintest thing on it. It now leads with a
+            solid accent header band — the only fully saturated surface in the column — and the
+            description is set at full text colour, one size up.
+          */}
+          <Box
+            bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
+            borderWidth="1px" borderColor={pal.accent}
+            rounded="2xl" overflow="hidden"
+            style={{ boxShadow: pal.sidebarShadow }}
+          >
+            <HStack
+              gap="2.5" px={{ base: "5", md: "6" }} py="3"
+              style={{ background: pal.accent, color: onAccentText(pal.accent) }}
+            >
+              <Icon boxSize="4"><LuScale /></Icon>
+              <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="widest">
+                The scenario
+              </Text>
+            </HStack>
+            <VStack align="stretch" gap="5" px={{ base: "5", md: "6" }} py={{ base: "5", md: "5" }}>
+              <Text fontSize="md" color={pal.text} lineHeight="tall">{scenario.description}</Text>
               {scenario.factBase && (
-                <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.accent} borderLeftWidth="4px" rounded="lg" px="4" py="3">
-                  <HStack gap="2" mb="1.5">
-                    <Icon color={pal.accent} boxSize="4"><LuTriangleAlert /></Icon>
-                    <Text fontSize="2xs" fontWeight="bold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">The situation right now</Text>
+                /*
+                  "The situation right now" is the live fact base every option is answering. It
+                  used to be a near-black inset with a thin accent edge; it is now washed in the
+                  scenario's own hue with a solid rail and a filled icon chip, so it reads as the
+                  urgent part of the panel rather than a footnote inside it.
+                */
+                <Box
+                  borderWidth="1px" borderLeftWidth="5px" rounded="lg" px="4" py="3.5"
+                  style={{
+                    background: `${pal.accent}1F`,
+                    borderColor: `${pal.accent}59`,
+                    borderLeftColor: pal.accent,
+                  }}
+                >
+                  <HStack gap="2" mb="2">
+                    <Center boxSize="5" minW="5" rounded="full"
+                      style={{ background: pal.accent, color: onAccentText(pal.accent) }}>
+                      <Icon boxSize="3"><LuTriangleAlert /></Icon>
+                    </Center>
+                    <Text fontSize="2xs" fontWeight="bold" color={pal.text} textTransform="uppercase" letterSpacing="wider">
+                      The situation right now
+                    </Text>
                   </HStack>
-                  <Text fontSize="sm" color={pal.text} lineHeight="tall" fontWeight="medium">{scenario.factBase}</Text>
+                  <Text fontSize="md" color={pal.text} lineHeight="tall" fontWeight="semibold">{scenario.factBase}</Text>
                 </Box>
               )}
               <Separator borderColor={pal.separator} />
@@ -744,7 +860,13 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
                           style={{ textDecoration: "underline dotted", textDecorationColor: pal.textFaint, textUnderlineOffset: "2px" }}>
                           {d.label}
                         </Text>
-                        <Badge bg={pal.badgeBg} color={pal.text} rounded="md" px="2" fontSize="xs" fontFamily="mono">{d.score}</Badge>
+                        {/*
+                          DISPLAY rounding only — d.score keeps its full precision everywhere it
+                          is scored against. The APA and CVR bumps are weighted by scenario
+                          stakes, so a score can land on 99.075, and printing that next to a
+                          clean 100 and 26 reads as a glitch rather than as precision.
+                        */}
+                        <Badge bg={pal.badgeBg} color={pal.text} rounded="md" px="2" fontSize="xs" fontFamily="mono">{Math.round(d.score)}</Badge>
                       </HStack>
                       {hoveredDim === d.key && (
                         <Box position="absolute" top="100%" left="0" mt="1.5" zIndex="20"
@@ -851,15 +973,37 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
 /* ---------------- Cumulative performance dashboard ---------------- */
 
-function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal }: {
+/** LocalStorage key remembering whether the participant hid the metric definitions. */
+const METRIC_MEANINGS_KEY = "block5_show_metric_meanings";
+
+function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal, scenarioId }: {
   current: Block5MetricProfile;
   projected: Block5MetricProfile | null;
   previewTitle: string | null;
   accent: string;
   completedCount: number;
   pal: Block5Palette;
+  /** Which scenario is on screen — decides which reading of each metric is shown. */
+  scenarioId: string;
 }) {
-  const [hovered, setHovered] = useState<Block5MetricKey | null>(null);
+  /**
+   * Definitions are shown UNDER each metric by default rather than hidden behind a hover.
+   *
+   * With eight metrics there was no room and hover was the only option, which meant the meaning
+   * was invisible to anyone who did not think to hover — and invisible on touch entirely. Five
+   * metrics leave room to simply say what each one means. The participant can collapse them once
+   * they know, and that choice is remembered across scenarios.
+   */
+  const [showMeanings, setShowMeanings] = useState<boolean>(() => {
+    try { return localStorage.getItem(METRIC_MEANINGS_KEY) !== "0"; } catch { return true; }
+  });
+  const toggleMeanings = useCallback(() => {
+    setShowMeanings((v) => {
+      const next = !v;
+      try { localStorage.setItem(METRIC_MEANINGS_KEY, next ? "1" : "0"); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
   const [showInfo, setShowInfo] = useState(false);
   const [infoOpened, setInfoOpened] = useState(false); // stops the glow once the user opens the explanation
   const isPreview = !!projected;
@@ -908,7 +1052,14 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
               {overallDelta > 0 ? `▲ +${overallDelta}` : `▼ ${overallDelta}`}
             </Badge>
           )}
-          <Badge bg={accent} color="white" rounded="md" px="2.5" py="1" fontSize="xs" fontWeight="bold">Overall {overall}/100</Badge>
+          {/* Lets the participant collapse the definitions once they know them, without
+              hiding them from anyone who never thinks to hover. */}
+          <Button size="2xs" variant="ghost" rounded="md" fontSize="2xs" fontWeight="medium"
+            color={pal.textMuted} _hover={{ bg: pal.surfaceSubtle, color: pal.text }}
+            onClick={toggleMeanings}>
+            {showMeanings ? "Hide definitions" : "Show definitions"}
+          </Button>
+          <Badge bg={accent} color={onAccentText(accent)} rounded="md" px="2.5" py="1" fontSize="xs" fontWeight="bold">Overall {overall}/100</Badge>
         </HStack>
       </HStack>
 
@@ -929,19 +1080,19 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
           {isPreview
             ? "Preview only — your choice isn't saved until you confirm it."
             : completedCount === 0
-              ? "This is the average outcome quality of the policies you choose. Hover a metric to learn what it means."
-              : "Average across the scenarios you've completed. Hover a metric to learn what it means."}
+              ? "This is the average outcome quality of the policies you choose. Each measure says what it means for this scenario."
+              : "Average across the scenarios you've completed. Each measure says what it means for this scenario."}
         </Text>
       )}
 
-      <Grid templateColumns={{ base: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }} gap="3">
+      <Grid templateColumns={{ base: "repeat(2, 1fr)", md: "repeat(5, 1fr)" }} gap={{ base: "3", md: "4" }}>
         {METRIC_KEYS.map((k) => {
           const val = display[k];
           const delta = val - current[k];
           return (
-            <Box key={k} position="relative" onMouseEnter={() => setHovered(k)} onMouseLeave={() => setHovered(null)} cursor="default">
+            <Box key={k} position="relative" cursor="default">
               <HStack justify="space-between" mb="1">
-                <Text fontSize="2xs" color={pal.textMuted} lineClamp={1}>{METRIC_LABELS[k]}</Text>
+                <Text fontSize="xs" fontWeight="semibold" color={pal.text} lineClamp={1}>{METRIC_LABELS[k]}</Text>
                 <HStack gap="1">
                   {isPreview && delta !== 0 && (
                     <Text fontSize="2xs" fontWeight="bold" color={delta > 0 ? pos : neg}>
@@ -957,11 +1108,12 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
                   <Box position="absolute" top="-1px" h="calc(100% + 2px)" w="2px" bg={pal.textMuted} rounded="full" style={{ left: `${current[k]}%` }} title={`Now: ${current[k]}`} />
                 )}
               </Box>
-              {hovered === k && (
-                <Box position="absolute" top="100%" left="0" mt="1" zIndex="10" bg={pal.tooltipBg} color={pal.tooltipText}
-                  borderWidth="1px" borderColor={pal.tooltipBorder} rounded="md" px="3" py="2" fontSize="2xs" w="220px" shadow="xl">
-                  {METRIC_HOVER[k]}
-                </Box>
+              {showMeanings && (
+                /* The reading for THIS scenario — "how soon safe water is back", not a generic
+                   gloss. The label above stays constant so the dashboard remains comparable. */
+                <Text fontSize="2xs" color={pal.textFaint} lineHeight="tall" mt="1.5">
+                  {metricMeaning(k, scenarioId)}
+                </Text>
               )}
             </Box>
           );
@@ -1373,6 +1525,18 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
         </Box>
       )}
 
+      {/*
+        The stakeholder's words AND the re-endorsement question, in one box.
+        ---------------------------------------------------------------------------------------
+        This page was briefly changed so the question sat in its own QuestionCard below, matching
+        the APA and keep-confirmation screens. It was reverted at the researcher's request: the
+        vignette and the question it provokes are one continuous piece of reading here, and
+        splitting them broke that. The question stays as the closing, emphasised line of the
+        stakeholder's paragraph.
+
+        The screens BEHIND the two answers below — the keep-confirmation and the APA panel — do
+        still use QuestionCard. Only this vignette page is exempt.
+      */}
       {showBox2 && (
         <Box bg="purple.subtle" borderWidth="1px" borderColor="purple.muted" rounded="xl" px="4" py="4" animationName="fade-in" animationDuration="moderate">
           {skipped || b2Step >= 1 ? (
@@ -1514,39 +1678,40 @@ function FlowOverlay({
         {/* Unified YES page: the former q1 + q2 on one page, plus the dual-perspective question
             (only if the participant generated the other lens). Then → confirm. */}
         {step === "q1" && coord && whoVariant && (
-          <Stack gap="5">
+          <Stack gap="4">
             <Text fontSize="xs" color={accent} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
               Confirm keeping this option
             </Text>
 
-            <Box>
-              <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="2">
-                This option focuses most on <Text as="span" fontWeight="bold" color="fg">{shortMainValue(option)}</Text>. Do you genuinely value this?
-              </Text>
+            {/* Question count is 3 only when the participant generated the second lens. */}
+            <QuestionCard
+              accent={accent} index={1} total={altViewGenerated ? 3 : 2} answered={q1Strong !== null}
+              question={<>This option focuses most on <Text as="span" color={accent}>{shortMainValue(option)}</Text>. Do you genuinely value this?</>}
+            >
               <Stack gap="2">
                 <ApaChoice selected={q1Strong === true} accent={accent} onClick={() => setQ1Strong(true)}>Yes, I value this</ApaChoice>
                 <ApaChoice selected={q1Strong === false} accent={accent} onClick={() => setQ1Strong(false)}>Not really, but I'm keeping my choice</ApaChoice>
               </Stack>
-            </Box>
+            </QuestionCard>
 
-            <Box>
-              <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="2">
-                {coord.who === "close"
-                  ? `Did imagining this person as ${whoVariant.label} guide your decision?`
-                  : `Did hearing from ${whoVariant.label} guide your decision?`}
-              </Text>
+            <QuestionCard
+              accent={accent} index={2} total={altViewGenerated ? 3 : 2} answered={q2Guided !== null}
+              question={coord.who === "close"
+                ? `Did imagining this person as ${whoVariant.label} guide your decision?`
+                : `Did hearing from ${whoVariant.label} guide your decision?`}
+            >
               <HStack gap="2" wrap="wrap">
                 <ApaChoice selected={q2Guided === true} accent={accent} onClick={() => setQ2Guided(true)} compact>Yes, it guided me</ApaChoice>
                 <ApaChoice selected={q2Guided === false} accent={accent} onClick={() => setQ2Guided(false)} compact>No, it did not</ApaChoice>
               </HStack>
-            </Box>
+            </QuestionCard>
 
             {altViewGenerated && (
-              <Box>
-                <FramingComparisonTable scenario={scenario} mode={mode} />
-                <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="3" mb="2">
-                  You looked at this from two perspectives. <Text as="span" fontWeight="bold" color="fg">Which one did NOT play a part</Text> in your decision to keep this option?
-                </Text>
+              <QuestionCard
+                accent={accent} index={3} total={3} answered={framingChoiceYes !== null}
+                question={<>You looked at this from two perspectives. <Text as="span" color={accent}>Which one did NOT play a part</Text> in your decision to keep this option?</>}
+              >
+                <Box mb="3"><FramingComparisonTable scenario={scenario} mode={mode} /></Box>
                 <Stack gap="2">
                   <ApaChoice selected={framingChoiceYes === "directness"} accent={accent} onClick={() => setFramingChoiceYes("directness")}>
                     The <b>Directness</b> view didn't influence me — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
@@ -1555,7 +1720,7 @@ function FlowOverlay({
                     The <b>Context</b> view didn't influence me — <Text as="span" color="fg.subtle">{FRAMING_META.context.gloss}</Text>
                   </ApaChoice>
                 </Stack>
-              </Box>
+              </QuestionCard>
             )}
 
             <HStack gap="3" wrap="wrap" pt="1">
@@ -1617,6 +1782,80 @@ function FlowOverlay({
 
 /* ---------------- APA (value clarification) ---------------- */
 
+/**
+ * QuestionCard — the shared container for EVERY question Block 5 asks the participant.
+ *
+ * ============================================================================
+ * WHY THIS EXISTS
+ * ============================================================================
+ * Questions used to be plain <Text> lines in the same flat stack as the narrative around them,
+ * and in every case the thing being ASKED was less prominent than the thing being read:
+ *
+ *   - CVR: the pivotal "would you still choose this?" was the closing sentence of the
+ *     stakeholder paragraph, with its answer buttons two elements further down and a colour
+ *     legend sitting in between them.
+ *   - Keep-confirmation and APA: the questions were muted grey prose, visually LIGHTER than
+ *     the answer buttons underneath them.
+ *
+ * ============================================================================
+ * WHAT IT DOES
+ * ============================================================================
+ * Gives every question one unmistakable signature — a raised surface, a solid accent rail down
+ * the left edge, a numbered chip, and the question set larger and heavier than any prose on the
+ * page — and keeps the ANSWERS INSIDE THE SAME CARD, so a question and its options read as one
+ * object instead of two loose ones.
+ *
+ * The answered state (accent-tinted border + tick) is not decoration. These screens require
+ * every question to be answered before Continue enables, and previously nothing told the
+ * participant which one they had missed.
+ *
+ * The scenario accent is passed in rather than read from a token because Block 5 recolours
+ * itself per scenario (see block5Palette.ts).
+ */
+function QuestionCard({ accent, index, total, label, question, answered, children }: {
+  accent: string;
+  /** 1-based position. Omit along with `total` on a screen that asks only one thing. */
+  index?: number;
+  total?: number;
+  /** Overrides the default "Question n of m" eyebrow. */
+  label?: string;
+  question: ReactNode;
+  /** Drives the tick and the border tint. Omit where the answer is not a required field. */
+  answered?: boolean;
+  children: ReactNode;
+}) {
+  const eyebrow = label ?? (index && total ? `Question ${index} of ${total}` : "Question");
+  return (
+    <Box
+      bg="bg.subtle"
+      borderWidth="1px"
+      borderColor={answered ? `${accent}66` : "border.emphasized"}
+      borderLeftWidth="4px"
+      borderLeftColor={accent}
+      rounded="xl"
+      px={{ base: "4", md: "5" }}
+      py={{ base: "3.5", md: "4" }}
+      shadow="sm"
+      transition="border-color 0.2s ease"
+    >
+      <HStack gap="2.5" mb="2.5" align="center">
+        <Center boxSize="6" minW="6" rounded="md" bg={accent} color={onAccentText(accent)}
+          fontSize="2xs" fontWeight="bold" lineHeight="1">
+          {index ?? "?"}
+        </Center>
+        <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
+          {eyebrow}
+        </Text>
+        {answered && <Icon boxSize="3.5" color="green.fg"><LuCheck /></Icon>}
+      </HStack>
+      <Box fontSize="md" fontWeight="semibold" color="fg" lineHeight="tall" mb="3">
+        {question}
+      </Box>
+      {children}
+    </Box>
+  );
+}
+
 function ApaChoice({ selected, accent, onClick, compact, children }: {
   selected: boolean; accent: string; onClick: () => void; compact?: boolean; children: ReactNode;
 }) {
@@ -1636,11 +1875,15 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
       lineHeight="1.55"
       w={compact ? "auto" : "full"}
       color="fg"
-      bg={selected ? `${accent}22` : "bg.subtle"}
-      borderColor={selected ? accent : "border"}
+      bg="bg.subtle"
+      borderColor="border"
       borderWidth={selected ? "2px" : "1px"}
-      boxShadow={selected ? `0 0 0 1px ${accent}55` : "none"}
       transition="all 0.15s ease"
+      style={selected ? {
+        background: `${accent}26`,
+        borderColor: accent,
+        boxShadow: `0 0 0 1px ${accent}55`,
+      } : undefined}
       _hover={selected ? {} : {
         bg: "bg.muted",
         borderColor: "border.emphasized",
@@ -1652,7 +1895,7 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
           borderWidth="2px" borderColor={selected ? accent : "border.emphasized"}
           bg={selected ? accent : "transparent"}
           display="flex" alignItems="center" justifyContent="center">
-          {selected && <Icon boxSize="3" color="white"><LuCheck /></Icon>}
+          {selected && <Icon boxSize="3" style={{ color: onAccentText(accent) }}><LuCheck /></Icon>}
         </Box>
         <Box flex="1">{children}</Box>
       </HStack>
@@ -1707,6 +1950,18 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
   );
 
   const ready = q1 !== null && confidence !== null && q2 !== null && q3 !== null && (!altViewGenerated || framingInfluential !== null);
+
+  /** 3 questions, or 4 when the participant generated the second CVR lens. Drives "n of m". */
+  const apaTotal = altViewGenerated ? 4 : 3;
+  /**
+   * How many are still outstanding. Continue stays disabled until this reaches 0, and a disabled
+   * button with no explanation is the classic way to strand someone who scrolled past one card.
+   */
+  const unanswered =
+    (q1 === null || confidence === null ? 1 : 0) +
+    (q2 === null ? 1 : 0) +
+    (q3 === null ? 1 : 0) +
+    (altViewGenerated && framingInfluential === null ? 1 : 0);
 
   const pending = useMemo(
     () => (q1 !== null && q2 !== null && q3 !== null
@@ -1792,7 +2047,7 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
               <Text fontSize="xs" color="fg.subtle" mb="1">Your final decision</Text>
               <Text fontSize="sm" color="fg" fontWeight="semibold">{section4.title}</Text>
             </Box>
-            <Text fontSize="md" color="fg" fontWeight="semibold">Make this your final decision for this scenario?</Text>
+            <QuestionCard accent={accent} label="Confirm" question="Make this your final decision for this scenario?">
             <HStack gap="3" wrap="wrap">
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" fontSize="xs"
                 onClick={() => onCommit({
@@ -1808,6 +2063,7 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
                 No, let me pick a different option
               </Button>
             </HStack>
+            </QuestionCard>
           </Stack>
         )}
       </Stack>
@@ -1834,8 +2090,11 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
         </Text>
       </Box>
 
-      <Box>
-        <Text fontSize="sm" color="fg" fontWeight="semibold" mb="2">When you made this choice, which is closer to the truth?</Text>
+      {/* Question 1 carries a required sub-answer (confidence), so both must be set to tick. */}
+      <QuestionCard
+        accent={accent} index={1} total={apaTotal} answered={q1 !== null && confidence !== null}
+        question="When you made this choice, which is closer to the truth?"
+      >
         <Stack gap="2">
           <ApaChoice selected={q1 === "endorse"} accent={accent} onClick={() => setQ1("endorse")}>
             I genuinely value {vSpan(optValue, ORANGE)} more than {vSpan(topValue, TEAL)} now.
@@ -1847,36 +2106,40 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
             I'm honestly not sure.
           </ApaChoice>
         </Stack>
-        <HStack gap="2" mt="3" wrap="wrap">
-          <Text fontSize="xs" color="fg.muted">How sure are you?</Text>
+        <HStack gap="2" mt="3.5" pt="3" borderTopWidth="1px" borderColor="border.subtle" wrap="wrap">
+          <Text fontSize="xs" color="fg.muted" fontWeight="medium">How sure are you?</Text>
           {[1, 2, 3, 4, 5].map((n) => (
             <Button key={n} minW="9" h="9" px="0" rounded="lg" fontSize="sm" fontWeight="semibold"
-              borderWidth="1px" borderColor={confidence === n ? accent : "border"}
-              bg={confidence === n ? accent : "bg.subtle"} color={confidence === n ? "white" : "fg"}
-              boxShadow={confidence === n ? `0 4px 12px ${accent}66` : "none"}
-              _hover={{ bg: confidence === n ? accent : "bg.muted" }}
+              borderWidth="1px" borderColor="border" bg="bg.subtle" color="fg"
+              _hover={{ bg: "bg.muted" }}
+              style={confidence === n ? {
+                background: accent, borderColor: accent, color: onAccentText(accent),
+                boxShadow: `0 4px 12px ${accent}66`,
+              } : undefined}
               onClick={() => setConfidence(n)}>{n}</Button>
           ))}
           <Text fontSize="2xs" color="fg.subtle">(1 = not sure · 5 = very sure)</Text>
         </HStack>
-      </Box>
+      </QuestionCard>
 
-      <Box>
-        <Text fontSize="sm" color="fg" fontWeight="semibold" mb="2">
+      <QuestionCard
+        accent={accent} index={2} total={apaTotal} answered={q2 !== null}
+        question={<>
           {coord.who === "close" ? "Did imagining this person as " : "Did hearing from "}
           <Text as="span" color={PURPLE} fontWeight="bold" fontStyle="italic">{whoVariant.label}</Text>
           {" influence your thinking here?"}
-        </Text>
+        </>}
+      >
         <HStack gap="2" wrap="wrap">
           <ApaChoice selected={q2 === true} accent={accent} onClick={() => setQ2(true)} compact>Yes, it did.</ApaChoice>
           <ApaChoice selected={q2 === false} accent={accent} onClick={() => setQ2(false)} compact>No, it didn't.</ApaChoice>
         </HStack>
-      </Box>
+      </QuestionCard>
 
-      <Box>
-        <Text fontSize="sm" color="fg" fontWeight="semibold" mb="2">
-          Pick the one value you most want the system to weight for you — you'll then see the options that fit it:
-        </Text>
+      <QuestionCard
+        accent={accent} index={3} total={apaTotal} answered={q3 !== null}
+        question="Pick the one value you most want the system to weight for you — you'll then see the options that fit it:"
+      >
         <Stack gap="2">
           {POLICY_DIM_KEYS.map((k) => (
             <ApaChoice key={k} selected={q3 === k} accent={accent} onClick={() => setQ3(k)}>
@@ -1884,14 +2147,14 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
             </ApaChoice>
           ))}
         </Stack>
-      </Box>
+      </QuestionCard>
 
       {altViewGenerated && (
-        <Box>
-          <FramingComparisonTable scenario={scenario} mode={mode} />
-          <Text fontSize="sm" color="fg" fontWeight="semibold" mt="3" mb="2">
-            You looked at this from two perspectives. Which one most <Text as="span" color={PURPLE} fontWeight="bold">changed your mind</Text> toward not keeping this option?
-          </Text>
+        <QuestionCard
+          accent={accent} index={4} total={apaTotal} answered={framingInfluential !== null}
+          question={<>You looked at this from two perspectives. Which one most <Text as="span" color={PURPLE} fontWeight="bold">changed your mind</Text> toward not keeping this option?</>}
+        >
+          <Box mb="3"><FramingComparisonTable scenario={scenario} mode={mode} /></Box>
           <Stack gap="2">
             <ApaChoice selected={framingInfluential === "directness"} accent={accent} onClick={() => setFramingInfluential("directness")}>
               The <b>Directness</b> view changed my mind — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
@@ -1900,13 +2163,18 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
               The <b>Context</b> view changed my mind — <Text as="span" color="fg.subtle">{FRAMING_META.context.gloss}</Text>
             </ApaChoice>
           </Stack>
-        </Box>
+        </QuestionCard>
       )}
 
-      <HStack gap="3" pt="1" wrap="wrap">
+      <HStack gap="3" pt="1" wrap="wrap" align="center">
         <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" fontSize="xs" disabled={!ready} onClick={() => setStage("options")}>
           Continue
         </Button>
+        {!ready && (
+          <Text fontSize="xs" color="fg.subtle">
+            {unanswered} question{unanswered === 1 ? "" : "s"} left to answer
+          </Text>
+        )}
         <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" fontSize="xs" onClick={() => setConfirmBail(true)}>
           Take me back to all options
         </Button>

@@ -9,7 +9,7 @@
  *    computed from only the 4 POLICY-FIT dimensions. Options are NEVER removed.
  *  - The 3 presentation dimensions (context, directness, stakeholder) drive the
  *    CVR vignette (framing + who appears), not the ranking.
- *  - Each option carries 8 generic PERFORMANCE metrics (separate from alignment).
+ *  - Each option carries 5 PERFORMANCE metrics describing what it achieves (see METRIC_DEFS).
  *  - Endorsing a misaligned choice updates the profile (carried to later scenarios).
  *  - Two measures: graded VCI (current profile) + Stability (original profile).
  */
@@ -73,50 +73,185 @@ export type AlignmentLevel =
  */
 export const ALIGNMENT_RANK_RULE = { aligned: 1, weaklyAligned: 1 } as const;
 
-/** 8 generic performance metrics, work across any scenario. */
+/**
+ * ============================================================================
+ * PERFORMANCE METRICS — what an OPTION achieves, never what the participant values.
+ * ============================================================================
+ *
+ * WHY THESE FIVE AND NOT THE PREVIOUS EIGHT
+ * -----------------------------------------
+ * The original eight were authored as a mirror of the option fingerprints. Measured across the
+ * 30 authored options, "Vulnerable Protection" correlated r = 0.98 with the participant's
+ * vulnerability-protection VALUE, "Total Benefit" r = 0.80 with outcome aggregation, and
+ * "Fairness / Equity" r = 0.80 with vulnerability again. They were not a second view of the
+ * option; they were the same numbers under a second heading, and overall performance therefore
+ * correlated r = 0.81 with the participant's own profile. Choosing your values was free.
+ *
+ * THE RULE THAT REPLACES THEM
+ * ---------------------------
+ *   The four VALUES ask *who* and *how much*.
+ *   The METRICS ask *how well it went*.
+ *
+ * Two axes that cannot collapse into each other, because no metric names a group of people or a
+ * quantity of good. That is what makes "did this participant trade moral alignment against
+ * practical performance?" a real question rather than a tautology.
+ *
+ * WHY FIVE, NOT SIX
+ * -----------------
+ * A sixth, "Practicality" (effort to carry the option out), was authored and then dropped. Two
+ * reasons, both fatal:
+ *   1. It correlated r = 0.71 with Speed even after honest re-coding — fast options are usually
+ *      also easy ones, so it was not carrying its own information.
+ *   2. Its referent changed between scenarios. In travel and dinner it means effort on YOU; in
+ *      the cancer, flood and water scenarios you are a decision-maker, not the executor, so it
+ *      means effort on some organisation. That is two constructs sharing a label — exactly the
+ *      cross-scenario ambiguity the readings below exist to prevent.
+ * The five that remain keep the same referent in all five scenarios.
+ *
+ * HIGHER IS ALWAYS BETTER, on every metric. "Resource use 85" means it uses LITTLE.
+ *
+ * SCORES ARE RELATIVE TO THE SITUATION, NOT ABSOLUTE
+ * --------------------------------------------------
+ * A score answers: among the six options available in THIS scenario, how well does this one do
+ * on this construct? "Speed 90" in the cancer scenario does not claim treatment is as fast as a
+ * flight; it claims this option starts treatment about as soon as anything could there. That is
+ * what makes averaging across scenarios legitimate, and it is the same rule the Blocks 1-3
+ * ladders already follow — only position within the instrument ever carries meaning.
+ * Anchors: 90-100 best this situation allows / 70-85 clearly good / 50-65 middling /
+ * 30-45 clearly poor / 10-25 the worst this situation allows.
+ *
+ * See docs/BLOCK5_METRIC_REDESIGN_PLAN.md for the full rationale and the acceptance gates,
+ * and tools/validate_block5_metrics.mjs for the gates as executable checks.
+ */
 export type Block5MetricKey =
-  | "totalBenefit"
-  | "harmReduction"
-  | "fairnessEquity"
-  | "vulnerableProtection"
-  | "resourceEfficiency"
-  | "feasibility"
-  | "longTermImpact"
-  | "predictability";
+  | "speed"
+  | "resourceUse"
+  | "reliability"
+  | "durability"
+  | "reversibility";
 
 export const METRIC_KEYS: Block5MetricKey[] = [
-  "totalBenefit",
-  "harmReduction",
-  "fairnessEquity",
-  "vulnerableProtection",
-  "resourceEfficiency",
-  "feasibility",
-  "longTermImpact",
-  "predictability",
+  "speed",
+  "resourceUse",
+  "reliability",
+  "durability",
+  "reversibility",
 ];
 
-export const METRIC_LABELS: Record<Block5MetricKey, string> = {
-  totalBenefit: "Total Benefit",
-  harmReduction: "Harm Reduction",
-  fairnessEquity: "Fairness / Equity",
-  vulnerableProtection: "Vulnerable Protection",
-  resourceEfficiency: "Resource Efficiency",
-  feasibility: "Feasibility",
-  longTermImpact: "Long-term Impact",
-  predictability: "Predictability",
+/** Scenario ids, used to pick the right reading for a metric. */
+export type Block5ScenarioId =
+  | "travel_mode_choice"
+  | "meal_hosting_choice"
+  | "cancer_treatment_allocation"
+  | "flood_evacuation_priority"
+  | "water_contamination_response";
+
+/**
+ * One metric: a constant label, the construct it measures, and what that construct looks like in
+ * each scenario.
+ *
+ * `readings` is the answer to "'Speed' in a travel scenario is not 'Speed' in a cancer
+ * scenario". The CONSTRUCT is identical everywhere — latency of benefit delivery, input
+ * consumed, outcome uncertainty, persistence, recoverability. Only the surface changes, and the
+ * participant is shown the surface for the scenario they are actually in, so they are never left
+ * guessing what a bar means here.
+ */
+export interface MetricDef {
+  key: Block5MetricKey;
+  /** Constant across scenarios — this is what makes the dashboard comparable. */
+  label: string;
+  /** The construct. Governs authoring; never shown to the participant. */
+  invariant: string;
+  /** Fallback wording when no scenario is in context. */
+  hover: string;
+  /** What this construct means in each scenario. Shown to the participant. */
+  readings: Record<Block5ScenarioId, string>;
+}
+
+export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
+  speed: {
+    key: "speed",
+    label: "Speed",
+    invariant: "Latency of benefit delivery — how soon the help reaches the people it is for.",
+    hover: "How soon the help actually reaches the people it is meant to help.",
+    readings: {
+      travel_mode_choice: "how soon you arrive, and how much of your own time comes back",
+      meal_hosting_choice: "how soon everyone is actually eating",
+      cancer_treatment_allocation: "how soon treatment begins for those who receive it",
+      flood_evacuation_priority: "how soon people are out of danger",
+      water_contamination_response: "how soon safe water is back",
+    },
+  },
+  resourceUse: {
+    key: "resourceUse",
+    label: "Resource use",
+    invariant: "How little of the limited supply the option consumes. Higher means leaner.",
+    hover: "How little of the limited supply this uses — higher means leaner.",
+    readings: {
+      travel_mode_choice: "how little money and fuel it spends per person",
+      meal_hosting_choice: "how little of the $80 and the two hours it uses",
+      cancer_treatment_allocation: "how little of the 20 doses and staff time it wastes",
+      flood_evacuation_priority: "how few boats, crews and fuel-hours it ties up",
+      water_contamination_response: "how little budget and crew time it consumes",
+    },
+  },
+  reliability: {
+    key: "reliability",
+    label: "Reliability",
+    invariant: "Probability the intended outcome actually happens.",
+    hover: "How likely this is to work as intended rather than go wrong.",
+    readings: {
+      travel_mode_choice: "how likely you are to arrive without delay or a missed connection",
+      meal_hosting_choice: "how likely the meal works and everyone can eat it",
+      cancer_treatment_allocation: "how likely the treatment achieves what is hoped",
+      flood_evacuation_priority: "how likely the plan really gets people out",
+      water_contamination_response: "how likely the fix really clears the contamination",
+    },
+  },
+  durability: {
+    key: "durability",
+    label: "Durability",
+    invariant: "Whether the benefit persists past the immediate moment.",
+    hover: "Whether the benefit lasts beyond the immediate moment.",
+    readings: {
+      travel_mode_choice: "whether the route survives for the people who will need it next",
+      meal_hosting_choice: "leftovers, and whether it is something you could repeat",
+      cancer_treatment_allocation: "how long the benefit lasts, not just the first weeks",
+      flood_evacuation_priority: "whether it builds lasting resilience or only works this once",
+      water_contamination_response: "a permanent repair rather than a temporary supply",
+    },
+  },
+  reversibility: {
+    key: "reversibility",
+    label: "Reversibility",
+    invariant: "Recoverability — how easily course can be changed if the choice proves wrong.",
+    hover: "If this turns out to be wrong, how easily you can change course.",
+    readings: {
+      travel_mode_choice: "whether you can rebook or change your plans",
+      meal_hosting_choice: "whether you can order something else if it fails",
+      cancer_treatment_allocation: "whether doses can be reallocated, or the decision is final",
+      flood_evacuation_priority: "whether you can redirect resources mid-operation",
+      water_contamination_response: "whether you can switch approach without wasting the work",
+    },
+  },
 };
 
-/** Short, plain-English hover text for each metric (line 1 of the tooltip). */
-export const METRIC_HOVER: Record<Block5MetricKey, string> = {
-  totalBenefit: "How much overall good this choice produces.",
-  harmReduction: "How well this choice avoids or limits harm.",
-  fairnessEquity: "How evenly the benefits and harms are shared.",
-  vulnerableProtection: "How well this choice protects the weakest people.",
-  resourceEfficiency: "How well it uses limited resources, with little waste.",
-  feasibility: "How realistic and easy it is to carry out.",
-  longTermImpact: "How much good it does beyond the immediate moment.",
-  predictability: "How sure we are the plan works as intended (higher = safer).",
-};
+/** Constant labels, for places that only need the name. */
+export const METRIC_LABELS: Record<Block5MetricKey, string> = Object.fromEntries(
+  METRIC_KEYS.map((k) => [k, METRIC_DEFS[k].label]),
+) as Record<Block5MetricKey, string>;
+
+/**
+ * Scenario-aware definition line for a metric.
+ *
+ * Falls back to the scenario-independent wording when the scenario is unknown, so this can never
+ * render an empty string.
+ */
+export function metricMeaning(key: Block5MetricKey, scenarioId?: string): string {
+  const def = METRIC_DEFS[key];
+  const reading = scenarioId ? def.readings[scenarioId as Block5ScenarioId] : undefined;
+  return reading ?? def.hover;
+}
 
 export type Block5MetricProfile = Record<Block5MetricKey, number>;
 
@@ -157,8 +292,12 @@ export interface Block5ScenarioOption {
   title: string;
   summary: string;
   fingerprint: Block5OptionFingerprint;
-  /** v3: the 8 performance metrics for this option (separate from alignment). */
-  metrics?: Block5MetricProfile;
+  /**
+   * The five performance metrics for this option. REQUIRED, deliberately: the previous
+   * optional field let a scenario fall back to deriveMetrics(), which copied the fingerprint
+   * into the metrics and is exactly how the duplication got in. See METRIC_DEFS above.
+   */
+  metrics: Block5MetricProfile;
   /**
    * v4 — the TRADE-OFF block shown prominently on every option card. Participants were
    * overlooking a single muted `consequence` line, so the gain and the cost are now separate,
@@ -328,7 +467,7 @@ export interface Block5ScenarioResult {
   /** per-scenario VCI contribution S_i (0–1). */
   vciScore?: number;
   performanceScore?: number;
-  /** the chosen option's 8 metrics, stored so the cumulative dashboard/summary don't re-look-up. */
+  /** the chosen option's 5 metrics, stored so the cumulative dashboard/summary don't re-look-up. */
   metrics?: Block5MetricProfile;
   /** APA clarification, when the scenario was resolved through the APA flow. */
   apa?: APARecord;

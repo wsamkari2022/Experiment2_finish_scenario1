@@ -56,14 +56,11 @@ import {
  * and collide with their neighbours. These say the same thing in one or two words.
  */
 const METRIC_AXIS_LABEL: Record<Block5MetricKey, string> = {
-  totalBenefit: "Total benefit",
-  harmReduction: "Harm reduction",
-  fairnessEquity: "Fairness",
-  vulnerableProtection: "Protects weakest",
-  resourceEfficiency: "Efficiency",
-  feasibility: "Feasibility",
-  longTermImpact: "Long-term good",
-  predictability: "Predictability",
+  speed: "Speed",
+  resourceUse: "Resource use",
+  reliability: "Reliability",
+  durability: "Durability",
+  reversibility: "Reversibility",
 };
 
 const POLICY_AXIS_LABEL: Record<Block5PolicyDimKey, string> = {
@@ -76,7 +73,7 @@ const POLICY_AXIS_LABEL: Record<Block5PolicyDimKey, string> = {
 /** Plain-English one-liner under each chart title. */
 const CHART_HELP = {
   performance:
-    "What each option actually achieves. Eight measures of how well a plan performs — the further a corner reaches from the middle, the better that option does on that measure.",
+    "What each option actually achieves. Five measures of how well a plan performs — the further a corner reaches from the middle, the better that option does on that measure. These describe the outcome, not who it favours; that is the second chart.",
   policy:
     "What each option is built to prioritise. These are the same four values your own answers were scored on, so this chart shows why each option received its alignment label.",
 } as const;

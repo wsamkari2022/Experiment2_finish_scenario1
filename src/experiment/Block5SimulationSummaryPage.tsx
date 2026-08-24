@@ -138,7 +138,8 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
           <HStack gap="3" wrap="wrap">
             {topDimensions.map((d) => (
               <Badge key={d.key} variant="subtle" colorPalette="blue" px="3" py="1" rounded="md" fontSize="xs">
-                {d.label} ({d.score})
+                {/* Display rounding only — see the same note in Block5PublicEmergencySimulation. */}
+                {d.label} ({Math.round(d.score)})
               </Badge>
             ))}
           </HStack>

@@ -132,6 +132,31 @@ function hueFor(scenario: Block5Scenario): HueSpec {
   };
 }
 
+/**
+ * Picks black or white text for a filled swatch of `hex`, by WCAG relative luminance.
+ *
+ * WHY THIS IS NEEDED: five scenario hues x two colour modes gives ten accents, and they are not
+ * all dark. The dark-mode amber used by "Getting to Fairhaven" (#f59e0b) is bright enough that
+ * white text on it lands around 2:1 — well under the 4.5:1 floor — while the same white is
+ * correct on the other nine. Hard-coding color="white" on every accent-filled chip was therefore
+ * wrong for exactly one scenario, which is the kind of thing that is easy to miss by eye.
+ *
+ * The 0.40 threshold rather than the usual 0.50 is deliberate: it is placed between amber
+ * (L = 0.43) and the next-brightest accent, violet (L = 0.34), so only genuinely light fills
+ * flip to dark text.
+ */
+export function onAccentText(hex: string): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return "#ffffff";
+  const n = parseInt(m[1], 16);
+  const lin = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  const luminance = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+  return luminance > 0.4 ? "#111827" : "#ffffff";
+}
+
 export function getBlock5Palette(scenario: Block5Scenario, mode: Block5Mode): Block5Palette {
   const hue = hueFor(scenario);
   if (mode === "light") {

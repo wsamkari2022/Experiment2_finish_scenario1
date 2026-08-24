@@ -63,8 +63,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 60, contextSensitivity: 72, stakeholderPerspectiveShiftSensitivity: 62,
         },
         metrics: {
-          totalBenefit: 58, harmReduction: 70, fairnessEquity: 88, vulnerableProtection: 96,
-          resourceEfficiency: 48, feasibility: 62, longTermImpact: 82, predictability: 60,
+          speed: 14,
+          resourceUse: 78,
+          reliability: 58,
+          durability: 94,
+          reversibility: 60,
         },
       },
       {
@@ -86,8 +89,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 42, contextSensitivity: 46, stakeholderPerspectiveShiftSensitivity: 38,
         },
         metrics: {
-          totalBenefit: 84, harmReduction: 72, fairnessEquity: 66, vulnerableProtection: 48,
-          resourceEfficiency: 92, feasibility: 88, longTermImpact: 70, predictability: 82,
+          speed: 55,
+          resourceUse: 95,
+          reliability: 68,
+          durability: 40,
+          reversibility: 70,
         },
       },
       {
@@ -109,8 +115,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 50, contextSensitivity: 58, stakeholderPerspectiveShiftSensitivity: 45,
         },
         metrics: {
-          totalBenefit: 88, harmReduction: 86, fairnessEquity: 72, vulnerableProtection: 60,
-          resourceEfficiency: 78, feasibility: 70, longTermImpact: 94, predictability: 76,
+          speed: 50,
+          resourceUse: 60,
+          reliability: 86,
+          durability: 80,
+          reversibility: 55,
         },
       },
       {
@@ -132,8 +141,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 68, contextSensitivity: 40, stakeholderPerspectiveShiftSensitivity: 30,
         },
         metrics: {
-          totalBenefit: 62, harmReduction: 34, fairnessEquity: 40, vulnerableProtection: 28,
-          resourceEfficiency: 74, feasibility: 92, longTermImpact: 24, predictability: 80,
+          speed: 96,
+          resourceUse: 38,
+          reliability: 66,
+          durability: 18,
+          reversibility: 62,
         },
       },
       {
@@ -155,8 +167,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 55, contextSensitivity: 55, stakeholderPerspectiveShiftSensitivity: 48,
         },
         metrics: {
-          totalBenefit: 62, harmReduction: 64, fairnessEquity: 58, vulnerableProtection: 58,
-          resourceEfficiency: 56, feasibility: 64, longTermImpact: 62, predictability: 66,
+          speed: 38,
+          resourceUse: 22,
+          reliability: 48,
+          durability: 44,
+          reversibility: 88,
         },
       },
       {
@@ -178,8 +193,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 48, contextSensitivity: 52, stakeholderPerspectiveShiftSensitivity: 58,
         },
         metrics: {
-          totalBenefit: 76, harmReduction: 74, fairnessEquity: 70, vulnerableProtection: 56,
-          resourceEfficiency: 84, feasibility: 60, longTermImpact: 74, predictability: 58,
+          speed: 45,
+          resourceUse: 72,
+          reliability: 42,
+          durability: 62,
+          reversibility: 26,
         },
       },
     ],
@@ -217,8 +235,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 62, contextSensitivity: 74, stakeholderPerspectiveShiftSensitivity: 66,
         },
         metrics: {
-          totalBenefit: 58, harmReduction: 76, fairnessEquity: 96, vulnerableProtection: 96,
-          resourceEfficiency: 44, feasibility: 70, longTermImpact: 80, predictability: 66,
+          speed: 78,
+          resourceUse: 32,
+          reliability: 58,
+          durability: 72,
+          reversibility: 60,
         },
       },
       {
@@ -240,8 +261,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 45, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 40,
         },
         metrics: {
-          totalBenefit: 86, harmReduction: 70, fairnessEquity: 78, vulnerableProtection: 60,
-          resourceEfficiency: 96, feasibility: 62, longTermImpact: 72, predictability: 74,
+          speed: 28,
+          resourceUse: 90,
+          reliability: 80,
+          durability: 92,
+          reversibility: 32,
         },
       },
       {
@@ -263,8 +287,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 52, contextSensitivity: 60, stakeholderPerspectiveShiftSensitivity: 48,
         },
         metrics: {
-          totalBenefit: 78, harmReduction: 84, fairnessEquity: 70, vulnerableProtection: 62,
-          resourceEfficiency: 74, feasibility: 56, longTermImpact: 96, predictability: 60,
+          speed: 24,
+          resourceUse: 66,
+          reliability: 46,
+          durability: 84,
+          reversibility: 24,
         },
       },
       {
@@ -286,8 +313,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 66, contextSensitivity: 44, stakeholderPerspectiveShiftSensitivity: 34,
         },
         metrics: {
-          totalBenefit: 66, harmReduction: 38, fairnessEquity: 34, vulnerableProtection: 26,
-          resourceEfficiency: 70, feasibility: 96, longTermImpact: 28, predictability: 84,
+          speed: 96,
+          resourceUse: 42,
+          reliability: 90,
+          durability: 18,
+          reversibility: 66,
         },
       },
       {
@@ -309,8 +339,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 52, contextSensitivity: 54, stakeholderPerspectiveShiftSensitivity: 46,
         },
         metrics: {
-          totalBenefit: 64, harmReduction: 62, fairnessEquity: 60, vulnerableProtection: 58,
-          resourceEfficiency: 60, feasibility: 66, longTermImpact: 58, predictability: 68,
+          speed: 62,
+          resourceUse: 72,
+          reliability: 86,
+          durability: 34,
+          reversibility: 84,
         },
       },
       {
@@ -332,8 +365,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 48, contextSensitivity: 56, stakeholderPerspectiveShiftSensitivity: 52,
         },
         metrics: {
-          totalBenefit: 72, harmReduction: 76, fairnessEquity: 68, vulnerableProtection: 58,
-          resourceEfficiency: 92, feasibility: 58, longTermImpact: 78, predictability: 46,
+          speed: 48,
+          resourceUse: 95,
+          reliability: 26,
+          durability: 66,
+          reversibility: 40,
         },
       },
     ],
@@ -374,8 +410,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 35,
         },
         metrics: {
-          totalBenefit: 95, harmReduction: 80, fairnessEquity: 45, vulnerableProtection: 46,
-          resourceEfficiency: 90, feasibility: 85, longTermImpact: 70, predictability: 82,
+          speed: 70,
+          resourceUse: 82,
+          reliability: 62,
+          durability: 56,
+          reversibility: 44,
         },
       },
       {
@@ -401,8 +440,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 55,
         },
         metrics: {
-          totalBenefit: 65, harmReduction: 78, fairnessEquity: 80, vulnerableProtection: 95,
-          resourceEfficiency: 55, feasibility: 70, longTermImpact: 65, predictability: 58,
+          speed: 76,
+          resourceUse: 50,
+          reliability: 60,
+          durability: 42,
+          reversibility: 50,
         },
       },
       {
@@ -428,8 +470,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 35,
         },
         metrics: {
-          totalBenefit: 90, harmReduction: 75, fairnessEquity: 50, vulnerableProtection: 35,
-          resourceEfficiency: 88, feasibility: 80, longTermImpact: 90, predictability: 80,
+          speed: 62,
+          resourceUse: 90,
+          reliability: 72,
+          durability: 80,
+          reversibility: 40,
         },
       },
       {
@@ -455,8 +500,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 85,
         },
         metrics: {
-          totalBenefit: 60, harmReduction: 65, fairnessEquity: 92, vulnerableProtection: 65,
-          resourceEfficiency: 60, feasibility: 90, longTermImpact: 55, predictability: 50,
+          speed: 90,
+          resourceUse: 34,
+          reliability: 28,
+          durability: 30,
+          reversibility: 72,
         },
       },
       {
@@ -482,8 +530,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 65,
         },
         metrics: {
-          totalBenefit: 58, harmReduction: 70, fairnessEquity: 76, vulnerableProtection: 68,
-          resourceEfficiency: 45, feasibility: 55, longTermImpact: 75, predictability: 45,
+          speed: 34,
+          resourceUse: 24,
+          reliability: 40,
+          durability: 84,
+          reversibility: 80,
         },
       },
       {
@@ -509,8 +560,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 50,
         },
         metrics: {
-          totalBenefit: 75, harmReduction: 70, fairnessEquity: 55, vulnerableProtection: 55,
-          resourceEfficiency: 78, feasibility: 75, longTermImpact: 82, predictability: 72,
+          speed: 52,
+          resourceUse: 74,
+          reliability: 78,
+          durability: 90,
+          reversibility: 28,
         },
       },
     ],
@@ -547,8 +601,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 45, contextSensitivity: 40, stakeholderPerspectiveShiftSensitivity: 30,
         },
         metrics: {
-          totalBenefit: 94, harmReduction: 78, fairnessEquity: 40, vulnerableProtection: 26,
-          resourceEfficiency: 90, feasibility: 90, longTermImpact: 64, predictability: 86,
+          speed: 88,
+          resourceUse: 86,
+          reliability: 72,
+          durability: 54,
+          reversibility: 54,
         },
       },
       {
@@ -570,8 +627,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 65, contextSensitivity: 70, stakeholderPerspectiveShiftSensitivity: 55,
         },
         metrics: {
-          totalBenefit: 60, harmReduction: 80, fairnessEquity: 84, vulnerableProtection: 97,
-          resourceEfficiency: 50, feasibility: 66, longTermImpact: 66, predictability: 56,
+          speed: 32,
+          resourceUse: 34,
+          reliability: 74,
+          durability: 74,
+          reversibility: 28,
         },
       },
       {
@@ -593,8 +653,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 92, contextSensitivity: 95, stakeholderPerspectiveShiftSensitivity: 44,
         },
         metrics: {
-          totalBenefit: 90, harmReduction: 95, fairnessEquity: 46, vulnerableProtection: 56,
-          resourceEfficiency: 82, feasibility: 70, longTermImpact: 60, predictability: 58,
+          speed: 76,
+          resourceUse: 78,
+          reliability: 66,
+          durability: 70,
+          reversibility: 40,
         },
       },
       {
@@ -616,8 +679,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 60, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 35,
         },
         metrics: {
-          totalBenefit: 84, harmReduction: 76, fairnessEquity: 38, vulnerableProtection: 32,
-          resourceEfficiency: 97, feasibility: 84, longTermImpact: 64, predictability: 82,
+          speed: 78,
+          resourceUse: 95,
+          reliability: 58,
+          durability: 40,
+          reversibility: 82,
         },
       },
       {
@@ -639,8 +705,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 72, contextSensitivity: 82, stakeholderPerspectiveShiftSensitivity: 90,
         },
         metrics: {
-          totalBenefit: 64, harmReduction: 70, fairnessEquity: 80, vulnerableProtection: 64,
-          resourceEfficiency: 50, feasibility: 54, longTermImpact: 66, predictability: 52,
+          speed: 28,
+          resourceUse: 40,
+          reliability: 44,
+          durability: 40,
+          reversibility: 74,
         },
       },
       {
@@ -662,8 +731,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 70, contextSensitivity: 92, stakeholderPerspectiveShiftSensitivity: 50,
         },
         metrics: {
-          totalBenefit: 66, harmReduction: 64, fairnessEquity: 56, vulnerableProtection: 50,
-          resourceEfficiency: 64, feasibility: 62, longTermImpact: 88, predictability: 50,
+          speed: 20,
+          resourceUse: 22,
+          reliability: 26,
+          durability: 86,
+          reversibility: 92,
         },
       },
     ],
@@ -700,8 +772,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 70, contextSensitivity: 74, stakeholderPerspectiveShiftSensitivity: 56,
         },
         metrics: {
-          totalBenefit: 60, harmReduction: 80, fairnessEquity: 84, vulnerableProtection: 97,
-          resourceEfficiency: 50, feasibility: 66, longTermImpact: 66, predictability: 56,
+          speed: 40,
+          resourceUse: 38,
+          reliability: 82,
+          durability: 56,
+          reversibility: 62,
         },
       },
       {
@@ -723,8 +798,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 48, contextSensitivity: 42, stakeholderPerspectiveShiftSensitivity: 32,
         },
         metrics: {
-          totalBenefit: 94, harmReduction: 78, fairnessEquity: 42, vulnerableProtection: 28,
-          resourceEfficiency: 90, feasibility: 90, longTermImpact: 64, predictability: 86,
+          speed: 92,
+          resourceUse: 80,
+          reliability: 66,
+          durability: 48,
+          reversibility: 60,
         },
       },
       {
@@ -746,8 +824,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 95, contextSensitivity: 92, stakeholderPerspectiveShiftSensitivity: 44,
         },
         metrics: {
-          totalBenefit: 90, harmReduction: 95, fairnessEquity: 46, vulnerableProtection: 56,
-          resourceEfficiency: 82, feasibility: 70, longTermImpact: 60, predictability: 58,
+          speed: 74,
+          resourceUse: 82,
+          reliability: 74,
+          durability: 72,
+          reversibility: 52,
         },
       },
       {
@@ -769,8 +850,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 58, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 36,
         },
         metrics: {
-          totalBenefit: 84, harmReduction: 76, fairnessEquity: 38, vulnerableProtection: 32,
-          resourceEfficiency: 97, feasibility: 84, longTermImpact: 64, predictability: 82,
+          speed: 76,
+          resourceUse: 95,
+          reliability: 50,
+          durability: 42,
+          reversibility: 86,
         },
       },
       {
@@ -792,8 +876,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 68, contextSensitivity: 80, stakeholderPerspectiveShiftSensitivity: 90,
         },
         metrics: {
-          totalBenefit: 64, harmReduction: 70, fairnessEquity: 80, vulnerableProtection: 64,
-          resourceEfficiency: 50, feasibility: 54, longTermImpact: 66, predictability: 52,
+          speed: 68,
+          resourceUse: 52,
+          reliability: 24,
+          durability: 22,
+          reversibility: 88,
         },
       },
       {
@@ -815,8 +902,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 66, contextSensitivity: 94, stakeholderPerspectiveShiftSensitivity: 50,
         },
         metrics: {
-          totalBenefit: 70, harmReduction: 64, fairnessEquity: 58, vulnerableProtection: 46,
-          resourceEfficiency: 66, feasibility: 60, longTermImpact: 92, predictability: 52,
+          speed: 16,
+          resourceUse: 62,
+          reliability: 88,
+          durability: 96,
+          reversibility: 22,
         },
       },
     ],
