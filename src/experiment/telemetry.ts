@@ -58,6 +58,7 @@ const TIMING_OUTPUT_KEY: Record<TelemetryStage, string> = {
   feedback: "feedbackMs",
 };
 
+/** Reads the timing ledger, returning an empty one on first use or on any parse failure. */
 function readTimings(): StageTimings {
   try {
     const raw = localStorage.getItem(TELEMETRY_KEY);
@@ -68,6 +69,8 @@ function readTimings(): StageTimings {
   return { stages: {} };
 }
 
+/** Persists the timing ledger. Silently gives up if storage is unavailable - timing is never
+ *  worth failing a participant's session over. */
 function writeTimings(t: StageTimings): void {
   try {
     localStorage.setItem(TELEMETRY_KEY, JSON.stringify(t));
@@ -76,6 +79,8 @@ function writeTimings(t: StageTimings): void {
   }
 }
 
+/** True for the nine real stages. Transition spinners are excluded so their seconds are not
+ *  attributed to the block on either side of them. */
 function isTimedStage(stage: string): stage is TelemetryStage {
   return (TIMED_STAGES as string[]).includes(stage);
 }

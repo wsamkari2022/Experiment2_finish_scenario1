@@ -1,0 +1,201 @@
+<title>Sixty Voices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --paper:#EFF0F2; --surface:#FFFFFF; --sunk:#E7E9EC;
+    --ink:#16181D; --muted:#5C616B; --faint:#878D98;
+    --hair:#D5D9E0;
+    --hurt:#8C2F39; --hurt-wash:#F7EDEE;
+    --need:#1C5C60; --need-wash:#E9F1F1;
+    --serif:"Spectral",Georgia,"Times New Roman",serif;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#14161A; --surface:#1B1E24; --sunk:#22262D;
+      --ink:#E6E8EC; --muted:#99A0AB; --faint:#767D89;
+      --hair:#2C3138;
+      --hurt:#E4939B; --hurt-wash:#2A1D20;
+      --need:#74C2C4; --need-wash:#152628;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14161A; --surface:#1B1E24; --sunk:#22262D;
+    --ink:#E6E8EC; --muted:#99A0AB; --faint:#767D89;
+    --hair:#2C3138;
+    --hurt:#E4939B; --hurt-wash:#2A1D20;
+    --need:#74C2C4; --need-wash:#152628;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.6;
+    margin:0; padding:0 20px 96px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:940px;margin:0 auto}
+
+  /* masthead */
+  .mast{padding:64px 0 28px;border-bottom:2px solid var(--ink)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 18px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(38px,6vw,62px);line-height:1.02;letter-spacing:-.02em;margin:0;text-wrap:balance}
+  .standfirst{font-family:var(--serif);font-size:19px;line-height:1.55;color:var(--muted);max-width:60ch;margin:20px 0 0}
+
+  /* the shared opening line */
+  .opening{background:var(--surface);border:1px solid var(--hair);padding:24px 26px;margin:34px 0 0}
+  .opening h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 14px;font-weight:600}
+  .opening ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .opening li{font-family:var(--serif);font-size:16px;color:var(--muted);padding-left:15px;border-left:2px solid var(--hair)}
+  .opening li b{color:var(--ink);font-weight:600}
+  .opening .after{font-size:14px;color:var(--faint);margin:16px 0 0;line-height:1.6}
+  .opening .after code{font-family:var(--mono);font-size:13px;color:var(--ink)}
+
+  /* the five rules */
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;background:var(--hair);border:1px solid var(--hair);margin:34px 0 0}
+  .rule{background:var(--surface);padding:18px 18px 20px}
+  .rule h4{font-size:13px;margin:0 0 6px;font-weight:600}
+  .rule p{font-size:13px;line-height:1.5;color:var(--muted);margin:0}
+  .rule .num{font-family:var(--mono);font-size:11px;color:var(--faint);display:block;margin-bottom:8px}
+  .rule .stat{font-family:var(--mono);font-size:12px;color:var(--need);display:block;margin-top:10px;font-weight:500}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--hair);
+      display:flex;flex-wrap:wrap;gap:4px 20px;padding:14px 0;margin:44px 0 0}
+  nav a{font-size:13px;color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px}
+  nav a:hover,nav a:focus-visible{color:var(--ink);border-bottom-color:var(--ink)}
+
+  /* scenarios */
+  .scenario{padding-top:52px;scroll-margin-top:64px}
+  .scenario h2{font-family:var(--serif);font-size:29px;font-weight:600;letter-spacing:-.01em;margin:0;text-wrap:balance}
+  .opts{display:flex;flex-direction:column;gap:1px;background:var(--hair);border:1px solid var(--hair);margin-top:22px}
+
+  .opt{background:var(--surface);padding:22px 24px 24px}
+  .opt-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-bottom:12px}
+  .oid{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--sunk);padding:3px 7px}
+  .label{font-size:14px;color:var(--muted);margin:0}
+
+  .already{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 18px;padding-bottom:16px;border-bottom:1px dashed var(--hair)}
+  .already .tag{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair)}
+  .side{padding:16px 18px}
+  .side.hurt{background:var(--hurt-wash)}
+  .side.need{background:var(--need-wash)}
+  .side h4{font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px;font-weight:700;
+           display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .side.hurt h4{color:var(--hurt)}
+  .side.need h4{color:var(--need)}
+  .len{font-family:var(--mono);font-size:11px;font-weight:400;letter-spacing:0;color:var(--faint);font-variant-numeric:tabular-nums}
+  .side p{font-family:var(--serif);font-size:16.5px;line-height:1.6;margin:0;color:var(--ink)}
+  .side b{font-weight:600}
+  .they{color:var(--faint);font-style:italic}
+
+  /* plain english */
+  .plain{margin-top:64px;background:var(--surface);border:1px solid var(--hair);padding:34px 32px}
+  .plain h2{font-family:var(--serif);font-size:27px;font-weight:600;margin:0 0 6px}
+  .plain .sub{font-size:14px;color:var(--faint);margin:0 0 22px}
+  .plain p{font-size:16px;line-height:1.7;color:var(--muted);max-width:66ch;margin:0 0 14px}
+  .plain p b{color:var(--ink);font-weight:600}
+  .plain ol{margin:0 0 14px;padding-left:22px;color:var(--muted);max-width:64ch}
+  .plain li{margin-bottom:10px;line-height:1.65}
+  .plain li b{color:var(--ink)}
+
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--hair);font-family:var(--mono);font-size:12px;color:var(--faint)}
+
+  @media (max-width:660px){
+    .pair{grid-template-columns:1fr}
+    .mast{padding-top:44px}
+    .opt{padding:18px 16px 20px}
+    .plain{padding:26px 20px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* ---------- print / PDF ----------
+     A4 portrait. The two sides must stay side by side on paper, because comparing them is the
+     whole point of the sheet, so the column cap is lifted and the type steps down a little to
+     keep each column comfortable. Backgrounds are forced on: the pink and teal washes are what
+     tell the two sides apart. */
+  @page{size:A4 portrait;margin:13mm 11mm}
+  @media print{
+    html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{background:#FFF;font-size:13.5px;padding:0}
+    .wrap{max-width:none}
+    nav{display:none}
+    .mast{padding-top:0}
+    .standfirst{font-size:16px}
+    h1{font-size:46px}
+    .opening,.rules{margin-top:24px}
+    .rule p,.rule h4{font-size:11.5px}
+    .side p{font-size:14px}
+    .already{font-size:12.5px}
+    .rule,.opt,.pair,.opening,.side{break-inside:avoid}
+    .scenario{break-before:page;padding-top:0}
+    .scenario h2{break-after:avoid}
+    .plain{break-before:page}
+    footer{break-inside:avoid}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">Experiment 2 &middot; Block 5 &middot; CVR</p>
+    <h1>Sixty Voices</h1>
+    <p class="standfirst">Every option in Block 5 now carries two short stories. One is read by
+      participants who keep their choice; the other by participants who drop it. This sheet shows
+      all sixty, next to the line each one must not repeat.</p>
+  </header>
+
+  <div class="opening">
+    <h3>What the participant reads first</h3>
+    <ul>
+      <li><b>Low</b> &mdash; Someone you have known for twenty years, and care about very much&hellip;</li>
+      <li><b>Medium</b> &mdash; Someone you have known for about a year, and might care about&hellip;</li>
+      <li><b>High</b> &mdash; Someone you have only just met&hellip;</li>
+    </ul>
+    <p class="after">That opening line is chosen by the participant&rsquo;s stakeholder sensitivity, and
+      it is the same for all thirty options. The stories below are everything that comes
+      <em>after</em> it, which is why they all begin with <code>They</code>.</p>
+  </div>
+
+  <div class="rules">
+    <div class="rule"><span class="num">Rule 1</span><h4>Both sides exist</h4><p>No option may fall back to a generic line.</p><span class="stat">30 / 30</span></div>
+    <div class="rule"><span class="num">Rule 2</span><h4>Not a repeat</h4><p>A story may not restate the option&rsquo;s own &ldquo;you give up&rdquo; line.</p><span class="stat">worst 23%, limit 34%</span></div>
+    <div class="rule"><span class="num">Rule 3</span><h4>The same person</h4><p>No story introduces a stranger. It describes whoever the opening line named.</p><span class="stat">0 strangers</span></div>
+    <div class="rule"><span class="num">Rule 4</span><h4>Reads after &ldquo;They&rdquo;</h4><p>The sentence must be grammatical once the template adds its subject.</p><span class="stat">60 / 60</span></div>
+    <div class="rule"><span class="num">Rule 5</span><h4>Neither side pushes harder</h4><p>Hurt and needed-it are matched in length, so the measure is not steered.</p><span class="stat">142 vs 142 chars</span></div>
+  </div>
+
+  <nav><!--NAV--></nav>
+
+  <!--SECTIONS-->
+
+  <section class="plain">
+    <h2>Simple English Explanation</h2>
+    <p class="sub">What this page is, in plain words.</p>
+    <p>In Block 5 the participant picks an option. Then one person speaks to them. We want to know
+      whether hearing a real person changes the participant&rsquo;s mind &mdash; and <b>how close that
+      person is to them</b> changes how loud that voice should feel.</p>
+    <p>So every option needs <b>two</b> stories, because the participant can go two ways:</p>
+    <ol>
+      <li>If they say <b>&ldquo;yes, I still choose this&rdquo;</b>, they meet the person this choice
+        <b>hurts</b>. We ask: knowing that, do you still choose it?</li>
+      <li>If they say <b>&ldquo;no, not any more&rdquo;</b>, they meet the person who <b>needed</b> it.
+        We ask: knowing that, do you go back to it?</li>
+    </ol>
+    <p>Both stories have to be fair. If the sad story is strong and the hopeful story is weak, then
+      everybody changes their mind, and we have measured <b>our own writing</b> instead of the
+      participant. That is why the five rules above exist, and why a script now checks all sixty
+      every time the project is built.</p>
+    <p>The one thing a script cannot judge is whether a sentence is <b>true and worth reading</b>.
+      That is what this page is for.</p>
+  </section>
+
+  <footer>30 options &middot; 60 stories &middot; npm run validate:people</footer>
+
+</div>

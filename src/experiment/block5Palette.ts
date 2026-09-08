@@ -4,7 +4,7 @@
  * theme and a cleaned, flat DARK theme — not a pale copy of one another.
  *
  * Design system: each scenario keeps an identity hue (Travel = amber, Meal = rose,
- * Cancer = violet, Flood = emerald, Water = blue). One light recipe + one dark recipe are
+ * Cancer = violet). One light recipe + one dark recipe are
  * parameterised by that hue + a tinted background, so every scenario stays coordinated and
  * only the hue changes.
  *
@@ -72,7 +72,7 @@ interface HueSpec {
 const HUES: Record<string, HueSpec> = {
   // Getting to Fairhaven (everyday · travel) -> amber. Warm, open-road, daylight; deliberately
   // unlike the three crisis hues so participants feel the change of register immediately.
-  travel_mode_choice: {
+  chemical_release_escape: {
     accentLight: "#b45309",
     accentDark: "#f59e0b",
     bgLight:
@@ -82,7 +82,7 @@ const HUES: Record<string, HueSpec> = {
   },
   // Dinner for Four (everyday · food) -> rose. Warm and domestic, and far enough from the red
   // "strongly misaligned" badge to stay unambiguous.
-  meal_hosting_choice: {
+  wildfire_household_evacuation: {
     accentLight: "#be185d",
     accentDark: "#f472b6",
     bgLight:
@@ -95,27 +95,37 @@ const HUES: Record<string, HueSpec> = {
     accentLight: "#7c3aed",
     accentDark: "#a78bfa",
     bgLight:
-      "radial-gradient(900px 460px at 10% -10%, #ede9fe, transparent 60%), radial-gradient(760px 520px at 108% 116%, #f5d0fe, transparent 55%), linear-gradient(155deg, #faf5ff, #f5f3ff 50%, #ede9fe)",
+      "radial-gradient(900px 460px at 10% -10%, #ede9fe, transparent 60%), radial-gradient(760px 520px at 108% 116%, #ddd6fe, transparent 55%), linear-gradient(155deg, #faf5ff, #f5f3ff 50%, #ede9fe)",
     bgDark:
       "radial-gradient(900px 420px at 12% -10%, rgba(124,58,237,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(49,29,90,0.42), transparent 55%), linear-gradient(155deg, #0f0a1c, #1a1030 50%, #2a1a4d)",
   },
-  // Flood → emerald.
-  flood_evacuation_priority: {
-    accentLight: "#059669",
-    accentDark: "#38A169",
+  /*
+   * The workplace pair get RELATED hues rather than unrelated ones — magenta, then teal — because
+   * they are the same situation seen from two chairs. Every other scenario is a new world and gets
+   * a colour that says so; these two need to read as a matched pair, so that arriving at the second
+   * one feels like a return rather than a fresh start. That recognition is the point: the
+   * participant is meant to notice these are the same six options.
+   */
+  // Under authority -> magenta. Measured against every other scenario: 31 degrees of hue from
+  // cancer's violet and 42 from wildfire's rose, the widest separation this corner of the wheel
+  // allows. Its gradient also drops the fuchsia stop that cancer's light theme uses, so the two
+  // read as different rooms rather than two shades of the same one.
+  care_rota_reduction: {
+    accentLight: "#c026d3",
+    accentDark: "#e879f9",
     bgLight:
-      "radial-gradient(900px 460px at 10% -10%, #d1fae5, transparent 60%), radial-gradient(760px 520px at 108% 116%, #bbf7d0, transparent 55%), linear-gradient(155deg, #f0fdf4, #ecfdf5 50%, #d1fae5)",
+      "radial-gradient(900px 460px at 10% -10%, #fae8ff, transparent 60%), radial-gradient(760px 520px at 108% 116%, #f0abfc, transparent 55%), linear-gradient(155deg, #fdf4ff, #fef1fb 50%, #fae8ff)",
     bgDark:
-      "radial-gradient(900px 420px at 12% -10%, rgba(56,161,105,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(20,75,54,0.35), transparent 55%), linear-gradient(155deg, #06140E, #0f2a1d 50%, #1C4B36)",
+      "radial-gradient(900px 420px at 12% -10%, rgba(192,38,211,0.24), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(86,14,96,0.44), transparent 55%), linear-gradient(155deg, #16081a, #2c0d33, #4d1657)",
   },
-  // Water → blue.
-  water_contamination_response: {
-    accentLight: "#2563eb",
-    accentDark: "#3182CE",
+  // Receiving end → teal. The same room, cooler, and the pen is not yours.
+  care_rota_receiving: {
+    accentLight: "#0f766e",
+    accentDark: "#2dd4bf",
     bgLight:
-      "radial-gradient(900px 460px at 10% -10%, #dbeafe, transparent 60%), radial-gradient(760px 520px at 108% 116%, #bae6fd, transparent 55%), linear-gradient(155deg, #eff6ff, #f0f9ff 50%, #dbeafe)",
+      "radial-gradient(900px 460px at 10% -10%, #ccfbf1, transparent 60%), radial-gradient(760px 520px at 108% 116%, #99f6e4, transparent 55%), linear-gradient(155deg, #f0fdfa, #ecfeff 50%, #ccfbf1)",
     bgDark:
-      "radial-gradient(900px 420px at 12% -10%, rgba(49,130,206,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(11,39,64,0.40), transparent 55%), linear-gradient(155deg, #05111E, #0b2740 50%, #14476B)",
+      "radial-gradient(900px 420px at 12% -10%, rgba(15,118,110,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(6,58,54,0.42), transparent 55%), linear-gradient(155deg, #041413, #072826 50%, #0d4a45)",
   },
 };
 
@@ -141,9 +151,19 @@ function hueFor(scenario: Block5Scenario): HueSpec {
  * correct on the other nine. Hard-coding color="white" on every accent-filled chip was therefore
  * wrong for exactly one scenario, which is the kind of thing that is easy to miss by eye.
  *
- * The 0.40 threshold rather than the usual 0.50 is deliberate: it is placed between amber
- * (L = 0.43) and the next-brightest accent, violet (L = 0.34), so only genuinely light fills
- * flip to dark text.
+ * THE THRESHOLD MOVED 0.40 -> 0.30 on 5 September 2026, and it was an accessibility fix, not a
+ * tuning preference. 0.40 sat just above amber (L = 0.43) and flipped only that one accent. Every
+ * other mid-brightness accent kept white text and landed FAR under the 4.5:1 floor:
+ *
+ *     wildfire dark  #f472b6   2.65:1        cancer dark  #a78bfa   2.72:1
+ *     care-decide    #e879f9   2.46:1
+ *
+ * Three of ten accents failing is not a rounding problem, and it had been shipping. At 0.30 those
+ * three take dark text instead and land at 6.5:1, 6.3:1 and 7.2:1. Nothing else moves: the five
+ * light-mode accents all sit at L <= 0.17 and keep white text, and amber and teal keep dark text.
+ *
+ * The visible consequence is that accent-filled chips in scenarios 2, 3 and 4 now carry dark text
+ * in dark mode. That is the point — they were previously close to unreadable.
  */
 export function onAccentText(hex: string): string {
   const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
@@ -154,7 +174,7 @@ export function onAccentText(hex: string): string {
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   });
   const luminance = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
-  return luminance > 0.4 ? "#111827" : "#ffffff";
+  return luminance > 0.30 ? "#111827" : "#ffffff";
 }
 
 export function getBlock5Palette(scenario: Block5Scenario, mode: Block5Mode): Block5Palette {

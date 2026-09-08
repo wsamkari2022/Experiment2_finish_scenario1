@@ -137,3 +137,38 @@ export const BLOCK3_LEGACY_CARRYOVER_AND_AUTOBLOCK: boolean = false;
  * different stamp is discarded and the block restarts cleanly.
  */
 export const BLOCKS_23_METHODOLOGY_VERSION = "independent-2026-08-21";
+
+/**
+ * CVR REFLECTION LENSES — show, or merely assert?
+ *
+ *   true  (current) — each lens is shown as its own block. CONTEXT transplants the participant's
+ *                     own rule, with the same numbers, into an equally serious second setting.
+ *                     DIRECTNESS shows the same outcome twice: once as an impersonal system could
+ *                     have produced it, once as the participant in fact produced it.
+ *   false           — the original single clause inside the recontext paragraph, which stated
+ *                     that context (or your own hand) mattered without letting anyone feel it.
+ *
+ * Both lenses were upgraded together on purpose. Upgrading only CONTEXT would have made it the
+ * more persuasive of the two, and chooseFraming() assigns lenses by the participant's own scores
+ * — so any difference in outcomes between the lenses would then partly measure which text was
+ * stronger rather than which participant was moved.
+ *
+ * The explicit `: boolean` keeps both branches live for the compiler and the linter.
+ */
+export const SHOW_LENS_VIGNETTES: boolean = true;
+
+/**
+ * THE PERSON WHO SPEAKS — a page of its own, after the yes/no.
+ *
+ *   true  (current) — the vignette page asks ONE question. After the answer, one affected person
+ *                     appears on their own page and argues AGAINST what the participant just said:
+ *                     after "yes" it is the person the choice costs, after "no" the person who
+ *                     needed it. Whether the participant then switches IS the stakeholder measure.
+ *   false           — the old flow: the person appeared on the vignette page itself, and the
+ *                     participant was ASKED "did hearing this influence you?" on a later page.
+ *
+ * Why the change: people are poor judges of what moved them. Watching whether they switch is a
+ * behavioural measure and it removes a self-report question from two pages. It also fixes a page
+ * that asked two questions and offered one set of answers.
+ */
+export const SHOW_STAKEHOLDER_PAGE: boolean = true;

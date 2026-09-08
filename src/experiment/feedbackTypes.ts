@@ -18,6 +18,8 @@ import type { Block5Results } from "./block5Types";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import type { TimingSummary } from "./telemetry";
 import { buildTimingSummary } from "./telemetry";
+import type { ParticipantRecord } from "./participantRecord";
+import { buildParticipantRecord } from "./participantRecord";
 
 /** LocalStorage key for the most-recent assembled feedback record. */
 export const FEEDBACK_KEY = "vrds_feedback_record";
@@ -102,6 +104,7 @@ export const TOOL_CLOSERS: FeedbackQuestion[] = [
 export type WellbeingSubscale =
   | "learningInsight"
   | "decisionSatisfaction"
+  | "decisionRegret"
   | "valueCongruence"
   | "decisionConfidence"
   | "cognitiveBurden"
@@ -112,7 +115,7 @@ export interface WellbeingItem {
   code: string;
   text: string;
   subscale: WellbeingSubscale;
-  /** reverse-scored for well-being (use 6 − response so higher always = better). */
+  /** reverse-scored for well-being (8 − response on the 1–7 scale, so higher always = better). */
   reverse: boolean;
 }
 
@@ -123,10 +126,39 @@ export const WELLBEING_ITEMS: WellbeingItem[] = [
   { code: "LI2", subscale: "learningInsight", reverse: false, text: "I gained insight into how I make difficult decisions." },
   { code: "LI3", subscale: "learningInsight", reverse: false, text: "This experience helped me understand moral trade-offs more clearly." },
   { code: "LI4", subscale: "learningInsight", reverse: false, text: "I believe this process improved the quality of my decision-making." },
-  // B · Decision Satisfaction
+  /*
+    B - Decision Satisfaction. THREE PURE SATISFACTION ITEMS: the outcome, the process, and what
+    the decisions achieved.
+
+    The old third item was "I have doubts or regrets about some of the decisions I made", and it
+    was reverse-scored INTO this subscale. That made regret the arithmetic opposite of
+    satisfaction BY CONSTRUCTION - a participant could not be recorded as satisfied and regretful
+    at once, because the instrument added the two together as one number.
+
+    That is precisely the case the advisor's example describes: "I am very satisfied that I ate the
+    cake, because it was delicious, but I regret eating it, because I probably shouldn't have."
+    Under the old scoring that person's satisfaction was pulled down by their regret and the
+    dissociation - the finding - disappeared into a subscale mean. The item now lives in its own
+    subscale below, and this one measures only satisfaction.
+  */
   { code: "DS1", subscale: "decisionSatisfaction", reverse: false, text: "I am satisfied with the final decisions I made." },
   { code: "DS2", subscale: "decisionSatisfaction", reverse: false, text: "I am satisfied with the way I reached my decisions (the process)." },
-  { code: "DS3", subscale: "decisionSatisfaction", reverse: true, text: "I have doubts or regrets about some of the decisions I made." },
+  { code: "DS4", subscale: "decisionSatisfaction", reverse: false, text: "I am satisfied with what my decisions achieved." },
+  /*
+    B2 - Decision Regret, measured SEPARATELY so it can disagree with satisfaction.
+
+    Every item is worded so that AGREEING means MORE regret, which keeps the raw subscale
+    single-directional (the same shape cognitiveBurden already uses). DR3 is the one reverse-worded
+    item, kept as a guard against straight-lining down the column.
+
+    DR2 and DR4 are the two that let the two constructs come apart: both explicitly grant that the
+    choice felt right at the time, and still ask about regret now. Without an item that allows
+    both to be true, the scale cannot record the person in the cake example.
+  */
+  { code: "DR1", subscale: "decisionRegret", reverse: true, text: "Looking back, I wish I had decided differently in at least one situation." },
+  { code: "DR2", subscale: "decisionRegret", reverse: true, text: "Some of my choices felt right at the time, but I am not comfortable with them now." },
+  { code: "DR3", subscale: "decisionRegret", reverse: false, text: "If I faced these situations again, I would make the same choices." },
+  { code: "DR4", subscale: "decisionRegret", reverse: true, text: "I regret at least one decision, even though I understood why I made it at the time." },
   // C · Value Congruence
   { code: "VC1", subscale: "valueCongruence", reverse: false, text: "My final decisions reflected what I truly value." },
   { code: "VC2", subscale: "valueCongruence", reverse: false, text: "My choices were consistent with the kind of person I want to be." },
@@ -152,6 +184,7 @@ export const WELLBEING_OPEN_ENDED = [
   { code: "OE_values", text: "What did you learn about your values?" },
   { code: "OE_change", text: "Did anything change in how you think about difficult moral decisions?" },
   { code: "OE_affect", text: "What part of the process made you feel more confident, less confident, satisfied, or uncomfortable?" },
+  { code: "OE_regret", text: "Was there a decision you felt good about at the time, but would change now? What was it, and what changed your mind?" },
   { code: "OE_additional", text: "Any additional feedback?" },
 ] as const;
 
@@ -166,6 +199,10 @@ export const WELLBEING_LIKERT_HIGH = "Strongly agree";
 export interface WellbeingSubscaleScores {
   learningInsight: number;
   decisionSatisfaction: number;
+  /** raw regret (higher = MORE regret); reported on its own, not in the composite. */
+  decisionRegret: number;
+  /** inverted regret (higher = LESS regret); this is what enters the composite. */
+  lowDecisionRegret: number;
   valueCongruence: number;
   decisionConfidence: number;
   /** raw burden (higher = MORE burden); not in the composite. */
@@ -196,10 +233,23 @@ export interface WellbeingResult {
 
 /** The six subscales that make up the Well-being Composite (Learning Insight excluded). */
 export const WELLBEING_COMPOSITE_SUBSCALES: (keyof WellbeingSubscaleScores)[] = [
-  "decisionSatisfaction", "valueCongruence", "decisionConfidence",
+  "decisionSatisfaction", "lowDecisionRegret", "valueCongruence", "decisionConfidence",
   "lowCognitiveBurden", "perceivedSupport", "overallWellbeing",
 ];
 
+/**
+ * Which subscales appear in each half of the questionnaire.
+ *
+ * The UI used to split the item list with a hard-coded `slice(11)`. Adding one item silently moved
+ * the boundary and put a question under the wrong heading, so the split is derived from the
+ * subscale instead - add an item and it lands in the right half on its own.
+ */
+export const WELLBEING_PART_A_SUBSCALES: WellbeingSubscale[] = [
+  "learningInsight", "decisionSatisfaction", "decisionRegret", "valueCongruence", "decisionConfidence",
+];
+
+/** Two decimal places, applied ONCE at storage time. Composites are computed from unrounded
+ *  means so that rounding never compounds through a chain of averages. */
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -217,8 +267,8 @@ export function reverseLikert(x: number): number {
 }
 
 /**
- * Computes subscale means and composites from raw 1–5 item responses.
- * Reverse items are inverted (6 − x) before they enter a subscale. Cognitive Burden is stored
+ * Computes subscale means and composites from raw 1–7 item responses.
+ * Reverse items are inverted (8 − x) before they enter a subscale. Cognitive Burden is stored
  * BOTH as raw `cognitiveBurden` (higher = more burden) and inverted `lowCognitiveBurden`
  * (used in the composite). Items left unanswered are simply ignored in their subscale mean.
  */
@@ -240,6 +290,18 @@ export function computeWellbeing(
 
   const learningInsight = subscaleMean("learningInsight", true);
   const decisionSatisfaction = subscaleMean("decisionSatisfaction", true);
+  /*
+    Regret carries mixed wording (three items where agreeing means regret, one where it means the
+    opposite), so the raw score cannot be read straight off the responses the way cognitiveBurden's
+    can. `subscaleMean(_, true)` already resolves every item into the "higher = better well-being"
+    direction, which for this subscale is "higher = LESS regret". Flipping that on the 1-7 scale
+    gives the raw regret score, and the two stay consistent by construction rather than by a second
+    hand-written rule that could drift from the first.
+  */
+  const lowDecisionRegret = subscaleMean("decisionRegret", true);
+  const decisionRegret = Number.isFinite(lowDecisionRegret) && lowDecisionRegret > 0
+    ? reverseLikert(lowDecisionRegret)
+    : 0;
   const valueCongruence = subscaleMean("valueCongruence", true);
   const decisionConfidence = subscaleMean("decisionConfidence", true);
   // Raw burden = items as entered (reverse NOT applied); inverted = 6 − raw.
@@ -252,6 +314,8 @@ export function computeWellbeing(
   const raw: WellbeingSubscaleScores = {
     learningInsight,
     decisionSatisfaction,
+    decisionRegret,
+    lowDecisionRegret,
     valueCongruence,
     decisionConfidence,
     cognitiveBurden,
@@ -268,6 +332,8 @@ export function computeWellbeing(
   const subscales: WellbeingSubscaleScores = {
     learningInsight: round2(raw.learningInsight),
     decisionSatisfaction: round2(raw.decisionSatisfaction),
+    decisionRegret: round2(raw.decisionRegret),
+    lowDecisionRegret: round2(raw.lowDecisionRegret),
     valueCongruence: round2(raw.valueCongruence),
     decisionConfidence: round2(raw.decisionConfidence),
     cognitiveBurden: round2(raw.cognitiveBurden),
@@ -322,7 +388,14 @@ export interface FeedbackBlock5Summary {
   stability: number | null;
   performance: number | null;
   scenarios: FeedbackScenarioTelemetry[];
-  /** reference to the full Block-5 results in LocalStorage (not a copy). */
+  /**
+   * The LocalStorage key the full Block-5 results USED to live under.
+   *
+   * KEPT FOR REFERENCE ONLY - do not analyse from it. Storing a key rather than the data was a
+   * data-loss bug: "Finish" calls localStorage.clear(), which deletes exactly the entry this
+   * points at, so every archived record referred to something that no longer existed. The data
+   * itself now travels in `FeedbackRecord.block5Full`.
+   */
   finalResultsKey: string;
 }
 
@@ -333,13 +406,36 @@ export interface FeedbackAnswers {
   wellbeing: WellbeingResult;
 }
 
+/**
+ * ONE RECORD PER PARTICIPANT, AND IT CONTAINS EVERYTHING.
+ *
+ * This is the row you will analyse. It is the only structure that survives a participant pressing
+ * "Finish", because that handler clears LocalStorage and preserves the archive alone - so anything
+ * not physically inside this object is gone.
+ *
+ * It did not always contain everything, and the gap was serious enough to name here so it is never
+ * reintroduced: until 2026-09-02 the record held a Block-5 SUMMARY plus the string
+ * "block5_public_emergency_results", and `buildParticipantRecord()` - which assembles the raw
+ * Blocks 1-4 answers - was written, documented, and never called by anything. A completed
+ * participant therefore left behind their questionnaire and a handful of headline scores, while
+ * every money-ladder answer, every trolley threshold, the whole six-cell workforce matrix and the
+ * full Block-5 result were destroyed on the way out. The two fields below close that.
+ */
 export interface FeedbackRecord {
   session_id: string;
   experiment: typeof EXPERIMENT_ID;
   schemaVersion: number;
   completedAt: string;
   timing: TimingSummary;
+  /** Headline Block-5 numbers and per-scenario telemetry. A summary, not the source. */
   block5: FeedbackBlock5Summary;
+  /**
+   * THE RAW BLOCKS 1-4 ANSWERS, plus what the model derived from them.
+   * `raw.*` is what the participant did and can never be recomputed; `derived.*` can.
+   */
+  participant: ParticipantRecord | null;
+  /** THE COMPLETE BLOCK-5 RESULT: every scenario, every choice, both profiles, all telemetry. */
+  block5Full: Block5Results | null;
   feedback: FeedbackAnswers;
 }
 
@@ -405,6 +501,18 @@ export function assembleFeedbackRecord(args: {
   answers: FeedbackAnswers;
 }): FeedbackRecord {
   const scenarioMs = (args.results?.scenarioResults ?? []).map((r) => r.timeMs ?? 0);
+  /*
+    Assembled HERE, at the last moment before the record is archived, rather than at the Block 4
+    boundary where it was originally meant to happen. Building it late costs nothing - it reads
+    the same per-block LocalStorage entries either way - and it removes the failure mode where a
+    participant who never reached the feedback page left no raw data at all.
+  */
+  let participant: ParticipantRecord | null = null;
+  try {
+    participant = buildParticipantRecord(args.sessionId);
+  } catch {
+    // A malformed block should cost that block, not the whole record.
+  }
   return {
     session_id: args.sessionId,
     experiment: EXPERIMENT_ID,
@@ -412,6 +520,8 @@ export function assembleFeedbackRecord(args: {
     completedAt: new Date().toISOString(),
     timing: buildTimingSummary(scenarioMs),
     block5: buildBlock5Summary(args.results),
+    participant,
+    block5Full: args.results,
     feedback: args.answers,
   };
 }

@@ -6,10 +6,13 @@ import {
   HStack,
   Heading,
   Icon,
+  Image,
+  Separator,
+  Stack,
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuMessageSquare, LuMessagesSquare } from "react-icons/lu";
+import { LuMessageSquare, LuMessagesSquare, LuScale } from "react-icons/lu";
 import { ProgressBar } from "./ProgressBar";
 import type { MoralProfile } from "./profileAnalysis";
 import type { AIWorkforceAnalysis } from "./aiWorkforceAnalysis";
@@ -264,7 +267,6 @@ export function AdaptiveStakeholderReflectionBlock({
     if (currentStep === "initial_decision") {
       return (
         <Screen1InitialDecision
-          title={scenarioTemplate.title}
           body={scenarioBody}
           onSubmit={(d, conf) => {
             setInitialDecision(d);
@@ -345,13 +347,99 @@ export function AdaptiveStakeholderReflectionBlock({
  * Displays the scenario text, collects the participant's initial approve/reject
  * choice, then reveals a 1–5 confidence rating before advancing to Screen 2.
  */
+/* ─── Artwork ──────────────────────────────────────────────────────────────── */
+
+/**
+ * The Block 4 figures, and which screen each belongs to.
+ *
+ * WHY THE PERSPECTIVE IMAGE IS CHOSEN BY `direction` AND NOT BY SCREEN NUMBER
+ * --------------------------------------------------------------------------
+ * Which perspective appears first is not fixed: the first vignette always OPPOSES the
+ * participant's initial decision (see `firstDirection`), so a participant who approves meets the
+ * harmed person first, and one who rejects meets the manager first. Pinning the kneeling figure to
+ * screen 2 would therefore have shown roughly half the sample a picture that contradicted the words
+ * beside it.
+ *
+ * `toward_rejection` is the harm side of the library (worker losing hours, family of an affected
+ * worker); `toward_acceptance` is the benefit side (operations manager, HR leader). The two
+ * pictures follow that, so the figure always matches the voice.
+ */
+const FIGURE = {
+  question: `${import.meta.env.BASE_URL}block4/main-question.webp`,
+  toward_rejection: `${import.meta.env.BASE_URL}block4/harm.webp`,
+  toward_acceptance: `${import.meta.env.BASE_URL}block4/benefit.webp`,
+} as const;
+
+const FIGURE_ALT: Record<VignetteDirection, string> = {
+  toward_rejection: "Someone affected by the policy, appealing to the person deciding",
+  toward_acceptance: "A manager making the case for the policy to the person deciding",
+};
+
+/**
+ * A figure on its own plate.
+ *
+ * WHY THE PLATE IS DARK IN BOTH COLOUR MODES. The artwork is white line-art on a transparent
+ * background. On the light theme's `bg.panel` it would be white-on-white and effectively invisible,
+ * so the plate cannot follow the theme — it has to guarantee the contrast itself. The screen's own
+ * accent returns as a glow at the top, which ties the picture to the panel beside it without
+ * putting the interface's colour behind a figure that is supposed to read as a person.
+ *
+ * `aria-hidden` and an empty alt where the picture is decorative: on the perspective screens the
+ * words carry the meaning, and a screen reader announcing the illustration would interrupt them.
+ */
+function Block4Figure({ src, alt, accent, minH }: {
+  src: string;
+  /** Empty string marks the image decorative, which hides it from assistive technology. */
+  alt: string;
+  /** Hex accent for the glow — the screen's own colour. */
+  accent: string;
+  minH?: Record<string, string> | string;
+}) {
+  return (
+    <Box
+      rounded="2xl"
+      overflow="hidden"
+      borderWidth="1px"
+      minH={minH ?? { base: "180px", sm: "170px" }}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      px="3"
+      py="4"
+      style={{
+        background:
+          `radial-gradient(115% 85% at 50% 0%, ${accent}40 0%, transparent 62%),`
+          + " linear-gradient(160deg, #131e31 0%, #1d2b45 100%)",
+        borderColor: `${accent}59`,
+        boxShadow: `0 10px 26px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255,255,255,0.07)`,
+      }}
+    >
+      {/* `contain` inside a stretched plate: the figure grows to whatever height the text column
+          sets, keeps its proportions, and never crops. The cap stops a very long scenario from
+          inflating the picture past the point where it reads as an illustration. */}
+      <Image
+        src={src}
+        alt={alt}
+        aria-hidden={alt === "" ? true : undefined}
+        w="full"
+        h="full"
+        maxH={{ base: "190px", sm: "290px" }}
+        objectFit="contain"
+        style={{ filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.35))" }}
+      />
+    </Box>
+  );
+}
+
+/** Accent per screen — matches the teal/orange the two perspective panels already use. */
+const ACCENT_QUESTION = "#60a5fa";
+const ACCENT_HARMSIDE = "#14b8a6";
+const ACCENT_BENEFIT = "#f97316";
+
 function Screen1InitialDecision({
-  title,
   body,
   onSubmit,
 }: {
-  /** Scenario title (used by the parent heading; passed here for potential reuse). */
-  title: string;
   /** Rendered scenario body text shown to the participant. */
   body: string;
   /** Called with the chosen decision and confidence rating when the participant continues. */
@@ -373,15 +461,45 @@ function Screen1InitialDecision({
       shadow="lg"
     >
       <VStack gap="6" align="stretch">
-        <Heading size="md" color="fg" lineHeight="short">
-          {title}
-        </Heading>
-        <Text color="fg" fontSize="md" lineHeight="tall">
-          {body}
-        </Text>
+        {/*
+          NO TITLE HERE. The page header above this card already prints the scenario title, centred
+          and at size xl. Repeating it inside the card put a second, smaller, left-aligned copy
+          directly beneath the first, which read as the page having two competing headings.
+        */}
+        <HStack gap="2" color="blue.fg">
+          <Icon boxSize="4"><LuScale /></Icon>
+          <Text fontSize="xs" fontWeight="semibold" textTransform="uppercase" letterSpacing="wider">
+            The decision in front of you
+          </Text>
+        </HStack>
 
-        <VStack gap="3" align="stretch">
-          <Text fontSize="sm" fontWeight="medium" color="fg.muted">
+        {/* The scenario reads first; the figure sits beside it on a wide screen and beneath it on a
+            narrow one, so the text is never pushed below the fold by the picture.
+            `align="center"` rather than `stretch`: the picture is shorter than a long scenario, and
+            stretching its plate to match left a tall empty band beside the last line of text. */}
+        <Stack
+          direction={{ base: "column", md: "row" }}
+          gap={{ base: "5", md: "7" }}
+          align={{ base: "stretch", md: "center" }}
+        >
+          <Text
+            flex="1 1 auto"
+            minW="0"
+            color="fg"
+            fontSize={{ base: "md", md: "lg" }}
+            lineHeight="1.85"
+          >
+            {body}
+          </Text>
+          <Box flex="0 0 auto" w={{ base: "full", md: "220px" }} alignSelf="center">
+            <Block4Figure src={FIGURE.question} alt="" accent={ACCENT_QUESTION} />
+          </Box>
+        </Stack>
+
+        <Separator borderColor="border" />
+
+        <VStack gap="4" align="stretch">
+          <Text fontSize={{ base: "md", md: "lg" }} fontWeight="semibold" color="fg" textAlign="center">
             Would you approve the policy?
           </Text>
           <HStack gap="4" justify="center" wrap="wrap">
@@ -416,8 +534,12 @@ function Screen1InitialDecision({
 
         {decision && (
           <VStack gap="3" align="stretch" animationName="fade-in" animationDuration="moderate">
-            <Text fontSize="sm" fontWeight="medium" color="fg.muted">
-              How confident are you? (1 = very unsure, 5 = very confident)
+            <Separator borderColor="border" />
+            <Text fontSize={{ base: "sm", md: "md" }} fontWeight="semibold" color="fg" textAlign="center">
+              How confident are you?{" "}
+              <Text as="span" fontWeight="normal" color="fg.muted">
+                1 = very unsure · 5 = very confident
+              </Text>
             </Text>
             <HStack gap="3" justify="center">
               {[1, 2, 3, 4, 5].map((v) => (
@@ -502,24 +624,39 @@ function Screen2Perspective({
           </Heading>
         </VStack>
 
-        {/* First perspective — TEAL box, visually distinct from the amber second perspective. */}
-        <Box
-          bg="teal.subtle"
-          borderWidth="1px"
-          borderColor="teal.muted"
-          borderLeftWidth="4px"
-          borderLeftColor="teal.solid"
-          rounded="xl"
-          px={{ base: "5", md: "6" }}
-          py="5"
-        >
-          <Text color="fg" fontSize="md" lineHeight="tall" fontStyle="italic">
-            {perspective.template}
-          </Text>
-        </Box>
+        {/* First perspective — TEAL box, visually distinct from the amber second perspective.
+            The figure sits to its left so the picture reads as the person saying the words. */}
+        <Stack direction={{ base: "column", sm: "row" }} gap={{ base: "4", sm: "5" }} align="stretch">
+          <Box flex="0 0 auto" w={{ base: "full", sm: "196px" }}>
+            <Block4Figure
+              src={FIGURE[perspective.direction]}
+              alt={FIGURE_ALT[perspective.direction]}
+              accent={perspective.direction === "toward_rejection" ? ACCENT_HARMSIDE : ACCENT_BENEFIT}
+              minH={{ base: "190px", sm: "100%" }}
+            />
+          </Box>
+          <Box
+            flex="1 1 auto"
+            minW="0"
+            bg="teal.subtle"
+            borderWidth="1px"
+            borderColor="teal.muted"
+            borderLeftWidth="4px"
+            borderLeftColor="teal.solid"
+            rounded="xl"
+            px={{ base: "5", md: "6" }}
+            py="5"
+            display="flex"
+            alignItems="center"
+          >
+            <Text color="fg" fontSize="md" lineHeight="tall" fontStyle="italic">
+              {perspective.template}
+            </Text>
+          </Box>
+        </Stack>
 
         <VStack gap="3" align="stretch">
-          <Text fontSize="sm" fontWeight="medium" color="fg.muted">
+          <Text fontSize={{ base: "md", md: "lg" }} fontWeight="semibold" color="fg" textAlign="center">
             Having heard this perspective, would you approve the policy?
           </Text>
           <HStack gap="4" justify="center" wrap="wrap">
@@ -642,24 +779,40 @@ function Screen3FinalDecision({
           </Heading>
         </VStack>
 
-        {/* Second perspective — AMBER box, visually distinct from the teal first perspective. */}
-        <Box
-          bg="orange.subtle"
-          borderWidth="1px"
-          borderColor="orange.muted"
-          borderLeftWidth="4px"
-          borderLeftColor="orange.solid"
-          rounded="xl"
-          px={{ base: "5", md: "6" }}
-          py="5"
-        >
-          <Text color="fg" fontSize="md" lineHeight="tall" fontStyle="italic">
-            {perspective.template}
-          </Text>
-        </Box>
+        {/* Second perspective — AMBER box, visually distinct from the teal first perspective.
+            Mirrored layout: this figure sits to the RIGHT, so the two voices face each other
+            across the two screens rather than lining up on the same side. */}
+        <Stack direction={{ base: "column", sm: "row" }} gap={{ base: "4", sm: "5" }} align="stretch">
+          <Box
+            flex="1 1 auto"
+            minW="0"
+            bg="orange.subtle"
+            borderWidth="1px"
+            borderColor="orange.muted"
+            borderLeftWidth="4px"
+            borderLeftColor="orange.solid"
+            rounded="xl"
+            px={{ base: "5", md: "6" }}
+            py="5"
+            display="flex"
+            alignItems="center"
+          >
+            <Text color="fg" fontSize="md" lineHeight="tall" fontStyle="italic">
+              {perspective.template}
+            </Text>
+          </Box>
+          <Box flex="0 0 auto" w={{ base: "full", sm: "196px" }}>
+            <Block4Figure
+              src={FIGURE[perspective.direction]}
+              alt={FIGURE_ALT[perspective.direction]}
+              accent={perspective.direction === "toward_rejection" ? ACCENT_HARMSIDE : ACCENT_BENEFIT}
+              minH={{ base: "190px", sm: "100%" }}
+            />
+          </Box>
+        </Stack>
 
         <VStack gap="3" align="stretch">
-          <Text fontSize="sm" fontWeight="medium" color="fg.muted">
+          <Text fontSize={{ base: "md", md: "lg" }} fontWeight="semibold" color="fg" textAlign="center">
             Your final decision: would you approve the policy?
           </Text>
           <HStack gap="4" justify="center" wrap="wrap">
@@ -694,8 +847,12 @@ function Screen3FinalDecision({
 
         {decision && (
           <VStack gap="3" align="stretch" animationName="fade-in" animationDuration="moderate">
-            <Text fontSize="sm" fontWeight="medium" color="fg.muted">
-              How confident are you? (1 = very unsure, 5 = very confident)
+            <Separator borderColor="border" />
+            <Text fontSize={{ base: "sm", md: "md" }} fontWeight="semibold" color="fg" textAlign="center">
+              How confident are you?{" "}
+              <Text as="span" fontWeight="normal" color="fg.muted">
+                1 = very unsure · 5 = very confident
+              </Text>
             </Text>
             <HStack gap="3" justify="center">
               {[1, 2, 3, 4, 5].map((v) => (
@@ -720,7 +877,7 @@ function Screen3FinalDecision({
 
         {decision && confidence && (
           <VStack gap="3" align="stretch" animationName="fade-in" animationDuration="moderate">
-            <Text fontSize="sm" fontWeight="medium" color="fg.muted">
+            <Text fontSize={{ base: "md", md: "lg" }} fontWeight="semibold" color="fg" textAlign="center">
               Which perspective influenced you the most?
             </Text>
             <VStack gap="2" align="stretch">

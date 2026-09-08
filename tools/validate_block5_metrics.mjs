@@ -27,8 +27,29 @@ const SH = { vulnerabilityProtectionSensitivity: "Vulnerability", groupSizeSensi
              gainResponsivenessSensitivity: "Gain", outcomeAggregationSensitivity: "Outcome",
              directnessSensitivity: "Directness", contextSensitivity: "Context",
              stakeholderPerspectiveShiftSensitivity: "Stakeholder" };
-const SCEN = ["travel_mode_choice", "meal_hosting_choice", "cancer_treatment_allocation",
-              "flood_evacuation_priority", "water_contamination_response"];
+/**
+ * The scenario list is DERIVED, never written down here.
+ *
+ * It used to be a hardcoded array of five ids. That is a silent trap: removing or adding a
+ * scenario left this file still checking the old set, so a gate could report "ok" for a scenario
+ * that no longer ships, or skip one that does. Every count below is expressed against
+ * SCEN.length for the same reason — a gate phrased as "4 of 5" becomes unsatisfiable the moment
+ * the study runs four scenarios, and a validator that cannot pass is a validator that gets
+ * switched off.
+ *
+ * Scenario-level ids are the ones immediately followed by `stakePosition:`; option ids are not.
+ */
+const SCEN = [...s.matchAll(/id: "([a-z0-9_]+)",\s*[\r\n]+\s*stakePosition:/g)].map((m) => m[1]);
+if (SCEN.length === 0) { console.error("no scenarios parsed — check block5Scenarios.ts"); process.exit(1); }
+/** Options per scenario, also derived rather than assumed to be six. */
+const OPTS_PER = 6;
+/** Gates phrased as "all but one scenario" scale with the set instead of naming a number. */
+const ALL_BUT_ONE = Math.max(1, SCEN.length - 1);
+/**
+ * G5b's dominance ceiling, held at the 40% of scenarios the five-scenario study used (2 of 5).
+ * Rounding up keeps it satisfiable for very small sets: with 3 scenarios the ceiling is 1.
+ */
+const DOMINANCE_MAX = Math.max(1, Math.round(SCEN.length * 0.4));
 
 /* ---------------- parse ---------------- */
 const bounds = SCEN.map((id) => ({ id, at: s.indexOf(`id: "${id}"`) }));
@@ -40,7 +61,16 @@ const scenarioAt = (i) => {
 const nums = (t) => Object.fromEntries([...t.matchAll(/(\w+):\s*(\d+)/g)].map((m) => [m[1], +m[2]]));
 const titleOf = (seg) => (/title:\s*"((?:[^"\\]|\\.)*)"/.exec(seg) ?? [, ""])[1];
 
-const marks = [...s.matchAll(/\{\s*id: "([a-z0-9_]+)",\s*cvrSeed/g)];
+/*
+ * Options are found by INDENT, not by the field that happens to follow the id.
+ *
+ * This used to match `id: "…", cvrSeed`, which silently defined "an option" as "an option that
+ * carries CVR material". Recipient scenarios carry none by design, so six real options became
+ * invisible to every gate in this file — and G1 was the only reason anyone noticed. A metric gate
+ * that skips a sixth of the option set while reporting PASS is the failure mode these gates exist
+ * to prevent, so the parser is now anchored on structure instead.
+ */
+const marks = [...s.matchAll(/^        id: "([a-z0-9_]+)",$/gm)];
 const rows = marks.map((m, i) => {
   const seg = s.slice(m.index, i + 1 < marks.length ? marks[i + 1].index : s.length);
   const fp = /fingerprint: \{([\s\S]*?)\}/.exec(seg);
@@ -75,18 +105,19 @@ console.log("\n=== BLOCK 5 PERFORMANCE-METRIC GATES ===");
 /* G1 — completeness */
 head("G1  every option carries all five metrics as integers 0-100");
 const bad = rows.filter((r) => !r.m || MK.some((k) => !Number.isInteger(r.m[k]) || r.m[k] < 0 || r.m[k] > 100));
-gate(rows.length === 30 && bad.length === 0, "G1",
+const EXPECTED_OPTIONS = SCEN.length * OPTS_PER;
+gate(rows.length === EXPECTED_OPTIONS && bad.length === 0, "G1",
   `${rows.length} options parsed, ${bad.length} malformed${bad.length ? ": " + bad.map((b) => b.id).join(", ") : ""}`);
-if (bad.length || rows.length !== 30) { console.log("\n### CANNOT CONTINUE ###"); process.exit(1); }
+if (bad.length || rows.length !== EXPECTED_OPTIONS) { console.log("\n### CANNOT CONTINUE ###"); process.exit(1); }
 
 /* G2 — discriminates inside a scenario */
-head("G2  each metric separates the six options: within-scenario range >= 30 in >= 4 of 5 scenarios");
+head("G2  each metric separates the six options: within-scenario range >= 30 in all but one scenario");
 MK.forEach((k) => {
   const ranges = SCEN.map((sc) => {
     const v = inScenario(sc).map((r) => r.m[k]);
     return Math.max(...v) - Math.min(...v);
   });
-  gate(ranges.filter((r) => r >= 30).length >= 4, "G2", `${k.padEnd(14)} ranges ${ranges.join(", ")}`);
+  gate(ranges.filter((r) => r >= 30).length >= ALL_BUT_ONE, "G2", `${k.padEnd(14)} ranges ${ranges.join(", ")}`);
 });
 
 /* G3 — no metric restates a value */
@@ -125,7 +156,7 @@ SCEN.forEach((sc) => {
 });
 
 /* G5b — no value may be systematically rewarded */
-head("G5b no value may be rewarded to the point of dominance: champion ranks 1st in <= 2 of 5");
+head("G5b no value may be rewarded to the point of dominance: champion ranks 1st in <= 40% of scenarios");
 POL.forEach((p) => {
   const ranks = SCEN.map((sc) => {
     const g = inScenario(sc);
@@ -133,7 +164,7 @@ POL.forEach((p) => {
     return [...g].sort((a, b) => perf(b) - perf(a)).findIndex((r) => r.id === champ.id) + 1;
   });
   const firsts = ranks.filter((r) => r === 1).length;
-  gate(firsts <= 2, "G5b", `${SH[p].padEnd(13)} champion ranks ${ranks.join(" ")}  — 1st in ${firsts}/5`);
+  gate(firsts <= DOMINANCE_MAX, "G5b", `${SH[p].padEnd(13)} champion ranks ${ranks.join(" ")}  — 1st in ${firsts}/${SCEN.length} (max ${DOMINANCE_MAX})`);
 });
 
 /* G6 — six distinguishable options, none obviously best */

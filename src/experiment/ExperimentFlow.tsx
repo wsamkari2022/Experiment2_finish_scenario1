@@ -6,6 +6,7 @@ import { MoralProfileInsightsPage } from "./MoralProfileInsightsPage";
 import { AdaptiveStakeholderReflectionBlock } from "./AdaptiveStakeholderReflectionBlock";
 import type { Block4CompletionPayload } from "./AdaptiveStakeholderReflectionBlock";
 import { FinalMoralAnalysisPage } from "./FinalMoralAnalysisPage";
+import { Block5IntroPage } from "./Block5IntroPage";
 import { Block5PublicEmergencySimulation } from "./Block5PublicEmergencySimulation";
 import { Block5SimulationSummaryPage } from "./Block5SimulationSummaryPage";
 import { UserFeedbackPage } from "./UserFeedbackPage";
@@ -49,6 +50,7 @@ type Stage =
   | "transition_block4_final"
   | "final_analysis"
   | "transition_final_block5"
+  | "block5_intro"
   | "block5"
   | "transition_block5_summary"
   | "block5_summary"
@@ -239,6 +241,11 @@ export function ExperimentFlow() {
     setStage("transition_final_block5");
   }, [participantId]);
 
+  /** Intro page -> the scenarios themselves. A button, not a timer: the page is meant to be read. */
+  const handleStartBlock5Scenarios = useCallback(() => {
+    setStage("block5");
+  }, []);
+
   /** Called when all 3 Block 5 scenarios are completed. */
   const handleBlock5Complete = useCallback((results: Block5Results) => {
     setBlock5Results(results);
@@ -263,7 +270,7 @@ export function ExperimentFlow() {
       transition_product_insights: "insights",
       transition_insights_block4: "block4",
       transition_block4_final: "final_analysis",
-      transition_final_block5: "block5",
+      transition_final_block5: "block5_intro",
       transition_block5_summary: "block5_summary",
     };
     const next = transitions[stage];
@@ -363,6 +370,18 @@ export function ExperimentFlow() {
     );
   }
 
+  /*
+   * The doorway into Block 5. It is its own stage rather than a panel inside the simulation so
+   * that a refresh lands here cleanly, and so the simulation component keeps one job.
+   *
+   * It needs no participant data of its own, but it is still gated on insights + block4Payload:
+   * without them the block5 branch below would bounce the participant back to the start, and
+   * showing "the main study starts now" one click before that happens would be a lie.
+   */
+  if (stage === "block5_intro" && insights && block4Payload) {
+    return <Block5IntroPage onStart={handleStartBlock5Scenarios} />;
+  }
+
   if (stage === "block5" && insights && block4Payload) {
     const aiResults = readJson<AIWorkforceBlockResults>(AI_WORKFORCE_RESULTS_KEY);
     const tree = buildThresholdTree(insights.profile, aiResults, block4Payload.decisions);
@@ -370,6 +389,9 @@ export function ExperimentFlow() {
     return (
       <Block5PublicEmergencySimulation
         userProfile={userProfile}
+        /* Read-only. The planner derives its red lines, exchange rates and tolerance from the
+           Blocks 1-3 ladder answers held here; nothing in Block 5 writes back to it. */
+        moralProfile={insights.profile}
         onComplete={handleBlock5Complete}
       />
     );
@@ -402,6 +424,11 @@ export function ExperimentFlow() {
   }
 
   if (stage === "final_analysis" && (!insights || !block4Payload)) {
+    setStage("money");
+    return null;
+  }
+
+  if (stage === "block5_intro" && (!insights || !block4Payload)) {
     setStage("money");
     return null;
   }

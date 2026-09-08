@@ -1,0 +1,27 @@
+{
+  "//": "Compiles just the Block-5 scoring modules to CommonJS so tools/simulate_vci.cjs can run the REAL functions rather than a copy of them. Output is throwaway.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "../.sim-build",
+    "strict": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": []
+  },
+  "files": [
+    "../src/experiment/block5CVR.ts",
+    "../src/experiment/block5Planner.ts",
+    "../src/experiment/block5PlannerText.ts",
+    "../src/experiment/block5Thresholds.ts",
+    "../src/experiment/block5Scenarios.ts",
+    "../src/experiment/block5Performance.ts",
+    "../src/experiment/block5Position.ts",
+    "../src/experiment/block5Company.ts",
+    "../src/experiment/block5Mirror.ts",
+    "../src/experiment/block5Types.ts",
+    "../src/experiment/block5CVRContent.ts",
+    "../src/experiment/blocksLegacyMethodology.ts"
+  ]
+}

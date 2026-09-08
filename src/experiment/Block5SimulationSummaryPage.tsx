@@ -90,7 +90,19 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
 
   const vci = results.vci ?? 0;
   const stability = results.stability ?? 0;
+  /*
+   * PERFORMANCE IS REPORTED AS A SHARE OF WHAT WAS AVAILABLE, not as the raw mean of the metrics.
+   *
+   * The raw mean spans only ~14 points across a whole session — a participant who takes the worst
+   * option in every scenario still scores 56 — so it reads as a percentage while behaving like a
+   * narrow band, and any equivalence test run against it is testing a window a third as wide as
+   * the entire scale. `performanceCaptured` is 0-100 by construction. The raw figure is still
+   * shown, in the hint, so nothing already collected becomes unreadable.
+   * See block5Performance.ts.
+   */
   const performance = results.performance ?? 0;
+  const captured = results.performanceCaptured;
+  const hasCaptured = typeof captured === "number";
 
   return (
     <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} py={{ base: "8", md: "12" }} display="flex" alignItems="flex-start" justifyContent="center">
@@ -110,13 +122,43 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
         <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap="4">
           <MeasureCard icon={<LuTrendingUp />} palette="blue" label="Value Consistency (VCI)"
             value={`${vci}`} sub={results.vciLevel ?? "—"}
-            hint="How consistent your final choices were with your evolving values. A choice you firmly stood by after a recontextualization still counts as consistent." />
+            hint="How often your choices matched your own values — judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
           <MeasureCard icon={<LuScale />} palette="purple" label="Stability"
             value={`${stability}`} sub={results.stabilityLevel ?? "—"}
-            hint="How steady your values stayed from before Block 5 to the end — measured against your original profile." />
-          <MeasureCard icon={<LuTarget />} palette="teal" label="Performance"
-            value={`${performance}`} hint="Average outcome quality of the policies you chose (separate from how well they matched your values)." />
+            hint="How much your own values moved during Block 5, compared with where they stood after Blocks 1-4. It combines whether your priorities changed order with how far they travelled along the way." />
+          <MeasureCard icon={<LuTarget />} palette="teal"
+            label={hasCaptured ? "Performance taken" : "Performance"}
+            value={hasCaptured ? `${captured}` : `${performance}`}
+            sub={hasCaptured ? results.performanceCapturedLevel : undefined}
+            hint={hasCaptured
+              ? `Of the outcome quality each scenario actually put on the table, this is how much your choices took. 100 would mean you picked the strongest-performing option every time, 0 the weakest. (Raw metric average: ${performance}.)`
+              : "Average outcome quality of the policies you chose (separate from how well they matched your values)."} />
         </Grid>
+
+        {/*
+          The two reflection lenses (Directness / Context) are reported here rather than folded
+          into Stability. They only move when a participant opens the second view, which is an
+          optional control — across six simulated behaviour types they never moved once. Scoring
+          a variable that is frozen for most people would dilute the number without measuring
+          anything, whereas how often someone chose to look through both lenses genuinely varies.
+        */}
+        {(() => {
+          const withCvr = results.scenarioResults.filter((r) => r.cvrFired).length;
+          const bothLenses = results.scenarioResults.filter((r) => r.cvrAltViewGenerated).length;
+          if (withCvr === 0) return null;
+          return (
+            <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="5" py="4">
+              <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">
+                Looking at it two ways
+              </Text>
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+                {bothLenses === 0
+                  ? `You were offered a second way of seeing your choice in ${withCvr} scenario${withCvr === 1 ? "" : "s"}, and stayed with the first view each time.`
+                  : `In ${bothLenses} of ${withCvr} scenario${withCvr === 1 ? "" : "s"} you generated the second perspective and compared both ways of seeing the same choice.`}
+              </Text>
+            </Box>
+          );
+        })()}
 
         {/* See-your-journey-in-charts entry point */}
         <Box textAlign="center">
@@ -126,7 +168,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
             View your results as charts
           </Button>
           <Text fontSize="xs" color="fg.muted" mt="2">
-            See your full journey — values, choices, consistency, and time — in six simple charts.
+            See your full journey — values, choices, consistency, and time — in seven simple charts.
           </Text>
         </Box>
 

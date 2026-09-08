@@ -39,21 +39,43 @@ export const POLICY_DIM_KEYS: Block5PolicyDimKey[] = [
 
 export const POLICY_DIM_SHORT: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity: "protecting the vulnerable",
-  groupSizeSensitivity: "helping the larger group",
-  gainResponsivenessSensitivity: "getting the most benefit",
-  outcomeAggregationSensitivity: "maximizing the total",
+  groupSizeSensitivity: "reducing harm",
+  gainResponsivenessSensitivity: "how much is gained",
+  outcomeAggregationSensitivity: "how many are helped",
 };
 
 /** Plain-English hover explanation of each policy value (shown in the sidebar tooltip). */
 export const POLICY_DIM_EXPLAIN: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity:
-    "How much you prioritize the people who are worst-off or least able to cope — protecting them first, even when others might gain more.",
+    "Do you shield the people least able to cope, even when others would gain more?",
   groupSizeSensitivity:
-    "How much you favor helping as many people as possible — reaching the largest number, rather than concentrating help on a few.",
+    "How much does it matter to you that fewer people are hurt — 10 rather than 100,000?",
   gainResponsivenessSensitivity:
-    "How much you favor putting each scarce resource where it does the most good — the biggest improvement for what is given.",
+    "How large must the payoff be before you accept the cost?",
   outcomeAggregationSensitivity:
-    "How much you focus on the largest total benefit added up across everyone — maximizing the overall sum.",
+    "How many people must benefit before you accept the cost?",
+};
+
+/**
+ * WHAT A HIGH BAR MEANS, per value.
+ *
+ * WHY THIS EXISTS. The old name "How many are harmed" read, to a participant seeing a long bar, as "this
+ * option harms a lot of people" — the exact opposite of what it encodes. Every fingerprint in this
+ * codebase is oriented HIGHER = BETTER, including the two whose names are nouns for bad things.
+ * A participant who misreads the direction on one bar misreads the whole panel, and would then be
+ * choosing against their own values while believing they were following them.
+ *
+ * Phrased as a completion of "Higher means …", in plain words, and shown under every bar.
+ */
+export const POLICY_DIM_HIGHER_MEANS: Record<Block5PolicyDimKey, string> = {
+  vulnerabilityProtectionSensitivity:
+    "Higher means MORE protection for the people least able to cope.",
+  groupSizeSensitivity:
+    "Higher means MORE harm is prevented.",
+  gainResponsivenessSensitivity:
+    "Higher means MORE is gained from the decision.",
+  outcomeAggregationSensitivity:
+    "Higher means MORE people are helped.",
 };
 
 /** 4-level alignment label (internal — options are never hidden). */
@@ -140,11 +162,11 @@ export const METRIC_KEYS: Block5MetricKey[] = [
 
 /** Scenario ids, used to pick the right reading for a metric. */
 export type Block5ScenarioId =
-  | "travel_mode_choice"
-  | "meal_hosting_choice"
+  | "chemical_release_escape"
+  | "wildfire_household_evacuation"
   | "cancer_treatment_allocation"
-  | "flood_evacuation_priority"
-  | "water_contamination_response";
+  | "care_rota_reduction"
+  | "care_rota_receiving";
 
 /**
  * One metric: a constant label, the construct it measures, and what that construct looks like in
@@ -175,11 +197,11 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
     invariant: "Latency of benefit delivery — how soon the help reaches the people it is for.",
     hover: "How soon the help actually reaches the people it is meant to help.",
     readings: {
-      travel_mode_choice: "how soon you arrive, and how much of your own time comes back",
-      meal_hosting_choice: "how soon everyone is actually eating",
+      chemical_release_escape: "how soon you are out of the plume, and how much of the six hours is left",
+      wildfire_household_evacuation: "how soon your household is clear of the valley",
       cancer_treatment_allocation: "how soon treatment begins for those who receive it",
-      flood_evacuation_priority: "how soon people are out of danger",
-      water_contamination_response: "how soon safe water is back",
+      care_rota_reduction: "how soon the new rota actually reaches clients and carers",
+      care_rota_receiving: "how soon the new rota actually reaches clients and carers",
     },
   },
   resourceUse: {
@@ -188,11 +210,11 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
     invariant: "How little of the limited supply the option consumes. Higher means leaner.",
     hover: "How little of the limited supply this uses — higher means leaner.",
     readings: {
-      travel_mode_choice: "how little money and fuel it spends per person",
-      meal_hosting_choice: "how little of the $80 and the two hours it uses",
+      chemical_release_escape: "how little of the shuttle, the clinic stock and the crews it uses",
+      wildfire_household_evacuation: "how little road capacity, fuel and crew time it ties up",
       cancer_treatment_allocation: "how little of the 20 doses and staff time it wastes",
-      flood_evacuation_priority: "how few boats, crews and fuel-hours it ties up",
-      water_contamination_response: "how little budget and crew time it consumes",
+      care_rota_reduction: "how little of the remaining carer-hours and budget it wastes",
+      care_rota_receiving: "how little of the remaining carer-hours and budget it wastes",
     },
   },
   reliability: {
@@ -201,11 +223,11 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
     invariant: "Probability the intended outcome actually happens.",
     hover: "How likely this is to work as intended rather than go wrong.",
     readings: {
-      travel_mode_choice: "how likely you are to arrive without delay or a missed connection",
-      meal_hosting_choice: "how likely the meal works and everyone can eat it",
+      chemical_release_escape: "how likely you are to get clear without the route failing",
+      wildfire_household_evacuation: "how likely all four of you actually get out together",
       cancer_treatment_allocation: "how likely the treatment achieves what is hoped",
-      flood_evacuation_priority: "how likely the plan really gets people out",
-      water_contamination_response: "how likely the fix really clears the contamination",
+      care_rota_reduction: "how likely the rota holds for the full three months",
+      care_rota_receiving: "how likely the rota holds for the full three months",
     },
   },
   durability: {
@@ -214,11 +236,11 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
     invariant: "Whether the benefit persists past the immediate moment.",
     hover: "Whether the benefit lasts beyond the immediate moment.",
     readings: {
-      travel_mode_choice: "whether the route survives for the people who will need it next",
-      meal_hosting_choice: "leftovers, and whether it is something you could repeat",
+      chemical_release_escape: "whether the way out stays open for the people still behind you",
+      wildfire_household_evacuation: "whether it still works for the households leaving after you",
       cancer_treatment_allocation: "how long the benefit lasts, not just the first weeks",
-      flood_evacuation_priority: "whether it builds lasting resilience or only works this once",
-      water_contamination_response: "a permanent repair rather than a temporary supply",
+      care_rota_reduction: "whether it still works after the three months are up",
+      care_rota_receiving: "whether it still works after the three months are up",
     },
   },
   reversibility: {
@@ -227,11 +249,11 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
     invariant: "Recoverability — how easily course can be changed if the choice proves wrong.",
     hover: "If this turns out to be wrong, how easily you can change course.",
     readings: {
-      travel_mode_choice: "whether you can rebook or change your plans",
-      meal_hosting_choice: "whether you can order something else if it fails",
+      chemical_release_escape: "whether you can turn round and take another way out",
+      wildfire_household_evacuation: "whether you can change course once you have committed",
       cancer_treatment_allocation: "whether doses can be reallocated, or the decision is final",
-      flood_evacuation_priority: "whether you can redirect resources mid-operation",
-      water_contamination_response: "whether you can switch approach without wasting the work",
+      care_rota_reduction: "whether visits can be restored if it goes wrong",
+      care_rota_receiving: "whether visits can be restored if it goes wrong",
     },
   },
 };
@@ -285,6 +307,57 @@ export interface OptionCVRSeed {
   identifiedCase: string;
   /** the concrete harm that case experiences. */
   harm: string;
+  /**
+   * The person who NEEDS this option, shown when the participant refuses it. Written to follow the
+   * voice lead, so it must describe what happens to "them" and must never name a new person.
+   */
+  benefitCase?: string;
+  /** what that person loses because the option was refused. */
+  benefitLost?: string;
+  /**
+   * WHAT THIS OPTION ACTUALLY CAUSES — the material the DIRECTNESS lens is built from.
+   *
+   * The option card sells the trade-off in the abstract ("you give up four hours"). These two
+   * lines say what happens to real people because of it, and they are the things the card does
+   * NOT show. One is immediate and one arrives long after anybody would still connect it to the
+   * choice, because a consequence you never link back to your decision is exactly the kind the
+   * directness lens exists to make visible.
+   *
+   * WRITING RULES, enforced by tools/validate_block5.cjs:
+   *  - short sentences, common words. Participants read this in a second language.
+   *  - name people and numbers, never categories ("two of them", not "some stakeholders").
+   *  - state the outcome, never the judgement. The lens attributes; the sentence reports.
+   */
+  consequences?: {
+    /** Within hours or days. What happens straight away. */
+    soon: string;
+    /** Weeks or months later. The part nobody connects back to the choice. */
+    later: string;
+  };
+  /**
+   * THE SAME TWO CONSEQUENCES, inside the scenario's parallel setting — for the CONTEXT lens.
+   *
+   * Written to the same rules and, deliberately, to the SAME SHAPE and roughly the same length as
+   * `consequences` above. The study compares the two lenses against each other, so if one carried
+   * two vivid consequences and the other carried one, the comparison would partly measure which
+   * block was longer. Same structure, same time labels; the only things that differ are the
+   * setting and whether the participant is named as the cause.
+   */
+  parallelConsequences?: {
+    soon: string;
+    later: string;
+  };
+  /**
+   * THE SAME RULE, restated inside the scenario's parallel setting — used by the CONTEXT lens.
+   *
+   * Phrased to follow "it …", exactly like `rule`, so the two can be swapped in the same
+   * sentence. It cannot be derived from `rule`: that string is written for its own domain
+   * ("adds about eight hours by stopping in every town") and does not transplant.
+   *
+   * Optional only so the type could land before the content did; the validator requires it on
+   * every option. See docs/BLOCK5_LENS_IMPLEMENTATION_PLAN.md.
+   */
+  parallelRule?: string;
 }
 
 export interface Block5ScenarioOption {
@@ -321,10 +394,87 @@ export interface Block5ScenarioOption {
   tensionPoints?: string[];
 }
 
+/** Who bears the consequences of the decision — the Block 5 manipulation. */
+/**
+ * WHERE THE PARTICIPANT STANDS relative to the decision. The Block 5 manipulation.
+ *
+ * The first three vary WHO CARRIES THE COST. The last two vary something else, and that is the
+ * point of adding them:
+ *
+ *   self             the participant, and nobody else
+ *   self_and_group   the participant and dependents who are present
+ *   others           other people; the participant is explicitly unaffected
+ *   under_authority  the participant decides, it lands on colleagues — but inside an organisation
+ *                    whose STATED VALUES pull against their own. Varies whose values govern.
+ *   receiving_end    someone else decides and it lands on the participant, who has NO CONTROL.
+ *                    Varies whether they hold the pen at all.
+ *
+ * `under_authority` and `receiving_end` are a matched pair: same employer, same decision, same six
+ * options, same numbers. Only the chair the participant sits in changes, which is what makes the
+ * contrast between them a clean read of position rather than of content.
+ */
+export type StakePosition =
+  | "self"
+  | "self_and_group"
+  | "others"
+  | "under_authority"
+  | "receiving_end";
+
+/**
+ * Does the participant DECIDE here, or only WISH?
+ *
+ * "recipient" scenarios ask what the participant wants someone else to do. A wish is not a choice:
+ * nobody is answerable for it, so there is nothing to reflect on and nothing it should teach.
+ * Recipient scenarios therefore run NO CVR, NO profile update, and are excluded from VCI and
+ * Stability — see the inclusion table in docs/VRDS_EXPERIMENT_GUIDE.md. They still produce a
+ * Position Effect distance, because `profileDistance(profile, wished option)` is the same
+ * arithmetic; it is simply labelled as a wish wherever it is shown.
+ *
+ * Defaults to "decider" when absent, so every scenario authored before this existed is unchanged.
+ */
+export type Block5DecisionRole = "decider" | "recipient";
+
 export interface Block5ScenarioTheme {
   gradient: string;
   accent: string;
   shadow: string;
+}
+
+/**
+ * An employer whose STATED values the participant is asked to work under.
+ *
+ * WHY THE COMPANY'S PRIORITY IS NOT WRITTEN DOWN HERE
+ *
+ * The scenario has to produce a real conflict for EVERY participant, not for the ones who happen
+ * to disagree with whatever a fixed company believes. A single hard-coded set of company values
+ * would clash hard with some people and barely at all with others — and those two participants
+ * cannot be compared, because they were not asked the same question.
+ *
+ * So the company's stated priority is chosen per participant: it is whichever value they scored
+ * LOWEST in Blocks 1–4. Everyone therefore faces an employer that prizes the thing they care least
+ * about, and "did you take on your employer's values?" means the same thing for everybody.
+ *
+ * WHAT STAYS FIXED. The situation, the numbers, the six options and their fingerprints never
+ * change. Only the sentence naming the company's priority does. That is deliberate: it keeps every
+ * authoring gate — domination, champion uniqueness, metric independence, the planner confound —
+ * applicable exactly as written, because the option set the gates measure is one option set.
+ *
+ * Read from the FROZEN profile, never the current one. A company whose values drifted along with
+ * the participant's would not be a company; it would be a mirror.
+ */
+export interface Block5Employer {
+  /** The organisation's name, used in the scene and in the stance readout. */
+  name: string;
+  /** Heading above the stated principle, e.g. "Meridian Care's published service principle". */
+  principleLabel: string;
+  /**
+   * What the company says it stands for, one phrasing per value. The phrasing shown is selected by
+   * `deriveCompanyValues` from the participant's weakest value, so every entry must read as a
+   * sentence a real employer could publish — including the ones that are uncomfortable.
+   */
+  principleFor: Record<Block5PolicyDimKey, string>;
+  /** The company's own justification for that principle, in its own voice. */
+  rationaleFor: Record<Block5PolicyDimKey, string>;
 }
 
 export interface Block5Scenario {
@@ -333,8 +483,58 @@ export interface Block5Scenario {
   description: string;
   theme: Block5ScenarioTheme;
   options: Block5ScenarioOption[];
-  /** v3.2: the shared, fixed "world" (same numbers for every option) that the CVR re-presents. */
+  /**
+   * THE SITUATION RIGHT NOW — the hard numbers, and nothing else.
+   *
+   * How many people, how much of the scarce thing, how long. These are the SAME for every option,
+   * which is exactly what makes the comparison a trade-off rather than a guess, and it is what the
+   * CVR re-presents when it says "the same 20 doses".
+   *
+   * NO PROSE ABOUT THE HAZARD — that belongs in `description`. NO STATEMENT OF THE PARTICIPANT'S
+   * ROLE — that belongs in `role`. The three fields were previously two, and the two overlapped
+   * heavily: `description` restated the scarcity that `factBase` was supposed to own, while the
+   * numbers were missing from four of the five scenarios and the participant's position was buried
+   * mid-sentence. A validator now enforces the split (numbers appear here, not there).
+   */
   factBase?: string;
+  /**
+   * WHO THE PARTICIPANT IS in this scene, and who carries the cost of what they decide.
+   *
+   * This is `stakePosition` written out for the participant to read, and it is the block's entire
+   * manipulation — the only thing that is supposed to differ across the five scenarios. It had
+   * been left implicit in the middle of `description`, where a participant skimming the scene
+   * could miss the one sentence the study turns on.
+   */
+  role?: string;
+  /**
+   * WHERE THE PARTICIPANT STANDS relative to the consequences — the Block 5 manipulation.
+   *
+   *   self            — deciding alone. Only the participant carries the cost.
+   *   self_and_group  — deciding for themselves AND dependents who are present.
+   *   others          — deciding for other people; the participant is explicitly unaffected.
+   *
+   * The deck runs one `self`, one `self_and_group`, and three `others`, in that fixed order. The
+   * unequal n and the confound with sequence position are stated limits, not oversights — see
+   * docs/BLOCK5_POSITION_EFFECT_PLAN.md §7 and docs/BLOCK5_PLANNER_ORDERING_PLAN.md §9.
+   */
+  stakePosition?: StakePosition;
+  /**
+   * Whether the participant decides here or only says what they wish. Defaults to "decider".
+   *
+   * This is the flag that switches off the reflection machinery, so it is load-bearing: setting it
+   * to "recipient" removes the scenario from CVR, from the profile update, from VCI and from
+   * Stability in one place rather than five.
+   */
+  decisionRole?: Block5DecisionRole;
+  /**
+   * The organisation whose stated values this scenario runs under, if any.
+   *
+   * Present only on the `under_authority` / `receiving_end` pair. The company's stated priority is
+   * NOT written here — it is derived per participant from their frozen Blocks 1–4 profile, so that
+   * the conflict is guaranteed rather than a matter of luck. See `deriveCompanyValues` in
+   * block5Company.ts.
+   */
+  employer?: Block5Employer;
   /**
    * How much this scenario's decisions are allowed to teach the profile, 0–1 (default 1).
    *
@@ -369,7 +569,44 @@ export interface CVRCoordinate {
   who: SalienceWho;
 }
 
+/**
+ * The reflection lens, made visible instead of asserted.
+ *
+ * The two lenses measure different things and therefore now LOOK different, which is deliberate:
+ *
+ *   context     — between contexts only. Shows the participant's own rule, with the same numbers,
+ *                 running in another setting of EQUAL seriousness.
+ *   directness  — within one context, direct harm. Shows the same outcome twice: once as an
+ *                 impersonal system could have produced it, once as the participant did produce it.
+ *
+ * Both are shown as a block rather than a clause, so neither lens is more persuasive than the
+ * other simply by being longer. See docs/BLOCK5_LENS_IMPLEMENTATION_PLAN.md.
+ */
+export interface CVRLensBlock {
+  framing: CVRFraming;
+  /** short heading above the block. */
+  heading: string;
+  /** the body of the lens (with {markup}). */
+  body: string;
+  /**
+   * Short labelled lines shown under the body, one per point.
+   *
+   * The directness lens needs two separate consequences and a paragraph would bury the second one.
+   * Separate lines also read far better in a second language than a long sentence with clauses.
+   */
+  points?: { label: string; text: string }[];
+  /** the one-line challenge that closes it (with {markup}). */
+  prompt: string;
+}
+
 export interface CVRStory {
+  /**
+   * The person who argues against whatever the participant just said, for each side.
+   * hurt — shown after "yes": what the choice costs someone.
+   * need — shown after "no": what that person loses because it was refused.
+   * These live on their own page now, after the yes/no, not on the vignette page.
+   */
+  people?: { hurt: string; need: string };
   coordinateKey: string;
   /** the recontextualized scenario: same trade-off + numbers, re-framed (with {markup}). */
   recontext: string;
@@ -377,6 +614,8 @@ export interface CVRStory {
   stakeholder: string;
   /** the re-endorsement question (with {markup}). */
   reendorseQuestion: string;
+  /** the lens shown as its own block. Optional until every scenario carries lens content. */
+  lens?: CVRLensBlock;
 }
 
 /** One randomly-chosen stakeholder "voice" for a CVR vignette (picked per misaligned selection). */
@@ -464,9 +703,49 @@ export interface Block5ScenarioResult {
   stakeholderGuided?: boolean | null;
   /** alignment of the FINAL choice vs the ORIGINAL pre-Block-5 profile (for Stability). */
   alignedToOriginal?: boolean;
-  /** per-scenario VCI contribution S_i (0–1). */
+  /**
+   * Whether this scenario asked for a DECISION or only a WISH. Absent means "decider".
+   *
+   * Recorded on the result rather than looked up from the scenario list, so a stored record stays
+   * self-describing: an analyst reading the exported JSON in two years can tell which rows are
+   * choices and which are wishes without needing the scenario definitions that were live at the
+   * time. It is also what `computeVCI` filters on, so the exclusion travels with the data instead
+   * of being re-derived in every place that consumes it.
+   */
+  decisionRole?: Block5DecisionRole;
+  /**
+   * Seconds the participant spent on this scenario’s intro page before opening the options.
+   *
+   * The intro carries the scene, the numbers and the participant’s ROLE — the one thing Block 5
+   * varies. Recording the dwell turns “did they take the manipulation in?” from an assumption
+   * into something an analyst can check, and lets a run clicked through in seconds be flagged
+   * rather than silently averaged in with the rest.
+   */
+  introSeconds?: number;
+  /**
+   * per-scenario VCI contribution S_i (0–1).
+   *
+   * Recorded for recipient scenarios too, but NOT averaged into VCI — see `computeVCI`. Keeping
+   * the number lets the Responsibility Gap compare "consistency when deciding" against
+   * "consistency when only wishing" on the same scale, which is the whole point of measuring it.
+   */
   vciScore?: number;
   performanceScore?: number;
+  /**
+   * PERFORMANCE AS A SHARE OF WHAT THIS SCENARIO OFFERED, 0-100. See block5Performance.ts.
+   *
+   * `performanceScore` above is the raw mean of the five metrics, and it is kept — but its
+   * achievable range across a session is only ~14 points wide (a participant who takes the worst
+   * option every time still scores 56), so it reads as a percentage while behaving like a narrow
+   * band. That is fatal for an equivalence test: the prior paper's H3 margin of 0.05 would be 36%
+   * of the entire achievable range.
+   *
+   * This field is `100 x (chosen − worst available) / (best − worst)` within the scenario, so it
+   * spans a true 0-100 and answers "of the performance on the table, how much did you take?".
+   */
+  performanceCaptured?: number;
+  /** The worst and best composite the scenario's six options offered — stored so the number is auditable. */
+  performanceMenu?: { worst: number; best: number };
   /** the chosen option's 5 metrics, stored so the cumulative dashboard/summary don't re-look-up. */
   metrics?: Block5MetricProfile;
   /** APA clarification, when the scenario was resolved through the APA flow. */
@@ -481,6 +760,12 @@ export interface Block5ScenarioResult {
    * (Before Block 5 → after S1 → after S2 → after S3). Additive; does not affect scoring.
    */
   policySnapshotAfter?: Record<Block5PolicyDimKey, number>;
+  /**
+   * Stakeholder sensitivity AFTER this scenario's update. Snapshotted alongside the four policy
+   * values because Stability measures movement across all five, and stakeholder is the largest
+   * single mover in the block (+-25 on every CVR).
+   */
+  stakeholderSnapshotAfter?: number;
 
   /* ---- CVR dual-perspective (Directness ↔ Context) — see block5CVR + CVRReveal ----
    * All optional and only populated when the participant engaged the dual-perspective feature.
@@ -503,6 +788,49 @@ export interface Block5ScenarioResult {
   /** The committed sensitivity change for the selected lens (e.g. {key:"contextSensitivity", delta:-20}). */
   cvrFramingAdjustment?: FramingAdjust;
 
+  /* ---- PLANNER (block5Planner.ts) — the card ORDER, kept strictly apart from alignment ----
+   *
+   * The whole consistency analysis rests on being able to ask one question of the data:
+   * "the participant chose the option the planner ranked 4th, and that option was labelled
+   * strongly aligned." Both halves of that sentence have to survive into the log, which is why
+   * `plannerOrder` and `rankedOptionIds` are two different fields that are allowed to disagree,
+   * and why `choiceRank` (planner position) sits beside `selectedRank` (alignment position).
+   */
+
+  /** Option ids in the order the planner displayed them: clear, then costed, then blocked. */
+  plannerOrder?: string[];
+  /** Which display bin each option landed in. */
+  plannerBins?: Record<string, "clear" | "costed" | "blocked">;
+  /** Pairwise wins per option — the quantity the ordering is actually built from. */
+  plannerWins?: Record<string, number>;
+  /** The option the planner put first. */
+  plannerTopOptionId?: string;
+  /** The highest-ranked option inside every limit — the reference every card compares against. */
+  plannerCleanReferenceId?: string;
+  /** The participant's value ranking as the planner used it, rank 1 first. */
+  plannerValueOrder?: Block5PolicyDimKey[];
+  /** True when the derived decision profile fell back to neutral (no Blocks 1-3 record). */
+  plannerDegradedProfile?: boolean;
+
+  /** THE KEY DEPENDENT VARIABLE: the chosen option's position in the planner order (1-based). */
+  choiceRank?: number;
+  /** The chosen option's bin. */
+  choiceBin?: "clear" | "costed" | "blocked";
+  /** Did they take the planner's first card? */
+  choiceMatchedPlannerTop?: boolean;
+  /** Did they take the option the alignment tier labelled best? */
+  choiceMatchedAlignedTop?: boolean;
+  /** Did the chosen option cross a limit the participant themselves refused outright? */
+  choiceCrossedOwnRedLine?: boolean;
+  /** Which values it crossed, and by how much, in normalised scenario units. */
+  choiceBreaches?: { key: Block5PolicyDimKey; amount: number; hard: boolean }[];
+  /**
+   * True when the chosen option outranked another option that beats it on the participant's own
+   * rank-1 value. In the LEAP paper this exact event is what TRIGGERS learning; here it is the
+   * observation — a person taking an option that trades away the value they ranked first.
+   */
+  choiceUsedTradeOff?: boolean;
+
   /**
    * Snapshot of the two reflection-lens sensitivities (0–100) AFTER this scenario's update,
    * so the results view can chart how Directness vs Context evolved across the scenarios.
@@ -520,7 +848,24 @@ export interface Block5Results {
   vciLevel?: string;
   stability?: number;
   stabilityLevel?: string;
+  /**
+   * The two halves behind the Stability headline plus the raw churn, kept so the results page can
+   * explain the number and so analysis is not left with a single opaque score.
+   */
+  stabilityDetail?: {
+    orderPart: number;
+    movementPart: number;
+    pairsSwapped: number;
+    churn: number;
+    topValueBefore: string;
+    topValueAfter: string;
+  };
   performance?: number;
+  /** Session performance as a share of what was available: mean of the per-scenario captured scores. */
+  performanceCaptured?: number;
+  /** Plain-English label for `performanceCaptured`. */
+  performanceCapturedLevel?: string;
+
   /** behavioral telemetry totals across all scenarios (additive; does not affect scoring). */
   totalCvrVisits?: number;
   totalApaVisits?: number;

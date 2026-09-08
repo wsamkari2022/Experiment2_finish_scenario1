@@ -448,6 +448,23 @@ ordering — a strong endorser still ends clearly above a weak one.
 **Not yet audited:** Block 4's internal scoring in depth, the final VCI and Stability measures,
 and the CVR ±20/±25 update magnitudes.
 
+**The APA profile update.** The rule is "+30 to the value you name, −20 to the value currently on
+top, scaled 0.6–1.0 by confidence, and no policy value moving more than 30 × that scale in one
+clarification". `npm run verify:apa` asserts it in 19 checks.
+
+The cap is what makes the published constant the applied one. Q1 and Q2 can name the same value,
+and without a cap they add: an internally consistent participant — one who endorses their choice and
+then names the value that choice protected — would receive **+45 × confidence**. Uncapped, that also
+inverts the confidence rating, since from confidence 2 upward a double-counting participant moves
+further (45 × 0.7 = 31.5) than one who is completely sure and does not (30 × 1.0).
+
+Rated **9/10**: the mechanism is sound, the decrement demonstrably lets the ranking change (4 of 6
+personas re-rank), and the rule is true as written on every answer path. The weak points are
+saturation — 11.9% of policy values sit at 100 after a clarification — and the stakeholder ±25,
+which is the one constant with no measurement behind it. Full worked audit, six personas, and the
+comparison behind each constant: [`BLOCK5_APA_AUDIT.md`](BLOCK5_APA_AUDIT.md). Reproduce with
+`npm run apa:personas` and `npm run apa:variants`.
+
 **All figures in this document come from simulated participants** run through the real pipeline.
 The *direction* of every finding is arithmetic and therefore solid; the exact percentages will
 move with real people. Pilot data is the next thing that would improve this model.

@@ -65,9 +65,9 @@ const METRIC_AXIS_LABEL: Record<Block5MetricKey, string> = {
 
 const POLICY_AXIS_LABEL: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity: "Protect the vulnerable",
-  groupSizeSensitivity: "Help the larger group",
-  gainResponsivenessSensitivity: "Most benefit gained",
-  outcomeAggregationSensitivity: "Maximize the total",
+  groupSizeSensitivity: "How many harmed",
+  gainResponsivenessSensitivity: "How much gained",
+  outcomeAggregationSensitivity: "How many helped",
 };
 
 /** Plain-English one-liner under each chart title. */

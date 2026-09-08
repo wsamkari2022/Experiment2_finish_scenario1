@@ -1,4 +1,17 @@
 /**
+ * ============================================================================
+ * DEAD CODE AS OF 2026-09-02 - nothing imports this file.
+ *
+ * Option ordering is done by block5Planner.ts (the trade-off tree), and alignment labelling by
+ * labelOptions() in block5CVR.ts. A grep for `from "./block5Ranking"` across src/ returns nothing.
+ *
+ * It is left in place rather than deleted only so the earlier ranking approach stays readable
+ * while the thesis is being written. DO NOT wire it back in without deciding which of the two
+ * governs - having two ranking functions live at once is how a card order and its label end up
+ * disagreeing.
+ * ============================================================================
+ */
+/**
  * block5Ranking.ts — Candidate filtering, weighted fit scoring, and ranking logic.
  *
  * This module takes a participant's Block5UserProfile (derived from the threshold tree)

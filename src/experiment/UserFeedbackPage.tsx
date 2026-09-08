@@ -25,6 +25,7 @@ import { markStage } from "./telemetry";
 import {
   APA_QUESTIONS, CVR_QUESTIONS, DUAL_VIEW_QUESTIONS, TOOL_CLOSERS, TOOL_RATINGS,
   WELLBEING_ITEMS, WELLBEING_OPEN_ENDED, WELLBEING_LIKERT_LOW, WELLBEING_LIKERT_HIGH,
+  WELLBEING_PART_A_SUBSCALES,
   assembleFeedbackRecord, computeWellbeing, saveFeedbackRecord,
   shouldShowApaSection, shouldShowCvrSection, usedDualPerspective,
   FEEDBACK_ARCHIVE_KEY,
@@ -349,7 +350,7 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
               <Icon><LuSparkles /></Icon>
               <Text fontSize="xs" fontWeight="semibold">Part A — Learning & decisions</Text>
             </HStack>
-            {WELLBEING_ITEMS.slice(0, 11).map((item) => (
+            {WELLBEING_ITEMS.filter((i) => WELLBEING_PART_A_SUBSCALES.includes(i.subscale)).map((item) => (
               <LikertRow key={item.code} q={{ code: item.code, text: item.text, type: "likert" }}
                 value={num(item.code)} onChange={(v) => setAnswer(item.code, v)} accent="pink"
                 invalid={showValidation && !isAnswered(item.code)} />
@@ -359,7 +360,7 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
               <Icon><LuSparkles /></Icon>
               <Text fontSize="xs" fontWeight="semibold">Part B — Your experience & well-being</Text>
             </HStack>
-            {WELLBEING_ITEMS.slice(11).map((item) => (
+            {WELLBEING_ITEMS.filter((i) => !WELLBEING_PART_A_SUBSCALES.includes(i.subscale)).map((item) => (
               <LikertRow key={item.code} q={{ code: item.code, text: item.text, type: "likert" }}
                 value={num(item.code)} onChange={(v) => setAnswer(item.code, v)} accent="pink"
                 invalid={showValidation && !isAnswered(item.code)} />

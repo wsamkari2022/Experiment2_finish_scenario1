@@ -38,15 +38,32 @@ const KEY_MAP: Record<string, Block5SensitivityKey> = {
   outcome_aggregation: "outcomeAggregationSensitivity",
 };
 
+/**
+ * PARTICIPANT-FACING NAMES. The keys are frozen; only these strings changed.
+ *
+ * The old names ("outcome aggregation", "gain responsiveness") were academic, and worse, the two
+ * of them read as synonyms — both said "benefit" or "total". They are not synonyms: one is
+ * measured from a MONEY ladder ($1 -> $100M, Block 3) and asks how big a payoff moves you; the
+ * other from a LIVES ladder (1 -> 10,000 saved, Block 2) and asks how many people must be helped.
+ *
+ * The four policy names are now deliberately parallel — harmed / harmed / helped / gained — so
+ * the difference is visible at a glance instead of needing to be explained:
+ *
+ *   Protecting the vulnerable   WHO is harmed
+ *   Reducing harm              HOW MANY are spared
+ *   How many are helped        HOW MANY are helped
+ *   How much is gained         HOW MUCH money is gained
+ *
+ * See docs/BLOCK5_VALUE_NAMING_PLAN.md.
+ */
 const LABEL_MAP: Record<Block5SensitivityKey, string> = {
-  directnessSensitivity: "Directness sensitivity",
-  vulnerabilityProtectionSensitivity: "Vulnerability protection sensitivity",
-  groupSizeSensitivity: "Group-size sensitivity",
-  contextSensitivity: "Context sensitivity",
-  gainResponsivenessSensitivity: "Gain responsiveness sensitivity",
-  stakeholderPerspectiveShiftSensitivity: "Stakeholder perspective shift sensitivity",
-  // See the note in thresholdTree.ts — display wording only; the key is unchanged.
-  outcomeAggregationSensitivity: "Outcome-aggregation (Utility) sensitivity",
+  vulnerabilityProtectionSensitivity: "Protecting the vulnerable",
+  groupSizeSensitivity: "Reducing harm",
+  outcomeAggregationSensitivity: "How many are helped",
+  gainResponsivenessSensitivity: "How much is gained",
+  directnessSensitivity: "Doing it yourself",
+  contextSensitivity: "Where it happens",
+  stakeholderPerspectiveShiftSensitivity: "Hearing someone's story",
 };
 
 /**

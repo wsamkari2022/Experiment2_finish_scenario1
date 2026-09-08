@@ -13,7 +13,7 @@
  * 85/75/55 give Aligned / Weakly aligned / Misaligned / Strongly misaligned.
  *
  * Top dashboard (issues 1 & 2): the participant's CUMULATIVE performance — a running
- * AVERAGE of the 8 metrics of the options confirmed so far (starts at 0, can never
+ * AVERAGE of the 5 metrics of the options confirmed so far (starts at 0, can never
  * exceed 100). It is STICKY so it stays visible while scrolling, has an info toggle
  * explaining how it works, and each option has a "Preview impact" button that projects
  * the new overall (also shown inline on the card).
@@ -26,33 +26,56 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline } from "react-icons/lu";
-import { SensitivityMeterBar, MeterLegend } from "./block5Meters";
+import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2 } from "react-icons/lu";
+import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
   labelOptions, type LabeledOption, ALIGNMENT_LABEL, isMisaligned, cvrCoordinate,
-  optionMetrics, applyEndorsementUpdates, applyValueBump, applyApaUpdates, scenarioVciScore,
+  optionMetrics, applyEndorsementUpdates, applyKeepUpdates, applyApaUpdates, scenarioVciScore,
+  scenarioIsScored,
   performanceScore, computeVCI, computeStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey,
 } from "./block5CVR";
-import { getCVRStory, pickWhoVariant, getCVRFramingClauses } from "./block5CVRContent";
+import { getCVRStory, pickWhoVariant, getCVRLensPair } from "./block5CVRContent";
+import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
 import { Block5OptionCompare } from "./Block5OptionCompare";
+import { capturedOf, menuRange, metricStandings, overallCaptured, capturedLabel,
+         overallStanding, ordinal,
+         type MetricStanding, type OverallStanding } from "./block5Performance";
 import { useColorMode } from "@/components/ui/color-mode";
+import { Tooltip } from "@/components/ui/tooltip";
 import { getBlock5Palette, onAccentText, type Block5Palette } from "./block5Palette";
+import { Block5ScenarioIntro } from "./Block5ScenarioIntro";
+import { runMorph } from "./block5Morph";
+import { deriveCompanyValues, type DerivedCompanyValues } from "./block5Company";
 import {
-  METRIC_KEYS, METRIC_LABELS, metricMeaning, POLICY_DIM_KEYS, POLICY_DIM_EXPLAIN,
+  METRIC_KEYS, METRIC_LABELS, metricMeaning, POLICY_DIM_KEYS, POLICY_DIM_EXPLAIN, POLICY_DIM_HIGHER_MEANS,
+  POLICY_DIM_SHORT,
   type AlignmentLevel, type Block5Results, type Block5Scenario, type Block5ScenarioResult,
   type Block5UserProfile, type CVREndorsement, type Block5MetricProfile,
   type Block5PolicyDimKey, type CVRCoordinate, type WhoVariant,
   type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
-  type CVRFraming, type FramingAdjust,
+  type CVRFraming, type FramingAdjust, type StakePosition,
   BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
 } from "./block5Types";
+import { plannerRank, type PlannerResult } from "./block5Planner";
+import { deriveDecisionProfile, type DecisionProfile } from "./block5Thresholds";
+import { explainOption, plannerPanelText, BIN_DIVIDER, type CardExplanation } from "./block5PlannerText";
+import type { MoralProfile } from "./profileAnalysis";
 
 interface Props {
   userProfile: Block5UserProfile;
+  /**
+   * The raw Blocks 1-3 ladder record, read-only, used ONLY to derive the planner's decision
+   * parameters (red lines, exchange rates, tolerance) in block5Thresholds.ts.
+   *
+   * Optional so the component still renders if it is ever absent — the derivation then falls back
+   * to a neutral profile and flags itself as degraded, which is logged rather than hidden. It is
+   * never written to, and it never touches alignment.
+   */
+  moralProfile?: MoralProfile | null;
   onComplete: (results: Block5Results) => void;
 }
 
@@ -64,7 +87,11 @@ interface ProgressState {
   firstChoiceId: string | null;
 }
 
-type FlowStep = "review" | "q1" | "apa" | "confirm";
+/**
+ * "person" is the page where one affected person argues against the answer just given.
+ * review -> person -> (q1 -> confirm)  or  (apa)
+ */
+type FlowStep = "review" | "person" | "q1" | "apa" | "confirm";
 
 interface PreviewImpact {
   overall: number;
@@ -140,16 +167,16 @@ function renderCVRMarkup(text: string, marks: MarkSet): ReactNode[] {
 }
 
 const VALUE_NAME: Record<Block5PolicyDimKey, string> = {
-  vulnerabilityProtectionSensitivity: "Vulnerability protection",
-  groupSizeSensitivity: "Group-size",
-  gainResponsivenessSensitivity: "Gain responsiveness",
-  outcomeAggregationSensitivity: "Outcome aggregation (Utility)",
+  vulnerabilityProtectionSensitivity: "Protecting the vulnerable",
+  groupSizeSensitivity: "Reducing harm",
+  gainResponsivenessSensitivity: "How much is gained",
+  outcomeAggregationSensitivity: "How many are helped",
 };
 const VALUE_BENEFIT: Record<Block5PolicyDimKey, string> = {
-  vulnerabilityProtectionSensitivity: "protecting the patients who are worst-off or least able to cope",
-  groupSizeSensitivity: "helping as many people as possible",
-  gainResponsivenessSensitivity: "getting the greatest benefit from each scarce dose",
-  outcomeAggregationSensitivity: "maximizing the total good across everyone",
+  vulnerabilityProtectionSensitivity: "shielding the people least able to cope",
+  groupSizeSensitivity: "how much harm is prevented",
+  gainResponsivenessSensitivity: "how large the payoff is",
+  outcomeAggregationSensitivity: "how many people are helped",
 };
 
 interface ApaCommitPayload {
@@ -190,6 +217,9 @@ interface TelemetryAccum {
   optionChanges: number;
   cvrBackouts: number;
   apaBackouts: number;
+  /** times the person-speaks page was shown, and times it was left without answering. */
+  personVisits: number;
+  personBackouts: number;
   finalDecisionChanges: number;
   previewImpactOpens: number;
   optionExpands: number;
@@ -208,6 +238,7 @@ function newTelemetryAccum(): TelemetryAccum {
   return {
     startedAt: Date.now(),
     cvrVisits: 0, apaVisits: 0, optionChanges: 0, cvrBackouts: 0, apaBackouts: 0,
+    personVisits: 0, personBackouts: 0,
     finalDecisionChanges: 0, previewImpactOpens: 0, optionExpands: 0, compareChartsOpens: 0,
     timeToFirstSelectionMs: null, cvrDwellMs: 0, apaDwellMs: 0,
     distinct: new Set(), lastSelectedId: null, cvrShownAt: null, apaShownAt: null,
@@ -256,7 +287,9 @@ function buildScenarioTelemetry(
     apaVisits: t.apaVisits,
     cvrOutcome: opts.cvrOutcome,
     apaOutcome: opts.apaOutcome,
-    numberOfSwitches: t.optionChanges + t.cvrBackouts + t.apaBackouts + t.finalDecisionChanges,
+    // Leaving the person-speaks page counts as a switch: the participant reached a decision point
+    // and stepped away from it, which is the same behaviour the other backout counters record.
+    numberOfSwitches: t.optionChanges + t.cvrBackouts + t.apaBackouts + t.personBackouts + t.finalDecisionChanges,
     initialSelections: t.distinct.size,
     optionChanges: t.optionChanges,
     cvrBackouts: t.cvrBackouts,
@@ -271,7 +304,7 @@ function buildScenarioTelemetry(
   };
 }
 
-export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Props) {
+export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onComplete }: Props) {
   // Issue 3: always start fresh at Scenario 1 on mount/refresh (no mid-block resume).
   const [progress, setProgress] = useState<ProgressState>(() => ({
     currentScenarioIndex: 0,
@@ -302,7 +335,6 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   const [step, setStep] = useState<FlowStep | null>(null);
   const [tradeoffAck, setTradeoffAck] = useState(false);
   const [q1Strong, setQ1Strong] = useState<boolean | null>(null);
-  const [q2Guided, setQ2Guided] = useState<boolean | null>(null);
   // The stakeholder voice shown for the current misaligned selection (random, stable while reading).
   const [cvrWho, setCvrWho] = useState<WhoVariant | null>(null);
   // Which sidebar value the user is hovering, to show its plain-English explanation.
@@ -378,15 +410,95 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   // Dual-perspective (Directness ↔ Context): did the participant generate the OTHER lens, and
   // (YES path) which lens did they say did NOT influence keeping the option? Both reset per option.
   const [altViewGenerated, setAltViewGenerated] = useState(false);
+  /**
+   * Which side the participant took on the vignette page, and whether the person who spoke
+   * afterwards moved them off it.
+   *
+   * Together these ARE the stakeholder measurement. It used to be a self-report question — "did
+   * hearing this influence you?" — which asks people to know something about themselves that they
+   * generally do not. Now it is simply whether they switched.
+   */
+  const [cvrSaidYes, setCvrSaidYes] = useState<boolean | null>(null);
+  const [stakeholderMoved, setStakeholderMoved] = useState<boolean | null>(null);
   const [framingChoiceYes, setFramingChoiceYes] = useState<CVRFraming | null>(null);
 
   const scenario = BLOCK5_SCENARIOS[progress.currentScenarioIndex];
+
+  /* Which scenarios have had their intro page read. Kept in memory: re-reading is available from
+     the sidebar, and persisting it would mean a participant who refreshed mid-scenario silently
+     skipped the scene they had not finished. */
+  const [introSeen, setIntroSeen] = useState<Set<string>>(new Set());
+  /* Seconds spent on each intro. A ref, not state — it is written once per scenario and read only
+     when the result is assembled, so it must never trigger a re-render. */
+  const introSecondsRef = useRef<Record<string, number>>({});
+  /* Measured by the morph: the overlay it animates FROM, and the page it animates INTO. */
+  const introRef = useRef<HTMLDivElement | null>(null);
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const profile = progress.profile;
 
+  /**
+   * ALIGNMENT — unchanged. `labelOptions` still sorts by match score and assigns the four-level
+   * tier BY RANK POSITION, so this array must never be reordered: its order IS the tier
+   * computation. It is no longer the display order, only the label source.
+   */
   const labeled = useMemo<LabeledOption[]>(
     () => (scenario ? labelOptions(scenario.options, profile) : []),
     [scenario, profile],
   );
+
+  /**
+   * THE PLANNER — a second, independent computation that decides the display ORDER.
+   *
+   * Derived from `userProfile` (the ORIGINAL pre-Block-5 profile), deliberately, not from
+   * `progress.profile`. The profile carried between scenarios is mutated by CVR and APA, and if
+   * the planner followed it the ordering would chase the participant's own drift: options would be
+   * re-ranked to match whatever the last scenario had just taught the system. Drift would then be
+   * measured against a moving instrument, and Stability would become uninterpretable. The ruler
+   * has to stay still while the thing being measured moves.
+   *
+   * (The alignment tier above DOES follow the live profile. That is intended — the tier is a
+   * running judgement, the ordering is a fixed frame. Keeping them on different clocks is what
+   * lets the analysis ask whether the two came apart.)
+   */
+  const decisionProfile = useMemo<DecisionProfile>(
+    () => deriveDecisionProfile(userProfile, moralProfile),
+    [userProfile, moralProfile],
+  );
+  const plan = useMemo<PlannerResult | null>(
+    () => (scenario ? plannerRank(scenario, decisionProfile) : null),
+    [scenario, decisionProfile],
+  );
+
+  /** The cards in the order the planner produced: clear first, then costed, then blocked. */
+  const displayOptions = useMemo<LabeledOption[]>(() => {
+    if (!plan) return labeled;
+    const byId = new Map(labeled.map((o) => [o.id, o]));
+    return plan.orderedIds.map((id) => byId.get(id)).filter((o): o is LabeledOption => !!o);
+  }, [plan, labeled]);
+
+  /** Per-card explanation text, generated from planner state. Keyed by option id. */
+  const explanations = useMemo<Record<string, CardExplanation>>(() => {
+    if (!plan || !scenario) return {};
+    return Object.fromEntries(
+      plan.orderedIds.map((id) => [id, explainOption(scenario, plan, decisionProfile, id)]),
+    );
+  }, [plan, scenario, decisionProfile]);
+
+  const panelText = useMemo(() => plannerPanelText(decisionProfile), [decisionProfile]);
+
+  /**
+   * Per-option performance standing, computed once for the scenario rather than per card.
+   *
+   * Every entry is relative to THIS scenario's six options, which is the only frame in which a
+   * metric score means anything (see the scale note in block5Types.ts and MetricStandingBar).
+   */
+  const standings = useMemo<Record<string, { rows: MetricStanding[]; overall: OverallStanding }>>(() => {
+    if (!scenario) return {};
+    return Object.fromEntries(scenario.options.map((o) => [
+      o.id,
+      { rows: metricStandings(scenario, o), overall: overallStanding(scenario, o) },
+    ]));
+  }, [scenario]);
 
   const selectedOption = labeled.find((o) => o.id === selectedOptionId) ?? null;
   const previewOption = labeled.find((o) => o.id === previewOptionId) ?? null;
@@ -402,9 +514,10 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     setStep(null);
     setTradeoffAck(false);
     setQ1Strong(null);
-    setQ2Guided(null);
     setAltViewGenerated(false);
     setFramingChoiceYes(null);
+    setCvrSaidYes(null);
+    setStakeholderMoved(null);
   }, []);
 
   const toggleExpand = useCallback((id: string) => {
@@ -448,14 +561,25 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     setStep("review");
     setTradeoffAck(false);
     setQ1Strong(null);
-    setQ2Guided(null);
     setAltViewGenerated(false);   // a fresh CVR starts with only the first lens
     setFramingChoiceYes(null);
     setProgress((p) => (p.firstChoiceId ? p : { ...p, firstChoiceId: id }));
     // Lock in a random stakeholder voice now (only for a misaligned choice that triggers CVR),
     // so the vignette and the Q2 questions all reference the SAME person and it won't change on re-render.
     const opt = labeled.find((o) => o.id === id);
-    const misaligned = !!(scenario && opt && isMisaligned(opt.level));
+    /*
+     * CVR NEVER FIRES IN A RECIPIENT SCENARIO, however misaligned the wish looks.
+     *
+     * The reflection re-presents the consequences of a decision back to the person who made it.
+     * In a recipient scenario the participant made no decision — they said what they hoped someone
+     * else would do — so there is nothing to hold them to. Running it anyway would ask them to
+     * account for an outcome they were explicitly denied any control over, which is both unfair to
+     * the participant and meaningless as data.
+     *
+     * This one guard is what keeps the whole reflection path out: no vignette, therefore no
+     * endorsement question, therefore no APA update, therefore no churn.
+     */
+    const misaligned = !!(scenario && opt && scenarioIsScored(scenario) && isMisaligned(opt.level));
     if (misaligned && t) {
       t.cvrVisits += 1;          // the CVR vignette is about to be shown
       t.cvrShownAt = Date.now(); // start CVR dwell timer
@@ -466,22 +590,61 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   }, [labeled, scenario, profile]);
 
   // --- CVR / APA telemetry handlers (wrap the existing step transitions; logic unchanged) ---
+  /**
+   * The participant's answer to the vignette. It does NOT go straight to the next page any more —
+   * one affected person speaks first, and argues the other way. `cvrSaidYes` remembers which
+   * side they took, because it decides which person appears and what a switch means.
+   */
   const handleCvrYes = useCallback(() => {
     const t = telRef.current;
     if (t && t.cvrShownAt != null) { t.cvrDwellMs += Math.max(0, Date.now() - t.cvrShownAt); t.cvrShownAt = null; }
-    setStep("q1");
+    setCvrSaidYes(true);
+    if (SHOW_STAKEHOLDER_PAGE) {
+      if (t) t.personVisits += 1;
+      setStep("person");
+    } else {
+      setStep("q1");
+    }
   }, []);
 
   const handleCvrNo = useCallback(() => {
     const t = telRef.current;
     const now = Date.now();
-    if (t) {
-      if (t.cvrShownAt != null) { t.cvrDwellMs += Math.max(0, now - t.cvrShownAt); t.cvrShownAt = null; }
-      t.apaVisits += 1;     // the APA panel is opening
-      t.apaShownAt = now;   // start APA dwell timer
+    if (t && t.cvrShownAt != null) { t.cvrDwellMs += Math.max(0, now - t.cvrShownAt); t.cvrShownAt = null; }
+    setCvrSaidYes(false);
+    if (SHOW_STAKEHOLDER_PAGE) {
+      if (t) t.personVisits += 1;
+      setStep("person");
+      return;
     }
+    if (t) { t.apaVisits += 1; t.apaShownAt = now; }
     setStep("apa");
   }, []);
+
+  /**
+   * The answer on the person-speaks page. `moved` is the whole stakeholder measurement: it is
+   * true when the participant ends up on the opposite side from where they started, which is the
+   * only thing that tells us the person reached them.
+   *
+   * Where they land follows their FINAL position, not their first one:
+   *   ends up keeping the option    -> the confirm flow
+   *   ends up refusing it           -> the APA flow
+   */
+  const handlePersonAnswer = useCallback((moved: boolean) => {
+    const t = telRef.current;
+    const now = Date.now();
+    setStakeholderMoved(moved);
+    const endsUpKeeping = cvrSaidYes ? !moved : moved;
+    if (endsUpKeeping) { setStep("q1"); return; }
+    if (t) { t.apaVisits += 1; t.apaShownAt = now; }
+    setStep("apa");
+  }, [cvrSaidYes]);
+
+  const handlePersonBackout = useCallback(() => {
+    const t = telRef.current;
+    if (t) t.personBackouts += 1;
+    resetFlow();
+  }, [resetFlow]);
 
   const handleCvrBackout = useCallback(() => {
     const t = telRef.current;
@@ -507,15 +670,48 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
   // Records a finished scenario and advances (or completes Block 5). Shared by all paths.
   const finalizeScenario = useCallback((result: Block5ScenarioResult, nextProfile: Block5UserProfile) => {
+    /*
+      PLANNER LOG. Attached here because both result paths — a direct choice and an APA-committed
+      choice — funnel through this one function, so neither can silently ship without it.
+
+      `choiceRank` is the study's key dependent variable, and it is recorded ALONGSIDE
+      `selectedRank` (the alignment position) rather than instead of it. The two are allowed to
+      disagree, and the analysis is the question of when they do.
+    */
+    if (plan) {
+      const p = plan.byId[result.selectedOptionId];
+      result.plannerOrder = plan.orderedIds;
+      result.plannerBins = Object.fromEntries(plan.orderedIds.map((id) => [id, plan.byId[id].bin]));
+      result.plannerWins = Object.fromEntries(plan.orderedIds.map((id) => [id, plan.byId[id].wins]));
+      result.plannerTopOptionId = plan.orderedIds[0];
+      result.plannerCleanReferenceId = plan.cleanReferenceId ?? undefined;
+      result.plannerValueOrder = plan.order;
+      result.plannerDegradedProfile = decisionProfile.degraded;
+      if (p) {
+        result.choiceRank = p.rank;
+        result.choiceBin = p.bin;
+        result.choiceMatchedPlannerTop = p.rank === 1;
+        result.choiceMatchedAlignedTop = labeled[0]?.id === result.selectedOptionId;
+        result.choiceCrossedOwnRedLine = p.breaches.some((b) => b.hard);
+        result.choiceBreaches = p.breaches.map((b) => ({ key: b.key, amount: b.amount, hard: b.hard }));
+        result.choiceUsedTradeOff = p.ignoredTopValueAgainst.length > 0;
+      }
+    }
+
     // Snapshot the 4 policy values + the two reflection lenses AFTER this scenario's update,
     // so the results view can chart how each evolved across the journey.
     result.policySnapshotAfter = policyScoresOf(nextProfile);
     result.framingSnapshotAfter = framingScoresOf(nextProfile);
+    // Stakeholder too: Stability measures movement across all five scored values, and this is
+    // the largest single mover in the block.
+    result.stakeholderSnapshotAfter = nextProfile.dimensions
+      .find((d) => d.key === "stakeholderPerspectiveShiftSensitivity")?.score ?? 50;
     const nextResults = [...progress.scenarioResults, result];
     const nextIndex = progress.currentScenarioIndex + 1;
     if (nextIndex >= BLOCK5_SCENARIOS.length) {
       const vci = computeVCI(nextResults);
-      const stab = computeStability(nextResults);
+      // Measured against the profile as it entered Block 5 — the Blocks 1-4 baseline.
+      const stab = computeStability(nextResults, userProfile);
       const finalResults: Block5Results = {
         completed: true,
         completedAt: new Date().toISOString(),
@@ -524,7 +720,16 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
         scenarioResults: nextResults,
         vci: vci.value, vciLevel: vci.level,
         stability: stab.value, stabilityLevel: stab.level,
+        stabilityDetail: {
+          orderPart: stab.orderPart, movementPart: stab.movementPart,
+          pairsSwapped: stab.pairsSwapped, churn: stab.churn,
+          topValueBefore: stab.topValueBefore, topValueAfter: stab.topValueAfter,
+        },
         performance: averagePerformance(nextResults),
+        // Share of the performance actually on the table, averaged over the scenarios that ran.
+        // Kept beside the raw mean rather than replacing it — see block5Performance.ts.
+        performanceCaptured: overallCaptured(nextResults),
+        performanceCapturedLevel: capturedLabel(overallCaptured(nextResults)),
         // Behavioral telemetry totals (additive; do not affect scoring).
         totalCvrVisits: nextResults.reduce((s, r) => s + (r.telemetry?.cvrVisits ?? 0), 0),
         totalApaVisits: nextResults.reduce((s, r) => s + (r.telemetry?.apaVisits ?? 0), 0),
@@ -549,7 +754,7 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     setPreviewOptionId(null);
     setCompareChartsOpen(false);
     resetFlow();
-  }, [progress, userProfile, onComplete, resetFlow]);
+  }, [progress, userProfile, onComplete, resetFlow, plan, decisionProfile, labeled]);
 
   const commitChoice = useCallback((opt: LabeledOption, opts: {
     nextProfile: Block5UserProfile;
@@ -561,12 +766,25 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
     const origLabeled = labelOptions(scenario.options, userProfile);
     const origLevel = origLabeled.find((o) => o.id === opt.id)?.level;
     const alignedToOriginal = origLevel === "aligned" || origLevel === "weakly_aligned";
-    const coord = isMisaligned(opt.level) ? cvrCoordinate(opt, profile) : undefined;
 
-    // Dual-perspective record (YES / keep path). Only populated for a misaligned option, and the
-    // selection/−20 only when the participant generated the other lens and answered the question.
+    /*
+     * DID A REFLECTION ACTUALLY RUN? Not "is this option misaligned?".
+     *
+     * These are the same question everywhere except a recipient scenario, which is why writing
+     * `isMisaligned(opt.level)` here went unnoticed. On a wish no reflection ever opens, so every
+     * field below that describes one has to be recorded as absent — otherwise the stored row says a
+     * participant was shown a vignette they never saw, carries a CVR coordinate for a reflection
+     * that did not happen, and would be counted in by any analysis filtering on `cvrFired`.
+     *
+     * A measure can survive a wrong pixel. It cannot survive data that misdescribes what occurred.
+     */
+    const cvrRan = scenarioIsScored(scenario) && isMisaligned(opt.level);
+    const coord = cvrRan ? cvrCoordinate(opt, profile) : undefined;
+
+    // Dual-perspective record (YES / keep path). Only populated when a reflection actually ran, and
+    // the selection/−20 only when the participant generated the other lens and answered the question.
     const framingFields: Partial<Block5ScenarioResult> = {};
-    if (isMisaligned(opt.level)) {
+    if (cvrRan) {
       const shownFirst = chooseFraming(profile);
       framingFields.cvrFramingShownFirst = shownFirst;
       if (altViewGenerated) {
@@ -599,18 +817,22 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
       matchScore: opt.matchScore,
       firstChoiceOptionId: progress.firstChoiceId ?? opt.id,
       postCVRChoiceOptionId: opt.id,
-      cvrFired: isMisaligned(opt.level),
+      cvrFired: cvrRan,
       cvrEndorsement: opts.endorsement,
       cvrCoordinate: coord,
       stakeholderGuided: opts.stakeholderGuided,
       alignedToOriginal,
-      vciScore: scenarioVciScore(opt.level, opts.endorsement),
+      decisionRole: scenario.decisionRole ?? "decider",
+      introSeconds: introSecondsRef.current[scenario.id],
+      vciScore: scenarioVciScore(opt.level),
       performanceScore: performanceScore(opt),
+      performanceCaptured: capturedOf(scenario, opt),
+      performanceMenu: { worst: Math.round(menuRange(scenario).worst), best: Math.round(menuRange(scenario).best) },
       metrics: optionMetrics(opt),
       cvrStakeholderShown: cvrWho?.label,
       telemetry: telRef.current
         ? buildScenarioTelemetry(telRef.current, {
-            cvrFired: isMisaligned(opt.level),
+            cvrFired: cvrRan,
             cvrOutcome: !isMisaligned(opt.level)
               ? "none"
               : opts.endorsement === "strong"
@@ -675,8 +897,12 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
       cvrEndorsement: "no",
       stakeholderGuided: payload.q2Influenced,
       alignedToOriginal,
-      vciScore: scenarioVciScore(opt.level, "no"),
+      decisionRole: scenario.decisionRole ?? "decider",
+      introSeconds: introSecondsRef.current[scenario.id],
+      vciScore: scenarioVciScore(opt.level),
       performanceScore: performanceScore(opt),
+      performanceCaptured: capturedOf(scenario, opt),
+      performanceMenu: { worst: Math.round(menuRange(scenario).worst), best: Math.round(menuRange(scenario).best) },
       metrics: optionMetrics(opt),
       apa: {
         q1: payload.q1,
@@ -699,37 +925,91 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
   const handleKeep = useCallback(() => {
     if (!selectedOption) return;
-    // Keeping the relative best fit (now labeled "Aligned") reinforces its value by +15;
-    // weakly-aligned by +10. Both clamped to 100.
-    const points = selectedOption.level === "aligned" ? 15 : selectedOption.level === "weakly_aligned" ? 10 : 0;
+    // Keeping an option that already fits reinforces the value it is built on, and eases off a
+    // value it neglects. The amounts and the guards live in applyKeepUpdates so the scoring rule
+    // sits with the other scoring rules and can be simulated (tools/simulate_vci.cjs).
     // Everyday scenarios teach the profile less than a life-and-death one (scenario.stakesWeight).
-    const nextProfile = points > 0
-      ? applyValueBump(profile, selectedOption, points, scenario?.stakesWeight ?? 1)
-      : profile;
+    /*
+     * A WISH TEACHES THE PROFILE NOTHING. In a recipient scenario the profile is carried through
+     * untouched, so Stability measures only the movement that actual decisions produced.
+     *
+     * This is also why the null model behind STABILITY_CHURN_CEILING had to be re-measured after
+     * these scenarios landed: a deck where one scenario cannot move the profile produces less
+     * accumulated churn than a deck where every scenario can, and the ceiling is a measurement of
+     * the deck rather than a threshold anyone chose.
+     */
+    const nextProfile = scenario && !scenarioIsScored(scenario)
+      ? profile
+      : applyKeepUpdates(
+          profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1,
+        );
     commitChoice(selectedOption, { nextProfile, endorsement: "n/a", stakeholderGuided: null });
   }, [selectedOption, profile, scenario, commitChoice]);
 
   const handleConfirmEndorsement = useCallback(() => {
-    if (!selectedOption || q1Strong === null || q2Guided === null) return;
+    // stakeholderMoved replaces the old "did hearing this influence you?" answer. It is set on
+    // the person-speaks page by whether they switched sides, which is an observation rather than
+    // a self-report. Under the legacy flow the page is skipped, so fall back to "not moved".
+    const moved = SHOW_STAKEHOLDER_PAGE ? stakeholderMoved : false;
+    if (!selectedOption || q1Strong === null || moved === null) return;
     // Dual-perspective: −20 to the lens the participant said did NOT influence keeping the option
     // (only when they generated the other lens and answered). Committed here, with the endorsement.
     const framingAdjust: FramingAdjust | null = altViewGenerated && framingChoiceYes
       ? { sensitivityKey: framingSensitivityKey(framingChoiceYes), delta: -20 }
       : null;
     const nextProfile = applyEndorsementUpdates(
-      profile, selectedOption, q1Strong, q2Guided, framingAdjust, scenario?.stakesWeight ?? 1,
+      profile, selectedOption, q1Strong, moved, framingAdjust, scenario?.stakesWeight ?? 1,
     );
     commitChoice(selectedOption, {
       nextProfile,
       endorsement: q1Strong ? "strong" : "weak",
-      stakeholderGuided: q2Guided,
+      stakeholderGuided: moved,
     });
-  }, [selectedOption, profile, scenario, q1Strong, q2Guided, altViewGenerated, framingChoiceYes, commitChoice]);
+  }, [selectedOption, profile, scenario, q1Strong, stakeholderMoved, altViewGenerated, framingChoiceYes, commitChoice]);
 
   if (!scenario) return null;
 
+  /*
+   * THE SCENE COMES BEFORE THE OPTIONS.
+   *
+   * Every scenario opens on a page of its own carrying the description, the numbers, the
+   * participant's role and — in the workplace pair — the employer's published principle, with
+   * nothing to click but "continue". Position is the one thing Block 5 varies, and on the
+   * simulation page that material sits in a sidebar next to six clickable cards, where a
+   * participant in a hurry can miss it entirely. A manipulation half the sample skims is a
+   * manipulation half the sample never received.
+   *
+   * Shown once per scenario. Re-reading is available from the sidebar, but the gate does not
+   * re-fire on a re-render or a mid-scenario refresh.
+   */
+  /*
+   * The intro is drawn OVER the scenario page rather than instead of it. That is what makes the
+   * transition possible: both screens exist at the same moment, so each intro card can be measured
+   * against the sidebar card it is about to become. Rendered as a replacement, there would be
+   * nothing on screen to travel to.
+   *
+   * The page underneath is inert while the overlay is up — it is covered, and the overlay owns the
+   * scroll.
+   */
+  const introOpen = !introSeen.has(scenario.id);
+
   // Resolved colour palette for the current mode (fresh light theme / cleaned dark theme).
   const pal = getBlock5Palette(scenario, colorMode === "light" ? "light" : "dark");
+
+  /** Deciding or wishing — every string that differs between the two. See DECISION_COPY. */
+  const decisionCopy = DECISION_COPY[scenario.decisionRole ?? "decider"];
+
+  /**
+   * The employer's published principle, chosen from the participant's FROZEN profile.
+   *
+   * Derived here rather than inside the card so it is computed once per scenario and so the card
+   * stays a presentational component. `userProfile` is the pre-Block-5 snapshot: reading the live
+   * profile would let the company's values drift along with the participant's, and the conflict
+   * this scenario is built on would quietly dissolve exactly when they started to move.
+   */
+  const company = scenario.employer
+    ? deriveCompanyValues(userProfile, scenario.employer)
+    : null;
 
   // Show ONLY the 4 policy/value sensitivities (these drive policy fit), strongest first.
   // Directness, Context, and Stakeholder are CVR-framing dimensions — they only shape the
@@ -745,7 +1025,38 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
   };
 
   return (
-    <Box minH="100dvh" style={{ background: pal.pageBg }} px={{ base: "4", md: "6", lg: "8" }} py={{ base: "6", md: "8" }}>
+    <>
+      {/*
+        THE OVERLAY IS A SIBLING OF THE PAGE, NOT A CHILD OF IT.
+
+        Nested inside, every `[data-morph]` lookup on the page root would find the OVERLAY's own
+        cards first — they come earlier in document order — and each card would be measured against
+        itself, producing a transition that travels nowhere. As siblings, the two subtrees are
+        disjoint and each lookup can only find what it is meant to.
+      */}
+      {introOpen && (
+        <Block5ScenarioIntro
+          rootRef={introRef}
+          scenario={scenario}
+          frozenProfile={userProfile}
+          index={progress.currentScenarioIndex + 1}
+          total={BLOCK5_SCENARIOS.length}
+          onBegin={(secondsSpent) => {
+            introSecondsRef.current[scenario.id] = secondsSpent;
+            /* Put the page at its top BEFORE the morph measures anything. The transition reads
+               each destination card's position in the viewport, so a page left scrolled would send
+               the cards flying to coordinates that are about to change — and would drop the
+               participant into the middle of the option list. */
+            window.scrollTo({ top: 0, behavior: "auto" });
+            /* The cards fly to their sidebar positions FIRST; the overlay is dismissed only once
+               they have arrived. Unmounting first would delete the elements being animated. */
+            runMorph(introRef.current, pageRef.current, () => {
+              setIntroSeen((prev) => new Set(prev).add(scenario.id));
+            });
+          }}
+        />
+      )}
+    <Box ref={pageRef} minH="100dvh" style={{ background: pal.pageBg }} px={{ base: "4", md: "6", lg: "8" }} py={{ base: "6", md: "8" }}>
       {/* Header */}
       <VStack gap="2" mb="5" maxW="7xl" mx="auto">
         <HStack gap="3" justify="center" wrap="wrap">
@@ -802,6 +1113,7 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
             description is set at full text colour, one size up.
           */}
           <Box
+            data-morph="scene"
             bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
             borderWidth="1px" borderColor={pal.accent}
             rounded="2xl" overflow="hidden"
@@ -820,10 +1132,16 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
               <Text fontSize="md" color={pal.text} lineHeight="tall">{scenario.description}</Text>
               {scenario.factBase && (
                 /*
-                  "The situation right now" is the live fact base every option is answering. It
-                  used to be a near-black inset with a thin accent edge; it is now washed in the
-                  scenario's own hue with a solid rail and a filled icon chip, so it reads as the
-                  urgent part of the panel rather than a footnote inside it.
+                  THREE FIELDS, THREE JOBS — and they used to be two that said the same thing.
+                    description  the general problem: what has happened, and where.
+                    factBase     the numbers, identical for every option.
+                    role         who the participant is, and who carries the cost.
+
+                  Before this split, `description` restated the scarcity that `factBase` was
+                  supposed to own, four of the five scenarios had no numbers at all, and the
+                  participant's position — the block's entire manipulation — was a clause buried
+                  mid-paragraph where a skimming reader would miss it. `role` is now the last thing
+                  read before the options, with its own rule above it.
                 */
                 <Box
                   borderWidth="1px" borderLeftWidth="5px" rounded="lg" px="4" py="3.5"
@@ -845,7 +1163,36 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
                   <Text fontSize="md" color={pal.text} lineHeight="tall" fontWeight="semibold">{scenario.factBase}</Text>
                 </Box>
               )}
-              <Separator borderColor={pal.separator} />
+            </VStack>
+          </Box>
+
+          {/*
+            YOUR ROLE — its own card, and the loudest one in the column. See ScenarioRoleCard for
+            why the block's independent variable is no longer a clause inside the scene.
+          */}
+          {scenario.role && <ScenarioRoleCard scenario={scenario} pal={pal} />}
+
+          {/*
+            THE EMPLOYER'S PUBLISHED PRINCIPLE — only in the workplace pair, and placed directly
+            under the role card because it is the second half of the same fact: this is who you
+            are, and this is what you are being asked to work under.
+          */}
+          {company && <CompanyPrincipleCard company={company} pal={pal} />}
+
+          {/*
+            YOUR VALUE PRIORITIES — split out of the scene card at the same time. Three cards that
+            each answer one question (what is happening / who am I in it / what do I care about)
+            read faster than one card that answers all three behind two separators, and it lets
+            the role card sit between the situation and the priorities, which is the order the
+            participant actually needs them in.
+          */}
+          <Box
+            bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
+            borderWidth="1px" borderColor={pal.cardBorder}
+            rounded="2xl" overflow="hidden"
+            style={{ boxShadow: pal.sidebarShadow }}
+          >
+            <VStack align="stretch" gap="5" px={{ base: "5", md: "6" }} py={{ base: "5", md: "5" }}>
               <Box>
                 <HStack gap="2" mb="3">
                   <Icon color={pal.accent}><LuShield /></Icon>
@@ -914,17 +1261,64 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
               The options — choose one policy
             </Text>
             <Text fontSize="xs" color={pal.textFaint} mt="1">
-              All {labeled.length} options are available. Each shows how well it fits your value priorities (left).
+              All {displayOptions.length} options are available, and every one of them can be chosen.
             </Text>
           </Box>
-          {labeled.map((opt) => (
-            <OptionCard key={opt.id} option={opt} profile={profile} accent={pal.accent} pal={pal}
-              expanded={expandedOptions.has(opt.id)} onToggle={() => toggleExpand(opt.id)}
-              onSelect={() => handleSelect(opt.id)}
-              isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
-              impact={previewOptionId === opt.id ? impactFor(opt) : null}
-              disabled={step !== null} />
-          ))}
+
+          {/*
+            THE PLANNER PANEL. Shown identically in every scenario, for every participant, whether
+            or not anything is actually blocked. It must NOT appear only when a limit is crossed:
+            an explanation that fires exactly where the measurement is most sensitive would be an
+            uncontrolled manipulation. See docs/BLOCK5_PLANNER_ORDERING_PLAN.md §10.
+          */}
+          <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl"
+            px={{ base: "3.5", md: "4" }} py="3">
+            <HStack gap="2" mb="2" align="center">
+              <Icon color={pal.accent} boxSize="3.5"><LuScale /></Icon>
+              <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase" color={pal.accent}>
+                Why these are in this order
+              </Text>
+            </HStack>
+            <Stack gap="1.5">
+              <Text fontSize="xs" color={pal.text} lineHeight="tall">{panelText.rankingLine}</Text>
+              <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{panelText.limitsLine}</Text>
+              <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">{panelText.noteLine}</Text>
+            </Stack>
+          </Box>
+
+          {displayOptions.map((opt, i) => {
+            const ex = explanations[opt.id];
+            const prev = i > 0 ? explanations[displayOptions[i - 1].id] : null;
+            // A divider is drawn the first time the bin changes, so the three groups read as one
+            // continuous numbered list rather than three separate lists.
+            const divider = ex && ex.bin !== "clear" && (!prev || prev.bin !== ex.bin)
+              ? BIN_DIVIDER[ex.bin]
+              : null;
+            return (
+              <Box key={opt.id}>
+                {divider && (
+                  <HStack gap="3" mb="4" mt="1" align="center">
+                    <Box flex="1" h="1px" bg={pal.separator} />
+                    <Text fontSize="2xs" color={pal.textFaint} textTransform="uppercase"
+                      letterSpacing="wider" textAlign="center" lineHeight="tall">
+                      {divider}
+                    </Text>
+                    <Box flex="1" h="1px" bg={pal.separator} />
+                  </HStack>
+                )}
+                <OptionCard option={opt} profile={profile} accent={pal.accent} pal={pal}
+                  explanation={ex ?? null}
+                  standing={standings[opt.id] ?? null}
+                  scenarioId={scenario.id}
+                  copy={decisionCopy}
+                  expanded={expandedOptions.has(opt.id)} onToggle={() => toggleExpand(opt.id)}
+                  onSelect={() => handleSelect(opt.id)}
+                  isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
+                  impact={previewOptionId === opt.id ? impactFor(opt) : null}
+                  disabled={step !== null} />
+              </Box>
+            );
+          })}
         </VStack>
       </Grid>
 
@@ -950,11 +1344,14 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
           step={step} setStep={setStep}
           tradeoffAck={tradeoffAck} setTradeoffAck={setTradeoffAck}
           q1Strong={q1Strong} setQ1Strong={setQ1Strong}
-          q2Guided={q2Guided} setQ2Guided={setQ2Guided}
+          stakeholderMoved={stakeholderMoved}
           onKeep={handleKeep}
           onConfirmEndorsement={handleConfirmEndorsement}
           onApaCommit={handleApaCommit}
           onChangeMyMind={resetFlow}
+          cvrSaidYes={cvrSaidYes}
+          onPersonAnswer={handlePersonAnswer}
+          onPersonBackout={handlePersonBackout}
           onCvrYes={handleCvrYes}
           onCvrNo={handleCvrNo}
           onCvrBackout={handleCvrBackout}
@@ -968,6 +1365,7 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
         />
       )}
     </Box>
+    </>
   );
 }
 
@@ -975,6 +1373,376 @@ export function Block5PublicEmergencySimulation({ userProfile, onComplete }: Pro
 
 /** LocalStorage key remembering whether the participant hid the metric definitions. */
 const METRIC_MEANINGS_KEY = "block5_show_metric_meanings";
+
+/**
+ * EVERY PIECE OF COPY THAT DIFFERS BETWEEN DECIDING AND WISHING, in one table.
+ *
+ * A recipient scenario asks a genuinely different question — not "what will you do?" but "what do
+ * you want done to you?" — and the interface has to say so consistently or the manipulation leaks.
+ * A participant who is told they are powerless and then handed a button marked "Choose this option"
+ * has been given two contradictory accounts of their own position, and the one they believe is the
+ * one the button implies.
+ *
+ * Collected here rather than spread across a dozen ternaries because the failure mode is a single
+ * missed string: five places saying "wish" and one saying "choose" reads as a bug to a participant
+ * and, worse, quietly restores the sense of agency the scenario exists to remove.
+ */
+const DECISION_COPY = {
+  decider: {
+    cardAction: "Choose this option",
+    dialogEyebrow: "Your choice",
+    fitsIntro: "This option fits your earlier priorities. Before you confirm, take a moment with what it gives up.",
+    commit: "Keep this choice",
+    reconsider: "Change my mind",
+  },
+  recipient: {
+    cardAction: "I wish for this one",
+    dialogEyebrow: "What you wish for",
+    /*
+     * NOT USED ON THE RECIPIENT PATH — see RecipientConfirm below, which replaces this whole
+     * paragraph. Kept only so both roles share one shape.
+     *
+     * The recipient page cannot reuse the decider's line. That line says "this option fits your
+     * earlier priorities", which is true on the decider path because the page only appears there
+     * when the option DOES fit. On the recipient path the page appears for every wish, including
+     * ones that go against the participant's own values — and telling somebody their choice matches
+     * their values when it does not is simply a false statement shown to a participant.
+     */
+    fitsIntro: "",
+    commit: "Yes, this is what I hope they choose",
+    reconsider: "Go back and look again",
+  },
+} as const;
+
+/**
+ * PLAIN WORDS FOR HOW A WISH SITS WITH THE PARTICIPANT'S OWN VALUES.
+ *
+ * "Strongly misaligned" is a research term. This study will be taken by people across a wide range
+ * of English, and a participant who cannot parse the badge cannot use it — which makes it worse
+ * than no badge, because it looks like information while conveying none.
+ *
+ * Same four tiers, same order, ordinary words. Used ONLY on the scenario-5 confirmation page;
+ * scenarios 1–4 keep ALIGNMENT_LABEL, which is what the rest of the study reports against.
+ */
+const WISH_FIT_LABEL: Record<AlignmentLevel, string> = {
+  aligned: "This matches your values",
+  weakly_aligned: "This is close to your values",
+  misaligned: "This is different from your values",
+  strongly_misaligned: "This is very different from your values",
+};
+
+/**
+ * The sentence under the badge. Says the same thing twice — once as a label, once as a sentence —
+ * because the badge is easy to skim past and this is the fact the participant most needs.
+ *
+ * The misaligned wording matters most. A participant who wishes for something that goes against
+ * their own stated values must not be made to feel caught out: the point of this scenario is to
+ * find out what people want when it lands on them, and a page that reads like a telling-off
+ * teaches them to answer the way the software seems to want. "You can still wish for it" is there
+ * to make the permission explicit.
+ */
+const WISH_FIT_SENTENCE: Record<AlignmentLevel, string> = {
+  aligned:
+    "This is close to what you said matters most to you in the earlier questions.",
+  weakly_aligned:
+    "This is fairly close to what you said matters most to you in the earlier questions.",
+  misaligned:
+    "This is not what you said matters most to you in the earlier questions. That is fine — you can still wish for it.",
+  strongly_misaligned:
+    "This is quite far from what you said matters most to you in the earlier questions. That is fine — you can still wish for it.",
+};
+
+/**
+ * WHERE THE PARTICIPANT STANDS, drawn as three fixed rows.
+ *
+ * `stakePosition` is the ONLY thing Block 5 deliberately varies across its five scenarios — the
+ * participant decides alone, then for a household that depends on them, then three times for
+ * people they will never meet. Every other moving part of the block exists to be held constant
+ * against it. It had been carried by one clause of prose inside a callout inside the scene card,
+ * which is a fragile place to put the manipulation: a participant who skims the scene misses it
+ * entirely, and then the position contrast the whole design rests on never happened for them.
+ *
+ * The three rows are the SAME THREE IN THE SAME ORDER in every scenario, so what changes between
+ * scenarios is only which of them is lit. That is what makes the contrast visible rather than
+ * merely present — a participant who reads the card in scenario 1 and again in scenario 3 sees
+ * the emphasis move from the top row to the bottom one.
+ *
+ * The wording is deliberately careful about the third row. In the two scenarios where the
+ * participant is themselves at risk, other residents are still affected by what the participant
+ * takes on the way out — the sidebar's own fact base says so — so the row says that rather than
+ * claiming nobody else is involved. Overstating the isolation would be a tidier graphic and a
+ * false one.
+ */
+const STAKE_VIEW: Record<StakePosition, {
+  badge: string;
+  headline: string;
+  actors: { key: string; icon: ReactNode; label: string; state: string; strong: boolean }[];
+}> = {
+  self: {
+    badge: "Deciding alone",
+    headline: "You are one of the people at risk here — and you are the only one.",
+    actors: [
+      { key: "you", icon: <LuUserRound />, label: "You",
+        state: "At risk. The way out you are choosing is your own.", strong: true },
+      { key: "with", icon: <LuUsersRound />, label: "People with you",
+        state: "Nobody. No one depends on you here, and no one is coming for you.", strong: false },
+      { key: "other", icon: <LuGlobe />, label: "Everyone else",
+        state: "Not yours to save — but affected by whatever you use and whatever you leave.", strong: false },
+    ],
+  },
+  self_and_group: {
+    badge: "Deciding for your household",
+    headline: "You are at risk, and so are the people who depend on you.",
+    actors: [
+      { key: "you", icon: <LuUserRound />, label: "You",
+        state: "At risk. You are choosing your own way out as well as theirs.", strong: true },
+      { key: "with", icon: <LuUsersRound />, label: "Your household",
+        state: "At risk with you, and they cannot make this choice for themselves.", strong: true },
+      { key: "other", icon: <LuGlobe />, label: "Everyone else",
+        state: "Not yours to save — but affected by whatever you use and whatever you leave.", strong: false },
+    ],
+  },
+  others: {
+    badge: "Deciding for other people",
+    headline: "You are not at risk. Every consequence of this choice lands on someone else.",
+    actors: [
+      { key: "you", icon: <LuUserRound />, label: "You",
+        state: "Not at risk. Nothing you decide here reaches you.", strong: false },
+      { key: "with", icon: <LuUsersRound />, label: "People close to you",
+        state: "Not involved. Nobody you know is on the receiving end of this.", strong: false },
+      { key: "other", icon: <LuGlobe />, label: "The people affected",
+        state: "They carry all of it. Every cost of this decision is theirs.", strong: true },
+    ],
+  },
+  /*
+   * The workplace pair. These two differ from the three above on a second axis: not who pays, but
+   * WHOSE VALUES GOVERN and WHETHER THE PARTICIPANT HOLDS THE PEN. The rows are worded so the
+   * contrast between them is unmissable when the same six options appear a second time — in the
+   * first, the participant's own row is the one that decides; in the second, it is the one that
+   * waits.
+   */
+  under_authority: {
+    badge: "Deciding inside your employer's rules",
+    headline: "You are making this call at work, under values your employer has already published.",
+    actors: [
+      { key: "you", icon: <LuUserRound />, label: "You",
+        state: "You decide. Your own hours are not touched, so none of this cost is yours.", strong: false },
+      { key: "with", icon: <LuUsersRound />, label: "Your colleagues",
+        state: "They carry it. The other carers work whatever schedule you set.", strong: true },
+      { key: "other", icon: <LuGlobe />, label: "Your employer",
+        state: "Sets the rule you work under. It carries none of the cost itself.", strong: false },
+    ],
+  },
+  receiving_end: {
+    badge: "It is being decided for you",
+    headline: "Someone else will decide this. This time, it happens to you.",
+    actors: [
+      { key: "you", icon: <LuUserRound />, label: "You",
+        state: "You have no say. You will be told what was decided, and you will work it.", strong: true },
+      { key: "with", icon: <LuUsersRound />, label: "The coordinator",
+        state: "They decide. They are choosing from the same six options you can see here.", strong: false },
+      { key: "other", icon: <LuGlobe />, label: "Your clients",
+        state: "They carry it with you. These are the same visits, seen from the other side.", strong: true },
+    ],
+  },
+};
+
+/**
+ * ScenarioRoleCard — "who you are in this one", as a card of its own.
+ *
+ * It is the loudest thing in the sidebar on purpose: a 2px accent border, an accent ring, a solid
+ * accent header and a tinted body, where the scene card beside it has a solid header and a plain
+ * body. Nothing else in the column competes with it, because nothing else in the column is the
+ * study's independent variable.
+ */
+/**
+ * CompanyPrincipleCard — what the employer says it stands for, and what the participant scored.
+ *
+ * DELIBERATELY QUIETER THAN THE ROLE CARD, and drawn in neutral grey rather than the scenario
+ * accent. The role card is the study's independent variable and should shout; this one is a
+ * document the participant has been handed. Giving it the same emphasis would make the sidebar two
+ * competing headlines, and — more to the point — an employer principle rendered in the interface's
+ * own celebratory colour reads as the interface endorsing it. The dotted border and the muted
+ * palette say "this is their position, not ours", which is exactly the distance the scenario needs.
+ *
+ * THE PARTICIPANT'S OWN SCORE IS SHOWN NEXT TO IT, from the frozen profile. Without it the conflict
+ * is something the participant has to reconstruct from memory of Blocks 1–3; with it, the gap is on
+ * the screen. That matters because the whole scenario turns on their noticing it.
+ */
+/**
+ * THE EMPLOYER'S PUBLISHED PRINCIPLE — scenarios 4 and 5 only.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * WHY THIS CARD IS THE LOUDEST THING ON THE PAGE
+ *
+ * Scenarios 4 and 5 are not about a fire or a ward. They are about being asked to work under a
+ * value you do not hold. If the participant does not NOTICE the employer's principle, and does
+ * not notice that it is the value they personally rated LOWEST, they are not in the dilemma — they
+ * are just picking options. The conflict is the manipulation, so the conflict has to be legible in
+ * about two seconds.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * WHY IT DOES NOT USE THE SCENARIO'S OWN COLOUR
+ *
+ * Every other card on the page is tinted with the scenario accent. An employer's demand rendered
+ * in the interface's own colour reads as the interface AGREEING with it, and this study must not
+ * put a thumb on that scale. So the chrome is deliberately institutional — a slate letterhead that
+ * belongs to the company, not to us.
+ *
+ * Amber appears in exactly one place: the strip that names the disagreement. That is semantic, not
+ * decorative — it marks a mismatch, the same way a warning does everywhere else in the interface.
+ *
+ * ────────────────────────────────────────────────────────────────────────────
+ * WHY THE PARTICIPANT'S OWN SCORE IS NOT SHOWN HERE
+ *
+ * This card briefly drew the company's position against the participant's own, and said this was
+ * the value they rated lowest. Both numbers came from the FROZEN pre-Block-5 profile, while the
+ * "your value priorities" card directly below it shows the LIVE one. A participant whose score had
+ * moved therefore saw two different numbers for themselves, stacked, on the same screen.
+ *
+ * Switching to the live number would have fixed that and broken two other things: "the one you
+ * rated lowest" stops being true once the profile moves, and the gap would then differ between
+ * scenarios 4 and 5 — a pair deliberately built to present identically.
+ *
+ * So the card states what the COMPANY holds and says nothing about the participant. Their own
+ * priorities are already on screen immediately below it, and the comparison is theirs to draw.
+ * That is also the more honest position for an instrument whose whole purpose is to measure
+ * whether they draw it.
+ */
+const PRINCIPLE_CONFLICT = { light: "#b45309", dark: "#fbbf24" } as const;
+const PRINCIPLE_LETTERHEAD = { light: "#334155", dark: "#0f172a" } as const;
+
+export function CompanyPrincipleCard({ company, pal, variant = "sidebar" }: {
+  company: DerivedCompanyValues; pal: Block5Palette; variant?: "hero" | "sidebar";
+}) {
+  const hero = variant === "hero";
+  const warn = PRINCIPLE_CONFLICT[pal.mode];
+  const head = PRINCIPLE_LETTERHEAD[pal.mode];
+  const px = hero ? { base: "5", md: "8" } : { base: "5", md: "6" };
+
+  return (
+    <Box
+      data-morph="employer"
+      rounded="2xl" overflow="hidden"
+      borderWidth={hero ? "2px" : "1px"} borderColor={head}
+      bg={pal.panelDeep}
+      style={{ boxShadow: hero ? `0 0 0 5px ${warn}26, 0 18px 40px rgba(0,0,0,0.28)` : pal.cardShadow }}
+    >
+      {/* ---- letterhead: this is the COMPANY speaking, not the interface ---- */}
+      <HStack gap="2.5" px={px} py={hero ? "3.5" : "2.5"} style={{ background: head, color: "#ffffff" }}>
+        <Icon boxSize={hero ? "4.5" : "3.5"}><LuBuilding2 /></Icon>
+        <Text fontSize={hero ? "xs" : "2xs"} fontWeight="bold"
+          textTransform="uppercase" letterSpacing="widest" lineHeight="short">
+          {company.principleLabel}
+        </Text>
+      </HStack>
+
+      {/* ---- the published sentence ---- */}
+      <HStack align="start" gap={hero ? "3" : "2"} px={px} pt={hero ? "5" : "4"} pb={hero ? "4" : "3"}>
+        <Text flex="0 0 auto" aria-hidden="true" color={warn} lineHeight="0.8"
+          fontSize={hero ? "5xl" : "3xl"} fontFamily="Georgia, 'Times New Roman', serif">
+          &ldquo;
+        </Text>
+        <Stack gap={hero ? "2.5" : "1.5"} minW="0">
+          <Text fontSize={hero ? { base: "lg", md: "xl" } : "sm"} fontWeight="bold"
+            color={pal.text} lineHeight="tall">
+            {company.principle}
+          </Text>
+          <Text fontSize={hero ? "sm" : "xs"} color={pal.textMuted} lineHeight="tall">
+            {company.rationale}
+          </Text>
+        </Stack>
+      </HStack>
+
+      {/* ---- the value the company puts first: stated, not scored ---- */}
+      <Box px={px} py={hero ? "4" : "3"} borderTopWidth="1px"
+        style={{ background: `${warn}14`, borderTopColor: `${warn}4D` }}>
+        <Text fontSize="2xs" fontWeight="bold" color={warn}
+          textTransform="uppercase" letterSpacing="widest" mb={hero ? "2" : "1.5"}>
+          The value {company.name} puts first
+        </Text>
+        <Text fontSize={hero ? { base: "xl", md: "2xl" } : "md"} fontWeight="bold" fontStyle="italic"
+          color={warn} lineHeight="short">
+          {POLICY_DIM_SHORT[company.statedKey]}
+        </Text>
+      </Box>
+    </Box>
+  );
+}
+
+export function ScenarioRoleCard({ scenario, pal }: { scenario: Block5Scenario; pal: Block5Palette }) {
+  const view = scenario.stakePosition ? STAKE_VIEW[scenario.stakePosition] : null;
+  const onAccent = onAccentText(pal.accent);
+  return (
+    <Box
+      data-morph="role"
+      bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
+      borderWidth="2px" borderColor={pal.accent}
+      rounded="2xl" overflow="hidden"
+      style={{ boxShadow: `0 0 0 4px ${pal.accent}1F, ${pal.sidebarShadow}` }}
+    >
+      <HStack gap="2" px={{ base: "4", md: "5" }} py="3" justify="space-between" align="center"
+        style={{ background: pal.accent, color: onAccent }}>
+        <HStack gap="2.5" minW="0">
+          <Icon boxSize="4"><LuUserRound /></Icon>
+          <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="widest">
+            Your role
+          </Text>
+        </HStack>
+        {view && (
+          <Text fontSize="2xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wider"
+            px="2" py="0.5" rounded="md" textAlign="right" lineHeight="short"
+            style={{ background: onAccent === "#ffffff" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.3)" }}>
+            {view.badge}
+          </Text>
+        )}
+      </HStack>
+
+      <VStack align="stretch" gap="3.5" px={{ base: "5", md: "6" }} py={{ base: "4", md: "5" }}
+        style={{ background: `${pal.accent}14` }}>
+        {view && (
+          <Text fontSize="md" fontWeight="bold" color={pal.text} lineHeight="tall">{view.headline}</Text>
+        )}
+        {/* The people are marked with {w|…} — the same "who is affected" colour the CVR uses — so
+            the person a decision lands on looks the same everywhere in the block, from this
+            sidebar through to the vignette. */}
+        <Text fontSize="sm" color={pal.text} lineHeight="tall">
+          {renderCVRMarkup(scenario.role ?? "", cvrMarks(pal.mode))}
+        </Text>
+
+        {view && (
+          <Box borderTopWidth="1px" pt="3.5" style={{ borderTopColor: `${pal.accent}59` }}>
+            <Text fontSize="2xs" fontWeight="bold" color={pal.textMuted}
+              textTransform="uppercase" letterSpacing="wider" mb="2.5">
+              Who this choice lands on
+            </Text>
+            <VStack align="stretch" gap="2.5">
+              {view.actors.map((a) => (
+                <HStack key={a.key} gap="2.5" align="start">
+                  <Center boxSize="6" minW="6" rounded="lg" flexShrink={0}
+                    style={a.strong
+                      ? { background: pal.accent, color: onAccent }
+                      : { background: pal.surfaceSubtle, color: pal.textFaint, border: `1px solid ${pal.separator}` }}>
+                    <Icon boxSize="3.5">{a.icon}</Icon>
+                  </Center>
+                  <Box minW="0">
+                    <Text fontSize="xs" fontWeight={a.strong ? "bold" : "semibold"}
+                      color={a.strong ? pal.text : pal.textMuted}>
+                      {a.label}
+                    </Text>
+                    <Text fontSize="2xs" lineHeight="tall" color={a.strong ? pal.text : pal.textFaint}>
+                      {a.state}
+                    </Text>
+                  </Box>
+                </HStack>
+              ))}
+            </VStack>
+          </Box>
+        )}
+      </VStack>
+    </Box>
+  );
+}
 
 function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal, scenarioId }: {
   current: Block5MetricProfile;
@@ -989,7 +1757,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
   /**
    * Definitions are shown UNDER each metric by default rather than hidden behind a hover.
    *
-   * With eight metrics there was no room and hover was the only option, which meant the meaning
+   * With the earlier eight metrics there was no room and hover was the only option, which meant the meaning
    * was invisible to anyone who did not think to hover — and invisible on touch entirely. Five
    * metrics leave room to simply say what each one means. The participant can collapse them once
    * they know, and that choice is remembered across scenarios.
@@ -1065,13 +1833,35 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
 
       {showInfo && (
         <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="lg" px="4" py="3" mb="3">
-          <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-            These 8 bars show how good your chosen policies are overall (total benefit, fairness, protecting the
-            vulnerable, and so on), each 0–100. When you confirm a choice, its scores are <b>averaged</b> into these
-            bars — so they can never go above 100. “Preview impact” shows what the average <b>would become</b> if you
-            picked an option. This measures <b>outcome quality</b>, which is separate from how well an option matches
-            <b> your values</b> (the alignment label on each card).
-          </Text>
+          {/*
+            THIS PANEL USED TO DESCRIBE A BLOCK THAT NO LONGER EXISTS. It said "these 8 bars" when
+            there are five, and it named the four VALUES — total benefit, fairness, protecting the
+            vulnerable — as though they were the performance measures. Those are the two things a
+            participant most needs kept apart, and the one explanation offered for the gauge was
+            running them together.
+
+            It now says the three things that are actually true and are actually confusable: this
+            is a record of choices already made, the same five names inside a card are a forecast
+            for one option not yet chosen, and neither has anything to do with the alignment label.
+          */}
+          <VStack align="start" gap="2">
+            <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
+              These five bars are a running record of <b>your own choices</b> — not a score for any option
+              in front of you. Each time you confirm a choice, that option's five readings are
+              <b> averaged</b> in, so the bars start at zero, fill in as you go, and can never pass 100.
+              “Preview impact” on a card shows what they <b>would become</b> if you picked it, without
+              picking it.
+            </Text>
+            <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
+              The same five names appear inside each option card, under “What this option achieves”. Those
+              describe <b>one option you have not chosen</b>, placed against the other five on this table.
+              They are not your score.
+            </Text>
+            <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">
+              All of this is <b>outcome quality</b>. How well an option matches <b>your values</b> is a
+              separate thing entirely — that is the alignment label on each card.
+            </Text>
+          </VStack>
         </Box>
       )}
 
@@ -1125,29 +1915,82 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
 
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, pal, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled }: {
+function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled }: {
   option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
+  /** Planner state for this card, or null before the planner has run. */
+  explanation: CardExplanation | null;
+  /** Where this option's five metrics sit inside the range its scenario offers. */
+  standing: { rows: MetricStanding[]; overall: OverallStanding } | null;
+  /** Chooses which reading of each metric to show — "speed" is not the same thing in every scenario. */
+  scenarioId: string;
+  /** Deciding-versus-wishing wording for this scenario. See DECISION_COPY. */
+  copy: (typeof DECISION_COPY)[keyof typeof DECISION_COPY];
   expanded: boolean; onToggle: () => void; onSelect: () => void;
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
 }) {
   const levelColor = (pal.mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[option.level];
   const pos = pal.mode === "light" ? "#15803d" : "#86efac";
   const neg = pal.mode === "light" ? "#b91c1c" : "#fca5a5";
+  /*
+    BIN TREATMENT. A blocked card is recessed, never disabled and never red. The study exists to
+    measure whether people cross lines they drew themselves, which is unmeasurable if the interface
+    refuses the click — and a warning colour would be the interface expressing disapproval, which
+    is a variable nobody meant to introduce. It recedes; it does not object.
+  */
+  const recessed = explanation?.bin === "blocked";
   return (
     <Box bg={pal.cardBg} backdropFilter={pal.backdropBlur} borderWidth={isPreviewing ? "2px" : "1px"}
       borderColor={isPreviewing ? accent : pal.cardBorder} rounded="2xl" p={{ base: "5", md: "6" }} style={{ boxShadow: pal.cardShadow }}
-      opacity={disabled ? 0.5 : 1} transition="all 0.2s ease" _hover={disabled ? {} : { borderColor: pal.cardHoverBorder }}>
+      opacity={disabled ? 0.5 : recessed ? 0.82 : 1} transition="all 0.2s ease" _hover={disabled ? {} : { borderColor: pal.cardHoverBorder, opacity: 1 }}>
       <Flex justify="space-between" align="start" gap="4" wrap="wrap">
-        <VStack align="start" gap="1" minW="0" flex="1">
-          <Text color={pal.text} fontWeight="semibold" fontSize="md" lineHeight="short">{option.title}</Text>
-          <Text color={pal.textMuted} fontSize="sm" lineHeight="tall">{option.summary}</Text>
-        </VStack>
+        <HStack align="start" gap="3" minW="0" flex="1">
+          {explanation && (
+            /* The planner's position. Deliberately NOT merged with the alignment tier beside it:
+               a participant must be able to see a card labelled "Aligned" sitting at rank 4. */
+            <Flex flexShrink={0} align="center" justify="center" w="7" h="7" rounded="lg"
+              borderWidth="1px" borderColor={pal.cardBorder} bg={pal.panelDeep} mt="0.5">
+              <Text fontSize="sm" fontWeight="bold" color={pal.text} fontFamily="mono" lineHeight="1">
+                {explanation.rank}
+              </Text>
+            </Flex>
+          )}
+          <VStack align="start" gap="1" minW="0" flex="1">
+            <Text color={pal.text} fontWeight="semibold" fontSize="md" lineHeight="short">{option.title}</Text>
+            <Text color={pal.textMuted} fontSize="sm" lineHeight="tall">{option.summary}</Text>
+          </VStack>
+        </HStack>
         <VStack align="end" gap="1" flexShrink={0}>
           <Badge bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
             {ALIGNMENT_LABEL[option.level]}
           </Badge>
+          {explanation?.binLabel && (
+            <Badge bg="transparent" color={pal.textFaint} borderWidth="1px" borderColor={pal.separator}
+              rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="semibold">
+              {explanation.binLabel}
+            </Badge>
+          )}
+          {/*
+            ALIGN IS A NUMBER; PERF IS A PLACING. That asymmetry is deliberate.
+
+            `matchScore` is a threshold-satisfaction score, so its 0 and its 100 mean something
+            fixed: 100 is "meets every line you drew", 0 is "meets none of them". A number is the
+            honest form for it.
+
+            `performance` is the unweighted mean of five metrics, and its zero means nothing at
+            all — across this scenario's six options it only ever ranges from about 54 to 69. A
+            bare "Perf 62" invites the participant to read 62/100 as a middling mark when it is in
+            fact fifth of six. Worse, the expanded panel scores the same option against the range
+            the table covers, so the card was showing TWO different performance numbers for one
+            option. The placing says the true thing once, in the same words the panel and the five
+            metric bars use.
+          */}
           <Badge bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono">Align {option.matchScore}</Badge>
-          <Badge bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono">Perf {option.performance}</Badge>
+          <Badge bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono"
+            title={standing
+              ? `On the five outcome measures combined, this is the ${ordinal(standing.overall.rank)} strongest of the ${standing.overall.total} options in this scenario`
+              : undefined}>
+            {standing ? `Perf ${ordinal(standing.overall.rank)} of ${standing.overall.total}` : `Perf ${option.performance}`}
+          </Badge>
         </VStack>
       </Flex>
 
@@ -1194,6 +2037,46 @@ function OptionCard({ option, profile, accent, pal, expanded, onToggle, onSelect
         </Box>
       )}
 
+      {/*
+        WHY IT RANKED HERE — generated entirely from planner state (block5PlannerText.ts).
+        Nothing here is authored per option: an explanation written by hand could disagree with the
+        ordering it is explaining, and a participant who notices that stops believing any of it.
+      */}
+      {explanation && (
+        <Box mt="3" bg={pal.panelDeep} borderWidth="1px" borderColor={pal.separator}
+          rounded="xl" px={{ base: "3.5", md: "4" }} py="3">
+          <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase"
+            color={pal.textFaint} mb="2">
+            Ranked {explanation.rank} — why
+          </Text>
+          <Stack gap="1.5">
+            <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
+              {explanation.winsLine}{explanation.decidedLine ? ` ${explanation.decidedLine}` : ""}
+            </Text>
+            {explanation.referenceLine && (
+              <Text fontSize="xs" color={pal.text} lineHeight="tall">{explanation.referenceLine}</Text>
+            )}
+            {explanation.tradeLine && (
+              <Text fontSize="xs" color={pal.text} lineHeight="tall" fontStyle="italic">
+                {explanation.tradeLine}
+              </Text>
+            )}
+            {explanation.breachLine && (
+              <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{explanation.breachLine}</Text>
+            )}
+          </Stack>
+          {explanation.chips.length > 0 && (
+            <HStack gap="2" wrap="wrap" mt="2.5">
+              {explanation.chips.map((c) => (
+                <Badge key={c} bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs">
+                  {c}
+                </Badge>
+              ))}
+            </HStack>
+          )}
+        </Box>
+      )}
+
       {/* Inline impact (issue 1: visible without scrolling to the top dashboard) */}
       {impact && (
         <Box mt="3" bg={pal.panelDeep} borderWidth="1px" borderColor={accent} rounded="lg" px="3" py="2">
@@ -1232,7 +2115,7 @@ function OptionCard({ option, profile, accent, pal, expanded, onToggle, onSelect
           {isPreviewing ? "Previewing impact" : "Preview impact"}
         </Button>
         <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={onSelect} disabled={disabled} fontSize="xs" fontWeight="semibold">
-          Choose this option
+          {copy.cardAction}
         </Button>
       </HStack>
 
@@ -1243,17 +2126,85 @@ function OptionCard({ option, profile, accent, pal, expanded, onToggle, onSelect
           </Text>
           <Text fontSize="2xs" color={pal.textFaint} mb="3" lineHeight="tall">
             The marker line is your priority for each value. A bar that reaches or passes the line satisfies that value;
-            a gap below the line is a shortfall that lowers alignment.
+            a gap below the line is a shortfall that lowers alignment. On every bar here a LONGER bar is better.
           </Text>
           <VStack align="stretch" gap="3">
             {POLICY_DIM_KEYS.map((k) => {
               const dim = profile.dimensions.find((d) => d.key === k);
               return (
-                <SensitivityMeterBar key={k} label={dim?.label ?? k} optionScore={option.fingerprint[k]} userScore={dim?.score ?? 50} accentColor={accent} mode={pal.mode} />
+                <SensitivityMeterBar key={k} label={dim?.label ?? k} optionScore={option.fingerprint[k]}
+                  userScore={dim?.score ?? 50} accentColor={accent} mode={pal.mode}
+                  higherMeans={POLICY_DIM_HIGHER_MEANS[k]} />
               );
             })}
           </VStack>
           <Box mt="3"><MeterLegend mode={pal.mode} /></Box>
+
+          {/*
+            WHAT IT ACHIEVES — the other half of the same question, in the same panel.
+
+            The card already says what the option IS (title, summary, trade-off) and how it meets
+            the participant's VALUES (bars above). Until now the five outcome measures lived only
+            as three word-chips and a session dashboard at the top of the page, so the connection
+            between "this is what I believe", "this is what this option does to those beliefs" and
+            "this is what it actually achieves" was never on screen at once.
+
+            Every bar is drawn against the range this scenario's six options span, because a metric
+            score is only ever a position within its own scenario — see MetricStandingBar.
+          */}
+          {standing && (
+            <Box mt="5" pt="4" borderTopWidth="1px" borderColor={pal.separator}>
+              <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
+                What this option achieves
+              </Text>
+              <Text fontSize="2xs" color={pal.textFaint} mb="3" lineHeight="tall">
+                These five say how well the option works, never who it helps — that is what the values above
+                are for. Each one is scored against the other {standing.overall.total - 1} options on this
+                table, so a bar reaching the green tick is the best this situation allows, and one sitting at
+                the red tick is the weakest anything here manages.
+              </Text>
+              <VStack align="stretch" gap="3">
+                {standing.rows.map((m) => (
+                  <MetricStandingBar key={m.key}
+                    label={METRIC_LABELS[m.key]}
+                    reading={metricMeaning(m.key, scenarioId)}
+                    score={m.score} worst={m.worst} best={m.best}
+                    rank={m.rank} total={m.total} mode={pal.mode} />
+                ))}
+              </VStack>
+              <Box mt="3"><MetricStandingLegend mode={pal.mode} total={standing.overall.total} /></Box>
+
+              {/*
+                THE CLOSING LINE LEADS WITH THE PLACING, NOT THE PERCENTAGE.
+
+                `captured` is a min-max position, so on every table the weakest option scores
+                exactly 0 and the strongest exactly 100. On its own, "takes 0% of the outcome
+                quality" reads as "this option achieves nothing" — which is false: the 0% option
+                in scenario 1 scores 45/46/71/72/37 and is simply last of six.
+
+                Leading with "6th of 6" says the true thing in the same grammar as the five bars
+                above, and the percentage then does the job a placing cannot: it says HOW FAR APART
+                the placings are. In scenario 1 the top three options land on 100, 99 and 96 — near
+                enough identical overall while reaching it by completely different routes — and a
+                bare ranking would hide that the participant is choosing between near-equals.
+              */}
+              <Box mt="3" bg={pal.tradeoffBg} borderWidth="1px" borderColor={pal.tradeoffBorder}
+                rounded="lg" px="3.5" py="2.5">
+                <Text fontSize="xs" color={pal.text} lineHeight="tall">
+                  Taken together, this is the{" "}
+                  <Text as="span" fontWeight="bold">
+                    {ordinal(standing.overall.rank)} strongest of the {standing.overall.total} options here
+                  </Text>{" "}
+                  on the five measures combined.
+                </Text>
+                <Text fontSize="2xs" color={pal.textFaint} mt="1" lineHeight="tall">
+                  It scores <Text as="span" fontWeight="semibold">{standing.overall.captured} out of 100</Text>{" "}
+                  on a scale where the strongest option on this table is 100 and the weakest is 0. That is a
+                  comparison inside this scenario only — it says nothing about the other four.
+                </Text>
+              </Box>
+            </Box>
+          )}
         </Box>
       )}
     </Box>
@@ -1376,16 +2327,20 @@ function ViewToggle({ current, framingFirst, framingSecond, accent, onSelect }: 
  * Side-by-side comparison of the two reflection lenses, using the exact framing clauses the
  * participant saw. Shown next to the dual-perspective question so the choice is unmistakable.
  */
-function FramingComparisonTable({ scenario, mode }: { scenario: Block5Scenario; mode: "light" | "dark" }) {
-  const clauses = getCVRFramingClauses(scenario);
-  const markColor = cvrMarks(mode).f.color;
+function FramingComparisonTable({ scenario, option, coord, mode }: {
+  scenario: Block5Scenario; option: LabeledOption; coord: CVRCoordinate; mode: "light" | "dark";
+}) {
+  const marks = cvrMarks(mode);
+  const lenses = getCVRLensPair(scenario, option, coord);
+  const markColor = marks.f.color;
   const cell = (framing: CVRFraming) => (
     <Box flex="1" minW="0" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="lg" px="3" py="2.5">
       <Text fontSize="2xs" fontWeight="bold" color="fg" mb="1">
         <Text as="span" color={markColor}>▍</Text> {FRAMING_META[framing].name}
         <Text as="span" color="fg.subtle" fontWeight="normal"> — {FRAMING_META[framing].gloss}</Text>
       </Text>
-      <Text fontSize="2xs" color="fg.muted" fontStyle="italic" lineHeight="tall">“{clauses[framing]}”</Text>
+      <Text fontSize="2xs" color="fg.subtle" fontWeight="semibold" mb="1">{lenses[framing].heading}</Text>
+      <Text fontSize="2xs" color="fg.muted" lineHeight="tall">{renderCVRMarkup(lenses[framing].prompt, marks)}</Text>
     </Box>
   );
   return (
@@ -1422,7 +2377,20 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
 }) {
   type Phase = "thinking" | "box1" | "box2" | "legend" | "done";
   const [phase, setPhase] = useState<Phase>("thinking");
-  const [b2Step, setB2Step] = useState(0); // 0 = typing stakeholder, 1 = typing question, 2 = done
+  const [b2Step, setB2Step] = useState(0); // the re-endorse question: 0 = typing, 2 = done
+  /**
+   * How far the LENS BLOCK has streamed.
+   *
+   * 0 = its opening paragraph is typing · 1..n = the nth consequence is typing ·
+   * n+1 = the closing line is typing · n+2 = the whole block is on screen.
+   *
+   * The block used to appear whole, in one frame, immediately under a paragraph that had just
+   * typed itself out character by character. The seam was obvious: the first half looked like it
+   * was being written and the second half looked like it had been sitting there all along. The
+   * consequences are also the part the reflection actually turns on, so they are the last thing
+   * that should arrive without being read.
+   */
+  const [b2Part, setB2Part] = useState(0);
   const [skipped, setSkipped] = useState(false);
 
   // Dual-perspective: alt-view generation state + which lens box 1 currently shows.
@@ -1455,8 +2423,47 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
     return () => clearTimeout(id);
   }, [altState]);
 
-  const skip = useCallback(() => { setSkipped(true); setB2Step(2); setPhase("done"); }, []);
-  const generateAlt = useCallback(() => { setAltState("regenThinking"); }, []);
+  const skip = useCallback(() => { setSkipped(true); setB2Step(2); setB2Part(999); setPhase("done"); }, []);
+  /**
+   * Generating the second lens.
+   *
+   * onAltGenerated fires HERE, on the click — not when the new text finishes typing, which is
+   * where it used to fire. The CVR answer buttons stay live during that typing, so a participant
+   * who pressed generate and then answered straight away was recorded as never having generated
+   * the second view: they were not asked which lens moved them, and the framing adjustment could
+   * not be applied. Nothing was corrupted, but an observation was silently lost. Pressing the
+   * button IS the act being recorded, so the click is the honest moment to record it.
+   */
+  const generateAlt = useCallback(() => {
+    setAltState("regenThinking");
+    onAltGenerated();
+  }, [onAltGenerated]);
+
+  /**
+   * Which story is on screen: the first lens, or the second once the participant generated it.
+   * Both the recontext paragraph and the lens block read from this, so they can never disagree.
+   */
+  const shownStory = altState === "ready" && currentView === "second" ? altStory : story;
+
+  /** The lens block's parts, and the cursor value that means "all of it is on screen". */
+  const lensPoints = shownStory.lens?.points ?? [];
+  const b2Done = lensPoints.length + 2;
+  /** A vignette with no lens block has nothing to wait for, so it must not gate what follows. */
+  const b2Complete = skipped || !shownStory.lens || b2Part >= b2Done;
+
+  /* Generating the second lens re-streams the whole block, not just its first paragraph — the
+     consequences are what actually differ between the two lenses. */
+  useEffect(() => {
+    if (altState === "regenTyping") setB2Part(0);
+  }, [altState]);
+
+  /* The second lens is "ready" once its LAST line has typed, not its first. */
+  useEffect(() => {
+    if (altState === "regenTyping" && b2Part >= b2Done) {
+      setAltState("ready");
+      setCurrentView("second");
+    }
+  }, [altState, b2Part, b2Done]);
 
   const showBox1 = skipped || phase !== "thinking";
   const showBox2 = skipped || phase === "box2" || phase === "legend" || phase === "done";
@@ -1464,23 +2471,22 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
   const showButtons = skipped || phase === "done";
   const revealComplete = skipped || phase === "done";
 
-  // Box-1 content: initial typing of the first lens → alt-view thinking/typing → settled full text.
+  /*
+   * Box 1 — the facts and the trade-off. It no longer changes when the second lens is generated.
+   *
+   * It used to re-type itself, because the framing clause lived inside this paragraph. The
+   * framing now has its own block, so the two versions of this paragraph are IDENTICAL — the
+   * animation was re-typing the same sentence while the actual change happened silently below.
+   * The regeneration now plays where the change really is: in the lens block.
+   */
   let box1Inner: ReactNode;
   if (phase === "box1" && !skipped && altState === "none") {
     box1Inner = (
       <Typed text={story.recontext} marks={marks} accent={accent} fontSize="sm" color="fg" lineHeight="tall"
         onComplete={() => setPhase("box2")} />
     );
-  } else if (altState === "regenThinking") {
-    box1Inner = <CVRThinking accent={accent} label={`Reframing through the ${FRAMING_META[framingSecond].name} lens`} />;
-  } else if (altState === "regenTyping") {
-    box1Inner = (
-      <Typed text={altStory.recontext} marks={marks} accent={accent} fontSize="sm" color="fg" lineHeight="tall"
-        onComplete={() => { setAltState("ready"); setCurrentView("second"); onAltGenerated(); }} />
-    );
   } else {
-    const recontext = currentView === "first" ? story.recontext : altStory.recontext;
-    box1Inner = <Text fontSize="sm" color="fg" lineHeight="tall">{renderCVRMarkup(recontext, marks)}</Text>;
+    box1Inner = <Text fontSize="sm" color="fg" lineHeight="tall">{renderCVRMarkup(shownStory.recontext, marks)}</Text>;
   }
 
   return (
@@ -1526,32 +2532,116 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
       )}
 
       {/*
-        The stakeholder's words AND the re-endorsement question, in one box.
-        ---------------------------------------------------------------------------------------
-        This page was briefly changed so the question sat in its own QuestionCard below, matching
-        the APA and keep-confirmation screens. It was reverted at the researcher's request: the
-        vignette and the question it provokes are one continuous piece of reading here, and
-        splitting them broke that. The question stays as the closing, emphasised line of the
-        stakeholder's paragraph.
+        THE LENS — the reflection made visible rather than asserted.
 
-        The screens BEHIND the two answers below — the keep-confirmation and the APA panel — do
-        still use QuestionCard. Only this vignette page is exempt.
+        CONTEXT shows the participant's own rule running in an equally serious second setting;
+        DIRECTNESS shows the same list produced by their own hand rather than by a process. Which
+        one appears is chooseFraming()'s decision; generating the other view swaps this whole
+        block, which is why the alt-view toggle now reads shownStory instead of story.
       */}
-      {showBox2 && (
-        <Box bg="purple.subtle" borderWidth="1px" borderColor="purple.muted" rounded="xl" px="4" py="4" animationName="fade-in" animationDuration="moderate">
-          {skipped || b2Step >= 1 ? (
-            <Text fontSize="sm" color="fg" lineHeight="tall" mb="3">{renderCVRMarkup(story.stakeholder, marks)}</Text>
+      {showBox2 && shownStory.lens && (
+        <Box
+          bg="bg.subtle" borderWidth="1px" borderColor="border.emphasized"
+          borderLeftWidth="4px" borderLeftColor={accent}
+          rounded="xl" px="4" py="4"
+          animationName="fade-in" animationDuration="moderate"
+        >
+          <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="2">
+            {altState === "regenThinking" || altState === "regenTyping"
+              ? (altStory.lens ? altStory.lens.heading : shownStory.lens.heading)
+              : shownStory.lens.heading}
+          </Text>
+          {altState === "regenThinking" ? (
+            <CVRThinking accent={accent} label={`Reframing through the ${FRAMING_META[framingSecond].name} lens`} />
           ) : (
-            <Typed text={story.stakeholder} marks={marks} accent={accent} fontSize="sm" color="fg" lineHeight="tall" mb="3"
-              onComplete={() => setB2Step(1)} />
+            <>
+              {/* the opening paragraph */}
+              {skipped || b2Part > 0 ? (
+                <Text fontSize="sm" color="fg" lineHeight="tall" mb="3">
+                  {renderCVRMarkup(shownStory.lens.body, marks)}
+                </Text>
+              ) : (
+                <Typed
+                  text={shownStory.lens.body} marks={marks} accent={accent}
+                  fontSize="sm" color="fg" lineHeight="tall" mb="3"
+                  onComplete={() => setB2Part(1)}
+                />
+              )}
+
+              {/*
+                The consequences, one per line with its own time label. A paragraph would bury the
+                second one, and separate short lines are far easier to read in a second language
+                than a single sentence carrying two clauses.
+
+                They arrive ONE AT A TIME. Revealing both at once put the delayed consequence on
+                screen before the immediate one had been read, which is the wrong way round for a
+                block whose whole point is that the second follows from the first.
+              */}
+              {lensPoints.length > 0 && (skipped || b2Part >= 1) && (
+                <Stack gap="2.5" mb="3">
+                  {lensPoints.map((pt, i) => {
+                    if (!skipped && b2Part < i + 1) return null;
+                    const settled = skipped || b2Part > i + 1;
+                    return (
+                      <Box key={pt.label} borderLeftWidth="2px" borderLeftColor={accent} pl="3"
+                        animationName="fade-in" animationDuration="fast">
+                        <Text fontSize="2xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="0.5">
+                          {pt.label}
+                        </Text>
+                        {settled ? (
+                          <Text fontSize="sm" color="fg" lineHeight="tall">
+                            {renderCVRMarkup(pt.text, marks)}
+                          </Text>
+                        ) : (
+                          <Typed
+                            text={pt.text} marks={marks} accent={accent}
+                            fontSize="sm" color="fg" lineHeight="tall"
+                            onComplete={() => setB2Part(i + 2)}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
+
+              {/* the closing line — who decided this */}
+              {(skipped || b2Part >= lensPoints.length + 1) && (
+                skipped || b2Part > lensPoints.length + 1 ? (
+                  <Text fontSize="sm" color="fg" fontWeight="semibold" lineHeight="tall">
+                    {renderCVRMarkup(shownStory.lens.prompt, marks)}
+                  </Text>
+                ) : (
+                  <Typed
+                    text={shownStory.lens.prompt} marks={marks} accent={accent}
+                    fontSize="sm" color="fg" fontWeight="semibold" lineHeight="tall"
+                    onComplete={() => setB2Part(lensPoints.length + 2)}
+                  />
+                )
+              )}
+            </>
           )}
-          {(skipped || b2Step >= 1) && (
-            skipped || b2Step >= 2 ? (
-              <Text fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall">{renderCVRMarkup(story.reendorseQuestion, marks)}</Text>
-            ) : (
-              <Typed text={story.reendorseQuestion} marks={marks} accent={accent} fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall"
-                onComplete={() => { setB2Step(2); setPhase("legend"); }} />
-            )
+        </Box>
+      )}
+
+      {/*
+        THE QUESTION — and only the question.
+        ---------------------------------------------------------------------------------------
+        The person who is affected used to appear here, above this line. They now have a page of
+        their own, AFTER the answer, so that this page asks exactly one thing. Two questions with
+        one set of buttons was the complaint that started this redesign; the lens above states,
+        this asks, and nothing else on the page is a question.
+      */}
+      {/* Waits for the lens block to finish streaming. `b2Step >= 2` keeps it on screen afterwards:
+          generating the second lens rewinds the block above, and a question that vanished from
+          under a participant who had already read it would be worse than one that arrives late. */}
+      {showBox2 && (b2Step >= 2 || b2Complete) && (
+        <Box animationName="fade-in" animationDuration="moderate">
+          {skipped || b2Step >= 2 ? (
+            <Text fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall">{renderCVRMarkup(story.reendorseQuestion, marks)}</Text>
+          ) : (
+            <Typed text={story.reendorseQuestion} marks={marks} accent={accent} fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall"
+              onComplete={() => { setB2Step(2); setPhase("legend"); }} />
           )}
         </Box>
       )}
@@ -1561,23 +2651,138 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
           <Text fontSize="2xs" color={marks.a.color} fontWeight="bold">▍ same numbers</Text>
           <Text fontSize="2xs" color={marks.v.color} fontWeight="bold">▍ the value</Text>
           <Text fontSize="2xs" color={marks.f.color} fontWeight="bold">▍ the framing</Text>
-          <Text fontSize="2xs" color={marks.w.color} fontWeight="bold">▍ who is affected</Text>
+          {/* "who is affected" is not listed here any more: that colour only appears on the
+              person-speaks page, which comes after this one. A key to a colour the page does not
+              use is just noise. */}
         </HStack>
       )}
 
       {showButtons && (
         <HStack gap="3" wrap="wrap" animationName="fade-in" animationDuration="moderate">
-          <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={onCvrYes} fontSize="xs">
-            Yes, I would still choose this
-          </Button>
-          <Button size="sm" variant="outline" borderColor="border.emphasized" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onCvrNo} fontSize="xs">
-            No, I would not
-          </Button>
+          <ChoiceWithMeaning
+            accent={accent} primary
+            label="Yes, I'd still choose it"
+            meaning="Yes — even after seeing this, I would still choose this option."
+            onClick={onCvrYes}
+          />
+          <ChoiceWithMeaning
+            accent={accent}
+            label="No, not any more"
+            meaning="No — after seeing this, I would not choose this option."
+            onClick={onCvrNo}
+          />
+          {/* No tooltip: this one already says exactly what it does. */}
           <Button size="sm" variant="ghost" color="fg.subtle" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onCvrBackout} fontSize="xs">
-            Change my mind
+            Back to all the options
           </Button>
         </HStack>
       )}
+    </Stack>
+  );
+}
+
+/**
+ * A short label plus the long sentence it stands for.
+ *
+ * The buttons were originally written out in full ("I still endorse this option even though after
+ * seeing the stakeholder perspective didn't change my priority"). That is precise but hard to read
+ * at a glance, and it asks the participant to narrate WHY they are choosing — which the system
+ * already knows, and which can nudge them. The button is short; the full sentence is one hover,
+ * tap or keyboard-focus away, so nothing is hidden.
+ */
+function ChoiceWithMeaning({ label, meaning, accent, primary, onClick }: {
+  label: string; meaning: string; accent: string; primary?: boolean; onClick: () => void;
+}) {
+  return (
+    <Tooltip content={meaning} showArrow openDelay={120} closeDelay={80} contentProps={{ maxW: "sm" }}>
+      <Button
+        onClick={onClick}
+        size="sm" rounded="lg" fontSize="xs" whiteSpace="normal" height="auto" py="2.5" px="3.5"
+        textAlign="left"
+        bg={primary ? accent : "bg.subtle"}
+        color={primary ? onAccentText(accent) : "fg"}
+        borderWidth={primary ? "0" : "1px"}
+        borderColor="border.emphasized"
+        _hover={primary ? { opacity: 0.9 } : { bg: "bg.muted" }}
+      >
+        {label}
+      </Button>
+    </Tooltip>
+  );
+}
+
+/**
+ * THE PERSON WHO SPEAKS — shown after the participant answers the vignette.
+ *
+ * The person always argues AGAINST the answer just given: after "yes" they are the person the
+ * choice costs, after "no" the person who needed it. Everyone is therefore pushed exactly once,
+ * which makes "did they switch?" a fair comparison between participants.
+ *
+ * Whether they switch is the entire stakeholder measurement — see handlePersonAnswer.
+ */
+function PersonSpeaksPage({ story, saidYes, accent, marks, onAnswer, onBack }: {
+  story: ReturnType<typeof getCVRStory>;
+  saidYes: boolean;
+  accent: string;
+  marks: MarkSet;
+  onAnswer: (moved: boolean) => void;
+  onBack: () => void;
+}) {
+  const text = saidYes ? story.people?.hurt : story.people?.need;
+  return (
+    <Stack gap="4">
+      <Text fontSize="xs" color={accent} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
+        Someone this affects
+      </Text>
+
+      <Box bg="purple.subtle" borderWidth="1px" borderColor="purple.muted" rounded="xl" px="4" py="4">
+        <Text fontSize="sm" color="fg" lineHeight="tall">
+          {renderCVRMarkup(text ?? "", marks)}
+        </Text>
+      </Box>
+
+      <Text fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall">
+        {renderCVRMarkup("Now that you have heard this — {b|what do you think}?", marks)}
+      </Text>
+
+      <Stack gap="2.5">
+        {saidYes ? (
+          <>
+            <ChoiceWithMeaning
+              accent={accent} primary
+              label="I still choose this"
+              meaning="I still choose this option. Hearing this person did not change what matters to me."
+              onClick={() => onAnswer(false)}
+            />
+            <ChoiceWithMeaning
+              accent={accent}
+              label="I've changed my mind — I don't want this now"
+              meaning="I do not want this option any more. Hearing this person changed what matters to me."
+              onClick={() => onAnswer(true)}
+            />
+          </>
+        ) : (
+          <>
+            <ChoiceWithMeaning
+              accent={accent} primary
+              label="I still don't want this"
+              meaning="I still do not want this option. Hearing this person did not change what matters to me."
+              onClick={() => onAnswer(false)}
+            />
+            <ChoiceWithMeaning
+              accent={accent}
+              label="I've changed my mind — I do want this now"
+              meaning="I do want this option now. Hearing this person changed what matters to me."
+              onClick={() => onAnswer(true)}
+            />
+          </>
+        )}
+      </Stack>
+
+      <Button size="sm" variant="ghost" color="fg.subtle" _hover={{ bg: "bg.subtle" }} rounded="lg"
+        alignSelf="start" fontSize="xs" onClick={onBack}>
+        Back to all the options
+      </Button>
     </Stack>
   );
 }
@@ -1586,9 +2791,10 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
 
 function FlowOverlay({
   option, profile, scenario, accent, whoVariant, step, setStep,
-  tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, q2Guided, setQ2Guided,
+  tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, stakeholderMoved,
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
   onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange,
+  cvrSaidYes, onPersonAnswer, onPersonBackout,
   altViewGenerated, onAltGenerated, framingChoiceYes, setFramingChoiceYes, mode,
 }: {
   option: LabeledOption; profile: Block5UserProfile; scenario: Block5Scenario; accent: string;
@@ -1598,16 +2804,65 @@ function FlowOverlay({
   step: FlowStep; setStep: (s: FlowStep) => void;
   tradeoffAck: boolean; setTradeoffAck: (b: boolean) => void;
   q1Strong: boolean | null; setQ1Strong: (b: boolean) => void;
-  q2Guided: boolean | null; setQ2Guided: (b: boolean) => void;
+  /** whether the person who spoke moved them — replaces the old self-report question. */
+  stakeholderMoved: boolean | null;
   onKeep: () => void; onConfirmEndorsement: () => void; onApaCommit: (p: ApaCommitPayload) => void; onChangeMyMind: () => void;
   // Telemetry wrappers for the CVR/APA transitions (observation only — same navigation).
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
   onApaBail: () => void; onFinalDecisionChange: () => void;
+  /** which side they took on the vignette, and the answer on the person page. */
+  cvrSaidYes: boolean | null;
+  onPersonAnswer: (moved: boolean) => void;
+  onPersonBackout: () => void;
   // Dual-perspective (Directness ↔ Context): generation flag + the YES-path "did NOT influence" answer.
   altViewGenerated: boolean; onAltGenerated: () => void;
   framingChoiceYes: CVRFraming | null; setFramingChoiceYes: (f: CVRFraming) => void;
 }) {
-  const misaligned = isMisaligned(option.level);
+  /*
+   * "MISALIGNED" HERE MEANS "OPEN THE REFLECTION", NOT "SCORES BADLY".
+   *
+   * This read `isMisaligned(option.level)` alone, and that was a bug with teeth. The selection
+   * handler guards the same question with `scenarioIsScored`, so on a recipient scenario it decides
+   * NO reflection and never sets up the vignette. This line disagreed with it and said yes — so a
+   * misaligned wish matched neither branch below: not the reflection (no vignette had been built)
+   * and not the confirmation page (which tested `!misaligned`). The participant got a dialog with a
+   * title, a sentence, and no buttons at all. Four of the six options are misaligned for every
+   * archetype, so this was the majority path through scenario 5, not a corner.
+   *
+   * Both places now ask `scenarioIsScored` first, so they cannot disagree again.
+   */
+  const misaligned = scenarioIsScored(scenario) && isMisaligned(option.level);
+
+  /*
+   * The trade this option makes, for the confirm question — the same two values the APA page names
+   * and the same two `applyEndorsementUpdates` moves. Built here so all three cannot drift apart.
+   *
+   * Value names are drawn in the CVR "violated value" colour, bold and italic, exactly as they are
+   * on the APA page: a participant who sees the same words styled the same way in both places can
+   * tell they are being asked about the same thing twice, rather than about two different things.
+   */
+  const confirmTrade = (() => {
+    const cm = cvrMarks(mode);
+    const servedKey = optionMainValue(option);
+    const sacrificedKey = violatedValue(option, profile);
+    const span = (k: Block5PolicyDimKey, color: string) => (
+      <Text as="span" color={color} fontWeight="bold" fontStyle="italic">{POLICY_DIM_SHORT[k]}</Text>
+    );
+    const score = (k: Block5PolicyDimKey) =>
+      Math.round(profile.dimensions.find((d) => d.key === k)?.score ?? 0);
+    return {
+      noTrade: servedKey === sacrificedKey,
+      servedSpan: span(servedKey, cm.f.color as string),
+      sacrificedSpan: span(sacrificedKey, cm.v.color as string),
+      sacrificedScore: score(sacrificedKey),
+    };
+  })();
+  /* Deciding or wishing. Derived from the scenario this overlay already holds rather than passed
+     as a prop, so the two can never be handed different scenarios. */
+  const copy = DECISION_COPY[scenario.decisionRole ?? "decider"];
+  /* Scenario 5. Gates the wish-confirmation page below, which replaces the decider version rather
+     than restyling it — the two make different claims and only one of them is true here. */
+  const isRecipient = scenario.decisionRole === "recipient";
   const coord = misaligned ? cvrCoordinate(option, profile) : null;
   const story = coord && whoVariant ? getCVRStory(scenario, option, coord, whoVariant) : null;
   // The same vignette through the OTHER lens (framing flipped) — used for the generate/compare feature.
@@ -1625,18 +2880,65 @@ function FlowOverlay({
       display="flex" alignItems="center" justifyContent="center" p="4">
       <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "7" }}
         maxW="2xl" w="full" maxH="90dvh" overflowY="auto" shadow="2xl">
-        <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">Your choice</Text>
+        <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">{copy.dialogEyebrow}</Text>
         <Heading size="md" color="fg" mb="2">{option.title}</Heading>
         {option.consequence && <Text fontSize="sm" color="fg.muted" mb="4" lineHeight="tall">{option.consequence}</Text>}
         <Separator borderColor="border" mb="4" />
 
-        {step === "review" && !misaligned && (
+        {/*
+          SCENARIO 5 ONLY — the wish confirmation, and the LAST page of that scenario.
+          ────────────────────────────────────────────────────────────────────────────
+          A recipient scenario never opens a reflection, whatever the participant wishes for: they
+          made no decision, so there is nothing to hold them to and nobody they have to answer for.
+          Every wish therefore arrives here, including ones that go against their own values — which
+          is exactly why this page cannot be the decider's page with different button labels. The
+          decider's version only ever appears for an option that FITS, so it says so; saying that
+          over a misaligned wish would be a plain untruth on screen.
+
+          The whole page is written for a wide range of English. Short sentences, ordinary words, no
+          research vocabulary, and the fit stated twice — as a badge and as a sentence — because the
+          badge is the easiest thing on the page to skim past.
+        */}
+        {step === "review" && !misaligned && isRecipient && (
+          <Stack gap="4">
+            <Badge alignSelf="start" bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
+              {WISH_FIT_LABEL[option.level]}
+            </Badge>
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+              {WISH_FIT_SENTENCE[option.level]}
+            </Text>
+            <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
+              <Text fontSize="xs" color="fg.subtle" mb="1">What this option gives up</Text>
+              <Text fontSize="sm" color="fg.muted">{option.givesUp ?? option.consequence}</Text>
+            </Box>
+            <Text fontSize="sm" color="fg" lineHeight="tall">
+              Remember: <b>you are not choosing this.</b> Someone else decides. You are only saying
+              what you hope they will do. This is the last question in this situation.
+            </Text>
+            <Button size="sm" variant="outline" alignSelf="start"
+              borderColor={tradeoffAck ? accent : "border.emphasized"} color={tradeoffAck ? accent : "fg.muted"}
+              bg={tradeoffAck ? "bg.subtle" : "transparent"} rounded="lg" onClick={() => setTradeoffAck(!tradeoffAck)} gap="2" fontSize="xs">
+              <Icon boxSize="3.5"><LuCheck /></Icon>
+              {tradeoffAck ? "I have read what it gives up" : "Tap here to show you have read this"}
+            </Button>
+            <HStack gap="3" pt="1" wrap="wrap">
+              <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" onClick={onKeep} disabled={!tradeoffAck} fontSize="xs">
+                {copy.commit}
+              </Button>
+              <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
+                {copy.reconsider}
+              </Button>
+            </HStack>
+          </Stack>
+        )}
+
+        {step === "review" && !misaligned && !isRecipient && (
           <Stack gap="4">
             <Badge alignSelf="start" bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
               {ALIGNMENT_LABEL[option.level]} with your values
             </Badge>
             <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              This option fits your earlier priorities. Before you confirm, take a moment with what it gives up.
+              {copy.fitsIntro}
             </Text>
             <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
               <Text fontSize="xs" color="fg.subtle" mb="1">What this trades away</Text>
@@ -1650,13 +2952,32 @@ function FlowOverlay({
             </Button>
             <HStack gap="3" pt="1" wrap="wrap">
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" onClick={onKeep} disabled={!tradeoffAck} fontSize="xs">
-                Keep this choice
+                {copy.commit}
               </Button>
               <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
-                Change my mind
+                {copy.reconsider}
               </Button>
             </HStack>
           </Stack>
+        )}
+
+        {/*
+          The person who argues against the answer just given. Its own page, on purpose: the
+          vignette page now asks exactly one question, and the person is what tests that answer.
+
+          NOTE: everything from here down is the CVR path, which a recipient scenario never reaches
+          — `misaligned` is forced false for them at selection time. Its copy is therefore left in
+          the deciding voice deliberately, rather than made conditional for a state that cannot occur.
+        */}
+        {step === "person" && story && cvrSaidYes !== null && (
+          <PersonSpeaksPage
+            story={story}
+            saidYes={cvrSaidYes}
+            accent={accent}
+            marks={cvrMarks(mode)}
+            onAnswer={onPersonAnswer}
+            onBack={onPersonBackout}
+          />
         )}
 
         {step === "review" && misaligned && story && altStory && framingFirst && (
@@ -1685,33 +3006,41 @@ function FlowOverlay({
 
             {/* Question count is 3 only when the participant generated the second lens. */}
             <QuestionCard
-              accent={accent} index={1} total={altViewGenerated ? 3 : 2} answered={q1Strong !== null}
-              question={<>This option focuses most on <Text as="span" color={accent}>{shortMainValue(option)}</Text>. Do you genuinely value this?</>}
+              accent={accent} index={1} total={altViewGenerated ? 2 : 1} answered={q1Strong !== null}
+              /*
+                THE SAME TRADE THE APA PAGE NAMES, AND THE SAME PAIR THE PROFILE UPDATE MOVES.
+                "This option focuses most on X. Do you genuinely value this?" was a fair question
+                only when X was not already the participant's strongest value. It often is — 10.5%
+                of misaligned choices — and then it reads as "you rated this 100, do you value it?",
+                which teaches the participant that the software is not reading their answers.
+              */
+              question={confirmTrade.noTrade ? (
+                <>This option is built around {confirmTrade.servedSpan}, but delivers less of it than
+                  your earlier answers asked for. Do you stand by choosing it?</>
+              ) : (
+                <>This option delivers {confirmTrade.servedSpan} and gives up {confirmTrade.sacrificedSpan},
+                  which you rated <b>{confirmTrade.sacrificedScore} out of 100</b>. Do you put{" "}
+                  {confirmTrade.servedSpan} above {confirmTrade.sacrificedSpan} here?</>
+              )}
             >
               <Stack gap="2">
-                <ApaChoice selected={q1Strong === true} accent={accent} onClick={() => setQ1Strong(true)}>Yes, I value this</ApaChoice>
-                <ApaChoice selected={q1Strong === false} accent={accent} onClick={() => setQ1Strong(false)}>Not really, but I'm keeping my choice</ApaChoice>
+                <ApaChoice selected={q1Strong === true} accent={accent} onClick={() => setQ1Strong(true)}>
+                  {confirmTrade.noTrade
+                    ? <>Yes, I stand by it</>
+                    : <>Yes — {confirmTrade.servedSpan} comes first for me here</>}
+                </ApaChoice>
+                <ApaChoice selected={q1Strong === false} accent={accent} onClick={() => setQ1Strong(false)}>
+                  Not really, but I'm keeping my choice
+                </ApaChoice>
               </Stack>
-            </QuestionCard>
-
-            <QuestionCard
-              accent={accent} index={2} total={altViewGenerated ? 3 : 2} answered={q2Guided !== null}
-              question={coord.who === "close"
-                ? `Did imagining this person as ${whoVariant.label} guide your decision?`
-                : `Did hearing from ${whoVariant.label} guide your decision?`}
-            >
-              <HStack gap="2" wrap="wrap">
-                <ApaChoice selected={q2Guided === true} accent={accent} onClick={() => setQ2Guided(true)} compact>Yes, it guided me</ApaChoice>
-                <ApaChoice selected={q2Guided === false} accent={accent} onClick={() => setQ2Guided(false)} compact>No, it did not</ApaChoice>
-              </HStack>
             </QuestionCard>
 
             {altViewGenerated && (
               <QuestionCard
-                accent={accent} index={3} total={3} answered={framingChoiceYes !== null}
+                accent={accent} index={2} total={2} answered={framingChoiceYes !== null}
                 question={<>You looked at this from two perspectives. <Text as="span" color={accent}>Which one did NOT play a part</Text> in your decision to keep this option?</>}
               >
-                <Box mb="3"><FramingComparisonTable scenario={scenario} mode={mode} /></Box>
+                <Box mb="3"><FramingComparisonTable scenario={scenario} option={option} coord={coord} mode={mode} /></Box>
                 <Stack gap="2">
                   <ApaChoice selected={framingChoiceYes === "directness"} accent={accent} onClick={() => setFramingChoiceYes("directness")}>
                     The <b>Directness</b> view didn't influence me — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
@@ -1725,7 +3054,7 @@ function FlowOverlay({
 
             <HStack gap="3" wrap="wrap" pt="1">
               <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" fontSize="xs"
-                disabled={q1Strong === null || q2Guided === null || (altViewGenerated && framingChoiceYes === null)}
+                disabled={q1Strong === null || (altViewGenerated && framingChoiceYes === null)}
                 onClick={() => setStep("confirm")}>
                 Continue
               </Button>
@@ -1744,7 +3073,7 @@ function FlowOverlay({
             <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
               <Text fontSize="xs" color="fg.muted" lineHeight="tall">
                 {q1Strong ? "Strong endorsement (+30 to this value, −20 to your previous top value)." : "Kept choice (+15 to this value, −10 to your previous top value)."}{" "}
-                {q2Guided ? "Stakeholder sensitivity +25." : "Stakeholder sensitivity −25."}
+                {stakeholderMoved ? "Hearing someone's story +25." : "Hearing someone's story −25."}
                 {altViewGenerated && framingChoiceYes && ` ${FRAMING_META[framingChoiceYes].name} lens −20 (it didn't affect this choice).`}
               </Text>
             </Box>
@@ -1766,7 +3095,7 @@ function FlowOverlay({
             scenario={scenario}
             accent={accent}
             coord={coord}
-            whoVariant={whoVariant}
+            stakeholderMoved={stakeholderMoved}
             onBail={onApaBail}
             onCommit={onApaCommit}
             onFinalDecisionChange={onFinalDecisionChange}
@@ -1903,13 +3232,14 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
   );
 }
 
-function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, mode }: {
+function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, mode }: {
   option: LabeledOption;
   profile: Block5UserProfile;
   scenario: Block5Scenario;
   accent: string;
   coord: CVRCoordinate;
-  whoVariant: WhoVariant;
+  /** whether the person who spoke moved them — the stakeholder signal, observed not reported. */
+  stakeholderMoved: boolean | null;
   onBail: () => void;
   onCommit: (p: ApaCommitPayload) => void;
   /** telemetry: called when the user picks an APA final option then backs out to choose again. */
@@ -1926,14 +3256,35 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
   const ORANGE = marks.f.color as string;   // the option's value
   const PURPLE = marks.w.color as string;   // the stakeholder
 
-  const topValue = violatedValue(option, profile);
-  const optValue = optionMainValue(option);
+  /*
+   * THE TWO VALUES THIS PAGE IS ABOUT — named for what they are.
+   *
+   * `sacrificed` was previously called `topValue` and described to the participant as "what you
+   * leaned most toward". It is not that. It is `violatedValue`: the value this option most
+   * under-serves, weighted by how much the participant said they care. Across 60,000 misaligned
+   * choices it was NOT the participant's highest-scoring value 20.9% of the time, so one reader in
+   * five was told a plain untruth about their own answers.
+   *
+   * The page now states the TRADE instead of guessing at a priority: this option delivers X and
+   * gives up Y, and here is what you scored on each. That is true in every case, including the one
+   * that broke the old wording — where the option's own value IS the participant's top value, so
+   * "you leaned toward something else" was doubly wrong.
+   *
+   * These are the same two values `applyEndorsementUpdates` moves, deliberately: the sentence and
+   * the arithmetic now describe one trade rather than two different ones.
+   */
+  const sacrificed = violatedValue(option, profile);
+  const served = optionMainValue(option);
+  const scoreOfDim = (k: Block5PolicyDimKey) =>
+    Math.round(profile.dimensions.find((d) => d.key === k)?.score ?? 0);
+  /* True only when the option's strongest value is also the one it most under-serves. There is no
+     two-sided trade to describe then, so the page asks the simpler question instead. */
+  const noTrade = served === sacrificed;
 
   const [stage, setStage] = useState<"questions" | "options" | "confirm">("questions");
   const [q1, setQ1] = useState<"endorse" | "context" | "unsure" | null>(null);
   // No default — the participant must choose a confidence level (it is a required answer).
   const [confidence, setConfidence] = useState<number | null>(null);
-  const [q2, setQ2] = useState<boolean | null>(null);
   const [q3, setQ3] = useState<Block5PolicyDimKey | null>(null);
   // Dual-perspective (NO path): which lens changed the participant's mind toward rejecting (→ +20).
   const [framingInfluential, setFramingInfluential] = useState<CVRFraming | null>(null);
@@ -1949,25 +3300,27 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
     [altViewGenerated, framingInfluential],
   );
 
-  const ready = q1 !== null && confidence !== null && q2 !== null && q3 !== null && (!altViewGenerated || framingInfluential !== null);
+  // q2 (the stakeholder question) is gone from this page: the ±25 now comes from whether the
+  // participant switched after the person spoke, which happens before they ever get here.
+  const ready = q1 !== null && confidence !== null && q3 !== null && (!altViewGenerated || framingInfluential !== null);
 
   /** 3 questions, or 4 when the participant generated the second CVR lens. Drives "n of m". */
-  const apaTotal = altViewGenerated ? 4 : 3;
+  const apaTotal = altViewGenerated ? 3 : 2;
   /**
    * How many are still outstanding. Continue stays disabled until this reaches 0, and a disabled
    * button with no explanation is the classic way to strand someone who scrolled past one card.
    */
   const unanswered =
     (q1 === null || confidence === null ? 1 : 0) +
-    (q2 === null ? 1 : 0) +
     (q3 === null ? 1 : 0) +
     (altViewGenerated && framingInfluential === null ? 1 : 0);
 
   const pending = useMemo(
-    () => (q1 !== null && q2 !== null && q3 !== null
-      ? applyApaUpdates(profile, option, q1, q2, q3, framingAdjust, scenario.stakesWeight ?? 1)
+    () => (q1 !== null && q3 !== null
+      ? applyApaUpdates(profile, option, q1, stakeholderMoved === true, q3, framingAdjust,
+          scenario.stakesWeight ?? 1, confidence ?? 3)
       : profile),
-    [q1, q2, q3, profile, option, framingAdjust, scenario],
+    [q1, q3, stakeholderMoved, profile, option, framingAdjust, scenario],
   );
 
   const matching = useMemo<LabeledOption[]>(() => {
@@ -2041,7 +3394,7 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
             </Button>
           </Stack>
         )}
-        {stage === "confirm" && section4 && q1 !== null && confidence !== null && q2 !== null && q3 !== null && (
+        {stage === "confirm" && section4 && q1 !== null && confidence !== null && q3 !== null && (
           <Stack gap="4">
             <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
               <Text fontSize="xs" color="fg.subtle" mb="1">Your final decision</Text>
@@ -2052,7 +3405,7 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" fontSize="xs"
                 onClick={() => onCommit({
                   finalOption: section4, pendingProfile: pending,
-                  q1, confidence, q2Influenced: q2, q3Value: q3, originalOptionId: option.id,
+                  q1, confidence, q2Influenced: stakeholderMoved === true, q3Value: q3, originalOptionId: option.id,
                   altViewGenerated, framingShownFirst: framingFirst,
                   framingSelected: framingInfluential, framingAdjust,
                 })}>
@@ -2084,30 +3437,66 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
 
       <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
         <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-          Across your responses you've leaned most toward {vSpan(topValue, TEAL)} — caring about <i>{VALUE_BENEFIT[topValue]}</i>.
-          In this scenario you chose an option built around {vSpan(optValue, ORANGE)}, which prioritizes <i>{VALUE_BENEFIT[optValue]}</i>.
-          That's the tension we'd like you to clarify.
+          {noTrade ? (
+            <>
+              This option is built around {vSpan(served, ORANGE)} — {VALUE_BENEFIT[served]} — but it
+              delivers less of it than your earlier answers asked for. You rated {vSpan(served, ORANGE)}{" "}
+              <b>{scoreOfDim(served)} out of 100</b>. That is what we would like you to confirm.
+            </>
+          ) : (
+            <>
+              This option delivers {vSpan(served, ORANGE)} — {VALUE_BENEFIT[served]} — which you rated{" "}
+              <b>{scoreOfDim(served)} out of 100</b>.
+              {" "}To do that it gives up {vSpan(sacrificed, TEAL)} — {VALUE_BENEFIT[sacrificed]} — which you
+              rated <b>{scoreOfDim(sacrificed)} out of 100</b>.
+              {" "}<b>That trade is what we would like you to clarify.</b>
+            </>
+          )}
         </Text>
       </Box>
 
-      {/* Question 1 carries a required sub-answer (confidence), so both must be set to tick. */}
       <QuestionCard
-        accent={accent} index={1} total={apaTotal} answered={q1 !== null && confidence !== null}
+        accent={accent} index={1} total={apaTotal} answered={q1 !== null}
         question="When you made this choice, which is closer to the truth?"
       >
         <Stack gap="2">
           <ApaChoice selected={q1 === "endorse"} accent={accent} onClick={() => setQ1("endorse")}>
-            I genuinely value {vSpan(optValue, ORANGE)} more than {vSpan(topValue, TEAL)} now.
+            {noTrade
+              ? <>Yes — I stand by choosing {vSpan(served, ORANGE)} here.</>
+              : <>I do put {vSpan(served, ORANGE)} above {vSpan(sacrificed, TEAL)}.</>}
           </ApaChoice>
           <ApaChoice selected={q1 === "context"} accent={accent} onClick={() => setQ1("context")}>
-            I leaned toward {vSpan(optValue, ORANGE)} because of <i>this particular situation</i> — overall, my priority is still {vSpan(topValue, TEAL)}.
+            {noTrade
+              ? <>I chose it for <i>this particular situation</i> — it is not how I usually think.</>
+              : <>I chose it for <i>this particular situation</i> — overall, {vSpan(sacrificed, TEAL)} still
+                 matters more to me than {vSpan(served, ORANGE)}.</>}
           </ApaChoice>
           <ApaChoice selected={q1 === "unsure"} accent={accent} onClick={() => setQ1("unsure")}>
             I'm honestly not sure.
           </ApaChoice>
         </Stack>
+      </QuestionCard>
+
+      {/*
+        THE CONFIDENCE RATING BELONGS TO THIS QUESTION, NOT THE ONE ABOVE.
+        It scales how far the value named here moves the profile (see applyApaUpdates), so asking
+        it under Question 1 meant the participant was rating their certainty about one thing while
+        the number was applied to another. Now the question that uses it is the question that asks
+        for it.
+      */}
+      <QuestionCard
+        accent={accent} index={2} total={apaTotal} answered={q3 !== null && confidence !== null}
+        question="Pick the one value you most want the system to weight for you — you'll then see the options that fit it:"
+      >
+        <Stack gap="2">
+          {POLICY_DIM_KEYS.map((k) => (
+            <ApaChoice key={k} selected={q3 === k} accent={accent} onClick={() => setQ3(k)}>
+              <b>{VALUE_NAME[k]}</b> — <Text as="span" color="fg.subtle">{VALUE_BENEFIT[k]}</Text>
+            </ApaChoice>
+          ))}
+        </Stack>
         <HStack gap="2" mt="3.5" pt="3" borderTopWidth="1px" borderColor="border.subtle" wrap="wrap">
-          <Text fontSize="xs" color="fg.muted" fontWeight="medium">How sure are you?</Text>
+          <Text fontSize="xs" color="fg.muted" fontWeight="medium">How sure are you about your answers on this page?</Text>
           {[1, 2, 3, 4, 5].map((n) => (
             <Button key={n} minW="9" h="9" px="0" rounded="lg" fontSize="sm" fontWeight="semibold"
               borderWidth="1px" borderColor="border" bg="bg.subtle" color="fg"
@@ -2122,39 +3511,12 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
         </HStack>
       </QuestionCard>
 
-      <QuestionCard
-        accent={accent} index={2} total={apaTotal} answered={q2 !== null}
-        question={<>
-          {coord.who === "close" ? "Did imagining this person as " : "Did hearing from "}
-          <Text as="span" color={PURPLE} fontWeight="bold" fontStyle="italic">{whoVariant.label}</Text>
-          {" influence your thinking here?"}
-        </>}
-      >
-        <HStack gap="2" wrap="wrap">
-          <ApaChoice selected={q2 === true} accent={accent} onClick={() => setQ2(true)} compact>Yes, it did.</ApaChoice>
-          <ApaChoice selected={q2 === false} accent={accent} onClick={() => setQ2(false)} compact>No, it didn't.</ApaChoice>
-        </HStack>
-      </QuestionCard>
-
-      <QuestionCard
-        accent={accent} index={3} total={apaTotal} answered={q3 !== null}
-        question="Pick the one value you most want the system to weight for you — you'll then see the options that fit it:"
-      >
-        <Stack gap="2">
-          {POLICY_DIM_KEYS.map((k) => (
-            <ApaChoice key={k} selected={q3 === k} accent={accent} onClick={() => setQ3(k)}>
-              <b>{VALUE_NAME[k]}</b> — <Text as="span" color="fg.subtle">{VALUE_BENEFIT[k]}</Text>
-            </ApaChoice>
-          ))}
-        </Stack>
-      </QuestionCard>
-
       {altViewGenerated && (
         <QuestionCard
-          accent={accent} index={4} total={apaTotal} answered={framingInfluential !== null}
+          accent={accent} index={3} total={apaTotal} answered={framingInfluential !== null}
           question={<>You looked at this from two perspectives. Which one most <Text as="span" color={PURPLE} fontWeight="bold">changed your mind</Text> toward not keeping this option?</>}
         >
-          <Box mb="3"><FramingComparisonTable scenario={scenario} mode={mode} /></Box>
+          <Box mb="3"><FramingComparisonTable scenario={scenario} option={option} coord={coord} mode={mode} /></Box>
           <Stack gap="2">
             <ApaChoice selected={framingInfluential === "directness"} accent={accent} onClick={() => setFramingInfluential("directness")}>
               The <b>Directness</b> view changed my mind — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
@@ -2183,15 +3545,4 @@ function APAPanel({ option, profile, scenario, accent, coord, whoVariant, onBail
   );
 }
 
-function shortMainValue(option: LabeledOption): string {
-  let best = POLICY_DIM_KEYS[0];
-  let bestV = -1;
-  for (const k of POLICY_DIM_KEYS) { const v = option.fingerprint[k]; if (v > bestV) { bestV = v; best = k; } }
-  const SHORT: Record<string, string> = {
-    vulnerabilityProtectionSensitivity: "protecting the most vulnerable",
-    groupSizeSensitivity: "helping the larger group",
-    gainResponsivenessSensitivity: "getting the most benefit per dose",
-    outcomeAggregationSensitivity: "maximizing the total benefit",
-  };
-  return SHORT[best] ?? "this value";
-}
+

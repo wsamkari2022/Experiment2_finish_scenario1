@@ -515,7 +515,7 @@ export function buildThresholdTree(
   const raw: Omit<ThresholdTreeDimension, "rank">[] = [
     {
       key: "vulnerability_protection",
-      label: "Vulnerability protection sensitivity",
+      label: "Protecting the vulnerable",
       score: to100(vulnerability),
       rationale:
         "How strongly you protect the worse-off — drawn mainly from demanding more gain before harming entry-level workers (Block 3), reinforced by your Block-1 need-sensitivity (shelter reluctance, plus light support from leniency toward a wealthy owner and any donations).",
@@ -526,7 +526,7 @@ export function buildThresholdTree(
     },
     {
       key: "group_size",
-      label: "Group-size sensitivity",
+      label: "Reducing harm",
       score: to100(groupSize),
       rationale:
         "How much your approval threshold moved as the harmed group grew from ~10 to ~100,000 workers (Block 3). The one-directional (carry-forward) design means this captures how much MORE gain you demanded for larger groups.",
@@ -535,7 +535,7 @@ export function buildThresholdTree(
     },
     {
       key: "gain_responsiveness",
-      label: "Gain responsiveness",
+      label: "How much is gained",
       score: to100(gain),
       rationale:
         "How readily financial gain moved you toward approving harm — mainly the overall gain level you required across Block 3.",
@@ -546,10 +546,9 @@ export function buildThresholdTree(
     },
     {
       key: "outcome_aggregation",
-      // Participant-facing label only. The advisor prefers "Utility"; both words are shown so
-      // the participant sees the familiar term alongside the one used throughout the model.
-      // The internal key stays "outcome_aggregation" — nothing in the data changes.
-      label: "Outcome-aggregation (Utility) sensitivity",
+      // "(Utility)" was dropped along with the rest of the jargon: "How many are helped" says
+      // the same thing in words every participant already owns. The key is unchanged.
+      label: "How many are helped",
       score: to100(outcome),
       rationale:
         "How much you weigh the total/aggregate outcome — measured by your willingness in Block 2 to act for fewer saved lives (trading a small harm for a net-positive result).",
@@ -558,7 +557,7 @@ export function buildThresholdTree(
     },
     {
       key: "directness",
-      label: "Directness sensitivity",
+      label: "Doing it yourself",
       score: to100(directness),
       rationale: BLOCK2_LEGACY_PAIRED_BRIDGE
         ? "How much being the DIRECT cause of harm matters — needing more lives at stake to push someone (direct) than to pull a lever (indirect) in Block 2."
@@ -572,7 +571,7 @@ export function buildThresholdTree(
     },
     {
       key: "context",
-      label: "Context sensitivity",
+      label: "Where it happens",
       score: to100(context),
       rationale:
         "How much surrounding circumstances reshape your choice — measured by how far your keep-threshold moved across the neutral, wealthy, and shelter contexts in Block 1.",
@@ -581,7 +580,7 @@ export function buildThresholdTree(
     },
     {
       key: "stakeholder_shift",
-      label: "Stakeholder perspective-shift sensitivity",
+      label: "Hearing someone's story",
       score: to100(stakeholder),
       rationale:
         "How much hearing a named person's perspective moves you — combining whether your Block-4 decision changed, how your confidence shifted, and whether you named an influential voice.",
