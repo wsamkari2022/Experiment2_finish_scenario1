@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ConsentPage } from "./ConsentPage";
+import { DemographicPage } from "./DemographicPage";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -42,6 +43,8 @@ type Stage =
   /* Informed consent, before anything else. A participant who has already agreed never returns
      here: the restored stage carries them past it. See getRestoredStage. */
   | "consent"
+  /* Age, gender and the email that lets a participant return. Follows consent, once. */
+  | "demographics"
   | "money"
   | "transition_money_trolley"
   | "trolley"
@@ -87,6 +90,18 @@ const STORAGE_KEY_BLOCK4 = "block4_reflection_results";
  * later; until then this is the only copy, so nothing in the app may delete it.
  */
 const STORAGE_KEY_CONSENT = "vrds_consent";
+/** localStorage key for the demographic answers, including the return email. */
+const STORAGE_KEY_DEMOGRAPHICS = "vrds_demographics";
+/**
+ * localStorage key for the completion status.
+ *
+ * Set to NOT_COMPLETED the moment the demographic form is submitted, which is the point a
+ * participant exists as a record at all. It is flipped to COMPLETED in exactly one place — after
+ * the feedback answers are submitted — and nowhere else may write it.
+ */
+const STORAGE_KEY_STATUS = "vrds_status";
+export const STATUS_NOT_COMPLETED = "Study Not Completed";
+export const STATUS_COMPLETED = "Study Completed";
 
 /**
  * Payload passed from MoralProfileInsightsPage to Block 4 and onwards.
@@ -123,7 +138,12 @@ function getRestoredStage(): Stage {
      * key, a mid-study error). Sending them back through the consent form would ask them to
      * agree to something they have already agreed to, so they resume at the first block.
      */
-    if (!saved) return localStorage.getItem(STORAGE_KEY_CONSENT) ? "money" : "consent";
+    if (!saved) {
+      if (!localStorage.getItem(STORAGE_KEY_CONSENT)) return "consent";
+      /* Agreed, but never finished the form: resume at the form, not at consent. */
+      if (!localStorage.getItem(STORAGE_KEY_DEMOGRAPHICS)) return "demographics";
+      return "money";
+    }
     // Never restore to a transition stage — roll back one step
     if (STAGES_WITH_TRANSITION.includes(saved as Stage)) return "money";
     return saved ?? "money";
@@ -316,6 +336,30 @@ export function ExperimentFlow() {
           } catch {
             /* Storage unavailable (private mode). The study still runs; the record is lost,
                which is why this moves to the database in a later step. */
+          }
+          setStage("demographics");
+        }}
+      />
+    );
+  }
+
+  /*
+   * The demographic form. Submitting it is the moment a participant becomes a record: it is where
+   * the return email arrives and where the completion status is created as NOT COMPLETED.
+   *
+   * The email is written here as the eventual MongoDB lookup key. Nothing checks it against a
+   * database yet — that arrives with the start screen and the API — so for now a second person
+   * using the same address on the same machine simply overwrites the local record.
+   */
+  if (stage === "demographics") {
+    return (
+      <DemographicPage
+        onSubmit={(record) => {
+          try {
+            localStorage.setItem(STORAGE_KEY_DEMOGRAPHICS, JSON.stringify(record));
+            localStorage.setItem(STORAGE_KEY_STATUS, STATUS_NOT_COMPLETED);
+          } catch {
+            /* Storage unavailable; the study still runs. See the note on the consent record. */
           }
           setStage("money");
         }}
