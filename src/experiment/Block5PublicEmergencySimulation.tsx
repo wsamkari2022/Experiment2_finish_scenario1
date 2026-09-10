@@ -30,7 +30,7 @@ import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo,
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
-  labelOptions, type LabeledOption, ALIGNMENT_LABEL, isMisaligned, cvrCoordinate,
+  labelOptions, type LabeledOption, isMisaligned, cvrCoordinate,
   optionMetrics, applyEndorsementUpdates, applyKeepUpdates, applyApaUpdates, scenarioVciScore,
   scenarioIsScored,
   performanceScore, computeVCI, computeStability, averagePerformance,
@@ -99,20 +99,12 @@ interface PreviewImpact {
   changes: { label: string; delta: number }[];
 }
 
-const LEVEL_COLOR: Record<AlignmentLevel, string> = {
-  aligned: "#48BB78",
-  weakly_aligned: "#ECC94B",
-  misaligned: "#ED8936",
-  strongly_misaligned: "#F56565",
-};
-
-/** Darker alignment colors for legibility on LIGHT cards (the dark decision modal keeps the bright set). */
-const LEVEL_COLOR_LIGHT: Record<AlignmentLevel, string> = {
-  aligned: "#16a34a",
-  weakly_aligned: "#ca8a04",
-  misaligned: "#ea580c",
-  strongly_misaligned: "#dc2626",
-};
+/*
+ * The alignment-tier color maps used to live here. Nothing renders a tier to the participant any
+ * more -- not on the option cards, not on either confirmation page, and not on the final-decision
+ * list -- so the colors have no consumer left. The tiers themselves are untouched: they are still
+ * computed, still drive whether CVR fires, and are still recorded in the results.
+ */
 
 /**
  * Color key for the CVR-cube dimensions inside the vignette text:
@@ -1951,8 +1943,7 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   expanded: boolean; onToggle: () => void; onSelect: () => void;
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
 }) {
-  /* No alignment color on this card any more — the tier is not shown before the choice. The
-     LEVEL_COLOR maps are still used by the reflection pages, which name the tier after it. */
+  /* No alignment color on this card — the tier is not shown to the participant anywhere now. */
   const pos = pal.mode === "light" ? "#15803d" : "#86efac";
   const neg = pal.mode === "light" ? "#b91c1c" : "#fca5a5";
   /*
@@ -3501,10 +3492,13 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
                 <Box key={o.id} bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3">
                   <HStack justify="space-between" align="start" gap="3" wrap="wrap">
                     <VStack align="start" gap="1" flex="1" minW="0">
+                      {/* No alignment tier here. This list is filtered by the value the participant
+                          JUST prioritized, while the tier scores against their ORIGINAL profile —
+                          so the badge could read "Strongly misaligned" directly under a heading
+                          saying these options best fit them. The participant has no way to tell
+                          the two are measured against different things; it just reads as the
+                          software recommending and condemning the same option at once. */}
                       <Text color="fg" fontWeight="semibold" fontSize="sm" lineHeight="short">{o.title}</Text>
-                      <Badge bg="transparent" color={(mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[o.level]} borderWidth="1px" borderColor={(mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[o.level]} rounded="md" px="2" fontSize="2xs" fontWeight="bold">
-                        {ALIGNMENT_LABEL[o.level]}
-                      </Badge>
                     </VStack>
                     <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" fontSize="xs" flexShrink={0}
                       onClick={() => { setSection4(o); setStage("confirm"); }}>
