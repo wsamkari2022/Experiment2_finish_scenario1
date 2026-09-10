@@ -12,7 +12,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuMessageSquare, LuMessagesSquare, LuScale } from "react-icons/lu";
+import { LuChevronsRight, LuMessageSquare, LuMessagesSquare, LuScale } from "react-icons/lu";
 import { ProgressBar } from "./ProgressBar";
 import type { MoralProfile } from "./profileAnalysis";
 import type { AIWorkforceAnalysis } from "./aiWorkforceAnalysis";
@@ -200,7 +200,21 @@ export function AdaptiveStakeholderReflectionBlock({
    * Assembles the Block4CompletionPayload from all collected state and calls onContinue.
    * Guards against incomplete state (missing finalDecision, finalConfidence, or mostInfluential).
    */
-  const handleComplete = useCallback(() => {
+  /*
+   * WHY THIS TAKES ARGUMENTS INSTEAD OF READING STATE.
+   *
+   * It used to read finalDecision / finalConfidence / mostInfluential straight off state, and the
+   * submit button called onSubmit() (which sets all three) and then onComplete() behind a 50ms
+   * timer. The timer fired the closure captured AT CLICK TIME -- the one built while all three
+   * were still null -- so the guard below returned immediately and nothing happened. The click
+   * only worked the SECOND time, once a re-render had produced a closure that could see the
+   * values. Taking them as arguments removes the timing question altogether.
+   */
+  const handleComplete = useCallback((
+    finalDecision: Decision,
+    finalConfidence: number,
+    mostInfluential: string,
+  ) => {
     if (!finalDecision || !finalConfidence || !mostInfluential) return;
     // Map the most-influential perspective to how its voice is affected by the
     // participant's final decision: a rejection-leaning voice speaks for the harmed
@@ -243,9 +257,6 @@ export function AdaptiveStakeholderReflectionBlock({
     initialDecision,
     initialConfidence,
     midDecision,
-    finalDecision,
-    finalConfidence,
-    mostInfluential,
     seedCase,
     scenarioDomain,
     scenarioContext,
@@ -736,8 +747,12 @@ function Screen3FinalDecision({
   perspectiveTwoTitle: string;
   /** Called with the final decision, confidence, and most-influential choice when the participant submits. */
   onSubmit: (d: Decision, conf: number, influential: string) => void;
-  /** Called immediately after onSubmit to trigger payload assembly and block completion. */
-  onComplete: () => void;
+  /**
+   * Called with the same three values as onSubmit, to assemble the payload and finish the block.
+   * It takes them as arguments rather than reading the lifted state, because that state has not
+   * landed yet on the click that calls it.
+   */
+  onComplete: (d: Decision, conf: number, influential: string) => void;
   /** Controlled final decision value lifted from the parent (supports re-render stability). */
   finalDecision: Decision | null;
   /** Controlled final confidence value lifted from the parent. */
@@ -917,11 +932,17 @@ function Screen3FinalDecision({
             p={{ base: "4", md: "5" }}
             mt="1"
           >
+            {/*
+              "Final step" used to sit here on its own. It was true of THIS case and read as true
+              of the whole study: participants who skim saw a finish-coloured card, the words
+              "final" and "won't be able to change it", and stopped. The label is now scoped to
+              this case, and the card ends by pointing at what comes next instead of closing.
+            */}
             <Badge colorPalette="purple" variant="solid" rounded="md" mb="2" px="2">
-              Final step
+              Last step here
             </Badge>
             <Text fontWeight="semibold" color="fg" fontSize="md" mb="1">
-              This is your final decision.
+              This is your final decision for this case.
             </Text>
             <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="4">
               Recording it saves your decision and confidence and continues to your profile.
@@ -936,13 +957,41 @@ function Screen3FinalDecision({
               _hover={{ opacity: 0.9 }}
               rounded="lg"
               fontWeight="semibold"
+              gap="2"
               onClick={() => {
                 onSubmit(decision, confidence, influential);
-                setTimeout(() => onComplete(), 50);
+                onComplete(decision, confidence, influential);
               }}
             >
               Record my final decision
+              <Icon boxSize="4">
+                <LuChevronsRight />
+              </Icon>
             </Button>
+
+            {/*
+              WHAT HAPPENS NEXT, drawn rather than described.
+
+              Five empty circles is the load-bearing element: it states, without a sentence anyone
+              has to read, that five more situations are still ahead. A participant who reads only
+              the button still sees them sitting under it.
+            */}
+            <HStack gap="2.5" mt="4" pt="3" borderTopWidth="1px" borderColor="purple.muted" align="center">
+              <Icon boxSize="3.5" color="purple.fg">
+                <LuChevronsRight />
+              </Icon>
+              <Text fontSize="xs" fontWeight="semibold" color="purple.fg" whiteSpace="nowrap">
+                Main study next
+              </Text>
+              <HStack gap="1" flexShrink={0}>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Box key={i} boxSize="2" rounded="full" borderWidth="1.5px" borderColor="purple.solid" />
+                ))}
+              </HStack>
+              <Text fontSize="xs" color="fg.muted" whiteSpace="nowrap">
+                5 scenarios
+              </Text>
+            </HStack>
           </Box>
         )}
       </VStack>

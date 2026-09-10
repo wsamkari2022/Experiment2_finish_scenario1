@@ -85,9 +85,55 @@ const PHASES: Phase[] = SHOW_INTER_BLOCK_PAGES
   ? ALL_PHASES
   : ALL_PHASES.filter((p) => !p.interstitial);
 
-/** Returns the active phase index for a stage, or -1 if the stepper should not show. */
-function phaseIndexForStage(stage: string): number {
-  return PHASES.findIndex((p) => p.stages.includes(stage));
+/**
+ * ============================================================================
+ * THE WHOLE JOURNEY — not just the run-up to it
+ * ============================================================================
+ * The rail used to stop at the four profiling sections and put a finish-line flag immediately
+ * after them, captioned "Main study". At the moment a participant finished section four it
+ * therefore read:
+ *
+ *     (check)(check)(check)(check) ┈┈┈ (flag)
+ *
+ * Four of four complete, then a finish flag. That is a picture of a finished study, and people
+ * who skim believe the picture over the caption -- several stopped there in the previous run.
+ * The words said "the main study starts now"; every visual said "done".
+ *
+ * The rail now carries the ENTIRE session, so the main study is the large middle of the journey
+ * rather than its terminus, and the flag sits where a flag belongs -- at the actual end:
+ *
+ *     (1)(2)(3)(4) ── (o o o o o) ── (.)(.)  ┈┈┈ (flag)
+ *                      Main study    results  Finish
+ *                      5 scenarios   feedback
+ *
+ * The five empty circles are the load-bearing part. They say "five situations still to come"
+ * without a sentence anyone has to read, and they are the same five the participant then sees
+ * counted off as "Scenario 1 of 5" inside the block, so the promise matches the experience.
+ */
+type Stop =
+  | { kind: "section"; label: string; stages: string[] }
+  /** The main study, drawn as one dot per scenario. */
+  | { kind: "main"; label: string; note: string; stages: string[]; dots: number }
+  /** What follows the main study: results, then feedback. */
+  | { kind: "tail"; label: string; stages: string[] };
+
+const STOPS: Stop[] = [
+  ...PHASES.map((p): Stop => ({ kind: "section", label: p.label, stages: p.stages })),
+  {
+    kind: "main",
+    label: "Main study",
+    note: "5 scenarios",
+    /* block5_intro is the doorway page and block5 the scenarios themselves; both are "here". */
+    stages: ["block5_intro", "block5"],
+    dots: 5,
+  },
+  { kind: "tail", label: "Your results", stages: ["block5_summary"] },
+  { kind: "tail", label: "Feedback", stages: ["feedback"] },
+];
+
+/** Returns the active stop index for a stage, or -1 if the stepper should not show. */
+function stopIndexForStage(stage: string): number {
+  return STOPS.findIndex((s) => s.stages.includes(stage));
 }
 
 /**
@@ -157,6 +203,126 @@ function PhaseNode({
 }
 
 /**
+ * The main study, drawn as five circles in one capsule.
+ *
+ * Deliberately the widest thing on the rail. A single node here would make five scenarios look
+ * like one more step the size of "Trolley", which is the misreading the whole change exists to
+ * prevent. The dots do not fill in one at a time -- the bar is presentational and does not know
+ * the scenario index -- so they are empty until the block is behind the participant. That is
+ * enough: the count is what has to be legible at the boundary, not live progress.
+ */
+function MainStudyGroup({
+  state,
+  dots,
+  label,
+  note,
+}: {
+  state: NodeState;
+  dots: number;
+  label: string;
+  note: string;
+}) {
+  const done = state === "done";
+  const current = state === "current";
+
+  return (
+    <VStack gap={{ base: "1", md: "1.5" }} flexShrink={0}>
+      <Center h={RAIL_ROW_H}>
+        <HStack
+          gap={{ base: "1", md: "1.5" }}
+          px={{ base: "2", md: "2.5" }}
+          py={{ base: "1.5", md: "2" }}
+          rounded="full"
+          bg={done ? "green.subtle" : current ? "purple.subtle" : "bg.muted"}
+          borderWidth={current ? "2px" : "1px"}
+          borderColor={done ? "green.solid" : current ? "purple.solid" : "border"}
+          boxShadow={current ? "0 0 0 4px {colors.purple.muted}" : undefined}
+          transition="all 0.35s ease"
+          aria-label={`${label}, ${note}`}
+        >
+          {Array.from({ length: dots }, (_, i) => (
+            <Box
+              key={i}
+              boxSize={{ base: "1.5", md: "2" }}
+              rounded="full"
+              bg={done ? "green.solid" : "transparent"}
+              borderWidth={done ? "0" : "1.5px"}
+              borderColor={current ? "purple.solid" : "border"}
+              transition="all 0.35s ease"
+            />
+          ))}
+        </HStack>
+      </Center>
+      <VStack gap="0" display={{ base: "none", md: "flex" }}>
+        <Text
+          fontSize="xs"
+          fontWeight={current ? "bold" : "semibold"}
+          color={current ? "purple.fg" : done ? "fg.muted" : "fg.subtle"}
+          whiteSpace="nowrap"
+          transition="color 0.35s ease"
+        >
+          {label}
+        </Text>
+        <Text fontSize="2xs" color="fg.muted" whiteSpace="nowrap">
+          {note}
+        </Text>
+      </VStack>
+    </VStack>
+  );
+}
+
+/**
+ * A stop after the main study: the results page, then feedback.
+ *
+ * Smaller than a section marker and unnumbered on purpose. Numbering them would restart a count
+ * the participant already finished at four, and these are short pages rather than sections of
+ * work — but they still have to appear, because they are the reason the flag is not next.
+ */
+function TailNode({ state, label }: { state: NodeState; label: string }) {
+  const done = state === "done";
+  const current = state === "current";
+
+  return (
+    <VStack gap={{ base: "1", md: "1.5" }} flexShrink={0}>
+      <Center h={RAIL_ROW_H}>
+        <Center
+          boxSize={current ? { base: "6", md: "7" } : { base: "5", md: "6" }}
+          rounded="full"
+          bg={done ? "green.solid" : current ? "blue.solid" : "bg.muted"}
+          color={done ? "green.contrast" : current ? "blue.contrast" : "fg.subtle"}
+          borderWidth={state === "upcoming" ? "1px" : "0"}
+          borderColor="border"
+          boxShadow={current ? "0 0 0 4px {colors.blue.muted}" : undefined}
+          transition="all 0.35s ease"
+        >
+          {done ? (
+            <Icon boxSize="3">
+              <LuCheck />
+            </Icon>
+          ) : (
+            <Box
+              boxSize="1.5"
+              rounded="full"
+              bg={current ? "blue.contrast" : "fg.subtle"}
+            />
+          )}
+        </Center>
+      </Center>
+      <Text
+        fontSize="xs"
+        fontWeight={current ? "semibold" : "medium"}
+        color={current ? "fg" : done ? "fg.muted" : "fg.subtle"}
+        display={{ base: "none", md: "block" }}
+        whiteSpace="nowrap"
+        transition="color 0.35s ease"
+      >
+        {label}
+      </Text>
+    </VStack>
+  );
+}
+
+/**
  * A stretch of rail between two section markers. `filled` paints it green — that stretch is
  * behind you. The final approach into the destination is a different thing entirely; see
  * GoalApproach.
@@ -206,11 +372,16 @@ function GoalApproach() {
  * beneath, and the only thing on screen that moves. It should be impossible to mistake for
  * another step in the queue.
  */
-function GoalMarker({ remaining }: { remaining: number }) {
-  const note =
-    remaining === 0
-      ? "Up next"
-      : `After ${remaining} more section${remaining === 1 ? "" : "s"}`;
+function GoalMarker({ reached }: { reached: boolean }) {
+  /*
+   * No countdown here any more.
+   *
+   * It used to read "After N more sections", which is now unsayable without lying in one
+   * direction or the other: the main study is ONE stop on the rail but five scenarios of work,
+   * so any number either oversells how close the end is or undersells what is left. The rail
+   * itself shows the distance, and it is drawn to scale. The flag just names the end.
+   */
+  const note = reached ? "You are nearly there" : "End of the study";
 
   return (
     <HStack gap={{ base: "2", md: "2.5" }} flexShrink={0} align="flex-start">
@@ -223,7 +394,7 @@ function GoalMarker({ remaining }: { remaining: number }) {
           gradientFrom="purple.400"
           gradientTo="purple.600"
           color="white"
-          aria-label={`Main study, the goal of this session. ${note}.`}
+          aria-label={`Finish — the end of the study. ${note}.`}
         >
           <Icon boxSize={{ base: "4", md: "5" }}>
             <LuFlag />
@@ -249,7 +420,7 @@ function GoalMarker({ remaining }: { remaining: number }) {
           whiteSpace="nowrap"
           letterSpacing="tight"
         >
-          Main study
+          Finish
         </Text>
         <Text
           fontSize="2xs"
@@ -265,11 +436,11 @@ function GoalMarker({ remaining }: { remaining: number }) {
 }
 
 export function GlobalStepper({ stage }: { stage: string }) {
-  const current = phaseIndexForStage(stage);
-  if (current < 0) return null; // hidden during transitions, Block 5, and the summary
+  const current = stopIndexForStage(stage);
+  if (current < 0) return null; // hidden during the transition spinners
 
-  /** Sections still to come after the one in progress. Drives the "after N more" line. */
-  const remaining = PHASES.length - current - 1;
+  /** True on the last stop, where the flag really is the next thing. */
+  const reached = current === STOPS.length - 1;
 
   return (
     <Box
@@ -308,25 +479,30 @@ export function GlobalStepper({ stage }: { stage: string }) {
           overflowX="auto"
           css={{ scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
         >
-          {PHASES.map((p, i) => (
-            <HStack
-              key={p.label}
-              gap={{ base: "2", md: "3" }}
-              align="flex-start"
-              flex="1"
-              minW="fit-content"
-            >
-              <PhaseNode
-                state={i < current ? "done" : i === current ? "current" : "upcoming"}
-                index={i}
-                label={p.label}
-              />
-              <RailSegment filled={i < current} />
-            </HStack>
-          ))}
+          {STOPS.map((s, i) => {
+            const state: NodeState = i < current ? "done" : i === current ? "current" : "upcoming";
+            return (
+              <HStack
+                key={s.label}
+                gap={{ base: "2", md: "3" }}
+                align="flex-start"
+                /* The main study is allowed to take the room its five dots need; everything else
+                   shares what is left, so the cluster stays legible on a narrow screen. */
+                flex={s.kind === "main" ? "0 0 auto" : "1"}
+                minW="fit-content"
+              >
+                {s.kind === "section" && <PhaseNode state={state} index={i} label={s.label} />}
+                {s.kind === "main" && (
+                  <MainStudyGroup state={state} dots={s.dots} label={s.label} note={s.note} />
+                )}
+                {s.kind === "tail" && <TailNode state={state} label={s.label} />}
+                <RailSegment filled={i < current} />
+              </HStack>
+            );
+          })}
         </HStack>
         <GoalApproach />
-        <GoalMarker remaining={remaining} />
+        <GoalMarker reached={reached} />
       </HStack>
     </Box>
   );

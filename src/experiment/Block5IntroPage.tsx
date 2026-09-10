@@ -24,13 +24,20 @@
  * The axis and bar labels are read from POLICY_DIM_SHORT and METRIC_DEFS for the same reason —
  * rename a value and this page renames itself.
  *
- * The purple accent and the flag are deliberate: they are what GlobalStepper has been showing at
- * the end of the rail as "Main study" for the whole session. Arriving at a page in the same
- * color, with the same icon, is the visual full-stop for that promise.
+ * THE PURPLE STAYS; THE FLAG DOES NOT
+ * The purple accent is what GlobalStepper has been showing for "Main study" all session, so the
+ * page that opens the main study wears it. The flag used to be here too, over the words "You have
+ * arrived" — and that pairing was the problem. A flag means the end of a race and arriving means
+ * you have finished, so the page announced completion at the exact moment the longest part of the
+ * study was starting. Participants in the previous run stopped here.
+ *
+ * The flag now lives at the true end of the rail, after the results and feedback pages. What
+ * opens this page instead points forward, above five empty circles — one per scenario still to
+ * come — so the page reads as a threshold rather than a finish line.
  */
 
 import { Badge, Box, Button, Grid, HStack, Heading, Icon, Stack, Text, VStack } from "@chakra-ui/react";
-import { LuArrowRight, LuChartColumn, LuFlag, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers, LuInfo } from "react-icons/lu";
+import { LuArrowRight, LuChartColumn, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers, LuInfo } from "react-icons/lu";
 
 import { HBarChart, RadarChart } from "./block5Charts";
 import { SERIES_COLORS } from "./block5ChartColors";
@@ -323,8 +330,17 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
         animationDuration="moderate"
       >
         {/*
-          HERO — the same flag, in the same purple, that has sat at the end of the progress bar
-          all session. This is the arrival it was pointing at.
+          HERO — a threshold, not an arrival.
+
+          This page used to open with the finish-line flag from the end of the progress rail, over
+          the words "You have arrived". Both were wrong in the same direction: the flag is the
+          symbol for the end of a race, and arriving is what you do when you have finished. A
+          participant who read nothing else took the picture at face value and stopped -- which is
+          exactly what happened in the previous run.
+
+          The flag has moved to the real end of the rail. What sits here now points forward, and
+          the line above the heading states the size of what is ahead instead of announcing an
+          arrival.
         */}
         <VStack gap="4" textAlign="center">
           <Box
@@ -341,9 +357,25 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
             shadow="md"
           >
             <Icon boxSize="6">
-              <LuFlag />
+              <LuChevronsRight />
             </Icon>
           </Box>
+
+          {/*
+            Five empty circles, at hero size. This is the one element on the page that a
+            participant who reads nothing at all still receives: five things are still to come.
+          */}
+          <HStack gap="2" justify="center" aria-label="Five scenarios ahead">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Box
+                key={i}
+                boxSize="2.5"
+                rounded="full"
+                borderWidth="2px"
+                borderColor="purple.solid"
+              />
+            ))}
+          </HStack>
           <VStack gap="2">
             <Text
               fontSize="xs"
@@ -352,7 +384,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
               textTransform="uppercase"
               letterSpacing="wider"
             >
-              You have arrived
+              5 scenarios ahead
             </Text>
             <Heading size={{ base: "2xl", md: "3xl" }} color="fg" letterSpacing="tight">
               The main study starts now

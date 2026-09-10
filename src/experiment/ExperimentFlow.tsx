@@ -379,7 +379,13 @@ export function ExperimentFlow() {
    * showing "the main study starts now" one click before that happens would be a lie.
    */
   if (stage === "block5_intro" && insights && block4Payload) {
-    return <Block5IntroPage onStart={handleStartBlock5Scenarios} />;
+    return (
+      <>
+        {/* The rail matters most HERE. This is the page that used to read as an arrival. */}
+        <GlobalStepper stage={stage} />
+        <Block5IntroPage onStart={handleStartBlock5Scenarios} />
+      </>
+    );
   }
 
   if (stage === "block5" && insights && block4Payload) {
@@ -399,20 +405,26 @@ export function ExperimentFlow() {
 
   if (stage === "block5_summary" && block5Results) {
     return (
-      <Block5SimulationSummaryPage
-        results={block5Results}
-        onContinueToFeedback={handleContinueToFeedback}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <Block5SimulationSummaryPage
+          results={block5Results}
+          onContinueToFeedback={handleContinueToFeedback}
+        />
+      </>
     );
   }
 
   if (stage === "feedback") {
     return (
-      <UserFeedbackPage
-        results={block5Results}
-        sessionId={participantId}
-        onBack={handleBackToSummary}
-      />
+      <>
+        <GlobalStepper stage={stage} />
+        <UserFeedbackPage
+          results={block5Results}
+          sessionId={participantId}
+          onBack={handleBackToSummary}
+        />
+      </>
     );
   }
 
