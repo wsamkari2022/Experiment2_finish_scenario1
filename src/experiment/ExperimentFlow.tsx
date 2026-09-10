@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { StartScreen } from "./StartScreen";
 import { ConsentPage } from "./ConsentPage";
 import { DemographicPage } from "./DemographicPage";
+import {
+  updateStage,
+  upsertParticipant,
+  STATUS_NOT_COMPLETED,
+} from "./participantDirectory";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -42,6 +48,9 @@ import type {
 type Stage =
   /* Informed consent, before anything else. A participant who has already agreed never returns
      here: the restored stage carries them past it. See getRestoredStage. */
+  /* Asks the email, and decides whether this is a new participant or a returning one. Seen only
+     when the browser does not already recognise them. */
+  | "start"
   | "consent"
   /* Age, gender and the email that lets a participant return. Follows consent, once. */
   | "demographics"
@@ -100,8 +109,11 @@ const STORAGE_KEY_DEMOGRAPHICS = "vrds_demographics";
  * the feedback answers are submitted — and nowhere else may write it.
  */
 const STORAGE_KEY_STATUS = "vrds_status";
-export const STATUS_NOT_COMPLETED = "Study Not Completed";
-export const STATUS_COMPLETED = "Study Completed";
+/**
+ * The email of the participant currently being enrolled, held between the start screen and the
+ * demographic form so the address is asked for once and confirmed rather than typed twice.
+ */
+const STORAGE_KEY_PENDING_EMAIL = "vrds_pending_email";
 
 /**
  * Payload passed from MoralProfileInsightsPage to Block 4 and onwards.
@@ -139,16 +151,27 @@ function getRestoredStage(): Stage {
      * agree to something they have already agreed to, so they resume at the first block.
      */
     if (!saved) {
-      if (!localStorage.getItem(STORAGE_KEY_CONSENT)) return "consent";
-      /* Agreed, but never finished the form: resume at the form, not at consent. */
-      if (!localStorage.getItem(STORAGE_KEY_DEMOGRAPHICS)) return "demographics";
-      return "money";
+      /*
+       * Order matters here, and each branch is a real situation:
+       *
+       *   consent + form done  -> they are enrolled on this browser; the stage key was lost, so
+       *                           put them back in the study rather than through the door again.
+       *   consent only         -> they agreed and stopped mid-enrolment. Back to the FORM: asking
+       *                           for consent a second time would record an agreement they have
+       *                           already given.
+       *   nothing              -> a browser that does not know them. Ask for the email, which is
+       *                           the only thing that can tell a new participant from a returning
+       *                           one on a machine with no history.
+       */
+      if (localStorage.getItem(STORAGE_KEY_DEMOGRAPHICS)) return "money";
+      if (localStorage.getItem(STORAGE_KEY_CONSENT)) return "demographics";
+      return "start";
     }
     // Never restore to a transition stage — roll back one step
     if (STAGES_WITH_TRANSITION.includes(saved as Stage)) return "money";
     return saved ?? "money";
   } catch {
-    return "consent";
+    return "start";
   }
 }
 
@@ -177,6 +200,23 @@ export function ExperimentFlow() {
   /** Current stage; restored from localStorage so refresh resumes where the user left off. */
   const [stage, setStage] = useState<Stage>(getRestoredStage);
 
+  /**
+   * The participant's email once it is known — from the start screen, the demographic form, or a
+   * previous visit to this browser. It is the key the participant directory is written under, so
+   * without it the run cannot be attached to a person and cannot be resumed elsewhere.
+   */
+  const [pendingEmail, setPendingEmail] = useState<string | null>(() => {
+    try {
+      return (
+        localStorage.getItem(STORAGE_KEY_PENDING_EMAIL) ??
+        readJson<{ email?: string }>(STORAGE_KEY_DEMOGRAPHICS)?.email ??
+        null
+      );
+    } catch {
+      return null;
+    }
+  });
+
   /** Profile + seed case data produced by the Insights page; needed by Block 4. */
   const [insights, setInsights] = useState<InsightsPayload | null>(() =>
     readJson<InsightsPayload>(STORAGE_KEY_INSIGHTS),
@@ -200,7 +240,19 @@ export function ExperimentFlow() {
     } catch {
       // ignore
     }
-  }, [stage]);
+    /*
+     * Mirror the stopping point into the participant directory as well.
+     *
+     * The line above records where THIS BROWSER is; this one records where the PERSON is. They
+     * are the same thing until somebody opens the study on a second machine, and at that moment
+     * only the directory can answer "where did I get to?". Writing it on every stage change is
+     * what makes the resume accurate rather than approximate — a returning participant lands on
+     * the screen they left, not back at the first block.
+     */
+    if (pendingEmail && stage !== "start" && stage !== "consent" && stage !== "demographics") {
+      updateStage(pendingEmail, stage);
+    }
+  }, [stage, pendingEmail]);
 
   // Telemetry: time each content stage. Marks "start" when a stage renders and "end" when we
   // leave it (effect cleanup). markStage ignores transition spinners, so only real stages count.
@@ -327,6 +379,50 @@ export function ExperimentFlow() {
    * participant be recognised before the consent page is reached, so they never see it twice.
    * Until then, the consent record itself is what keeps them past it.
    */
+  /*
+   * The door. It asks the email and then decides: a new address goes on to consent, a known and
+   * unfinished one resumes after an identity check, and a finished one is stopped.
+   *
+   * The address is parked in storage rather than only in React state, because the consent page
+   * sits between here and the form: a refresh in that gap would otherwise lose it and ask for it
+   * a second time.
+   */
+  if (stage === "start") {
+    return (
+      <StartScreen
+        onNewParticipant={(email) => {
+          try {
+            localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, email);
+          } catch {
+            /* Storage unavailable; the form will simply ask for the address again. */
+          }
+          setPendingEmail(email);
+          setStage("consent");
+        }}
+        onResume={(entry) => {
+          /* Rebuild just enough local state for the study to continue, then jump to the stage
+             they stopped on. On this machine that stage is usually already present; on a new
+             machine the directory is the only thing that knows it. */
+          try {
+            localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, entry.email);
+            if (entry.consent) {
+              localStorage.setItem(STORAGE_KEY_CONSENT, JSON.stringify(entry.consent));
+            }
+            localStorage.setItem(
+              STORAGE_KEY_DEMOGRAPHICS,
+              JSON.stringify({ email: entry.email, age: entry.age, gender: entry.gender }),
+            );
+            localStorage.setItem(STORAGE_KEY_STATUS, entry.status);
+          } catch {
+            /* Storage unavailable; the resume still works for this tab. */
+          }
+          setPendingEmail(entry.email);
+          setStage((entry.stage as Stage) || "money");
+        }}
+      />
+    );
+  }
+
   if (stage === "consent") {
     return (
       <ConsentPage
@@ -345,22 +441,37 @@ export function ExperimentFlow() {
 
   /*
    * The demographic form. Submitting it is the moment a participant becomes a record: it is where
-   * the return email arrives and where the completion status is created as NOT COMPLETED.
+   * the details arrive, where the status is created as NOT COMPLETED, and where the entry in the
+   * participant directory is written — the entry the start screen will find next time.
    *
-   * The email is written here as the eventual MongoDB lookup key. Nothing checks it against a
-   * database yet — that arrives with the start screen and the API — so for now a second person
-   * using the same address on the same machine simply overwrites the local record.
+   * The address comes down from the start screen and is shown locked. It is asked for there, not
+   * here, because the start screen has to know it before consent in order to skip consent for
+   * somebody who has already agreed.
    */
   if (stage === "demographics") {
     return (
       <DemographicPage
+        initialEmail={pendingEmail ?? ""}
+        emailLocked={!!pendingEmail}
         onSubmit={(record) => {
           try {
             localStorage.setItem(STORAGE_KEY_DEMOGRAPHICS, JSON.stringify(record));
             localStorage.setItem(STORAGE_KEY_STATUS, STATUS_NOT_COMPLETED);
+            localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, record.email);
           } catch {
             /* Storage unavailable; the study still runs. See the note on the consent record. */
           }
+          setPendingEmail(record.email);
+          upsertParticipant({
+            email: record.email,
+            sessionId: participantId,
+            age: record.age,
+            gender: record.gender,
+            stage: "money",
+            consent: readJson<{ agreed: boolean; timestamp: string; version: string }>(
+              STORAGE_KEY_CONSENT,
+            ),
+          });
           setStage("money");
         }}
       />
