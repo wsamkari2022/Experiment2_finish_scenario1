@@ -6,10 +6,10 @@
  * The other two APA tools answer "is the arithmetic right" (verify_apa) and "how do different
  * answers compare" (apa_personas). Neither shows the thing the study is actually built to do:
  * a person makes one choice, the system reflects it back, they say what they really meant, and
- * THE OPTIONS THEY ARE OFFERED NEXT ARE LABELLED DIFFERENTLY AS A RESULT.
+ * THE OPTIONS THEY ARE OFFERED NEXT ARE LABELED DIFFERENTLY AS A RESULT.
  *
  * That last step is the payoff and the hardest thing to convey in prose, so this prints it: the
- * same six options in scenario 2, labelled against the profile before the clarification and again
+ * same six options in scenario 2, labeled against the profile before the clarification and again
  * against the profile after it.
  *
  * Every number in the advisor deck's "one participant, step by step" slides comes from this run.

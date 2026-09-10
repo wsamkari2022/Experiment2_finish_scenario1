@@ -62,7 +62,7 @@ the same boundary `policyAlignmentScore` already draws, and for the same documen
 
 ### 2b. Why this is a distance and alignment is not
 
-`policyAlignmentScore` is deliberately **one-sided**: an option is penalised only when it delivers
+`policyAlignmentScore` is deliberately **one-sided**: an option is penalized only when it delivers
 *less* than the participant demands, because you should not be punished for an option protecting
 the vulnerable more than you asked.
 
@@ -78,7 +78,7 @@ uses a **symmetric** distance, and the two measures answer different questions:
 
 Alignment is untouched. Nothing in scoring changes.
 
-### 2c. Menu-normalised departure — `departureIndex`
+### 2c. Menu-normalized departure — `departureIndex`
 
 ```
 E = 100 × (D_chosen − D_nearest) / (D_farthest − D_nearest)
@@ -109,7 +109,7 @@ Two consequences:
 
 1. The **raw distance is already broadly comparable** across scenarios — worth reporting, because
    it is the interpretable number.
-2. The **normalised departure is used for the position comparison** anyway. It costs nothing, it
+2. The **normalized departure is used for the position comparison** anyway. It costs nothing, it
    removes the remaining 1–2 points, and it means the claim survives the question being asked.
 
 ---
@@ -137,7 +137,7 @@ Rows 2 and 3 **both score 94** — but they are completely different people. One
 strangers are involved; the other is loyal only to the people in the room with them.
 
 **The single number is a summary. The three-point shape is the finding.** That is why the hero
-visualisation is the shape across the three positions, and the number is secondary.
+visualization is the shape across the three positions, and the number is secondary.
 
 ### Direction, not just size
 
@@ -161,14 +161,14 @@ reflectionPull = D(first choice) − D(final choice)
 **Why this one is the cleanest measure in the plan.** The first and the final choice are drawn
 from the *same six options in the same scenario*. The menu is identical on both sides of the
 subtraction, so it cancels completely — Reflection Pull carries **none** of the confound discussed
-in §3, and needs no normalisation at all.
+in §3, and needs no normalization at all.
 
 It is also rolled up **per position**, which asks a question worth asking on its own: *does
 reflection work better when the cost is not yours?*
 
 ---
 
-## 5. The visualisations (new cards on the Block 5 charts page)
+## 5. The visualizations (new cards on the Block 5 charts page)
 
 **Card 8 — "Does your position change what you choose?"** *(the hero)*
 A slope chart across the three positions, 0–100. One line. The Position Effect number beside it,
@@ -186,7 +186,7 @@ facts live on the same axis and the same track, so a separate chart would redraw
 scale to say less. Needs one new chart primitive, `RangeDotChart`.
 
 **Card 10 — "Which values moved, and which way"**
-A radar with the pre-Block-5 profile as a dashed grey reference and three solid shapes — the mean
+A radar with the pre-Block-5 profile as a dashed gray reference and three solid shapes — the mean
 of the options chosen at each position. Uses the existing `RadarChart` unchanged. This is where
 *direction* becomes visible.
 
@@ -231,7 +231,7 @@ positionAnalysis?: {
 1. **Unequal n.** Position A and B rest on one scenario each; position C averages three. A and B
    are noisier. This is descriptive, not a significance test, and must not be written as one.
 2. **Position is confounded with order.** Scenarios always run 1→5, so anyone who drifts simply
-   because they are tired or practised will look position-sensitive. **Partial control:** the three
+   because they are tired or practiced will look position-sensitive. **Partial control:** the three
    position-C scenarios sit at three different points in time, so a trend across S3→S4→S5 measures
    drift *within a constant position*. That is `driftCheck`, and a large value is a warning that
    the effect may be time, not position.
@@ -249,11 +249,11 @@ positionAnalysis?: {
 | 1 | `stakePosition` on all five scenarios; types for the new fields | validator gate: all 5 tagged, exactly one `self`, one `self_and_group`, three `others` |
 | 2 | `positionDistance.ts` — D, E, signed deltas, the rollup | new `simulate_position.cjs` reproducing the table in §4 |
 | 3 | Wire into `finalizeScenario` + block completion | typecheck, existing validators still green |
-| 4 | `RangeDotChart` primitive | renders at 5 rows, both colour modes |
+| 4 | `RangeDotChart` primitive | renders at 5 rows, both color modes |
 | 5 | Cards 8, 9, 10 on the charts page | screenshots, light + dark + mobile |
 | 6 | Docs + Simple English Explanation | — |
 
-Nothing in stages 1–3 is visible to a participant. Block 5 behaviour is unchanged.
+Nothing in stages 1–3 is visible to a participant. Block 5 behavior is unchanged.
 
 ---
 

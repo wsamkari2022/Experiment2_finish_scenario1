@@ -9,7 +9,7 @@
  * actually ship, and the resulting VCI is asserted.
  *
  * It imports the compiled modules rather than re-implementing the formulas, deliberately — a
- * simulator that carries its own copy of the maths drifts from the code and then lies.
+ * simulator that carries its own copy of the math drifts from the code and then lies.
  *
  * Run: npm run validate:vci    (chained into npm run validate:block5)
  */
@@ -161,7 +161,7 @@ gate("V4", out["Contrarian"] <= out["Flip-flopper"], `Contrarian <= Flip-flopper
 /* V5 — the convert pays for the ONE scenario in which they changed, and for nothing after it.
    This was written as ">= 80", which is not the claim: 80 is (5-1)/5, so the number silently
    encoded a five-scenario deck. On a three-scenario deck a single change is a third of the run
-   rather than a fifth, so the same behaviour scores lower and a fixed threshold would fail a
+   rather than a fifth, so the same behavior scores lower and a fixed threshold would fail a
    participant who did nothing wrong. Expressed against the deck size, the gate keeps testing the
    property instead of the arithmetic: a convert must do at least as well as someone who scored
    zero once and perfectly every time after. */

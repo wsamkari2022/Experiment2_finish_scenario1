@@ -55,7 +55,7 @@ Three details a reader will ask about:
 - **"Currently top" is evaluated *after* Q1 has been applied**, not before. Q1 can therefore change
   which value the −20 lands on.
 - **The cap applies to the four policy values only.** The stakeholder move comes from a separate
-  behavioural observation and is deliberately unscaled; at low confidence the cap would clip it
+  behavioral observation and is deliberately unscaled; at low confidence the cap would clip it
   (30 × 0.6 = 18 against a ±25 move) and quietly alter a different measure.
 
 All five shipped scenarios run at `stakesWeight = 1`, so nothing else scales these numbers.
@@ -161,7 +161,7 @@ the participant said.
 **Why 0 rather than reading "top" before Q1**, which ties on fidelity (79.8%): zeroing is the
 smaller rule, and one fewer invented constant.
 
-So the division of labour is clean: **Q1 records what the participant did, Q2 records what they
+So the division of labor is clean: **Q1 records what the participant did, Q2 records what they
 want.** The sacrificed value is carried by Q2, where naming it is worth +30.
 
 ---
@@ -195,12 +195,12 @@ This is inherent to flat deltas on a bounded scale. The cap reduces it; nothing 
 
 Personas B, D and F each lose 25 points on stakeholder sensitivity from a single non-switch. Two
 non-switches pin a participant at the floor. Being unscaled by confidence is deliberate and
-defensible — it is a behavioural observation, not a self-report — but the **magnitude** has never
+defensible — it is a behavioral observation, not a self-report — but the **magnitude** has never
 been derived from anything. It is the constant in this mechanism with the least behind it.
 
 ### 7.3 Six invented constants
 
-+30, +15, −20, −10, ±25 and the cap are set by judgement, not derived from Blocks 1–4. The
++30, +15, −20, −10, ±25 and the cap are set by judgment, not derived from Blocks 1–4. The
 defensible framing: they are identical for every participant, so they cannot bias a
 between-participant comparison. Report Stability as *"how far the system's model of this participant
 moved"*, not as a fact about their morality.
@@ -217,16 +217,16 @@ moved"*, not as a fact about their morality.
 | **Confidence rating** | Works. The largest possible move rises with the rating and nothing else. |
 | **Documentation honesty** | The published constant is the applied one on every path. |
 | **Saturation** | 11.9% of values reach 100. The weakest part of the mechanism. |
-| **Constants** | Six are set by judgement. Identical for everyone, so they cannot bias a comparison — but the stakeholder ±25 has no measurement behind it. |
+| **Constants** | Six are set by judgment. Identical for everyone, so they cannot bias a comparison — but the stakeholder ±25 has no measurement behind it. |
 
 ---
 
 ## 9. What to say to an examiner
 
 > The profile update applies fixed constants, identical for every participant, so it cannot bias a
-> between-participant comparison. We audited its behaviour across six answer patterns and 2,500
+> between-participant comparison. We audited its behavior across six answer patterns and 2,500
 > simulated participants, and capped the per-value movement so the published constant is the applied
-> one on every answer path. We report the rule, the audited behaviour, and the saturation rate
+> one on every answer path. We report the rule, the audited behavior, and the saturation rate
 > together.
 
 ---

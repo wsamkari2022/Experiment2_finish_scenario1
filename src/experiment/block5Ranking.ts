@@ -2,7 +2,7 @@
  * ============================================================================
  * DEAD CODE AS OF 2026-09-02 - nothing imports this file.
  *
- * Option ordering is done by block5Planner.ts (the trade-off tree), and alignment labelling by
+ * Option ordering is done by block5Planner.ts (the trade-off tree), and alignment labeling by
  * labelOptions() in block5CVR.ts. A grep for `from "./block5Ranking"` across src/ returns nothing.
  *
  * It is left in place rather than deleted only so the earlier ranking approach stays readable
@@ -16,7 +16,7 @@
  *
  * This module takes a participant's Block5UserProfile (derived from the threshold tree)
  * and a set of scenario options (each with a 7-dimension fingerprint), then produces
- * a personalised ranking.
+ * a personalized ranking.
  *
  * Algorithm:
  *  1. Gate filtering — each option must meet a minimum threshold on the user's top

@@ -3,7 +3,7 @@
  *
  * WHAT IT SHOWS
  * Two radar (spider) charts drawn from data that already exists on every scenario option —
- * nothing here computes or alters experiment logic, it only visualises what the option
+ * nothing here computes or alters experiment logic, it only visualizes what the option
  * objects already declare:
  *
  *   Chart 1 — PERFORMANCE IMPACT: the 8 generic metrics on `option.metrics`
@@ -18,7 +18,7 @@
  * A radar of options alone tells the participant how the options differ from each other but
  * not where THEY stand. Each chart therefore overlays one dashed reference series:
  *   - Chart 2 overlays the participant's own four value priorities. Because the alignment
- *     rule only penalises an option for falling BELOW the participant on a value, any option
+ *     rule only penalizes an option for falling BELOW the participant on a value, any option
  *     corner sitting inside the dashed shape is precisely a shortfall the score charges for.
  *     The chart is, literally, a picture of the alignment computation.
  *   - Chart 1 overlays the participant's cumulative performance so far, and only once at
@@ -29,7 +29,7 @@
  * Six filled polygons on one radar is unreadable, so the overlay lets the participant toggle
  * options on and off, and the fill/vertex-dot density adapts to how many are visible: solid
  * fills and dots for a focused 1-2 option comparison, near-transparent fills and no dots when
- * everything is shown at once. Meaning is never carried by colour alone — every series is
+ * everything is shown at once. Meaning is never carried by color alone — every series is
  * also named in the toggle list and in the legend.
  *
  * EXPERIMENT NOTE
@@ -53,7 +53,7 @@ import {
 /**
  * Short axis captions. The full METRIC_LABELS / POLICY_DIM_SHORT strings are written for
  * running prose and are too long for a radar spoke, where they would wrap into three lines
- * and collide with their neighbours. These say the same thing in one or two words.
+ * and collide with their neighbors. These say the same thing in one or two words.
  */
 const METRIC_AXIS_LABEL: Record<Block5MetricKey, string> = {
   speed: "Speed",
@@ -65,7 +65,7 @@ const METRIC_AXIS_LABEL: Record<Block5MetricKey, string> = {
 
 const POLICY_AXIS_LABEL: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity: "Protect the vulnerable",
-  groupSizeSensitivity: "How many harmed",
+  groupSizeSensitivity: "Reducing harm",
   gainResponsivenessSensitivity: "How much gained",
   outcomeAggregationSensitivity: "How many helped",
 };
@@ -73,9 +73,9 @@ const POLICY_AXIS_LABEL: Record<Block5PolicyDimKey, string> = {
 /** Plain-English one-liner under each chart title. */
 const CHART_HELP = {
   performance:
-    "What each option actually achieves. Five measures of how well a plan performs — the further a corner reaches from the middle, the better that option does on that measure. These describe the outcome, not who it favours; that is the second chart.",
+    "What each option actually achieves. Five measures of how well a plan performs — the further a corner reaches from the middle, the better that option does on that measure. These describe the outcome, not who it favors; that is the second chart.",
   policy:
-    "What each option is built to prioritise. These are the same four values your own answers were scored on, so this chart shows why each option received its alignment label.",
+    "What each option is built to prioritize. These are the same four values your own answers were scored on, so this chart shows why each option received its alignment label.",
 } as const;
 
 interface Props {
@@ -107,6 +107,25 @@ export function Block5OptionCompare({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  /*
+    FREEZE THE PAGE BEHIND THIS OVERLAY.
+
+    The panel scrolls on its own, but the scenario page underneath keeps its own scrollbar — a few
+    thousand pixels of it. Reaching the top or the bottom of the panel hands the rest of the wheel
+    gesture to that page, so it creeps up and down behind the charts and the participant returns to
+    a scenario scrolled somewhere they did not put it.
+
+    Locking the root removes the thing being scrolled. `overscroll-behavior: contain` on the panel
+    is the matching half: it stops the chain at the panel's own edges, including on touch, where a
+    locked root alone is not always enough.
+  */
+  useEffect(() => {
+    const root = document.documentElement;
+    const prev = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => { root.style.overflow = prev; };
+  }, []);
 
   const colorOf = useMemo(() => {
     const map: Record<string, string> = {};
@@ -170,7 +189,8 @@ export function Block5OptionCompare({
       display="flex" alignItems="center" justifyContent="center" p={{ base: "2", md: "4" }}
       onClick={onClose}>
       <Box bg={pal.cardBg} borderWidth="1px" borderColor={pal.cardBorder} rounded="2xl"
-        maxW="6xl" w="full" maxH="94dvh" overflowY="auto" style={{ boxShadow: pal.sidebarShadow }}
+        maxW="6xl" w="full" maxH="94dvh" overflowY="auto" overscrollBehavior="contain"
+        style={{ boxShadow: pal.sidebarShadow }}
         onClick={(e) => e.stopPropagation()}>
 
         {/* ---------------- Header ---------------- */}
@@ -188,7 +208,7 @@ export function Block5OptionCompare({
               <Heading size="md" color={pal.text}>{scenario.title}</Heading>
               <Text fontSize="sm" color={pal.textMuted} mt="1" lineHeight="tall">
                 All {options.length} options on the same two charts — what each one achieves, and
-                what each one prioritises. Nothing here is a recommendation; every option stays
+                what each one prioritizes. Nothing here is a recommendation; every option stays
                 available to you.
               </Text>
             </Box>
@@ -293,8 +313,8 @@ export function Block5OptionCompare({
             </HStack>
             <VStack align="stretch" gap="1.5">
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                Each coloured shape is one option. Every corner is one measure, scored 0 at the
-                centre and 100 at the outer ring. The further a corner stretches out, the higher
+                Each colored shape is one option. Every corner is one measure, scored 0 at the
+                center and 100 at the outer ring. The further a corner stretches out, the higher
                 that option scores on that measure.
               </Text>
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
@@ -303,7 +323,7 @@ export function Block5OptionCompare({
                 asked to make.
               </Text>
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                The <b>dashed grey shape</b> on the right-hand chart is <b>you</b> — your own four
+                The <b>dashed gray shape</b> on the right-hand chart is <b>you</b> — your own four
                 value priorities. Wherever an option's corner falls short of your dashed line, that
                 option gives up something you said mattered.
               </Text>
@@ -340,7 +360,7 @@ function ChartCard({ pal, title, help, axes, series, fillOpacity, showDots }: {
   showDots: boolean;
 }) {
   // The overlay paints its own surfaces from the scenario palette rather than from the global
-  // Chakra tokens, so the radar axes are given that palette's text colour explicitly.
+  // Chakra tokens, so the radar axes are given that palette's text color explicitly.
   return (
     <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl"
       px={{ base: "3", md: "4" }} py="4">

@@ -8,7 +8,7 @@
  *                    (chosen by salience) and the concrete harm they experience.
  *   + reendorseQuestion.
  *
- * The text carries lightweight {markup} so the UI can colour the three CVR-cube dimensions:
+ * The text carries lightweight {markup} so the UI can color the three CVR-cube dimensions:
  *   {a|…} same-numbers anchor (outcome-equivalence)   {v|…} the violated VALUE
  *   {f|…} the FRAMING (context/directness)            {w|…} WHO appears (salience)
  *   {b|…} plain bold (e.g. the harm)
@@ -260,7 +260,7 @@ const CARE: ScenarioCVRContent = {
   parallel: {
     register: "life_and_death",
     setting:
-      "Forty-five beds left in the winter night shelter, down from sixty. Two hundred people on the list, and a fortnight of hard frost forecast.",
+      "Forty-five beds left in the winter night shelter, down from sixty. Two hundred people on the list, and a two weeks of hard frost forecast.",
     valuePhrase: {
       vulnerabilityProtectionSensitivity: "the people who would not survive a night outside",
       groupSizeSensitivity: "much of the larger group who could have been let in",

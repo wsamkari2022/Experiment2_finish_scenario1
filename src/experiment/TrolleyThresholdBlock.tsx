@@ -111,7 +111,7 @@ export function TrolleyThresholdBlock({
 
   /**
    * Illustration for the current (phase, lives) pair, or null when the phase has no artwork —
-   * in which case the question renders full-width and centred, as it did before illustrations.
+   * in which case the question renders full-width and centered, as it did before illustrations.
    */
   const scenarioImageSrc = trolleyScenarioImage(state.currentPhase, currentValue);
   /** Each phase keeps its own native frame shape — see TROLLEY_IMAGE_ASPECT for why. */
@@ -151,7 +151,7 @@ export function TrolleyThresholdBlock({
    * ref-based version needed a dummy `forceGlowRender` state alongside it purely to schedule
    * the render. Using state directly does the same job in one step.
    *
-   * Behaviour is unchanged: the same integer sequence reaches GlowSpan, at the same moments.
+   * Behavior is unchanged: the same integer sequence reaches GlowSpan, at the same moments.
    */
   const [valueGlowKey, setValueGlowKey] = useState(0);
   /**
@@ -520,7 +520,7 @@ export function TrolleyThresholdBlock({
     [state, isTransitioning, trolleyBlockCompleted, completeTrolleyBlock],
   );
 
-  /** Forwards the completed results to the parent and logs for debugging. */
+  /** Forward the completed results to the parent and logs for debugging. */
   const handleContinue = useCallback(() => {
     if (!finalResults) return;
     console.log("Trolley block results:", finalResults);
@@ -540,7 +540,7 @@ export function TrolleyThresholdBlock({
   /** Human-readable label for the phase badge — shown in the UI to orient the participant. */
   const phaseBadgeLabel =
     state.currentPhase === "bridge" ? "Bridge scenario" : "Lever scenario";
-  /** Colour palette for the phase badge: blue for lever, orange for bridge. */
+  /** Color palette for the phase badge: blue for lever, orange for bridge. */
   const phaseBadgePalette =
     state.currentPhase === "bridge" ? "orange" : "blue";
 
@@ -549,7 +549,7 @@ export function TrolleyThresholdBlock({
    *
    * Two things can glow. The people-count figure is keyed to valueGlowKey and lights up green
    * whenever the number changes. The action phrase — "pull a lever" or "pushing … off a
-   * bridge" — is keyed to phaseGlowKey and lights up when the scenario changes, in the colour
+   * bridge" — is keyed to phaseGlowKey and lights up when the scenario changes, in the color
    * that already identifies that scenario (blue for the lever, yellow for the bridge).
    */
   const scenarioElements = useMemo(() => {
@@ -726,7 +726,7 @@ export function TrolleyThresholdBlock({
 
           {/*
             * Scenario panel. With an illustration it is a two-column row (picture beside the
-            * question on md+, stacked on a phone); without one it is the original centred
+            * question on md+, stacked on a phone); without one it is the original centered
             * single column, so a phase with no artwork is unchanged.
             *
             * The `key` deliberately does NOT include the rung index. Re-keying on every rung

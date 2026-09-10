@@ -86,7 +86,7 @@ interface Props {
  *      final decision, final confidence, and which perspective was most influential.
  *
  * The block adapts the perspective vignettes to the participant's moral profile and prior
- * analysis, always selecting opposing-direction vignettes to maximise reflective tension.
+ * analysis, always selecting opposing-direction vignettes to maximize reflective tension.
  */
 export function AdaptiveStakeholderReflectionBlock({
   participantId,
@@ -204,7 +204,7 @@ export function AdaptiveStakeholderReflectionBlock({
     if (!finalDecision || !finalConfidence || !mostInfluential) return;
     // Map the most-influential perspective to how its voice is affected by the
     // participant's final decision: a rejection-leaning voice speaks for the harmed
-    // workers; an acceptance-leaning voice speaks for the benefiting organisation.
+    // workers; an acceptance-leaning voice speaks for the benefiting organization.
     // This feeds the engine's secondary vulnerability / gain signals (Approved Change 5).
     const influentialDirection =
       mostInfluential === perspectiveOne.title ? firstDirection
@@ -378,11 +378,11 @@ const FIGURE_ALT: Record<VignetteDirection, string> = {
 /**
  * A figure on its own plate.
  *
- * WHY THE PLATE IS DARK IN BOTH COLOUR MODES. The artwork is white line-art on a transparent
+ * WHY THE PLATE IS DARK IN BOTH COLOR MODES. The artwork is white line-art on a transparent
  * background. On the light theme's `bg.panel` it would be white-on-white and effectively invisible,
  * so the plate cannot follow the theme — it has to guarantee the contrast itself. The screen's own
  * accent returns as a glow at the top, which ties the picture to the panel beside it without
- * putting the interface's colour behind a figure that is supposed to read as a person.
+ * putting the interface's color behind a figure that is supposed to read as a person.
  *
  * `aria-hidden` and an empty alt where the picture is decorative: on the perspective screens the
  * words carry the meaning, and a screen reader announcing the illustration would interrupt them.
@@ -391,7 +391,7 @@ function Block4Figure({ src, alt, accent, minH }: {
   src: string;
   /** Empty string marks the image decorative, which hides it from assistive technology. */
   alt: string;
-  /** Hex accent for the glow — the screen's own colour. */
+  /** Hex accent for the glow — the screen's own color. */
   accent: string;
   minH?: Record<string, string> | string;
 }) {
@@ -462,7 +462,7 @@ function Screen1InitialDecision({
     >
       <VStack gap="6" align="stretch">
         {/*
-          NO TITLE HERE. The page header above this card already prints the scenario title, centred
+          NO TITLE HERE. The page header above this card already prints the scenario title, centered
           and at size xl. Repeating it inside the card put a second, smaller, left-aligned copy
           directly beneath the first, which read as the page having two competing headings.
         */}

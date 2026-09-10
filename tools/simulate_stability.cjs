@@ -244,7 +244,7 @@ for (let n = 0; n < 4000; n++) {
        *
        * A misaligned pick sends a chance responder to APA about half the time (they answer the
        * vignette at random, and the flow routes on whether the person moved them), so that is the
-       * split modelled here. Every APA answer is random too: the value they prioritise, their
+       * split modeled here. Every APA answer is random too: the value they prioritize, their
        * confidence, and whether the stakeholder swayed them.
        */
       if (isFit(opt.level)) {
@@ -253,9 +253,9 @@ for (let n = 0; n < 4000; n++) {
         p = applyEndorsementUpdates(p, opt, rnd() < 0.5, rnd() < 0.5, null, w);
       } else {
         const q1 = rnd() < 0.5 ? "endorse" : "context";
-        const prioritised = POLICY[Math.floor(rnd() * POLICY.length)];
+        const prioritized = POLICY[Math.floor(rnd() * POLICY.length)];
         const confidence = 1 + Math.floor(rnd() * 5);
-        p = applyApaUpdates(p, opt, q1, rnd() < 0.5, prioritised, null, w, confidence);
+        p = applyApaUpdates(p, opt, q1, rnd() < 0.5, prioritized, null, w, confidence);
       }
     }
     results.push({

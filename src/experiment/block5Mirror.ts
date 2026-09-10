@@ -126,7 +126,7 @@ export interface MirrorReading {
  * Below this, a wish is treated as recall rather than reflection.
  *
  * Twelve seconds is roughly the floor for reading six option titles at all, let alone weighing
- * them. It is a flag for the analyst, never a judgement shown to the participant.
+ * them. It is a flag for the analyst, never a judgment shown to the participant.
  */
 export const HURRIED_WISH_SECONDS = 12;
 

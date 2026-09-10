@@ -148,12 +148,18 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     ? `Your four values held remarkably steady across all ${n} scenarios.`
     : `“${moverLabel}” moved the most across the journey (by ${Math.round(moverDelta)} points).`;
 
-  /* 7 · Line: how your two reflection lenses (Directness vs Context) shifted across the journey.
-     These only move when you generated and compared the alternate perspective inside a reflection. */
+  /* 7 · Line: how the two reflection views shifted across the journey. These only move when the
+     participant generated and compared the second perspective inside a reflection.
+
+     NAMED DESCRIPTIVELY HERE, NOT "Main" AND "Alternative". Inside a scenario those two words are
+     exact — one view is shown first and the other is generated. Across scenarios they are not:
+     `chooseFraming` reads the CURRENT profile, and the APA moves both sensitivities, so the view
+     that comes first can flip partway through. A series labelled "Main view" would therefore be
+     two different lenses joined by one line. */
   const lensX = ["Before", ...scenarios.map((_, i) => `After S${i + 1}`)];
   const lensSeries: LineSeries[] = [
     {
-      name: "Directness — your responsibility",
+      name: "Your own responsibility",
       color: SERIES_COLORS[3],
       values: [
         dimScoreOf(before, "directnessSensitivity"),
@@ -161,7 +167,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
       ],
     },
     {
-      name: "Context — circumstances",
+      name: "The circumstances",
       color: SERIES_COLORS[0],
       values: [
         dimScoreOf(before, "contextSensitivity"),
@@ -193,8 +199,8 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   const lensCaption = lensMoved < 1
     ? "Your two reflection lenses stayed exactly where they started — you didn't lean on one over the other."
     : finalContext >= finalDirectness
-      ? "By the end, your Context lens (the circumstances behind the numbers) carried more weight."
-      : "By the end, your Directness lens (your own responsibility for the outcome) carried more weight.";
+      ? "By the end, the circumstances behind the numbers carried more weight for you."
+      : "By the end, your own responsibility for the outcome carried more weight for you.";
 
   /* 3 · Bars: final choice & alignment per scenario */
   const choiceBars: HBar[] = scenarios.map((r, i) => ({
@@ -310,7 +316,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     under_authority: "#c026d3",
     receiving_end: "#0f766e",
   };
-  /** Own values vs the employer's, kept apart so the two are never drawn in one another's colour. */
+  /** Own values vs the employer's, kept apart so the two are never drawn in one another's color. */
   const OWN_COLOR = "#7c3aed";
   const COMPANY_COLOR = "#b45309";
   const positionBars: HBar[] = position.rows.map((r) => ({
@@ -400,7 +406,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     /*
       "Insights" and "Final analysis" are deliberately absent. They are read-only pages the
       participant scrolls through rather than stages where they decide anything, so their times are
-      a few hundred milliseconds and render as a hairline labelled "0s" - a row that carries no
+      a few hundred milliseconds and render as a hairline labeled "0s" - a row that carries no
       information while taking a full line of the chart. The `.value > 0` filter below does not
       catch them, because a 400ms page is greater than zero and only LOOKS like zero once rounded
       to seconds. The times are still recorded and still counted in the total below the chart;
@@ -454,7 +460,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 2 · Evolution line */}
           <ChartCard index={2} title="How your four values shifted along the way"
-            howTo={<>Follow each coloured line left to right to see how that value rose or fell — from <b>before</b> Block 5, then after each scenario. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you.</>}
+            howTo={<>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> Block 5, then after each scenario. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you.</>}
             caption={evoCaption}>
             <LineChart xLabels={evoX} series={evoSeries} max={100} />
             <ChartLegend items={evoSeries.map((s) => ({ label: s.name, color: s.color }))} />
@@ -462,7 +468,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 3 · Choice & alignment */}
           <ChartCard index={3} title="Your choice in each scenario"
-            howTo={<>Each bar is one scenario. The bar length is how well your <b>final choice</b> fit your values (0–100), and its colour shows the fit: <b>green</b> = aligned, <b>yellow</b> = weak, <b>orange/red</b> = against your values. Your actual choices are listed below.</>}
+            howTo={<>Each bar is one scenario. The bar length is how well your <b>final choice</b> fit your values (0–100), and its color shows the fit: <b>green</b> = aligned, <b>yellow</b> = weak, <b>orange/red</b> = against your values. Your actual choices are listed below.</>}
             caption={choiceCaption}>
             <HBarChart bars={choiceBars} max={100} unitHint="value fit (0–100)" />
             <ChartLegend items={[
@@ -502,7 +508,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 5 · Position Effect — the study's independent variable, seen from the outside */}
           <ChartCard index={5} title="How far each choice sat from the person you were"
-            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are coloured by <b>who carried the cost</b>. Read <b>across the three colours</b>, not down the five bars: that is where the finding is.</>}
+            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>. Read <b>across the three colors</b>, not down the five bars: that is where the finding is.</>}
             caption={positionCaption}>
             {position.rows.length === 0 ? (
               <Text fontSize="sm" color="fg.muted">No position data recorded for these scenarios.</Text>
@@ -552,7 +558,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                     </Text>
                     <Text fontSize="xs" color="fg.muted" lineHeight="tall">
                       <Text as="span" fontWeight="semibold" color="fg">What matters is whether it changes
-                      between the three colours.</Text> One number on its own says very little; the same
+                      between the three colors.</Text> One number on its own says very little; the same
                       person scoring 13 alone and 40 for strangers is the finding.
                     </Text>
                   </Stack>
@@ -601,7 +607,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
           {/*
             7 · THE TRADE-OFF, on one axis.
 
-            Both measures are already 0-100 and both are already normalised within a scenario, so
+            Both measures are already 0-100 and both are already normalized within a scenario, so
             they can share an axis honestly. That is the whole reason this card can exist: a paired
             chart whose two bars used different scales would invite exactly the comparison it
             cannot support.
@@ -656,7 +662,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/*
             STANCE — what you did with an employer's values that were not yours.
-            Drawn as two bars per option rather than a scatter: a scatter plots six unlabelled dots
+            Drawn as two bars per option rather than a scatter: a scatter plots six unlabeled dots
             and asks the reader to find theirs, while paired bars put the chosen row's two distances
             side by side with the five it was chosen over.
           */}
@@ -725,7 +731,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                 {" "}<b>Consistency when deciding {mirror.vciActed}/100, when only wishing {mirror.vciWished}/100</b> — {responsibilityGapLabel(mirror.responsibilityGap).toLowerCase()}.
                 {mirror.hurried && (
                   <> <b>Read with care:</b> the wish came back in {mirror.wished.seconds} seconds, which is fast
-                  enough to be recall of the earlier screen rather than a fresh judgement.</>
+                  enough to be recall of the earlier screen rather than a fresh judgment.</>
                 )}
               </>}>
               <Stack gap="3">
@@ -765,7 +771,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                   </Text>
                   <Text fontSize="2xs" color="fg.subtle" lineHeight="tall" mt="1.5">
                     You answered the deciding version first. That order makes this a cautious test:
-                    having already committed, most people lean towards repeating themselves, so a gap
+                    having already committed, most people lean toward repeating themselves, so a gap
                     found here is a floor rather than a ceiling.
                   </Text>
                 </Box>
@@ -802,7 +808,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
           {/* 7 · Reflection lenses — only when they actually moved. See lensHasMovement. */}
           {lensHasMovement && (
           <ChartCard index={iLens} title="How your two reflection lenses shifted"
-            howTo={<>When a choice went against your values, the reflection could be framed two ways — <b>Directness</b> (it's your own rule, your responsibility) and <b>Context</b> (circumstances shaped the numbers). If you generated and compared both, the lens that swayed (or didn't) you was nudged. Each line traces one lens from before Block 5 through each scenario.</>}
+            howTo={<>When a choice went against your values, the reflection could be framed two ways — <b>your own responsibility</b> for the outcome, or <b>the circumstances</b> that shaped the numbers. If you generated and compared both, the one that swayed (or didn't) you was nudged. Each line traces one of them from before Block 5 through each scenario.</>}
             caption={lensCaption}>
             <LineChart xLabels={lensX} series={lensSeries} max={100} />
             <ChartLegend items={lensSeries.map((s) => ({ label: s.name, color: s.color }))} />
@@ -813,7 +819,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
             Deliberately descriptive and deliberately un-scored. Answering differently in different
             contexts is the sensitivity this study measures, not a defect, so nothing here is
-            labelled good or bad except the two things that really are defects of ANSWERING rather
+            labeled good or bad except the two things that really are defects of ANSWERING rather
             than positions about the world: clicking faster than the text can be read, and moving
             in both directions on an axis that only moves one way.
           */}

@@ -1,14 +1,14 @@
 /**
- * block5Palette.ts — the single source of truth for Block-5 scenario-page colours, resolved
- * per colour mode. This makes Block 5 genuinely colour-mode-aware: a fresh, colourful LIGHT
+ * block5Palette.ts — the single source of truth for Block-5 scenario-page colors, resolved
+ * per color mode. This makes Block 5 genuinely color-mode-aware: a fresh, colorful LIGHT
  * theme and a cleaned, flat DARK theme — not a pale copy of one another.
  *
  * Design system: each scenario keeps an identity hue (Travel = amber, Meal = rose,
  * Cancer = violet). One light recipe + one dark recipe are
- * parameterised by that hue + a tinted background, so every scenario stays coordinated and
+ * parameterized by that hue + a tinted background, so every scenario stays coordinated and
  * only the hue changes.
  *
- * This file only produces COLOURS. It contains no decision logic, scoring, or scenario data.
+ * This file only produces COLORS. It contains no decision logic, scoring, or scenario data.
  */
 
 import type { Block5Scenario } from "./block5Types";
@@ -37,7 +37,7 @@ export interface Block5Palette {
   /** inset panel used for the option-card TRADE-OFF block (must read against cardBg). */
   tradeoffBg: string;
   tradeoffBorder: string;
-  /** gain / cost accents for the trade-off block, tuned per colour mode. */
+  /** gain / cost accents for the trade-off block, tuned per color mode. */
   gainColor: string;
   costColor: string;
   // badges
@@ -102,7 +102,7 @@ const HUES: Record<string, HueSpec> = {
   /*
    * The workplace pair get RELATED hues rather than unrelated ones — magenta, then teal — because
    * they are the same situation seen from two chairs. Every other scenario is a new world and gets
-   * a colour that says so; these two need to read as a matched pair, so that arriving at the second
+   * a color that says so; these two need to read as a matched pair, so that arriving at the second
    * one feels like a return rather than a fresh start. That recognition is the point: the
    * participant is meant to notice these are the same six options.
    */
@@ -145,7 +145,7 @@ function hueFor(scenario: Block5Scenario): HueSpec {
 /**
  * Picks black or white text for a filled swatch of `hex`, by WCAG relative luminance.
  *
- * WHY THIS IS NEEDED: five scenario hues x two colour modes gives ten accents, and they are not
+ * WHY THIS IS NEEDED: five scenario hues x two color modes gives ten accents, and they are not
  * all dark. The dark-mode amber used by "Getting to Fairhaven" (#f59e0b) is bright enough that
  * white text on it lands around 2:1 — well under the 4.5:1 floor — while the same white is
  * correct on the other nine. Hard-coding color="white" on every accent-filled chip was therefore

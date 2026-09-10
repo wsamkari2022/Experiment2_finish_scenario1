@@ -25,7 +25,7 @@
  * and weights them against option fingerprints. Ranking a level against a difference is like
  * asking whether someone's height is bigger than their age: the arithmetic works, the answer
  * is meaningless. In practice the two level-type dimensions won almost every time, and the
- * CVR fired on only two of the four policy values — vulnerability protection, the centre of
+ * CVR fired on only two of the four policy values — vulnerability protection, the center of
  * the whole thesis, fired 0% of the time.
  *
  * ============================================================================
@@ -37,7 +37,7 @@
  *       that this participant's answers exceed on this value"
  *
  * That definition is identical for all seven, so they become directly comparable. It is also
- * a monotone relabelling: it never changes the order of two participants on the same
+ * a monotone relabeling: it never changes the order of two participants on the same
  * dimension, only the number attached to that order.
  *
  * WHY THIS REFERENCE, AND NOT A POPULATION

@@ -92,7 +92,7 @@ const SOURCE_MAP: Record<Block5SensitivityKey, string[]> = {
  * happened to be right for N=7). Derived from the dimension count instead.
  * NOTE: this weight is profile metadata; Block 5 alignment ranks options by the
  * raw 0–100 scores, not by this weight, so changing the formula cannot alter
- * Block 5 behaviour — but we keep it consistent and documented.
+ * Block 5 behavior — but we keep it consistent and documented.
  */
 function rankWeight(rank: number, dimensionCount: number): number {
   const triangular = (dimensionCount * (dimensionCount + 1)) / 2;
@@ -120,7 +120,7 @@ export function extractBlock5Profile(tree: ThresholdTree): Block5UserProfile {
       // Loud failure instead of mislabeling as directness (the previous silent bug).
       throw new Error(
         `[extractBlock5Profile] Unmapped sensitivity key "${d.key}". Blocks 1–4 produced a ` +
-          "dimension Block 5 does not recognise. Refusing to silently default it — update KEY_MAP " +
+          "dimension Block 5 does not recognize. Refusing to silently default it — update KEY_MAP " +
           "if a new dimension was intentionally added.",
       );
     }

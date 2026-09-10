@@ -36,6 +36,22 @@ Second finding: the current payoffs are not good enough to carry the design. **3
 order the cards the same way alignment already does**, which is the one outcome that makes the
 whole measurement uninterpretable (§2a).
 
+### What the shipped planner does
+
+Measured over **3,000 randomly generated profiles** through the shipped `labelOptions` and
+`plannerRank`, on all five scenarios:
+
+- The **first card** is labeled Aligned **51%** · Weakly aligned **28%** · Misaligned **19%** ·
+  Strongly misaligned **3%**.
+- The **best-fitting option** sits at card #1 or #2 **84%** of the time, and in the top three
+  **95.5%**. It reaches cards 4–6 in under 5% of cases, so it is never buried.
+- The separation gate — `npm run validate:planner`, *planner #1 == alignment #1, need ≤ 50%* —
+  currently reports **49%** on the structured 72-profile set.
+
+A first card reading *Misaligned* is therefore the design working rather than a fault: it happens
+to roughly one profile in five, and the best-fitting option is almost always the card directly
+beside it.
+
 ### Decisions locked (2026-08-30)
 
 | # | Decision |
@@ -177,7 +193,7 @@ The two MD files were written without access to this repository. Judged against 
 
 | # | Brainstorm said | Why it is dropped |
 |---|---|---|
-| 1 | Invert `harm` and `vulnerable` before normalising ("lower is better") | **All four fingerprints here are already higher = better.** Inverting two of four would make `policyAlignmentScore` reward the options it should penalise, and would corrupt alignment, the CVR coordinate and VCI. Highest-severity trap in the two files. |
+| 1 | Invert `harm` and `vulnerable` before normalizing ("lower is better") | **All four fingerprints here are already higher = better.** Inverting two of four would make `policyAlignmentScore` reward the options it should penalize, and would corrupt alignment, the CVR coordinate and VCI. Highest-severity trap in the two files. |
 | 2 | Three scenarios | Six, per Decision 1. Three cannot separate position from time-on-task. |
 | 3 | Default `tolerance` to 0.15 | **Derivable** from ladder resolution (§4b). Not defaulted. |
 | 4 | Default `exchange` to 2.0 | **Derivable** from Block 3's 2×3 money-threshold matrix (§4b). Not defaulted. |
@@ -247,7 +263,7 @@ Ladders: Block 1 `AMOUNT_VALUES` = 8 rungs ($0.25 → $10,000) × 3 contexts. Bl
 #### RED LINES — a sentinel index is literally a refusal
 
 A rung index equal to the ladder length is the stored sentinel for *"I said no at every rung,
-including the largest."* That is not a modelled threshold; it is the participant refusing on
+including the largest."* That is not a modeled threshold; it is the participant refusing on
 screen. It is the cleanest red line the study could possibly have.
 
 | Red line | Derivation | Fires when |
@@ -385,7 +401,7 @@ their mind"*, so it presents an interactive tree and lets the operator type the 
 
 This study cannot ask. Blocks 1–4 are frozen, no new elicitation is permitted, and — more
 importantly — a moral threshold is not a number people can reliably introspect and type. So the
-thresholds are **inferred from behaviour**: the rung at which they refused, the extra rungs they
+thresholds are **inferred from behavior**: the rung at which they refused, the extra rungs they
 demanded when the victim changed, the interval they could not discriminate.
 
 **That substitution is the novel step.** LEAP learns a trade-off tree from a domain expert who
@@ -467,12 +483,12 @@ New file `block5Planner.ts`. Pure, DOM-free, deterministic. `plannerRank(scenari
 
 **Algorithm** — the brainstorm's tree, with three corrections:
 
-1. **No inversion.** All four fingerprints min–max normalise directly. Higher is better on all four
+1. **No inversion.** All four fingerprints min–max normalize directly. Higher is better on all four
    in this codebase (§3 correction 1).
 2. **Red lines, exchange rates and tolerance come from §4b** — derived from the Blocks 1–4 ladders,
    never from the 0–100 sensitivity score and never defaulted.
-3. **Performance never enters the ordering** (§4b). Only the four moral values are normalised for
-   ranking purposes; the five metrics are normalised for display chips only.
+3. **Performance never enters the ordering** (§4b). Only the four moral values are normalized for
+   ranking purposes; the five metrics are normalized for display chips only.
 
 Everything else stands: three bins → pairwise trade-off tree (`bestA < redLineNorm(A)` →
 `FAVOR_A`; `diffA < tolerance(A)` → node 3; `diffB > exchange(A) × diffA` → `IGNORE_A`) →
@@ -579,7 +595,7 @@ distance formula, and it subsumes that plan's `departureIndex` without contradic
 
 **What this costs, stated plainly so it can go in the write-up.** Position is confounded with
 sequence position: "for others" is always last and always follows two scenarios of accumulated
-drift. A participant who drifts simply because they are tired, practised, or warmed up will look
+drift. A participant who drifts simply because they are tired, practiced, or warmed up will look
 position-sensitive.
 
 **The partial control already exists and must be reported alongside every position claim.** The
@@ -676,18 +692,18 @@ extend it rather than adding a parallel structure.
 
 | Stage | Work | Gate |
 |---|---|---|
-| 1 | ✅ **DONE** — `block5Planner.ts`, `tools/simulate_planner.cjs`, `tools/test_planner.cjs` | §7 measured; all 17 behavioural assertions pass |
+| 1 | ✅ **DONE** — `block5Planner.ts`, `tools/simulate_planner.cjs`, `tools/test_planner.cjs` | §7 measured; all 17 behavioral assertions pass |
 | 2 | ✅ **DONE** — `block5Thresholds.ts`. Read-only; Blocks 1–4 show zero diffs. | blocked bin at 17% in 3 of 5; no constants in the planner |
 | 3 | ✅ **DONE** — two new high-stakes scenarios authored, three retuned, all six slots filled | all §7 gates green; every existing validator green |
 | 4 | ✅ **DONE** — `cvrSeed` × 12, two parallel worlds, registers all `life_and_death` | `validate:lenses`, `validate:people` green |
 | 5 | ✅ **DONE** — planner drives the card order; panel, rank badges, bin dividers and reason lines added; full logging | alignment tiers byte-identical; verified live in the running app |
 | 6 | ✅ **DONE** — verified in the running app across light/dark × desktop/mobile | no page overflow; SVG labels measured, not eyeballed |
 | 7 | `scenario.positionInSequence` logging (order stays fixed per §9) | logged on every trial |
-| 8 | ❌ **REVERTED** — no re-measurement; the author's design measures drift from behaviour, not from re-asking. See §14c. |
+| 8 | ❌ **REVERTED** — no re-measurement; the author's design measures drift from behavior, not from re-asking. See §14c. |
 | 9 | Inverse planner + drift fields | §13 item 13 |
 | 10 | Docs + methods write-up of every derivation in §4b | — |
 
-Stages 1–4 are invisible to a participant. Nothing before Stage 5 changes Block 5 behaviour, and
+Stages 1–4 are invisible to a participant. Nothing before Stage 5 changes Block 5 behavior, and
 **as of this writing nothing in the running experiment has changed at all** — the two new modules
 are not imported by any component yet.
 
@@ -698,7 +714,7 @@ are not imported by any component yet.
 | `src/experiment/block5Thresholds.ts` | ~310 | Derives red lines, exchange rates and tolerance from `MoralProfile`. Read-only. |
 | `src/experiment/block5Planner.ts` | ~400 | `plannerRank(scenario, profile)`. Pure, DOM-free, deterministic, zero constants. |
 | `tools/simulate_planner.cjs` | ~290 | Authoring sweep: 72 synthetic participants × 5 scenarios against 10 gates. |
-| `tools/test_planner.cjs` | ~230 | 17 behavioural assertions across 5 tests of the tree itself. |
+| `tools/test_planner.cjs` | ~230 | 17 behavioral assertions across 5 tests of the tree itself. |
 
 `npm run validate:planner` runs the sweep; `npm run test:planner` runs the tests and is chained
 into `npm run validate:block5`.
@@ -735,7 +751,7 @@ only to stop a dinner teaching the profile as much as a dose, and there are no d
 ### The six slots, filled in every scenario
 
 Slot 1 (clean reference) is deliberately the **runner-up on gain**, close enough to the gain
-champion that the trade-off tree can set gain aside in its favour. That is the paper's own Table 1
+champion that the trade-off tree can set gain aside in its favor. That is the paper's own Table 1
 structure — the plan that is slightly worse on the top attribute and much better on the second —
 and it is what makes slot 1 reachable as a rank-1 recommendation instead of a permanent also-ran.
 Before that change, the clean reference was never ranked first for **any** of the 72 synthetic
@@ -784,7 +800,7 @@ chase the participant's own drift — options re-ranked to match whatever the la
 taught the system — and drift would be measured against a moving instrument. The ruler has to hold
 still while the thing being measured moves.
 
-The alignment tier DOES follow the live profile, deliberately. The tier is a running judgement;
+The alignment tier DOES follow the live profile, deliberately. The tier is a running judgment;
 the ordering is a fixed frame. Keeping them on different clocks is exactly what lets the analysis
 ask whether the two came apart.
 
@@ -808,11 +824,11 @@ That already exists, three times over:
 | Charts card 2 | value-by-value trajectory across the five scenarios |
 
 **Why re-asking was the wrong call, beyond the length.** Re-administering the identical ladders
-straight after an intensive moral block invites a testing effect: a participant who recognises the
+straight after an intensive moral block invites a testing effect: a participant who recognizes the
 questions has an obvious reason to answer consistently ("I should not contradict myself") or
 inconsistently ("I should show the block affected me"). That is a demand characteristic sitting
 directly on top of the dependent variable, and it would be very hard to argue away afterwards.
-The behavioural route has no such problem — the participant is never asked to describe themselves,
+The behavioral route has no such problem — the participant is never asked to describe themselves,
 only to choose.
 
 **The honest limitation to keep in the write-up.** The end-of-Block-5 profile moves by update

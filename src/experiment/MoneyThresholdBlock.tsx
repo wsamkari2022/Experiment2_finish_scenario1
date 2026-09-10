@@ -159,7 +159,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
    * to schedule the render. Using state directly does the same job in one step: the update IS
    * the re-render trigger, so the extra hook is gone.
    *
-   * Behaviour is unchanged — the same integer sequence reaches GlowSpan, at the same moments.
+   * Behavior is unchanged — the same integer sequence reaches GlowSpan, at the same moments.
    * (Reading a ref during render is also what `react-hooks/refs` flags: it is unsafe under
    * StrictMode's double-render and under concurrent rendering, where the value read during
    * render may not be the value that gets committed.)
@@ -185,7 +185,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
   }
 
   /**
-   * Finalises the experiment: assembles the MoneyBlockResults object,
+   * Finalizes the experiment: assembles the MoneyBlockResults object,
    * persists it to localStorage for session recovery, and marks the block done.
    */
   const completeMoneyBlock = useCallback(
@@ -311,7 +311,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
     ],
   );
 
-  /** Forwards the completed results to the parent via the onContinue prop. */
+  /** Forward the completed results to the parent via the onContinue prop. */
   const handleContinue = useCallback(() => {
     if (!finalResults) return;
     console.log("Money block results:", finalResults);
@@ -473,7 +473,7 @@ export function MoneyThresholdBlock({ participantId, onContinue }: MoneyThreshol
 
           {/*
             * Scenario panel. With an illustration it is a two-column row (picture beside the
-            * question on md+, stacked on a phone); without one it is the original centred
+            * question on md+, stacked on a phone); without one it is the original centered
             * single column, so contexts that have no artwork are unchanged.
             *
             * The `key` deliberately does NOT include the amount index any more. Re-keying on

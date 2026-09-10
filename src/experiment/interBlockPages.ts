@@ -25,7 +25,7 @@
  *     demand characteristics there is, and Block 4 is precisely where we ask them to revisit
  *     a decision after hearing other people.
  *   - The Final Analysis page shows the ranked seven-sensitivity tree — the exact quantity that
- *     then decides which Block 5 options are labelled misaligned for them. Showing a participant
+ *     then decides which Block 5 options are labeled misaligned for them. Showing a participant
  *     the scoring key and then scoring them with it makes Block 5 unusable as a measurement.
  *
  * Hiding them makes Blocks 1-5 run straight through as one continuous task.

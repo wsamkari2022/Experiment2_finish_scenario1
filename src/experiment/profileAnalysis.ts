@@ -2,7 +2,7 @@
  * profileAnalysis.ts — Interim Blocks-1–3 descriptive snapshot (the "MoralProfile")
  *
  * This builds the INTERIM profile shown on the Insights page (after Block 3, before
- * Block 4) and used to personalise the Block-4 scenario. It is a descriptive
+ * Block 4) and used to personalize the Block-4 scenario. It is a descriptive
  * snapshot of Blocks 1–3 only.
  *
  * It is NOT the authoritative seven-sensitivity User Value Profile — that is built
@@ -86,7 +86,7 @@ export function toBridgeComparableIndex(t: BridgeThresholdResult | null): number
   return t.thresholdIndex;
 }
 
-/** Normalises an index to [0,1] by dividing by the ladder length. */
+/** Normalizes an index to [0,1] by dividing by the ladder length. */
 function norm(idx: number, steps: number): number {
   return Math.max(0, Math.min(1, idx / steps));
 }
@@ -207,7 +207,7 @@ export function deriveMoralProfile(
   // DELIBERATELY DIFFERENT from the "Directness sensitivity" in thresholdTree.ts. Do not
   // "fix" one to match the other — they measure two different things:
   //
-  //   directnessAversionScore (here)  — SIGNED, centred on 0.5. Answers "which way did this
+  //   directnessAversionScore (here)  — SIGNED, centered on 0.5. Answers "which way did this
   //     participant lean?": above 0.5 = more reluctant to push than to pull, below 0.5 = more
   //     willing to push than to pull. Descriptive only; feeds the interim profile preview and
   //     scenario selection, neither of which ranks it against other dimensions.
@@ -215,7 +215,7 @@ export function deriveMoralProfile(
   //   directness sensitivity (thresholdTree) — MAGNITUDE, |gap|, 0-baseline. Answers "how much
   //     did directness move this participant at all?". It is RANKED and WEIGHTED against the
   //     other six sensitivities in Block 5, so it must sit on the same 0 = "did not move me"
-  //     footing as the rest; a 0.5-centred score there would inflate directness for everyone.
+  //     footing as the rest; a 0.5-centered score there would inflate directness for everyone.
   //
   // Since Block 2's two phases became independent, a below-0.5 value is genuinely reachable
   // here for the first time (see blocksLegacyMethodology.ts). Under the original paired design

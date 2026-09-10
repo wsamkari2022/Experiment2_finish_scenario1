@@ -2,14 +2,14 @@
  * block5ChartColors.ts — shared chart palettes (kept in their own non-component module so
  * the chart components file stays Fast-Refresh-friendly).
  *
- * The categorical palette is colour-blind-safe, and in the charts colour is always paired
- * with a text label so meaning is never carried by colour alone.
+ * The categorical palette is color-blind-safe, and in the charts color is always paired
+ * with a text label so meaning is never carried by color alone.
  */
 
-/** Colour-blind-safe categorical palette (teal · blue · amber · violet · pink). */
+/** Color-blind-safe categorical palette (teal · blue · amber · violet · pink). */
 export const SERIES_COLORS = ["#0d9488", "#2563eb", "#d97706", "#7c3aed", "#db2777"];
 
-/** Alignment-level colours (always shown next to a text label). */
+/** Alignment-level colors (always shown next to a text label). */
 export const ALIGN_COLORS: Record<string, string> = {
   aligned: "#16a34a",
   weakly_aligned: "#ca8a04",
@@ -18,12 +18,12 @@ export const ALIGN_COLORS: Record<string, string> = {
 };
 
 /**
- * Six-colour categorical palette for the per-scenario option comparison, tuned per colour
+ * Six-color categorical palette for the per-scenario option comparison, tuned per color
  * mode: the 600-level hues below read strongly on a light card but go muddy on a dark one,
  * so dark mode uses the 300/400-level counterparts of the SAME six hues. The hues are spread
- * around the wheel (blue · teal · green · amber · red · violet) so no two neighbours are
+ * around the wheel (blue · teal · green · amber · red · violet) so no two neighbors are
  * confusable — a lesson from the earlier legend fix, where amber and orange sat ~5° apart and
- * could not be told apart in Light Mode. Colour is always paired with the option's title in
+ * could not be told apart in Light Mode. Color is always paired with the option's title in
  * both the toggle list and the legend.
  */
 export const OPTION_SERIES_COLORS: Record<"light" | "dark", string[]> = {
@@ -32,7 +32,7 @@ export const OPTION_SERIES_COLORS: Record<"light" | "dark", string[]> = {
 };
 
 /**
- * Neutral grey for the dashed "this is you" reference series, deliberately outside the
+ * Neutral gray for the dashed "this is you" reference series, deliberately outside the
  * categorical palette so it never reads as one more option.
  */
 export const REFERENCE_SERIES_COLOR: Record<"light" | "dark", string> = {

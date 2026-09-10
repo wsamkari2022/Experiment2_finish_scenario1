@@ -72,7 +72,7 @@ import type { MoralProfile } from "./profileAnalysis";
 
 /**
  * Rungs per ladder. These are properties of the FROZEN Blocks 1–3 instruments, restated here so
- * the derivation can normalise a rung index without importing UI modules.
+ * the derivation can normalize a rung index without importing UI modules.
  *
  *   Block 1  AMOUNT_VALUES        8 rungs, $0.25 … $10,000, x3 contexts
  *   Block 2  SAVED_LIVES_OPTIONS  8 rungs, 1 … 10,000 lives, x2 phases
@@ -98,15 +98,15 @@ const AI_CELLS = {
 /**
  * One value's derived decision parameters.
  *
- * All three are expressed in NORMALISED scenario units [0,1], because that is the space the
- * planner compares options in. A ladder answer is ordinal (rung 3 of 6); normalising it to 0.5 is
+ * All three are expressed in NORMALIZED scenario units [0,1], because that is the space the
+ * planner compares options in. A ladder answer is ordinal (rung 3 of 6); normalizing it to 0.5 is
  * the only way to put "how strict this person is" on the same ruler as "how much this option
  * delivers, relative to what this scenario offers".
  */
 export interface ValueThreshold {
   /**
    * TRUE only when the participant refused at every rung of the ladder that measures this value.
-   * This is the red line, and it is the participant's own refusal, not a modelled cut-off.
+   * This is the red line, and it is the participant's own refusal, not a modeled cut-off.
    */
   hasRedLine: boolean;
   /**

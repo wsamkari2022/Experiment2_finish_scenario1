@@ -71,7 +71,7 @@ until the stage before it is green.
 | # | Stage | Risk |
 |---|---|---|
 | **0** | **Back up** every file to be touched into `.cvr-backup/`. | none |
-| **1** | Add the new type fields, all **optional**. No behaviour change. | none — pure types |
+| **1** | Add the new type fields, all **optional**. No behavior change. | none — pure types |
 | **2** | Add `register` + `impersonalAgent` (10 pieces) and build the **directness** lens. Smallest content, simplest render. | low |
 | **3** | Add `parallel.setting` + `parallel.valuePhrase` (25 pieces). Still not rendered. | low |
 | **4** | Author the **30 `parallelRule`** strings. Still not rendered. | medium — bulk content |

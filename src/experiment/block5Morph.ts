@@ -23,7 +23,7 @@
  * WHY THE CARDS CROSS-FADE AS THEY TRAVEL
  *
  * A card is scaled, not re-laid-out — animating width and height would reflow text on every frame
- * and stutter. Scaling squashes the type slightly on the way, so each travelling card fades out
+ * and stutter. Scaling squashes the type slightly on the way, so each traveling card fades out
  * over the last stretch of its journey while the real card underneath fades in. The eye reads one
  * object moving; it never gets a clear enough look at the distorted text to notice it. This is the
  * same trick PowerPoint's own Morph uses.
@@ -44,7 +44,7 @@ export const MORPH_FADE_ATTR = "data-morph-fade";
 const TRAVEL_MS = 620;
 const FADE_OUT_MS = 260;
 
-/** True when the participant has asked the system to minimise animation. */
+/** True when the participant has asked the system to minimize animation. */
 export function prefersReducedMotion(): boolean {
   return typeof window !== "undefined"
     && typeof window.matchMedia === "function"
@@ -84,7 +84,7 @@ export function runMorph(
     if (!to) return;
     const rect = from.getBoundingClientRect();
     const target = to.getBoundingClientRect();
-    // A target with no area is off-screen or display:none — travelling to it would look like the
+    // A target with no area is off-screen or display:none — traveling to it would look like the
     // card being sucked into a corner, which is worse than simply fading.
     if (target.width < 1 || target.height < 1 || rect.width < 1) return;
     pairs.push({ from, to, rect, target });

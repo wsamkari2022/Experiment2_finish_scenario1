@@ -9,15 +9,15 @@
  *  - if the bar stops short → a red "shortfall" gap is drawn from the bar up to the
  *    line, and the label reads "Below your priority by X" (this is what lowers alignment).
  *
- * COLOUR MODE
+ * COLOR MODE
  * This panel was originally authored for Dark Mode only: every label used a `whiteAlpha.*`
  * token, the track was `whiteAlpha.100` and the priority marker was solid white. On a light
  * card that is white-on-white — the four value names, the "Option / Your line" numbers and
  * the whole legend were invisible, and the marker disappeared wherever the bar had not
- * reached it. Colours are now resolved per mode through `meterColors()`.
+ * reached it. Colors are now resolved per mode through `meterColors()`.
  *
  * The DARK values below are exactly the tokens the component used before, so Dark Mode is
- * unchanged; only the light branch is new. The light status colours are the 700-level greens
+ * unchanged; only the light branch is new. The light status colors are the 700-level greens
  * and oranges rather than the 300-level ones, which are far too pale to read on white.
  */
 
@@ -34,7 +34,7 @@ interface MeterColors {
   userScore: string;
   /** unfilled portion of the meter */
   track: string;
-  /** the vertical priority marker; must read against BOTH the track and the coloured bar */
+  /** the vertical priority marker; must read against BOTH the track and the colored bar */
   marker: string;
   /** status line when the option meets or exceeds the participant's priority */
   statusMet: string;
@@ -47,11 +47,11 @@ interface MeterColors {
    * reaches on that metric.
    *
    * Red and green here are not a verdict on the option — they name the TWO ENDS OF THE TABLE, and
-   * the legend says so in those words. That is safe where colouring the bar itself would not be
+   * the legend says so in those words. That is safe where coloring the bar itself would not be
    * (see the note on MetricStandingBar): "worst available" and "best available" are facts about
    * the menu, not opinions about what this participant should want.
    *
-   * COLOUR IS NEVER THE ONLY CUE. The red tick is always to the left of the green one, both are
+   * COLOR IS NEVER THE ONLY CUE. The red tick is always to the left of the green one, both are
    * named in the legend, and both carry a hover title. A participant who cannot tell red from
    * green loses nothing — which matters at roughly 1 man in 12.
    */
@@ -62,16 +62,16 @@ interface MeterColors {
    *
    * The value bars above them are drawn in the scenario's own accent, which runs olive, orange,
    * red, green and blue across the five scenarios. Drawing performance in that same accent made
-   * two different constructs the same colour on the same card, and a participant reading quickly
+   * two different constructs the same color on the same card, and a participant reading quickly
    * has no way to tell "how well this fits your values" from "how well this option works".
    *
-   * It is a DESATURATED steel rather than another hue on purpose. Any saturated colour picked here
+   * It is a DESATURATED steel rather than another hue on purpose. Any saturated color picked here
    * would collide with at least one of the five accents; low saturation cannot, whatever the
-   * scenario. It also reads correctly: the values are the participant's own and are coloured,
+   * scenario. It also reads correctly: the values are the participant's own and are colored,
    * while performance is the instrument's reading and is neutral.
    */
   metricFill: string;
-  /** 1px ring round each tick so it stays visible where it crosses the coloured fill */
+  /** 1px ring round each tick so it stays visible where it crosses the colored fill */
   tickHalo: string;
   /** alpha of the red shortfall gap */
   gapOpacity: number;
@@ -225,16 +225,16 @@ export function MeterLegend({ mode }: { mode: Block5Palette["mode"] }) {
  * option delivers"; these show "what was available" against the same thing. Same visual grammar,
  * two different constructs, so the participant reads them the same way without being taught twice.
  *
- * THE BAR IS DELIBERATELY NOT COLOUR-CODED GOOD/BAD. The value bars turn orange on a shortfall
+ * THE BAR IS DELIBERATELY NOT COLOR-CODED GOOD/BAD. The value bars turn orange on a shortfall
  * because falling below a threshold the participant themselves set IS a shortfall. A performance
  * metric has no such threshold — nothing in Blocks 1-4 says how much speed is worth to this
- * person — so colouring the FILL would be the system expressing a preference it has no basis for,
+ * person — so coloring the FILL would be the system expressing a preference it has no basis for,
  * on exactly the trade-off the study exists to watch the participant make. It stays neutral.
  *
- * THE TWO TICKS ARE COLOURED, AND THAT IS A DIFFERENT CLAIM. Red marks the weakest and green the
+ * THE TWO TICKS ARE COLORED, AND THAT IS A DIFFERENT CLAIM. Red marks the weakest and green the
  * strongest score any option on this table reaches. Those are facts about the MENU — who is at
  * each end of it — not a verdict on the option in front of the participant, and the legend names
- * them in exactly those words. Without them the ticks were two identical grey lines and the
+ * them in exactly those words. Without them the ticks were two identical gray lines and the
  * participant had no way to tell which end was which.
  */
 export function MetricStandingBar({
@@ -297,7 +297,7 @@ export function MetricStandingBar({
           The two ends of the table. Red = the weakest of the six on this measure, green = the
           strongest, and the legend says so in those words.
 
-          The halo ring matters: both ticks cross the coloured fill for some options, and a red
+          The halo ring matters: both ticks cross the colored fill for some options, and a red
           line on an orange bar is close to invisible without it. `pointerEvents` stays on so the
           hover title still works, and the tick is nudged left by half its width so it sits ON the
           value rather than starting at it.
@@ -324,7 +324,7 @@ export function MetricStandingBar({
  * Legend for the metric bars — says once what the band, the two ticks and the placings mean.
  *
  * The placing line is here rather than only in the intro paragraph because it is the piece a
- * participant is most likely to get backwards, and it is the one they will look back for.
+ * participant is most likely to get backward, and it is the one they will look back for.
  */
 export function MetricStandingLegend({ mode, total }: { mode: Block5Palette["mode"]; total: number }) {
   const c = meterColors(mode);
@@ -334,7 +334,7 @@ export function MetricStandingLegend({ mode, total }: { mode: Block5Palette["mod
         <HStack gap="1.5">
           {/*
             The swatch has to be built the way the bar is — the band painted ON the track — or it
-            comes out a different colour from the thing it is labelling. On the light card the
+            comes out a different color from the thing it is labeling. On the light card the
             band alone over white is visibly paler than the same band over slate-200, which is
             exactly the sort of small mismatch that makes a legend useless.
           */}

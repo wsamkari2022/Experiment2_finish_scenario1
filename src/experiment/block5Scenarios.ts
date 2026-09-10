@@ -19,7 +19,7 @@
  *   water      14                        44%  (worst)                 100·93·72·69·62·0
  *
  * Cancer also carries the only option set that maps onto named ethical positions — utilitarian,
- * prioritarian, QALY-maximising, egalitarian lottery, equity of access, instrumental value — which
+ * prioritarian, QALY-maximizing, egalitarian lottery, equity of access, instrumental value — which
  * is what makes a participant's choice legible to a reader rather than merely recorded.
  *
  * WHAT THAT COST. The `others` position now appears ONCE, so `driftCheck` in block5Position.ts
@@ -88,7 +88,7 @@
  * profiles produce different planner orders rather than the same one for everybody:
  *
  *   1 clean reference   moderate throughout; runner-up on gain, close enough to the gain champion
- *                       that the trade-off tree can set gain aside in its favour
+ *                       that the trade-off tree can set gain aside in its favor
  *   2 tempting breach   highest gain in the set AND the worst option on protecting the vulnerable
  *   3 vulnerable protector  the vulnerability champion; poor gain, slow
  *   4 helper            the aggregation champion; slow and resource-heavy
@@ -139,7 +139,7 @@ const MERIDIAN: Block5Employer = {
     groupSizeSensitivity:
       "The board's position is that the number the regulator counts is people left with nothing, and that number is the one to hold down.",
     gainResponsivenessSensitivity:
-      "The board's position is that three months of losses would end the company, and forty carers' jobs with it.",
+      "The board's position is that three months of losses would end the company, and forty caregivers' jobs with it.",
     outcomeAggregationSensitivity:
       "The board's position is that the contract is measured on coverage, and coverage is what it will deliver.",
   },
@@ -152,7 +152,14 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     factBase:
       "Six hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long, and one service road running past the tanker. Every option you will see gets you out inside the six hours. They differ only in what each one takes from the people still here.",
     role:
-      "You are {w|a resident here, on your own}. {w|Nobody depends on you}, and nobody is coming for you. You are the only person your choice has to save. But everything you use on the way out was something {w|another resident} was counting on.",
+      /*
+        The closing clause — "but everything you use on the way out was something another resident
+        was counting on" — is gone. It sat one sentence after "nobody depends on you" and read as a
+        contradiction, and the cost to other people is already stated in `factBase`: "they differ
+        only in what each one takes from the people still here." Saying it twice, in opposite
+        directions, cost more than it added.
+      */
+      "You are {w|a resident here, on your own}. {w|Nobody depends on you}, and nobody is coming for you. You are the only person your choice has to save.",
     title: "Six Hours to Clear the District",
     description:
       "A rail tanker has split open at the freight yard on the edge of the district. Chlorine is coming off it as a low plume, and the wind is pushing it street by street into the housing. The whole district has been ordered to clear out.",
@@ -181,11 +188,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Leave with the registered convoy at your assigned time",
-        summary: "The district is being cleared street by street in timed groups. You wait for your street's slot, board with your neighbours, and go when they go.",
+        summary: "The district is being cleared street by street in timed groups. You wait for your street's slot, board with your neighbors, and go when they go.",
         gains: "You get out well inside the six hours, and nobody loses their place so that you can have yours.",
-        consequence: "You reach the centre in good time. You take nothing that was set aside for anyone else. But you leave when the list says, not when you want. The last hour is spent watching the plume come down the road.",
+        consequence: "You reach the center in good time. You take nothing that was set aside for anyone else. But you leave when the list says, not when you want. The last hour is spent watching the plume come down the road.",
         givesUp: "Control over your own timing. You go when your street is called, and not a minute sooner.",
-        moralTension: "Is a fair queue still fair, when the people at the back breathe the same air as the people at the front?",
+        moralTension: "Is a fair line still fair, when the people at the back breathe the same air as the people at the front?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 67, groupSizeSensitivity: 61,
           gainResponsivenessSensitivity: 82, outcomeAggregationSensitivity: 56,
@@ -206,7 +213,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelRule: "takes the one ventilator that had been tagged and held for another patient",
           identifiedCase: "have been on home oxygen for two years and cannot walk the distance unaided",
           harm: "They wait in a sealed room for a mask that has already left the district on your face",
-          benefitCase: "were behind you in the convoy queue and move up a place when you walk out",
+          benefitCase: "were behind you in the convoy line and move up a place when you walk out",
           benefitLost: "The seat you would have filled is the last one on the last bus that runs",
           consequences: {
             soon: "The patient on home oxygen stays in a sealed room. The mask tagged for them is on your face.",
@@ -220,7 +227,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Take the sealed respirator the clinic had reserved",
         summary: "One full-face respirator is left in the clinic cabinet, tagged for a patient on home oxygen. With it you can walk out through the plume immediately, by whichever route is shortest.",
         gains: "You leave right now, by the shortest way, breathing clean air the whole distance.",
-        consequence: "You are clear of the district within the hour and never queue at all. But the mask was tagged for someone whose lungs cannot manage the walk without it, and there is not another one.",
+        consequence: "You are clear of the district within the hour and never wait in line at all. But the mask was tagged for someone whose lungs cannot manage the walk without it, and there is not another one.",
         givesUp: "The one piece of equipment set aside for a person who cannot breathe the outside air.",
         moralTension: "If a mask protects whoever is wearing it, does it matter whose name was on the tag?",
         fingerprint: {
@@ -241,7 +248,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "leaves every reserved seat and every tagged mask untouched and goes the long way round",
           parallelRule: "leaves every held bed and every reserved dose untouched and waits for the next round",
-          identifiedCase: "were counting on you to reach the centre and confirm your street was empty",
+          identifiedCase: "were counting on you to reach the center and confirm your street was empty",
           harm: "The sweep team spent two more hours on a street you had in fact already cleared",
           benefitCase: "cannot walk unaided and were the one tagged for the mask you did not take",
           benefitLost: "The mask was still in the cabinet when the ambulance finally got to them",
@@ -321,14 +328,14 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           benefitLost: "Both were still there because you stayed, and both were gone within the hour",
           consequences: {
             soon: "A sweep team breaks into your block to check you are alive. They breathe the worst air of the night.",
-            later: "One of them is off work for two months. Nobody links it back to the flat that stayed shut.",
+            later: "One of them is off work for two months. Nobody links it back to the apartment that stayed shut.",
           },
           parallelConsequences: {
             soon: "No shared supply is used. A team has to break in to check the room is safe.",
             later: "One of them is off work for two months. Nobody links it back to the room that stayed shut.",
           },
         },
-        title: "Seal your flat and shelter until the plume passes",
+        title: "Seal your apartment and shelter until the plume passes",
         summary: "Tape the doors, wet towels along the gaps, and stay put. Nothing is taken from anyone, nobody is moved out of their place, and no seat, road or mask is used.",
         gains: "You take absolutely nothing from anyone — no seat, no mask, no road, no crew time.",
         consequence: "Not one other person is worse off for what you chose, and you can still leave later if the wind turns. But you spend the night inside a plume with tape on the doors.",
@@ -354,7 +361,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelRule: "opens the fastest treatment path it can find and lets every other case follow it",
           identifiedCase: "followed your tail lights down the service road and stopped level with the tanker",
           harm: "Their car stalled where the air was worst, and the road was too narrow to turn on",
-          benefitCase: "were still queueing for the convoy when your route opened up behind you",
+          benefitCase: "were still waiting in line for the convoy when your route opened up behind you",
           benefitLost: "Four streets emptied down that road within the hour, and not one of them waited",
           consequences: {
             soon: "Four streets follow your tail lights onto a single-track road that runs past the split tanker.",
@@ -405,11 +412,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "fire_assigned_convoy_slot",
         cvrSeed: {
-          rule: "keeps its assigned place in the queue and moves nobody out of the way",
+          rule: "keeps its assigned place in line and moves nobody out of the way",
           parallelRule: "keeps its assigned place on the list and moves no other case down it",
           identifiedCase: "were in the ninth slot and left as the fire crossed the valley floor",
           harm: "The staging kept the road clear, and it kept them sitting in it three hours longer",
-          benefitCase: "were marshalling the convoy and needed the blocks to leave in the order set",
+          benefitCase: "were marshaling the convoy and needed the blocks to leave in the order set",
           benefitLost: "One household leaving early is what turns a staged convoy back into a jam",
           consequences: {
             soon: "Your child uses the inhaler twice while you wait for slot five to be called.",
@@ -443,7 +450,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "fire_closed_ridge_road",
         cvrSeed: {
           rule: "uses the lane that was being held clear for the people going the other way",
-          parallelRule: "uses the theatre slot that was being held clear for the emergency list",
+          parallelRule: "uses the operating room slot that was being held clear for the emergency list",
           identifiedCase: "were waiting at the care home for the engine that you turned back",
           harm: "The crew reversed two miles to let you past, and reached them forty minutes late",
           benefitCase: "are eight years old, sitting behind you, and already on the inhaler",
@@ -487,7 +494,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           benefitLost: "Your two seats were the only ones in the valley they could actually get into",
           consequences: {
             soon: "Your household waits five hours in a shelter hall. Your child's inhaler runs low.",
-            later: "Both neighbours who took your seats are safe. Your mother's chest is worse all winter.",
+            later: "Both neighbors who took your seats are safe. Your mother's chest is worse all winter.",
           },
           parallelConsequences: {
             soon: "Your group gives up its places and waits five hours for the last boat.",
@@ -495,10 +502,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Give your car seats to the two frame users and wait for the lift bus",
-        summary: "Two neighbours use walking frames and cannot board the standard coaches. Your car can take them out now. Your own household then waits for the lift-equipped bus, which is the last vehicle scheduled to leave the valley.",
+        summary: "Two neighbors use walking frames and cannot board the standard coaches. Your car can take them out now. Your own household then waits for the lift-equipped bus, which is the last vehicle scheduled to leave the valley.",
         gains: "The two people least able to get themselves out of the valley leave first, in your seats.",
         consequence: "Nobody who needs a lift is left behind. But your own four are then on the last vehicle out. Your mother waits five hours in a shelter hall for it.",
-        givesUp: "Your place near the front of the queue. Your household leaves last, with a child on an inhaler and five hours to wait.",
+        givesUp: "Your place near the front of the line. Your household leaves last, with a child on an inhaler and five hours to wait.",
         moralTension: "Do your own dependents come first, or the dependents who have nobody at all?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 56,
@@ -531,12 +538,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
             later: "The frame lashed on top is smashed in the crossing. It takes two months to replace.",
           },
         },
-        title: "Fill every seat in the car with neighbours who have none",
+        title: "Fill every seat in the car with neighbors who have none",
         summary: "Your car holds seven and your household is four. Three people on your street have no vehicle at all, and taking them costs you nothing but the space.",
         gains: "Seven people leave the valley instead of four, in one vehicle, on one tank of fuel.",
         consequence: "Three people who had no way out at all are in your car. But seven in a seven-seat car means the walking frame goes on the roof. The drive is slow and very hot.",
         givesUp: "Room and speed. The car is full, the frame is strapped above it, and you cannot take the fast line through the bends.",
-        moralTension: "How much of your own family's room do you owe the neighbours who have no car?",
+        moralTension: "How much of your own family's room do you owe the neighbors who have no car?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 54, groupSizeSensitivity: 50,
           gainResponsivenessSensitivity: 40, outcomeAggregationSensitivity: 94,
@@ -608,7 +615,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Leave immediately on the main highway, before the staging starts",
         summary: "The highway is still empty. Going now, before the timed convoy starts, is the fastest and cheapest way out. That is true for you, and for everyone who leaves when you do.",
         gains: "The quickest, cleanest run out of the valley, and the ones who follow you get the same clear road.",
-        consequence: "Your household is out early on an open highway, and so is everybody who moves when you move. But once the highway fills there is no staging left to organise it, and no way back in for anything you forgot.",
+        consequence: "Your household is out early on an open highway, and so is everybody who moves when you move. But once the highway fills there is no staging left to organize it, and no way back in for anything you forgot.",
         givesUp: "The staging system, and any way back. Once the highway is moving unstaged it cannot be re-formed.",
         moralTension: "If everyone leaving early is what causes the jam, does it matter that you left before it?",
         fingerprint: {
@@ -675,7 +682,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "gives them to the patients with the highest survival odds",
           parallelRule: "lifts the people most likely to come through the flight alive",
-          identifiedCase: "were diagnosed late, because the first two appointments were cancelled",
+          identifiedCase: "were diagnosed late, because the first two appointments were canceled",
           harm: "The delay is what made those odds low, and the rule reads low odds as a reason to pass them over",
           benefitCase: "have exactly the odds this rule looks for, and a cancer caught early",
           benefitLost: "Any rule that ignores odds is one where their good chance counts for nothing",
@@ -773,7 +780,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Maximize life-years (treat the best responders)",
         summary: "Give the treatment to patients who would gain the most years of life.",
         gains: "The greatest number of future years of life saved.",
-        consequence: "Each dose is used where it adds the most years of life. But this favours younger patients, and older patients are pushed down the list.",
+        consequence: "Each dose is used where it adds the most years of life. But this favors younger patients, and older patients are pushed down the list.",
         givesUp: "Older patients. A life with fewer years left is counted as worth less.",
         moralTension: "Is a year of life the right way to measure a person, when it means the old always lose?",
         fingerprint: {
@@ -885,12 +892,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           benefitCase: "are one of only two people who can keep the dialysis unit open",
           benefitLost: "If they are not treated the unit closes, and forty other people lose their week",
           consequences: {
-            soon: "Doses go to nurses and carers first. Most are back at work within weeks.",
+            soon: "Doses go to nurses and caregivers first. Most are back at work within weeks.",
             later: "Patients with no job to return to wait another month. Some of them stop asking.",
           },
           parallelConsequences: {
             soon: "The pilots, medics and engineers go first. Most are working again within weeks.",
-            later: "People with no job to go back to wait another night. Some of them stop signalling.",
+            later: "People with no job to go back to wait another night. Some of them stop signaling.",
           },
         },
         title: "Prioritize essential workers / caregivers",
@@ -924,12 +931,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     decisionRole: "decider",
     employer: MERIDIAN,
     factBase:
-      "240 clients. 40 carers. 1,600 visit-hours a week, cut to 1,200 for the next three months. Every option you will see fits inside the same 1,200 hours — they differ only in whose visits are cut.",
+      "240 clients. 40 caregivers. 1,600 visit-hours a week, cut to 1,200 for the next three months. Every option you will see fits inside the same 1,200 hours — they differ only in whose visits are cut.",
     role:
-      "You are the shift coordinator. {w|Your own hours are not touched}, and {w|nobody you know is a client}. You set the work schedule that {w|forty carers} will work and {w|240 clients} will live with — and you set it under a principle {w|your employer has already published}.",
+      "You are the shift coordinator. {w|Your own hours are not touched}, and {w|nobody you know is a client}. You set the work schedule that {w|forty caregivers} will work and {w|240 clients} will live with — and you set it under a principle {w|your employer has already published}.",
     title: "The Care Visits You Have to Cut",
     description:
-      "Meridian Care is a company that sends carers to people's homes. The carers help with washing, medicines and meals. These visits are the reason those people can stay in their own homes instead of moving into a hospital. The company has lost funding, so it must cut a quarter of all visiting time for the next three months. Your job is to decide whose visits get cut.",
+      "Meridian Care is a company that sends caregivers to people's homes. The caregivers help with washing, medicines and meals. These visits are the reason those people can stay in their own homes instead of moving into a hospital. The company has lost funding, so it must cut a quarter of all visiting time for the next three months. Your job is to decide whose visits get cut.",
     theme: {
       gradient: "radial-gradient(900px 420px at 12% -10%, rgba(192,38,211,0.26), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(86,14,96,0.36), transparent 55%), linear-gradient(155deg, #16081a, #2c0d33 50%, #4d1657)",
       accent: "#C026D3",
@@ -941,13 +948,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "redraws every round to cut driving time",
           parallelRule: "redraws the intake lists to cut the queue outside",
-          identifiedCase: "have had the same carer for nine years, and cannot follow a new face",
+          identifiedCase: "have had the same caregiver for nine years, and cannot follow a new face",
           harm: "The round is efficient now, and the person at the door is a stranger every week",
-          benefitCase: "lost two visits last month to a carer stuck in traffic across town",
+          benefitCase: "lost two visits last month to a caregiver stuck in traffic across town",
           benefitLost: "Every other option leaves that driving time exactly where it is",
           consequences: {
             soon: "Three hundred of the four hundred lost hours come back out of travel time.",
-            later: "Clients who needed a familiar face had a different carer most weeks for three months.",
+            later: "Clients who needed a familiar face had a different caregiver most weeks for three months.",
           },
           parallelConsequences: {
             soon: "Ten of the fifteen lost beds come back out of wasted space.",
@@ -955,10 +962,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Rebuild the rounds around travel time",
-        summary: "Redraw every round so carers spend less time driving and more time at doors.",
+        summary: "Redraw every round so caregivers spend less time driving and more time at doors.",
         gains: "Hours recovered from driving rather than taken from anyone's visit.",
-        consequence: "About 300 of the 400 lost hours come back out of travel time, so most visits survive at full length. But the new rounds pair carers with clients they have never met, and the routes cannot be redrawn again for three months.",
-        givesUp: "Continuity. Clients lose the carer who knows them, and carers lose the clients they know.",
+        consequence: "About 300 of the 400 lost hours come back out of travel time, so most visits survive at full length. But the new rounds pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
+        givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 41,
@@ -992,13 +999,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
           parallelConsequences: {
             soon: "All 200 people keep a bed, and every stay is a quarter shorter.",
-            later: "The people who needed the most time lost the most of it, every night for a fortnight.",
+            later: "The people who needed the most time lost the most of it, every night for a two weeks.",
           },
         },
         title: "Cut every round by the same share",
         summary: "Every client loses the same proportion of their visit time.",
-        gains: "Nobody is singled out, and every carer's round shrinks by the same amount.",
-        consequence: "The cut is spread thin enough that no single client loses everything, and no carer's round is gutted. But an equal share off a larger need is a larger loss, so the clients who needed most time lose the most minutes.",
+        gains: "Nobody is singled out, and every caregiver's round shrinks by the same amount.",
+        consequence: "The cut is spread thin enough that no single client loses everything, and no caregiver's round is gutted. But an equal share off a larger need is a larger loss, so the clients who needed most time lose the most minutes.",
         givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
         moralTension: "Is treating everyone the same the same as treating everyone fairly?",
         fingerprint: {
@@ -1069,8 +1076,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           benefitCase: "would be taken off the schedule entirely under four of these six options",
           benefitLost: "This is the only rule under which they are still a client at all",
           consequences: {
-            soon: "All 240 clients keep a carer coming through the door.",
-            later: "Carers logged tasks left undone at a third of visits by the second month.",
+            soon: "All 240 clients keep a caregiver coming through the door.",
+            later: "Caregivers logged tasks left undone at a third of visits by the second month.",
           },
           parallelConsequences: {
             soon: "All 200 people keep a place on the list.",
@@ -1079,8 +1086,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Shorten every visit so nobody is dropped",
         summary: "Keep all 240 clients on the schedule, with less time at each door.",
-        gains: "Every client keeps a carer coming through the door.",
-        consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But a shortened visit is often not long enough to do what the visit was for, and carers report leaving with tasks undone.",
+        gains: "Every client keeps a caregiver coming through the door.",
+        consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But a shortened visit is often not long enough to do what the visit was for, and caregivers report leaving with tasks undone.",
         givesUp: "Depth. Everyone is seen, and fewer are properly cared for.",
         moralTension: "Is reaching everyone worth reaching nobody properly?",
         fingerprint: {
@@ -1105,23 +1112,23 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "keeps the rounds that pay and hands back the ones that do not",
           parallelRule: "keeps the places the grant covers and closes the ones it does not",
-          identifiedCase: "live far out of town, and have seen nobody but their carer for months",
+          identifiedCase: "live far out of town, and have seen nobody but their caregiver for months",
           harm: "Distance is what makes their round cost more, and the rule reads that as a reason to stop",
-          benefitCase: "are one of the 40 carers whose job exists only if the contract survives",
+          benefitCase: "are one of the 40 caregivers whose job exists only if the contract survives",
           benefitLost: "Every other option here leaves the company short by March",
           consequences: {
             soon: "The service ends the three months solvent, and every job is still there.",
-            later: "Sixty rural clients were handed back to a council with nobody to hand them to.",
+            later: "Sixty rural clients were handed back to a county agency with nobody to hand them to.",
           },
           parallelConsequences: {
             soon: "The service ends the winter solvent, and every post is still there.",
-            later: "Fifty people were handed back to a council with nobody to hand them to.",
+            later: "Fifty people were handed back to a county agency with nobody to hand them to.",
           },
         },
         title: "Keep the rounds that pay, hand back the ones that do not",
         summary: "Retain the block-booked town rounds and hand the scattered rural ones back.",
         gains: "The strongest financial position, and a service that is still open next year.",
-        consequence: "The company comes out of the three months solvent and every carer's job survives, which no other option here guarantees. But the rural clients are handed back to a council with nobody to hand them to, and most of them are the ones with nobody else.",
+        consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But the rural clients are handed back to a county agency with nobody to hand them to, and most of them are the ones with nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",
         moralTension: "Is keeping the service alive worth the people it was built for?",
         fingerprint: {
@@ -1208,12 +1215,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     decisionRole: "recipient",
     employer: MERIDIAN,
     factBase:
-      "The same 240 clients. The same 40 carers. The same 1,600 visit-hours cut to 1,200. The same six options — but this time your own round and your own clients are among the ones being cut.",
+      "The same 240 clients. The same 40 caregivers. The same 1,600 visit-hours cut to 1,200. The same six options — but this time your own round and your own clients are among the ones being cut.",
     role:
-      "You are one of the forty carers. {w|You are not deciding this}. The coordinator decides, and they are choosing from {w|the same six options you can see here}. Whatever they choose, {w|you have to work it} — and {w|the people on your round} have to live with it.",
+      "You are one of the forty caregivers. {w|You are not deciding this}. The coordinator decides, and they are choosing from {w|the same six options you can see here}. Whatever they choose, {w|you have to work it} — and {w|the people on your round} have to live with it.",
     title: "The Same Cut, Decided Without You",
     description:
-      "The same company, the same cut, and the same six choices you saw a moment ago. This time you are not the coordinator. You are one of the carers, and your own hours and your own clients are on the list. You cannot decide anything here. You can only say which choice you hope the coordinator will make.",
+      "The same company, the same cut, and the same six choices you saw a moment ago. This time you are not the coordinator. You are one of the caregivers, and your own hours and your own clients are on the list. You cannot decide anything here. You can only say which choice you hope the coordinator will make.",
     theme: {
       gradient: "radial-gradient(900px 420px at 12% -10%, rgba(13,148,136,0.22), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(12,74,74,0.34), transparent 55%), linear-gradient(155deg, #061414, #0a2222 50%, #0f3d3d)",
       accent: "#0D9488",
@@ -1223,10 +1230,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "wish_rebuild_rounds_by_travel",
         title: "Rebuild the rounds around travel time",
-        summary: "Redraw every round so carers spend less time driving and more time at doors.",
+        summary: "Redraw every round so caregivers spend less time driving and more time at doors.",
         gains: "Hours recovered from driving rather than taken from anyone's visit.",
-        consequence: "About 300 of the 400 lost hours come back out of travel time, so most visits survive at full length. But the new rounds pair carers with clients they have never met, and the routes cannot be redrawn again for three months.",
-        givesUp: "Continuity. Clients lose the carer who knows them, and carers lose the clients they know.",
+        consequence: "About 300 of the 400 lost hours come back out of travel time, so most visits survive at full length. But the new rounds pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
+        givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 41,
@@ -1249,8 +1256,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "wish_equal_share",
         title: "Cut every round by the same share",
         summary: "Every client loses the same proportion of their visit time.",
-        gains: "Nobody is singled out, and every carer's round shrinks by the same amount.",
-        consequence: "The cut is spread thin enough that no single client loses everything, and no carer's round is gutted. But an equal share off a larger need is a larger loss, so the clients who needed most time lose the most minutes.",
+        gains: "Nobody is singled out, and every caregiver's round shrinks by the same amount.",
+        consequence: "The cut is spread thin enough that no single client loses everything, and no caregiver's round is gutted. But an equal share off a larger need is a larger loss, so the clients who needed most time lose the most minutes.",
         givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
         moralTension: "Is treating everyone the same the same as treating everyone fairly?",
         fingerprint: {
@@ -1299,8 +1306,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "wish_shorten_every_visit",
         title: "Shorten every visit so nobody is dropped",
         summary: "Keep all 240 clients on the schedule, with less time at each door.",
-        gains: "Every client keeps a carer coming through the door.",
-        consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But a shortened visit is often not long enough to do what the visit was for, and carers report leaving with tasks undone.",
+        gains: "Every client keeps a caregiver coming through the door.",
+        consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But a shortened visit is often not long enough to do what the visit was for, and caregivers report leaving with tasks undone.",
         givesUp: "Depth. Everyone is seen, and fewer are properly cared for.",
         moralTension: "Is reaching everyone worth reaching nobody properly?",
         fingerprint: {
@@ -1325,7 +1332,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Keep the rounds that pay, hand back the ones that do not",
         summary: "Retain the block-booked town rounds and hand the scattered rural ones back.",
         gains: "The strongest financial position, and a service that is still open next year.",
-        consequence: "The company comes out of the three months solvent and every carer's job survives, which no other option here guarantees. But the rural clients are handed back to a council with nobody to hand them to, and most of them are the ones with nobody else.",
+        consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But the rural clients are handed back to a county agency with nobody to hand them to, and most of them are the ones with nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",
         moralTension: "Is keeping the service alive worth the people it was built for?",
         fingerprint: {

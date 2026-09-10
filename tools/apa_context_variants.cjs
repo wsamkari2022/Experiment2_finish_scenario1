@@ -102,9 +102,9 @@ const CASES = [];
 while (CASES.length < 2500) {
   const prof = mk(Object.fromEntries(ALL.map((k) => [k, Math.round(rnd() * 100)])));
   const scen = pick(BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") === "decider"));
-  const labelled = labelOptions(scen.options, prof).filter((o) => isMisaligned(o.level));
-  if (!labelled.length) continue;
-  const option = pick(labelled);
+  const labeled = labelOptions(scen.options, prof).filter((o) => isMisaligned(o.level));
+  if (!labeled.length) continue;
+  const option = pick(labeled);
   const sacrificed = violatedValue(option, prof);
   const served = optionMainValue(option);
   if (sacrificed === served) continue;               // the bump cannot apply; not the case under test

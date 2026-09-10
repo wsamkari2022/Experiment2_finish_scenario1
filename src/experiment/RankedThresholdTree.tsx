@@ -62,7 +62,7 @@ function toneFor(score: number): { bar: string; badge: "green" | "blue" | "yello
   return { bar: "gray.500", badge: "gray" };
 }
 
-/** One sensitivity row, accented with its face's colour. */
+/** One sensitivity row, accented with its face's color. */
 function DimensionRow({ d, palette }: { d: ThresholdTreeDimension; palette: Palette }) {
   const tone = toneFor(d.score);
   return (
@@ -104,7 +104,7 @@ function DimensionRow({ d, palette }: { d: ThresholdTreeDimension; palette: Pale
   );
 }
 
-/** A coloured CVR-Cube face containing its sensitivities. */
+/** A colored CVR-Cube face containing its sensitivities. */
 function FaceSection({ face, dims }: { face: Face; dims: ThresholdTreeDimension[] }) {
   if (dims.length === 0) return null;
   return (

@@ -140,7 +140,7 @@ console.log("===================================================================
  *   drifter  — nearest when they are at risk, farthest when only other people are
  *   erratic  — farthest, then nearest, alternating, ignoring position entirely
  */
-const behaviours = {
+const behaviors = {
   steady:  (profile, sc) => nearestFarthest(profile, sc).nearest.id,
   drifter: (profile, sc) => (sc.stakePosition === "others"
     ? nearestFarthest(profile, sc).farthest.id
@@ -151,7 +151,7 @@ const behaviours = {
 };
 
 const table = {};
-for (const [bname, pick] of Object.entries(behaviours)) {
+for (const [bname, pick] of Object.entries(behaviors)) {
   table[bname] = {};
   for (const [aname, scores] of Object.entries(ARCHETYPES)) {
     const profile = profileOf(scores);
@@ -161,8 +161,8 @@ for (const [bname, pick] of Object.entries(behaviours)) {
   }
 }
 
-console.log("  behaviour     " + Object.keys(ARCHETYPES).map((a) => a.padStart(11)).join(""));
-for (const bname of Object.keys(behaviours)) {
+console.log("  behavior     " + Object.keys(ARCHETYPES).map((a) => a.padStart(11)).join(""));
+for (const bname of Object.keys(behaviors)) {
   const row = Object.keys(ARCHETYPES)
     .map((a) => String(table[bname][a].effect).padStart(11)).join("");
   console.log("  " + bname.padEnd(14) + row);
@@ -306,7 +306,7 @@ console.log("===================================================================
      * hold them to — the wish goes straight to a single confirmation page instead.
      *
      * `scenarioIsScored` is the one predicate the app's CVR guard reads, so asserting it here
-     * asserts the behaviour rather than a copy of it. Checking only that the options carry no
+     * asserts the behavior rather than a copy of it. Checking only that the options carry no
      * cvrSeed would not be enough: a seed-less option still reaches the CVR path and falls back to
      * GENERIC content, which is precisely the wrong page appearing with plausible-looking text.
      */
@@ -408,7 +408,7 @@ console.log("===================================================================
       if (m) {
         check("a self-serving reversal shows a POSITIVE mirror gap", m.mirrorGap > 0,
           `chose "${m.decided.optionTitle}" (${m.decided.departure}), wished "${m.wished.optionTitle}" (${m.wished.departure}) — gap ${m.mirrorGap}`);
-        check("the wish and the decision are recognised as different options", !m.sameOption);
+        check("the wish and the decision are recognized as different options", !m.sameOption);
         check("the responsibility gap is on the same 0-100 scale as VCI",
           m.vciActed >= 0 && m.vciActed <= 100 && m.vciWished >= 0 && m.vciWished <= 100,
           `acted ${m.vciActed}, wished ${m.vciWished}, gap ${m.responsibilityGap}`);

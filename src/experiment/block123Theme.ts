@@ -1,7 +1,7 @@
 /**
- * block123Theme.ts — shared LIGHT-MODE surface colours for Blocks 1–3 (Money, Trolley,
+ * block123Theme.ts — shared LIGHT-MODE surface colors for Blocks 1–3 (Money, Trolley,
  * AI-Workforce). One coordinated palette so the whole "value-profiling" stage feels like a
- * single, organised, scientific instrument.
+ * single, organized, scientific instrument.
  *
  * Why this exists: in light mode the Bolt defaults render the page (`bg`) and the cards
  * (`bg.panel`) both as near-white, so cards melt into the background and content is hard to

@@ -13,7 +13,7 @@
  * a bump, the sentence in the documentation stops being true and this fails.
  *
  * It imports the shipped module rather than re-implementing the formula, deliberately — a checker
- * carrying its own copy of the maths drifts from the code and then certifies the drift.
+ * carrying its own copy of the math drifts from the code and then certifies the drift.
  *
  * Run: npm run verify:apa    (chained into npm run validate:block5)
  */

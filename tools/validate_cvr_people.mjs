@@ -82,7 +82,7 @@ gate(worst.v < 0.34,
   `no story merely repeats its option's "you give up" line — worst overlap ${(worst.v * 100).toFixed(0)}% (${worst.id})`);
 
 /* 3 — no new person introduced */
-const NEW_PERSON = /^(a|an|the|one|another)\s+(child|miner|nurse|doctor|driver|parent|resident|worker|patient|person|family|man|woman|teacher|neighbour|neighbor)\b/i;
+const NEW_PERSON = /^(a|an|the|one|another)\s+(child|miner|nurse|doctor|driver|parent|resident|worker|patient|person|family|man|woman|teacher|neighbor|neighbor)\b/i;
 const strangers = opts.filter((o) => NEW_PERSON.test(o.identifiedCase) || NEW_PERSON.test(o.benefitCase));
 gate(strangers.length === 0,
   `no story introduces a different person from the one the lead named${strangers.length ? ": " + strangers.map((o) => o.id).join(", ") : ""}`);

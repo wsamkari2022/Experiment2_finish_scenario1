@@ -74,7 +74,7 @@ const ALL_PHASES: Phase[] = [
 /**
  * The phases actually drawn — four when the between-block pages are hidden, six when they are shown.
  *
- * WHY FILTER RATHER THAN LEAVE THEM GREYED OUT: a progress bar is a promise about how much work
+ * WHY FILTER RATHER THAN LEAVE THEM GRAYED OUT: a progress bar is a promise about how much work
  * is left. Listing two steps the participant never performs would make them expect six pieces of
  * work and then watch two of them tick over to a green check on their own, which invites exactly
  * the question ("what did I just skip?") that hiding the pages was meant to avoid.
@@ -91,15 +91,15 @@ function phaseIndexForStage(stage: string): number {
 }
 
 /**
- * Height of the row every node's circle is vertically centred in.
+ * Height of the row every node's circle is vertically centered in.
  *
  * The destination marker is larger than the section markers, so without a shared row their
- * centres would not line up and the rail would visibly kink at the end. Centring every circle
- * inside a fixed-height row puts all centres on the same line, which is also the offset the
+ * centers would not line up and the rail would visibly kink at the end. Centering every circle
+ * inside a fixed-height row puts all centers on the same line, which is also the offset the
  * connectors use (RAIL_ROW_H / 2).
  */
 const RAIL_ROW_H = { base: "8", md: "10" };
-/** Half of RAIL_ROW_H — the top offset that drops a connector onto the centre line. */
+/** Half of RAIL_ROW_H — the top offset that drops a connector onto the center line. */
 const RAIL_CENTER = { base: "4", md: "5" };
 
 type NodeState = "done" | "current" | "upcoming";
@@ -127,7 +127,7 @@ function PhaseNode({
           color={done ? "green.contrast" : current ? "blue.contrast" : "fg.subtle"}
           borderWidth={state === "upcoming" ? "1px" : "0"}
           borderColor="border"
-          // The ring is what makes "you are here" readable at a glance without colour alone.
+          // The ring is what makes "you are here" readable at a glance without color alone.
           boxShadow={current ? "0 0 0 4px {colors.blue.muted}" : undefined}
           fontSize="xs"
           fontWeight="bold"
@@ -286,7 +286,7 @@ export function GlobalStepper({ stage }: { stage: string }) {
        *
        * The larger right padding below xl keeps the goal marker clear of the floating light/dark
        * toggle (App.tsx: pos="fixed" top=4 right=4, so it owns the top-right ~56px). From xl up
-       * the maxW="5xl" content is centred well inside that corner and the padding drops back.
+       * the maxW="5xl" content is centered well inside that corner and the padding drops back.
        */
       pl={{ base: "3", md: "6" }}
       pr={{ base: "16", xl: "6" }}

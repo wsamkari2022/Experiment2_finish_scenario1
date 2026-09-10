@@ -13,7 +13,7 @@ scen.forEach((x,k)=>x.end=k+1<scen.length?scen[k+1].i:S.length);
 /* RECIPIENT scenarios ask what the participant WISHES someone else would do. No reflection fires
    there, so their options carry no cvrSeed by design — and every CVR-content gate below must skip
    them rather than fail on the absence. Missing decisionRole means "decider", so nothing authored
-   before the field existed changes behaviour. */
+   before the field existed changes behavior. */
 const ROLE={};
 for(const sc of scen){
   const body=S.slice(sc.i,sc.end);
@@ -141,7 +141,7 @@ for(const n of CVR_SCEN){
     return /\bleast\b/.test(v)||/could (save|give) you\b/.test(v);});
   ok((n+" value phrases").padEnd(30),bad.length===0,bad.length?"problem: "+bad.map(k=>SH[k]).join(","):"all name something that can be given up");}
 console.log("\n=== 7. IDENTIFIED-VICTIM RULE: every cvrSeed case names one individual ===");
-const ABSTRACT=/^(A|The|This|It|Half|After|One of)\s+(town|local|neighbourhood|neighborhood|district|street|route|service|fare|queue|city|region|company|restaurant|four|plates|table|air|metal|harm|is\b)/i;
+const ABSTRACT=/^(A|The|This|It|Half|After|One of)\s+(town|local|neighborhood|neighborhood|district|street|route|service|fare|queue|city|region|company|restaurant|four|plates|table|air|metal|harm|is\b)/i;
 for(const id of ids){const bad=DATA[id].filter(o=>ABSTRACT.test(o.ic));
   ok(id.padEnd(30),bad.length===0,bad.length?"abstract opener: "+bad.map(x=>x.id).join(", "):"all 6 open on a person");}
 console.log("\n=== 8. TRADE-OFF PANEL FIELDS PRESENT ON ALL 30 OPTIONS ===");

@@ -60,10 +60,10 @@ function scoreOf(profile: Block5UserProfile, key: string): number {
  *        score   = 100 − penalty
  * where u is the participant's score on that value and f is the option's fingerprint on it.
  *
- * WHY ONLY SHORTFALLS COUNT — max(0, u − f): an option is penalised only when it delivers LESS
+ * WHY ONLY SHORTFALLS COUNT — max(0, u − f): an option is penalized only when it delivers LESS
  * than the participant demands. Exceeding their bar costs nothing: you are not punished for
  * caring more than required. This is a THRESHOLD-SATISFACTION model, not a distance model. A
- * distance model would penalise an option for protecting the vulnerable "too much", which is not
+ * distance model would penalize an option for protecting the vulnerable "too much", which is not
  * a coherent thing to hold against it.
  *
  * WHY THE PENALTY IS WEIGHTED BY u/100: a shortfall on a value you hold strongly should hurt
@@ -299,7 +299,7 @@ function cloneProfile(p: Block5UserProfile): Block5UserProfile {
  *      value at 96 by +1.2. Every description of the rule — in the methods chapter, in the advisor
  *      deck, in this file's own header — was therefore approximately false, and no reader could
  *      check the arithmetic against the stored profiles.
- *   2. IT DISCRIMINATED LESS. Measured on the real scenario set across 5 profiles x 4 behaviours,
+ *   2. IT DISCRIMINATED LESS. Measured on the real scenario set across 5 profiles x 4 behaviors,
  *      Stability separated steady participants from drifting ones by 33 points under headroom and
  *      by 42 under flat. The measure's whole job is that separation.
  *
@@ -357,7 +357,7 @@ function displacedTopValue(p: Block5UserProfile, option: Block5ScenarioOption): 
  *
  * `framingAdjust` (optional) is the dual-perspective change — applied ONLY when the participant
  * generated the other lens and answered the new question. On the YES path it is −20 to the lens
- * that did NOT influence keeping the option. Passing null/undefined keeps the original behaviour.
+ * that did NOT influence keeping the option. Passing null/undefined keeps the original behavior.
  */
 export function applyEndorsementUpdates(
   profile: Block5UserProfile,
@@ -452,7 +452,7 @@ export function confidenceWeight(confidence: number): number {
  * published constant honest when they do — see the block above it for the measurement. Anything
  * that changes these magnitudes must re-run `npm run verify:apa` and then the full
  * `npm run validate:block5`: STABILITY_CHURN_CEILING is the p99 of a null model run against this
- * behaviour, so it moves when this does.
+ * behavior, so it moves when this does.
  *
  * WHERE THE MECHANISM IS STILL WEAK, and it is worth knowing before touching anything:
  *
@@ -462,8 +462,8 @@ export function confidenceWeight(confidence: number): number {
  *    reduces it, nothing removes it.
  *
  * 2. THE STAKEHOLDER +/-25 is the one constant here with no measurement behind it. Being unscaled
- *    by confidence is deliberate (it is behavioural, not self-reported), but the magnitude is
- *    judgement alone, and two non-switches pin a participant at the floor.
+ *    by confidence is deliberate (it is behavioral, not self-reported), but the magnitude is
+ *    judgment alone, and two non-switches pin a participant at the floor.
  *
  * Reproduce: `npm run apa:personas` (six answer patterns) · `npm run apa:variants` (the constants)
  * Full working: docs/BLOCK5_APA_AUDIT.md
@@ -521,7 +521,7 @@ export function applyApaUpdates(
      * Lowering it instead (-5 was tested) scores worse again at 75.8% AND records the opposite of
      * what the participant said, so it was rejected.
      *
-     * The division of labour is now clean: Q1 records what they DID, Q2 records what they WANT.
+     * The division of labor is now clean: Q1 records what they DID, Q2 records what they WANT.
      * The sacrificed value is carried by Q2, where naming it is worth +30.
      *
      * Reproduce: npm run apa:variants   ·   Full reasoning: docs/BLOCK5_APA_AUDIT.md
@@ -532,7 +532,7 @@ export function applyApaUpdates(
   bump(p, "stakeholderPerspectiveShiftSensitivity",
     (stakeholderInfluenced ? 25 : -25) * stakesWeight);
   /*
-   * THE PRIORITISED VALUE: +30, and the value currently on top comes DOWN 20.
+   * THE PRIORITIZED VALUE: +30, and the value currently on top comes DOWN 20.
    *
    * This was a flat +10 with no counterweight, and it did not work. Measured over 5,056 simulated
    * clarifications, the value the participant NAMED as their priority rose in the ranking only
@@ -574,7 +574,7 @@ export function applyApaUpdates(
    * -20 is meant to be able to cancel part of a +30. Capping each one separately would leave the
    * sum uncapped and change nothing.
    *
-   * WHY THE FOUR POLICY VALUES ONLY. The stakeholder move is +/-25 from a separate behavioural
+   * WHY THE FOUR POLICY VALUES ONLY. The stakeholder move is +/-25 from a separate behavioral
    * observation and is deliberately not confidence-scaled; at low confidence the cap would clip it
    * (30 x 0.6 = 18) and quietly alter a different measure. The lens adjustment is already 20 x w
    * and cannot reach the cap. Neither is part of the double-count this exists to remove.
@@ -677,7 +677,7 @@ export function performanceScore(option: Block5ScenarioOption): number {
  * participant's values as they stood at that moment, which move as the block proceeds.
  *
  * 0.85 for the second-best option, not 0.75: staying inside your own top two is consistent
- * behaviour, and a participant who never once chose against themselves should be able to reach
+ * behavior, and a participant who never once chose against themselves should be able to reach
  * the top band. It stays below 1.00 so that "always my best fit" and "always my second" remain
  * distinguishable.
  *
@@ -700,7 +700,7 @@ export function performanceScore(option: Block5ScenarioOption): number {
  * which asserts this, and docs/BLOCK5_VCI_PLAN.md.
  *
  * The raw answer is NOT lost: it is stored per scenario as `cvrEndorsement` and can still be
- * related to behaviour in analysis. It simply no longer inflates this score.
+ * related to behavior in analysis. It simply no longer inflates this score.
  */
 const BASE_CREDIT: Record<AlignmentLevel, number> = {
   aligned: 1.0,
@@ -782,7 +782,7 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
    Not "did you keep choosing what the old you would have chosen" — that is a question about
    CHOICES, and it is very close to what VCI already asks. Stability asks about the PROFILE:
    the block updates the participant's values as they go, and this measures how far that model
-   of them travelled.
+   of them traveled.
 
    That makes the pair genuinely different questions instead of two views of one:
      VCI       — did your choices fit your values, judged as they stood at the time?
@@ -794,7 +794,7 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
       between the start of Block 5 and the end? This is the qualitative event: your priorities
       reordered.
 
-   2. MOVEMENT — the total distance the five scored values travelled, summed scenario by
+   2. MOVEMENT — the total distance the five scored values traveled, summed scenario by
       scenario ("churn"), not just start-versus-end ("net drift").
 
    Order alone is blind: two participants can finish with an identical ranking while one moved
@@ -812,7 +812,7 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
    WHY CONTEXT AND DIRECTNESS ARE IN NEITHER
    -----------------------------------------
    They only move when a participant clicks the optional "Generate the other view" control AND
-   answers which lens moved them. Simulation across six behaviour types found them completely
+   answers which lens moved them. Simulation across six behavior types found them completely
    unmoved in every case. Scoring a variable that is frozen for most participants would dilute
    the number without measuring anything. They are reported separately instead, as how often the
    participant compared both lenses — which does vary, and is a fact about them rather than about
@@ -865,7 +865,7 @@ const STABILITY_MOVE_KEYS: string[] = [...POLICY_DIM_KEYS, "stakeholderPerspecti
  * THE ORDER OF OPERATIONS MATTERS HERE and is worth recording, because getting it wrong is silent.
  * The ceiling was measured only AFTER the recipient skip was wired through `scenarioIsScored`. Run
  * before that, the null model still moved the profile in all five scenarios and reported 65.4 — a
- * ceiling calibrated against behaviour the app was about to stop producing, which would have made
+ * ceiling calibrated against behavior the app was about to stop producing, which would have made
  * every real participant look more stable than they were.
  *
  * MOVED 55 -> 56 on 5 September 2026, when the endorsement rule changed to lower the value the
@@ -974,7 +974,7 @@ export function computeStability(
 /**
  * Session performance as the mean of the RAW per-scenario composites.
  *
- * Kept so that data collected before the per-scenario normalisation stays readable, and so the
+ * Kept so that data collected before the per-scenario normalization stays readable, and so the
  * two can be reported side by side. For analysis prefer `overallCaptured`, which averages figures
  * that are already shares of what each scenario offered and therefore share a scale by
  * construction rather than by the five menus happening to match.

@@ -3544,5 +3544,3 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
     </Stack>
   );
 }
-
-

@@ -25,7 +25,7 @@ endorse this"*, two separate things happen:
 
 1. **Their profile moves.** The endorsed value gains **+30**, the value it displaced loses **−20**
    (`applyEndorsementUpdates`). From the next scenario onward, options built on that value are
-   labelled aligned or weakly aligned — so choosing it again scores full credit, naturally.
+   labeled aligned or weakly aligned — so choosing it again scores full credit, naturally.
 2. **That same scenario's VCI score jumps** from 0.35 to 0.9, via
    `Math.max(BASE_CREDIT[level], reflectiveCredit(endorsement))`.
 
@@ -37,7 +37,7 @@ Because the reflective credit is re-earned every time a participant goes against
 moved) profile, a participant who changes what they value **in every single scenario** collects
 0.9 five times over.
 
-| Participant | Behaviour | VCI today |
+| Participant | Behavior | VCI today |
 |---|---|---|
 | Mixed-loyal | always picks a fitting option | 90 |
 | **Flip-flopper** | **a different clashing value every scenario**, endorses each one | **90** |
@@ -79,7 +79,7 @@ Option B keeps that distinction at a cost of 15 points.
 
 The raw answer is already stored separately as `cvrEndorsement` on each scenario result
 (`"strong" | "weak" | "no" | "n/a"`). Removing it from the VCI *formula* does not remove it from
-the *record*. Every analysis that wants to relate endorsement to behaviour can still do so, and
+the *record*. Every analysis that wants to relate endorsement to behavior can still do so, and
 the participant record carries it unchanged.
 
 ### 3.3 The profile bump, corrected
@@ -108,7 +108,7 @@ The corrected rule:
 **Why the second row moves further.** Keeping your top option tells the system almost nothing it
 did not already believe. Keeping your **second** tells it the ordering may be wrong, so it should
 move further. This is what makes the value you picked climb toward the top and the previous top
-settle beneath it — the behaviour asked for in review.
+settle beneath it — the behavior asked for in review.
 
 **Honest limit.** This cannot guarantee the picked value becomes #1 after exactly one choice.
 Which options count as fitting depends on all four values together
@@ -134,7 +134,7 @@ Replaced with:
 
 ## 4. What this produces
 
-| Participant | Behaviour across the five scenarios | Now | After |
+| Participant | Behavior across the five scenarios | Now | After |
 |---|---|---|---|
 | **Loyal** | always the best fit | 100 | **100** |
 | **Near-loyal** | always the second best fit | 75 | **85** |
@@ -162,7 +162,7 @@ assertions:
 | ID | Gate |
 |---|---|
 | **V1** | Loyal scores 100. |
-| **V2** | Near-loyal scores ≥ 80 — staying inside your own top two is consistent behaviour. |
+| **V2** | Near-loyal scores ≥ 80 — staying inside your own top two is consistent behavior. |
 | **V3** | Flip-flopper scores < 50 — *the gate that today's code fails.* |
 | **V4** | Contrarian scores < Flip-flopper — never fitting is worse than sometimes fitting. |
 | **V5** | Convert scores ≥ 80 — a genuine change of heart, held to, is consistent. |

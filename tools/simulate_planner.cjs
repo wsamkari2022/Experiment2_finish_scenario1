@@ -11,7 +11,7 @@
  *
  * This script answers those questions with numbers, by running the REAL plannerRank and the REAL
  * labelOptions over the REAL scenarios. It imports the compiled modules rather than
- * re-implementing anything — a simulator carrying its own copy of the maths drifts from the code
+ * re-implementing anything — a simulator carrying its own copy of the math drifts from the code
  * and then lies.
  *
  * TWO SWEEPS, DO NOT CONFUSE THEM
@@ -73,7 +73,7 @@ const ORDERS = permutations(POLICY_DIM_KEYS);
 const SCORE_SPREAD = [80, 65, 50, 35];
 
 /**
- * Three strictness archetypes, standing in for the range of ladder behaviour a real sample
+ * Three strictness archetypes, standing in for the range of ladder behavior a real sample
  * produces. Each is expressed the way block5Thresholds.ts would have derived it:
  *
  *   lenient  — named a price everywhere, demanded little extra when the target got harder.
@@ -132,7 +132,7 @@ function makeUserProfile(order) {
  * Structural checks that do not depend on a participant
  * ------------------------------------------------------------------ */
 
-function normalise(options, key, from) {
+function normalize(options, key, from) {
   const vals = options.map((o) => (from === "fp" ? o.fingerprint[key] : o.metrics[key]));
   const lo = Math.min(...vals), hi = Math.max(...vals);
   return vals.map((v) => (hi === lo ? 0.5 : (v - lo) / (hi - lo)));
@@ -187,8 +187,8 @@ function slotReport(options) {
  * exceeds the exchange premium. Without it the tree degenerates into a plain lexicographic sort.
  */
 function hasSmallGainBigLossPair(options, order, arch) {
-  const nTop = normalise(options, order[0], "fp");
-  const nSecond = normalise(options, order[1], "fp");
+  const nTop = normalize(options, order[0], "fp");
+  const nSecond = normalize(options, order[1], "fp");
   for (let i = 0; i < options.length; i++) {
     for (let j = i + 1; j < options.length; j++) {
       const dTop = Math.abs(nTop[i] - nTop[j]);

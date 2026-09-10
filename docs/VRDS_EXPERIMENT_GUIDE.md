@@ -145,9 +145,9 @@ This distinction is load-bearing. Confusing them produces numbers that look righ
 
 | Calculation | Reads | Why |
 |---|---|---|
-| Alignment label on the card | CURRENT | A running judgement of who you are now |
+| Alignment label on the card | CURRENT | A running judgment of who you are now |
 | Card order (the planner) | **PRE** | A moving ruler cannot measure movement |
-| Stability | PRE vs POST | The point is the distance travelled |
+| Stability | PRE vs POST | The point is the distance traveled |
 | Position Effect | **PRE** vs each chosen option | Same reason as the planner |
 
 ---
@@ -227,15 +227,45 @@ wins always gives the same answer.
 **All six cards stay selectable, including Blocked.** A card you cannot choose cannot record that
 you were willing to cross your own stated limit — which is one of the things worth observing.
 
+### What the first card actually carries
+
+The order is a trade-off comparison, not a fit ranking, so the top card is **not** guaranteed to be
+the best-fitting one. That surprises people, so here is what it does in practice.
+
+Measured over **3,000 randomly generated profiles** run through the shipped `labelOptions` and
+`plannerRank` on all five scenarios:
+
+| The first card is labeled | Share |
+|---|---|
+| Aligned | **51%** |
+| Weakly aligned | 28% |
+| Misaligned | 19% |
+| Strongly misaligned | **3%** |
+
+**The best-fitting option is never buried.** It sits at card #1 or #2 **84%** of the time, and in
+the top three **95.5%** of the time. It reaches cards 4–6 in under 5% of cases.
+
+**The separation holds.** `npm run validate:planner` asserts that the planner's first card and the
+alignment first card coincide in **no more than 50%** of profiles; it currently reports **49%** on
+the structured 72-profile set. That gate is the reason the planner exists: if the top card were
+usually the best-fitting one, *"chose the first card"* and *"chose the option that fits me"* would
+be the same event, and neither could be interpreted afterward.
+
+So a top card reading *Misaligned* is the design working, not a fault. It happens to about one
+profile in five.
+
+*(The 3,000-profile sweep above is a one-off analysis, not a saved script — the reproducible gate
+is `npm run validate:planner`. Say the word if it should become a permanent tool.)*
+
 ---
 
 ## 6. Alignment labels
 
-`policyAlignmentScore` is **one-sided**: an option is penalised only when it delivers *less* than
+`policyAlignmentScore` is **one-sided**: an option is penalized only when it delivers *less* than
 you demand. You are never marked down for an option that protects the vulnerable *more* than you
 asked.
 
-Options are then ranked by that score and labelled **by rank position**, so every scenario always
+Options are then ranked by that score and labeled **by rank position**, so every scenario always
 shows the same spread:
 
 | Rank | Label |
@@ -328,7 +358,7 @@ by +24 and a value at 96 by **+1.2**. That was changed because:
 
 1. **The documented constant was never the applied one.** Every description of the rule was
    approximately false, and no reader could check the arithmetic against a stored profile.
-2. **It discriminated less.** Measured across 5 profiles × 4 behaviours, Stability separated steady
+2. **It discriminated less.** Measured across 5 profiles × 4 behaviors, Stability separated steady
    from drifting participants by **33 points** under headroom and **42** under flat.
 
 **The cost, which belongs in the write-up:** flat deltas pile up on the ends. About **13%** of
@@ -381,7 +411,7 @@ double-counting participant moves further than one who is completely sure and do
 rises with the rating and nothing else.
 
 It applies to the **four policy values only** — the stakeholder ±25 comes from a separate
-behavioural observation and is deliberately unscaled, and at low confidence the cap would clip it.
+behavioral observation and is deliberately unscaled, and at low confidence the cap would clip it.
 Asserted by gate **A-APA-8**.
 
 **Full worked audit, six participants and the measurement behind every constant:
@@ -409,7 +439,7 @@ A +10 followed by the −20 is a net **loss of 10** on the very value the partic
 mattered more. **Lowering it scores worse again** (−5 gives 75.8%) *and* records the opposite of
 what they said.
 
-The division of labour is therefore clean: **Q1 records what they did, Q2 records what they want.**
+The division of labor is therefore clean: **Q1 records what they did, Q2 records what they want.**
 The sacrificed value is carried by Q2, where naming it is worth +30.
 
 `STABILITY_CHURN_CEILING` is **57** — the p99 of the null model under this rule. Gate S7 enforces
@@ -431,7 +461,7 @@ Judged against **CURRENT**, so a value taken on mid-block counts from then on.
 *Did your values themselves change?* Two halves:
 
 - **Order** — of the six pairs among four values, how many swapped between start and end
-- **Movement** — total distance travelled, summed **scenario by scenario** (churn), not start-to-end
+- **Movement** — total distance traveled, summed **scenario by scenario** (churn), not start-to-end
 
 **Why churn and not net drift.** A participant who picks the option furthest from their values in
 *every* scenario thrashes and ends up near where they began. Net drift would call that person
@@ -528,7 +558,7 @@ Position Effect = highest position − lowest
 **Scenario 5 counts here and nowhere else.** VCI, CVR, APA and Stability all exclude it, because
 those four ask what a participant DID and hold them answerable for it, and a wish is not a decision.
 This measure is a *distance* — |frozen profile − the option| — and that arithmetic is identical
-whether the option was chosen or wished for. It is labelled as a wish everywhere it is shown.
+whether the option was chosen or wished for. It is labeled as a wish everywhere it is shown.
 
 ### Is a bigger distance good or bad? **Neither.**
 
@@ -665,7 +695,7 @@ chair.
 | CVR reflection | **No** | Nobody is answerable for a wish. |
 | Profile update (APA) | **No** | The profile is taught by decisions. |
 | Stability / churn | **No** | Follows APA — this is why the ceiling is 55 and not 65. |
-| Position Effect distance | **Yes** | Same arithmetic; labelled as a wish everywhere it is shown. |
+| Position Effect distance | **Yes** | Same arithmetic; labeled as a wish everywhere it is shown. |
 
 #### Two design decisions worth defending
 
@@ -719,7 +749,7 @@ Now two separate subscales. Verified against the real scorer:
 
 ### The one thing to know
 
-**Everything you will analyse lives in `vrds_feedback_archive`.** When a participant presses
+**Everything you will analyze lives in `vrds_feedback_archive`.** When a participant presses
 Finish, `localStorage.clear()` runs and only that key is preserved. One entry per completed
 participant, joined by `session_id`.
 
@@ -779,7 +809,7 @@ It is written onto the row rather than looked up from the scenario list, so an e
 self-describing: an analyst in two years can tell choices from wishes without needing the scenario
 definitions that were live at the time.
 
-**In practice:** filter `decisionRole == "decider"` for anything about behaviour. The single
+**In practice:** filter `decisionRole == "decider"` for anything about behavior. The single
 `"recipient"` row is the wish, and it belongs in the mirror comparison (§9.4b), not in an average.
 
 On a recipient row, `cvrFired` is `false`, `cvrCoordinate` is absent, and `cvrEndorsement` is
@@ -832,7 +862,7 @@ and responsibility gap are all derived from these rows on demand (`block5Company
 | `simulate_stability.cjs` | Stability + **S7: the churn ceiling still matches the null p99** |
 | `validate_cvr_lenses.cjs` | Both lenses carry equal weight; the context lens never says "you" |
 | `simulate_position.cjs` | Menu confound; drift vs random responder separation |
-| `test_planner.cjs` | 22 behavioural assertions on the trade-off tree |
+| `test_planner.cjs` | 22 behavioral assertions on the trade-off tree |
 | `simulate_planner.cjs` | Card orders discriminate across 72 synthetic participants |
 | `audit_block5_run.cjs` | Labels and profile movement across full runs (run manually) |
 
@@ -856,14 +886,14 @@ Say these before an examiner finds them.
    moved"*, not as a fact about their morality.
 5. **The stakeholder ±25 has no measurement behind it.** It is large enough that two non-switches
    pin a participant at the floor, and it is the one constant in the profile update that was never
-   sized against anything. Being unscaled by confidence is deliberate — it is behavioural, not
-   self-reported — but the magnitude is judgement alone.
+   sized against anything. Being unscaled by confidence is deliberate — it is behavioral, not
+   self-reported — but the magnitude is judgment alone.
 6. **11.9% of policy values sit at 100 after a clarification.** The cap reduces saturation but
    cannot remove it; flat deltas on a bounded scale always pile up at the ends. See
    [`docs/BLOCK5_APA_AUDIT.md`](BLOCK5_APA_AUDIT.md) §7.
 7. **Within-ladder coherence is unmeasurable.** The interface enforces monotonicity, so any such
    score would read 100% for everybody.
-8. **Stability and behavioural distance are not redundant** (r = −0.17 across 600 simulated
+8. **Stability and behavioral distance are not redundant** (r = −0.17 across 600 simulated
    participants) — they answer different questions, so report both.
 9. **The explanation panel is itself an intervention.** Shown identically to everyone, so it cannot
    differ by condition, but it adds information before the choice and may lengthen deliberation (your H4).
@@ -877,11 +907,11 @@ Ordered by value. None are implemented.
 ### High value
 
 **0 · Size the stakeholder ±25 against something.** Every other constant in the profile update has
-at least a shape argument behind it; this one is judgement alone, and it is large enough that two
+at least a shape argument behind it; this one is judgment alone, and it is large enough that two
 non-switches pin a participant at the floor. Either derive it from Block 4's observed switch rate or
 state plainly in the write-up that it is set by hand. **Anything that changes it must re-run
 `npm run verify:apa` then `npm run validate:block5` — the churn ceiling (56) is calibrated
-against current APA behaviour.**
+against current APA behavior.**
 
 **1 · Delete the dev restart button before launch.**
 `src/components/dev/` and two lines in `src/App.tsx`. It cannot ship (`import.meta.env.DEV` folds
@@ -924,7 +954,7 @@ With flood and water removed, every position appears exactly once, so `driftChec
 and the within-position control is **gone**. This was previously a "nice to have"; it is now the
 single biggest hole in the design, because a genuine position-shifter and a random responder both
 score Position Effect 100 and nothing separates them. Either the replacement scenarios must repeat
-a position, or Position Effect must be reported as descriptive only. Both the visualisation
+a position, or Position Effect must be reported as descriptive only. Both the visualization
 caption and `tools/simulate_position.cjs` already say so out loud.
 
 **6 · Report the direction of value drift, not just the size.**
@@ -945,7 +975,7 @@ disguise. Only do this if you can defend the mapping independently.
 
 **9 · A second coder for the scenario content.** Strengthens the methods chapter; costs a person.
 
-### Things that do not currently make sense — worth your judgement
+### Things that do not currently make sense — worth your judgment
 
 - **`block5Ranking.ts`** appears to be superseded by `block5Planner.ts` but still exists. If it is
   dead, delete it; if it is live, document which one governs.
@@ -995,7 +1025,7 @@ Scenarios 4 and 5 show what the participant's employer has published: an institu
 letterhead, a large quote, and the company's value named in **bold amber italic**.
 
 It is deliberately **not** tinted with the scenario accent — an employer's demand rendered in the
-interface's own colour reads as the interface agreeing with it.
+interface's own color reads as the interface agreeing with it.
 
 **It shows no numbers.** The participant's own priorities sit on screen immediately below it, so the
 comparison is theirs to draw — which is also what the study is trying to measure. A number here
@@ -1005,7 +1035,7 @@ two different figures for the same person on one screen.
 *Which value the company champions is read from the frozen pre-Block-5 profile*, so the employer
 cannot change its principle between scenarios 4 and 5.
 
-### 14.4 Scroll behaviour around the intro
+### 14.4 Scroll behavior around the intro
 
 The intro is a fixed overlay, and the scenario page behind it is **frozen** while it is up, then
 reset to its top **before** the morph measures anything. The transition reads where each destination

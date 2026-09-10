@@ -4,7 +4,6 @@ import {
   Badge,
   Box,
   Button,
-  HStack,
   Heading,
   Icon,
   SimpleGrid,
@@ -233,7 +232,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
   });
   /** True once completeBlock has been called and final results are ready. */
   const [completed, setCompleted] = useState(false);
-  /** Holds the finalised results object after the block completes. */
+  /** Holds the finalized results object after the block completes. */
   const [finalResults, setFinalResults] =
     useState<AIWorkforceBlockResults | null>(null);
   /** Prevents double-submission while an animated transition is in flight. */
@@ -294,7 +293,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
    * to schedule the render. Using state directly does the same job in one step: the update IS
    * the re-render trigger, so the extra hook is gone.
    *
-   * Behaviour is unchanged — the same integer sequence reaches GlowSpan, at the same moments.
+   * Behavior is unchanged — the same integer sequence reaches GlowSpan, at the same moments.
    * (Reading a ref during render is also what `react-hooks/refs` flags: it is unsafe under
    * StrictMode's double-render and under concurrent rendering, where the value read during
    * render may not be the value that gets committed.)
@@ -333,7 +332,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
     state.currentGroupSizeIndex;
 
   /**
-   * Finalises the threshold matrix by filling any cells that were never explicitly
+   * Finalizes the threshold matrix by filling any cells that were never explicitly
    * resolved (e.g. gaps left by early termination) with blocked results. Serialises
    * the completed AIWorkforceBlockResults to AI_WORKFORCE_RESULTS_KEY (the single,
    * canonical Block-3 storage key) and cleans up the in-progress key afterward.
@@ -635,19 +634,19 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
    * scenario box, which is itself painted with `subtleBg`. The panel therefore reads as a
    * RAISED surface sitting on a recessed one (light mode: white on #eef2fb; dark mode:
    * bg.panel on bg.subtle). Do not "simplify" it to `subtleBg` — that makes the panel and
-   * the box around it the same colour and the nesting disappears.
+   * the box around it the same color and the nesting disappears.
    *
    * It is hoisted out of the memo below and read as a plain string so it can be listed as a
    * dependency. `surf` itself must NOT be used as a dependency: `useBlock123Surfaces()`
    * returns a fresh object every render, so depending on the object would recompute the memo
-   * on every render and defeat the glow-key memoisation entirely. The resolved colour is a
-   * stable string within a colour mode, which is exactly the granularity that is needed.
+   * on every render and defeat the glow-key memoization entirely. The resolved color is a
+   * stable string within a color mode, which is exactly the granularity that is needed.
    */
   const scenarioPanelBg = surf.cardBg;
 
   /**
    * Illustration for the current (worker group, group size, gain) triple, or null when that
-   * cell has no artwork — in which case the question renders full-width and centred.
+   * cell has no artwork — in which case the question renders full-width and centered.
    *
    * Block 3 needs all three coordinates because each picture shows the gain and the affected
    * group together on two signposts; unlike Blocks 1 and 2 the artwork is specific to the cell
@@ -684,9 +683,9 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
    * size — in a GlowSpan keyed by its respective glow counter so only the value(s) that
    * changed since the last render animate.
    *
-   * COLOUR-MODE BUG (fixed): this memo closes over a surface colour, but that colour was not
+   * COLOR-MODE BUG (fixed): this memo closes over a surface color, but that color was not
    * in the dependency array. Toggling light/dark therefore did not recompute the memo, so the
-   * panel kept whatever colour was resolved on first render — which is why the box stayed
+   * panel kept whatever color was resolved on first render — which is why the box stayed
    * white after switching to Dark Mode. `scenarioPanelBg` is now a listed dependency, so the
    * panel repaints with the rest of the block. (ESLint had flagged this as a missing
    * `react-hooks/exhaustive-deps` dependency.)
@@ -865,21 +864,16 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
             </Badge>
           </VStack>
 
-          <HStack gap="2" justify="center" wrap="wrap">
-            <Badge colorPalette="green" variant="subtle" px="3" py="1" rounded="md">
-              Financial gain
-            </Badge>
-            <Badge colorPalette="yellow" variant="subtle" px="3" py="1" rounded="md">
-              Worker group
-            </Badge>
-            <Badge colorPalette="blue" variant="subtle" px="3" py="1" rounded="md">
-              Group size
-            </Badge>
-          </HStack>
+          {/*
+            NO DIMENSION CHIPS HERE. This page used to carry three badges naming the three things
+            Block 3 varies — financial gain, worker group, group size. They told the participant
+            exactly which levers were being pulled on them, which invites answering the design
+            rather than the question. The scenario text already says everything they need.
+          */}
 
           {/*
             * Scenario panel. With an illustration it is a two-column row (picture beside the
-            * question on md+, stacked on a phone); without one it is the original centred
+            * question on md+, stacked on a phone); without one it is the original centered
             * single column, so a cell with no artwork is unchanged.
             *
             * The `key` deliberately does NOT include the gain index. Re-keying on every gain

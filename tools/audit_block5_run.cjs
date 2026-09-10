@@ -11,7 +11,7 @@
  *      right DIRECTION, by a sane amount, and stay inside 0-100 across a whole five-scenario run?
  *
  * This is an audit, not a gate: it prints what happened so a human can read it. Run it after any
- * change to labelling or to the bump constants.
+ * change to labeling or to the bump constants.
  *
  * Run:  node tools/audit_block5_run.cjs
  */
@@ -58,8 +58,8 @@ const PARTICIPANTS = {
   "very high      ": { vulnerabilityProtectionSensitivity: 96, groupSizeSensitivity: 94, gainResponsivenessSensitivity: 90, outcomeAggregationSensitivity: 97 },
 };
 
-/* Four behaviours, so the update paths all get exercised. */
-const BEHAVIOURS = {
+/* Four behaviors, so the update paths all get exercised. */
+const BEHAVIORS = {
   "always top card":     (labeled) => labeled[0],
   "always bottom card":  (labeled) => labeled[labeled.length - 1],
   "always 3rd card":     (labeled) => labeled[2],
@@ -90,7 +90,7 @@ for (const [pname, scores] of Object.entries(PARTICIPANTS)) {
         flag(`label order contradicts fit score: ${pname.trim()} / ${sc.id} at rank ${i + 1}`);
       }
     }
-    // the top-ranked option must be the highest scorer, and it must be labelled "aligned"
+    // the top-ranked option must be the highest scorer, and it must be labeled "aligned"
     const best = Math.max(...labeled.map((o) => o.matchScore));
     if (Math.abs(labeled[0].matchScore - best) > 1e-9 || labeled[0].level !== "aligned") {
       flag(`rank 1 is not the best-fitting option: ${pname.trim()} / ${sc.id}`);
@@ -109,7 +109,7 @@ console.log("  columns: vuln / harm / gain / helped  |  stakeholder\n");
 
 const headroomNotes = [];
 for (const [pname, scores] of Object.entries(PARTICIPANTS)) {
-  for (const [bname, pick] of Object.entries(BEHAVIOURS)) {
+  for (const [bname, pick] of Object.entries(BEHAVIORS)) {
     let profile = makeProfile(scores);
     let misalignedPicks = 0;
     const start = POLICY_DIM_KEYS.map((k) => scoreOf(profile, k));
@@ -181,7 +181,7 @@ for (const [pname, scores] of Object.entries(PARTICIPANTS)) {
     if (misalignedPicks === 0 && Math.abs(endStake - startStake) > 0.5) {
       flag(`stakeholder sensitivity moved with NO misaligned pick: ${pname.trim()} / ${bname}`);
     }
-    headroomNotes.push({ name: pname.trim(), behaviour: bname, start: start.slice(), totalMove });
+    headroomNotes.push({ name: pname.trim(), behavior: bname, start: start.slice(), totalMove });
   }
   console.log("");
 }

@@ -125,7 +125,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
             hint="How often your choices matched your own values — judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
           <MeasureCard icon={<LuScale />} palette="purple" label="Stability"
             value={`${stability}`} sub={results.stabilityLevel ?? "—"}
-            hint="How much your own values moved during Block 5, compared with where they stood after Blocks 1-4. It combines whether your priorities changed order with how far they travelled along the way." />
+            hint="How much your own values moved during Block 5, compared with where they stood after Blocks 1-4. It combines whether your priorities changed order with how far they traveled along the way." />
           <MeasureCard icon={<LuTarget />} palette="teal"
             label={hasCaptured ? "Performance taken" : "Performance"}
             value={hasCaptured ? `${captured}` : `${performance}`}
@@ -138,7 +138,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
         {/*
           The two reflection lenses (Directness / Context) are reported here rather than folded
           into Stability. They only move when a participant opens the second view, which is an
-          optional control — across six simulated behaviour types they never moved once. Scoring
+          optional control — across six simulated behavior types they never moved once. Scoring
           a variable that is frozen for most people would dilute the number without measuring
           anything, whereas how often someone chose to look through both lenses genuinely varies.
         */}

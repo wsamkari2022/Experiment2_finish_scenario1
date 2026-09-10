@@ -173,7 +173,7 @@ function clearAllSessionData() {
 /**
  * FinalMoralAnalysisPage — the closing page of the experiment.
  *
- * Synthesises the MoralProfile from Blocks 1–3 with the Block 4 decision record to
+ * Synthesizes the MoralProfile from Blocks 1–3 with the Block 4 decision record to
  * produce the full FinalAnalysis text and the ranked ThresholdTree. All seven sections
  * are shown sequentially in PanelCard wrappers. The page persists the analysis to
  * localStorage once on mount, and offers a "Start Over" button that wipes all session
@@ -248,7 +248,7 @@ export function FinalMoralAnalysisPage({
    * nowhere to advance to, and auto-advancing would leave a spinner forever.
    *
    * This page is the most important one to hide. It displays the ranked seven-sensitivity tree,
-   * which is the very quantity Block 5 then uses to decide which options are labelled misaligned
+   * which is the very quantity Block 5 then uses to decide which options are labeled misaligned
    * for this participant. Showing someone the scoring key immediately before scoring them with
    * it would compromise Block 5 as a measurement. See interBlockPages.ts.
    */
@@ -325,7 +325,7 @@ export function FinalMoralAnalysisPage({
           <Text color="fg.muted" fontSize="lg" maxW="2xl" mx="auto">
             The notes below describe patterns we observed across the four
             blocks. They are tentative, and they do not constitute a diagnosis
-            or a judgement about your character.
+            or a judgment about your character.
           </Text>
         </VStack>
 
@@ -368,7 +368,7 @@ export function FinalMoralAnalysisPage({
           <PanelCard title="Your AI workforce thresholds">
             <Text color="fg.muted" fontSize="sm" mb="4" lineHeight="tall">
               The minimum financial gain at which you would have approved the
-              rollout in each sub-context. Values labelled "no acceptance
+              rollout in each sub-context. Values labeled "no acceptance
               within range" mean the maximum offered gain was not enough.
             </Text>
             <ThresholdRecap results={aiResults} />
@@ -450,7 +450,7 @@ export function FinalMoralAnalysisPage({
           <Box textAlign="center" py="2">
             <Text color="fg.muted" fontSize="md" mb="5">
               Your sensitivity profile is ready. Continue to the main simulation
-              where your profile will personalise public emergency scenarios.
+              where your profile will personalize public emergency scenarios.
             </Text>
             <Button
               onClick={onStartBlock5}

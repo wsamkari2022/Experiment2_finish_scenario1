@@ -45,15 +45,29 @@ export const POLICY_DIM_SHORT: Record<Block5PolicyDimKey, string> = {
 };
 
 /** Plain-English hover explanation of each policy value (shown in the sidebar tooltip). */
+/*
+ * WHY THESE FOUR SENTENCES ARE WORDED THE WAY THEY ARE.
+ *
+ * The last two describe different things — the SIZE of a benefit and the NUMBER of people it
+ * reaches — and both used to end "...before you accept the cost?". Two questions with the same
+ * shape and the same ending read as one question asked twice, and a participant who cannot tell
+ * them apart cannot use either.
+ *
+ * "Reducing harm" also carried a worked example ("10 rather than 100,000") that made a reader
+ * stop and do arithmetic in the middle of a definition.
+ *
+ * Each one now names the thing it responds to, in the fewest words that stay true to what Blocks
+ * 1-3 actually measured. See docs/VRDS_EXPERIMENT_GUIDE.md §3 for the source of each.
+ */
 export const POLICY_DIM_EXPLAIN: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity:
-    "Do you shield the people least able to cope, even when others would gain more?",
+    "How far you go to protect the people least able to cope — even when other people would gain more.",
   groupSizeSensitivity:
-    "How much does it matter to you that fewer people are hurt — 10 rather than 100,000?",
+    "How much it matters to you that fewer people end up hurt.",
   gainResponsivenessSensitivity:
-    "How large must the payoff be before you accept the cost?",
+    "How strongly the SIZE of the benefit moves you.",
   outcomeAggregationSensitivity:
-    "How many people must benefit before you accept the cost?",
+    "How strongly the NUMBER of people helped moves you.",
 };
 
 /**
@@ -126,7 +140,7 @@ export const ALIGNMENT_RANK_RULE = { aligned: 1, weaklyAligned: 1 } as const;
  *      also easy ones, so it was not carrying its own information.
  *   2. Its referent changed between scenarios. In travel and dinner it means effort on YOU; in
  *      the cancer, flood and water scenarios you are a decision-maker, not the executor, so it
- *      means effort on some organisation. That is two constructs sharing a label — exactly the
+ *      means effort on some organization. That is two constructs sharing a label — exactly the
  *      cross-scenario ambiguity the readings below exist to prevent.
  * The five that remain keep the same referent in all five scenarios.
  *
@@ -200,8 +214,8 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
       chemical_release_escape: "how soon you are out of the plume, and how much of the six hours is left",
       wildfire_household_evacuation: "how soon your household is clear of the valley",
       cancer_treatment_allocation: "how soon treatment begins for those who receive it",
-      care_rota_reduction: "how soon the new rota actually reaches clients and carers",
-      care_rota_receiving: "how soon the new rota actually reaches clients and carers",
+      care_rota_reduction: "how soon the new schedule actually reaches clients and caregivers",
+      care_rota_receiving: "how soon the new schedule actually reaches clients and caregivers",
     },
   },
   resourceUse: {
@@ -213,8 +227,8 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
       chemical_release_escape: "how little of the shuttle, the clinic stock and the crews it uses",
       wildfire_household_evacuation: "how little road capacity, fuel and crew time it ties up",
       cancer_treatment_allocation: "how little of the 20 doses and staff time it wastes",
-      care_rota_reduction: "how little of the remaining carer-hours and budget it wastes",
-      care_rota_receiving: "how little of the remaining carer-hours and budget it wastes",
+      care_rota_reduction: "how little of the remaining caregiver-hours and budget it wastes",
+      care_rota_receiving: "how little of the remaining caregiver-hours and budget it wastes",
     },
   },
   reliability: {
@@ -226,8 +240,8 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
       chemical_release_escape: "how likely you are to get clear without the route failing",
       wildfire_household_evacuation: "how likely all four of you actually get out together",
       cancer_treatment_allocation: "how likely the treatment achieves what is hoped",
-      care_rota_reduction: "how likely the rota holds for the full three months",
-      care_rota_receiving: "how likely the rota holds for the full three months",
+      care_rota_reduction: "how likely the schedule holds for the full three months",
+      care_rota_receiving: "how likely the schedule holds for the full three months",
     },
   },
   durability: {
@@ -326,7 +340,7 @@ export interface OptionCVRSeed {
    * WRITING RULES, enforced by tools/validate_block5.cjs:
    *  - short sentences, common words. Participants read this in a second language.
    *  - name people and numbers, never categories ("two of them", not "some stakeholders").
-   *  - state the outcome, never the judgement. The lens attributes; the sentence reports.
+   *  - state the outcome, never the judgment. The lens attributes; the sentence reports.
    */
   consequences?: {
     /** Within hours or days. What happens straight away. */
@@ -374,7 +388,7 @@ export interface Block5ScenarioOption {
   /**
    * v4 — the TRADE-OFF block shown prominently on every option card. Participants were
    * overlooking a single muted `consequence` line, so the gain and the cost are now separate,
-   * colour-coded fields rendered before the choice is made.
+   * color-coded fields rendered before the choice is made.
    */
   /** What the participant clearly WINS by choosing this. One short sentence. */
   gains?: string;
@@ -404,7 +418,7 @@ export interface Block5ScenarioOption {
  *   self             the participant, and nobody else
  *   self_and_group   the participant and dependents who are present
  *   others           other people; the participant is explicitly unaffected
- *   under_authority  the participant decides, it lands on colleagues — but inside an organisation
+ *   under_authority  the participant decides, it lands on colleagues — but inside an organization
  *                    whose STATED VALUES pull against their own. Varies whose values govern.
  *   receiving_end    someone else decides and it lands on the participant, who has NO CONTROL.
  *                    Varies whether they hold the pen at all.
@@ -428,7 +442,7 @@ export type StakePosition =
  * Recipient scenarios therefore run NO CVR, NO profile update, and are excluded from VCI and
  * Stability — see the inclusion table in docs/VRDS_EXPERIMENT_GUIDE.md. They still produce a
  * Position Effect distance, because `profileDistance(profile, wished option)` is the same
- * arithmetic; it is simply labelled as a wish wherever it is shown.
+ * arithmetic; it is simply labeled as a wish wherever it is shown.
  *
  * Defaults to "decider" when absent, so every scenario authored before this existed is unchanged.
  */
@@ -463,7 +477,7 @@ export interface Block5ScenarioTheme {
  * the participant's would not be a company; it would be a mirror.
  */
 export interface Block5Employer {
-  /** The organisation's name, used in the scene and in the stance readout. */
+  /** The organization's name, used in the scene and in the stance readout. */
   name: string;
   /** Heading above the stated principle, e.g. "Meridian Care's published service principle". */
   principleLabel: string;
@@ -527,7 +541,7 @@ export interface Block5Scenario {
    */
   decisionRole?: Block5DecisionRole;
   /**
-   * The organisation whose stated values this scenario runs under, if any.
+   * The organization whose stated values this scenario runs under, if any.
    *
    * Present only on the `under_authority` / `receiving_end` pair. The company's stated priority is
    * NOT written here — it is derived per participant from their frozen Blocks 1–4 profile, so that
@@ -589,7 +603,7 @@ export interface CVRLensBlock {
   /** the body of the lens (with {markup}). */
   body: string;
   /**
-   * Short labelled lines shown under the body, one per point.
+   * Short labeled lines shown under the body, one per point.
    *
    * The directness lens needs two separate consequences and a paragraph would bury the second one.
    * Separate lines also read far better in a second language than a long sentence with clauses.
@@ -769,7 +783,7 @@ export interface Block5ScenarioResult {
 
   /* ---- CVR dual-perspective (Directness ↔ Context) — see block5CVR + CVRReveal ----
    * All optional and only populated when the participant engaged the dual-perspective feature.
-   * If the alternate view is never generated, these stay undefined and behaviour is unchanged. */
+   * If the alternate view is never generated, these stay undefined and behavior is unchanged. */
 
   /** Which reflection lens was shown FIRST (the larger of Directness/Context at the time). */
   cvrFramingShownFirst?: CVRFraming;
@@ -791,7 +805,7 @@ export interface Block5ScenarioResult {
   /* ---- PLANNER (block5Planner.ts) — the card ORDER, kept strictly apart from alignment ----
    *
    * The whole consistency analysis rests on being able to ask one question of the data:
-   * "the participant chose the option the planner ranked 4th, and that option was labelled
+   * "the participant chose the option the planner ranked 4th, and that option was labeled
    * strongly aligned." Both halves of that sentence have to survive into the log, which is why
    * `plannerOrder` and `rankedOptionIds` are two different fields that are allowed to disagree,
    * and why `choiceRank` (planner position) sits beside `selectedRank` (alignment position).
@@ -818,11 +832,11 @@ export interface Block5ScenarioResult {
   choiceBin?: "clear" | "costed" | "blocked";
   /** Did they take the planner's first card? */
   choiceMatchedPlannerTop?: boolean;
-  /** Did they take the option the alignment tier labelled best? */
+  /** Did they take the option the alignment tier labeled best? */
   choiceMatchedAlignedTop?: boolean;
   /** Did the chosen option cross a limit the participant themselves refused outright? */
   choiceCrossedOwnRedLine?: boolean;
-  /** Which values it crossed, and by how much, in normalised scenario units. */
+  /** Which values it crossed, and by how much, in normalized scenario units. */
   choiceBreaches?: { key: Block5PolicyDimKey; amount: number; hard: boolean }[];
   /**
    * True when the chosen option outranked another option that beats it on the participant's own

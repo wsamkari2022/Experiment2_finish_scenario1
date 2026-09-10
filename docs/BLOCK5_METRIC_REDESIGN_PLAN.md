@@ -83,7 +83,7 @@ means *uses little*, not *uses much*. The label will read **"Resource use"** wit
 
 ## 3. Problem 1 — the same metric means different things in each scenario
 
-Raised in review: *"'Speed' in a travelling scenario is different from a cancer scenario."*
+Raised in review: *"'Speed' in a traveling scenario is different from a cancer scenario."*
 
 Correct, and it applies to all six. If Speed means "arrival time" in travel and "time to treatment"
 in cancer, then the dashboard — which **averages each metric across completed scenarios** — is
@@ -91,7 +91,7 @@ averaging different quantities. Four devices solve this together.
 
 ### Device 1 — one construct, five documented readings
 
-The metric measures the same construct everywhere; only its surface realisation changes. This is
+The metric measures the same construct everywhere; only its surface realization changes. This is
 made explicit in the type so an author cannot skip it:
 
 ```ts
@@ -327,7 +327,7 @@ unequal weights, and equal weighting is the conservative choice.
 - **This is a measurement change, not a display change.** `performanceScore`, the cumulative
   dashboard, VCI and the summary page all move. Nothing is collected yet, so nothing is
   invalidated — but this must land before launch, not after.
-- **The r = 0.81 baseline is computed on 30 hand-authored options, not observed behaviour.** It
+- **The r = 0.81 baseline is computed on 30 hand-authored options, not observed behavior.** It
   describes the stimulus set, which is exactly what is being fixed; it is not a claim about
   participants.
 
@@ -368,7 +368,7 @@ exhausting to *endure* but trivially simple to *do*) brought it only to 0.71.
 The second reason was decisive and is the one to quote: **its referent changed between
 scenarios.** In travel and dinner, "how hard is this to carry out" means effort on *you*. In the
 cancer, flood and water scenarios the participant is a decision-maker, not the executor, so it
-means effort on some organisation. That is two constructs sharing a label — precisely the
+means effort on some organization. That is two constructs sharing a label — precisely the
 cross-scenario ambiguity section 3 exists to prevent. The five that remain keep one referent
 throughout.
 
@@ -405,7 +405,7 @@ methods chapter:
 | Gain responsiveness | 4, 3, 1, 2, 2 | 2.4 |
 | Outcome aggregation | 1, 6, 3, 3, 1 | 2.8 |
 
-Protecting the vulnerable costs performance in **every** scenario. Options that maximise total
+Protecting the vulnerable costs performance in **every** scenario. Options that maximize total
 good or efficiency perform well. That is not a residual defect — it follows from what the five
 metrics measure. Speed, leanness, reliability, durability and recoverability are a
 *consequentialist* account of how a choice went. The cost of a utilitarian option is borne by

@@ -14,7 +14,7 @@
  *
  * 3. buildScenarioContext(profile, domain)
  *    Which specific (worker group type × group size × gain level) should the
- *    Block-4 scenario use? Personalised to the participant's profile.
+ *    Block-4 scenario use? Personalized to the participant's profile.
  */
 
 import type { MoralProfile } from "./profileAnalysis";
@@ -36,7 +36,7 @@ export type ScenarioDomain =
 /**
  * Human-readable framing for a scenario domain.
  * `harmFraming` describes how affected people experience the downside.
- * `benefitFraming` describes the upside to the decision-maker's organisation.
+ * `benefitFraming` describes the upside to the decision-maker's organization.
  * Both are used in Block-4 stakeholder perspective card templates.
  */
 export interface DomainDescriptor {
@@ -100,7 +100,7 @@ export const DOMAINS: Record<ScenarioDomain, DomainDescriptor> = {
 /**
  * A seed case is the single decision from Blocks 1–3 that most clearly
  * represents the participant's dominant moral pattern. It is shown on the
- * Insights page ("based on your pattern of X...") and used to personalise
+ * Insights page ("based on your pattern of X...") and used to personalize
  * the Block-4 framing.
  *
  * - `source`      — which block and phase the seed comes from
@@ -187,7 +187,7 @@ export function selectSeedCase(profile: MoralProfile): SeedCase {
  *
  * Block 4 revisits the same context as Block 3 so participants can reflect on
  * a decision type they have already reasoned about numerically. The `_profile`
- * parameter is accepted for future personalisation but is currently unused.
+ * parameter is accepted for future personalization but is currently unused.
  */
 export function selectDomain(_profile: MoralProfile): DomainDescriptor {
   return DOMAINS.ai_workforce_rollout;
@@ -208,7 +208,7 @@ export interface ScenarioContext {
 }
 
 /**
- * buildScenarioContext — personalises the Block-4 scenario parameters from the profile.
+ * buildScenarioContext — personalizes the Block-4 scenario parameters from the profile.
  *
  * Group type: "vulnerable" if the participant protects vulnerable workers strongly
  * or has vulnerability sensitivity ≥ 0.5; otherwise "wealthy".

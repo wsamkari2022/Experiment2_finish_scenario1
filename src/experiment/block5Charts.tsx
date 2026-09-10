@@ -5,9 +5,9 @@
  *
  * Theming: structural elements (axes, gridlines, tick text) use `currentColor` with opacity.
  * Each chart's <svg> sets `color: var(--chakra-colors-fg)`, so they follow the app's
- * light/dark text colour automatically. Data series use an explicit colour-blind-safe
- * palette that reads on both light and dark cards. Meaning is never carried by colour alone —
- * every series/bar is also labelled.
+ * light/dark text color automatically. Data series use an explicit color-blind-safe
+ * palette that reads on both light and dark cards. Meaning is never carried by color alone —
+ * every series/bar is also labeled.
  *
  * These components only DRAW the values handed to them; they compute no experiment logic.
  */
@@ -15,7 +15,7 @@
 import { Box } from "@chakra-ui/react";
 
 const AXIS = "currentColor";
-/** Inherits the app's light/dark text colour so currentColor is theme-aware. */
+/** Inherits the app's light/dark text color so currentColor is theme-aware. */
 const SVG_STYLE: React.CSSProperties = { display: "block", height: "auto", color: "var(--chakra-colors-fg)" };
 
 /* --------------------------------- Radar --------------------------------- */
@@ -37,9 +37,9 @@ export function RadarChart({ axes, series, max = 100, fillOpacity = 0.14, showDo
   series: RadarSeries[];
   max?: number;
   /**
-   * Colour of the rings, spokes and spoke labels. Defaults to `currentColor`, which resolves
+   * Color of the rings, spokes and spoke labels. Defaults to `currentColor`, which resolves
    * to the app-wide `--chakra-colors-fg` token — correct whenever the chart's surface follows
-   * the app's colour mode. Pass an explicit colour when the surrounding surface is painted
+   * the app's color mode. Pass an explicit color when the surrounding surface is painted
    * from a palette of its own, so the axes cannot end up dark-on-dark.
    */
   axisColor?: string;
@@ -188,7 +188,7 @@ export function LineChart({ xLabels, series, max = 100, refLine }: {
   xLabels: string[]; series: LineSeries[]; max?: number; refLine?: RefLine;
 }) {
   // padL/padR are generous so the first and last x-axis labels (e.g. "Scenario 1",
-  // "After S3") are centred under their end points without being clipped at the edges.
+  // "After S3") are centered under their end points without being clipped at the edges.
   const W = 480, H = 270, padT = 16, padB = 34, padL = 46, padR = 46;
   const plotW = W - padL - padR, plotH = H - padT - padB;
   const n = xLabels.length;
@@ -228,7 +228,7 @@ export function LineChart({ xLabels, series, max = 100, refLine }: {
 
 export interface LegendItem { label: string; color: string; dashed?: boolean }
 
-/** A small, wrapping legend used under charts (colour swatch + label). */
+/** A small, wrapping legend used under charts (color swatch + label). */
 export function ChartLegend({ items }: { items: LegendItem[] }) {
   return (
     <Box display="flex" flexWrap="wrap" gap="3" mt="2" justifyContent="center">

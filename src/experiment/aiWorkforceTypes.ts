@@ -124,7 +124,7 @@ export const WORKER_GROUP_DISCLAIMER =
  * "medium" and "large" were removed from the participant-facing text because they are
  * evaluative framing supplied by the instrument rather than facts about the scenario —
  * calling 10 workers "small" invites the participant to treat that harm as minor before
- * they have weighed it themselves. The number alone lets them make that judgement.
+ * they have weighed it themselves. The number alone lets them make that judgment.
  * The `key` values are unchanged, so stored data and analysis code are unaffected.
  */
 export const WORKER_GROUP_SIZES: readonly WorkerGroupSizeOption[] = [

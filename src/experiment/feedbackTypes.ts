@@ -65,7 +65,7 @@ export const CVR_QUESTIONS: FeedbackQuestion[] = [
  * lens (Directness ↔ Context) in at least one reflection. Rendered inside the CVR section.
  */
 export const DUAL_VIEW_QUESTIONS: FeedbackQuestion[] = [
-  { code: "CVR_dual_helpful", type: "likert", text: "Being able to generate and compare a second perspective (Directness vs Context) helped me reflect more carefully on my choice." },
+  { code: "CVR_dual_helpful", type: "likert", text: "Being able to generate and compare a second perspective helped me reflect more carefully on my choice." },
   { code: "CVR_dual_changed", type: "yesno", text: "Did comparing the two perspectives change how you felt about your choice?" },
 ];
 
@@ -391,7 +391,7 @@ export interface FeedbackBlock5Summary {
   /**
    * The LocalStorage key the full Block-5 results USED to live under.
    *
-   * KEPT FOR REFERENCE ONLY - do not analyse from it. Storing a key rather than the data was a
+   * KEPT FOR REFERENCE ONLY - do not analyze from it. Storing a key rather than the data was a
    * data-loss bug: "Finish" calls localStorage.clear(), which deletes exactly the entry this
    * points at, so every archived record referred to something that no longer existed. The data
    * itself now travels in `FeedbackRecord.block5Full`.
@@ -409,7 +409,7 @@ export interface FeedbackAnswers {
 /**
  * ONE RECORD PER PARTICIPANT, AND IT CONTAINS EVERYTHING.
  *
- * This is the row you will analyse. It is the only structure that survives a participant pressing
+ * This is the row you will analyze. It is the only structure that survives a participant pressing
  * "Finish", because that handler clears LocalStorage and preserves the archive alone - so anything
  * not physically inside this object is gone.
  *

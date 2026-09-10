@@ -24,7 +24,7 @@
  * a window that wide passes almost by construction, and "reflection carries no performance cost"
  * stops being a finding and becomes an artefact of the scale.
  *
- * Normalised within scenario, the range is a true 0–100 and the same 5-point margin is 5% of it,
+ * Normalized within scenario, the range is a true 0–100 and the same 5-point margin is 5% of it,
  * which is what the paper intended.
  *
  * ────────────────────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ export interface MenuRange {
 /**
  * The worst and best raw composite on one scenario's table.
  *
- * These two numbers are the 0 and the 100 that `capturedOf` normalises against, so they define
+ * These two numbers are the 0 and the 100 that `capturedOf` normalizes against, so they define
  * what "took all the performance available" means for that scenario and no other.
  */
 export function menuRange(scenario: Block5Scenario): MenuRange {

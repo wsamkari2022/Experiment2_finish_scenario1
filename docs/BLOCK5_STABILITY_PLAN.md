@@ -15,7 +15,7 @@ different baselines, which is a large part of why the results page was hard to r
 ## 2. What it measures now
 
 The block updates the participant's values as they go. Stability asks how far that model of them
-actually travelled.
+actually traveled.
 
 > **VCI** — did your choices fit your values, judged as they stood at the time?
 > **Stability** — did your values themselves change?
@@ -27,7 +27,7 @@ Two genuinely different questions.
 **Order half** — of the six possible pairs among the four policy values, how many swapped places
 between the start of Block 5 and the end? `(6 − swapped) / 6 × 100`.
 
-**Movement half** — the total distance the five scored values travelled, summed scenario by
+**Movement half** — the total distance the five scored values traveled, summed scenario by
 scenario ("churn"), not start-versus-end ("net drift"). `100 × (1 − churn / 35)`.
 
 Half each. Order is the more meaningful event but coarse — only seven possible values, and
@@ -57,7 +57,7 @@ Gate **S4** asserts this and would fail if the measure were ever switched back.
 
 **Directness and Context are reported, not scored.** They only move when a participant clicks the
 optional *"Generate the other view"* control **and** answers which lens moved them. Across six
-simulated behaviour types they were **completely unmoved in every case**. Scoring a variable that
+simulated behavior types they were **completely unmoved in every case**. Scoring a variable that
 is frozen for most participants dilutes the number without measuring anything. The results page
 instead reports how often the participant chose to compare both lenses — which does vary, and is
 a fact about them rather than about the button.

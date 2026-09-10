@@ -11,13 +11,13 @@
  *   Scenario 1  — only me                (chemical release, alone)
  *   Scenario 2  — me and my people       (wildfire, household of four)
  *   Scenario 3  — other people           (cancer; the participant is not at risk)
- *   Scenario 4  — at work, under rules   (care rota; colleagues carry it, the participant decides)
+ *   Scenario 4  — at work, under rules   (care schedule; colleagues carry it, the participant decides)
  *   Scenario 5  — done to me, no say     (the same cut, decided by someone else)
  *
  * SCENARIO 5 IS INCLUDED HERE AND EXCLUDED FROM VCI, CVR, APA AND STABILITY. Those four ask what a
  * participant DID and hold them answerable for it, and a wish is not a decision. This measure is a
  * DISTANCE — |frozen profile − the option| — and that arithmetic is identical whether the option
- * was chosen or wished for. It is labelled as a wish everywhere it is shown.
+ * was chosen or wished for. It is labeled as a wish everywhere it is shown.
  *
  * The driving example is the author's own: "Am I the same driver alone as I am with my children
  * in the car?"
@@ -39,7 +39,7 @@
  *
  *    This exists because the five menus are not identical. They were measured and they sit within
  *    about 2 points of each other, against roughly 20 points of room inside each scenario — so
- *    the confound is small, and the raw distance is already broadly comparable. The normalised
+ *    the confound is small, and the raw distance is already broadly comparable. The normalized
  *    form costs nothing, removes the remaining 1-2 points, and means the position claim survives
  *    the question being asked. Charts show D; the position comparison uses E.
  *
@@ -62,7 +62,7 @@
  *
  * WHY THIS IS A DISTANCE AND ALIGNMENT IS NOT
  *
- * `policyAlignmentScore` is deliberately ONE-SIDED: an option is penalised only when it delivers
+ * `policyAlignmentScore` is deliberately ONE-SIDED: an option is penalized only when it delivers
  * LESS than the participant demands, because nobody should be marked down for an option that
  * protects the vulnerable more than they asked. That is correct for JUDGING AN OPTION and wrong
  * here. If someone whose profile reads "protect the vulnerable = 30" chooses an option reading
@@ -73,7 +73,7 @@
  * THE CONFOUND, AND THE CHECK THAT SHIPS WITH IT
  *
  * Position is confounded with sequence: "for others" is always last, and always follows two
- * scenarios of accumulated drift. A participant who drifts because they are tired, practised or
+ * scenarios of accumulated drift. A participant who drifts because they are tired, practiced or
  * warmed up will look position-sensitive.
  *
  * `driftCheck` is the partial control and it is not optional. When two or more scenarios share a
@@ -88,7 +88,7 @@
  * someone who genuinely responds to position and someone answering at random BOTH score a Position
  * Effect of 100, and only the drift check separated them (0 vs 100). Until a position repeats,
  * Position Effect is a description of what a participant did, not evidence that position caused
- * it, and both the visualisation caption and tools/simulate_position.cjs say so out loud.
+ * it, and both the visualization caption and tools/simulate_position.cjs say so out loud.
  *
  * Everything here is computed from records Block 5 already stores — `originalProfile`,
  * `scenarioId` and `selectedOptionId` — so it also applies to data already collected. Nothing
@@ -128,7 +128,7 @@ export const POSITION_LABEL: Record<PositionKey, string> = {
 
 /**
  * Short forms for chart row labels. HBarChart reserves a fixed 116-unit label column, and
- * "S2 · Me and my people" overruns it and is drawn over by the bar. The colour band and the
+ * "S2 · Me and my people" overruns it and is drawn over by the bar. The color band and the
  * legend already carry the position, so the row label only has to disambiguate.
  */
 export const POSITION_SHORT: Record<PositionKey, string> = {
@@ -294,7 +294,7 @@ export function positionSummaries(rows: PositionRow[]): PositionSummary[] {
 }
 
 /**
- * The headline: highest position minus lowest, on the menu-normalised departure. 0-100.
+ * The headline: highest position minus lowest, on the menu-normalized departure. 0-100.
  *
  * Needs at least two positions to mean anything — one position has nothing to compare against,
  * and returning 0 there would say "the same person everywhere" on the strength of no evidence.
@@ -416,7 +416,7 @@ export function analysePosition(
   };
 }
 
-/** Position of a scenario id, for labelling outside this module. */
+/** Position of a scenario id, for labeling outside this module. */
 export function positionOfScenario(scenarioId: string): StakePosition | undefined {
   return BLOCK5_SCENARIOS.find((s) => s.id === scenarioId)?.stakePosition;
 }
@@ -438,7 +438,7 @@ export function positionOfScenario(scenarioId: string): StakePosition | undefine
      moved a long way AND took less performance  — the move was not about performance at all
      barely moved, whatever the performance      — position did not reach them
 
-   Both measures are already 0-100 and both are already normalised WITHIN a scenario, so they can
+   Both measures are already 0-100 and both are already normalized WITHIN a scenario, so they can
    be drawn on one axis without either being rescaled to fit the other. That is not a convenience;
    a paired chart whose two bars used different scales would invite exactly the comparison it
    cannot support.
@@ -500,7 +500,7 @@ export interface PositionTradeoff {
 
 /**
  * Both halves of the trade-off per position: how far they moved, and how much performance they
- * took, each already 0-100 and each already normalised inside its own scenario.
+ * took, each already 0-100 and each already normalized inside its own scenario.
  *
  * That shared scale is what lets the two be drawn on one axis. Two bars on different scales would
  * invite exactly the comparison they cannot support.

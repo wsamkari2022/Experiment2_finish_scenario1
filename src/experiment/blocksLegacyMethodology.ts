@@ -84,16 +84,16 @@
  * `directnessGapIndex` / `directnessDirection` on the Block 2 summary) and is never folded
  * into the sensitivity score.
  *
- * Why not a signed score centred on 0.5? Because the seven sensitivities are RANKED and
+ * Why not a signed score centered on 0.5? Because the seven sensitivities are RANKED and
  * WEIGHTED against each other in Block 5, and that model deliberately puts every dimension
- * on a "0 = no sensitivity" footing. A centred score would hand 50/100 to every participant
+ * on a "0 = no sensitivity" footing. A centered score would hand 50/100 to every participant
  * who draws no directness distinction at all, structurally inflating directness above
  * context and group-size — the exact artifact the comment in `thresholdTree.ts` records as
  * having been fixed once already. It would also skew `chooseFraming()`, which picks the CVR
  * reflection lens by comparing context sensitivity against directness sensitivity.
  *
  * Note that `profileAnalysis.ts` keeps a SEPARATE, signed measure named
- * `directnessAversionScore` (centred on 0.5). That is intentional and is not a duplicate:
+ * `directnessAversionScore` (centered on 0.5). That is intentional and is not a duplicate:
  * "aversion" is directional by definition and is descriptive only, while "sensitivity" is
  * magnitude and feeds the Block 5 model. See the comments at both sites.
  *
@@ -168,7 +168,7 @@ export const SHOW_LENS_VIGNETTES: boolean = true;
  *                     participant was ASKED "did hearing this influence you?" on a later page.
  *
  * Why the change: people are poor judges of what moved them. Watching whether they switch is a
- * behavioural measure and it removes a self-report question from two pages. It also fixes a page
+ * behavioral measure and it removes a self-report question from two pages. It also fixes a page
  * that asked two questions and offered one set of answers.
  */
 export const SHOW_STAKEHOLDER_PAGE: boolean = true;

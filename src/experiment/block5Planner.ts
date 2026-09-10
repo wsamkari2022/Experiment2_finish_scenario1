@@ -9,7 +9,7 @@
  * every card. Two computations, two code paths, two separate fields in the log.
  *
  * That separation is the entire point. The consistency analysis has to be able to ask:
- * "the participant chose the option the planner ranked 4th, and that option was labelled
+ * "the participant chose the option the planner ranked 4th, and that option was labeled
  * strongly aligned." Both halves of that sentence must survive into the results.
  * ────────────────────────────────────────────────────────────────────────────
  *
@@ -25,7 +25,7 @@
  * WHAT THE PLANNER DOES INSTEAD
  * -----------------------------
  * It never scores an option on its own. It compares TWO options and asks one question: for this
- * pair, do I honour the participant's top-priority value, or set it aside because the gap on it is
+ * pair, do I honor the participant's top-priority value, or set it aside because the gap on it is
  * tiny while the gap on their second-priority value is large?
  *
  *   Rank-1 value = gain, rank-2 = harm, and two options:
@@ -35,7 +35,7 @@
  *   The tree drops gain for this pair and Q ranks above P.
  *
  * P is the best option on the participant's own rank-1 value and still does not rank first. That
- * is the behaviour the whole design depends on, and a plain sort by the top value can never
+ * is the behavior the whole design depends on, and a plain sort by the top value can never
  * produce it.
  *
  * NO CONSTANTS. THIS FILE HAS NO TUNING PARAMETERS.
@@ -69,9 +69,9 @@ import type {
 import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
 
 /**
- * Below this, two normalised values are treated as the same number.
+ * Below this, two normalized values are treated as the same number.
  *
- * NOT a preference and NOT tunable: min–max normalisation over six integer payoffs produces exact
+ * NOT a preference and NOT tunable: min–max normalization over six integer payoffs produces exact
  * ties and near-ties from floating-point division, and a lexicographic comparison must not let
  * 1e-16 of arithmetic noise decide an ordering. It is a float guard.
  */
@@ -96,10 +96,10 @@ export type PlannerBin = "clear" | "costed" | "blocked";
 
 const BIN_ORDER: Record<PlannerBin, number> = { clear: 0, costed: 1, blocked: 2 };
 
-/** Which value put an option into its bin, and by how much it fell short (normalised units). */
+/** Which value put an option into its bin, and by how much it fell short (normalized units). */
 export interface BinBreach {
   key: Block5PolicyDimKey;
-  /** how far below the participant's floor the option sits, in normalised scenario units. */
+  /** how far below the participant's floor the option sits, in normalized scenario units. */
   amount: number;
   /** true when this came from an outright refusal rather than a priced threshold. */
   hard: boolean;
@@ -133,7 +133,7 @@ export interface PlannedOption {
    *
    * This also makes the comparison graph inspectable from outside, which matters: the relation is
    * NOT transitive, and a cycle can only be detected by looking at the whole graph. It cannot be
-   * recovered by re-running the planner on a pair, because normalisation is within-set and a pair
+   * recovered by re-running the planner on a pair, because normalization is within-set and a pair
    * rescales to 0 and 1.
    */
   beatIds: string[];
@@ -143,8 +143,8 @@ export interface PlannedOption {
   ignoredTopValueAgainst: string[];
   /** two strongest and one weakest performance metric, ranked within the scenario. */
   perfChips: PerfChip[];
-  /** normalised policy values, exposed so the UI can render deltas without renormalising. */
-  normalised: Record<Block5PolicyDimKey, number>;
+  /** normalized policy values, exposed so the UI can render deltas without renormalizing. */
+  normalized: Record<Block5PolicyDimKey, number>;
 }
 
 export interface PlannerResult {
@@ -158,11 +158,11 @@ export interface PlannerResult {
 }
 
 /* ------------------------------------------------------------------------- *
- * Normalisation
+ * Normalization
  * ------------------------------------------------------------------------- */
 
 /**
- * Min–max normalise one field across the options of ONE scenario.
+ * Min–max normalize one field across the options of ONE scenario.
  *
  * WITHIN-SCENARIO, deliberately: a fingerprint score is authored as "how well this option serves
  * this value, among the options available HERE" (see the scale note in block5Types.ts). Comparing
@@ -183,22 +183,22 @@ function normaliseField(values: number[]): number[] {
   return values.map((v) => (v - lo) / (hi - lo));
 }
 
-interface Normalised {
+interface Normalized {
   policy: Record<string, Record<Block5PolicyDimKey, number>>;
   metricRank: Record<string, Record<Block5MetricKey, number>>;
 }
 
 /**
- * Min-max normalises every option's four values WITHIN this scenario, to 0-1.
+ * Min-max normalizes every option's four values WITHIN this scenario, to 0-1.
  *
  * The tree compares gaps against the participant's own tolerance and exchange rate, and both of
  * those are expressed as fractions of a ladder. Comparing them against raw 0-100 authoring scores
  * would mean a scenario whose options happen to be tightly clustered produced systematically
  * smaller gaps, and therefore a different card order, for the very same person.
  */
-function normaliseScenario(options: Block5ScenarioOption[]): Normalised {
-  const policy: Normalised["policy"] = {};
-  const metricRank: Normalised["metricRank"] = {};
+function normaliseScenario(options: Block5ScenarioOption[]): Normalized {
+  const policy: Normalized["policy"] = {};
+  const metricRank: Normalized["metricRank"] = {};
   for (const o of options) {
     policy[o.id] = {} as Record<Block5PolicyDimKey, number>;
     metricRank[o.id] = {} as Record<Block5MetricKey, number>;
@@ -209,7 +209,7 @@ function normaliseScenario(options: Block5ScenarioOption[]): Normalised {
     options.forEach((o, i) => { policy[o.id][key] = n[i]; });
   }
 
-  // Metrics are RANKED, not normalised: they are shown as "Fastest / Least reversible", never
+  // Metrics are RANKED, not normalized: they are shown as "Fastest / Least reversible", never
   // scored, so their standing is ordinal and a distance would imply a precision the chips do not claim.
   for (const key of METRIC_KEYS) {
     const sorted = [...options].sort((a, b) => (b.metrics[key] - a.metrics[key]) || a.id.localeCompare(b.id));
@@ -318,7 +318,7 @@ function lexical(
  *            both options are bad on it, and choosing between two bad options on the thing they
  *            care about most is precisely when their ranking should govern.
  *   node 2 — is the gap on the top value REAL (wider than what they demonstrably discriminate)?
- *            Then honour the ranking.
+ *            Then honor the ranking.
  *   node 3 — the gap on the top value is inside their own noise floor. Is the gap on their SECOND
  *            value larger than their stated exchange rate makes it worth? Then set the top value
  *            aside for this pair only.
@@ -344,7 +344,7 @@ function comparePair(
   let ignoredTop = false;
 
   if (bestTop < tTop.tolerance) {
-    useOrder = order;                                   // node 1 -> honour the ranking
+    useOrder = order;                                   // node 1 -> honor the ranking
   } else if (diffTop >= tTop.tolerance) {
     useOrder = order;                                   // node 2 -> the gap is real
   } else if (second && diffSecond > tTop.exchange * diffTop) {
@@ -449,7 +449,7 @@ export function plannerRank(scenario: Block5Scenario, profile: DecisionProfile):
       breaches: breaches[o.id],
       ignoredTopValueAgainst: ignoredAgainst[o.id],
       perfChips: buildPerfChips(metricRank[o.id], options.length),
-      normalised: policy[o.id],
+      normalized: policy[o.id],
     };
   });
 

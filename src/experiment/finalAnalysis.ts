@@ -1,7 +1,7 @@
 /**
  * finalAnalysis.ts — Generate the plain-language final analysis
  *
- * This module synthesises the MoralProfile (from Blocks 1–3) with the
+ * This module synthesizes the MoralProfile (from Blocks 1–3) with the
  * Block 4 decision record to produce a FinalAnalysis object. The analysis
  * is shown on FinalMoralAnalysisPage after all four blocks are complete.
  *
@@ -16,7 +16,7 @@ import { describeScore } from "./profileAnalysis";
 /**
  * A broad classification of the participant's apparent moral reasoning style,
  * derived from the combined pattern across all four blocks.
- * These are labelled "tentative" — they are observations, not diagnoses.
+ * These are labeled "tentative" — they are observations, not diagnoses.
  */
 export type TentativeMoralStyle =
   | "more outcome-focused / utilitarian-leaning"
@@ -47,7 +47,7 @@ export interface Block4DecisionRecord {
   /**
    * How the most-influential stakeholder is affected by the participant's FINAL decision:
    *  - "harmed"    → the influential voice is the party the decision harms (e.g. displaced workers)
-   *  - "benefited" → the influential voice is the party the decision benefits (e.g. the organisation)
+   *  - "benefited" → the influential voice is the party the decision benefits (e.g. the organization)
    *  - null        → not applicable / not recorded
    */
   influentialValence?: "harmed" | "benefited" | null;

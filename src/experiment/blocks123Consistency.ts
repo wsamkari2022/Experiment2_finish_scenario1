@@ -74,7 +74,7 @@ export interface MoneyContextPoint {
 
 export interface MoneyReadout {
   points: MoneyContextPoint[];
-  /** highest rung minus lowest, in ladder steps. NOT a judgement - see the header. */
+  /** highest rung minus lowest, in ladder steps. NOT a judgment - see the header. */
   spread: number;
   maxRung: number;
 }
@@ -240,7 +240,7 @@ export interface DeliberationReadout {
  *
  * Gaps ARE measured within a block only, never across the boundary between two blocks, since that
  * span includes whatever transition screen sat between them. The 2.5-second flag is a reading-speed
- * floor, not a quality judgement: the shortest scenario text in these blocks cannot be read in
+ * floor, not a quality judgment: the shortest scenario text in these blocks cannot be read in
  * that time, so anything below it means the text was not read.
  */
 const HURRIED_SECONDS = 2.5;

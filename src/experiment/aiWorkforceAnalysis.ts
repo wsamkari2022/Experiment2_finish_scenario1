@@ -129,7 +129,7 @@ function spreadForGroup(
 export interface AIWorkforceAnalysis {
   /**
    * How readily financial gain drove approval (higher = approves at lower gain levels).
-   * Inverted normalisation of the overall average gain index.
+   * Inverted normalization of the overall average gain index.
    */
   organizationalGainResponsivenessScore: number;
 
@@ -153,7 +153,7 @@ export interface AIWorkforceAnalysis {
 
   /**
    * Absolute difference between LB and HB average indices.
-   * High score = worker type made a big difference to approval behaviour.
+   * High score = worker type made a big difference to approval behavior.
    */
   workerContextSensitivityScore: number;
 
@@ -209,7 +209,7 @@ export function computeAIWorkforceAnalysis(
   );
 
   // 2. Low-buffer protection: LB average index > HB average index → more protective of LB → higher score.
-  //    Formula: 50 + 50 × (avgLB − avgHB) / GAIN_STEPS   (centred at 50 = no difference)
+  //    Formula: 50 + 50 × (avgLB − avgHB) / GAIN_STEPS   (centered at 50 = no difference)
   const protectionGap = (avgLowBuffer - avgHighBuffer) / GAIN_STEPS;
   const lowBufferProtectionScore = clamp0to100(50 + 50 * protectionGap);
 

@@ -33,7 +33,7 @@ import {
 } from "./interBlockPages";
 import { InterBlockPause } from "./InterBlockPause";
 
-/** localStorage key for the summarised insights payload (domain key + timestamp). */
+/** localStorage key for the summarized insights payload (domain key + timestamp). */
 const STORAGE_KEY_INSIGHTS = "moral_profile_insights";
 
 /**
@@ -67,7 +67,7 @@ function readJson<T>(key: string): T | null {
  * Reads completed results for Blocks 1–3 from localStorage, derives the MoralProfile
  * and AIWorkforceAnalysis, selects the seed case and Block 4 scenario context, and
  * presents a five-score pattern summary to the participant. The Continue button
- * forwards the derived data to ExperimentFlow for use in Block 4 and the Final Analysis.
+ * forward the derived data to ExperimentFlow for use in Block 4 and the Final Analysis.
  */
 export function MoralProfileInsightsPage({
   participantId,
@@ -99,7 +99,7 @@ export function MoralProfileInsightsPage({
    * Derived, not stored. `data` is computed synchronously above, so whether the earlier blocks
    * are missing is already known on the first render — there is nothing to wait for.
    *
-   * There used to be a `loading` state initialised to true, plus an effect that set it false
+   * There used to be a `loading` state initialized to true, plus an effect that set it false
    * (and set an error message) immediately after mount. That produced a spinner which was
    * painted for a single frame before being replaced, i.e. a loading indicator for work that
    * was already finished, and it was what tripped `react-hooks/set-state-in-effect`. Deriving
@@ -132,7 +132,7 @@ export function MoralProfileInsightsPage({
    * Lifted out of the Continue button's onClick so that the human click and the automatic
    * advance below share ONE implementation. If they were separate, hiding the page could
    * silently forward a different payload than showing it does — the exact class of bug that
-   * would be invisible until the data was analysed months later.
+   * would be invisible until the data was analyzed months later.
    */
   const handleContinue = useCallback(() => {
     if (!data) return;
@@ -337,7 +337,7 @@ export function MoralProfileInsightsPage({
 
 /**
  * Single row in the "Patterns we noticed" card.
- * `level` is one of "strong" | "moderate" | "mild" | "low" and drives the colour.
+ * `level` is one of "strong" | "moderate" | "mild" | "low" and drives the color.
  */
 function PatternRow({ label, level }: { label: string; level: string }) {
   const color =

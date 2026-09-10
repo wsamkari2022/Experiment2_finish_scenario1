@@ -5,7 +5,7 @@
  * build one integrated User Value Profile — the seven moral "sensitivities" —
  * that Block 5 (the real experiment) then uses. This module is where that
  * profile is assembled. It is intentionally the ONE place the seven scores are
- * computed, so the maths can be audited and explained in the dissertation.
+ * computed, so the math can be audited and explained in the dissertation.
  *
  * DESIGN (Approved Changes 2, 3, 7, 8) — the multi-block contribution model.
  * Every block contributes, directly or indirectly, and every sensitivity is
@@ -31,7 +31,7 @@
  *
  * All scores are integers 0–100; higher always means "more of that sensitivity". Every
  * sensitivity is on a common 0-BASELINE scale: 0 = the factor did not move the participant at
- * all, and NOTHING is centred at 50 — so a participant who treats direct and indirect harm
+ * all, and NOTHING is centered at 50 — so a participant who treats direct and indirect harm
  * identically scores 0 directness (not 50), and a spread-based dimension like context can
  * legitimately rank above directness. The full rationale + every weight is in userValueModel.md.
  *
@@ -97,22 +97,22 @@ function to100(v: number): number {
 }
 
 /**
- * One piece of evidence for a sensitivity: a normalised [0,1] value, a relative
+ * One piece of evidence for a sensitivity: a normalized [0,1] value, a relative
  * weight, whether it is actually available for this participant, and a label.
  */
 interface Signal {
   block: "Block 1" | "Block 2" | "Block 3" | "Block 4";
   label: string;
-  value: number;   // normalised 0–1 (higher = stronger sensitivity)
+  value: number;   // normalized 0–1 (higher = stronger sensitivity)
   weight: number;  // relative importance among this sensitivity's signals
   available: boolean;
 }
 
 /**
  * Availability-aware weighted mean. Absent signals are EXCLUDED and the weights
- * of the present signals are renormalised — so a missing optional signal never
+ * of the present signals are renormalized — so a missing optional signal never
  * silently drags a score toward zero. If nothing is available we return the
- * neutral midpoint 0.5 (documented behaviour; in practice the primary signals
+ * neutral midpoint 0.5 (documented behavior; in practice the primary signals
  * are always present because Blocks 1–3 are mandatory).
  */
 /**
@@ -128,11 +128,11 @@ interface Signal {
  * A weight is never a statement that one value matters more than another; it is a statement
  * about how much the instrument actually learned from that question.
  *
- * WHY RE-NORMALISING BY THE AVAILABLE WEIGHT MATTERS: some signals only exist for some
+ * WHY RE-NORMALIZING BY THE AVAILABLE WEIGHT MATTERS: some signals only exist for some
  * participants — Block 4's secondary signals require that an influential voice was named AND
  * its valence recorded. When a signal is missing it is DROPPED and the remaining weights are
  * rescaled to sum to 1. Scoring a missing measurement as 0 would be wrong: absence of evidence
- * is not evidence of absence, and it would silently penalise anyone who skipped an optional step.
+ * is not evidence of absence, and it would silently penalize anyone who skipped an optional step.
  */
 function blend(signals: Signal[]): number {
   const active = signals.filter((s) => s.available && Number.isFinite(s.value));
@@ -178,7 +178,7 @@ export interface ThresholdTree {
  *
  * WHY TRIANGULAR: the intent is that a participant's leading value counts for more than their
  * seventh, with a smooth decline rather than a cliff. A triangular series is the simplest
- * weighting with that property, needs no tuning parameter, and always normalises to 1 for any
+ * weighting with that property, needs no tuning parameter, and always normalizes to 1 for any
  * number of dimensions — so adding an eighth sensitivity later requires no change here.
  *
  * KNOWN LIMITATION: about 10% of participants tie for their top dimension, and the tie is broken
@@ -207,7 +207,7 @@ function pct(v: number): string {
  *
  * Inputs:
  *  - profile   : the interim Blocks-1–3 snapshot (provides Block-1 money indices
- *                and Block-2 trolley indices, already normalised once upstream).
+ *                and Block-2 trolley indices, already normalized once upstream).
  *  - aiResults : raw Block-3 results; Block-3 quantities are derived ONCE via
  *                computeAIWorkforceAnalysis (single source of truth). null → the
  *                three B3-primary signals fall back to neutral and are flagged.
@@ -266,7 +266,7 @@ export function buildThresholdTree(
    *
    * This is deliberately different from directness below, where the reverse direction IS a real
    * effect and the absolute value is used. Whether a construct is one-way or two-way is a
-   * judgement about meaning, made explicitly per dimension — never a default.
+   * judgment about meaning, made explicitly per dimension — never a default.
    *
    * WHY ADDITIVE AND CAPPED: the two light signals can only REINFORCE the shelter base, never
    * dilute it, and each contributes at most 0.20 x 0.30 ≈ 6% of the final vulnerability score.
@@ -354,7 +354,7 @@ export function buildThresholdTree(
   // WORDING NOTE: participants are told only "entry-level workers" and "senior-level workers,
   // such as the engineers who build these AI systems". They are NEVER told that entry-level
   // workers have less savings — that would put the answer in their mouth. The seniority
-  // difference is a plain fact about the roles; the vulnerability judgement is left entirely to
+  // difference is a plain fact about the roles; the vulnerability judgment is left entirely to
   // the participant and is then read off the difference in their OWN thresholds. Evidence a
   // participant produces is far stronger than agreement with a statement we supplied.
   //

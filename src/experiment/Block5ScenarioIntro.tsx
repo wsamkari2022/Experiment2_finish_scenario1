@@ -16,8 +16,8 @@
  * ────────────────────────────────────────────────────────────────────────────
  * WHAT IS DELIBERATELY ABSENT
  *
- * THE OPTIONS. Not summarised, not counted, not hinted at. If the six choices appear here the
- * participant starts deciding while reading the scene, which is exactly the behaviour the page
+ * THE OPTIONS. Not summarized, not counted, not hinted at. If the six choices appear here the
+ * participant starts deciding while reading the scene, which is exactly the behavior the page
  * exists to prevent.
  *
  * ────────────────────────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ export function Block5ScenarioIntro({ rootRef, scenario, frozenProfile, index, t
           not really been given the dilemma.
 
           Neutral surface, not the scenario accent: an employer's demand rendered in the interface's
-          own colour reads as the interface endorsing it.
+          own color reads as the interface endorsing it.
         */}
         {/*
           THE EMPLOYER PRINCIPLE — rendered by the SAME component the scenario page uses, in its

@@ -31,7 +31,7 @@ interface ScenarioImageProps {
   src: string;
   /** Describes the scene for screen readers and for participants whose images fail to load. */
   alt: string;
-  /** Frame background, so the box reads as part of the card in either colour mode. */
+  /** Frame background, so the box reads as part of the card in either color mode. */
   bg: string;
   /**
    * Frame shape, as width/height. Defaults to 4:3, which matches most of the existing artwork.

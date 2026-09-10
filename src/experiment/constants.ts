@@ -24,7 +24,7 @@ import type { ContextDef } from "./types";
  *
  * Only the ORDINAL POSITION of a rung is ever used in scoring (see toMoneyComparableIndex), so
  * these figures can be re-chosen without changing any formula. Adding or removing a rung DOES
- * change MONEY_STEPS, which normalises every Block 1 signal — and it invalidates the calibration
+ * change MONEY_STEPS, which normalizes every Block 1 signal — and it invalidates the calibration
  * tables in sensitivityCalibration.ts, which must then be regenerated.
  */
 export const AMOUNT_LABELS: readonly string[] = [

@@ -10,7 +10,7 @@ import { LuMoon, LuSun } from "react-icons/lu"
 export interface ColorModeProviderProps extends ThemeProviderProps {}
 
 /**
- * Colour-mode provider.
+ * Color-mode provider.
  *
  * `defaultTheme="dark"` + `enableSystem={false}` means every participant starts in Dark Mode.
  *

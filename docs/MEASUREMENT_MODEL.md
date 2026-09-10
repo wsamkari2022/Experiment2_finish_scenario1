@@ -114,7 +114,7 @@ Being *more* reluctant to pocket money outside a shelter is protection. Being *l
 is not "reverse protection" — it is simply the absence of protection, and belongs at zero.
 
 This is deliberately different from directness (below), where the reverse direction *is* a real
-effect. Whether a construct is one-way or two-way is a judgement about meaning, not arithmetic,
+effect. Whether a construct is one-way or two-way is a judgment about meaning, not arithmetic,
 and it is made explicitly for each dimension.
 
 **Why the two light signals are additive and capped.** They can only reinforce the shelter
@@ -184,7 +184,7 @@ with an inferred value rather than an answer. Now nothing is inferred.
 **A note on the wording.** Participants are told only "entry-level workers" and "senior-level
 workers, such as the engineers who build these AI systems". They are **never** told that
 entry-level workers have less savings. That claim would put the answer in their mouth. The
-seniority difference is a plain fact about the roles; the vulnerability judgement is left
+seniority difference is a plain fact about the roles; the vulnerability judgment is left
 entirely to the participant, and is then read off the *difference in their own thresholds*.
 Evidence a participant produces is far stronger than agreement with a statement we supplied.
 
@@ -294,7 +294,7 @@ blend(signals) = Σ(weight · clamp01(value)) / Σ(weight)     // over AVAILABLE
 preference**. A rich direct measure (a 2x3 gain matrix, 36 questions) outweighs a single
 contextual contrast, which outweighs a soft reflective signal. The tiers are ≈0.55 / 0.30 / 0.15.
 
-**Why re-normalising by the available weight matters.** Block 4's secondary signals only exist
+**Why re-normalizing by the available weight matters.** Block 4's secondary signals only exist
 if the participant named an influential voice with a recorded valence. If they did not, the
 signal is *dropped* rather than treated as zero — a missing measurement is not evidence of
 absence. The remaining weights are rescaled so they still sum to 1.
@@ -317,7 +317,7 @@ stakeholder 63 · context 56 · outcome 50 · gain 50 · directness 37 · vulner
 Ranking a level against a difference is like asking whether someone's height is bigger than
 their age. The arithmetic works; the answer is meaningless. In practice the two level-type
 dimensions won nearly every comparison, and the CVR fired on only two of the four policy values
-— vulnerability protection, the centre of the thesis, fired **0%** of the time.
+— vulnerability protection, the center of the thesis, fired **0%** of the time.
 
 **The fix.** Every sensitivity is re-expressed as one thing, with one meaning:
 
@@ -325,7 +325,7 @@ dimensions won nearly every comparison, and the CVR fired on only two of the fou
 > answers exceed on this value*
 
 Identical definition for all seven, so they become directly comparable. It is a **monotone
-relabelling** — it never reorders two participants on the same dimension.
+relabeling** — it never reorders two participants on the same dimension.
 
 **Why this reference.** The tables describe the *instrument*, not a population: "what range of
 scores can these questions produce, and how often?" That is a fact about the questionnaire,
@@ -381,7 +381,7 @@ score   = 100 − penalty
 ```
 where `u` = participant's score on that value, `f` = the option's fingerprint on that value.
 
-**Why only shortfalls count.** `max(0, u − f)` means an option is penalised only when it delivers
+**Why only shortfalls count.** `max(0, u − f)` means an option is penalized only when it delivers
 *less* than the participant demands. Exceeding their bar costs nothing — you are not punished for
 caring more than required. This is a threshold-satisfaction model, not a distance model.
 
@@ -494,7 +494,7 @@ about them *before they have finished answering*. Two concrete risks:
   decision after hearing other people. Consistency pressure is among the best-documented demand
   characteristics there is.
 - The Final Analysis page displays the ranked seven-sensitivity tree, which is the very quantity
-  Block 5 then uses to decide which options are labelled misaligned for that person. Showing
+  Block 5 then uses to decide which options are labeled misaligned for that person. Showing
   someone the scoring key immediately before scoring them with it makes Block 5 unusable as a
   measurement.
 

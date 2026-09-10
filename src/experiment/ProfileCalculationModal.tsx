@@ -29,7 +29,7 @@ import {
  * ProfileCalculationModal — advisor-facing breakdown of the interim Blocks-1–3
  * snapshot (the five MoralProfile scores). It is read-only and shows, for each
  * score, the participant's raw threshold indices, the exact formula, and the
- * result — every number substituted inline so the maths is fully transparent.
+ * result — every number substituted inline so the math is fully transparent.
  *
  * Vocabulary is AI-Workforce throughout (low-buffer / high-buffer workers, gain) —
  * the legacy Product-Launch wording has been removed (Approved Change 1).

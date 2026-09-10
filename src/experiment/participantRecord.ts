@@ -121,7 +121,7 @@ export interface ParticipantRecord {
      * The flattened profile Block 5 is actually driven by.
      *
      * Stored even though it is derivable from thresholdTree, because it is the precise input
-     * that decided which options each participant saw labelled aligned or misaligned, and which
+     * that decided which options each participant saw labeled aligned or misaligned, and which
      * CVR framing and which stakeholder voice they were given. Keeping it means an analyst can
      * reconstruct what a participant was shown without re-running the extraction and hoping it
      * still behaves the way it did on the day.
@@ -135,7 +135,7 @@ export interface ParticipantRecord {
     block2: boolean;
     block3: boolean;
     block4: boolean;
-    /** True only when all four are present — the rows safe to analyse. */
+    /** True only when all four are present — the rows safe to analyze. */
     readyForBlock5: boolean;
   };
 }

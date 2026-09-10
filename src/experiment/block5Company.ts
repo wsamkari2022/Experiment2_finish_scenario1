@@ -4,7 +4,7 @@
  * ────────────────────────────────────────────────────────────────────────────
  * THE QUESTION THIS FILE EXISTS TO ANSWER
  *
- * Scenario 4 puts the participant inside an organisation that has published a value they do not
+ * Scenario 4 puts the participant inside an organization that has published a value they do not
  * hold, and asks them to make a decision under it. Three things can happen, and the whole point is
  * to tell them apart:
  *
@@ -121,7 +121,7 @@ export function deriveCompanyValues(
 /**
  * The employer as a profile, so it can be measured against options the same way a person is.
  *
- * Exported because the visualisations draw it alongside the participant's own profile, and a chart
+ * Exported because the visualizations draw it alongside the participant's own profile, and a chart
  * that redrew this shape from its own copy of the constants would drift from the number the stance
  * was computed with.
  */

@@ -8,7 +8,7 @@
  *   2. delete the import and the <DevResetButton /> line in src/App.tsx
  *
  * That is the entire footprint. It is deliberately mounted in ONE place (App.tsx, beside the
- * colour-mode button that is already fixed to the corner) rather than added to each page, so
+ * color-mode button that is already fixed to the corner) rather than added to each page, so
  * removing it can never leave a copy behind on some page nobody thought to check.
  * ─────────────────────────────────────────────────────────────────────────────
  *

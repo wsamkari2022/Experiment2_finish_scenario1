@@ -17,14 +17,14 @@
  * reordering cannot break the pairing and an unmapped value simply returns null.
  *
  * PARTIAL COVERAGE IS SAFE
- * A context with no entry returns null and its question renders full-width and centred, exactly
+ * A context with no entry returns null and its question renders full-width and centered, exactly
  * as it did before illustrations existed. Artwork can therefore be added one context at a time.
  * All three Block 1 contexts are now illustrated.
  *
  * ASSETS
  * Files live in `public/scenario-images/`, mirroring the folder layout of the masters in
  * `scenarios_images/`, and are referenced by absolute URL so Vite serves them as-is. The
- * mirrored names are URL-sanitised: characters outside [A-Za-z0-9._-] become underscores, so
+ * mirrored names are URL-sanitized: characters outside [A-Za-z0-9._-] become underscores, so
  * the master folder "Block 3 images/100,000_Entry_level" is served as
  * "Block_3_images/100_000_Entry_level". Names that were already safe are unchanged. Always
  * copy the path from `public/scenario-images/` rather than from the masters folder. They are
@@ -53,7 +53,7 @@ const B1_SHELTER = `${IMAGE_BASE}/Block1_Shelter_scenario_images`;
  * UNUSED MASTERS: the wealthy and shelter folders also contain a `_5` illustration, but the
  * amount ladder has no $5 rung (it runs 0.25, 1, 10, 20, 50, 100, 1000, 10000). Those two files
  * are therefore deliberately not mapped — mapping them would have no effect, and adding a $5
- * rung to the ladder is a separate decision because it changes MONEY_STEPS, which normalises
+ * rung to the ladder is a separate decision because it changes MONEY_STEPS, which normalizes
  * every Block 1 score.
  */
 export const MONEY_SCENARIO_IMAGES: Record<string, Record<number, string>> = {
@@ -194,7 +194,7 @@ export function trolleyScenarioImagesFor(
 
 /* --------------------------- BLOCK 3 — AI Workforce --------------------------- */
 
-/** Master folder for Block 3, sanitised (the master is "Block 3 images", with spaces). */
+/** Master folder for Block 3, sanitized (the master is "Block 3 images", with spaces). */
 const B3 = `${IMAGE_BASE}/Block_3_images`;
 
 /**
@@ -206,7 +206,7 @@ const B3 = `${IMAGE_BASE}/Block_3_images`;
  * specific to the CELL as well as the rung, which is 36 illustrations in total.
  *
  * KEY NAMING: the internal group keys remain `low_buffer` / `high_buffer` (see the naming note
- * in aiWorkforceTypes.ts), while the artwork is labelled "entry-level" and "senior-level". The
+ * in aiWorkforceTypes.ts), while the artwork is labeled "entry-level" and "senior-level". The
  * mapping is low_buffer -> Entry_level and high_buffer -> Senior_level.
  *
  * FILENAMES are irregular across the six folders — some carry a "worker" segment, some suffix

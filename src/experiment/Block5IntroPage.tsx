@@ -5,7 +5,7 @@
  * Blocks 1-4 ask short questions and move on quickly. Block 5 does something different: it puts
  * six full options in front of the participant, each with its own values, its own performance
  * readings, and consequences that carry into the scenarios that follow. Dropping someone into
- * that with no warning produces two bad behaviours we want to avoid:
+ * that with no warning produces two bad behaviors we want to avoid:
  *
  *   1. Performance anxiety — treating it as a test with a correct answer, and picking what they
  *      think the researcher wants rather than what they want. Every measure in Block 5 (VCI,
@@ -26,7 +26,7 @@
  *
  * The purple accent and the flag are deliberate: they are what GlobalStepper has been showing at
  * the end of the rail as "Main study" for the whole session. Arriving at a page in the same
- * colour, with the same icon, is the visual full-stop for that promise.
+ * color, with the same icon, is the visual full-stop for that promise.
  */
 
 import { Badge, Box, Button, Grid, HStack, Heading, Icon, Stack, Text, VStack } from "@chakra-ui/react";
@@ -40,6 +40,7 @@ import {
   METRIC_DEFS,
   METRIC_KEYS,
   POLICY_DIM_EXPLAIN,
+  POLICY_DIM_HIGHER_MEANS,
   POLICY_DIM_KEYS,
   POLICY_DIM_SHORT,
   type Block5MetricKey,
@@ -68,6 +69,9 @@ const scenarioCountWord = (n: number): string => COUNT_WORDS[n] ?? String(n);
 const EXAMPLE_VALUES = [88, 34, 62, 30];
 const EXAMPLE_ALTERNATIVE = [36, 84, 45, 78];
 const EXAMPLE_METRICS = [42, 78, 65, 88, 30];
+/* A second, deliberately different shape, so the pair demonstrates what comparing two
+   options on one chart actually looks like rather than one shape on its own. */
+const EXAMPLE_METRICS_ALT = [80, 38, 72, 45, 66];
 
 /**
  * The running gauge in the left-hand miniature. These five average to exactly 62, which is the
@@ -252,7 +256,17 @@ function ToolCard({
 }
 
 /** One of the four value chips, with its plain-English meaning underneath. */
-function ValueChip({ name, meaning }: { name: string; meaning: string }) {
+/**
+ * One of the four values, with what it means AND which way its bar runs.
+ *
+ * The direction line is not decoration. Two of the four are named for bad things — "reducing
+ * harm", "protecting the vulnerable" — and every fingerprint in the study is drawn HIGHER =
+ * BETTER. A participant who reads one long bar as "this option harms a lot of people" has the
+ * direction inverted for the whole panel, and will choose against their own values believing they
+ * are following them. Saying it here, once, before any option is on screen, is the cheapest place
+ * to prevent that.
+ */
+function ValueChip({ name, meaning, higher }: { name: string; meaning: string; higher: string }) {
   return (
     <VStack
       align="start"
@@ -271,21 +285,18 @@ function ValueChip({ name, meaning }: { name: string; meaning: string }) {
       <Text fontSize="xs" color="fg.muted" lineHeight="tall">
         {meaning}
       </Text>
+      <Text fontSize="xs" color="teal.fg" fontWeight="medium" lineHeight="tall" mt="0.5">
+        {higher}
+      </Text>
     </VStack>
   );
 }
 
 export function Block5IntroPage({ onStart }: { onStart: () => void }) {
   const { colorMode } = useColorMode();
-  /* MetricStandingBar resolves its own colours per mode; this page has no Block5Palette. */
+  /* MetricStandingBar resolves its own colors per mode; this page has no Block5Palette. */
   const meterMode = colorMode === "dark" ? "dark" : "light";
   const axes = POLICY_DIM_KEYS.map((k) => sentenceCase(POLICY_DIM_SHORT[k]));
-  const bars = METRIC_KEYS.map((k, i) => ({
-    label: METRIC_DEFS[k].label,
-    value: EXAMPLE_METRICS[i],
-    color: SERIES_COLORS[0],
-    valueLabel: "",
-  }));
   const runningBars = METRIC_KEYS.map((k, i) => ({
     label: METRIC_DEFS[k].label,
     value: EXAMPLE_RUNNING[i],
@@ -386,22 +397,46 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
 
         {/*
           THE INSTRUMENTS — shown, not described. A participant who has already seen the shape of
-          a radar chart on a calm page recognises it on a page where a decision is waiting.
+          a radar chart on a calm page recognizes it on a page where a decision is waiting.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
-          <VStack align="start" gap="1" mb="5">
+          <VStack align="start" gap="1" mb="4">
             <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
-              What every option shows you
+              The two charts, and how to open them
             </Text>
             <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              Its values and its performance, side by side, at the same time.
+              On every scenario page there is a button marked{" "}
+              <Text as="span" color="fg" fontWeight="semibold">“Compare all options on charts”</Text>.
+              It draws all six options on these two shapes at once.
             </Text>
           </VStack>
 
-          <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={{ base: "6", md: "8" }} alignItems="start">
+          {/*
+            ONE RULE FOR BOTH CHARTS, STATED BEFORE EITHER IS SHOWN.
+
+            Both are drawn HIGHER = BETTER, including the two value spokes named for bad things.
+            A participant who reads "reducing harm" reaching far out as "this harms a lot of
+            people" has the direction inverted for every option they will see.
+          */}
+          <Box bg="teal.subtle" borderWidth="1px" borderColor="teal.muted" borderLeftWidth="4px"
+            borderLeftColor="teal.solid" rounded="lg" px="4" py="3" mb="5">
+            <Text fontSize="sm" color="fg" lineHeight="tall">
+              <Text as="span" fontWeight="semibold">How to read both charts:</Text>{" "}
+              each corner is one measure. The further a shape reaches toward that corner, the{" "}
+              <Text as="span" fontWeight="semibold">better</Text> that option does on it. A wide,
+              even shape is strong on everything; a spiky shape is strong on some things and weak
+              on others.
+            </Text>
+          </Box>
+
+          <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={{ base: "7", md: "8" }} alignItems="start">
             <VStack gap="2" align="stretch">
-              <Text fontSize="xs" fontWeight="semibold" color="fg" textAlign="center">
-                Its values, next to the alternatives
+              <Text fontSize="sm" fontWeight="semibold" color="fg" textAlign="center">
+                The four value priorities
+              </Text>
+              <Text fontSize="xs" color="fg.muted" textAlign="center" lineHeight="tall" minH={{ md: "10" }}>
+                What the option is built to protect. The same four values your earlier answers were
+                scored on.
               </Text>
               <RadarChart
                 axes={axes}
@@ -410,28 +445,38 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
                   { name: "Another option", color: SERIES_COLORS[2], values: EXAMPLE_ALTERNATIVE, dashed: true },
                 ]}
               />
-              <HStack gap="4" justify="center">
-                {[
-                  { name: "This option", color: SERIES_COLORS[1] },
-                  { name: "Another option", color: SERIES_COLORS[2] },
-                ].map((s) => (
-                  <HStack key={s.name} gap="1.5">
-                    <Box boxSize="2.5" rounded="sm" bg={s.color} />
-                    <Text fontSize="2xs" color="fg.muted">{s.name}</Text>
-                  </HStack>
-                ))}
-              </HStack>
             </VStack>
 
             <VStack gap="2" align="stretch">
-              <Text fontSize="xs" fontWeight="semibold" color="fg" textAlign="center">
-                What it costs and delivers
+              <Text fontSize="sm" fontWeight="semibold" color="fg" textAlign="center">
+                Performance impact
               </Text>
-              <HBarChart bars={bars} max={100} unitHint="longer bar = better on that measure" />
+              <Text fontSize="xs" color="fg.muted" textAlign="center" lineHeight="tall" minH={{ md: "10" }}>
+                What the option actually achieves. This describes the outcome, not who it favors.
+              </Text>
+              <RadarChart
+                axes={METRIC_KEYS.map((k) => METRIC_DEFS[k].label)}
+                series={[
+                  { name: "This option", color: SERIES_COLORS[1], values: EXAMPLE_METRICS },
+                  { name: "Another option", color: SERIES_COLORS[2], values: EXAMPLE_METRICS_ALT, dashed: true },
+                ]}
+              />
             </VStack>
           </Grid>
 
-          <Text fontSize="xs" color="fg.subtle" mt="4" textAlign="center" lineHeight="tall">
+          <HStack gap="5" justify="center" mt="4">
+            {[
+              { name: "This option", color: SERIES_COLORS[1] },
+              { name: "Another option", color: SERIES_COLORS[2] },
+            ].map((sr) => (
+              <HStack key={sr.name} gap="1.5">
+                <Box boxSize="2.5" rounded="sm" bg={sr.color} />
+                <Text fontSize="2xs" color="fg.muted">{sr.name}</Text>
+              </HStack>
+            ))}
+          </HStack>
+
+          <Text fontSize="xs" color="fg.subtle" mt="3" textAlign="center" lineHeight="tall">
             An example, not a real option. Every option in the study has a shape of its own.
           </Text>
         </Box>
@@ -580,7 +625,8 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           </VStack>
           <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="3">
             {POLICY_DIM_KEYS.map((k) => (
-              <ValueChip key={k} name={POLICY_DIM_SHORT[k]} meaning={POLICY_DIM_EXPLAIN[k]} />
+              <ValueChip key={k} name={POLICY_DIM_SHORT[k]} meaning={POLICY_DIM_EXPLAIN[k]}
+                higher={POLICY_DIM_HIGHER_MEANS[k]} />
             ))}
           </Grid>
         </Box>

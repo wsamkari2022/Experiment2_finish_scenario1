@@ -1,5 +1,5 @@
 /**
- * test_planner.cjs — behavioural tests for the trade-off tree.
+ * test_planner.cjs — behavioral tests for the trade-off tree.
  *
  * These assert the things that MUST be true for the planner to be doing its job at all, on
  * synthetic option sets small enough to reason about by hand. The authoring sweep
@@ -84,7 +84,7 @@ function profileOf(order, { tolerance = 0.15, exchange = 2.0, redLines = [] } = 
 console.log("\n=== 1. Worked example: the top value is set aside for a small gap ===\n");
 
 /*
- * Raw payoffs chosen so that min-max normalisation inside the scenario yields:
+ * Raw payoffs chosen so that min-max normalization inside the scenario yields:
  *
  *     option   n(gain)   n(harm)
  *     P         1.000     0.111
@@ -96,7 +96,7 @@ console.log("\n=== 1. Worked example: the top value is set aside for a small gap
  *
  *   P vs Q   diff(gain) = 0.084 < 0.15, and diff(harm) = 0.833 > 2.0 x 0.084 = 0.168
  *            -> the tree drops gain for this pair and compares on harm -> Q WINS
- *   P vs R   diff(gain) = 0.632 >= 0.15 -> the gap is real, honour the ranking -> P WINS
+ *   P vs R   diff(gain) = 0.632 >= 0.15 -> the gap is real, honor the ranking -> P WINS
  *   Q vs R   diff(gain) = 0.547 >= 0.15 -> Q WINS
  *   S loses all three on gain.
  *
@@ -118,7 +118,7 @@ const worked = scenarioOf([
 const gainFirst = plannerRank(worked, profileOf([GAIN, HARM, HELP, VULN]));
 check("order is Q, P, R, S", gainFirst.orderedIds, ["Q", "P", "R", "S"]);
 assert("P is best on gain but not ranked first",
-  gainFirst.byId.P.normalised[GAIN] === 1 && gainFirst.byId.P.rank !== 1,
+  gainFirst.byId.P.normalized[GAIN] === 1 && gainFirst.byId.P.rank !== 1,
   `P n(gain)=1.00 at rank ${gainFirst.byId.P.rank}`);
 assert("Q records that it won by setting the top value aside",
   gainFirst.byId.Q.ignoredTopValueAgainst.includes("P"),
@@ -162,7 +162,7 @@ console.log("\n=== 3. Non-transitive comparisons resolve without crashing ===\n"
  */
 /*
  * A cycle is detected from the FULL three-option run, never by comparing two options on their own.
- * Normalisation is min-max WITHIN the option set, so pulling a pair out of a triple rescales both
+ * Normalization is min-max WITHIN the option set, so pulling a pair out of a triple rescales both
  * of them and asks a different question than the planner ever asks. (Written the wrong way first;
  * the pairwise helper found no cycles precisely because rescaling every pair to 0-and-1 destroys
  * the small gaps the tolerance branch keys on.)
@@ -172,7 +172,7 @@ console.log("\n=== 3. Non-transitive comparisons resolve without crashing ===\n"
  * ordering exists.
  */
 /*
- * The set must have SIX options, not three. Min-max normalisation forces the extremes to 0 and 1,
+ * The set must have SIX options, not three. Min-max normalization forces the extremes to 0 and 1,
  * so in a three-option set at least one consecutive gap is 0.5 — far wider than any tolerance
  * band, which means the "small gap on the top value" branch can never fire and no cycle can exist.
  * Two anchor options hold the ends of the range so the three candidates can sit close together on

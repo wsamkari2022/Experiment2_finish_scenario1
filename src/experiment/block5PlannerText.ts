@@ -31,9 +31,9 @@ import type { DecisionProfile } from "./block5Thresholds";
  * ------------------------------------------------------------------ */
 
 /**
- * A normalised difference turned into a word.
+ * A normalized difference turned into a word.
  *
- * The participant is never shown the normalised number itself. 0.31 is not a quantity anybody has
+ * The participant is never shown the normalized number itself. 0.31 is not a quantity anybody has
  * an intuition for, and printing it would imply a precision the min-max scale does not carry — it
  * is a position within THIS scenario's spread, not a measurement of anything in the world.
  * "Clearly better" says what the number actually supports.
@@ -144,8 +144,8 @@ export function explainOption(
   if (isReference) {
     referenceLine = "This is the option that stays inside every limit you set.";
   } else if (ref) {
-    const refN = plan.byId[ref].normalised;
-    const deltas = POLICY_DIM_KEYS.map((k) => ({ k, d: p.normalised[k] - refN[k] }));
+    const refN = plan.byId[ref].normalized;
+    const deltas = POLICY_DIM_KEYS.map((k) => ({ k, d: p.normalized[k] - refN[k] }));
     const up = deltas.reduce((a, b) => (b.d > a.d ? b : a));
     const down = deltas.reduce((a, b) => (b.d < a.d ? b : a));
     const parts: string[] = [];
@@ -164,8 +164,8 @@ export function explainOption(
     const top = profile.order[0];
     const second = profile.order[1];
     if (top && second) {
-      const dTop = Math.abs(p.normalised[top] - other.normalised[top]);
-      const dSecond = Math.abs(p.normalised[second] - other.normalised[second]);
+      const dTop = Math.abs(p.normalized[top] - other.normalized[top]);
+      const dSecond = Math.abs(p.normalized[second] - other.normalized[second]);
       const times = dTop > 0 ? Math.round(dSecond / dTop) : 0;
       tradeLine =
         `This ranks above “${titleOf(scenario, otherId)}” even though that option is slightly better ` +
@@ -185,8 +185,8 @@ export function explainOption(
       : `sits at the bottom of this scenario's range on ${what}, the value you ranked first`;
     let inReturn = "";
     if (ref && ref !== optionId) {
-      const refN = plan.byId[ref].normalised;
-      const gains = POLICY_DIM_KEYS.map((k) => ({ k, d: p.normalised[k] - refN[k] }))
+      const refN = plan.byId[ref].normalized;
+      const gains = POLICY_DIM_KEYS.map((k) => ({ k, d: p.normalized[k] - refN[k] }))
         .reduce((a, c) => (c.d > a.d ? c : a));
       if (gains.d > 0.02) {
         inReturn = ` In return it is ${magnitude(gains.d)} better on ${POLICY_DIM_SHORT[gains.k]}.`;
