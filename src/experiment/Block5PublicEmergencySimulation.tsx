@@ -1455,23 +1455,6 @@ const DECISION_COPY = {
 } as const;
 
 /**
- * PLAIN WORDS FOR HOW A WISH SITS WITH THE PARTICIPANT'S OWN VALUES.
- *
- * "Strongly misaligned" is a research term. This study will be taken by people across a wide range
- * of English, and a participant who cannot parse the badge cannot use it — which makes it worse
- * than no badge, because it looks like information while conveying none.
- *
- * Same four tiers, same order, ordinary words. Used ONLY on the scenario-5 confirmation page;
- * scenarios 1–4 keep ALIGNMENT_LABEL, which is what the rest of the study reports against.
- */
-const WISH_FIT_LABEL: Record<AlignmentLevel, string> = {
-  aligned: "This matches your values",
-  weakly_aligned: "This is close to your values",
-  misaligned: "This is different from your values",
-  strongly_misaligned: "This is very different from your values",
-};
-
-/**
  * The sentence under the badge. Says the same thing twice — once as a label, once as a sentence —
  * because the badge is easy to skim past and this is the fact the participant most needs.
  *
@@ -2993,8 +2976,6 @@ function FlowOverlay({
   const altStory = coord && whoVariant
     ? getCVRStory(scenario, option, { ...coord, framing: otherFraming(coord.framing) }, whoVariant)
     : null;
-  // Alignment color tuned for the current modal background (bright on dark, darker on light).
-  const levelColor = (mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[option.level];
 
   /*
     FREEZE THE SCENARIO PAGE BEHIND THIS OVERLAY.
@@ -3042,9 +3023,8 @@ function FlowOverlay({
         */}
         {step === "review" && !misaligned && isRecipient && (
           <Stack gap="4">
-            <Badge alignSelf="start" bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
-              {WISH_FIT_LABEL[option.level]}
-            </Badge>
+            {/* The verdict badge is not shown. See the note on the misaligned reflection page:
+                a tier label read before the trade-off is read answers the question for them. */}
             <Text fontSize="sm" color="fg.muted" lineHeight="tall">
               {WISH_FIT_SENTENCE[option.level]}
             </Text>
@@ -3075,9 +3055,7 @@ function FlowOverlay({
 
         {step === "review" && !misaligned && !isRecipient && (
           <Stack gap="4">
-            <Badge alignSelf="start" bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
-              {ALIGNMENT_LABEL[option.level]} with your values
-            </Badge>
+            {/* The verdict badge is not shown here either -- same reason. */}
             <Text fontSize="sm" color="fg.muted" lineHeight="tall">
               {copy.fitsIntro}
             </Text>
