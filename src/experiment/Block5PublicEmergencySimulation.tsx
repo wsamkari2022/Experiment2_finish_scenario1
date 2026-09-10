@@ -1344,6 +1344,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   scenarioId={scenario.id}
                   copy={decisionCopy}
                   expanded={openOptionId === opt.id} onToggle={() => toggleExpand(opt.id)}
+                  /* Every card stops hinting the moment ANY of them has been opened. */
+                  hintDetails={expandedOptions.size === 0}
                   onSelect={() => handleSelect(opt.id)}
                   isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
                   impact={previewOptionId === opt.id ? impactFor(opt) : null}
@@ -1822,6 +1824,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
             rounded="full"
             px="1"
             minW="auto"
+            className={infoOpened ? undefined : "vrds-glow-ring"}
             animation={infoOpened ? undefined : "glow-ring 1.6s ease-in-out infinite"}
             onClick={() => { setShowInfo((s) => !s); setInfoOpened(true); }}
           >
@@ -1930,7 +1933,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
 
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled }: {
+function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails }: {
   option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
   /** Planner state for this card, or null before the planner has run. */
   explanation: CardExplanation | null;
@@ -1942,6 +1945,15 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   copy: (typeof DECISION_COPY)[keyof typeof DECISION_COPY];
   expanded: boolean; onToggle: () => void; onSelect: () => void;
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
+  /**
+   * True until the participant has opened ANY option's details in this scenario.
+   *
+   * Drives the slow ring on the details button. It is deliberately a property of the scenario
+   * rather than of this card: the six cards teach the same control, so once one of them has been
+   * opened the lesson has landed and all six go quiet together. Leaving them all breathing would
+   * put six pulsing controls on one screen, competing with the primary action.
+   */
+  hintDetails: boolean;
 }) {
   /* No alignment color on this card — the tier is not shown to the participant anywhere now. */
   const pos = pal.mode === "light" ? "#15803d" : "#86efac";
@@ -2202,9 +2214,48 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
       )}
 
       <HStack mt="4" gap="3" wrap="wrap">
-        <Button size="sm" variant="ghost" color={pal.textMuted} _hover={{ bg: pal.surfaceSubtle, color: pal.text }} rounded="lg" onClick={onToggle} gap="1" fontSize="xs">
+        {/*
+          THE DETAILS CONTROL — dressed as a control.
+
+          This was a ghost button in muted text, sitting between an outlined "Preview impact" and
+          a solid "Choose this option". It was the only thing in a row of buttons with no border
+          and no background, in the lowest-contrast text on the card, and participants read it as
+          a caption rather than something to press — which meant the values and the metrics, the
+          two things this block is built to have them weigh, went unopened.
+
+          It now has a surface, a border, full-contrast text, and its chevron in a chip of its
+          own. It stays quieter than "Choose this option", which is still the primary action.
+
+          THE RING is the discovery aid, and it removes itself. It breathes slowly (3.2s, the
+          beacon's tempo) rather than pulsing (1.6s), because a fast pulse reads as a warning and
+          this is an invitation. The moment the participant opens any card's details, hintDetails
+          goes false for all six and the ring never returns in this scenario.
+        */}
+        <Button
+          size="sm"
+          variant="outline"
+          className={hintDetails && !expanded ? "vrds-hint-breathe" : undefined}
+          css={hintDetails && !expanded ? { "--hint-c": `${accent}59` } : undefined}
+          bg={expanded ? pal.surfaceSubtle : pal.cardBg}
+          borderColor={hintDetails && !expanded ? accent : pal.cardBorder}
+          color={pal.text}
+          _hover={{ bg: pal.surfaceSubtle, borderColor: accent }}
+          rounded="lg"
+          onClick={onToggle}
+          gap="2"
+          fontSize="xs"
+          fontWeight="semibold"
+        >
           {expanded ? "Hide details" : "See value & metric details"}
-          <Icon boxSize="3.5">{expanded ? <LuChevronUp /> : <LuChevronDown />}</Icon>
+          <Center
+            boxSize="4"
+            rounded="md"
+            bg={pal.surfaceSubtle}
+            color={hintDetails && !expanded ? accent : pal.textMuted}
+            flexShrink={0}
+          >
+            <Icon boxSize="3">{expanded ? <LuChevronUp /> : <LuChevronDown />}</Icon>
+          </Center>
         </Button>
         <Button size="sm" variant="outline"
           borderColor={isPreviewing ? accent : pal.cardBorder} color={isPreviewing ? accent : pal.textMuted}
@@ -2390,7 +2441,8 @@ function CVRThinking({ accent, label = "Reflecting on your choice" }: { accent: 
   return (
     <HStack gap="3" py="7" justify="center" animationName="fade-in" animationDuration="moderate">
       <Spinner size="sm" color={accent} />
-      <Icon color={accent} boxSize="4" animation="glow-ring 1.6s ease-in-out infinite"><LuSparkles /></Icon>
+      <Icon color={accent} boxSize="4" className="vrds-glow-ring"
+        animation="glow-ring 1.6s ease-in-out infinite"><LuSparkles /></Icon>
       <Text fontSize="sm" color="fg.muted" fontStyle="italic">
         {label}<AnimatedDots />
       </Text>
@@ -2609,7 +2661,8 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
           {revealComplete && altState === "none" && (
             <Button size="xs" rounded="full" px="3.5" py="1" fontWeight="bold" fontSize="2xs"
               bgImage="linear-gradient(135deg, #7c3aed, #4338ca)" color="white" _hover={{ opacity: 0.92 }}
-              boxShadow="0 0 0 1px rgba(124,58,237,0.4)" animation="glow-ring 1.8s ease-in-out infinite"
+              boxShadow="0 0 0 1px rgba(124,58,237,0.4)" className="vrds-glow-ring"
+              animation="glow-ring 1.8s ease-in-out infinite"
               onClick={generateAlt}>
               ✨ Generate the {VIEW_LABEL.second.toLowerCase()}
             </Button>
@@ -3185,14 +3238,19 @@ function FlowOverlay({
             <Text fontSize="sm" color="fg.muted" lineHeight="tall">
               You're confirming <Text as="span" fontWeight="bold" color="fg">{option.title}</Text>. Your value profile will be updated to reflect this for the next scenario.
             </Text>
-            <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
-              <Text fontSize="xs" color="fg.muted" lineHeight="tall">
-                {q1Strong ? "Strong endorsement (+30 to this value, −20 to your previous top value)." : "Kept choice (+15 to this value, −10 to your previous top value)."}{" "}
-                {stakeholderMoved ? "Hearing someone's story +25." : "Hearing someone's story −25."}
-                {altViewGenerated && framingChoiceYes && coord
-                  && ` ${viewLabelFor(framingChoiceYes, coord.framing)} −20 (it didn't affect this choice).`}
-              </Text>
-            </Box>
+            {/*
+              THE ADJUSTMENT LEDGER IS NOT SHOWN.
+
+              This used to print the exact APA arithmetic -- "+15 to this value, -10 to your
+              previous top value", the stakeholder's ±25, the lens −20. It handed the participant
+              the scoring rules of the instrument mid-study, which is the one thing that reliably
+              changes how people answer: once someone can see what raises and lowers a value, the
+              remaining scenarios measure their theory of the scoring rather than their values.
+
+              Nothing about the update itself changed. The numbers are still applied, still
+              recorded, and still reported in the results at the end -- they are simply not
+              narrated to the participant while the study is still running.
+            */}
             <HStack gap="3" wrap="wrap">
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" onClick={onConfirmEndorsement} fontSize="xs">
                 Confirm choice and continue

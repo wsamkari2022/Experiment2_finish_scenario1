@@ -34,11 +34,44 @@
       }
       .vrds-goal-beacon { animation: goal-beacon 3.2s ease-in-out infinite; }
 
-      /* Participants who have asked their OS for less motion get the halo without the movement. */
+      /*
+       * hint-breathe — a slow invitation on a control the participant has not discovered yet.
+       *
+       * Two things separate it from glow-ring. It is SLOW (the beacon's 3.2s rather than 1.6s),
+       * because a fast pulse reads as an alert — something is wrong, act now — and this is an
+       * invitation to look. And it takes its color from --hint-c, the way glow-pulse takes
+       * --glow-c, so it can wear whichever accent the current scenario is using instead of a
+       * hardcoded yellow.
+       *
+       * Unlike the beacon it is not ambient: every place it is used removes it as soon as the
+       * participant has used the control once. See OptionCard.
+       */
+      @keyframes hint-breathe {
+        0%, 100% { box-shadow: 0 0 0 0 var(--hint-c), 0 0 0 0 transparent; }
+        50%      { box-shadow: 0 0 0 4px transparent, 0 0 12px 2px var(--hint-c); }
+      }
+      .vrds-hint-breathe { animation: hint-breathe 3.2s ease-in-out infinite; }
+
+      /*
+       * Participants who have asked their OS for less motion get the emphasis without the
+       * movement — a steady ring instead of a pulsing one. This covers every looping glow in
+       * the app, not just the beacon: glow-ring drives three controls inside Block 5, and those
+       * were still pulsing for people who had explicitly asked them not to.
+       */
       @media (prefers-reduced-motion: reduce) {
         .vrds-goal-beacon {
           animation: none;
           box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3), 0 0 14px 2px rgba(168, 85, 247, 0.3);
+        }
+        .vrds-hint-breathe {
+          animation: none;
+          box-shadow: 0 0 0 2px var(--hint-c);
+        }
+        /* Carried by every control that runs glow-ring on a loop; Chakra compiles the animation
+           prop to a class of its own, so there is nothing else stable to select on. */
+        .vrds-glow-ring {
+          animation: none !important;
+          box-shadow: 0 0 0 2px rgba(246, 224, 94, 0.45);
         }
       }
     </style>
