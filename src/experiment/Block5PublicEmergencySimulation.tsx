@@ -2491,7 +2491,7 @@ function FramingComparisonTable({ scenario, option, coord, mode }: {
  * answer: a random 2–5s "thinking" pause, then box 1 fades in and types, then box 2 fades in
  * and types, then the legend, then the response buttons. A "Skip" control reveals it all at once.
  */
-function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
+function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
   story: ReturnType<typeof getCVRStory>;
   /** the SAME vignette with the framing flipped (the other reflection lens). */
   altStory: ReturnType<typeof getCVRStory>;
@@ -2504,7 +2504,7 @@ function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenera
   onAltGenerated: () => void;
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
 }) {
-  type Phase = "thinking" | "box1" | "box2" | "legend" | "done";
+  type Phase = "thinking" | "box1" | "box2" | "settle" | "done";
   const [phase, setPhase] = useState<Phase>("thinking");
   const [b2Step, setB2Step] = useState(0); // the re-endorse question: 0 = typing, 2 = done
   /**
@@ -2529,7 +2529,6 @@ function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenera
   /* Nothing on screen names a lens any more, so the second framing is no longer needed here —
      `altStory` is passed in already built. */
   const marks = cvrMarks(mode); // mode-aware highlight colors for the vignette markup
-  const levelColor = (mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[level];
 
   // Random "thinking" wait (2–5s) on every arrival, then begin generating the first view.
   useEffect(() => {
@@ -2538,9 +2537,11 @@ function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenera
     return () => clearTimeout(id);
   }, []);
 
-  // Once the legend shows, reveal the answer buttons a beat later.
+  // A short beat after the question finishes typing, then the answer buttons arrive. The pause
+  // is kept: without it the buttons appear on the same frame as the last character of the
+  // question, which reads as the interface hurrying the participant into answering.
   useEffect(() => {
-    if (phase !== "legend") return;
+    if (phase !== "settle") return;
     const id = setTimeout(() => setPhase("done"), 450);
     return () => clearTimeout(id);
   }, [phase]);
@@ -2596,8 +2597,7 @@ function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenera
   }, [altState, b2Part, b2Done]);
 
   const showBox1 = skipped || phase !== "thinking";
-  const showBox2 = skipped || phase === "box2" || phase === "legend" || phase === "done";
-  const showLegend = skipped || phase === "legend" || phase === "done";
+  const showBox2 = skipped || phase === "box2" || phase === "settle" || phase === "done";
   const showButtons = skipped || phase === "done";
   const revealComplete = skipped || phase === "done";
 
@@ -2621,10 +2621,10 @@ function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenera
 
   return (
     <Stack gap="4">
-      <HStack justify="space-between" align="center" gap="2">
-        <Badge alignSelf="start" bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
-          {ALIGNMENT_LABEL[level]} with your values
-        </Badge>
+      {/* No alignment verdict is shown here. This page asks the participant to re-read the choice
+          they already made; stamping "Misaligned with your values" across the top of it answers
+          the question for them before they have started thinking. */}
+      <HStack justify="flex-end" align="center" gap="2">
         {/* Top-right control: Skip (during the first reveal) → Generate the other view → switch toggle. */}
         <Box flexShrink={0}>
           {!skipped && phase !== "done" && (
@@ -2770,21 +2770,15 @@ function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenera
             <Text fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall">{renderCVRMarkup(story.reendorseQuestion, marks)}</Text>
           ) : (
             <Typed text={story.reendorseQuestion} marks={marks} accent={accent} fontSize="md" color="fg" fontWeight="semibold" lineHeight="tall"
-              onComplete={() => { setB2Step(2); setPhase("legend"); }} />
+              onComplete={() => { setB2Step(2); setPhase("settle"); }} />
           )}
         </Box>
       )}
 
-      {showLegend && (
-        <HStack gap="3" wrap="wrap" animationName="fade-in" animationDuration="moderate">
-          <Text fontSize="2xs" color={marks.a.color} fontWeight="bold">▍ same numbers</Text>
-          <Text fontSize="2xs" color={marks.v.color} fontWeight="bold">▍ the value</Text>
-          <Text fontSize="2xs" color={marks.f.color} fontWeight="bold">▍ the framing</Text>
-          {/* "who is affected" is not listed here any more: that color only appears on the
-              person-speaks page, which comes after this one. A key to a color the page does not
-              use is just noise. */}
-        </HStack>
-      )}
+      {/* The color key that used to sit here is gone along with the verdict badge. It named the
+          highlight colors, and one of the things it named was the framing — the very thing this
+          page is asking the participant to notice for themselves. The highlights stay in the
+          prose, where they do their work without being labelled. */}
 
       {showButtons && (
         <HStack gap="3" wrap="wrap" animationName="fade-in" animationDuration="moderate">
