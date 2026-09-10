@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { ConsentPage } from "./ConsentPage";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -38,6 +39,9 @@ import type {
  * They are never persisted to localStorage so a page refresh lands cleanly.
  */
 type Stage =
+  /* Informed consent, before anything else. A participant who has already agreed never returns
+     here: the restored stage carries them past it. See getRestoredStage. */
+  | "consent"
   | "money"
   | "transition_money_trolley"
   | "trolley"
@@ -75,6 +79,14 @@ const STORAGE_KEY_STAGE = "experiment_flow_stage";
 const STORAGE_KEY_INSIGHTS = "experiment_flow_insights";
 /** localStorage key for the completed Block4CompletionPayload. */
 const STORAGE_KEY_BLOCK4 = "block4_reflection_results";
+/**
+ * localStorage key for the signed consent record.
+ *
+ * Written once, never cleared by the app. It is what lets a returning participant skip the
+ * consent page, and it is the evidence of what they agreed to and when. It moves to MongoDB
+ * later; until then this is the only copy, so nothing in the app may delete it.
+ */
+const STORAGE_KEY_CONSENT = "vrds_consent";
 
 /**
  * Payload passed from MoralProfileInsightsPage to Block 4 and onwards.
@@ -105,12 +117,18 @@ function readJson<T>(key: string): T | null {
 function getRestoredStage(): Stage {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_STAGE) as Stage | null;
-    if (!saved) return "money";
+    /*
+     * Nothing saved: a first visit, so start at consent — UNLESS a consent record already
+     * exists. That second case is someone who agreed and then had their stage lost (a cleared
+     * key, a mid-study error). Sending them back through the consent form would ask them to
+     * agree to something they have already agreed to, so they resume at the first block.
+     */
+    if (!saved) return localStorage.getItem(STORAGE_KEY_CONSENT) ? "money" : "consent";
     // Never restore to a transition stage — roll back one step
     if (STAGES_WITH_TRANSITION.includes(saved as Stage)) return "money";
     return saved ?? "money";
   } catch {
-    return "money";
+    return "consent";
   }
 }
 
@@ -279,6 +297,31 @@ export function ExperimentFlow() {
       return () => clearTimeout(timer);
     }
   }, [stage]);
+
+  /*
+   * Consent comes before every other screen and before the progress rail: the rail describes the
+   * study, and at this point the participant has not agreed to take part in it yet.
+   *
+   * The demographic page (which collects the email) follows this one, and a start screen that
+   * asks for the email will eventually sit in FRONT of consent — that is what lets a returning
+   * participant be recognised before the consent page is reached, so they never see it twice.
+   * Until then, the consent record itself is what keeps them past it.
+   */
+  if (stage === "consent") {
+    return (
+      <ConsentPage
+        onAgree={(record) => {
+          try {
+            localStorage.setItem(STORAGE_KEY_CONSENT, JSON.stringify(record));
+          } catch {
+            /* Storage unavailable (private mode). The study still runs; the record is lost,
+               which is why this moves to the database in a later step. */
+          }
+          setStage("money");
+        }}
+      />
+    );
+  }
 
   if (stage === "money") {
     return (
