@@ -106,7 +106,7 @@ const LEVEL_COLOR: Record<AlignmentLevel, string> = {
   strongly_misaligned: "#F56565",
 };
 
-/** Darker alignment colours for legibility on LIGHT cards (the dark decision modal keeps the bright set). */
+/** Darker alignment colors for legibility on LIGHT cards (the dark decision modal keeps the bright set). */
 const LEVEL_COLOR_LIGHT: Record<AlignmentLevel, string> = {
   aligned: "#16a34a",
   weakly_aligned: "#ca8a04",
@@ -115,13 +115,13 @@ const LEVEL_COLOR_LIGHT: Record<AlignmentLevel, string> = {
 };
 
 /**
- * Colour key for the CVR-cube dimensions inside the vignette text:
+ * Color key for the CVR-cube dimensions inside the vignette text:
  *   a = same-numbers anchor (gold) · v = the violated VALUE (teal) ·
  *   f = the FRAMING context/directness (orange) · w = WHO appears, salience (purple) ·
  *   b = plain bold (e.g. the harm).
  *
  * Two sets: bright tones for the DARK modal, darker tones for the LIGHT modal (so the highlights
- * stay legible whichever colour mode is active). Pick with cvrMarks(colorMode).
+ * stay legible whichever color mode is active). Pick with cvrMarks(colorMode).
  */
 type MarkSet = Record<string, { color?: string; bold?: boolean; italic?: boolean }>;
 const CVR_MARK_DARK: MarkSet = {
@@ -140,12 +140,12 @@ const CVR_MARK_LIGHT: MarkSet = {
   w: { color: "#7c3aed", bold: true, italic: true }, // violet-600 — who is affected
   b: { bold: true },
 };
-/** The mark colours for the current colour mode. */
+/** The mark colors for the current color mode. */
 function cvrMarks(mode: "light" | "dark"): MarkSet {
   return mode === "light" ? CVR_MARK_LIGHT : CVR_MARK_DARK;
 }
 
-/** Parse {x|text} markup into coloured, emphasised spans so the cube dimensions stand out. */
+/** Parse {x|text} markup into colored, emphasized spans so the cube dimensions stand out. */
 function renderCVRMarkup(text: string, marks: MarkSet): ReactNode[] {
   const nodes: ReactNode[] = [];
   const re = /\{([avfwb])\|([^}]*)\}/g;
@@ -263,11 +263,36 @@ function framingScoresOf(profile: Block5UserProfile): { directnessSensitivity: n
   };
 }
 
-/** Participant-facing name + plain-English gloss for each reflection lens. */
-const FRAMING_META: Record<CVRFraming, { name: string; gloss: string }> = {
-  directness: { name: "Directness", gloss: "it's your own rule, your responsibility" },
-  context: { name: "Context", gloss: "circumstances shaped the numbers" },
+/**
+ * Plain-English gloss for each reflection lens.
+ *
+ * THERE IS NO `name` FIELD, AND THAT IS THE POINT. The two lenses are "directness" and "context"
+ * everywhere the code and the stored data are concerned, and a participant is never shown either
+ * word: they are terms of art from the CVR literature, and someone who does not already know them
+ * cannot tell which button they are pressing. They are named by POSITION instead — see VIEW_LABEL.
+ *
+ * Removing the field rather than leaving it unused is deliberate. It makes showing the internal
+ * term a compile error instead of a thing somebody has to remember not to do.
+ */
+const FRAMING_META: Record<CVRFraming, { gloss: string }> = {
+  directness: { gloss: "it's your own rule, your responsibility" },
+  context: { gloss: "circumstances shaped the numbers" },
 };
+
+/**
+ * WHAT THE PARTICIPANT CALLS THE TWO VIEWS.
+ *
+ * The first one shown is whichever lens the participant's own profile scores highest on — see
+ * `chooseFraming`. Which of the two that is varies per participant, so the labels cannot name a
+ * lens; they name the ORDER the participant met them in, which is the one thing that is the same
+ * for everybody. The gloss beside each still says what the view actually argues, so the two remain
+ * tellable apart without the jargon.
+ */
+const VIEW_LABEL = { first: "Main view", second: "Alternative view" } as const;
+
+/** The label a framing carries, given whichever framing this participant saw first. */
+const viewLabelFor = (framing: CVRFraming, mainFraming: CVRFraming): string =>
+  framing === mainFraming ? VIEW_LABEL.first : VIEW_LABEL.second;
 
 /** Assembles the immutable, stored telemetry for a finished scenario from the accumulator. */
 function buildScenarioTelemetry(
@@ -288,7 +313,7 @@ function buildScenarioTelemetry(
     cvrOutcome: opts.cvrOutcome,
     apaOutcome: opts.apaOutcome,
     // Leaving the person-speaks page counts as a switch: the participant reached a decision point
-    // and stepped away from it, which is the same behaviour the other backout counters record.
+    // and stepped away from it, which is the same behavior the other backout counters record.
     numberOfSwitches: t.optionChanges + t.cvrBackouts + t.apaBackouts + t.personBackouts + t.finalDecisionChanges,
     initialSelections: t.distinct.size,
     optionChanges: t.optionChanges,
@@ -326,10 +351,12 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   // Each scenario opens at the top of the page.
   useScrollToTop(progress.currentScenarioIndex);
 
-  // Colour-mode-aware palette source (resolved after the scenario guard below).
+  // Color-mode-aware palette source (resolved after the scenario guard below).
   const { colorMode } = useColorMode();
 
   const [expandedOptions, setExpandedOptions] = useState<Set<string>>(new Set());
+  /** Which single option's detail panel is open. Display only — see toggleExpand. */
+  const [openOptionId, setOpenOptionId] = useState<string | null>(null);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [previewOptionId, setPreviewOptionId] = useState<string | null>(null);
   const [step, setStep] = useState<FlowStep | null>(null);
@@ -520,15 +547,27 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setStakeholderMoved(null);
   }, []);
 
+  /**
+   * Opening one option's detail panel CLOSES whichever was open before.
+   *
+   * WHY AN ACCORDION. Six panels open at once turns the scenario into a page several screens long,
+   * and the participant loses the comparison they opened the panels to make — the cards they want
+   * side by side end up scrolled apart.
+   *
+   * WHY THE RECORD IS A SEPARATE PIECE OF STATE. `expandedOptions` is not a display flag: it is
+   * written into every scenario result as `viewedExplanationOptionIds`, the record of which options
+   * a participant actually inspected. If the accordion drove that Set, closing a panel would erase
+   * the fact it had ever been opened, and the field would only ever hold the last card looked at.
+   * So `openOptionId` says what is on screen, `expandedOptions` keeps everything ever opened, and
+   * the two never overwrite each other.
+   */
   const toggleExpand = useCallback((id: string) => {
+    setOpenOptionId((cur) => (cur === id ? null : id));
     setExpandedOptions((prev) => {
+      if (prev.has(id)) return prev;              // already recorded; nothing to add
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-        if (telRef.current) telRef.current.optionExpands += 1; // info-seeking signal
-      }
+      next.add(id);
+      if (telRef.current) telRef.current.optionExpands += 1; // info-seeking signal
       return next;
     });
   }, []);
@@ -751,6 +790,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     });
     telRef.current = newTelemetryAccum(); // fresh telemetry for the next scenario
     setExpandedOptions(new Set());
+    setOpenOptionId(null);
     setPreviewOptionId(null);
     setCompareChartsOpen(false);
     resetFlow();
@@ -993,7 +1033,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    */
   const introOpen = !introSeen.has(scenario.id);
 
-  // Resolved colour palette for the current mode (fresh light theme / cleaned dark theme).
+  // Resolved color palette for the current mode (fresh light theme / cleaned dark theme).
   const pal = getBlock5Palette(scenario, colorMode === "light" ? "light" : "dark");
 
   /** Deciding or wishing — every string that differs between the two. See DECISION_COPY. */
@@ -1107,10 +1147,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         >
           {/*
             The scenario card. The advisor's note was that this did not catch the eye, and it did
-            not: a 5%-white panel, a 2xs label and body copy in the muted text colour made the
+            not: a 5%-white panel, a 2xs label and body copy in the muted text color made the
             most important content on the page the faintest thing on it. It now leads with a
             solid accent header band — the only fully saturated surface in the column — and the
-            description is set at full text colour, one size up.
+            description is set at full text color, one size up.
           */}
           <Box
             data-morph="scene"
@@ -1250,7 +1290,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             <Text fontSize="sm" fontWeight="semibold">Compare all options on charts</Text>
           </Button>
           <Text fontSize="2xs" color={pal.textFaint} textAlign="center" px="2" lineHeight="tall">
-            Two radar charts: what each option achieves, and what each one prioritises.
+            Two radar charts: what each option achieves, and what each one prioritizes.
           </Text>
         </VStack>
 
@@ -1311,7 +1351,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   standing={standings[opt.id] ?? null}
                   scenarioId={scenario.id}
                   copy={decisionCopy}
-                  expanded={expandedOptions.has(opt.id)} onToggle={() => toggleExpand(opt.id)}
+                  expanded={openOptionId === opt.id} onToggle={() => toggleExpand(opt.id)}
                   onSelect={() => handleSelect(opt.id)}
                   isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
                   impact={previewOptionId === opt.id ? impactFor(opt) : null}
@@ -1528,7 +1568,7 @@ const STAKE_VIEW: Record<StakePosition, {
       { key: "you", icon: <LuUserRound />, label: "You",
         state: "You decide. Your own hours are not touched, so none of this cost is yours.", strong: false },
       { key: "with", icon: <LuUsersRound />, label: "Your colleagues",
-        state: "They carry it. The other carers work whatever schedule you set.", strong: true },
+        state: "They carry it. The other caregivers work whatever schedule you set.", strong: true },
       { key: "other", icon: <LuGlobe />, label: "Your employer",
         state: "Sets the rule you work under. It carries none of the cost itself.", strong: false },
     ],
@@ -1562,7 +1602,7 @@ const STAKE_VIEW: Record<StakePosition, {
  * accent. The role card is the study's independent variable and should shout; this one is a
  * document the participant has been handed. Giving it the same emphasis would make the sidebar two
  * competing headlines, and — more to the point — an employer principle rendered in the interface's
- * own celebratory colour reads as the interface endorsing it. The dotted border and the muted
+ * own celebratory color reads as the interface endorsing it. The dotted border and the muted
  * palette say "this is their position, not ours", which is exactly the distance the scenario needs.
  *
  * THE PARTICIPANT'S OWN SCORE IS SHOWN NEXT TO IT, from the frozen profile. Without it the conflict
@@ -1582,10 +1622,10 @@ const STAKE_VIEW: Record<StakePosition, {
  * about two seconds.
  *
  * ────────────────────────────────────────────────────────────────────────────
- * WHY IT DOES NOT USE THE SCENARIO'S OWN COLOUR
+ * WHY IT DOES NOT USE THE SCENARIO'S OWN COLOR
  *
  * Every other card on the page is tinted with the scenario accent. An employer's demand rendered
- * in the interface's own colour reads as the interface AGREEING with it, and this study must not
+ * in the interface's own color reads as the interface AGREEING with it, and this study must not
  * put a thumb on that scale. So the chrome is deliberately institutional — a slate letterhead that
  * belongs to the company, not to us.
  *
@@ -1703,7 +1743,7 @@ export function ScenarioRoleCard({ scenario, pal }: { scenario: Block5Scenario; 
         {view && (
           <Text fontSize="md" fontWeight="bold" color={pal.text} lineHeight="tall">{view.headline}</Text>
         )}
-        {/* The people are marked with {w|…} — the same "who is affected" colour the CVR uses — so
+        {/* The people are marked with {w|…} — the same "who is affected" color the CVR uses — so
             the person a decision lands on looks the same everywhere in the block, from this
             sidebar through to the vignette. */}
         <Text fontSize="sm" color={pal.text} lineHeight="tall">
@@ -1779,7 +1819,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
   const overall = metricProfileScore(display);
   const baseOverall = metricProfileScore(current);
   const overallDelta = overall - baseOverall;
-  // Delta colours tuned for legibility in each mode.
+  // Delta colors tuned for legibility in each mode.
   const pos = pal.mode === "light" ? "#15803d" : "#86efac";
   const neg = pal.mode === "light" ? "#b91c1c" : "#fca5a5";
 
@@ -1928,20 +1968,51 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   expanded: boolean; onToggle: () => void; onSelect: () => void;
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
 }) {
-  const levelColor = (pal.mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[option.level];
+  /* No alignment color on this card any more — the tier is not shown before the choice. The
+     LEVEL_COLOR maps are still used by the reflection pages, which name the tier after it. */
   const pos = pal.mode === "light" ? "#15803d" : "#86efac";
   const neg = pal.mode === "light" ? "#b91c1c" : "#fca5a5";
   /*
     BIN TREATMENT. A blocked card is recessed, never disabled and never red. The study exists to
     measure whether people cross lines they drew themselves, which is unmeasurable if the interface
-    refuses the click — and a warning colour would be the interface expressing disapproval, which
+    refuses the click — and a warning color would be the interface expressing disapproval, which
     is a variable nobody meant to introduce. It recedes; it does not object.
   */
   const recessed = explanation?.bin === "blocked";
+  /*
+    THE OPEN CARD IS TINTED, not merely taller.
+
+    Only one detail panel can be open at a time, so when a participant opens a second card the
+    first one silently collapses somewhere off-screen. Without a mark on the card itself, the only
+    evidence of which one is open is a panel they may have to scroll to find. The tint and the ring
+    travel with the card, so the answer is visible wherever it happens to sit.
+
+    `isPreviewing` keeps its 2px accent border and wins when both are true: a preview is a live
+    calculation the participant triggered, and it should not be visually outranked by a panel
+    being open.
+
+    The four properties that CHANGE with the open state are set through `style` rather than as
+    Chakra props, so the open and closed appearances sit next to each other in one object and can
+    be read as a pair. `data-card-open` carries the same state as an attribute, which is what makes
+    the whole thing inspectable from a test without reaching into React.
+
+    A shadow LIST containing "none" is invalid CSS and the browser drops the entire declaration, so
+    the ring is filtered before it is joined — `pal.cardShadow` is "none" in dark mode.
+  */
   return (
-    <Box bg={pal.cardBg} backdropFilter={pal.backdropBlur} borderWidth={isPreviewing ? "2px" : "1px"}
-      borderColor={isPreviewing ? accent : pal.cardBorder} rounded="2xl" p={{ base: "5", md: "6" }} style={{ boxShadow: pal.cardShadow }}
-      opacity={disabled ? 0.5 : recessed ? 0.82 : 1} transition="all 0.2s ease" _hover={disabled ? {} : { borderColor: pal.cardHoverBorder, opacity: 1 }}>
+    <Box data-card-open={expanded ? "1" : "0"}
+      backdropFilter={pal.backdropBlur}
+      rounded="2xl" p={{ base: "5", md: "6" }}
+      style={{
+        background: expanded && !isPreviewing ? pal.panelDeep : pal.cardBg,
+        borderStyle: "solid",
+        borderWidth: isPreviewing || expanded ? "2px" : "1px",
+        borderColor: isPreviewing ? accent : expanded ? `${accent}80` : pal.cardBorder,
+        boxShadow: expanded && !isPreviewing
+          ? [`0 0 0 4px ${accent}1F`, pal.cardShadow].filter((v) => v && v !== "none").join(", ")
+          : pal.cardShadow,
+      }}
+      opacity={disabled ? 0.5 : recessed ? 0.82 : 1} transition="all 0.2s ease" _hover={disabled ? {} : { opacity: 1 }}>
       <Flex justify="space-between" align="start" gap="4" wrap="wrap">
         <HStack align="start" gap="3" minW="0" flex="1">
           {explanation && (
@@ -1959,45 +2030,33 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
             <Text color={pal.textMuted} fontSize="sm" lineHeight="tall">{option.summary}</Text>
           </VStack>
         </HStack>
-        <VStack align="end" gap="1" flexShrink={0}>
-          <Badge bg="transparent" color={levelColor} borderWidth="1px" borderColor={levelColor} rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold">
-            {ALIGNMENT_LABEL[option.level]}
-          </Badge>
-          {explanation?.binLabel && (
-            <Badge bg="transparent" color={pal.textFaint} borderWidth="1px" borderColor={pal.separator}
-              rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="semibold">
-              {explanation.binLabel}
-            </Badge>
-          )}
-          {/*
-            ALIGN IS A NUMBER; PERF IS A PLACING. That asymmetry is deliberate.
+        {/*
+          NO TAG CLUSTER IN THIS CORNER.
 
-            `matchScore` is a threshold-satisfaction score, so its 0 and its 100 mean something
-            fixed: 100 is "meets every line you drew", 0 is "meets none of them". A number is the
-            honest form for it.
+          Four badges used to sit here before the participant had read a word of the option: the
+          alignment tier, the planner bin, an "Align NN" score and a "Perf Nth of 6" placing.
 
-            `performance` is the unweighted mean of five metrics, and its zero means nothing at
-            all — across this scenario's six options it only ever ranges from about 54 to 69. A
-            bare "Perf 62" invites the participant to read 62/100 as a middling mark when it is in
-            fact fifth of six. Worse, the expanded panel scores the same option against the range
-            the table covers, so the card was showing TWO different performance numbers for one
-            option. The placing says the true thing once, in the same words the panel and the five
-            metric bars use.
-          */}
-          <Badge bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono">Align {option.matchScore}</Badge>
-          <Badge bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs" fontFamily="mono"
-            title={standing
-              ? `On the five outcome measures combined, this is the ${ordinal(standing.overall.rank)} strongest of the ${standing.overall.total} options in this scenario`
-              : undefined}>
-            {standing ? `Perf ${ordinal(standing.overall.rank)} of ${standing.overall.total}` : `Perf ${option.performance}`}
-          </Badge>
-        </VStack>
+          WHY THE ALIGNMENT TIER IS GONE. VCI asks whether a participant's choices fit their own
+          values. Printing "Misaligned" on the card answers that question for them, so a compliant
+          participant scores well on VCI by reading a label rather than by holding a position —
+          the measure stops being about them.
+
+          WHY THE NUMBERS ARE GONE. "Align 62" and "Perf 4th of 6" are summaries of material the
+          card already states in words, and a number at the top of a card reads as a mark out of
+          100 before anything explains it.
+
+          NOTHING WAS DELETED, ONLY MOVED. The bin ("Has a cost" / "Crosses a limit you set") and
+          the performance placing now sit inside the "Ranked N — why" panel below, each under a
+          heading that says which of the two things it belongs to. The bin still has to be visible
+          somewhere: choosing an option that crosses a limit only records a willingness to cross
+          it if the participant could see that it did.
+        */}
       </Flex>
 
       {/*
         THE TRADE-OFF — the most important thing on the card.
         This used to be a single muted line that participants skipped straight past. It is now an
-        inset, colour-coded panel: what you GAIN in green, what you GIVE UP in red, and the moral
+        inset, color-coded panel: what you GAIN in green, what you GIVE UP in red, and the moral
         question underneath. Both halves are visible BEFORE the participant chooses, which is the
         whole point of the block — they should feel the cost of the option, not discover it after.
       */}
@@ -2046,8 +2105,22 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
         <Box mt="3" bg={pal.panelDeep} borderWidth="1px" borderColor={pal.separator}
           rounded="xl" px={{ base: "3.5", md: "4" }} py="3">
           <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase"
-            color={pal.textFaint} mb="2">
+            color={pal.textFaint} mb="2.5">
             Ranked {explanation.rank} — why
+          </Text>
+
+          {/*
+            TWO HEADINGS, BECAUSE THESE ARE TWO DIFFERENT SUBJECTS.
+
+            The prose above the chips is about VALUES — which of the participant's priorities this
+            option honors and which it sets aside. The chips below are about PERFORMANCE — how the
+            option does on the five outcome measures. Unlabeled, they read as one continuous
+            explanation, and a participant can finish the panel believing a strong performance
+            placing is a statement about their values.
+          */}
+          <Text fontSize="2xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+            color={pal.textMuted} mb="1.5">
+            What it does for your values
           </Text>
           <Stack gap="1.5">
             <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
@@ -2064,15 +2137,67 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
             {explanation.breachLine && (
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{explanation.breachLine}</Text>
             )}
-          </Stack>
-          {explanation.chips.length > 0 && (
-            <HStack gap="2" wrap="wrap" mt="2.5">
-              {explanation.chips.map((c) => (
-                <Badge key={c} bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs">
-                  {c}
+            {/* The planner bin — moved down from the card corner, kept where the values live. */}
+            {explanation.binLabel && (
+              <Box>
+                <Badge bg="transparent" color={pal.textFaint} borderWidth="1px" borderColor={pal.separator}
+                  rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="semibold">
+                  {explanation.binLabel}
                 </Badge>
-              ))}
-            </HStack>
+              </Box>
+            )}
+
+            {/*
+              THE FIT SCORE, SAID QUIETLY.
+
+              This is the same `matchScore` that used to sit in the card corner as a mono "Align
+              62" badge. Up there it read as a mark out of 100 awarded to the participant, and it
+              was the first thing on the card — a verdict before a word of the option had been
+              read.
+
+              Here it is the last line of the values section, in the faintest text on the card, as
+              a sentence rather than a score. It is available to a participant who wants a number
+              and easy to pass over for one who does not, which is the correct weight for a
+              summary of the four statements printed directly above it.
+            */}
+            <Text fontSize="2xs" color={pal.textFaint} lineHeight="tall" pt="0.5">
+              Matches your earlier answers: {option.matchScore} out of 100.
+            </Text>
+          </Stack>
+
+          {(explanation.chips.length > 0 || standing) && (
+            <Box mt="3" pt="2.5" borderTopWidth="1px" borderColor={pal.separator}>
+              <Text fontSize="2xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+                color={pal.textMuted} mb="1.5">
+                How it performs
+              </Text>
+              <HStack gap="2" wrap="wrap">
+                {/*
+                  The overall placing, spelled out rather than abbreviated to "Perf". It leads the
+                  row because the five chips beside it are placings on single measures, and the
+                  combined standing is what they add up to.
+                */}
+                {/*
+                  Tinted, while the five beside it stay neutral. This one is the COMBINED standing
+                  and the others are single measures, so they are different kinds of fact sitting
+                  in one row. Identically styled, the row reads as six equal chips and the summary
+                  disappears into its own components.
+                */}
+                {standing && (
+                  <Badge rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold"
+                    color={accent} borderWidth="1px"
+                    style={{ background: `${accent}1A`, borderColor: `${accent}59` }}
+                    title={`On the five outcome measures combined, this is the ${ordinal(standing.overall.rank)} strongest of the ${standing.overall.total} options in this scenario`}>
+                    Performance {ordinal(standing.overall.rank)} of {standing.overall.total}
+                  </Badge>
+                )}
+                {explanation.chips.map((c) => (
+                  <Badge key={c} bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs">
+                    {c}
+                  </Badge>
+                ))}
+              </HStack>
+            </Box>
           )}
         </Box>
       )}
@@ -2215,7 +2340,7 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
 
 interface CVRSeg { text: string; color?: string; bold?: boolean; italic?: boolean }
 
-/** Parses {x|…} CVR markup into styled segments (same colour key as renderCVRMarkup). */
+/** Parses {x|…} CVR markup into styled segments (same color key as renderCVRMarkup). */
 function parseCVRSegments(text: string, marks: MarkSet): CVRSeg[] {
   const segs: CVRSeg[] = [];
   const re = /\{([avfwb])\|([^}]*)\}/g;
@@ -2231,7 +2356,7 @@ function parseCVRSegments(text: string, marks: MarkSet): CVRSeg[] {
   return segs;
 }
 
-/** Renders the first `shown` characters across styled segments (preserving per-segment colour). */
+/** Renders the first `shown` characters across styled segments (preserving per-segment color). */
 function renderCVRSegmentsUpTo(segs: CVRSeg[], shown: number): ReactNode[] {
   const nodes: ReactNode[] = [];
   let consumed = 0;
@@ -2299,26 +2424,31 @@ function CVRThinking({ accent, label = "Reflecting on your choice" }: { accent: 
   );
 }
 
-/** Two-pill segmented control to switch box 1 between the two generated reflection lenses. */
-function ViewToggle({ current, framingFirst, framingSecond, accent, onSelect }: {
-  current: "first" | "second"; framingFirst: CVRFraming; framingSecond: CVRFraming; accent: string;
+/**
+ * Two-pill segmented control to switch box 1 between the two reflection views.
+ *
+ * It takes no framing any more: the pills are named by POSITION, so which lens sits behind each one
+ * is not something this component needs to know or could usefully say.
+ */
+function ViewToggle({ current, accent, onSelect }: {
+  current: "first" | "second"; accent: string;
   onSelect: (v: "first" | "second") => void;
 }) {
-  const pill = (view: "first" | "second", framing: CVRFraming) => {
+  const pill = (view: "first" | "second") => {
     const active = current === view;
     return (
       <Button size="2xs" rounded="full" px="3" fontSize="2xs" fontWeight="bold"
         bg={active ? accent : "transparent"} color={active ? "white" : "fg.muted"}
         _hover={active ? {} : { bg: "bg.muted", color: "fg" }}
         onClick={() => onSelect(view)}>
-        {FRAMING_META[framing].name}
+        {VIEW_LABEL[view]}
       </Button>
     );
   };
   return (
     <HStack gap="0.5" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="full" p="0.5">
-      {pill("first", framingFirst)}
-      {pill("second", framingSecond)}
+      {pill("first")}
+      {pill("second")}
     </HStack>
   );
 }
@@ -2336,7 +2466,7 @@ function FramingComparisonTable({ scenario, option, coord, mode }: {
   const cell = (framing: CVRFraming) => (
     <Box flex="1" minW="0" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="lg" px="3" py="2.5">
       <Text fontSize="2xs" fontWeight="bold" color="fg" mb="1">
-        <Text as="span" color={markColor}>▍</Text> {FRAMING_META[framing].name}
+        <Text as="span" color={markColor}>▍</Text> {viewLabelFor(framing, coord.framing)}
         <Text as="span" color="fg.subtle" fontWeight="normal"> — {FRAMING_META[framing].gloss}</Text>
       </Text>
       <Text fontSize="2xs" color="fg.subtle" fontWeight="semibold" mb="1">{lenses[framing].heading}</Text>
@@ -2361,15 +2491,14 @@ function FramingComparisonTable({ scenario, option, coord, mode }: {
  * answer: a random 2–5s "thinking" pause, then box 1 fades in and types, then box 2 fades in
  * and types, then the legend, then the response buttons. A "Skip" control reveals it all at once.
  */
-function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
+function CVRReveal({ story, altStory, factBase, level, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
   story: ReturnType<typeof getCVRStory>;
   /** the SAME vignette with the framing flipped (the other reflection lens). */
   altStory: ReturnType<typeof getCVRStory>;
-  framingFirst: CVRFraming;
   factBase?: string;
   level: AlignmentLevel;
   accent: string;
-  /** colour mode — picks the bright (dark) vs darker (light) CVR highlight colours. */
+  /** color mode — picks the bright (dark) vs darker (light) CVR highlight colors. */
   mode: "light" | "dark";
   /** called once when the participant generates the alternate lens (lifts state to FlowOverlay). */
   onAltGenerated: () => void;
@@ -2397,8 +2526,9 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
   type AltState = "none" | "regenThinking" | "regenTyping" | "ready";
   const [altState, setAltState] = useState<AltState>("none");
   const [currentView, setCurrentView] = useState<"first" | "second">("first");
-  const framingSecond = otherFraming(framingFirst);
-  const marks = cvrMarks(mode); // mode-aware highlight colours for the vignette markup
+  /* Nothing on screen names a lens any more, so the second framing is no longer needed here —
+     `altStory` is passed in already built. */
+  const marks = cvrMarks(mode); // mode-aware highlight colors for the vignette markup
   const levelColor = (mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[level];
 
   // Random "thinking" wait (2–5s) on every arrival, then begin generating the first view.
@@ -2507,15 +2637,14 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
               bgImage="linear-gradient(135deg, #7c3aed, #4338ca)" color="white" _hover={{ opacity: 0.92 }}
               boxShadow="0 0 0 1px rgba(124,58,237,0.4)" animation="glow-ring 1.8s ease-in-out infinite"
               onClick={generateAlt}>
-              ✨ Generate the {FRAMING_META[framingSecond].name} view
+              ✨ Generate the {VIEW_LABEL.second.toLowerCase()}
             </Button>
           )}
           {(altState === "regenThinking" || altState === "regenTyping") && (
             <Text fontSize="2xs" color="fg.subtle" fontStyle="italic">Generating…</Text>
           )}
           {altState === "ready" && (
-            <ViewToggle current={currentView} framingFirst={framingFirst} framingSecond={framingSecond}
-              accent={accent} onSelect={setCurrentView} />
+            <ViewToggle current={currentView} accent={accent} onSelect={setCurrentView} />
           )}
         </Box>
       </HStack>
@@ -2552,7 +2681,7 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
               : shownStory.lens.heading}
           </Text>
           {altState === "regenThinking" ? (
-            <CVRThinking accent={accent} label={`Reframing through the ${FRAMING_META[framingSecond].name} lens`} />
+            <CVRThinking accent={accent} label={`Building the ${VIEW_LABEL.second.toLowerCase()}`} />
           ) : (
             <>
               {/* the opening paragraph */}
@@ -2651,8 +2780,8 @@ function CVRReveal({ story, altStory, framingFirst, factBase, level, accent, mod
           <Text fontSize="2xs" color={marks.a.color} fontWeight="bold">▍ same numbers</Text>
           <Text fontSize="2xs" color={marks.v.color} fontWeight="bold">▍ the value</Text>
           <Text fontSize="2xs" color={marks.f.color} fontWeight="bold">▍ the framing</Text>
-          {/* "who is affected" is not listed here any more: that colour only appears on the
-              person-speaks page, which comes after this one. A key to a colour the page does not
+          {/* "who is affected" is not listed here any more: that color only appears on the
+              person-speaks page, which comes after this one. A key to a color the page does not
               use is just noise. */}
         </HStack>
       )}
@@ -2798,7 +2927,7 @@ function FlowOverlay({
   altViewGenerated, onAltGenerated, framingChoiceYes, setFramingChoiceYes, mode,
 }: {
   option: LabeledOption; profile: Block5UserProfile; scenario: Block5Scenario; accent: string;
-  /** colour mode for the modal (light/dark-aware surfaces + CVR highlight colours). */
+  /** color mode for the modal (light/dark-aware surfaces + CVR highlight colors). */
   mode: "light" | "dark";
   whoVariant: WhoVariant | null;
   step: FlowStep; setStep: (s: FlowStep) => void;
@@ -2837,7 +2966,7 @@ function FlowOverlay({
    * The trade this option makes, for the confirm question — the same two values the APA page names
    * and the same two `applyEndorsementUpdates` moves. Built here so all three cannot drift apart.
    *
-   * Value names are drawn in the CVR "violated value" colour, bold and italic, exactly as they are
+   * Value names are drawn in the CVR "violated value" color, bold and italic, exactly as they are
    * on the APA page: a participant who sees the same words styled the same way in both places can
    * tell they are being asked about the same thing twice, rather than about two different things.
    */
@@ -2870,8 +2999,26 @@ function FlowOverlay({
   const altStory = coord && whoVariant
     ? getCVRStory(scenario, option, { ...coord, framing: otherFraming(coord.framing) }, whoVariant)
     : null;
-  // Alignment colour tuned for the current modal background (bright on dark, darker on light).
+  // Alignment color tuned for the current modal background (bright on dark, darker on light).
   const levelColor = (mode === "light" ? LEVEL_COLOR_LIGHT : LEVEL_COLOR)[option.level];
+
+  /*
+    FREEZE THE SCENARIO PAGE BEHIND THIS OVERLAY.
+
+    This panel scrolls on its own and the participant reads a long way down it — the vignette, the
+    consequences, the questions. Every time they reach its top or bottom edge the rest of the wheel
+    gesture goes to the page underneath, which quietly scrolls the scenario somewhere else. They
+    then answer, the overlay closes, and they are looking at a part of the page they never chose.
+
+    `overscroll-behavior: contain` on the panel stops the chain at its own edges, including on
+    touch; locking the root removes the thing that would be scrolled at all.
+  */
+  useEffect(() => {
+    const root = document.documentElement;
+    const prev = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => { root.style.overflow = prev; };
+  }, []);
 
   // Backdrop is intentionally NOT click-to-close: the participant must use an explicit,
   // recorded button to leave CVR/APA, so we never lose or corrupt their interaction data.
@@ -2879,7 +3026,7 @@ function FlowOverlay({
     <Box position="fixed" inset="0" bg="blackAlpha.700" backdropFilter="blur(4px)" zIndex="50"
       display="flex" alignItems="center" justifyContent="center" p="4">
       <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "7" }}
-        maxW="2xl" w="full" maxH="90dvh" overflowY="auto" shadow="2xl">
+        maxW="2xl" w="full" maxH="90dvh" overflowY="auto" overscrollBehavior="contain" shadow="2xl">
         <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">{copy.dialogEyebrow}</Text>
         <Heading size="md" color="fg" mb="2">{option.title}</Heading>
         {option.consequence && <Text fontSize="sm" color="fg.muted" mb="4" lineHeight="tall">{option.consequence}</Text>}
@@ -2984,7 +3131,6 @@ function FlowOverlay({
           <CVRReveal
             story={story}
             altStory={altStory}
-            framingFirst={framingFirst}
             factBase={scenario.factBase}
             level={option.level}
             accent={accent}
@@ -3041,13 +3187,19 @@ function FlowOverlay({
                 question={<>You looked at this from two perspectives. <Text as="span" color={accent}>Which one did NOT play a part</Text> in your decision to keep this option?</>}
               >
                 <Box mb="3"><FramingComparisonTable scenario={scenario} option={option} coord={coord} mode={mode} /></Box>
+                {/*
+                  Listed in the order the participant met them, and named for that order. The value
+                  written to state is still the framing itself, so the record is unchanged — only
+                  the words on the button differ.
+                */}
                 <Stack gap="2">
-                  <ApaChoice selected={framingChoiceYes === "directness"} accent={accent} onClick={() => setFramingChoiceYes("directness")}>
-                    The <b>Directness</b> view didn't influence me — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
-                  </ApaChoice>
-                  <ApaChoice selected={framingChoiceYes === "context"} accent={accent} onClick={() => setFramingChoiceYes("context")}>
-                    The <b>Context</b> view didn't influence me — <Text as="span" color="fg.subtle">{FRAMING_META.context.gloss}</Text>
-                  </ApaChoice>
+                  {[coord.framing, otherFraming(coord.framing)].map((f) => (
+                    <ApaChoice key={f} selected={framingChoiceYes === f} accent={accent}
+                      onClick={() => setFramingChoiceYes(f)}>
+                      The <b>{viewLabelFor(f, coord.framing)}</b> didn't influence me —{" "}
+                      <Text as="span" color="fg.subtle">{FRAMING_META[f].gloss}</Text>
+                    </ApaChoice>
+                  ))}
                 </Stack>
               </QuestionCard>
             )}
@@ -3074,7 +3226,8 @@ function FlowOverlay({
               <Text fontSize="xs" color="fg.muted" lineHeight="tall">
                 {q1Strong ? "Strong endorsement (+30 to this value, −20 to your previous top value)." : "Kept choice (+15 to this value, −10 to your previous top value)."}{" "}
                 {stakeholderMoved ? "Hearing someone's story +25." : "Hearing someone's story −25."}
-                {altViewGenerated && framingChoiceYes && ` ${FRAMING_META[framingChoiceYes].name} lens −20 (it didn't affect this choice).`}
+                {altViewGenerated && framingChoiceYes && coord
+                  && ` ${viewLabelFor(framingChoiceYes, coord.framing)} −20 (it didn't affect this choice).`}
               </Text>
             </Box>
             <HStack gap="3" wrap="wrap">
@@ -3121,7 +3274,7 @@ function FlowOverlay({
  * and in every case the thing being ASKED was less prominent than the thing being read:
  *
  *   - CVR: the pivotal "would you still choose this?" was the closing sentence of the
- *     stakeholder paragraph, with its answer buttons two elements further down and a colour
+ *     stakeholder paragraph, with its answer buttons two elements further down and a color
  *     legend sitting in between them.
  *   - Keep-confirmation and APA: the questions were muted grey prose, visually LIGHTER than
  *     the answer buttons underneath them.
@@ -3138,7 +3291,7 @@ function FlowOverlay({
  * every question to be answered before Continue enables, and previously nothing told the
  * participant which one they had missed.
  *
- * The scenario accent is passed in rather than read from a token because Block 5 recolours
+ * The scenario accent is passed in rather than read from a token because Block 5 recolors
  * itself per scenario (see block5Palette.ts).
  */
 function QuestionCard({ accent, index, total, label, question, answered, children }: {
@@ -3247,10 +3400,10 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   /** dual-perspective: did the participant generate the other lens, and which lens was shown first. */
   altViewGenerated: boolean;
   framingFirst: CVRFraming;
-  /** colour mode — light/dark-aware surfaces + highlight colours. */
+  /** color mode — light/dark-aware surfaces + highlight colors. */
   mode: "light" | "dark";
 }) {
-  // Highlight colours for the value-name spans, tuned for the current modal background.
+  // Highlight colors for the value-name spans, tuned for the current modal background.
   const marks = cvrMarks(mode);
   const TEAL = marks.v.color as string;     // the participant's leaning value
   const ORANGE = marks.f.color as string;   // the option's value
@@ -3517,13 +3670,16 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
           question={<>You looked at this from two perspectives. Which one most <Text as="span" color={PURPLE} fontWeight="bold">changed your mind</Text> toward not keeping this option?</>}
         >
           <Box mb="3"><FramingComparisonTable scenario={scenario} option={option} coord={coord} mode={mode} /></Box>
+          {/* Same as the confirm-page question above: ordered and named by position, storing the
+              framing. See VIEW_LABEL. */}
           <Stack gap="2">
-            <ApaChoice selected={framingInfluential === "directness"} accent={accent} onClick={() => setFramingInfluential("directness")}>
-              The <b>Directness</b> view changed my mind — <Text as="span" color="fg.subtle">{FRAMING_META.directness.gloss}</Text>
-            </ApaChoice>
-            <ApaChoice selected={framingInfluential === "context"} accent={accent} onClick={() => setFramingInfluential("context")}>
-              The <b>Context</b> view changed my mind — <Text as="span" color="fg.subtle">{FRAMING_META.context.gloss}</Text>
-            </ApaChoice>
+            {[coord.framing, otherFraming(coord.framing)].map((f) => (
+              <ApaChoice key={f} selected={framingInfluential === f} accent={accent}
+                onClick={() => setFramingInfluential(f)}>
+                The <b>{viewLabelFor(f, coord.framing)}</b> changed my mind —{" "}
+                <Text as="span" color="fg.subtle">{FRAMING_META[f].gloss}</Text>
+              </ApaChoice>
+            ))}
           </Stack>
         </QuestionCard>
       )}
