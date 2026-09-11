@@ -58,11 +58,30 @@ const TIMING_OUTPUT_KEY: Record<TelemetryStage, string> = {
   feedback: "feedbackMs",
 };
 
-/** Reads the timing ledger, returning an empty one on first use or on any parse failure. */
+/**
+ * Reads the timing ledger, returning an empty one on first use or on anything unusable.
+ *
+ * THE SHAPE IS CHECKED, NOT ASSUMED.
+ *
+ * This used to return `JSON.parse(raw)` directly, which is safe only while the stored value has
+ * the shape this file expects. Anything else — a ledger written by an older version of the app, a
+ * partially written value, a key edited by hand during testing — parses successfully into an
+ * object with no `stages`, and the very next line of markStage does `t.stages[stage]` on
+ * undefined. That throws during a React effect, which unmounts the whole experiment: the
+ * participant gets a blank white page mid-study and cannot continue.
+ *
+ * The comment on writeTimings already says timing is never worth failing a session over. This is
+ * what makes that true on the way in as well as on the way out.
+ */
 function readTimings(): StageTimings {
   try {
     const raw = localStorage.getItem(TELEMETRY_KEY);
-    if (raw) return JSON.parse(raw) as StageTimings;
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<StageTimings> | null;
+      if (parsed && typeof parsed === "object" && parsed.stages && typeof parsed.stages === "object") {
+        return parsed as StageTimings;
+      }
+    }
   } catch {
     // ignore — start fresh
   }

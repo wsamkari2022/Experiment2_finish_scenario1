@@ -40,6 +40,13 @@ import {
   upsertParticipant as upsertParticipantLocal,
   type DirectoryEntry,
 } from "./participantDirectory";
+import { SESSION_KEY_RESULTS } from "./constants";
+import { TROLLEY_RESULTS_STORAGE_KEY } from "./trolleyTypes";
+import { AI_WORKFORCE_RESULTS_KEY } from "./aiWorkforceTypes";
+import { BLOCK5_RESULTS_KEY } from "./block5Types";
+import { FEEDBACK_KEY } from "./feedbackTypes";
+import { TELEMETRY_KEY } from "./telemetry";
+import { PARTICIPANT_RECORD_KEY } from "./participantRecord";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -245,3 +252,123 @@ export function saveBlockData(input: {
 
 /** How many writes are still waiting for the server. Useful for a status readout. */
 export const pendingWriteCount = (): number => readOutbox().length;
+
+/* ------------------------------------------------------------------- block sync */
+
+/**
+ * Every piece of a participant's run, and the name it gets inside their document.
+ *
+ * WHY THIS IS A LIST HERE RATHER THAN A CALL IN EACH BLOCK
+ * The blocks already write their own results to LocalStorage, and they have done since long
+ * before there was a database. Editing all of them to also call the server would mean touching
+ * five working blocks — the parts of this study that must not break — to add a feature none of
+ * them care about. Reading what they have already written is the same data for none of the risk,
+ * and a block that changes how it saves keeps working without knowing this file exists.
+ *
+ * Two of these keys are private constants inside their own modules and cannot be imported, so
+ * they appear as literals. If either is ever renamed, this list must be updated with it; the
+ * sync check in `npm run validate:block5` is not aware of these.
+ */
+const BLOCK_SOURCES: { block: string; key: string }[] = [
+  { block: "money", key: SESSION_KEY_RESULTS },
+  { block: "trolley", key: TROLLEY_RESULTS_STORAGE_KEY },
+  { block: "aiWorkforce", key: AI_WORKFORCE_RESULTS_KEY },
+  { block: "insights", key: "moral_profile_insights" }, // private to MoralProfileInsightsPage
+  { block: "block4", key: "block4_reflection_results" },
+  { block: "finalAnalysis", key: "final_moral_analysis" }, // private to FinalMoralAnalysisPage
+  { block: "block5", key: BLOCK5_RESULTS_KEY },
+  { block: "feedback", key: FEEDBACK_KEY },
+  { block: "timings", key: TELEMETRY_KEY },
+  { block: "participantRecord", key: PARTICIPANT_RECORD_KEY },
+];
+
+/** Fingerprints of what has already been sent, so unchanged blocks are not re-sent. */
+const SYNC_STATE_KEY = "vrds_sync_state";
+
+/**
+ * A cheap content fingerprint.
+ *
+ * Not a real hash and does not need to be: the only question is "has this changed since I last
+ * sent it", and a length plus a rolling sum answers that for JSON that grows as a participant
+ * answers questions. A collision would cost one skipped re-send of data the server already has.
+ */
+function fingerprint(value: string): string {
+  let sum = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    sum = (sum * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return `${value.length}:${sum.toString(36)}`;
+}
+
+function readSyncState(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(SYNC_STATE_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : {};
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Sends any block whose stored answers have changed since the last sync.
+ *
+ * Called on every stage change and once more at completion. It is deliberately driven by the
+ * CONTENT rather than by events: a block that saved twice, or saved late, or was restored from a
+ * previous session, is picked up all the same. The alternative — trusting that every save fired a
+ * notification — is how partial data sets happen.
+ *
+ * Does nothing at all when there is no server, and never blocks the caller.
+ */
+export function syncBlocks(email: string | null): void {
+  if (!remote || !email) return;
+
+  const state = readSyncState();
+  let changed = false;
+
+  for (const source of BLOCK_SOURCES) {
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(source.key);
+    } catch {
+      continue;
+    }
+    if (!raw) continue;
+
+    const print = fingerprint(raw);
+    if (state[source.key] === print) continue;
+
+    let data: unknown;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      continue; // not JSON; nothing sensible to store
+    }
+
+    sendOrQueue({ op: "saveBlock", sessionId: "", block: source.block, data });
+    state[source.key] = print;
+    changed = true;
+  }
+
+  if (changed) {
+    try {
+      localStorage.setItem(SYNC_STATE_KEY, JSON.stringify(state));
+    } catch {
+      /* Worst case the same block is sent again next time, which is harmless. */
+    }
+  }
+}
+
+/**
+ * Forgets what has been sent, so the next sync sends everything again.
+ *
+ * Used when a participant is resumed from the server on a machine that has never seen them: the
+ * fingerprints from whoever used this browser last say nothing about THIS participant's data.
+ */
+export function resetSyncState(): void {
+  try {
+    localStorage.removeItem(SYNC_STATE_KEY);
+  } catch {
+    /* ignore */
+  }
+}

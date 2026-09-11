@@ -5,7 +5,15 @@ import { DemographicPage } from "./DemographicPage";
 import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
 /* Every participant write goes through storage.ts, never to the directory or a server directly.
    That is what lets the database be switched on in one place. See the header of storage.ts. */
-import { flushOutbox, saveCompletion, saveParticipant, saveProgress, useRemoteBackend } from "./storage";
+import {
+  flushOutbox,
+  resetSyncState,
+  saveCompletion,
+  saveParticipant,
+  saveProgress,
+  syncBlocks,
+  useRemoteBackend,
+} from "./storage";
 import { apiClient, isApiAvailable } from "./apiClient";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
@@ -245,6 +253,14 @@ export function ExperimentFlow() {
      */
     if (pendingEmail && stage !== "start" && stage !== "consent" && stage !== "demographics") {
       saveProgress(pendingEmail, stage);
+      /*
+       * And push whatever the blocks have written since the last screen.
+       *
+       * A stage change is the natural moment: a block has just finished and saved its results,
+       * and the participant is between screens rather than mid-answer. Only blocks whose stored
+       * content actually changed are sent, so this is cheap to call on every transition.
+       */
+      syncBlocks(pendingEmail);
     }
   }, [stage, pendingEmail]);
 
@@ -267,6 +283,21 @@ export function ExperimentFlow() {
       if (available) {
         useRemoteBackend(apiClient);
         void flushOutbox();
+        /*
+         * Sync immediately, because this effect finishes AFTER the first stage effect has already
+         * run. At that earlier moment there was no backend yet, so the sync it attempted did
+         * nothing — and without this line the data on screen would not reach the server until the
+         * participant happened to change stage. For somebody who opens the study on its last
+         * screen and finishes there, that stage change never comes.
+         *
+         * The email is read from storage rather than from `pendingEmail`, because this callback
+         * closed over the value from first render and may be looking at a stale null.
+         */
+        const email =
+          localStorage.getItem(STORAGE_KEY_PENDING_EMAIL) ??
+          readJson<{ email?: string }>(STORAGE_KEY_DEMOGRAPHICS)?.email ??
+          null;
+        syncBlocks(email);
       }
     })();
     return () => {
@@ -453,6 +484,9 @@ export function ExperimentFlow() {
             stage: entry.stage,
             consent: entry.consent,
           });
+          /* The sync fingerprints in this browser describe whoever used it last, not this
+             participant, so forget them and let the next sync re-send from scratch. */
+          resetSyncState();
           setPendingEmail(entry.email);
           setStage((entry.stage as Stage) || "money");
         }}
@@ -671,7 +705,15 @@ export function ExperimentFlow() {
             } catch {
               /* Storage unavailable; the directory write below still records it. */
             }
-            if (pendingEmail) saveCompletion(pendingEmail);
+            if (pendingEmail) {
+              saveCompletion(pendingEmail);
+              /*
+               * One last sync, and the most important one: the feedback answers were written a
+               * moment ago, and this is the last screen. Without it the final block would sit in
+               * the browser until a stage change that is never coming.
+               */
+              syncBlocks(pendingEmail);
+            }
           }}
         />
       </>
@@ -711,3 +753,4 @@ export function ExperimentFlow() {
 }
 
 export default ExperimentFlow;
+
