@@ -5,7 +5,8 @@ import { DemographicPage } from "./DemographicPage";
 import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
 /* Every participant write goes through storage.ts, never to the directory or a server directly.
    That is what lets the database be switched on in one place. See the header of storage.ts. */
-import { flushOutbox, saveCompletion, saveParticipant, saveProgress } from "./storage";
+import { flushOutbox, saveCompletion, saveParticipant, saveProgress, useRemoteBackend } from "./storage";
+import { apiClient, isApiAvailable } from "./apiClient";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -248,14 +249,29 @@ export function ExperimentFlow() {
   }, [stage, pendingEmail]);
 
   /*
-   * Retry anything that could not reach the server last time, once, on load.
+   * Switch the database on, if it is there.
    *
-   * A participant who closed the tab while the API was down comes back with writes still queued.
-   * This is the moment to clear them: the app has just started, nothing is competing for
-   * attention, and the queue drains in order. It does nothing at all while there is no server.
+   * The study is asked to run with or without the API: the researcher tests it without starting
+   * the server, and a participant must not be stopped by a server that is down. So the backend is
+   * only installed once /api/health answers — until then every write stays local and nothing is
+   * queued for a server that does not exist.
+   *
+   * Once it IS installed, the outbox is flushed: a participant who closed the tab while the API
+   * was down comes back with writes still waiting, and this is the moment to deliver them.
    */
   useEffect(() => {
-    void flushOutbox();
+    let cancelled = false;
+    void (async () => {
+      const available = await isApiAvailable();
+      if (cancelled) return;
+      if (available) {
+        useRemoteBackend(apiClient);
+        void flushOutbox();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Telemetry: time each content stage. Marks "start" when a stage renders and "end" when we
@@ -420,6 +436,23 @@ export function ExperimentFlow() {
           } catch {
             /* Storage unavailable; the resume still works for this tab. */
           }
+          /*
+           * Copy the participant into this browser's own directory.
+           *
+           * When the entry came from the SERVER, nothing local knows this person yet. Without
+           * this, a participant who resumed on a new machine and then lost the server would have
+           * no local record to fall back on — their progress would stop being tracked locally,
+           * which is exactly the situation the local-first rule exists to prevent. Writing it
+           * here makes the browser self-sufficient again from the first moment of the session.
+           */
+          saveParticipant({
+            email: entry.email,
+            sessionId: entry.sessionId,
+            age: entry.age,
+            gender: entry.gender,
+            stage: entry.stage,
+            consent: entry.consent,
+          });
           setPendingEmail(entry.email);
           setStage((entry.stage as Stage) || "money");
         }}
