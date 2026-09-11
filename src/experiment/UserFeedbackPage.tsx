@@ -31,12 +31,22 @@ import {
   FEEDBACK_ARCHIVE_KEY,
   type FeedbackAnswer, type FeedbackAnswers, type FeedbackQuestion,
 } from "./feedbackTypes";
+import { PARTICIPANT_DIRECTORY_KEY } from "./participantDirectory";
 
 interface Props {
   results: Block5Results | null;
   sessionId: string;
   /** Return to the Block-5 results summary. */
   onBack: () => void;
+  /**
+   * Called once, at the single moment the study counts as finished: the feedback answers have
+   * been accepted and the thank-you screen is about to show.
+   *
+   * The page does not write the completion status itself. Only the flow does, so that there is
+   * exactly one line in the codebase capable of marking someone complete — which is what makes
+   * "Study Completed" mean the same thing every time it appears.
+   */
+  onCompleted?: () => void;
 }
 
 /* ------------------------------- small inputs ------------------------------- */
@@ -127,7 +137,7 @@ function SectionCard({ accent, eyebrow, title, subtitle, children }: {
 
 /* ------------------------------- the page ------------------------------- */
 
-export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
+export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Props) {
   const [answers, setAnswers] = useState<Record<string, FeedbackAnswer>>({});
   const [submitted, setSubmitted] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
@@ -215,17 +225,37 @@ export function UserFeedbackPage({ results, sessionId, onBack }: Props) {
     markStage("feedback", "end");
     const record = assembleFeedbackRecord({ sessionId, results, answers: feedback });
     saveFeedbackRecord(record);
+    /* The answers are saved BEFORE the study is marked complete, and never the other way round.
+       If anything failed in between, a participant would be left recorded as unfinished with
+       their answers safe — recoverable. The reverse would mark them finished with nothing to
+       show for it, which is not. */
+    onCompleted?.();
     setSubmitted(true);
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
-  }, [answers, collect, isAnswered, requiredCodes, results, sessionId, showApa, showCvr, showDual]);
+  }, [answers, collect, isAnswered, onCompleted, requiredCodes, results, sessionId, showApa, showCvr, showDual]);
 
-  /** Finish: reset for a fresh participant but PRESERVE the archived records for export. */
+  /**
+   * Finish: reset for a fresh participant, but PRESERVE two things that outlive the run.
+   *
+   * The archived feedback records, as before — and the participant directory. The directory is
+   * every person this machine has enrolled, and it is what the start screen reads to recognise a
+   * returning participant and to refuse a second attempt. Clearing it with everything else would
+   * mean that finishing one session quietly erased the record of everyone who had used the
+   * machine before, and that each of them could then take the study again.
+   *
+   * Anything that must survive a reset goes in this list. Nothing else does.
+   */
   const handleFinish = useCallback(() => {
     try {
-      const archive = localStorage.getItem(FEEDBACK_ARCHIVE_KEY);
+      const preserved: Array<[string, string | null]> = [
+        [FEEDBACK_ARCHIVE_KEY, localStorage.getItem(FEEDBACK_ARCHIVE_KEY)],
+        [PARTICIPANT_DIRECTORY_KEY, localStorage.getItem(PARTICIPANT_DIRECTORY_KEY)],
+      ];
       localStorage.clear();
       sessionStorage.clear();
-      if (archive) localStorage.setItem(FEEDBACK_ARCHIVE_KEY, archive);
+      for (const [key, value] of preserved) {
+        if (value) localStorage.setItem(key, value);
+      }
     } catch { /* ignore */ }
     window.location.reload();
   }, []);

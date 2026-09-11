@@ -31,8 +31,14 @@ export const STATUS_NOT_COMPLETED = "Study Not Completed";
 export const STATUS_COMPLETED = "Study Completed";
 export type ParticipantStatus = typeof STATUS_NOT_COMPLETED | typeof STATUS_COMPLETED;
 
-/** LocalStorage key holding the whole directory, an object keyed by normalised email. */
-const DIRECTORY_KEY = "vrds_local_participants";
+/**
+ * LocalStorage key holding the whole directory, an object keyed by normalised email.
+ *
+ * Exported because anything that resets the app has to know to KEEP this. It outlives a single
+ * run: it is the record of every person this machine has enrolled.
+ */
+export const PARTICIPANT_DIRECTORY_KEY = "vrds_local_participants";
+const DIRECTORY_KEY = PARTICIPANT_DIRECTORY_KEY;
 
 /** One person. Mirrors the MongoDB document planned in CONSENT_DEMOGRAPHICS_MONGODB_PLAN.md. */
 export interface DirectoryEntry {

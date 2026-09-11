@@ -41,7 +41,8 @@ import {
 } from "@chakra-ui/react";
 import { LuArrowRight, LuCircleCheck, LuMail, LuTriangleAlert } from "react-icons/lu";
 import { Field } from "@/components/ui/field";
-import { lookupByEmail, STATUS_COMPLETED, type DirectoryEntry } from "./participantDirectory";
+import { STATUS_COMPLETED, type DirectoryEntry } from "./participantDirectory";
+import { findParticipant } from "./storage";
 
 /** Same permissive test as the demographic page — catch typos, do not police addresses. */
 const looksLikeEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
@@ -67,26 +68,32 @@ export function StartScreen({
   const [mode, setMode] = useState<Mode>({ kind: "askEmail" });
   const [ageAnswer, setAgeAnswer] = useState("");
   const [error, setError] = useState<string | null>(null);
+  /** True while the lookup is in flight. Local today; a server round trip once one exists. */
+  const [checking, setChecking] = useState(false);
 
   const emailValid = looksLikeEmail(email);
 
-  const handleContinue = () => {
-    if (!emailValid) {
-      setError("Please check this address — it does not look complete.");
+  const handleContinue = async () => {
+    if (!emailValid || checking) {
+      if (!emailValid) setError("Please check this address — it does not look complete.");
       return;
     }
     setError(null);
-
-    const entry = lookupByEmail(email);
-    if (!entry) {
-      onNewParticipant(email.trim().toLowerCase());
-      return;
+    setChecking(true);
+    try {
+      const entry = await findParticipant(email);
+      if (!entry) {
+        onNewParticipant(email.trim().toLowerCase());
+        return;
+      }
+      if (entry.status === STATUS_COMPLETED) {
+        setMode({ kind: "finished" });
+        return;
+      }
+      setMode({ kind: "verify", entry });
+    } finally {
+      setChecking(false);
     }
-    if (entry.status === STATUS_COMPLETED) {
-      setMode({ kind: "finished" });
-      return;
-    }
-    setMode({ kind: "verify", entry });
   };
 
   const handleVerify = () => {
@@ -186,7 +193,7 @@ export function StartScreen({
                       if (error) setError(null);
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && emailValid) handleContinue();
+                      if (e.key === "Enter" && emailValid) void handleContinue();
                     }}
                     pl="9"
                     rounded="lg"
@@ -206,8 +213,10 @@ export function StartScreen({
                 rounded="lg"
                 fontWeight="semibold"
                 gap="2"
-                disabled={!emailValid}
-                onClick={handleContinue}
+                disabled={!emailValid || checking}
+                loading={checking}
+                loadingText="Checking"
+                onClick={() => void handleContinue()}
               >
                 Continue
                 <Icon boxSize="4">

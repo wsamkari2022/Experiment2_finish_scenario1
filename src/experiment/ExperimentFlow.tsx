@@ -2,11 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { StartScreen } from "./StartScreen";
 import { ConsentPage } from "./ConsentPage";
 import { DemographicPage } from "./DemographicPage";
-import {
-  updateStage,
-  upsertParticipant,
-  STATUS_NOT_COMPLETED,
-} from "./participantDirectory";
+import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
+/* Every participant write goes through storage.ts, never to the directory or a server directly.
+   That is what lets the database be switched on in one place. See the header of storage.ts. */
+import { flushOutbox, saveCompletion, saveParticipant, saveProgress } from "./storage";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -46,11 +45,11 @@ import type {
  * They are never persisted to localStorage so a page refresh lands cleanly.
  */
 type Stage =
-  /* Informed consent, before anything else. A participant who has already agreed never returns
-     here: the restored stage carries them past it. See getRestoredStage. */
   /* Asks the email, and decides whether this is a new participant or a returning one. Seen only
      when the browser does not already recognise them. */
   | "start"
+  /* Informed consent. A participant who has already agreed never returns here: the restored
+     stage, or their directory entry, carries them past it. See getRestoredStage. */
   | "consent"
   /* Age, gender and the email that lets a participant return. Follows consent, once. */
   | "demographics"
@@ -144,12 +143,6 @@ function readJson<T>(key: string): T | null {
 function getRestoredStage(): Stage {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_STAGE) as Stage | null;
-    /*
-     * Nothing saved: a first visit, so start at consent — UNLESS a consent record already
-     * exists. That second case is someone who agreed and then had their stage lost (a cleared
-     * key, a mid-study error). Sending them back through the consent form would ask them to
-     * agree to something they have already agreed to, so they resume at the first block.
-     */
     if (!saved) {
       /*
        * Order matters here, and each branch is a real situation:
@@ -250,9 +243,20 @@ export function ExperimentFlow() {
      * the screen they left, not back at the first block.
      */
     if (pendingEmail && stage !== "start" && stage !== "consent" && stage !== "demographics") {
-      updateStage(pendingEmail, stage);
+      saveProgress(pendingEmail, stage);
     }
   }, [stage, pendingEmail]);
+
+  /*
+   * Retry anything that could not reach the server last time, once, on load.
+   *
+   * A participant who closed the tab while the API was down comes back with writes still queued.
+   * This is the moment to clear them: the app has just started, nothing is competing for
+   * attention, and the queue drains in order. It does nothing at all while there is no server.
+   */
+  useEffect(() => {
+    void flushOutbox();
+  }, []);
 
   // Telemetry: time each content stage. Marks "start" when a stage renders and "end" when we
   // leave it (effect cleanup). markStage ignores transition spinners, so only real stages count.
@@ -462,7 +466,7 @@ export function ExperimentFlow() {
             /* Storage unavailable; the study still runs. See the note on the consent record. */
           }
           setPendingEmail(record.email);
-          upsertParticipant({
+          saveParticipant({
             email: record.email,
             sessionId: participantId,
             age: record.age,
@@ -621,6 +625,21 @@ export function ExperimentFlow() {
           results={block5Results}
           sessionId={participantId}
           onBack={handleBackToSummary}
+          /*
+           * THE ONLY PLACE THE STUDY IS MARKED COMPLETE.
+           *
+           * Not when Block 5 ends, not when the results page is reached — here, once the feedback
+           * answers have been accepted. Keeping it to a single call site is what lets
+           * "Study Completed" be trusted later: every record carrying it got there the same way.
+           */
+          onCompleted={() => {
+            try {
+              localStorage.setItem(STORAGE_KEY_STATUS, STATUS_COMPLETED);
+            } catch {
+              /* Storage unavailable; the directory write below still records it. */
+            }
+            if (pendingEmail) saveCompletion(pendingEmail);
+          }}
         />
       </>
     );
