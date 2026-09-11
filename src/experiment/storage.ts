@@ -41,7 +41,7 @@ import {
   type DirectoryEntry,
 } from "./participantDirectory";
 import { TELEMETRY_KEY } from "./telemetry";
-import { SOURCE_MAP, buildHeadline, buildVisualizationData } from "./dbShape";
+import { SOURCE_MAP, buildHeadline, buildPositionSection, buildProfileChange } from "./dbShape";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -336,8 +336,18 @@ export function syncBlocks(email: string | null): void {
       }
       const headline = buildHeadline(translated, timings);
       if (headline) sendOrQueue({ op: "saveSection", path: "headline", data: headline });
-      const charts = buildVisualizationData(translated);
-      if (charts) sendOrQueue({ op: "saveSection", path: "analysis.block5_visualizations", data: charts });
+
+      /* Position, per scenario and per chair — the reading the results page computes and drops. */
+      const position = buildPositionSection(translated);
+      if (position) sendOrQueue({ op: "saveSection", path: "analysis.position_effect", data: position });
+
+      /* The value profile before and after Block 5, and the movement between them. */
+      const profiles = buildProfileChange(translated);
+      if (profiles) {
+        sendOrQueue({ op: "saveSection", path: "analysis.value_profile_before_block5", data: profiles.before });
+        sendOrQueue({ op: "saveSection", path: "analysis.value_profile_after_block5", data: profiles.after });
+        sendOrQueue({ op: "saveSection", path: "analysis.value_profile_change", data: profiles.change });
+      }
     }
   }
 

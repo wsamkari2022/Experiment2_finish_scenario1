@@ -198,6 +198,7 @@ function positionFor(b5: Record<string, unknown>) {
     return {
       effect: report.effect,
       label: report.effect === null ? null : positionEffectLabel(report.effect),
+      rows: report.rows,
       summaries: report.summaries,
       drift: report.drift,
       sentence: report.sentence,
@@ -205,6 +206,41 @@ function positionFor(b5: Record<string, unknown>) {
   } catch {
     return null;
   }
+}
+
+/** A value profile flattened to `{ value name: score }`, which is what an analyst wants. */
+function flattenProfile(profile: unknown): Record<string, number> | null {
+  if (!profile || typeof profile !== "object") return null;
+  const dims = (profile as { dimensions?: unknown }).dimensions;
+  if (!Array.isArray(dims)) return null;
+  const out: Record<string, number> = {};
+  for (const d of dims as { key?: string; score?: number }[]) {
+    if (d?.key) out[d.key] = typeof d.score === "number" ? d.score : 0;
+  }
+  return out;
+}
+
+/**
+ * The participant's values before Block 5, after it, and the movement between.
+ *
+ * Both profiles already exist inside the Block 5 results, under `originalProfile` and
+ * `userProfile` — names that do not say which is which to somebody meeting them for the first
+ * time, three levels down in a field they had no reason to open. The change is computed here
+ * because it is the number the question "did Block 5 move this person?" actually asks for, and
+ * working it out by hand means reading two nested objects and subtracting by eye.
+ */
+export function buildProfileChange(block5: unknown): Record<string, unknown> | null {
+  if (!block5 || typeof block5 !== "object") return null;
+  const b5 = block5 as Record<string, unknown>;
+  const before = flattenProfile(b5.originalProfile);
+  const after = flattenProfile(b5.userProfile);
+  if (!before || !after) return null;
+
+  const change: Record<string, number> = {};
+  for (const key of Object.keys(before)) {
+    if (typeof after[key] === "number") change[key] = Math.round((after[key] - before[key]) * 10) / 10;
+  }
+  return { before, after, change };
 }
 
 export function buildHeadline(block5: unknown, timings: unknown): Record<string, unknown> | null {
@@ -241,18 +277,89 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
  * database. An analyst who wants to know what a participant was SHOWN — as opposed to what can be
  * recomputed later from raw answers — has no way back to it otherwise.
  */
-export function buildVisualizationData(block5: unknown): Record<string, unknown> | null {
+/**
+ * Everything about position, in one section, in words a reader does not have to decode.
+ *
+ * WHY PER-SCENARIO ROWS ARE THE POINT
+ * The overall effect is one number: the widest gap between any two positions. It answers "did
+ * position matter?" and nothing else. The per-scenario rows answer the question an analyst
+ * actually has — how far did THIS choice sit from the person they were before Block 5 — and they
+ * were being discarded. analysePosition already computes them; only the saving was missing.
+ *
+ * DISTANCE VERSUS SHARE, AND WHY BOTH ARE KEPT
+ * `distance_from_profile_before_block5` is the raw gap. `departure_share` is that gap as a
+ * proportion of how far the six options in that scenario ALLOWED anyone to move. One scenario may
+ * only permit a move of 10; another permits 60. A distance of 10 is everything in the first case
+ * and almost nothing in the second, so the raw number alone is not comparable across scenarios.
+ * The share is what the headline compares; the raw distance is kept so the share can be audited.
+ */
+export function buildPositionSection(block5: unknown): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
   const position = positionFor(block5 as Record<string, unknown>);
   if (!position) return null;
+
+  const byScenario = position.rows.map((row) => ({
+    scenario_id: row.scenarioId,
+    order_shown: row.index,
+    title: row.title,
+    position: row.position,
+    position_label: row.positionLabel,
+    distance_from_profile_before_block5: row.distance,
+    departure_share: row.departure,
+    nearest_possible_distance: row.nearest,
+    farthest_possible_distance: row.farthest,
+    value_movement: row.valueDrift,
+  }));
+
+  const byPosition = position.summaries.map((s) => ({
+    position: s.position,
+    position_label: s.label,
+    scenarios_at_this_position: s.scenarioCount,
+    mean_distance_from_profile_before_block5: s.distance,
+    mean_departure_share: s.departure,
+    mean_value_movement: s.valueDrift,
+  }));
+
   return {
-    position_effect: position.effect,
-    position_effect_label: position.label,
-    position_effect_explained:
-      "How differently the participant chose depending on who the decision was about: themselves, their household, or strangers. Higher means their choices changed more with position.",
-    position_by_stake: position.summaries,
-    position_drift_check: position.drift,
-    position_direction_sentence: position.sentence,
-    note: "Computed from blocks.block5_emergency_scenarios. Saved because the results page works these out live and would otherwise discard them.",
+    overall_effect: position.effect,
+    overall_effect_label: position.label,
+    overall_effect_explained:
+      "The widest gap in departure_share between any two positions. Higher means the participant's choices depended more on who the decision was about.",
+    by_scenario: byScenario,
+    by_position: byPosition,
+    authority_vs_receiving: authorityVsReceiving(byPosition),
+    drift_check: position.drift,
+    drift_check_explained:
+      "Whether departure grew simply because the study went on, rather than because position changed. A large value here weakens any position reading.",
+    direction_sentence: position.sentence,
+    source: "Computed from blocks.block5_emergency_scenarios. Saved because the results page works these out live and would otherwise discard them.",
+  };
+}
+
+/**
+ * Scenarios 4 and 5 side by side — the cleanest position reading in the study.
+ *
+ * Everywhere else in Block 5, the position and the situation change together, so a difference
+ * could be either. These two are a matched pair by design: the same employer, the same decision,
+ * the same six options and the same numbers. The only thing that differs is whether the
+ * participant is the one deciding or the one it is being done to. A difference here is position,
+ * and it cannot be anything else — which is why it gets a field of its own rather than being
+ * left for a reader to work out from the array above.
+ */
+function authorityVsReceiving(
+  byPosition: { position: string; mean_departure_share: number }[],
+): Record<string, unknown> | null {
+  const deciding = byPosition.find((p) => p.position === "under_authority");
+  const receiving = byPosition.find((p) => p.position === "receiving_end");
+  if (!deciding || !receiving) return null;
+
+  const difference = Math.round((receiving.mean_departure_share - deciding.mean_departure_share) * 10) / 10;
+  return {
+    when_i_decided_under_my_employers_rules: deciding.mean_departure_share,
+    when_the_same_decision_was_done_to_me: receiving.mean_departure_share,
+    difference,
+    moved_further: difference === 0 ? "neither" : difference > 0 ? "receiving_end" : "under_authority",
+    why_this_pair_matters:
+      "Scenarios 4 and 5 are a matched pair: same employer, same decision, same six options, same numbers. Only the chair the participant sits in changes, so a difference between them is a clean read of position rather than of content.",
   };
 }
