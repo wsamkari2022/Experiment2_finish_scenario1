@@ -47,6 +47,8 @@ import {
   buildHeadline,
   buildPositionSection,
   buildProfileChange,
+  collectResumeFiles,
+  restoreResumeFiles,
 } from "./dbShape";
 
 /* ------------------------------------------------------------------ the remote seam */
@@ -62,6 +64,8 @@ export interface RemoteBackend {
   markCompleted(email: string): Promise<void>;
   /** Writes one named section of the participant document. `path` is dotted, e.g. blocks.block1_money */
   saveSection(path: string, data: unknown): Promise<void>;
+  /** The raw browser files stored for a half-finished participant, or null. */
+  getResumeFiles(email: string): Promise<Record<string, unknown> | null>;
 }
 
 /**
@@ -229,6 +233,43 @@ export function saveCompletion(email: string): void {
 }
 
 /* ------------------------------------------------------------------------- blocks */
+
+/* ------------------------------------------------------- carrying a run to another machine */
+
+/**
+ * Uploads the files a returning participant would need on a different computer.
+ *
+ * Sent on every sync rather than only at a stage boundary, because the moment somebody abandons a
+ * run is not something the app is ever told about — they simply close the tab. Whatever was last
+ * uploaded is what they come back to, so it should be as recent as possible.
+ */
+export function syncResumeState(email: string | null): void {
+  if (!remote || !email) return;
+  const files = collectResumeFiles();
+  if (Object.keys(files).length === 0) return;
+  sendOrQueue({
+    op: "saveSection",
+    path: "resume_state",
+    data: { files, updated_at: new Date().toISOString() },
+  });
+}
+
+/**
+ * Downloads a participant's files and writes them into this browser.
+ *
+ * Returns how many were restored, so the caller can tell the difference between "welcome back,
+ * everything is here" and "the server had nothing for you" — two very different situations for
+ * somebody who is otherwise about to be sent back to the start.
+ */
+export async function restoreParticipantFiles(email: string): Promise<number> {
+  if (!remote) return 0;
+  try {
+    const files = await remote.getResumeFiles(email);
+    return restoreResumeFiles(files);
+  } catch {
+    return 0;
+  }
+}
 
 /**
  * How many writes are still waiting for the server. Useful for a status readout.

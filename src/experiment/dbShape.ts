@@ -98,6 +98,95 @@ export const SOURCE_MAP: SourceMapping[] = [
   { key: TELEMETRY_KEY, path: "timings" },
 ];
 
+/* ------------------------------------------------------------- carrying a run to another machine */
+
+/**
+ * The browser files a half-finished participant needs in order to continue somewhere else.
+ *
+ * THE PROBLEM THIS SOLVES
+ * The consent page promises that a participant may stop and come back. On the SAME browser that
+ * works, because their answers are still in it. On a different computer it did not work at all:
+ * the start screen recognised them and put them back on the stage they left, but nothing had put
+ * their answers there, so Block 5 found no profile and the flow sent them to Block 1 to start
+ * again. The promise was real; the software could not keep it.
+ *
+ * WHY THESE ARE RAW COPIES AND NOT THE TRANSLATED ONES
+ * `blocks` already holds most of this, but translated for readability — threshold keys renamed,
+ * feedback answers wrapped with their question text. Restoring from those would mean running
+ * every translation backwards, and each reverse step is a chance to hand somebody a corrupted
+ * version of their own answers. These are byte-for-byte what the browser wrote, so restoring is a
+ * copy with no interpretation.
+ *
+ * WHY IT IS A SEPARATE FIELD THAT DELETES ITSELF
+ * It is scaffolding, not data. It lives in `resume_state`, never in `blocks` or `analysis`, so it
+ * cannot be mistaken for a measurement — and the server removes it the moment the participant
+ * finishes, so a completed document is exactly as clean as it was before this existed.
+ *
+ * TWO OF THESE HAVE NEVER BEEN SAVED ANYWHERE
+ * `experiment_flow_insights` is the file Blocks 4 and 5 actually read to continue — not to be
+ * confused with `moral_profile_insights`, which has a similar name and is a different thing. And
+ * the three `*_progress` files hold a half-finished block, so without them somebody who stopped
+ * at scenario 3 of 5 would restart Block 5 from scenario 1.
+ */
+export const RESUME_FILES: string[] = [
+  "experiment_flow_insights",
+  "moral_profile_insights",
+  "final_moral_analysis",
+  SESSION_KEY_RESULTS,
+  TROLLEY_RESULTS_STORAGE_KEY,
+  AI_WORKFORCE_RESULTS_KEY,
+  "block4_reflection_results",
+  BLOCK5_RESULTS_KEY,
+  /* half-finished blocks */
+  "trolley_block_progress",
+  "ai_workforce_block_progress",
+  "block5_public_emergency_progress",
+  /* so time already spent is not lost by moving machine */
+  TELEMETRY_KEY,
+  "vrds_active_time",
+];
+
+/** Reads every resume file present in this browser. Missing ones are simply left out. */
+export function collectResumeFiles(): Record<string, unknown> {
+  const files: Record<string, unknown> = {};
+  for (const key of RESUME_FILES) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw === null) continue;
+      files[key] = JSON.parse(raw);
+    } catch {
+      /* Not JSON, or storage unavailable. Skipping one file is better than failing the sync. */
+    }
+  }
+  return files;
+}
+
+/**
+ * Writes downloaded files back into this browser, and reports how many landed.
+ *
+ * ONLY KEYS ON THE LIST ARE WRITTEN. The payload comes from the network, and writing arbitrary
+ * keys from a network response into storage would let a bad or stale document overwrite anything
+ * the app keeps — including the consent record and the participant directory.
+ *
+ * Existing values are NOT overwritten when the incoming file is missing, and the caller reloads
+ * the page afterwards, because the app reads these files once at startup.
+ */
+export function restoreResumeFiles(files: unknown): number {
+  if (!files || typeof files !== "object") return 0;
+  let restored = 0;
+  for (const [key, value] of Object.entries(files as Record<string, unknown>)) {
+    if (!RESUME_FILES.includes(key)) continue;
+    if (value === null || value === undefined) continue;
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      restored += 1;
+    } catch {
+      /* Storage full or unavailable; the rest are still worth trying. */
+    }
+  }
+  return restored;
+}
+
 /* ------------------------------------------------------------------------- the renames */
 
 /**

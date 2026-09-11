@@ -140,6 +140,13 @@ app.patch(
           completed_at: existing?.completed_at ?? now,
           updated_at: now,
         },
+        /*
+         * resume_state exists only to carry a HALF-FINISHED run to another computer. Once the
+         * study is done there is nothing to carry, and leaving it would put a second, raw copy of
+         * every answer beside the tidy one — the kind of duplicate that makes an analyst ask which
+         * of the two is the real record. It goes the moment it stops being useful.
+         */
+        $unset: { resume_state: "" },
       },
     );
     res.json({ ok: true });
@@ -153,7 +160,7 @@ app.patch(
  * field in the document — including `status`, `email` or `consent`. An allowlist of first segments
  * plus a strict character check means the worst a malformed request can do is be rejected.
  */
-const WRITABLE_ROOTS = new Set(["blocks", "analysis", "headline", "timings"]);
+const WRITABLE_ROOTS = new Set(["blocks", "analysis", "headline", "timings", "resume_state"]);
 const SAFE_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)?$/;
 
 app.patch(

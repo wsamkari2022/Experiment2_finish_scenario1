@@ -97,6 +97,16 @@ export const apiClient: RemoteBackend = {
     await request(`/participants/${encodeURIComponent(email)}/complete`, { method: "PATCH" });
   },
 
+  async getResumeFiles(email) {
+    /* The lookup already returns the whole document, so no extra endpoint is needed — the raw
+       files ride along with the record the start screen was fetching anyway. */
+    const doc = await request<{ resume_state?: { files?: Record<string, unknown> } } | null>(
+      "/participants/lookup",
+      { method: "POST", body: JSON.stringify({ email }) },
+    );
+    return doc?.resume_state?.files ?? null;
+  },
+
   async saveSection(path, data) {
     /* Addressed by email like everything else; the participant id travels on the document itself
        and does not need repeating in every section write. */

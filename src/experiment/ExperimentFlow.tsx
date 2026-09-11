@@ -8,10 +8,12 @@ import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
 import {
   flushOutbox,
   resetSyncState,
+  restoreParticipantFiles,
   saveCompletion,
   saveParticipant,
   saveProgress,
   syncBlocks,
+  syncResumeState,
   useRemoteBackend,
 } from "./storage";
 import { apiClient, isApiAvailable } from "./apiClient";
@@ -261,6 +263,12 @@ export function ExperimentFlow() {
        * content actually changed are sent, so this is cheap to call on every transition.
        */
       syncBlocks(pendingEmail);
+      /*
+       * And keep the copy that lets them continue on another machine up to date. A participant
+       * never announces that they are leaving — they close the tab — so the most recent stage
+       * boundary is the best moment there is.
+       */
+      syncResumeState(pendingEmail);
     }
   }, [stage, pendingEmail]);
 
@@ -298,6 +306,9 @@ export function ExperimentFlow() {
           readJson<{ email?: string }>(STORAGE_KEY_DEMOGRAPHICS)?.email ??
           null;
         syncBlocks(email);
+        /* And the copy that carries them to another machine — same reason, same moment. The
+           stage effect that normally sends it ran before this backend existed. */
+        syncResumeState(email);
       }
     })();
     return () => {
@@ -488,7 +499,36 @@ export function ExperimentFlow() {
              participant, so forget them and let the next sync re-send from scratch. */
           resetSyncState();
           setPendingEmail(entry.email);
-          setStage((entry.stage as Stage) || "money");
+
+          /*
+           * BRING THEIR ANSWERS DOWN BEFORE SHOWING THEM ANYTHING.
+           *
+           * Everything above restores who they are. None of it restores what they DID, and the
+           * later stages refuse to render without it: Block 5 with no profile falls through to
+           * `setStage("money")` and the participant starts the whole study again. That is the
+           * bug this fixes, and it is why the stage is not set here.
+           *
+           * The page is reloaded rather than continued, because every one of these files is read
+           * once when the app starts. Writing them into storage under a running app would leave
+           * it using the empty versions it already loaded. A reload is the only honest way to
+           * pick them up, and it is also what makes this safe: nothing half-restored is ever on
+           * screen.
+           */
+          void (async () => {
+            const restored = await restoreParticipantFiles(entry.email);
+            try {
+              localStorage.setItem(STORAGE_KEY_STAGE, entry.stage || "money");
+            } catch {
+              /* ignore */
+            }
+            if (restored > 0) {
+              window.location.reload();
+              return;
+            }
+            /* Nothing came back — either there is no server, or this participant has nothing
+               stored yet. Continue in this tab; the stage guards will place them safely. */
+            setStage((entry.stage as Stage) || "money");
+          })();
         }}
       />
     );
