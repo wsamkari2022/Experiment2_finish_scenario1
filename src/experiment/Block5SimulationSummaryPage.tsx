@@ -145,16 +145,29 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
         {(() => {
           const withCvr = results.scenarioResults.filter((r) => r.cvrFired).length;
           const bothLenses = results.scenarioResults.filter((r) => r.cvrAltViewGenerated).length;
+          /* Read from the run, never written as a number: the scenario deck is edited far more
+             often than this paragraph is re-read. */
+          const totalScenarios = results.scenarioResults.length;
           if (withCvr === 0) return null;
           return (
             <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="5" py="4">
               <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">
                 Looking at it two ways
               </Text>
+              {/*
+                THE DENOMINATOR IS NAMED, NOT LEFT TO BE GUESSED.
+
+                This used to read "In 1 of 3 scenarios ...". Both numbers were correct — the
+                second view is only offered where the reflection fired, which is not every
+                situation — but a participant who has just played FIVE situations reads "of 3"
+                as a mistake in the software, and a researcher reading it over their shoulder
+                reads it as stale text. Saying how many were offered, out of how many there
+                were, removes the arithmetic the reader was being asked to do.
+              */}
               <Text fontSize="sm" color="fg.muted" lineHeight="tall">
                 {bothLenses === 0
-                  ? `You were offered a second way of seeing your choice in ${withCvr} scenario${withCvr === 1 ? "" : "s"}, and stayed with the first view each time.`
-                  : `In ${bothLenses} of ${withCvr} scenario${withCvr === 1 ? "" : "s"} you generated the second perspective and compared both ways of seeing the same choice.`}
+                  ? `In ${withCvr} of the ${totalScenarios} situations you were offered a second way of seeing your choice, and you stayed with the first view each time.`
+                  : `In ${withCvr} of the ${totalScenarios} situations you were offered a second way of seeing your choice. You generated it in ${bothLenses} of those, and compared both ways of seeing the same decision.`}
               </Text>
             </Box>
           );
@@ -167,8 +180,22 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
             <Icon><LuChartColumn /></Icon>
             View your results as charts
           </Button>
+          {/*
+            NO NUMBER HERE, AND THAT IS THE FIX.
+
+            This promised "seven simple charts". The view holds seventeen chart cards, and how
+            many a given participant actually sees varies: several are conditional on what their
+            run contained — the money and trolley charts, the employer-values chart, the
+            scenario-5 wish chart. So there is no single true number to print, and the one that
+            was printed had been wrong for a long time without anybody noticing.
+
+            A count is the kind of detail that goes stale the moment a chart is added, and it
+            buys the reader nothing: they are about to see the charts. Describing what the charts
+            are ABOUT cannot rot in the same way.
+          */}
           <Text fontSize="xs" color="fg.muted" mt="2">
-            See your full journey — values, choices, consistency, and time — in seven simple charts.
+            See your full journey — your values, your choices, how consistent you were, and where
+            your time went.
           </Text>
         </Box>
 
