@@ -60,7 +60,7 @@ import { analysePosition, positionEffectLabel } from "./block5Position";
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-11-position";
+export const SHAPE_VERSION = "2026-09-11-position-b";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -260,13 +260,44 @@ export function buildProfileChange(block5: unknown): Record<string, unknown> | n
   return { before, after, change };
 }
 
+/**
+ * How long the study actually took, in milliseconds.
+ *
+ * WHY THIS IS NOT SIMPLY `totalExperimentMs`
+ * That field exists, but it is assembled into the FEEDBACK record at the very end — it is not
+ * part of the raw timing ledger this function is handed, so reading it there always produced
+ * null. The headline said "no total time" for every participant, which is how the bug hid.
+ *
+ * WHY THE SUM OF STAGES, AND NOT LAST-EVENT MINUS FIRST-EVENT
+ * This study is explicitly allowed to be done across several sittings. Somebody who starts on
+ * Monday and finishes on Wednesday has a wall-clock span of two days and perhaps forty minutes of
+ * actual work. Subtracting the first timestamp from the last would report the two days. Summing
+ * the time spent on each stage reports the forty minutes, which is the number anybody asking
+ * "how long does this take?" means.
+ */
+function totalTimeMs(timings: unknown): number | null {
+  if (!timings || typeof timings !== "object") return null;
+  const t = timings as { totalExperimentMs?: number; stages?: Record<string, { durationMs?: number }> };
+  if (typeof t.totalExperimentMs === "number") return t.totalExperimentMs;
+  if (!t.stages || typeof t.stages !== "object") return null;
+  let sum = 0;
+  let seen = false;
+  for (const stage of Object.values(t.stages)) {
+    if (stage && typeof stage.durationMs === "number") {
+      sum += stage.durationMs;
+      seen = true;
+    }
+  }
+  return seen ? sum : null;
+}
+
 export function buildHeadline(block5: unknown, timings: unknown): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
   const b5 = block5 as Record<string, unknown>;
 
   const position = positionFor(b5);
 
-  const totalMs = (timings as { totalExperimentMs?: number } | null)?.totalExperimentMs;
+  const totalMs = totalTimeMs(timings);
 
   return {
     /* "VCI" is the internal name. It measures how consistent the choices were, so that is what
