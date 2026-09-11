@@ -4,6 +4,7 @@ import { ColorModeButton } from "@/components/ui/color-mode";
 import { DevResetButton } from "@/components/dev/DevResetButton";
 import { ExperimentFlow } from "./experiment/ExperimentFlow";
 import { StudyErrorBoundary } from "./experiment/StudyErrorBoundary";
+import { ActivePauseBadge } from "./experiment/ActivePauseBadge";
 
 function App() {
   return (
@@ -21,6 +22,8 @@ function App() {
       <StudyErrorBoundary>
         <ExperimentFlow />
       </StudyErrorBoundary>
+      {/* Above every screen, because the clock pauses wherever the participant happens to be. */}
+      <ActivePauseBadge />
       {/* DEV ONLY — renders nothing in a production build. See DevResetButton for how to remove. */}
       <DevResetButton />
     </Box>

@@ -19,7 +19,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   Badge, Box, Button, Heading, HStack, Icon, Separator, Stack, Text, Textarea, VStack,
 } from "@chakra-ui/react";
-import { LuArrowLeft, LuCheck, LuMessageSquare, LuRotateCcw, LuSparkles } from "react-icons/lu";
+import { LuArrowLeft, LuCheck, LuClock, LuMessageSquare, LuRotateCcw, LuSparkles } from "react-icons/lu";
 import type { Block5Results } from "./block5Types";
 import { markStage } from "./telemetry";
 import {
@@ -32,6 +32,7 @@ import {
   type FeedbackAnswer, type FeedbackAnswers, type FeedbackQuestion,
 } from "./feedbackTypes";
 import { PARTICIPANT_DIRECTORY_KEY } from "./participantDirectory";
+import { getActiveSummary } from "./activeTime";
 
 interface Props {
   results: Block5Results | null;
@@ -140,6 +141,9 @@ function SectionCard({ accent, eyebrow, title, subtitle, children }: {
 export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Props) {
   const [answers, setAnswers] = useState<Record<string, FeedbackAnswer>>({});
   const [submitted, setSubmitted] = useState(false);
+  /** The active-time summary, frozen at the moment of submission. */
+  const [activeSummary, setActiveSummary] =
+    useState<ReturnType<typeof getActiveSummary> | null>(null);
   const [showValidation, setShowValidation] = useState(false);
 
   const showCvr = useMemo(() => shouldShowCvrSection(results), [results]);
@@ -229,6 +233,8 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
        If anything failed in between, a participant would be left recorded as unfinished with
        their answers safe — recoverable. The reverse would mark them finished with nothing to
        show for it, which is not. */
+    /* Read before the flow stops the clock, so the number shown is the one that was earned. */
+    setActiveSummary(getActiveSummary());
     onCompleted?.();
     setSubmitted(true);
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
@@ -272,6 +278,45 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
             Your feedback has been recorded. We're grateful for the time and thought you gave
             to this experiment — it genuinely helps improve how these decision-support tools work.
           </Text>
+
+          {/*
+            THE TIME THEY ACTUALLY WORKED, AND NOTHING ELSE.
+            No eligibility, no threshold, no "you needed X more minutes". A page that reports how
+            close somebody is to a target is a page that teaches them how to reach it without
+            doing the work. Whether a participant qualifies is decided later, from the data,
+            where nobody can nudge it.
+          */}
+          {activeSummary && activeSummary.total_active_minutes > 0 && (
+            <Box
+              bg="bg.subtle"
+              borderWidth="1px"
+              borderColor="border"
+              rounded="xl"
+              px="6"
+              py="4"
+              w="full"
+            >
+              <HStack gap="3" justify="center" align="center">
+                <Icon boxSize="4" color="fg.muted"><LuClock /></Icon>
+                <Text fontSize="sm" color="fg.muted">
+                  You spent{" "}
+                  <Text as="span" color="fg" fontWeight="bold">
+                    {Math.round(activeSummary.total_active_minutes)} minutes
+                  </Text>{" "}
+                  actively working on this study
+                  {activeSummary.sittings > 1 && (
+                    <>
+                      , across{" "}
+                      <Text as="span" color="fg" fontWeight="bold">
+                        {activeSummary.sittings} visits
+                      </Text>
+                    </>
+                  )}
+                  .
+                </Text>
+              </HStack>
+            </Box>
+          )}
           <Button onClick={handleFinish} size="lg" bg="gray.900" color="white" _hover={{ bg: "gray.800" }} rounded="lg" px="8" gap="2">
             <Icon><LuRotateCcw /></Icon>
             Finish

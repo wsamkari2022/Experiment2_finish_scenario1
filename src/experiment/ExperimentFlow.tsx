@@ -17,6 +17,7 @@ import {
   useRemoteBackend,
 } from "./storage";
 import { apiClient, isApiAvailable } from "./apiClient";
+import { setActiveStage, startActiveClock, stopActiveClock } from "./activeTime";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -315,6 +316,21 @@ export function ExperimentFlow() {
       cancelled = true;
     };
   }, []);
+
+  /*
+   * The active-time clock. Started once, then told which screen is showing on every change.
+   *
+   * It counts only while the participant is really working — see activeTime.ts. The entry screen
+   * is excluded because typing an email is not participation; everything from the consent page
+   * onwards counts, including reading the consent, which is genuine effort.
+   */
+  useEffect(() => {
+    startActiveClock();
+  }, []);
+
+  useEffect(() => {
+    setActiveStage(stage === "start" ? "" : stage);
+  }, [stage]);
 
   // Telemetry: time each content stage. Marks "start" when a stage renders and "end" when we
   // leave it (effect cleanup). markStage ignores transition spinners, so only real stages count.
@@ -745,6 +761,9 @@ export function ExperimentFlow() {
             } catch {
               /* Storage unavailable; the directory write below still records it. */
             }
+            /* The clock stops here and never restarts: sitting on the thank-you page, or
+               reopening it tomorrow, must not earn a single second more. */
+            stopActiveClock();
             if (pendingEmail) {
               saveCompletion(pendingEmail);
               /*

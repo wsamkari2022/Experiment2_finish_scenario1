@@ -229,17 +229,42 @@ export function StartScreen({
           {/* ------------------------------------------------------------------- VERIFY */}
           {mode.kind === "verify" && (
             <VStack align="stretch" gap="5">
-              <HStack gap="2.5" align="center">
-                <Icon boxSize="4" color="green.fg">
-                  <LuCircleCheck />
-                </Icon>
-                <Text fontSize="sm" color="fg" fontWeight="semibold">
-                  Welcome back
-                </Text>
-              </HStack>
+              {/*
+                The address is repeated back deliberately. A returning participant may not
+                remember which of their addresses they used, and seeing the right one is the
+                difference between "this is my session" and "whose session is this?" — which is
+                the question the age check is about to ask them anyway.
+              */}
+              <Box
+                bg="green.subtle"
+                borderWidth="1px"
+                borderColor="green.solid"
+                rounded="xl"
+                px="4"
+                py="3.5"
+              >
+                <HStack gap="3" align="center">
+                  <Icon boxSize="5" color="green.fg">
+                    <LuCircleCheck />
+                  </Icon>
+                  <VStack align="start" gap="0.5" minW="0">
+                    <Text fontSize="md" color="fg" fontWeight="bold" letterSpacing="tight">
+                      Welcome back
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      color="green.fg"
+                      fontWeight="semibold"
+                      wordBreak="break-all"
+                    >
+                      {mode.entry.email}
+                    </Text>
+                  </VStack>
+                </HStack>
+              </Box>
               <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-                We found your earlier session and can continue from where you stopped. To confirm
-                it is you, please enter your age.
+                We found your earlier session and can continue from exactly where you stopped —
+                your answers are all still here. To confirm it is you, please enter your age.
               </Text>
 
               <Field label="Your age" invalid={!!error} errorText={error || undefined}>

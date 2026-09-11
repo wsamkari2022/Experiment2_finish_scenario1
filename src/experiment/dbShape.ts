@@ -44,6 +44,7 @@ import {
 import { TELEMETRY_KEY } from "./telemetry";
 import { PARTICIPANT_RECORD_KEY } from "./participantRecord";
 import { analysePosition, positionEffectLabel } from "./block5Position";
+import { ACTIVE_TIME_KEY } from "./activeTime";
 
 /**
  * Bump this whenever the SHAPE of the document changes — a field added, renamed, moved, or a
@@ -96,7 +97,43 @@ export const SOURCE_MAP: SourceMapping[] = [
   { key: PARTICIPANT_RECORD_KEY, path: "analysis.participant_record" },
 
   { key: TELEMETRY_KEY, path: "timings" },
+  /* Its own room, not inside `timings`: the whole `timings` object is written as one value, so a
+     nested path would be wiped the next time the ledger above was sent. */
+  { key: ACTIVE_TIME_KEY, path: "active_time", transform: summariseActiveTime },
 ];
+
+/**
+ * The active-time ledger, tidied for a reader.
+ *
+ * The stored version keeps milliseconds and raw timestamps because that is what arithmetic needs.
+ * Nobody analysing a dataset wants to divide by 60000 in their head, so the database gets minutes
+ * and ISO dates, plus a sentence stating the counting rule — so a reader never has to guess
+ * whether "42" meant minutes of work or minutes of having the tab open.
+ */
+function summariseActiveTime(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+  const l = value as {
+    totalMs?: number; byStage?: Record<string, number>; sittings?: number;
+    firstSeenAt?: number; lastActiveAt?: number; longestIdleMs?: number; stopped?: boolean;
+  };
+  const minutes = (ms: number | undefined) =>
+    typeof ms === "number" ? Math.round((ms / 60000) * 10) / 10 : null;
+  const byStage: Record<string, number> = {};
+  for (const [stage, ms] of Object.entries(l.byStage ?? {})) {
+    byStage[stage] = Math.round((ms / 60000) * 10) / 10;
+  }
+  return {
+    total_active_minutes: minutes(l.totalMs),
+    by_stage_minutes: byStage,
+    sittings: l.sittings ?? null,
+    longest_idle_minutes: minutes(l.longestIdleMs),
+    first_seen_at: l.firstSeenAt ? new Date(l.firstSeenAt).toISOString() : null,
+    last_active_at: l.lastActiveAt ? new Date(l.lastActiveAt).toISOString() : null,
+    clock_stopped: l.stopped === true,
+    counting_rule:
+      "Counts only while the tab was visible AND the participant had moved, typed, clicked or scrolled within the previous 90 seconds. Idle time is never included.",
+  };
+}
 
 /* ------------------------------------------------------------- carrying a run to another machine */
 
