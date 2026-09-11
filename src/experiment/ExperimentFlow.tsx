@@ -711,8 +711,13 @@ export function ExperimentFlow() {
                * One last sync, and the most important one: the feedback answers were written a
                * moment ago, and this is the last screen. Without it the final block would sit in
                * the browser until a stage change that is never coming.
+               *
+               * Forced, because nothing in the earlier blocks has CHANGED and the ordinary sync
+               * only sends what changed — yet the derived sections must be rebuilt here. The study
+               * total time is only totalled at this moment, so a headline built when Block 5
+               * finished still says total_time_minutes: null.
                */
-              syncBlocks(pendingEmail);
+              syncBlocks(pendingEmail, { force: true });
             }
           }}
         />

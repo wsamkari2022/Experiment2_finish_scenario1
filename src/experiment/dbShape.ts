@@ -45,6 +45,23 @@ import { TELEMETRY_KEY } from "./telemetry";
 import { PARTICIPANT_RECORD_KEY } from "./participantRecord";
 import { analysePosition, positionEffectLabel } from "./block5Position";
 
+/**
+ * Bump this whenever the SHAPE of the document changes — a field added, renamed, moved, or a
+ * derived section introduced.
+ *
+ * WHY IT HAS TO EXIST
+ * The sync only sends a source whose stored content has CHANGED, which is what keeps it cheap.
+ * But a new derived section is not a change in any participant's answers: their Block 5 results
+ * are byte-for-byte what they were, so nothing looks changed, so nothing is sent — and the new
+ * field never appears for anybody who had already been synced.
+ *
+ * That is exactly what happened when position_effect was added: a completed participant kept the
+ * old `block5_visualizations` and never received the new section, because their data had not
+ * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
+ * builds the new sections from data that was already there.
+ */
+export const SHAPE_VERSION = "2026-09-11-position";
+
 /* ------------------------------------------------------------------ where each source goes */
 
 /**

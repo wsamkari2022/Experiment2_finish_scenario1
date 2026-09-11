@@ -41,7 +41,13 @@ import {
   type DirectoryEntry,
 } from "./participantDirectory";
 import { TELEMETRY_KEY } from "./telemetry";
-import { SOURCE_MAP, buildHeadline, buildPositionSection, buildProfileChange } from "./dbShape";
+import {
+  SOURCE_MAP,
+  SHAPE_VERSION,
+  buildHeadline,
+  buildPositionSection,
+  buildProfileChange,
+} from "./dbShape";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -270,13 +276,28 @@ function fingerprint(value: string): string {
   return `${value.length}:${sum.toString(36)}`;
 }
 
+/** Reserved key inside the sync state holding the shape the fingerprints were taken against. */
+const SHAPE_VERSION_KEY = "__shape_version";
+
+/**
+ * Reads the fingerprints — unless they were taken against an older document shape, in which case
+ * they are discarded.
+ *
+ * Without this gate, a participant whose data was already synced never receives a newly added
+ * field: their answers have not changed, so nothing looks stale, so nothing is re-sent. Comparing
+ * the version turns "has this participant's data changed?" into "has their data changed, OR has
+ * what we store about it changed?", which is the question that actually matters.
+ */
 function readSyncState(): Record<string, string> {
   try {
     const raw = localStorage.getItem(SYNC_STATE_KEY);
     const parsed = raw ? (JSON.parse(raw) as unknown) : {};
-    return parsed && typeof parsed === "object" ? (parsed as Record<string, string>) : {};
+    if (!parsed || typeof parsed !== "object") return { [SHAPE_VERSION_KEY]: SHAPE_VERSION };
+    const state = parsed as Record<string, string>;
+    if (state[SHAPE_VERSION_KEY] !== SHAPE_VERSION) return { [SHAPE_VERSION_KEY]: SHAPE_VERSION };
+    return state;
   } catch {
-    return {};
+    return { [SHAPE_VERSION_KEY]: SHAPE_VERSION };
   }
 }
 
@@ -290,10 +311,16 @@ function readSyncState(): Record<string, string> {
  *
  * Does nothing at all when there is no server, and never blocks the caller.
  */
-export function syncBlocks(email: string | null): void {
+export function syncBlocks(email: string | null, opts?: { force?: boolean }): void {
   if (!remote || !email) return;
 
-  const state = readSyncState();
+  /*
+   * `force` re-sends everything even if nothing looks changed. It is used at completion, because
+   * two things are only true at that moment: the feedback answers have just been written, and the
+   * total study time has only just been totalled. A headline built earlier carries
+   * total_time_minutes: null forever unless it is rebuilt here.
+   */
+  const state = opts?.force ? { ["__shape_version"]: SHAPE_VERSION } : readSyncState();
   let changed = false;
 
   for (const source of BLOCK_SOURCES) {
