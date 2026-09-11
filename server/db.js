@@ -40,7 +40,7 @@ export async function connect() {
 
   await db.collection("participants").createIndexes([
     { key: { email: 1 }, name: "email_unique", unique: true },
-    { key: { session_id: 1 }, name: "session_id_unique", unique: true },
+    { key: { participant_id: 1 }, name: "participant_id_unique", unique: true },
     { key: { status: 1 }, name: "status" },
   ]);
 

@@ -40,13 +40,8 @@ import {
   upsertParticipant as upsertParticipantLocal,
   type DirectoryEntry,
 } from "./participantDirectory";
-import { SESSION_KEY_RESULTS } from "./constants";
-import { TROLLEY_RESULTS_STORAGE_KEY } from "./trolleyTypes";
-import { AI_WORKFORCE_RESULTS_KEY } from "./aiWorkforceTypes";
-import { BLOCK5_RESULTS_KEY } from "./block5Types";
-import { FEEDBACK_KEY } from "./feedbackTypes";
 import { TELEMETRY_KEY } from "./telemetry";
-import { PARTICIPANT_RECORD_KEY } from "./participantRecord";
+import { SOURCE_MAP, buildHeadline, buildVisualizationData } from "./dbShape";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -59,7 +54,8 @@ export interface RemoteBackend {
   upsertParticipant(entry: DirectoryEntry): Promise<void>;
   updateStage(email: string, stage: string): Promise<void>;
   markCompleted(email: string): Promise<void>;
-  saveBlock(sessionId: string, block: string, data: unknown): Promise<void>;
+  /** Writes one named section of the participant document. `path` is dotted, e.g. blocks.block1_money */
+  saveSection(path: string, data: unknown): Promise<void>;
 }
 
 /**
@@ -94,7 +90,7 @@ type OutboxItem =
   | { op: "upsertParticipant"; entry: DirectoryEntry }
   | { op: "updateStage"; email: string; stage: string }
   | { op: "markCompleted"; email: string }
-  | { op: "saveBlock"; sessionId: string; block: string; data: unknown };
+  | { op: "saveSection"; path: string; data: unknown };
 
 function readOutbox(): OutboxItem[] {
   try {
@@ -134,8 +130,8 @@ async function send(item: OutboxItem): Promise<boolean> {
       case "markCompleted":
         await remote.markCompleted(item.email);
         return true;
-      case "saveBlock":
-        await remote.saveBlock(item.sessionId, item.block, item.data);
+      case "saveSection":
+        await remote.saveSection(item.path, item.data);
         return true;
     }
   } catch {
@@ -229,28 +225,13 @@ export function saveCompletion(email: string): void {
 /* ------------------------------------------------------------------------- blocks */
 
 /**
- * Saves one block's answers.
+ * How many writes are still waiting for the server. Useful for a status readout.
  *
- * `key` is the LocalStorage key the block already uses, so this can be adopted block by block in
- * step 9 without changing what any of them writes or how the existing readers find it. The
- * `block` name is what the field will be called inside the participant's document.
+ * (A per-block `saveBlockData` helper used to live here, for blocks to call as they saved. It was
+ * never adopted: syncBlocks reads what the blocks have already written instead, which covers every
+ * source without any block having to know this file exists. It is gone rather than left unused,
+ * because a second way to write the same data is a second way for the two to disagree.)
  */
-export function saveBlockData(input: {
-  sessionId: string;
-  email: string | null;
-  block: string;
-  key: string;
-  data: unknown;
-}): void {
-  try {
-    localStorage.setItem(input.key, JSON.stringify(input.data));
-  } catch {
-    /* Storage unavailable; the send below is then the only copy. */
-  }
-  sendOrQueue({ op: "saveBlock", sessionId: input.sessionId, block: input.block, data: input.data });
-}
-
-/** How many writes are still waiting for the server. Useful for a status readout. */
 export const pendingWriteCount = (): number => readOutbox().length;
 
 /* ------------------------------------------------------------------- block sync */
@@ -269,18 +250,7 @@ export const pendingWriteCount = (): number => readOutbox().length;
  * they appear as literals. If either is ever renamed, this list must be updated with it; the
  * sync check in `npm run validate:block5` is not aware of these.
  */
-const BLOCK_SOURCES: { block: string; key: string }[] = [
-  { block: "money", key: SESSION_KEY_RESULTS },
-  { block: "trolley", key: TROLLEY_RESULTS_STORAGE_KEY },
-  { block: "aiWorkforce", key: AI_WORKFORCE_RESULTS_KEY },
-  { block: "insights", key: "moral_profile_insights" }, // private to MoralProfileInsightsPage
-  { block: "block4", key: "block4_reflection_results" },
-  { block: "finalAnalysis", key: "final_moral_analysis" }, // private to FinalMoralAnalysisPage
-  { block: "block5", key: BLOCK5_RESULTS_KEY },
-  { block: "feedback", key: FEEDBACK_KEY },
-  { block: "timings", key: TELEMETRY_KEY },
-  { block: "participantRecord", key: PARTICIPANT_RECORD_KEY },
-];
+const BLOCK_SOURCES = SOURCE_MAP;
 
 /** Fingerprints of what has already been sent, so unchanged blocks are not re-sent. */
 const SYNC_STATE_KEY = "vrds_sync_state";
@@ -345,9 +315,30 @@ export function syncBlocks(email: string | null): void {
       continue; // not JSON; nothing sensible to store
     }
 
-    sendOrQueue({ op: "saveBlock", sessionId: "", block: source.block, data });
+    /* Translate on the way out: rename misleading keys, attach the real feedback questions.
+       See dbShape.ts — the study's own copy in the browser is never touched. */
+    const translated = source.transform ? source.transform(data) : data;
+    sendOrQueue({ op: "saveSection", path: source.path, data: translated });
     state[source.key] = print;
     changed = true;
+
+    /*
+     * Block 5 is the one source that produces more than it stores. The headline scores and the
+     * chart numbers are worked out FROM it, and the results page throws them away, so they are
+     * built and sent here at the moment the Block 5 results change.
+     */
+    if (source.path === "blocks.block5_emergency_scenarios") {
+      let timings: unknown = null;
+      try {
+        timings = JSON.parse(localStorage.getItem(TELEMETRY_KEY) ?? "null");
+      } catch {
+        /* headline simply reports no total time */
+      }
+      const headline = buildHeadline(translated, timings);
+      if (headline) sendOrQueue({ op: "saveSection", path: "headline", data: headline });
+      const charts = buildVisualizationData(translated);
+      if (charts) sendOrQueue({ op: "saveSection", path: "analysis.block5_visualizations", data: charts });
+    }
   }
 
   if (changed) {

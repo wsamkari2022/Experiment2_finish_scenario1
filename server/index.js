@@ -10,7 +10,7 @@
  *   POST  /api/participants                create or update a participant
  *   PATCH /api/participants/:email/stage   record how far they have got
  *   PATCH /api/participants/:email/complete  mark the study finished
- *   PATCH /api/participants/:email/block   save one block's answers
+ *   PATCH /api/participants/:email/section save one named section of the document
  *
  * WRITES NEVER FAIL DESTRUCTIVELY
  * Every write is an upsert or a targeted $set. Nothing here deletes a participant or replaces a
@@ -83,18 +83,19 @@ app.post(
       { email },
       {
         $set: {
-          session_id: body.sessionId,
+          participant_id: body.sessionId,
           age: body.age,
           gender: body.gender,
           consent: body.consent ?? null,
-          stage: body.stage ?? "money",
-          updatedAt: now,
+          current_stage: body.stage ?? "money",
+          /* `stage` is the app's word; `current_stage` says what it is to a reader. */
+          updated_at: now,
         },
         $setOnInsert: {
           email,
           status: "Study Not Completed",
-          createdAt: now,
-          completedAt: null,
+          created_at: now,
+          completed_at: null,
           blocks: {},
         },
       },
@@ -114,7 +115,7 @@ app.patch(
     if (!stage) return res.status(400).json({ error: "stage is required" });
     const result = await participants().updateOne(
       { email },
-      { $set: { stage, updatedAt: new Date().toISOString() } },
+      { $set: { current_stage: stage, updated_at: new Date().toISOString() } },
     );
     res.json({ updated: result.matchedCount === 1 });
   }),
@@ -130,14 +131,14 @@ app.patch(
      * the outbox, say — records the moment they FIRST finished rather than the moment the
      * message happened to arrive.
      */
-    const existing = await participants().findOne({ email }, { projection: { completedAt: 1 } });
+    const existing = await participants().findOne({ email }, { projection: { completed_at: 1 } });
     await participants().updateOne(
       { email },
       {
         $set: {
           status: "Study Completed",
-          completedAt: existing?.completedAt ?? now,
-          updatedAt: now,
+          completed_at: existing?.completed_at ?? now,
+          updated_at: now,
         },
       },
     );
@@ -145,15 +146,32 @@ app.patch(
   }),
 );
 
+/**
+ * The rooms of a participant document that may be written, and nothing else.
+ *
+ * The path arrives from the browser, and a path that went straight into a $set could address any
+ * field in the document — including `status`, `email` or `consent`. An allowlist of first segments
+ * plus a strict character check means the worst a malformed request can do is be rejected.
+ */
+const WRITABLE_ROOTS = new Set(["blocks", "analysis", "headline", "timings"]);
+const SAFE_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)?$/;
+
 app.patch(
-  "/api/participants/:email/block",
+  "/api/participants/:email/section",
   route(async (req, res) => {
     const email = normalizeEmail(req.params.email);
-    const block = String(req.body?.block ?? "");
-    if (!block) return res.status(400).json({ error: "block is required" });
+    const path = String(req.body?.path ?? "");
+
+    if (!SAFE_PATH.test(path)) {
+      return res.status(400).json({ error: `path must be lower_snake_case, got "${path}"` });
+    }
+    if (!WRITABLE_ROOTS.has(path.split(".")[0])) {
+      return res.status(400).json({ error: `"${path}" is not a writable section` });
+    }
+
     await participants().updateOne(
       { email },
-      { $set: { [`blocks.${block}`]: req.body?.data ?? null, updatedAt: new Date().toISOString() } },
+      { $set: { [path]: req.body?.data ?? null, updated_at: new Date().toISOString() } },
     );
     res.json({ ok: true });
   }),

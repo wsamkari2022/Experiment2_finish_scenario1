@@ -49,15 +49,17 @@ function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry |
   if (!doc) return null;
   return {
     email: String(doc.email ?? ""),
-    sessionId: String(doc.session_id ?? ""),
+    /* The document calls it participant_id now; the browser's own directory still calls it
+       sessionId internally. One name in the database is what matters for anybody reading it. */
+    sessionId: String(doc.participant_id ?? doc.session_id ?? ""),
     age: Number(doc.age ?? 0),
     gender: String(doc.gender ?? ""),
     status: doc.status as DirectoryEntry["status"],
-    stage: String(doc.stage ?? "money"),
+    stage: String(doc.current_stage ?? "money"),
     consent: (doc.consent as DirectoryEntry["consent"]) ?? null,
-    createdAt: String(doc.createdAt ?? ""),
-    updatedAt: String(doc.updatedAt ?? ""),
-    completedAt: (doc.completedAt as string | null) ?? null,
+    createdAt: String(doc.created_at ?? ""),
+    updatedAt: String(doc.updated_at ?? ""),
+    completedAt: (doc.completed_at as string | null) ?? null,
   };
 }
 
@@ -95,14 +97,14 @@ export const apiClient: RemoteBackend = {
     await request(`/participants/${encodeURIComponent(email)}/complete`, { method: "PATCH" });
   },
 
-  async saveBlock(_sessionId, block, data) {
-    /* The block write is addressed by email like everything else; the session id travels on the
-       participant document and does not need repeating per block. */
+  async saveSection(path, data) {
+    /* Addressed by email like everything else; the participant id travels on the document itself
+       and does not need repeating in every section write. */
     const email = currentEmail();
     if (!email) return;
-    await request(`/participants/${encodeURIComponent(email)}/block`, {
+    await request(`/participants/${encodeURIComponent(email)}/section`, {
       method: "PATCH",
-      body: JSON.stringify({ block, data }),
+      body: JSON.stringify({ path, data }),
     });
   },
 };
