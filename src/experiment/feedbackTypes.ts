@@ -29,7 +29,7 @@ export const FEEDBACK_KEY = "vrds_feedback_record";
  * participant's data is lost before it can be exported to MongoDB.
  */
 export const FEEDBACK_ARCHIVE_KEY = "vrds_feedback_archive";
-export const FEEDBACK_SCHEMA_VERSION = 3; // v3: timing.block5 is scenarioMs[] (5 scenarios); v2 = 1–7 Likert
+export const FEEDBACK_SCHEMA_VERSION = 4; // v4: dropped TOOL_alignmentLabels (the labels are no longer shown to participants); v3: timing.block5 is scenarioMs[] (5 scenarios); v2 = 1-7 Likert
 export const EXPERIMENT_ID = "vrds_experiment_2";
 
 /* ----------------------------- Question definitions ----------------------------- */
@@ -81,14 +81,22 @@ export const APA_QUESTIONS: FeedbackQuestion[] = [
   { code: "APA_open", type: "open", text: "What part of the value-clarification step was most helpful or most confusing?" },
 ];
 
-/** ③ Decision-support tools — rate how helpful each tool the participant saw was (always shown). */
+/**
+ * ③ Decision-support tools — rate how helpful each tool the participant saw was (always shown).
+ *
+ * THERE IS NO "ALIGNMENT LABELS" ITEM HERE, AND THAT IS DELIBERATE.
+ * Participants are never shown an alignment verdict on an option (see CLAUDE.md, "Things that are
+ * deliberate, not oversights"). A question asking them to rate those labels therefore asked about
+ * something that is not on the screen. It still collected answers, because a rating scale always
+ * does, and every one of them was noise that looked like data. Removed in feedback schema v4.
+ * Do not add it back unless the labels themselves come back.
+ */
 export const TOOL_RATINGS: FeedbackQuestion[] = [
   { code: "TOOL_optionCards", type: "likert", text: "The option cards", likertLow: "Not helpful", likertHigh: "Very helpful" },
   { code: "TOOL_consequences", type: "likert", text: "The consequence / “what it gives up” lines", likertLow: "Not helpful", likertHigh: "Very helpful" },
   { code: "TOOL_tradeoffs", type: "likert", text: "The trade-off explanations", likertLow: "Not helpful", likertHigh: "Very helpful" },
   { code: "TOOL_metricsDashboard", type: "likert", text: "The performance metrics dashboard", likertLow: "Not helpful", likertHigh: "Very helpful" },
   { code: "TOOL_previewImpact", type: "likert", text: "The “Preview impact” button", likertLow: "Not helpful", likertHigh: "Very helpful" },
-  { code: "TOOL_alignmentLabels", type: "likert", text: "The alignment labels on each option", likertLow: "Not helpful", likertHigh: "Very helpful" },
   { code: "TOOL_resultsPage", type: "likert", text: "The final results page", likertLow: "Not helpful", likertHigh: "Very helpful" },
 ];
 
