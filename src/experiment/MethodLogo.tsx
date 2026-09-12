@@ -40,12 +40,15 @@ export function MethodLogo({
 }) {
   const { src, alt } = LOGO[method];
   /*
-   * The feedback size sits just under the in-study one rather than far below it. The mark has more
-   * work to do on the feedback page, not less: in the study it labels a screen the participant is
-   * already looking at, while here it has to call back to something they saw half an hour ago.
-   * Too small and it reads as decoration next to the heading instead of a thing to recognise.
+   * Both sizes are now the same, and that is the point rather than an oversight.
+   *
+   * The mark works by being recognised, and recognition is easiest when the two appearances are
+   * identical. It also has MORE work to do on the feedback page, not less: in the study it labels
+   * a screen the participant is looking at, while there it has to call back to something they saw
+   * half an hour ago. The `size` prop is kept so a future placement can be smaller without
+   * touching either of these.
    */
-  const height = size === "sm" ? { base: "6", md: "6" } : { base: "6", md: "7" };
+  const height = size === "sm" ? { base: "6", md: "7" } : { base: "6", md: "7" };
 
   return (
     <Box flexShrink={0} lineHeight="0" opacity={0.95}>
