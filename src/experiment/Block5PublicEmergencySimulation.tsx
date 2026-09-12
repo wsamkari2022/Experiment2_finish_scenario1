@@ -3501,7 +3501,17 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
       ? applyApaUpdates(profile, option, q1, stakeholderMoved === true, q3, framingAdjust,
           scenario.stakesWeight ?? 1, confidence ?? 3)
       : profile),
-    [q1, q3, stakeholderMoved, profile, option, framingAdjust, scenario],
+    /*
+     * `confidence` MUST be listed here even though it is only read inside the call above.
+     *
+     * It scales how far the profile moves, and this result is not a preview: it is handed to
+     * onCommit as `pendingProfile` and becomes the participant's real profile for every later
+     * scenario. Without it in this list, the profile kept whatever confidence happened to be set
+     * the last time one of the OTHER values changed. A participant who answered the confidence
+     * slider last, or who went back and revised it, was scored with the placeholder 3 instead of
+     * their own answer - silently, and only sometimes, which is the worst kind of wrong number.
+     */
+    [q1, q3, confidence, stakeholderMoved, profile, option, framingAdjust, scenario],
   );
 
   const matching = useMemo<LabeledOption[]>(() => {
