@@ -160,7 +160,9 @@ app.patch(
  * field in the document — including `status`, `email` or `consent`. An allowlist of first segments
  * plus a strict character check means the worst a malformed request can do is be rejected.
  */
-const WRITABLE_ROOTS = new Set(["blocks", "analysis", "headline", "timings", "resume_state", "active_time"]);
+const WRITABLE_ROOTS = new Set([
+  "blocks", "analysis", "headline", "timings", "resume_state", "active_time", "quality",
+]);
 const SAFE_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)?$/;
 
 app.patch(

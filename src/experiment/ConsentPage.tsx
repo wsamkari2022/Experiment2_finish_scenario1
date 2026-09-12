@@ -43,17 +43,20 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuArrowRight, LuGift, LuLock, LuShieldCheck } from "react-icons/lu";
+import { LuArrowRight, LuClock, LuGift, LuLock, LuShieldCheck } from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
+import { REQUIRED_ACTIVE_MINUTES } from "./dbShape";
 
 /** Bump whenever the consent wording below changes. Stored with every consent record. */
-export const CONSENT_VERSION = "2026-09-10";
+export const CONSENT_VERSION = "2026-09-11";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
   agreed: boolean;
   timestamp: string;
   version: string;
+  /** True when the participant also ticked the payment-rules box. */
+  compensation_rules_agreed?: boolean;
 }
 
 /** Contact details, kept in one place so the page and any later document cannot drift apart. */
@@ -118,10 +121,24 @@ function Highlight({
 
 export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => void }) {
   const [checked, setChecked] = useState(false);
+  /*
+   * Deliberately a SECOND tick, not folded into the first. The payment rules are the part a
+   * participant is most likely to skim and most likely to dispute later, so agreement to them is
+   * recorded as its own deliberate act rather than bundled into a general "I agree".
+   */
+  const [rulesChecked, setRulesChecked] = useState(false);
+  const bothAgreed = checked && rulesChecked;
 
   const handleContinue = () => {
-    if (!checked) return;
-    onAgree({ agreed: true, timestamp: new Date().toISOString(), version: CONSENT_VERSION });
+    if (!bothAgreed) return;
+    onAgree({
+      agreed: true,
+      timestamp: new Date().toISOString(),
+      version: CONSENT_VERSION,
+      /* Recorded separately, because it answers a different question than "did they consent":
+         it answers "were they told the payment rules before they started". */
+      compensation_rules_agreed: true,
+    });
   };
 
   return (
@@ -258,6 +275,59 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
               </Text>
             </Highlight>
 
+            {/*
+              THE RULES OF THE PAYMENT, STATED BEFORE THEY AGREE.
+              Given its own bordered panel and its own tick-box because it is the one section a
+              participant could later say they had not seen. If time is a condition of payment,
+              they are entitled to know it in advance — and a rule agreed to in advance is also
+              far easier to apply afterwards than one produced at the end.
+            */}
+            <Box
+              borderWidth="2px"
+              borderColor="orange.solid"
+              bg="orange.subtle"
+              rounded="xl"
+              p={{ base: "4", md: "5" }}
+            >
+              <HStack gap="2.5" mb="3" align="center">
+                <Icon boxSize="5" color="orange.fg">
+                  <LuClock />
+                </Icon>
+                <Heading size="sm" color="fg" letterSpacing="tight">
+                  How the gift card is earned
+                </Heading>
+              </HStack>
+
+              <VStack align="stretch" gap="3" fontSize="sm" color="fg.muted" lineHeight="tall">
+                <Text>
+                  <Text as="span" color="fg" fontWeight="bold">
+                    Spend at least {REQUIRED_ACTIVE_MINUTES} minutes actively working
+                  </Text>{" "}
+                  on the study, and answer every feedback question at the end.
+                </Text>
+                <Text>
+                  <Text as="span" color="fg" fontWeight="semibold">
+                    You may finish across several visits.
+                  </Text>{" "}
+                  Your time adds up, and you continue exactly where you stopped — even on a
+                  different computer.
+                </Text>
+                <Text>
+                  <Text as="span" color="fg" fontWeight="semibold">
+                    Time counts only while you are actually working.
+                  </Text>{" "}
+                  If you step away or switch to something else, the study pauses and starts again
+                  when you return. Leaving it open while you do something else does not count.
+                </Text>
+                <Text>
+                  <Text as="span" color="fg" fontWeight="semibold">
+                    Please answer thoughtfully.
+                  </Text>{" "}
+                  Rushing through, or giving the same answer to every question, may not qualify.
+                </Text>
+              </VStack>
+            </Box>
+
             <Highlight icon={<LuLock />} title="Privacy and Your Email">
               <Text color="fg" fontWeight="semibold">
                 This study is confidential, not anonymous.
@@ -392,18 +462,37 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
             </Text>
           </Checkbox>
 
+          <Box mt="4" pt="4" borderTopWidth="1px" borderColor="border.subtle">
+            <Checkbox
+              checked={rulesChecked}
+              onCheckedChange={(e) => setRulesChecked(!!e.checked)}
+              colorPalette="orange"
+              alignItems="flex-start"
+              cursor="pointer"
+            >
+              <Text fontSize="sm" color="fg" lineHeight="tall">
+                I understand how the gift card is earned: at least{" "}
+                <Text as="span" fontWeight="bold">
+                  {REQUIRED_ACTIVE_MINUTES} minutes of active work
+                </Text>{" "}
+                plus the feedback questions, that time counts only while I am actually working, and
+                that rushing may not qualify.
+              </Text>
+            </Checkbox>
+          </Box>
+
           <Button
             mt="5"
             size="lg"
             w="full"
             colorPalette="green"
-            bg={checked ? "green.solid" : "bg.muted"}
-            color={checked ? "green.contrast" : "fg.subtle"}
-            _hover={checked ? { opacity: 0.92 } : {}}
+            bg={bothAgreed ? "green.solid" : "bg.muted"}
+            color={bothAgreed ? "green.contrast" : "fg.subtle"}
+            _hover={bothAgreed ? { opacity: 0.92 } : {}}
             rounded="lg"
             fontWeight="semibold"
             gap="2"
-            disabled={!checked}
+            disabled={!bothAgreed}
             onClick={handleContinue}
           >
             I agree — continue
@@ -412,9 +501,9 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
             </Icon>
           </Button>
 
-          {!checked && (
+          {!bothAgreed && (
             <Text mt="2.5" fontSize="xs" color="fg.subtle" textAlign="center">
-              Tick the box above to continue.
+              Tick both boxes above to continue.
             </Text>
           )}
         </Box>

@@ -45,6 +45,7 @@ import { capturedOf, menuRange, metricStandings, overallCaptured, capturedLabel,
          overallStanding, ordinal,
          type MetricStanding, type OverallStanding } from "./block5Performance";
 import { useColorMode } from "@/components/ui/color-mode";
+import { MethodLogo } from "./MethodLogo";
 import { Tooltip } from "@/components/ui/tooltip";
 import { getBlock5Palette, onAccentText, type Block5Palette } from "./block5Palette";
 import { Block5ScenarioIntro } from "./Block5ScenarioIntro";
@@ -2650,7 +2651,13 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
       {/* No alignment verdict is shown here. This page asks the participant to re-read the choice
           they already made; stamping "Misaligned with your values" across the top of it answers
           the question for them before they have started thinking. */}
-      <HStack justify="flex-end" align="center" gap="2">
+      <HStack justify="space-between" align="center" gap="2">
+        {/*
+          The mark for this step, so the feedback question that asks about it later can carry the
+          same one. The participant is never told the acronym; they are given something to
+          recognise. See MethodLogo.
+        */}
+        <MethodLogo method="cvr" />
         {/* Top-right control: Skip (during the first reveal) → Generate the other view → switch toggle. */}
         <Box flexShrink={0}>
           {!skipped && phase !== "done" && (
@@ -3604,7 +3611,11 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   return (
     <Stack gap="4">
       <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3">
-        <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold" mb="1">Value clarification</Text>
+        <HStack justify="space-between" align="center" gap="3" mb="1">
+          <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold">Value clarification</Text>
+          {/* The same mark the feedback question about this step will carry. See MethodLogo. */}
+          <MethodLogo method="apa" />
+        </HStack>
         <Text fontSize="sm" color="fg.muted" lineHeight="tall">
           We noticed something worth a closer look — a couple of your choices point in different directions.
           There are <b>no right or wrong answers</b> here; this step just helps the system represent your

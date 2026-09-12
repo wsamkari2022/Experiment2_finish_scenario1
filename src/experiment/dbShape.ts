@@ -313,6 +313,131 @@ function attachFeedbackQuestions(value: unknown): unknown {
   return { ...record, feedback: annotated };
 }
 
+/* ---------------------------------------------------------------------------- quality */
+
+/** Below this, a block was not read. */
+const RUSHED_BLOCK_SECONDS = 30;
+/** Below this, a Block 5 scenario was not considered — six options and a trade-off in that time. */
+const RUSHED_SCENARIO_SECONDS = 15;
+/** The compensation bar, in minutes of genuine work. Stated on the consent page. */
+export const REQUIRED_ACTIVE_MINUTES = 35;
+
+/**
+ * Straightlining: the same answer to every rating, all the way down.
+ *
+ * Somebody who answers 7, 7, 7, 7, 7 to twenty differently-worded questions — several of which
+ * point in opposite directions — has not read them. It is the clearest single signal of a
+ * participant who wanted the payment rather than the study, and it costs nothing to detect.
+ *
+ * Requires at least eight ratings before judging: a section with three questions can honestly be
+ * answered identically by somebody who simply agrees with all three.
+ */
+function isStraightlined(feedbackRecord: unknown): boolean {
+  if (!feedbackRecord || typeof feedbackRecord !== "object") return false;
+  const answers = (feedbackRecord as { feedback?: Record<string, unknown> }).feedback;
+  if (!answers) return false;
+
+  const ratings: number[] = [];
+  const walk = (value: unknown): void => {
+    if (typeof value === "number") {
+      ratings.push(value);
+      return;
+    }
+    if (value && typeof value === "object") {
+      for (const inner of Object.values(value as Record<string, unknown>)) walk(inner);
+    }
+  };
+  walk(answers);
+
+  if (ratings.length < 8) return false;
+  return ratings.every((r) => r === ratings[0]);
+}
+
+/**
+ * The signals that separate a genuine run from one done for the payment.
+ *
+ * TIME ALONE IS NOT ENOUGH, WHICH IS THE WHOLE POINT.
+ * A participant can reach 35 active minutes by sitting on one page nudging the mouse. What that
+ * cannot fake is the shape of the run: real engagement is spread across the blocks, and rushing
+ * shows up as blocks finished in seconds. The previous study produced exactly that pattern — 35
+ * minutes on one page and 2 seconds on the next — and a time check alone would have paid for it.
+ *
+ * EVERY RAW NUMBER IS KEPT, not just the verdict. The rule below is a starting point; six months
+ * from now a different threshold can be applied to data already collected, which would be
+ * impossible if only the true/false had been stored.
+ */
+export function buildQuality(
+  activeLedger: unknown,
+  block5: unknown,
+  feedbackRecord: unknown,
+  status: string,
+): Record<string, unknown> | null {
+  if (!activeLedger || typeof activeLedger !== "object") return null;
+  const a = activeLedger as {
+    totalMs?: number; byStage?: Record<string, number>; sittings?: number; longestIdleMs?: number;
+  };
+
+  const stageSeconds = Object.entries(a.byStage ?? {}).map(([stage, ms]) => ({
+    stage,
+    seconds: Math.round(ms / 1000),
+  }));
+  const rushedBlocks = stageSeconds.filter((s) => s.seconds < RUSHED_BLOCK_SECONDS);
+  const fastest = stageSeconds.length
+    ? stageSeconds.reduce((min, s) => (s.seconds < min.seconds ? s : min))
+    : null;
+
+  /* Block 5's per-scenario timer is wall-clock, not active time, so it OVER-states how long a
+     scenario took. A scenario flagged as rushed by this measure was therefore rushed on the
+     generous reading, which is the right direction for a flag that can cost somebody payment. */
+  let rushedScenarios = 0;
+  const results = (block5 as { scenarioResults?: { timeMs?: number }[] } | null)?.scenarioResults;
+  if (Array.isArray(results)) {
+    rushedScenarios = results.filter(
+      (r) => typeof r.timeMs === "number" && r.timeMs < RUSHED_SCENARIO_SECONDS * 1000,
+    ).length;
+  }
+
+  const activeMinutes = typeof a.totalMs === "number" ? Math.round((a.totalMs / 60000) * 10) / 10 : 0;
+  const straightlined = isStraightlined(feedbackRecord);
+  const completed = status === "Study Completed";
+
+  return {
+    active_minutes: activeMinutes,
+    required_active_minutes: REQUIRED_ACTIVE_MINUTES,
+    met_time_requirement: activeMinutes >= REQUIRED_ACTIVE_MINUTES,
+    completed_the_study: completed,
+
+    fastest_block: fastest,
+    blocks_under_30_seconds: rushedBlocks.length,
+    rushed_blocks: rushedBlocks,
+    scenarios_under_15_seconds: rushedScenarios,
+
+    sittings: a.sittings ?? 1,
+    longest_idle_minutes:
+      typeof a.longestIdleMs === "number" ? Math.round((a.longestIdleMs / 60000) * 10) / 10 : 0,
+
+    straightlined_feedback: straightlined,
+
+    /*
+     * The verdict, and the reason. Storing WHY it failed matters as much as the answer: a
+     * participant who queries their payment deserves a specific reason, and "eligible: false" on
+     * its own cannot give one.
+     */
+    compensation_eligible:
+      completed && activeMinutes >= REQUIRED_ACTIVE_MINUTES && !straightlined && rushedBlocks.length < 3,
+    reasons: [
+      ...(completed ? [] : ["did not finish the study"]),
+      ...(activeMinutes >= REQUIRED_ACTIVE_MINUTES
+        ? []
+        : [`active time ${activeMinutes} min is under the ${REQUIRED_ACTIVE_MINUTES} min requirement`]),
+      ...(straightlined ? ["gave the same answer to every feedback rating"] : []),
+      ...(rushedBlocks.length >= 3 ? [`${rushedBlocks.length} blocks finished in under ${RUSHED_BLOCK_SECONDS}s`] : []),
+    ],
+    rule:
+      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, and fewer than 3 blocks were finished in under 30 seconds. Raw numbers above allow a different rule to be applied later.",
+  };
+}
+
 /* --------------------------------------------------------------------------- the headline */
 
 /**

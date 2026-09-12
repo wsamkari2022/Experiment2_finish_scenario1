@@ -33,6 +33,7 @@ import {
 } from "./feedbackTypes";
 import { PARTICIPANT_DIRECTORY_KEY } from "./participantDirectory";
 import { getActiveSummary } from "./activeTime";
+import { MethodLogo, type Method } from "./MethodLogo";
 
 interface Props {
   results: Block5Results | null;
@@ -121,14 +122,26 @@ function OpenRow({ q, value, onChange }: {
   );
 }
 
-function SectionCard({ accent, eyebrow, title, subtitle, children }: {
-  accent: string; eyebrow: string; title: string; subtitle?: string; children: ReactNode;
+function SectionCard({ accent, eyebrow, title, subtitle, method, children }: {
+  accent: string; eyebrow: string; title: string; subtitle?: string;
+  /**
+   * The mark the participant saw on that step during the study.
+   *
+   * These sections ask about screens they met half an hour ago under no name at all — the study
+   * never says "CVR" or "APA" in front of a participant. The mark is the only thing linking the
+   * question to the memory, so it sits at the top of the card where the question begins.
+   */
+  method?: Method;
+  children: ReactNode;
 }) {
   return (
     <Box bg="bg.panel" borderWidth="1px" borderColor="border" borderLeftWidth="5px"
       borderLeftColor={`${accent}.solid`} rounded="2xl" p={{ base: "5", md: "7" }} shadow="sm">
-      <Badge colorPalette={accent} variant="subtle" rounded="md" px="2" py="0.5" fontSize="2xs"
-        textTransform="uppercase" letterSpacing="wider" mb="2">{eyebrow}</Badge>
+      <HStack justify="space-between" align="center" gap="3" mb="2">
+        <Badge colorPalette={accent} variant="subtle" rounded="md" px="2" py="0.5" fontSize="2xs"
+          textTransform="uppercase" letterSpacing="wider">{eyebrow}</Badge>
+        {method && <MethodLogo method={method} size="sm" />}
+      </HStack>
       <Heading size="md" color="fg" mb={subtitle ? "1" : "4"}>{title}</Heading>
       {subtitle && <Text fontSize="sm" color="fg.muted" mb="4" lineHeight="tall">{subtitle}</Text>}
       <Stack gap="5">{children}</Stack>
@@ -347,7 +360,7 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
 
         {/* ① CVR (conditional) */}
         {showCvr && (
-          <SectionCard accent="teal" eyebrow="Value reflection"
+          <SectionCard accent="teal" eyebrow="Value reflection" method="cvr"
             title="The reflection step"
             subtitle="In some scenarios, after you chose an option that went against your usual values, you saw a short reflection: the same decision re-framed, plus the perspective of an affected person. These questions are about that step.">
             {CVR_QUESTIONS.map((q) =>
@@ -380,7 +393,7 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
 
         {/* ② APA (conditional) */}
         {showApa && (
-          <SectionCard accent="purple" eyebrow="Value clarification"
+          <SectionCard accent="purple" eyebrow="Value clarification" method="apa"
             title="The clarification step"
             subtitle="In some scenarios you went through a short value-clarification step that asked which value you wanted the system to weight, then showed you the options that fit it. These questions are about that step.">
             {APA_QUESTIONS.map((q) =>

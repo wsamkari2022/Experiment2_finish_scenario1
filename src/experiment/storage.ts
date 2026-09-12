@@ -47,9 +47,13 @@ import {
   buildHeadline,
   buildPositionSection,
   buildProfileChange,
+  buildQuality,
   collectResumeFiles,
   restoreResumeFiles,
 } from "./dbShape";
+import { ACTIVE_TIME_KEY } from "./activeTime";
+import { FEEDBACK_KEY } from "./feedbackTypes";
+import { BLOCK5_RESULTS_KEY } from "./block5Types";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -417,6 +421,29 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
         sendOrQueue({ op: "saveSection", path: "analysis.value_profile_change", data: profiles.change });
       }
     }
+  }
+
+  /*
+   * Quality is computed last, because it reads across several files at once — the active-time
+   * ledger, the Block 5 results and the feedback answers. Building it inside the per-source loop
+   * would mean building it from whichever of those happened to be processed first.
+   */
+  if (changed) {
+    const readKey = (key: string): unknown => {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    };
+    const quality = buildQuality(
+      readKey(ACTIVE_TIME_KEY),
+      readKey(BLOCK5_RESULTS_KEY),
+      readKey(FEEDBACK_KEY),
+      localStorage.getItem("vrds_status") ?? "",
+    );
+    if (quality) sendOrQueue({ op: "saveSection", path: "quality", data: quality });
   }
 
   if (changed) {
