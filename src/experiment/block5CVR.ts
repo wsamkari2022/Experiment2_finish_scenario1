@@ -921,6 +921,11 @@ const STABILITY_MOVE_KEYS: string[] = [...POLICY_DIM_KEYS, "stakeholderPerspecti
  * sacrificed value. Removing a bump changes how far a chance responder drifts, so the null model
  * was re-run: p99 came back at 57.0.
  *
+ * CORRECTION (2026-09-13): that entry records a measurement, not the constant. The exported value
+ * below is and has stayed 56, and gate S7 confirms it against a freshly measured null p99 of 56.3
+ * on the current deck. Read the entries above as a log of what was measured on each date; the one
+ * number that is authoritative is the export itself, which the gate checks on every run.
+ *
  * Gate S7 enforces the pair: the suite fails if this number and the freshly measured p99 drift
  * apart. Regenerate with `npm run validate:stability` whenever the deck, the roles, or the bump
  * magnitudes change.

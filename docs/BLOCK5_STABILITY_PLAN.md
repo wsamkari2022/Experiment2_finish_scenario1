@@ -93,18 +93,66 @@ only by VCI, which resolves the shared-function problem noted in the VCI plan.
 
 ## 6. A limitation worth stating in the methods chapter
 
-**The order half is less sensitive than it looks when one value starts far ahead.** The Contrarian
-picks against their top value in all five scenarios and it *still* ends up ranked first — because
-`bump()` scales by headroom, so pushing a value down from 82 is slow. The order half caught only
-2 of 6 pairs for that participant; the movement half is what registered the instability. This is
-another reason both halves are needed.
+**Re-measured 2026-09-13 against the current code.** The limitation recorded here in August was a
+consequence of headroom scaling. `bump()` has used flat deltas since 2026-08-31, and the old
+limitation is now not merely stale but inverted. A different one has taken its place, and it is the
+one to put in the chapter.
 
-> **Superseded on 2026-08-31, and this one needs re-measuring before it is quoted.** `bump()` no
-> longer scales by headroom; deltas are flat (see `MEASUREMENT_MODEL.md`, "Profile updates"). The
-> premise of the paragraph above is therefore no longer true: pushing a value down from 82 now
-> costs the same flat amount as pushing one down from 40. Whether the Contrarian still ends ranked
-> first, and whether the order half is still the less sensitive of the two, has not been
-> re-measured since the change. **Do not copy this limitation into the methods chapter as written.**
+### What used to be recorded here, kept as a record and not to be quoted
+
+> The order half is less sensitive than it looks when one value starts far ahead. The Contrarian
+> picks against their top value in every scenario and it *still* ends up ranked first, because
+> `bump()` scales by headroom, so pushing a value down from 82 is slow. The order half caught only
+> 2 of 6 pairs for that participant.
+
+### What the same participant does now
+
+Same Contrarian, same starting profile, same deck, run through the current scoring code:
+
+| | vulnerable | harm | gained | helped | top value |
+|---|---|---|---|---|---|
+| start | 82 | 64 | 38 | 46 | vulnerable |
+| after scenario 1 | 62 | 64 | 68 | 46 | gained |
+| after scenario 2 | 42 | 64 | 98 | 46 | gained |
+| after scenario 3 | 72 | 64 | 78 | 46 | gained |
+| after scenario 4 | 52 | 64 | 100 | 46 | gained |
+| after scenario 5 | 52 | 64 | 100 | 46 | gained |
+
+Scenario 5 is a wish and runs no update, which is why the last two rows are identical.
+
+Vulnerability starts at 82 ranked first and finishes at 52 ranked **third of four**. The starting
+order `vulnerable > harm > helped > gained` ends as `gained > harm > vulnerable > helped`, and
+**4 of the 6 pairs swap**, against 2 under the old rule. The order half is no longer the
+insensitive one: it scores 33/100 here and does most of the work.
+
+### The limitation that replaces it
+
+**At the unstable end, the movement half saturates and stops discriminating.** Movement is
+`100 × (1 − min(1, churn / STABILITY_CHURN_CEILING))` with the ceiling at 56, so any participant
+whose churn reaches 56 scores exactly 0 however much further they travelled.
+
+| Participant | churn | movement half | order half | Stability |
+|---|---|---|---|---|
+| Swinger | 48.6 | 13 | 100 | 57 |
+| Flip-flopper | 60.0 | **0** | 67 | 34 |
+| Contrarian | 58.4 | **0** | 33 | 17 |
+
+The two most unstable archetypes receive the same movement score despite visibly different
+behavior. They are still separated overall, but only because the order half ranks them 67 against
+33. **Report Stability as a composite, and do not report the movement half on its own as an
+interval measure at the unstable end — it is censored above the ceiling.**
+
+A second, related effect is visible in the trace above. Flat deltas let a value reach a bound:
+`gained` hits 100 after scenario 4 and stops moving, so part of that scenario's update is swallowed
+by `clamp` and contributes no churn. A participant who keeps drifting after saturating a value
+therefore looks slightly steadier than they were. This is the same cost recorded against `bump()`
+in `MEASUREMENT_MODEL.md`, seen here in one participant.
+
+**Both halves are still needed, and the reason has reversed.** In August the order half was the
+coarse one and movement carried the signal. Now movement is the half that censors, and order is the
+half that separates the badly drifting participants from each other.
+
+*Reproduce: `npm run validate:stability`. The table above is the Contrarian row of its output.*
 
 ## 7. Files changed
 
