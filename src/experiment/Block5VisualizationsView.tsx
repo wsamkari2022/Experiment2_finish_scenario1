@@ -32,7 +32,7 @@ import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { ordinal } from "./block5Performance";
 import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from "./blocks123Consistency";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
-import { ALIGNMENT_LABEL } from "./block5CVR";
+import { ALIGNMENT_LABEL, stabilityLevel } from "./block5CVR";
 import { buildTimingSummary } from "./telemetry";
 import {
   POLICY_DIM_KEYS,
@@ -127,9 +127,49 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   if (before) radarSeries.push({ name: "Before Block 5", color: SERIES_COLORS[1], values: POLICY_DIM_KEYS.map((k) => scoreOf(before, k)) });
   radarSeries.push({ name: "After Block 5", color: SERIES_COLORS[4], dashed: true, values: POLICY_DIM_KEYS.map((k) => scoreOf(after, k)) });
   const stability = results.stability ?? null;
-  const stabilityCaption = stability === null
+  /*
+   * THE WORDS COME FROM stabilityLevel(), NOT FROM CUTOFFS WRITTEN HERE.
+   *
+   * This used to test `>= 80` and `>= 60` of its own, while the stored `stabilityLevel` field uses
+   * 85 / 70 / 50 / 30. A participant scoring 82 therefore read "your values stayed very steady" on
+   * screen while the database recorded "Mostly steady" - two different answers to one question,
+   * and only one of them is in the data an analysis would later use.
+   *
+   * The STORED level is preferred over recomputing, so the screen and the record cannot disagree
+   * even if the bands are ever retuned; the function is the fallback for a record written before
+   * that field existed.
+   */
+  const stabilityWords = stability === null
     ? null
-    : `Stability ${stability}/100 — ${stability >= 80 ? "your values stayed very steady from start to finish." : stability >= 60 ? "your values shifted only a little." : "your values shifted noticeably as you decided."}`;
+    : (results.stabilityLevel ?? stabilityLevel(stability));
+  /*
+   * WHY THE SENTENCE ABOUT WHAT THIS MEASURES IS NOT DECORATION.
+   *
+   * Stability is DESCRIPTIVE, not an achievement. It reports whether the participant's values
+   * moved, and a bare number out of 100 is read as a grade by everyone who sees one.
+   *
+   * The misreading is not hypothetical. Measured over 2,000 simulated participants who chose their
+   * BEST-FITTING option in every scenario, about one in ten still scores below 70 - in every one of
+   * those cases because their four values changed rank order, never because of movement alone.
+   * Without this sentence, a participant who picked exactly what fitted them reads "your values
+   * shifted" and concludes they failed at something nobody was scoring.
+   *
+   * The question they think is being asked - "did I choose well?" - is answered on the card titled
+   * "How consistent your choices were", so the caption sends them there rather than leaving the
+   * two numbers to be confused for one.
+   */
+  const stabilityCaption = stability === null ? null : (
+    <>
+      Stability {stability}/100 — {stabilityWords?.toLowerCase()}.{" "}
+      <b>
+        This is about whether your values themselves moved during the scenarios, not about whether
+        you chose well.
+      </b>{" "}
+      A high number means the two shapes above nearly match and a low number means they do not.
+      Neither is better than the other. How well your choices matched your values is a separate
+      score, on the card titled “How consistent your choices were”.
+    </>
+  );
 
   /* 2 · Line: how each value shifted across the journey */
   const evoX = ["Before", ...scenarios.map((_, i) => `After S${i + 1}`)];

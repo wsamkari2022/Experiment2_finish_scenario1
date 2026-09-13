@@ -970,6 +970,31 @@ export interface StabilityResult {
   topValueAfter: string;
 }
 
+/*
+ * THE SCALE THIS RETURNS, for anyone about to analyse or report it.
+ *
+ *   order half    = 100 x (6 - pairs swapped) / 6     only 7 values: 0 17 33 50 67 83 100
+ *   movement half = 100 x (1 - min(1, churn / 56))    exactly 0 for any churn at or above 56
+ *   value         = the mean of the two
+ *
+ * THE FULL 0-100 RANGE IS REACHABLE. Measured over 1,200 runs (300 random starting profiles x 4
+ * behaviors) the lowest score was 0 and the highest 100. STABILITY_CHURN_CEILING is a CHURN value
+ * and not a cap on the score - a participant can and does reach 100.
+ *
+ * THREE THINGS THAT ARE EASY TO REPORT WRONGLY:
+ *   1. It is descriptive, not evaluative. High means the values did not move. It says nothing
+ *      about whether the participant chose well - that is VCI, a different number.
+ *   2. The order half is coarse. Seven possible values, so it is not continuous.
+ *   3. The movement half is censored from below: everyone past the ceiling scores 0 on it and
+ *      cannot be told apart on that half alone. Report the composite.
+ *
+ * A PARTICIPANT WHO PICKS THEIR BEST FIT EVERY TIME still lands below 70 about one time in ten,
+ * and in every such case it is the ORDER half that dropped. That is the measure working as
+ * designed, and it is the most likely thing to be misread.
+ *
+ * Regenerate every figure above with `npm run report:stability`. Full reporting and visualization
+ * guidance: docs/MEASUREMENT_MODEL.md, "The Stability scale, for reporting".
+ */
 export function computeStability(
   results: Block5ScenarioResult[],
   originalProfile: Block5UserProfile | null | undefined,

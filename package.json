@@ -14,6 +14,7 @@
     "validate:metrics": "node tools/validate_block5_metrics.mjs",
     "validate:vci": "tsc -p tools/tsconfig.sim.json && node tools/simulate_vci.cjs",
     "validate:stability": "tsc -p tools/tsconfig.sim.json && node tools/simulate_stability.cjs",
+    "report:stability": "tsc -p tools/tsconfig.sim.json && node tools/stability_distribution.cjs",
     "validate:lenses": "tsc -p tools/tsconfig.sim.json && node tools/validate_cvr_lenses.cjs",
     "validate:people": "node tools/validate_cvr_people.mjs",
     "print:stories": "tsc -p tools/tsconfig.sim.json && node tools/print_stories.cjs",
