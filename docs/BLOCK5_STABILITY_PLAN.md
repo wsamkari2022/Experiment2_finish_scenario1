@@ -99,6 +99,13 @@ picks against their top value in all five scenarios and it *still* ends up ranke
 2 of 6 pairs for that participant; the movement half is what registered the instability. This is
 another reason both halves are needed.
 
+> **Superseded on 2026-08-31, and this one needs re-measuring before it is quoted.** `bump()` no
+> longer scales by headroom; deltas are flat (see `MEASUREMENT_MODEL.md`, "Profile updates"). The
+> premise of the paragraph above is therefore no longer true: pushing a value down from 82 now
+> costs the same flat amount as pushing one down from 40. Whether the Contrarian still ends ranked
+> first, and whether the order half is still the less sensitive of the two, has not been
+> re-measured since the change. **Do not copy this limitation into the methods chapter as written.**
+
 ## 7. Files changed
 
 `block5CVR.ts` — `computeStability(results, originalProfile)` rewritten; `stabilityLevel()` added;

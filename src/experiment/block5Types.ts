@@ -553,10 +553,15 @@ export interface Block5Scenario {
    * How much this scenario's decisions are allowed to teach the profile, 0–1 (default 1).
    *
    * Every profile update the scenario can produce is multiplied by this weight, so the strength
-   * of the evidence scales with what is actually at stake. The everyday scenarios (travel, food)
-   * use 0.5: a participant's dinner choice is real evidence about their moral priorities, but it
-   * should not move the profile as far as a decision about who receives a scarce cancer dose.
-   * Applied in block5CVR.ts by applyValueBump / applyEndorsementUpdates / applyApaUpdates.
+   * of the evidence scales with what is actually at stake.
+   *
+   * ALL FIVE SHIPPED SCENARIOS LEAVE THIS UNSET AND THEREFORE RUN AT 1. The field is kept because
+   * an earlier deck opened with a travel booking and a dinner at 0.5, and because a future
+   * everyday scenario would need it again - but nothing in the current study is down-weighted, so
+   * the published constants are the applied ones. See the header of block5Scenarios.ts for why
+   * the low-stakes pair was dropped.
+   *
+   * Applied in block5CVR.ts by applyKeepUpdates / applyEndorsementUpdates / applyApaUpdates.
    */
   stakesWeight?: number;
 }

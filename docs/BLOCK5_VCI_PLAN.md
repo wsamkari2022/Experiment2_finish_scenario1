@@ -239,6 +239,11 @@ is the thing being measured.
 that is already fairly high climbs more slowly than a flat +30 would suggest. The ordering the
 plan argued for is unaffected.
 
+> **Superseded on 2026-08-31.** `bump()` no longer scales by headroom; deltas are flat. The
+> observed result (Convert at 84) stands as a record of the run made on the date above, but the
+> explanation given for it does not apply to the current code. Re-run `npm run validate:vci` before
+> citing either number.
+
 ## 9. Files changed
 
 `block5CVR.ts` — `scenarioVciScore(level)` drops the endorsement; `reflectiveCredit` deleted;

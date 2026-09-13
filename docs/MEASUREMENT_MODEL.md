@@ -417,19 +417,65 @@ authored range onto a wide participant range amplifies that dimension's penaltie
 Result across all five scenarios: vulnerability 26.2% · gain 32.9% · group 21.4% · outcome 19.5%,
 and every option in every scenario is the best fit for someone.
 
-### Profile updates after a CVR answer — `bump()`
+### Profile updates — `bump()`
 
 ```ts
-headroom = delta >= 0 ? (100 − score)/100 : score/100
-score   += delta · headroom
+score = clamp(score + delta)        // flat. +30 means +30.
 ```
 
-**Why proportional and not additive.** With five scenarios each able to add ±30, a plain addition
-drives any consistently-answered dimension to 0 or 100 by about the third scenario, after which
-later scenarios can no longer move it. Simulation confirmed 2 of 3 tracked dimensions pinned at
-three scenarios and 3 of 3 at five. Proportional updating (the standard Rescorla-Wagner form)
-cannot reach a bound, so the profile keeps responding through Scenario 5 while preserving every
-ordering — a strong endorser still ends clearly above a weak one.
+**The delta is flat, and every published amount is the applied amount.** Until 2026-08-31 this
+scaled each delta by the remaining headroom, `delta × (100 − score)/100` going up. That was changed
+for two reasons. First, the documented constant was never the applied one: "+30" moved a value at
+20 by +24 and a value at 96 by +1.2, so every statement of the rule was approximately false and no
+reader could check the arithmetic against a stored profile. Second, it discriminated less —
+measured on the real scenario set across 5 profiles × 4 behaviors, Stability separated steady
+participants from drifting ones by 33 points under headroom and by 42 under flat, and that
+separation is the measure's whole job.
+
+**What flat deltas cost, stated rather than hidden.** Values pile up on the bounds. About 13% of
+values finish a five-scenario run sitting exactly on 0 or 100, and roughly 17 bumps per 20 runs are
+swallowed by `clamp`. A value pinned at 100 stops contributing movement for the rest of the run, so
+a participant who keeps drifting after saturating one value looks slightly steadier than they were.
+Report this as a limitation; it is real, and it was accepted knowingly in exchange for being able to
+state the rule truthfully in one line.
+
+**This constant is paired with `STABILITY_CHURN_CEILING`.** The ceiling is the p99 of the null
+model and the null churn distribution scales with the deltas; it moved 42 → 65 with this edit. Gate
+S7 in `tools/simulate_stability.cjs` enforces the pairing, so changing `bump` without re-measuring
+the ceiling fails the build.
+
+### Profile updates when the choice already fits — `applyKeepUpdates()`
+
+Confirming an option that is **already labelled Aligned or Weakly Aligned** updates the profile
+too. No reflection runs on those two tiers, so this is the only update they produce, and it is easy
+to miss when reading the CVR and APA paths alone.
+
+| Tier kept | Value the option is built on | A value it neglects by more than 5 |
+|---|---|---|
+| Aligned | +15 | −10 |
+| Weakly aligned | +20 | −15 |
+| Misaligned / strongly misaligned | no change (the reflection path handles these) | — |
+
+**Why the second-best option moves the profile further.** Keeping your top-ranked option tells the
+model almost nothing it did not already believe. Keeping your second-ranked option is the
+informative case, because it says the ordering may be wrong, so it earns the larger move.
+
+**Two guards on the decrement.** It never subtracts from the value just raised, which would net a
+participant down for agreeing with themselves; and it only fires on a value the option genuinely
+under-serves (`displacedTopValue`, a margin of more than 5). An option that satisfies everything
+the participant holds costs them nothing. In practice an aligned pick therefore moves one value and
+nothing else 46% of the time, and is mildly inflationary at about +6.3 points of net profile per
+pick against +5.4 for a weakly aligned pick.
+
+**Scenario 5 is exempt.** It is a wish rather than a decision, `scenarioIsScored()` returns false,
+and the profile passes through untouched, so Stability measures only movement that real decisions
+produced.
+
+**Saturation does not reduce the number of reflections.** Labels come from `rankLabel()`, which
+reads rank position inside the scenario, so the split is always 1 aligned / 1 weakly / 2 misaligned
+/ 2 strongly however high a profile climbs. Raising a profile changes which option lands in which
+slot, never how many options trigger the CVR. Verified across 7 archetypes × 4 behaviors × 4 scored
+scenarios: the count of fitting options was 2 of 6 in every single case.
 
 ---
 

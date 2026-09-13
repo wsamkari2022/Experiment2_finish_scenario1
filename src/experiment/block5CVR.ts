@@ -263,6 +263,52 @@ export function cvrCoordinate(option: Block5ScenarioOption, profile: Block5UserP
 /* ---------------- Profile updates (pending until the caller commits) ---------------- */
 
 /**
+ * EVERY WAY THE PROFILE CAN CHANGE INSIDE BLOCK 5, IN ONE PLACE.
+ *
+ * There are exactly four. A value that moved between the pre-Block-5 snapshot and the final
+ * profile came from one of them. They are collected here because the analysis and the write-up
+ * both need to say WHICH decision produced WHICH movement, and the amounts otherwise sit spread
+ * across three functions.
+ *
+ *  1. applyKeepUpdates - the participant confirmed an option ALREADY labelled a good fit.
+ *       Aligned          +15 to the value the option is built on (optionMainValue)
+ *                        -10 to a value it neglects by more than 5 (displacedTopValue)
+ *       Weakly aligned   +20 / -15
+ *       Any other level  no change at all
+ *     Weakly aligned moves FURTHER on purpose: keeping your top-ranked option tells the model
+ *     what it already believed, while keeping your second says the ordering may be wrong.
+ *     The decrement is skipped when the neglected value IS the value just raised, and when the
+ *     option neglects nothing - so an aligned pick often moves one value and nothing else.
+ *
+ *  2. applyEndorsementUpdates - the reflection ran and the participant KEPT the misaligned choice.
+ *       served value      +30 strong endorsement / +15 weak
+ *       sacrificed value  -20 strong / -10 weak   (violatedValue; skipped when it equals served)
+ *       stakeholder       +25 if the person's story moved them, else -25
+ *       framing lens      -20 to the lens they said did NOT influence them (dual-perspective only)
+ *
+ *  3. applyApaUpdates - the reflection ran and the participant CHANGED their mind. Amounts and
+ *     the net cap are documented on the function itself.
+ *
+ *  4. Nothing at all - scenario 5 is a wish rather than a decision. scenarioIsScored() returns
+ *     false for it, the whole reflection path stays shut, and the profile is carried through
+ *     untouched so Stability measures only movement that real decisions produced.
+ *
+ * Every amount is additionally multiplied by the scenario's stakesWeight, which is 1 for all five
+ * shipped scenarios, so in the current deck the published number IS the applied number.
+ *
+ * WHAT THIS COSTS, kept next to the amounts rather than buried: the deltas are flat (see `bump`),
+ * so values pile up on 0 and 100. Measured on seven archetypes through the four scored scenarios,
+ * six of them finish with one of their four policy values sitting exactly on 100. An aligned pick
+ * is mildly inflationary - about +6.3 points of net profile per pick, with no decrement at all
+ * 46% of the time. A value pinned at 100 stops contributing movement for the rest of the run.
+ *
+ * WHAT IT DOES NOT COST: the number of reflections. Alignment labels are assigned by RANK inside
+ * the scenario (rankLabel), so it is always 1 aligned / 1 weakly / 2 misaligned / 2 strongly,
+ * whatever the profile looks like. Raising a profile changes WHICH option lands in which slot; it
+ * can never reduce how many options trigger the CVR.
+ */
+
+/**
  * Deep-enough copy for a profile update.
  *
  * Every apply* function clones before mutating, and that is what keeps `originalProfile` frozen
@@ -273,21 +319,6 @@ function cloneProfile(p: Block5UserProfile): Block5UserProfile {
   return { ...p, dimensions: p.dimensions.map((d) => ({ ...d })) };
 }
 
-/**
- * Applies one profile update, scaled by how much room the score has left to move.
- *
- * A raw `delta` is not added directly. It is multiplied by the fraction of the range still
- * available in that direction — `(100 − score)/100` for a gain, `score/100` for a loss — so a
- * dimension already near a bound moves only a little, while a mid-range dimension moves almost
- * the full step. This is the standard proportional (Rescorla–Wagner) update form.
- *
- * Why: with five scenarios each able to add +30, a plain additive rule drives every dimension a
- * consistent participant touches to 0 or 100 by about the third scenario, after which the
- * carry-over between scenarios becomes invisible (verified by simulation: 2 of 3 tracked
- * dimensions pinned at 3 scenarios, 3 of 3 at five). Proportional updating cannot reach a bound,
- * so the profile keeps responding right through Scenario 5 while preserving every ordering —
- * a strong endorser still ends clearly above a weak one.
- */
 /**
  * Applies one profile update. THE DELTA IS FLAT: +30 means +30, not "+30 scaled by something".
  *
@@ -409,8 +440,21 @@ export function applyEndorsementUpdates(
 
 /**
  * APA clarification updates (pending until the participant commits a final choice inside APA).
- * Q1 endorse: option value +15, the value it went against −10. Q1 context: +5 / +10.
- * Q1 unsure: no value change. Q2 stakeholder ±25. Q3 forced prioritization: +10 (stacks with Q1).
+ *
+ * THE AMOUNTS, as the code applies them. `w` is stakesWeight x confidenceWeight(confidence).
+ *   Q1 endorse   option's own value +15 x w, the value it went against -10 x w
+ *   Q1 context   option's own value +5 x w, and NOTHING is raised in return (see the long note
+ *                inside the function: the old +10 to the sacrificed value was self-defeating)
+ *   Q1 unsure    no value change
+ *   Q2           stakeholder +25 if the person's story moved them, else -25. Multiplied by
+ *                stakesWeight ONLY - never by confidence, because it is not a matter of degree
+ *   Q3           +30 x w to the value the participant named, -20 x w to whichever value is
+ *                currently top (skipped when those are the same value)
+ *   Net cap      no policy value moves more than 30 x w in one clarification, either direction.
+ *                Q1 and Q2 can name the same value and would otherwise stack to 45 x w.
+ *
+ * These superseded an earlier rule of "+5/+10 on context, +10 on prioritization". If a number
+ * here disagrees with a paper draft, the code is the authority and the draft is stale.
  */
 /**
  * How much weight the participant's own certainty carries, 1–5 -> 0.6–1.0.
