@@ -1379,4 +1379,212 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
     ],
   },
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * SCENARIO 6 — THE VEIL OF IGNORANCE. A TEST OF THE MODEL, NOT INPUT TO IT.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   *
+   * The first five scenarios ask what the participant would do. This one asks what rule they would
+   * set before knowing which person in the situation they will be, then shows them what the model
+   * expected and measures whether they recognise themselves in it.
+   *
+   * IT NEVER FEEDS THE MODEL. `decisionRole: "predicted"` makes `scenarioIsScored()` false, so no
+   * profile update, no churn, and no contribution to VCI, Stability or Performance. Two reasons,
+   * both binding. STABILITY_CHURN_CEILING is a measurement OF THIS DECK, so a sixth scenario
+   * producing churn would invalidate it and every gate resting on it. And a scenario built to check
+   * whether the model predicted correctly cannot also be evidence for the model.
+   *
+   * IT HAS FOUR OPTIONS, NOT SIX, AND THEY ARE PURE CHAMPIONS. Measured across 3,000 profiles, the
+   * alignment gap between a scenario's best and second-best option is 7 points at the median, so
+   * the model usually cannot separate the top two. Four strongly differentiated options raise that
+   * separation to 17. Part of the gain is an artifact of having fewer options and part is real
+   * discriminating power; the decomposition is in docs/BLOCK5_SCENARIO6_VEIL_DRAFT.md, and the
+   * chance baseline of 25% must be reported wherever the probability is.
+   *
+   * ONE OPTION PER VALUE IS WHAT MAKES THE QUESTION EXACT. The scenario does not ask "which action
+   * do you take", it asks "which of your four values do you act on when you do not know who you
+   * will be". That maps one to one onto what is being predicted. In an emergency scenario four
+   * stark options would be a weakness, because real emergencies are made of competing specifics.
+   * Behind the veil the abstraction is the point: Rawls's original position is deliberately
+   * abstract, and a participant is choosing a principle rather than an act.
+   *
+   * THE OPTION ORDER IS FIXED FOR EVERY PARTICIPANT and is the order written here. Ordering them by
+   * the participant's own profile would place the predicted option in a position that correlates
+   * with the prediction, and any general preference for the top of a list would then be
+   * indistinguishable from agreement with the model.
+   */
+  {
+    id: "veil_emergency_reserve_rule",
+    stakePosition: "behind_the_veil",
+    decisionRole: "predicted",
+    factBase:
+      "1 emergency reserve, held for the whole region. It covers roughly 33% of what a full-scale emergency would need. It will be triggered at some point in the next 2 years, once. Whatever rule is chosen is the rule that runs, and nobody gets to argue with it on the day.",
+    role:
+      /*
+        The veil itself. It names five concrete positions rather than gesturing at anyone at all,
+        because a position nobody can picture is not a veil at all, only a sentence.
+
+        The last one is the one that does the work. Including a position that never needs the
+        reserve stops the participant quietly assuming they will be the person in need — which is
+        the assumption that collapses the exercise into ordinary self-interest.
+      */
+      "You write the rule today. When the emergency comes, {w|your own place in it will be assigned at random}, and you will not know it until it happens. You could be {w|the person whose life depends on the reserve arriving}. You could be {w|the nurse who has to apply your rule} to someone standing in front of them. You could be {w|the technician who can restore power to one building and not the next}. You could be {w|a parent held outside the cordon}. You could be {w|someone who never needs the reserve at all}, and only pays for it. You are writing a rule you will have to live under, from a position you do not get to choose.",
+    title: "The Rule You Will Live Under",
+    description:
+      "A regional authority is writing the standing rule for its emergency reserve: the one stock of people, equipment and power it can release when the next crisis comes. The rule will be applied automatically, to everyone, with no exceptions and no appeal. It is written once, and it does not get revisited in the moment.",
+    theme: {
+      /* Violet rather than another emergency palette. This scenario is not a sixth emergency, and
+         the colour is the first thing that says so. It is also the hue the CVR already uses for
+         "who is affected", which is exactly what the veil withholds. */
+      gradient: "radial-gradient(900px 420px at 12% -10%, rgba(124,58,237,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(76,29,149,0.42), transparent 55%), linear-gradient(155deg, #0f0b1a, #1e1433 50%, #33235c)",
+      accent: "#7C3AED",
+      shadow: "0 8px 32px rgba(124, 58, 237, 0.16)",
+    },
+    options: [
+      {
+        id: "veil_worst_off_first",
+        title: "Whoever would suffer most without it",
+        summary:
+          "The reserve goes first to the people who would be worst off if it never reached them, even when reaching them is slow, expensive, and helps only a few.",
+        gains: "Nobody is left out because helping them was difficult or expensive.",
+        consequence:
+          "The people in the worst position are reached first, whatever it costs to get to them. But the reserve does less in total, and many people who would have been helped by a wider rule get nothing.",
+        givesUp: "The larger number of people the same reserve could have reached.",
+        moralTension:
+          "Is a rule fair when it knowingly helps fewer people, in order to reach the people in the worst position?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 95, groupSizeSensitivity: 25,
+          gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 25,
+          directnessSensitivity: 50, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 50,
+        },
+        metrics: {
+          /*
+            ALL FIVE ARE 50, AND THAT IS THE STATEMENT RATHER THAN A PLACEHOLDER.
+
+            Metrics describe how an ACTION performs - how fast, how reliable, how reversible. These
+            four are not actions, they are standing rules, and asking whether a principle is "fast"
+            has no answer. Scenario 6 is also excluded from Performance, so nothing reads these.
+
+            Equal values say the options do not differ on this axis. Inventing a spread would put a
+            difference on the metrics dashboard that the scenario does not contain, and a
+            participant comparing two rules would find themselves separating them on a number that
+            means nothing here. The dashboard is hidden on this scenario for the same reason.
+          */
+          speed: 50,
+          resourceUse: 50,
+          reliability: 50,
+          durability: 50,
+          reversibility: 50,
+        },
+      },
+      {
+        id: "veil_prevent_most_harm",
+        title: "Wherever it prevents the most serious harm",
+        summary:
+          "The reserve goes wherever it stops the largest number of deaths and severe injuries, whoever those people turn out to be.",
+        gains: "The number of people seriously harmed is as low as this reserve can make it.",
+        consequence:
+          "Fewer people are gravely hurt than under any other rule. But someone already in the worst position can be passed over, because reaching them would use up what could have prevented more severe harm elsewhere.",
+        givesUp: "Any claim a person has on the reserve because of who they are.",
+        moralTension:
+          "If the rule never looks at who a person is, is that fairness, or only efficiency wearing its name?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 95,
+          gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 25,
+          directnessSensitivity: 50, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 50,
+        },
+        metrics: {
+          /*
+            ALL FIVE ARE 50, AND THAT IS THE STATEMENT RATHER THAN A PLACEHOLDER.
+
+            Metrics describe how an ACTION performs - how fast, how reliable, how reversible. These
+            four are not actions, they are standing rules, and asking whether a principle is "fast"
+            has no answer. Scenario 6 is also excluded from Performance, so nothing reads these.
+
+            Equal values say the options do not differ on this axis. Inventing a spread would put a
+            difference on the metrics dashboard that the scenario does not contain, and a
+            participant comparing two rules would find themselves separating them on a number that
+            means nothing here. The dashboard is hidden on this scenario for the same reason.
+          */
+          speed: 50,
+          resourceUse: 50,
+          reliability: 50,
+          durability: 50,
+          reversibility: 50,
+        },
+      },
+      {
+        id: "veil_reach_most_people",
+        title: "Wherever it reaches the most people",
+        summary:
+          "The reserve is spread so that the largest number of people get some help from it, even when nobody gets very much.",
+        gains: "Almost nobody is left with nothing at all.",
+        consequence:
+          "Help reaches further than under any other rule, and very few people are passed over entirely. But spread that thin it may be too little to change what happens to anyone in real danger.",
+        givesUp: "Enough help, concentrated, to actually change an outcome.",
+        moralTension:
+          "Is a little help to many worth more than enough help to a few?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 25,
+          gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 95,
+          directnessSensitivity: 50, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 50,
+        },
+        metrics: {
+          /*
+            ALL FIVE ARE 50, AND THAT IS THE STATEMENT RATHER THAN A PLACEHOLDER.
+
+            Metrics describe how an ACTION performs - how fast, how reliable, how reversible. These
+            four are not actions, they are standing rules, and asking whether a principle is "fast"
+            has no answer. Scenario 6 is also excluded from Performance, so nothing reads these.
+
+            Equal values say the options do not differ on this axis. Inventing a spread would put a
+            difference on the metrics dashboard that the scenario does not contain, and a
+            participant comparing two rules would find themselves separating them on a number that
+            means nothing here. The dashboard is hidden on this scenario for the same reason.
+          */
+          speed: 50,
+          resourceUse: 50,
+          reliability: 50,
+          durability: 50,
+          reversibility: 50,
+        },
+      },
+      {
+        id: "veil_greatest_total",
+        title: "Wherever it achieves the most",
+        summary:
+          "The reserve goes where each unit of it produces the greatest total result, measured across everything and everyone it touches.",
+        gains: "Nothing is wasted. Every unit is placed where it does the most work.",
+        consequence:
+          "The reserve produces more than it would under any other rule. But the people who are hardest and most expensive to reach are, by this rule exactly, the people it will pass over every time.",
+        givesUp: "The people who cost the most to help.",
+        moralTension:
+          "When a rule is written to get the most out of what we have, who reliably ends up on the wrong side of it?",
+        fingerprint: {
+          vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 25,
+          gainResponsivenessSensitivity: 95, outcomeAggregationSensitivity: 25,
+          directnessSensitivity: 50, contextSensitivity: 50, stakeholderPerspectiveShiftSensitivity: 50,
+        },
+        metrics: {
+          /*
+            ALL FIVE ARE 50, AND THAT IS THE STATEMENT RATHER THAN A PLACEHOLDER.
+
+            Metrics describe how an ACTION performs - how fast, how reliable, how reversible. These
+            four are not actions, they are standing rules, and asking whether a principle is "fast"
+            has no answer. Scenario 6 is also excluded from Performance, so nothing reads these.
+
+            Equal values say the options do not differ on this axis. Inventing a spread would put a
+            difference on the metrics dashboard that the scenario does not contain, and a
+            participant comparing two rules would find themselves separating them on a number that
+            means nothing here. The dashboard is hidden on this scenario for the same reason.
+          */
+          speed: 50,
+          resourceUse: 50,
+          reliability: 50,
+          durability: 50,
+          reversibility: 50,
+        },
+      },
+    ],
+  },
 ];

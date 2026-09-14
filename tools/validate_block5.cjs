@@ -19,8 +19,17 @@ for(const sc of scen){
   const body=S.slice(sc.i,sc.end);
   ROLE[sc.id]=(body.match(/decisionRole: "([a-z]+)"/)||[,"decider"])[1];
 }
-const isRecipient=id=>ROLE[id]==="recipient";
-const DECIDER_IDS=scen.map(x=>x.id).filter(id=>!isRecipient(id));
+/*
+  MIRRORS block5CVR.scenarioIsScored(): a scenario teaches the profile and runs the reflection only
+  when its role is "decider". Written as "is it scored" rather than "is it not a recipient" because
+  the roles are now three - decider, recipient, and the scenario-6 "predicted" role - and the
+  negative form silently treated every NEW role as a decider. That is exactly the drift the shared
+  predicate in the app exists to prevent, and a validator that disagrees with the app about which
+  scenarios count does not validate the app.
+*/
+const isScored=id=>ROLE[id]==="decider";
+const isPredicted=id=>ROLE[id]==="predicted";
+const DECIDER_IDS=scen.map(x=>x.id).filter(id=>isScored(id));
 const DATA={};
 for(const sc of scen){const body=S.slice(sc.i,sc.end);
   const opts=[...body.matchAll(/^        id: "([a-z_]+)",$/gm)];
@@ -28,9 +37,9 @@ for(const sc of scen){const body=S.slice(sc.i,sc.end);
     const fp={},f=ob.match(/fingerprint: \{([\s\S]*?)\}/)[1];
     K.forEach(kk=>fp[kk]=+f.match(new RegExp(kk+": ([0-9]+)"))[1]);
     const seed=ob.match(/cvrSeed: \{([\s\S]*?)\n        \}/);
-    if(!seed&&!isRecipient(sc.id)) throw new Error("option "+m[1]+" has no cvrSeed and its scenario is not a recipient scenario");
+    if(!seed&&isScored(sc.id)) throw new Error("option "+m[1]+" has no cvrSeed and the reflection does run on its scenario");
     const sd=seed?seed[1]:"";
-    return {id:m[1],title:str(ob,"title"),fp,recipient:isRecipient(sc.id),
+    return {id:m[1],title:str(ob,"title"),fp,carriesNoCvr:!isScored(sc.id),
             rule:seed?str(sd,"rule"):null,ic:seed?str(sd,"identifiedCase"):null,harm:seed?str(sd,"harm"):null,
             gains:str(ob,"gains"),givesUp:str(ob,"givesUp"),moralTension:str(ob,"moralTension")};});}
 let fails=0; const ok=(n,c,d)=>{if(!c)fails++;console.log((c?"  PASS  ":"  FAIL  ")+n+(d?"  — "+d:""));};
@@ -49,7 +58,7 @@ const DECIDER_OPTIONS=DECIDER_IDS.reduce((a,id)=>a+DATA[id].length,0);
 const CVR_ALL=[...C.matchAll(/const ([A-Z_]+): ScenarioCVRContent/g)].map(m=>m[1]);
 const CVR_SCEN=CVR_ALL.filter(n=>n!=="GENERIC");
 if(!CVR_ALL.length){console.log("  FAIL  no CVR content blocks parsed");process.exit(1);}
-console.log("\n=== 1. COVERAGE: 6 options + 4 value-champions per scenario ===");
+console.log("\n=== 1. COVERAGE: option count + 4 value-champions per scenario ===");
 for(const id of ids){const o=DATA[id];
   // A champion is the option scoring HIGHEST on that dimension within its scenario, uniquely.
   // Replaces an absolute ">=95" test, which was tied to the pre-Stage-3 fingerprint scale.
@@ -58,8 +67,18 @@ for(const id of ids){const o=DATA[id];
     return o.filter(x=>x.fp[k]===mx).length===1;}));
   const owners=new Set(K.map(k=>{const mx=Math.max(...o.map(x=>x.fp[k]));
     return o.find(x=>x.fp[k]===mx).id;}));
-  ok(id.padEnd(30),o.length===6&&champs.size===4&&owners.size===4,
-     champs.size+" unique champions across "+owners.size+" distinct options");}
+  /*
+    THE CHAMPION STRUCTURE IS REQUIRED OF EVERY SCENARIO. The option count is not: scenario 6 runs
+    four options, one pure champion per value, because it asks which PRINCIPLE the participant
+    holds rather than which action they take. Four strongly differentiated options also raise the
+    model's separation between the top two from 7 points to 17, which is what makes a prediction
+    there worth showing. See docs/BLOCK5_SCENARIO6_VEIL_DRAFT.md.
+
+    Four pure champions satisfy the champion test perfectly, so nothing is waived here but the count.
+  */
+  const wantOptions=isPredicted(id)?4:6;
+  ok(id.padEnd(30),o.length===wantOptions&&champs.size===4&&owners.size===4,
+     o.length+" options, "+champs.size+" unique champions across "+owners.size+" distinct options");}
 console.log("\n=== 2. STRICT DOMINATION: no option beaten on all 4 dimensions ===");
 for(const id of ids){const o=DATA[id];const bad=[];
   for(const a of o)for(const b of o)if(a!==b&&K.every(k=>b.fp[k]>=a.fp[k])&&K.some(k=>b.fp[k]>a.fp[k]))bad.push(a.id+" < "+b.id);

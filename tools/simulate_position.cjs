@@ -37,7 +37,19 @@ if (!fs.existsSync(BUILD)) {
 fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commonjs" }));
 const B = (f) => require(path.join(BUILD, f));
 
-const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
+const { BLOCK5_SCENARIOS: FULL_DECK } = B("block5Scenarios.js");
+/*
+ * THE POSITION DECK IS NOT THE WHOLE DECK, and this file must use the same one the app does.
+ *
+ * `block5Position.positionRows()` drops any scenario whose position is `behind_the_veil`, because
+ * behind the veil the participant is not told where they stand and there is no position to compare.
+ * This tool walks the scenario list directly rather than through that function, so without the same
+ * filter it would measure a scenario the measure itself excludes — and a simulator that disagrees
+ * with the app about which scenarios count does not validate the app, it validates a fiction.
+ *
+ * Filtered once, here, so every gate below inherits it.
+ */
+const BLOCK5_SCENARIOS = FULL_DECK.filter((s) => s.stakePosition !== "behind_the_veil");
 const { POLICY_DIM_KEYS } = B("block5Types.js");
 const P = B("block5Position.js");
 const PERF = B("block5Performance.js");

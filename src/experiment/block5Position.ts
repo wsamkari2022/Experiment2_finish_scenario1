@@ -124,6 +124,14 @@ export const POSITION_LABEL: Record<PositionKey, string> = {
   others: "Other people",
   under_authority: "My employer's rules",
   receiving_end: "Done to me",
+  /*
+   * PRESENT SO THE TYPE IS COMPLETE, AND NEVER DRAWN. `positionRows()` drops this position before
+   * a row can reach a chart. The label exists because `PositionKey` is aliased to `StakePosition`
+   * on purpose - the compiler is meant to stop anyone adding a position and forgetting a map - and
+   * a blank string here would satisfy the compiler while producing an unlabelled row if the filter
+   * were ever removed.
+   */
+  behind_the_veil: "No position (scenario 6)",
 };
 
 /**
@@ -137,6 +145,8 @@ export const POSITION_SHORT: Record<PositionKey, string> = {
   others: "others",
   under_authority: "at work",
   receiving_end: "done to me",
+  /** Never drawn; see the note on POSITION_LABEL. */
+  behind_the_veil: "no position",
 };
 
 /** Reads a profile's four policy values as a plain record. */
@@ -210,6 +220,21 @@ export function positionRows(
   results.forEach((r, i) => {
     const scenario = BLOCK5_SCENARIOS.find((s) => s.id === r.scenarioId);
     if (!scenario) return;
+
+    /*
+     * BEHIND THE VEIL THERE IS NO POSITION TO MEASURE.
+     *
+     * Every other scenario, including the recipient one, puts the participant SOMEWHERE: deciding
+     * alone, deciding for a household, deciding for strangers, deciding under an employer, or having
+     * it done to them. The position effect compares those. Scenario 6 withholds the participant's
+     * place on purpose, so there is nothing to compare and a row here would be an average over a
+     * variable that was deliberately not set.
+     *
+     * Filtered on the POSITION rather than on the scenario id, so a future veil scenario is covered
+     * without anyone remembering to come back here.
+     */
+    if (scenario.stakePosition === "behind_the_veil") return;
+
     const option = scenario.options.find((o) => o.id === r.selectedOptionId);
     if (!option) return;
 

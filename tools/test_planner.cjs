@@ -325,8 +325,24 @@ const refs = BLOCK5_SCENARIOS.map((scn) => {
 });
 /* Expected shape is built from the deck, not written out: a literal [1, 1, 1, 1, 1] silently
    encoded "five scenarios" and failed the moment the deck changed size, for a reason that has
-   nothing to do with what this gate is about. The claim is one clean reference PER SCENARIO. */
-check("exactly one clean-reference line per scenario", refs, BLOCK5_SCENARIOS.map(() => 1));
+   nothing to do with what this gate is about. The claim is one clean reference PER SCENARIO.
+
+   SCENARIO 6 EXPECTS ZERO, AND THAT IS THE SCENARIO WORKING.
+
+   A clean reference is an option that breaches none of the limits the participant set. The five
+   emergency decks are built so one always exists: a participant must never be cornered into
+   violating something they refused outright just to proceed.
+
+   Behind the veil that guarantee is exactly what is being withdrawn. The four options are pure
+   champions - each one delivers a single value and gives up the other three - so for any participant
+   with a real limit on more than one value, every option breaches something. There is no option
+   that keeps everything, because the question is which value you act on when you cannot keep them
+   all. Manufacturing a safe fourth option would answer the question for them.
+
+   Derived from the role rather than from the scenario's position in the list, so reordering the
+   deck cannot silently move the exemption onto the wrong scenario. */
+const expectedRefs = BLOCK5_SCENARIOS.map((scn) => (scn.decisionRole === "predicted" ? 0 : 1));
+check("exactly one clean-reference line per scenario (none behind the veil)", refs, expectedRefs);
 
 /* The trade-off sentence must actually appear somewhere — it is the whole point of the tree. */
 const withTrade = rows.filter((x) => x.ex.tradeLine).length;

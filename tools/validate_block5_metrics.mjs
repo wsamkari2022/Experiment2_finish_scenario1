@@ -41,8 +41,22 @@ const SH = { vulnerabilityProtectionSensitivity: "Vulnerability", groupSizeSensi
  */
 const SCEN = [...s.matchAll(/id: "([a-z0-9_]+)",\s*[\r\n]+\s*stakePosition:/g)].map((m) => m[1]);
 if (SCEN.length === 0) { console.error("no scenarios parsed — check block5Scenarios.ts"); process.exit(1); }
-/** Options per scenario, also derived rather than assumed to be six. */
-const OPTS_PER = 6;
+/**
+ * Options per scenario, now genuinely derived rather than assumed.
+ *
+ * This said "derived rather than assumed to be six" directly above `const OPTS_PER = 6`, which was
+ * the assumption wearing the word. It held while every scenario ran six options and broke the day
+ * one did not: scenario 6 runs FOUR, one pure champion per value, because it asks which principle
+ * the participant holds rather than which action they take.
+ */
+const roleOf = (id) => {
+  const at = s.indexOf(`id: "${id}"`);
+  const next = SCEN.map((x) => s.indexOf(`id: "${x}"`)).filter((i) => i > at).sort((a, b) => a - b)[0];
+  const body = s.slice(at, next === undefined ? s.length : next);
+  const m = body.match(/decisionRole: "([a-z]+)"/);
+  return m ? m[1] : "decider";
+};
+const optionsExpectedIn = (id) => (roleOf(id) === "predicted" ? 4 : 6);
 /** Gates phrased as "all but one scenario" scale with the set instead of naming a number. */
 const ALL_BUT_ONE = Math.max(1, SCEN.length - 1);
 /**
@@ -50,6 +64,24 @@ const ALL_BUT_ONE = Math.max(1, SCEN.length - 1);
  * Rounding up keeps it satisfiable for very small sets: with 3 scenarios the ceiling is 1.
  */
 const DOMINANCE_MAX = Math.max(1, Math.round(SCEN.length * 0.4));
+
+/**
+ * THE SCENARIOS THESE PERFORMANCE GATES APPLY TO.
+ *
+ * Everything from G4 down protects the PERFORMANCE measure: that the option best protecting the
+ * vulnerable costs something, that no single value dominates, that the options are distinguishable
+ * on outcome quality. Scenario 6 takes part in none of it.
+ *
+ * Its four options are standing RULES rather than actions, so "how fast" and "how reversible" have
+ * no answer for them; its metrics are deliberately all 50 to say exactly that; and it is excluded
+ * from Performance entirely, along with VCI and Stability. Running these gates over it would demand
+ * a spread the scenario is designed not to have, and the only way to pass would be to invent
+ * differences and then show them to a participant on a dashboard.
+ *
+ * G1 still covers every scenario, scenario 6 included: all five metrics present, integers, 0-100.
+ */
+const SCORED_SCEN = SCEN.filter((id) => roleOf(id) !== "predicted");
+
 
 /* ---------------- parse ---------------- */
 const bounds = SCEN.map((id) => ({ id, at: s.indexOf(`id: "${id}"`) }));
@@ -105,7 +137,7 @@ console.log("\n=== BLOCK 5 PERFORMANCE-METRIC GATES ===");
 /* G1 — completeness */
 head("G1  every option carries all five metrics as integers 0-100");
 const bad = rows.filter((r) => !r.m || MK.some((k) => !Number.isInteger(r.m[k]) || r.m[k] < 0 || r.m[k] > 100));
-const EXPECTED_OPTIONS = SCEN.length * OPTS_PER;
+const EXPECTED_OPTIONS = SCEN.reduce((a, id) => a + optionsExpectedIn(id), 0);
 gate(rows.length === EXPECTED_OPTIONS && bad.length === 0, "G1",
   `${rows.length} options parsed, ${bad.length} malformed${bad.length ? ": " + bad.map((b) => b.id).join(", ") : ""}`);
 if (bad.length || rows.length !== EXPECTED_OPTIONS) { console.log("\n### CANNOT CONTINUE ###"); process.exit(1); }
@@ -113,7 +145,7 @@ if (bad.length || rows.length !== EXPECTED_OPTIONS) { console.log("\n### CANNOT 
 /* G2 — discriminates inside a scenario */
 head("G2  each metric separates the six options: within-scenario range >= 30 in all but one scenario");
 MK.forEach((k) => {
-  const ranges = SCEN.map((sc) => {
+  const ranges = SCORED_SCEN.map((sc) => {
     const v = inScenario(sc).map((r) => r.m[k]);
     return Math.max(...v) - Math.min(...v);
   });
@@ -143,13 +175,13 @@ head("G5  protecting the vulnerable must COST performance, in every scenario");
 console.log("      This is the dimension the whole dissertation turns on. If the option that best");
 console.log("      protects the vulnerable is also the best performer, the participant is never");
 console.log("      asked to give anything up, and their Block 5 data says nothing.");
-SCEN.forEach((sc) => {
+SCORED_SCEN.forEach((sc) => {
   const g = inScenario(sc);
   const champ = g.reduce((a, b) => (b.fp.vulnerabilityProtectionSensitivity > a.fp.vulnerabilityProtectionSensitivity ? b : a));
   const rank = [...g].sort((a, b) => perf(b) - perf(a)).findIndex((r) => r.id === champ.id) + 1;
   gate(rank >= 3, "G5", `${sc.padEnd(30)} "${champ.title.slice(0, 32)}" ranks ${rank}/6 on performance`);
 });
-SCEN.forEach((sc) => {
+SCORED_SCEN.forEach((sc) => {
   const g = inScenario(sc);
   const r = corr(g.map((x) => x.fp.vulnerabilityProtectionSensitivity), g.map(perf));
   gate(r < 0.30, "G5", `${sc.padEnd(30)} vulnerability x performance r = ${r.toFixed(2)}`);
@@ -158,18 +190,18 @@ SCEN.forEach((sc) => {
 /* G5b — no value may be systematically rewarded */
 head("G5b no value may be rewarded to the point of dominance: champion ranks 1st in <= 40% of scenarios");
 POL.forEach((p) => {
-  const ranks = SCEN.map((sc) => {
+  const ranks = SCORED_SCEN.map((sc) => {
     const g = inScenario(sc);
     const champ = g.reduce((a, b) => (b.fp[p] > a.fp[p] ? b : a));
     return [...g].sort((a, b) => perf(b) - perf(a)).findIndex((r) => r.id === champ.id) + 1;
   });
   const firsts = ranks.filter((r) => r === 1).length;
-  gate(firsts <= DOMINANCE_MAX, "G5b", `${SH[p].padEnd(13)} champion ranks ${ranks.join(" ")}  — 1st in ${firsts}/${SCEN.length} (max ${DOMINANCE_MAX})`);
+  gate(firsts <= DOMINANCE_MAX, "G5b", `${SH[p].padEnd(13)} champion ranks ${ranks.join(" ")}  — 1st in ${firsts}/${SCORED_SCEN.length} (max ${DOMINANCE_MAX})`);
 });
 
 /* G6 — six distinguishable options, none obviously best */
 head("G6  six distinguishable options, none obviously best");
-SCEN.forEach((sc) => {
+SCORED_SCEN.forEach((sc) => {
   const g = inScenario(sc);
   let closest = 999, pair = "";
   for (let i = 0; i < g.length; i++) for (let j = i + 1; j < g.length; j++) {
@@ -178,12 +210,12 @@ SCEN.forEach((sc) => {
   }
   gate(closest >= 10, "G6", `${sc.padEnd(30)} closest profiles differ by ${closest.toFixed(1)} pts (${pair})`);
 });
-SCEN.forEach((sc) => {
+SCORED_SCEN.forEach((sc) => {
   const g = inScenario(sc);
   const leads = new Set(MK.map((k) => g.reduce((a, b) => (b.m[k] > a.m[k] ? b : a)).id));
   gate(leads.size >= 4, "G6", `${sc.padEnd(30)} ${leads.size}/6 options lead on at least one metric`);
 });
-SCEN.forEach((sc) => {
+SCORED_SCEN.forEach((sc) => {
   const p = inScenario(sc).map(perf).sort((a, b) => b - a);
   gate(p[0] - p[1] <= 8, "G6", `${sc.padEnd(30)} top performer beats 2nd by ${(p[0] - p[1]).toFixed(1)} pts`);
 });

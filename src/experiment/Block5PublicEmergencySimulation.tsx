@@ -1447,6 +1447,23 @@ const DECISION_COPY = {
     commit: "Yes, this is what I hope they choose",
     reconsider: "Go back and look again",
   },
+  /*
+   * SCENARIO 6. The participant is not choosing an ACTION, they are setting a RULE that will be
+   * applied to a situation whose place in it they do not yet know. "Choose this option" would be
+   * wrong twice over: nothing is being done now, and the thing being picked outlives the moment.
+   *
+   * `fitsIntro` deliberately does NOT say the rule fits their values. The decider version can say
+   * that because it only appears when the option genuinely fits. Here every rule reaches this page,
+   * including ones that cut against the participant's own profile, and the whole point of the
+   * scenario is to find out which rule they set without being told how well it matches them.
+   */
+  predicted: {
+    cardAction: "Set this as the rule",
+    dialogEyebrow: "The rule you are setting",
+    fitsIntro: "This is the rule you are about to set. Before you confirm, take a moment with what it gives up.",
+    commit: "Yes, this is my rule",
+    reconsider: "Go back and look again",
+  },
 } as const;
 
 /**
@@ -1561,6 +1578,26 @@ const STAKE_VIEW: Record<StakePosition, {
         state: "They decide. They are choosing from the same six options you can see here.", strong: false },
       { key: "other", icon: <LuGlobe />, label: "Your clients",
         state: "They carry it with you. These are the same visits, seen from the other side.", strong: true },
+    ],
+  },
+  /*
+   * SCENARIO 6 — THE VEIL. Every row is lit, and every row says the same thing: not known yet.
+   *
+   * The other five entries answer "where do you stand?". This one answers it by refusing, which is
+   * the manipulation rather than an absence of one. All three rows are marked strong on purpose:
+   * emphasising one would hint at which position the participant is most likely to occupy, and the
+   * exercise only works while every position is equally possible.
+   */
+  behind_the_veil: {
+    badge: "You do not know who you will be",
+    headline: "You are writing a rule you will live under, from a position you do not get to choose.",
+    actors: [
+      { key: "you", icon: <LuUserRound />, label: "You",
+        state: "Unknown. Your place in this is assigned at random once the rule is set.", strong: true },
+      { key: "with", icon: <LuUsersRound />, label: "The people around you",
+        state: "Unknown. You may be the one who needs help, or the one who has to apply your rule.", strong: true },
+      { key: "other", icon: <LuGlobe />, label: "Everyone else",
+        state: "All of them. The rule applies to every person here, with no exceptions — including you.", strong: true },
     ],
   },
 };

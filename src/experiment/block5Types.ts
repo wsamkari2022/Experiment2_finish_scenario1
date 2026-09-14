@@ -432,7 +432,17 @@ export type StakePosition =
   | "self_and_group"
   | "others"
   | "under_authority"
-  | "receiving_end";
+  | "receiving_end"
+  /**
+   * SCENARIO 6 ONLY. The participant is behind Rawls's veil: they write a rule before learning
+   * which person in the situation they will be.
+   *
+   * This is not a sixth rung on the same ladder, and it must never be analysed as one. The other
+   * five vary WHO CARRIES THE COST, which is the block's manipulation. This one removes the
+   * question: there is no position to occupy, because not knowing is the condition of the
+   * exercise. `positionRows()` skips it for that reason.
+   */
+  | "behind_the_veil";
 
 /**
  * Does the participant DECIDE here, or only WISH?
@@ -446,7 +456,24 @@ export type StakePosition =
  *
  * Defaults to "decider" when absent, so every scenario authored before this existed is unchanged.
  */
-export type Block5DecisionRole = "decider" | "recipient";
+export type Block5DecisionRole =
+  /** Makes a real choice. Teaches the profile and counts toward VCI, Stability and Performance. */
+  | "decider"
+  /** States a wish about a decision made for them. Scenario 5. Teaches the profile nothing. */
+  | "recipient"
+  /**
+   * SCENARIO 6 ONLY. A test OF the model rather than input TO it.
+   *
+   * Behaves like `recipient` everywhere that matters — `scenarioIsScored()` returns false for any
+   * role that is not `decider`, so this is excluded from profile updates, churn, VCI and Stability
+   * without a single call site needing to know it exists.
+   *
+   * Two reasons it must stay excluded. `STABILITY_CHURN_CEILING` is a measurement OF THE SCENARIO
+   * DECK, so a sixth scenario producing churn would invalidate it and every gate resting on it.
+   * And a scenario whose purpose is to check whether the model predicted correctly cannot also be
+   * evidence for the model without arguing in a circle.
+   */
+  | "predicted";
 
 export interface Block5ScenarioTheme {
   gradient: string;
