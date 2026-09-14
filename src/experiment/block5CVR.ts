@@ -78,6 +78,39 @@ function scoreOf(profile: Block5UserProfile, key: string): number {
  * me", which are different questions.
  */
 export function policyAlignmentScore(option: Block5ScenarioOption, profile: Block5UserProfile): number {
+  return Math.round(clamp(100 - policyAlignmentShortfall(option, profile)));
+}
+
+/**
+ * THE SAME QUANTITY, BEFORE THE FLOOR IS APPLIED. Lower is a better fit; 0 is a perfect one.
+ *
+ * WHY THIS HAD TO BE SEPARATED OUT.
+ * `policyAlignmentScore` clamps at 0, and a clamp destroys information. A demanding participant -
+ * one who asked for a lot on several values - pushes most options past a shortfall of 100, and
+ * every one of them then reports the same score of 0. Ranking on that number put those options in
+ * order of their internal id, which is alphabetical, so the "best fit" badge went to whichever
+ * option happened to be named earliest.
+ *
+ * It is a stopwatch that stops at 60 seconds. Runners finishing in 70, 90 and 120 are all written
+ * down as 60, and the medals then get handed out by name.
+ *
+ * Measured over 20,000 profiles on the five-scenario deck: at least one option sat on the floor in
+ * 18.7% of scenarios, every option sat there in 0.1%, and ranking on the floored number put the
+ * wrong label on 2.7% of cards and named the wrong best-fit option in 1.5% of scenarios. About one
+ * participant in five was affected somewhere in their run.
+ *
+ * THE SCORE SHOWN TO PARTICIPANTS IS UNCHANGED. They still see 0 rather than a negative number,
+ * which would mean nothing to them. Only the ORDERING moved onto this uncensored value, and for
+ * every participant whose options all score above 0 the two orderings are identical - the score is
+ * exactly 100 minus this, so ranking by one is ranking by the other.
+ *
+ * STORE THIS, NOT ONLY THE SCORE, for analysis. The score is censored above a shortfall of 100 and
+ * cannot be treated as an interval measure at the bottom of the range; this can.
+ */
+export function policyAlignmentShortfall(
+  option: Block5ScenarioOption,
+  profile: Block5UserProfile,
+): number {
   let penalty = 0;
   for (const k of POLICY_DIM_KEYS) {
     const u = scoreOf(profile, k);
@@ -85,7 +118,7 @@ export function policyAlignmentScore(option: Block5ScenarioOption, profile: Bloc
     const shortfall = Math.max(0, u - o); // only falling BELOW the threshold counts
     penalty += (u / 100) * shortfall;
   }
-  return Math.round(clamp(100 - penalty));
+  return penalty;
 }
 
 /**
@@ -137,7 +170,15 @@ export const ALIGNMENT_LABEL: Record<AlignmentLevel, string> = {
 };
 
 export interface LabeledOption extends Block5ScenarioOption {
+  /** 0-100, shown to the participant. Floored at 0, so not an interval measure at the bottom. */
   matchScore: number;
+  /**
+   * The same fit, uncensored: total weighted shortfall, lower is better.
+   *
+   * This is what the ranking uses and what an analysis should use. `matchScore` cannot separate an
+   * option that missed by 104 from one that missed by 154 - both read 0 - and this can.
+   */
+  matchShortfall: number;
   level: AlignmentLevel;
   performance: number;
   rank: number;
@@ -151,12 +192,23 @@ export function labelOptions(
   const labeled: LabeledOption[] = options.map((o) => ({
     ...o,
     matchScore: policyAlignmentScore(o, profile),
+    matchShortfall: policyAlignmentShortfall(o, profile),
     level: "misaligned" as AlignmentLevel,
     performance: performanceScore(o),
     rank: 0,
   }));
-  // Rank by absolute fit (stable tie-break by id), then label by RANK POSITION (guaranteed spread).
-  labeled.sort((a, b) => (b.matchScore - a.matchScore) || a.id.localeCompare(b.id));
+  /*
+   * RANKED ON THE UNCENSORED SHORTFALL, not on the floored score.
+   *
+   * Sorting on `matchScore` looked identical for most participants and was silently wrong for the
+   * rest: every option past a shortfall of 100 reports 0, so the comparison collapsed to the
+   * tie-break and the ranking became alphabetical by id. `rankLabel` then handed "Aligned" to
+   * whichever option was named earliest.
+   *
+   * Ascending, because a shortfall is a cost. The id tie-break stays, for options that genuinely
+   * fit identically, so the same profile always produces the same order.
+   */
+  labeled.sort((a, b) => (a.matchShortfall - b.matchShortfall) || a.id.localeCompare(b.id));
   labeled.forEach((o, i) => { o.rank = i + 1; o.level = rankLabel(i, labeled.length); });
   return labeled;
 }

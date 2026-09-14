@@ -31,7 +31,7 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 const B = (f) => require(path.join(BUILD, f));
 
 const { predictChoice, predictionConfidence, PREDICTION_VERSION } = B("block5Prediction.js");
-const { policyAlignmentScore } = B("block5CVR.js");
+const { policyAlignmentScore, policyAlignmentShortfall } = B("block5CVR.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
@@ -74,9 +74,20 @@ console.log("--- gates ---");
     const pr = predictChoice(s.options, p, { vci: rnd() * 100, stability: rnd() * 100 });
     const total = pr.options.reduce((a, o) => a + o.probability, 0);
     if (Math.abs(total - 1) > 1e-9) sumOk = false;
-    const byScore = [...pr.options].sort((a, b) => b.alignmentScore - a.alignmentScore);
-    for (let j = 1; j < byScore.length; j++) {
-      if (byScore[j].probability - byScore[j - 1].probability > 1e-12) monoOk = false;
+    /*
+      MONOTONIC AGAINST THE UNCENSORED FIT, NOT AGAINST THE DISPLAYED SCORE.
+
+      This used to sort by `alignmentScore`, which stops at 0. For a demanding participant several
+      options report the same 0 while having genuinely different shortfalls, so the old form
+      demanded that options which merely LOOK equal be given equal probability - the exact bug the
+      predictor was changed to stop. Sorting on the shortfall asks the real question: a better fit
+      must never receive a lower probability.
+    */
+    const byFit = [...pr.options]
+      .map((o) => ({ o, fit: -policyAlignmentShortfall(s.options.find((x) => x.id === o.optionId), p) }))
+      .sort((a, b) => b.fit - a.fit);
+    for (let j = 1; j < byFit.length; j++) {
+      if (byFit[j].o.probability - byFit[j - 1].o.probability > 1e-12) monoOk = false;
     }
     const again = predictChoice(s.options, p, { vci: 50, stability: 50 });
     const once = predictChoice(s.options, p, { vci: 50, stability: 50 });
@@ -84,6 +95,22 @@ console.log("--- gates ---");
   }
   gate("P1", sumOk, "the six probabilities always sum to exactly 1  (800 cases)");
   gate("P2", monoOk, "a better-fitting option never gets a lower probability  (800 cases)");
+
+  {
+    /* THE BUG THIS FILE EXISTS TO CATCH AGAIN. A participant who asks a lot of every value pushes
+       every option past the floor, so all of them display 0. Before the fix the predictor fed
+       those identical zeros to the softmax and returned an even split, which is a confident claim
+       that the model knows nothing - made precisely when the participant's values are strongest. */
+    const demanding = mk({ vulnerabilityProtectionSensitivity: 94, groupSizeSensitivity: 0,
+                           gainResponsivenessSensitivity: 100, outcomeAggregationSensitivity: 87 });
+    const veil = BLOCK5_SCENARIOS[BLOCK5_SCENARIOS.length - 1];
+    const shown = veil.options.map((o) => policyAlignmentScore(o, demanding));
+    const pr = predictChoice(veil.options, demanding, { vci: 70, stability: 80 });
+    const probs = pr.options.map((o) => o.probability);
+    const spread = Math.max(...probs) - Math.min(...probs);
+    gate("P8", shown.every((x) => x === 0) && spread > 0.05,
+      `all four options display 0 yet the prediction still separates them  (${probs.map((x) => pctS(x)).join(" ")})`);
+  }
   gate("P3", detOk, "the same profile and scenario always give the identical prediction");
 }
 

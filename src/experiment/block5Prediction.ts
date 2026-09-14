@@ -39,7 +39,7 @@ import type {
   Block5UserProfile,
 } from "./block5Types";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
-import { optionMainValue, policyAlignmentScore } from "./block5CVR";
+import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall } from "./block5CVR";
 
 /**
  * Stamped onto every stored prediction.
@@ -167,21 +167,38 @@ export function predictChoice(
   const confidence = predictionConfidence(inputs.vci, inputs.stability);
   const temperature = temperatureFor(confidence);
 
+  /*
+   * THE SOFTMAX RUNS ON THE UNCENSORED SHORTFALL, NOT ON THE FLOORED SCORE.
+   *
+   * `policyAlignmentScore` stops at 0, and for a demanding participant every option can land there.
+   * Feeding four identical zeros to a softmax returns four identical probabilities, so the
+   * prediction would say "25% each" and mean nothing - exactly when the participant's own values
+   * are most pronounced.
+   *
+   * Nothing else changes. Away from the floor the score is 100 minus the shortfall, and a softmax
+   * is unaffected by adding a constant to every input, so the probabilities are identical for every
+   * participant who was already being served correctly. `alignmentScore` is still reported for
+   * display; only the arithmetic moved.
+   */
   const scored = options.map((o) => ({
     option: o,
     alignmentScore: policyAlignmentScore(o, profile),
+    fit: -policyAlignmentShortfall(o, profile),
   }));
 
   /* Subtract the maximum before exponentiating. Standard softmax hygiene: without it a score of
      100 over a temperature of 18 is exp(5.6), which is fine here but stops being fine the moment
      anyone widens the scale, and a silent overflow would produce NaN probabilities on a page a
      participant is reading. */
-  const max = Math.max(...scored.map((s) => s.alignmentScore));
-  const weights = scored.map((s) => Math.exp((s.alignmentScore - max) / temperature));
+  const max = Math.max(...scored.map((s) => s.fit));
+  const weights = scored.map((s) => Math.exp((s.fit - max) / temperature));
   const total = weights.reduce((a, b) => a + b, 0);
 
-  const sortedScores = [...scored].map((s) => s.alignmentScore).sort((a, b) => b - a);
-  const separation = Math.round((sortedScores[0] ?? 0) - (sortedScores[1] ?? 0));
+  /* Separation is measured on the uncensored fit for the same reason: two options both floored at
+     a displayed 0 would otherwise report a separation of 0 and be called an unbreakable tie, when
+     one of them may have missed by 70 points more than the other. */
+  const sortedFits = [...scored].map((s) => s.fit).sort((a, b) => b - a);
+  const separation = Math.round((sortedFits[0] ?? 0) - (sortedFits[1] ?? 0));
 
   const withProb = scored.map((s, i) => ({
     optionId: s.option.id,
