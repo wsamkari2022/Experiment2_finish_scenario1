@@ -34,6 +34,24 @@ const LEVEL_PALETTE: Record<AlignmentLevel, string> = {
 
 /** Plain-English note for a scenario, based on alignment + CVR outcome. */
 function scenarioNote(sr: Block5ScenarioResult): string {
+  /*
+   * SCENARIO 6 IS NOT DESCRIBED BY HOW WELL IT FIT.
+   *
+   * Every sentence below is a verdict on the participant's choice against their own values, which
+   * is the raw material the MPF's guess was built from. Saying "this choice fit your earlier
+   * values" right under a badge reporting what the MPF expected reads as the software marking their
+   * answer twice over, which is the one impression this scenario must not leave.
+   *
+   * The sentence it gets instead describes what THEY did, not how well they scored.
+   */
+  const pt = sr.predictionTest;
+  if (pt) {
+    if (pt.changedAfterSeeing) {
+      return "You chose one rule, saw what the MPF expected, and then chose a different one.";
+    }
+    return "You saw what the MPF expected of you, and kept the rule you had already chosen.";
+  }
+
   const level = sr.alignmentLevel;
   if (level === "aligned" || level === "weakly_aligned") {
     return "This choice fit your earlier values.";
@@ -233,6 +251,33 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
                   </VStack>
                 </HStack>
 
+                {/*
+                  SCENARIO 6 GETS ITS OWN BADGES, and deliberately not the fit ones.
+
+                  The alignment tier and the "Fit 75" score are the raw material the MPF's guess was
+                  built from. Printing them immediately after a participant has been shown that
+                  guess reads as the software marking their answer, which is the one impression this
+                  scenario must not leave: it is a test of the MPF, not of them.
+
+                  The row stays, because the choice they made there is real and belongs in a summary
+                  of their choices. What it reports is what the GUESS did.
+                */}
+                {sr.predictionTest ? (
+                  <HStack gap="3" wrap="wrap">
+                    <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
+                      MPF expected this {Math.round(sr.predictionTest.probabilityOfFirstChoice * 100)}%
+                    </Badge>
+                    <Badge variant="subtle" colorPalette={sr.predictionTest.predictionWasRight ? "green" : "orange"}
+                      rounded="md" px="2" fontSize="xs">
+                      {sr.predictionTest.predictionWasRight ? "The MPF guessed right" : "The MPF guessed wrong"}
+                    </Badge>
+                    {sr.predictionTest.changedAfterSeeing && (
+                      <Badge variant="subtle" colorPalette="blue" rounded="md" px="2" fontSize="xs">
+                        You changed after seeing it
+                      </Badge>
+                    )}
+                  </HStack>
+                ) : (
                 <HStack gap="3" wrap="wrap">
                   {level && (
                     <Badge variant="subtle" colorPalette={LEVEL_PALETTE[level]} rounded="md" px="2" fontSize="xs">
@@ -255,6 +300,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
                     </Badge>
                   )}
                 </HStack>
+                )}
 
                 <Text fontSize="sm" color="fg.muted" fontStyle="italic" mt="1">{scenarioNote(sr)}</Text>
               </Stack>

@@ -48,7 +48,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { REQUIRED_ACTIVE_MINUTES } from "./dbShape";
 
 /** Bump whenever the consent wording below changes. Stored with every consent record. */
-export const CONSENT_VERSION = "2026-09-14";
+export const CONSENT_VERSION = "2026-09-14b";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
@@ -266,10 +266,13 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
                     3. One last situation, and a guess about you.
                   </Text>{" "}
                   This one is different. You write a rule before you know who you will be in the
-                  situation. After you choose, we show you what we expected you to pick, as a
-                  percentage for each option. Then we ask whether the guess sounds like you, and
-                  you may keep your answer or change it. The guess may well be wrong. It is a test
-                  of our software, not a test of you.
+                  situation. After you choose, our{" "}
+                  <Text as="span" color="fg" fontWeight="semibold">
+                    Moral Prediction Function (MPF)
+                  </Text>{" "}
+                  shows you what it expected you to pick, as a percentage for each option. Then we
+                  ask whether the guess sounds like you, and you may keep your answer or change it.
+                  The MPF may well be wrong. It is a test of our software, not a test of you.
                 </Text>
                 <Text>
                   <Text as="span" color="fg" fontWeight="semibold">

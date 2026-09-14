@@ -544,6 +544,43 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   const [predAnswered, setPredAnswered] = useState(false);
   const [predFirstChoiceId, setPredFirstChoiceId] = useState<string | null>(null);
 
+  /*
+   * THE SCENARIO-6 INTERACTION LOG.
+   *
+   * A ref rather than state on purpose: every entry is an observation, nothing on screen depends on
+   * it, and putting it in state would re-render the page on each keystroke of behaviour we record.
+   *
+   * It is kept separate from the shared `telRef` telemetry because those fields are defined for all
+   * six scenarios and mean the same thing in each; these exist only where there is a guess to be on
+   * one side or the other of.
+   */
+  const predLogRef = useRef<{
+    guessShownAt: number | null;
+    /** The last rule opened, kept here because resetFlow clears the component's own selection. */
+    lastId: string | null;
+    switchesBefore: number;
+    switchesAfter: number;
+    openedBefore: Set<string>;
+    openedAfter: Set<string>;
+    /** Rules whose details have already been logged, so one expansion is recorded once. */
+    expandedLogged: Set<string>;
+    events: PredictionTestRecord["interactions"];
+  }>({ guessShownAt: null, lastId: null, switchesBefore: 0, switchesAfter: 0,
+       openedBefore: new Set(), openedAfter: new Set(), expandedLogged: new Set(), events: [] });
+
+  /** Append one observation. Time is measured from the moment this scenario opened. */
+  const logPred = useCallback((
+    what: PredictionTestRecord["interactions"][number]["what"],
+    extra?: { optionId?: string; value?: string | number },
+  ) => {
+    if (!scenario || !isPredictionTest(scenario)) return;
+    predLogRef.current.events.push({
+      atMs: Date.now() - progress.scenarioStartTime,
+      what,
+      ...extra,
+    });
+  }, [scenario, progress.scenarioStartTime]);
+
   /** Per-card explanation text, generated from planner state. Keyed by option id. */
   const explanations = useMemo<Record<string, CardExplanation>>(() => {
     if (!plan || !scenario) return {};
@@ -588,6 +625,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   );
 
   const resetFlow = useCallback(() => {
+    if (selectedOptionId) logPred("backed_out", { optionId: selectedOptionId });
     setSelectedOptionId(null);
     setStep(null);
     setTradeoffAck(false);
@@ -596,7 +634,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setFramingChoiceYes(null);
     setCvrSaidYes(null);
     setStakeholderMoved(null);
-  }, []);
+  }, [selectedOptionId, logPred]);
 
   /**
    * Opening one option's detail panel CLOSES whichever was open before.
@@ -621,7 +659,18 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       if (telRef.current) telRef.current.optionExpands += 1; // info-seeking signal
       return next;
     });
-  }, []);
+    /*
+     * LOGGED OUTSIDE THE STATE UPDATER, and guarded by its own set.
+     *
+     * React may run a state updater more than once for a single update, so a side effect placed
+     * inside one can fire twice. An over-counted counter is a nuisance; an interaction log with
+     * duplicate entries is a record of something the participant did not do.
+     */
+    if (!predLogRef.current.expandedLogged.has(id)) {
+      predLogRef.current.expandedLogged.add(id);
+      logPred("opened_details", { optionId: id });
+    }
+  }, [logPred]);
 
   const togglePreview = useCallback((id: string) => {
     setPreviewOptionId((cur) => {
@@ -645,6 +694,35 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       t.lastSelectedId = id;
       t.distinct.add(id);
     }
+
+    /*
+     * SCENARIO 6 COUNTS THE SAME SWITCH TWICE OVER: once in the shared telemetry, and once on the
+     * correct side of the guess. `guessShownAt` is the divider, and it is null until the prediction
+     * screen has actually been opened, so a participant who never reaches it records everything as
+     * "before" - which is exactly right.
+     */
+    if (scenario && isPredictionTest(scenario)) {
+      const pl = predLogRef.current;
+      const afterGuess = pl.guessShownAt !== null;
+      /*
+       * COMPARED AGAINST THE LOG'S OWN `lastId`, NOT AGAINST `selectedOptionId`.
+       *
+       * "Change my answer" runs resetFlow, which clears `selectedOptionId` before the participant
+       * picks again. Reading that state here therefore saw null and recorded no switch - which
+       * silently zeroed the one number the reactivity measure is built on, in exactly the case it
+       * exists to capture.
+       */
+      const changed = pl.lastId !== null && pl.lastId !== id;
+      if (afterGuess) {
+        if (changed) pl.switchesAfter += 1;
+        pl.openedAfter.add(id);
+      } else {
+        if (changed) pl.switchesBefore += 1;
+        pl.openedBefore.add(id);
+      }
+      pl.lastId = id;
+    }
+    logPred("selected", { optionId: id });
 
     setSelectedOptionId(id);
     setPreviewOptionId(null);
@@ -677,7 +755,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setCvrWho(misaligned && scenario && opt
       ? pickWhoVariant(scenario, cvrCoordinate(opt, profile).who)
       : null);
-  }, [labeled, scenario, profile]);
+  }, [labeled, scenario, profile, logPred]);
 
   // --- CVR / APA telemetry handlers (wrap the existing step transitions; logic unchanged) ---
   /**
@@ -1029,8 +1107,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     if (!selectedOption) return;
     if (predFirstChoiceId === null) setPredFirstChoiceId(selectedOption.id);
     predShownAtRef.current = Date.now();
+    predLogRef.current.guessShownAt = Date.now();
+    logPred("guess_shown", { optionId: selectedOption.id });
     setStep("prediction");
-  }, [selectedOption, predFirstChoiceId]);
+  }, [selectedOption, predFirstChoiceId, logPred]);
 
   const handleKeep = useCallback(() => {
     if (!selectedOption) return;
@@ -1080,6 +1160,13 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         predictionWasRight: top?.optionId === firstChoice,
         soundsLikeMe: predSoundsLike,
         surprised: predSurprised,
+        switchesBeforeGuess: predLogRef.current.switchesBefore,
+        switchesAfterGuess: predLogRef.current.switchesAfter,
+        rulesOpenedBeforeGuess: predLogRef.current.openedBefore.size,
+        rulesOpenedAfterGuess: predLogRef.current.openedAfter.size,
+        interactions: [...predLogRef.current.events,
+          { atMs: Date.now() - progress.scenarioStartTime, what: "committed" as const,
+            optionId: selectedOption.id }],
         changedAfterSeeing: selectedOption.id !== firstChoice,
         finalChoiceOptionId: selectedOption.id,
         secondsViewingPrediction: predShownAtRef.current
@@ -1091,7 +1178,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       nextProfile, endorsement: "n/a", stakeholderGuided: null, predictionTest,
     });
   }, [selectedOption, profile, scenario, commitChoice, prediction, predFirstChoiceId,
-      predSoundsLike, predSurprised]);
+      predSoundsLike, predSurprised, progress.scenarioStartTime]);
 
   const handleConfirmEndorsement = useCallback(() => {
     // stakeholderMoved replaces the old "did hearing this influence you?" answer. It is set on
@@ -1503,6 +1590,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           predSoundsLike={predSoundsLike} setPredSoundsLike={setPredSoundsLike}
           predSurprised={predSurprised} setPredSurprised={setPredSurprised}
           predAnswered={predAnswered} setPredAnswered={setPredAnswered}
+          onLogPred={logPred}
           onConfirmEndorsement={handleConfirmEndorsement}
           onApaCommit={handleApaCommit}
           onChangeMyMind={resetFlow}
@@ -3119,7 +3207,7 @@ function FlowOverlay({
   cvrSaidYes, onPersonAnswer, onPersonBackout,
   altViewGenerated, onAltGenerated, framingChoiceYes, setFramingChoiceYes, mode,
   prediction, onOpenPrediction, predSoundsLike, setPredSoundsLike, predSurprised, setPredSurprised,
-  predAnswered, setPredAnswered,
+  predAnswered, setPredAnswered, onLogPred,
 }: {
   option: LabeledOption; profile: Block5UserProfile; scenario: Block5Scenario; accent: string;
   /** color mode for the modal (light/dark-aware surfaces + CVR highlight colors). */
@@ -3136,6 +3224,8 @@ function FlowOverlay({
   predSoundsLike: number | null; setPredSoundsLike: (n: number) => void;
   predSurprised: boolean | null; setPredSurprised: (b: boolean) => void;
   predAnswered: boolean; setPredAnswered: (b: boolean) => void;
+  onLogPred: (what: PredictionTestRecord["interactions"][number]["what"],
+              extra?: { optionId?: string; value?: string | number }) => void;
   // Telemetry wrappers for the CVR/APA transitions (observation only — same navigation).
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
   onApaBail: () => void; onFinalDecisionChange: () => void;
@@ -3284,7 +3374,7 @@ function FlowOverlay({
               </Text>
               <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="2">
                 You picked <Text as="span" color="fg" fontWeight="semibold">{option.title}</Text>.
-                Here is how likely our software thought each rule was, for you.
+                Here is how likely our Moral Prediction Function (MPF) thought each rule was, for you.
               </Text>
             </Box>
 
@@ -3327,8 +3417,8 @@ function FlowOverlay({
 
             <Text fontSize="xs" color="fg.subtle" lineHeight="tall">
               With four rules, a coin toss would give <Text as="span" fontWeight="bold">25%</Text> to
-              each one. Our guess can be wrong, and there is nothing wrong with your answer. This
-              page is a test of our software, not of you.
+              each one. The MPF can be wrong, and there is nothing wrong with your answer. This
+              page is a test of the MPF, not of you.
             </Text>
 
             <Separator />
@@ -3344,7 +3434,7 @@ function FlowOverlay({
                     bg={predSoundsLike === n ? accent : "transparent"}
                     color={predSoundsLike === n ? "white" : "fg.muted"}
                     borderColor={predSoundsLike === n ? accent : "border.emphasized"}
-                    onClick={() => setPredSoundsLike(n)}>
+                    onClick={() => { setPredSoundsLike(n); onLogPred("answered_sounds_like", { value: n }); }}>
                     {n}
                   </Button>
                 ))}
@@ -3366,7 +3456,7 @@ function FlowOverlay({
                     bg={predSurprised === val ? accent : "transparent"}
                     color={predSurprised === val ? "white" : "fg.muted"}
                     borderColor={predSurprised === val ? accent : "border.emphasized"}
-                    onClick={() => setPredSurprised(val as boolean)}>
+                    onClick={() => { setPredSurprised(val as boolean); onLogPred("answered_surprised", { value: String(label) }); }}>
                     {label as string}
                   </Button>
                 ))}
@@ -3388,12 +3478,12 @@ function FlowOverlay({
               <HStack gap="3" wrap="wrap">
                 <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg"
                   fontSize="xs" disabled={predSoundsLike === null || predSurprised === null}
-                  onClick={() => { setPredAnswered(true); onKeep(); }}>
+                  onClick={() => { onLogPred("kept_answer"); setPredAnswered(true); onKeep(); }}>
                   Keep my answer
                 </Button>
                 <Button size="sm" variant="outline" color="fg.muted" borderColor="border.emphasized"
                   rounded="lg" fontSize="xs" disabled={predSoundsLike === null || predSurprised === null}
-                  onClick={() => { setPredAnswered(true); onChangeMyMind(); }}>
+                  onClick={() => { onLogPred("changed_answer"); setPredAnswered(true); onChangeMyMind(); }}>
                   Change my answer
                 </Button>
               </HStack>

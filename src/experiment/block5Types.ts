@@ -948,6 +948,48 @@ export interface PredictionTestRecord {
   finalChoiceOptionId: string;
   /** Seconds spent on the prediction screen before answering. A two-second answer is not a judgment. */
   secondsViewingPrediction: number;
+
+  /**
+   * HOW MUCH THEY WAVERED, SPLIT BY THE GUESS.
+   *
+   * A switch is selecting a DIFFERENT rule from the one currently open. Counting them on either
+   * side of the guess is what separates two very different people who both end up "changed":
+   * someone who agonised through all four rules before the guess and then held firm, and someone
+   * who went straight to one rule and only moved after being told what we expected.
+   *
+   * The single `changedAfterSeeing` flag cannot tell those apart. These can.
+   */
+  switchesBeforeGuess: number;
+  switchesAfterGuess: number;
+  /** Distinct rules they opened into the confirm view, on each side of the guess. */
+  rulesOpenedBeforeGuess: number;
+  rulesOpenedAfterGuess: number;
+
+  /**
+   * EVERY INTERACTION IN SCENARIO 6, IN ORDER, with milliseconds from the moment the scenario
+   * opened.
+   *
+   * The counters above are summaries and summaries lose the sequence. This keeps it: which rules
+   * they read, in what order, how long they sat on the guess before answering, whether the answer
+   * came before or after they decided to change. An analysis that needs none of it can ignore the
+   * field; an analysis that needs it cannot reconstruct it from anything else.
+   */
+  interactions: {
+    /** Milliseconds since this scenario opened. */
+    atMs: number;
+    what:
+      | "opened_details"   // expanded a rule's value details
+      | "selected"         // opened a rule into the confirm view
+      | "backed_out"       // left the confirm view without committing
+      | "guess_shown"      // the MPF prediction appeared
+      | "answered_sounds_like"
+      | "answered_surprised"
+      | "kept_answer"
+      | "changed_answer"
+      | "committed";
+    optionId?: string;
+    value?: string | number;
+  }[];
 }
 
 export interface Block5Results {
