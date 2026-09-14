@@ -5,9 +5,14 @@ results, then give feedback. React 19 + Chakra UI v3 + Vite + TypeScript.
 
 ## Before analysing any collected data
 
-**Read `Generated Outputs/HOW_TO_READ_MY_DATABASE.md` first.** It is the data dictionary for the
-MongoDB `participants` collection: every field, what it means, which numbers are raw and which are
-computed, and a list of traps that produce confident but meaningless findings.
+**Read these two, in this order.**
+
+1. `Generated Outputs/HOW_TO_READ_MY_DATABASE.md` — the data dictionary for the MongoDB
+   `participants` collection: every field, what it means, which numbers are raw and which are
+   computed, and a list of traps that produce confident but meaningless findings.
+2. `Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md` — which questions the data can answer, which
+   analyses answer them, what may and may not be claimed, and which figures to build. Written for a
+   person or an AI agent arriving with no other context.
 
 Two of those traps matter enough to repeat here:
 
