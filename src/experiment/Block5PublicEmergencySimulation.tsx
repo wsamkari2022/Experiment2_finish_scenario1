@@ -130,15 +130,29 @@ type FlowStep = "review" | "person" | "q1" | "apa" | "confirm" | "prediction";
  * participant always knows the information is there; only the body is folded. A design that removed
  * the role would be removing the block's independent variable from the page.
  */
-function CollapsibleHeader({ open, onToggle, children, style, px, py }: {
+function CollapsibleHeader({ open, onToggle, children, style, px, py, glow }: {
   open: boolean; onToggle: () => void; children: ReactNode;
   style?: React.CSSProperties; px?: unknown; py?: unknown;
+  /**
+   * Breathe until this section has been opened once, then stop for good.
+   *
+   * A FOLDED SECTION HAS ONE PROBLEM: it is easy to miss that it opens at all. A heading with no
+   * affordance reads as a label, and a participant who never realises the scene is one click away
+   * has effectively had it taken from them.
+   *
+   * IT STOPS AFTER THE FIRST OPEN, not after the first render or on a timer. The glow is an
+   * instruction - "this can be opened" - and once the participant has proved they understood it,
+   * continuing would be nagging. A signal that never turns off stops being a signal.
+   */
+  glow?: boolean;
 }) {
   return (
     <HStack
       as="button" w="full" gap="2.5" px={px as never} py={py as never} style={style}
       onClick={onToggle} cursor="pointer" textAlign="left"
       aria-expanded={open}
+      className={glow ? "vrds-glow-ring" : undefined}
+      animation={glow ? "glow-ring 2.4s ease-in-out infinite" : undefined}
     >
       {children}
       <Box flex="1" />
@@ -631,6 +645,19 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   const [openFacts, setOpenFacts] = useState(false);
   const [openRole, setOpenRole] = useState(false);
   const [openOrdering, setOpenOrdering] = useState(false);
+
+  /*
+   * WHICH FOLDABLE THINGS HAVE EVER BEEN OPENED, so each can stop asking.
+   *
+   * Kept per scenario rather than for the whole block. A participant who opened the scene in
+   * scenario 1 has learned that headings open, but the scene in scenario 4 is different text they
+   * have not seen, and it deserves the same nudge. The cost of a second nudge is small; the cost of
+   * a participant never reading the role in the scenario where the role is the manipulation is not.
+   */
+  const [everOpened, setEverOpened] = useState<Set<string>>(new Set());
+  const markOpened = useCallback((key: string) => {
+    setEverOpened((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+  }, []);
 
   const [predAnswered, setPredAnswered] = useState(false);
   const [predFirstChoiceId, setPredFirstChoiceId] = useState<string | null>(null);
@@ -1448,7 +1475,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             style={{ boxShadow: pal.sidebarShadow }}
           >
             <CollapsibleHeader
-              open={openScene} onToggle={() => setOpenScene((v) => !v)}
+              open={openScene}
+              glow={!everOpened.has("scene")}
+              onToggle={() => { markOpened("scene"); setOpenScene((v) => !v); }}
               px={{ base: "5", md: "6" }} py="3"
               style={{ background: pal.accent, color: onAccentText(pal.accent) }}
             >
@@ -1486,7 +1515,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   }}
                 >
                   <CollapsibleHeader
-                    open={openFacts} onToggle={() => setOpenFacts((v) => !v)}
+                    open={openFacts}
+                    glow={!everOpened.has("facts")}
+                    onToggle={() => { markOpened("facts"); setOpenFacts((v) => !v); }}
                     px="0" py="0"
                   >
                     <Center boxSize="5" minW="5" rounded="full"
@@ -1511,7 +1542,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           */}
           {scenario.role && (
             <ScenarioRoleCard scenario={scenario} pal={pal}
-              open={openRole} onToggle={() => setOpenRole((v) => !v)} />
+              open={openRole} glow={!everOpened.has("role")}
+              onToggle={() => { markOpened("role"); setOpenRole((v) => !v); }} />
           )}
 
           {/*
@@ -1586,7 +1618,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
             _hover={{ bg: pal.surfaceSubtle }}
             style={{ boxShadow: pal.sidebarShadow }}
-            onClick={openCompareCharts}
+            className={everOpened.has("charts") ? undefined : "vrds-glow-ring"}
+            animation={everOpened.has("charts") ? undefined : "glow-ring 2.4s ease-in-out infinite"}
+            onClick={() => { markOpened("charts"); openCompareCharts(); }}
           >
             <Icon boxSize="4"><LuChartSpline /></Icon>
             <Text fontSize="sm" fontWeight="semibold">Compare all options on charts</Text>
@@ -1621,7 +1655,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl"
             px={{ base: "3.5", md: "4" }} py="3">
             <CollapsibleHeader
-              open={openOrdering} onToggle={() => setOpenOrdering((v) => !v)} px="0" py="0"
+              open={openOrdering}
+              glow={!everOpened.has("ordering")}
+              onToggle={() => { markOpened("ordering"); setOpenOrdering((v) => !v); }}
+              px="0" py="0"
             >
               <Icon color={pal.accent} boxSize="3.5"><LuScale /></Icon>
               <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase" color={pal.accent}>
@@ -2049,10 +2086,12 @@ export function CompanyPrincipleCard({ company, pal, variant = "sidebar" }: {
   );
 }
 
-export function ScenarioRoleCard({ scenario, pal, open = true, onToggle }: {
+export function ScenarioRoleCard({ scenario, pal, open = true, onToggle, glow }: {
   scenario: Block5Scenario; pal: Block5Palette;
   /** Collapsed on the options page, where the intro has just shown this in full. Open elsewhere. */
   open?: boolean; onToggle?: () => void;
+  /** Breathe until opened once. See CollapsibleHeader for why it stops rather than looping. */
+  glow?: boolean;
 }) {
   const view = scenario.stakePosition ? STAKE_VIEW[scenario.stakePosition] : null;
   const onAccent = onAccentText(pal.accent);
@@ -2071,6 +2110,8 @@ export function ScenarioRoleCard({ scenario, pal, open = true, onToggle }: {
         as={onToggle ? "button" : undefined} w={onToggle ? "full" : undefined}
         onClick={onToggle} cursor={onToggle ? "pointer" : undefined}
         aria-expanded={onToggle ? open : undefined}
+        className={glow ? "vrds-glow-ring" : undefined}
+        animation={glow ? "glow-ring 2.4s ease-in-out infinite" : undefined}
         style={{ background: pal.accent, color: onAccent }}>
         <HStack gap="2.5" minW="0">
           <Icon boxSize="4"><LuUserRound /></Icon>
@@ -2385,9 +2426,14 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
       opacity={disabled ? 0.5 : recessed ? 0.82 : 1} transition="all 0.2s ease" _hover={disabled ? {} : { opacity: 1 }}>
       <Flex justify="space-between" align="start" gap="4" wrap="wrap">
         <HStack align="start" gap="3" minW="0" flex="1">
-          {explanation && (
+          {explanation && showPerformance && (
             /* The planner's position. Deliberately NOT merged with the alignment tier beside it:
-               a participant must be able to see a card labelled "Aligned" sitting at rank 4. */
+               a participant must be able to see a card labelled "Aligned" sitting at rank 4.
+
+               ABSENT IN SCENARIO 6. Those four rules are shuffled, so a number beside them would be
+               read as a ranking that does not exist - and worse, as a ranking the MPF is about to
+               show a prediction against. A participant who sees "3" next to a rule has been told
+               something about it before they have decided anything. */
             <Flex flexShrink={0} align="center" justify="center" w="7" h="7" rounded="lg"
               borderWidth="1px" borderColor={pal.cardBorder} bg={pal.panelDeep} mt="0.5">
               <Text fontSize="sm" fontWeight="bold" color={pal.text} fontFamily="mono" lineHeight="1">
