@@ -43,12 +43,12 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuArrowRight, LuClock, LuGift, LuLock, LuShieldCheck } from "react-icons/lu";
+import { LuArrowRight, LuCheck, LuClock, LuGift, LuLock, LuShieldCheck } from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { REQUIRED_ACTIVE_MINUTES } from "./dbShape";
 
 /** Bump whenever the consent wording below changes. Stored with every consent record. */
-export const CONSENT_VERSION = "2026-09-11";
+export const CONSENT_VERSION = "2026-09-13";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
@@ -93,6 +93,29 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  * icon rather than being one more paragraph in a long scroll. Privacy and compensation are the
  * two things people actually need to find again later.
  */
+/**
+ * One condition of the payment: a check mark, the claim in bold, then the detail.
+ *
+ * A shared row rather than four hand-built paragraphs. These four lines are the only text on the
+ * page a participant could later say they had not noticed, and four paragraphs that drift apart in
+ * weight or spacing read as four unrelated remarks rather than as one list of conditions.
+ */
+function Rule({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <HStack align="start" gap="2.5">
+      <Icon boxSize="4" color="orange.fg" mt="1" flexShrink={0}>
+        <LuCheck />
+      </Icon>
+      <Text>
+        <Text as="span" color="fg" fontWeight="semibold">
+          {title}
+        </Text>{" "}
+        {children}
+      </Text>
+    </HStack>
+  );
+}
+
 function Highlight({
   icon,
   title,
@@ -250,37 +273,31 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
               </Text>
             </Section>
 
+            {/*
+              ONE SENTENCE, AND NOT A WORD ABOUT THE EMAIL.
+              This panel used to explain that the email is what lets the study recognize a
+              returning participant. "Privacy and Your Email" below already gives the complete
+              reason the address is collected, and saying it twice made the shorter version read as
+              a second, separate purpose. The address is explained in exactly one place.
+            */}
             <Highlight icon={<LuArrowRight />} title="You Can Stop and Come Back">
               <Text>
                 You may close the study at any time and return later to continue from where you
-                stopped. Your answers so far are saved.
-              </Text>
-              <Text>
-                This is why we ask for your email address on the next page: it is how the study
-                recognizes you when you come back.
-              </Text>
-            </Highlight>
-
-            <Highlight icon={<LuGift />} title="Compensation">
-              <Text>
-                Participants who complete the entire study will receive a{" "}
-                <Text as="span" color="fg" fontWeight="semibold">
-                  $5 Amazon gift card
-                </Text>
-                , sent privately to the email address you provide.
-              </Text>
-              <Text>
-                The study counts as complete once you have submitted the feedback questions at the
-                end and reached the thank-you page.
+                stopped. Your answers are saved, and you can even continue on a different computer.
               </Text>
             </Highlight>
 
             {/*
-              THE RULES OF THE PAYMENT, STATED BEFORE THEY AGREE.
-              Given its own bordered panel and its own tick-box because it is the one section a
-              participant could later say they had not seen. If time is a condition of payment,
-              they are entitled to know it in advance — and a rule agreed to in advance is also
-              far easier to apply afterwards than one produced at the end.
+              THE PAYMENT, AND THE RULES OF IT, IN ONE PANEL.
+              These were two panels: what you get, then how it is earned. Split across two boxes
+              they repeated each other - both named the feedback questions, both mentioned finishing
+              across several visits - and the softer of the two came first, so the conditions read
+              as an afterthought to a promise already made.
+
+              They are one thing and are now one panel, and it keeps the strong border and its own
+              tick-box because it is the section a participant could later say they had not seen. If
+              time is a condition of payment they are entitled to know it in advance, and a rule
+              agreed to beforehand is far easier to apply afterwards than one produced at the end.
             */}
             <Box
               borderWidth="2px"
@@ -291,40 +308,51 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
             >
               <HStack gap="2.5" mb="3" align="center">
                 <Icon boxSize="5" color="orange.fg">
-                  <LuClock />
+                  <LuGift />
                 </Icon>
                 <Heading size="sm" color="fg" letterSpacing="tight">
-                  How the gift card is earned
+                  Your $5 Amazon Gift Card
                 </Heading>
               </HStack>
 
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+                Everyone who completes the study receives a{" "}
+                <Text as="span" color="fg" fontWeight="semibold">
+                  $5 Amazon gift card
+                </Text>
+                , sent privately by email.
+              </Text>
+
+              <HStack gap="2.5" mt="4" mb="3" align="center">
+                <Icon boxSize="4" color="orange.fg">
+                  <LuClock />
+                </Icon>
+                <Text
+                  fontSize="xs"
+                  fontWeight="bold"
+                  color="orange.fg"
+                  textTransform="uppercase"
+                  letterSpacing="wider"
+                >
+                  What earns it
+                </Text>
+              </HStack>
+
               <VStack align="stretch" gap="3" fontSize="sm" color="fg.muted" lineHeight="tall">
-                <Text>
-                  <Text as="span" color="fg" fontWeight="bold">
-                    Spend at least {REQUIRED_ACTIVE_MINUTES} minutes actively working
-                  </Text>{" "}
-                  on the study, and answer every feedback question at the end.
-                </Text>
-                <Text>
-                  <Text as="span" color="fg" fontWeight="semibold">
-                    You may finish across several visits.
-                  </Text>{" "}
-                  Your time adds up, and you continue exactly where you stopped — even on a
-                  different computer.
-                </Text>
-                <Text>
-                  <Text as="span" color="fg" fontWeight="semibold">
-                    Time counts only while you are actually working.
-                  </Text>{" "}
+                <Rule title="Reach the end.">
+                  Answer the feedback questions and arrive at the thank-you page. That is the point
+                  at which the study counts as complete.
+                </Rule>
+                <Rule title={`Spend at least ${REQUIRED_ACTIVE_MINUTES} minutes actively working.`}>
+                  Your time adds up across every visit, so you do not have to do it in one sitting.
+                </Rule>
+                <Rule title="Time counts only while you are working.">
                   If you step away or switch to something else, the study pauses and starts again
                   when you return. Leaving it open while you do something else does not count.
-                </Text>
-                <Text>
-                  <Text as="span" color="fg" fontWeight="semibold">
-                    Please answer thoughtfully.
-                  </Text>{" "}
+                </Rule>
+                <Rule title="Answer thoughtfully.">
                   Rushing through, or giving the same answer to every question, may not qualify.
-                </Text>
+                </Rule>
               </VStack>
             </Box>
 
