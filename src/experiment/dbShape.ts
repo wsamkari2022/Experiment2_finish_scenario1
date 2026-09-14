@@ -669,6 +669,10 @@ export function buildScenario6Section(block5: unknown): Record<string, unknown> 
       seconds_looking_at_the_guess: p.secondsViewingPrediction ?? null,
     },
 
+    /* The order the four rules appeared in, top to bottom. Shuffled per participant, so an order
+       effect can only be checked because this column exists. */
+    order_rules_were_shown_in: p.shownOrder ?? null,
+
     /* ---- how much they wavered, on each side of the guess ---- */
     wavering: {
       switches_before_the_guess: p.switchesBeforeGuess ?? null,

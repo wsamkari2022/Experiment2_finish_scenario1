@@ -104,6 +104,69 @@ interface ProgressState {
  */
 type FlowStep = "review" | "person" | "q1" | "apa" | "confirm" | "prediction";
 
+/**
+ * A stable shuffle for one participant and one scenario.
+ *
+ * DETERMINISTIC ON PURPOSE. `Math.random()` would reshuffle on every render, so a participant who
+ * opened a card and closed it would find the list rearranged underneath them. Seeding from the
+ * session id and the scenario id gives one order per participant that never moves, and that can be
+ * recreated from the stored record.
+ *
+ * Fisher-Yates, so every ordering is equally likely. A naive `sort(() => Math.random() - 0.5)` is
+ * not uniform and quietly favours some orders over others, which in a four-option scenario built to
+ * measure order effects is exactly the bias that must not be there.
+ */
+/**
+ * A section header that opens and closes what is under it.
+ *
+ * WHY THESE SECTIONS START CLOSED.
+ * The scene, the numbers and the participant's role are read in full on the intro page that comes
+ * immediately before this one. Repeating all three, open, at the top of the options column pushes
+ * the options themselves below the fold and asks the participant to scroll past text they read
+ * fifteen seconds ago. Closed, the column opens on the thing they are actually there to do, and the
+ * text is one click away for anyone who wants it again.
+ *
+ * NOTHING IS HIDDEN, and that distinction matters for the study. Every heading stays visible, so a
+ * participant always knows the information is there; only the body is folded. A design that removed
+ * the role would be removing the block's independent variable from the page.
+ */
+function CollapsibleHeader({ open, onToggle, children, style, px, py }: {
+  open: boolean; onToggle: () => void; children: ReactNode;
+  style?: React.CSSProperties; px?: unknown; py?: unknown;
+}) {
+  return (
+    <HStack
+      as="button" w="full" gap="2.5" px={px as never} py={py as never} style={style}
+      onClick={onToggle} cursor="pointer" textAlign="left"
+      aria-expanded={open}
+    >
+      {children}
+      <Box flex="1" />
+      <Icon boxSize="4" transition="transform 0.2s ease"
+        style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
+        <LuChevronDown />
+      </Icon>
+    </HStack>
+  );
+}
+
+function shuffleForParticipant<T extends { id: string }>(items: T[], scenarioId: string): T[] {
+  let seed = 0;
+  const key = (() => {
+    try { return (localStorage.getItem("vrds_session_id") ?? "") + scenarioId; }
+    catch { return scenarioId; }
+  })();
+  for (let i = 0; i < key.length; i++) seed = (seed * 31 + key.charCodeAt(i)) >>> 0;
+  const next = () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 0x100000000; };
+
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(next() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 interface PreviewImpact {
   overall: number;
   baseOverall: number;
@@ -500,11 +563,30 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   );
 
   /** The cards in the order the planner produced: clear first, then costed, then blocked. */
+  /*
+   * SCENARIO 6 IS SHUFFLED, ONCE PER PARTICIPANT, AND THE ORDER IS RECORDED.
+   *
+   * The other five scenarios are ordered by the planner, which is a deliberate part of the design.
+   * Scenario 6 must not be: its four rules are one per value, so a planner order would put the rule
+   * the model favours in a position that CORRELATES with the prediction. Any general preference for
+   * the top of a list would then be indistinguishable from agreement with the MPF, which is the one
+   * thing the scenario exists to measure.
+   *
+   * A fixed order was the first plan and is worse than a shuffle. Fixed, an order effect is
+   * constant and therefore built into every participant's data with no way to separate it out.
+   * Shuffled, it is spread evenly across participants, and because the order is stored it can also
+   * be checked directly.
+   *
+   * ONCE, not per render. The shuffle is seeded from the session id so the same participant sees
+   * the same order every time this component re-renders, and from the scenario id so it does not
+   * change if they navigate away and back.
+   */
   const displayOptions = useMemo<LabeledOption[]>(() => {
+    if (scenario && isPredictionTest(scenario)) return shuffleForParticipant(labeled, scenario.id);
     if (!plan) return labeled;
     const byId = new Map(labeled.map((o) => [o.id, o]));
     return plan.orderedIds.map((id) => byId.get(id)).filter((o): o is LabeledOption => !!o);
-  }, [plan, labeled]);
+  }, [plan, labeled, scenario]);
 
   /*
    * SCENARIO 6: THE GUESS, COMPUTED ONCE AND FROZEN.
@@ -541,6 +623,15 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * differently is exercising the reactivity measure, and showing them a second guess would turn
    * one clean before-and-after into an argument with the software.
    */
+  /*
+   * WHICH SIDEBAR SECTIONS ARE OPEN. All closed to begin with, and reset for each scenario, because
+   * each scenario has its own intro page that has just shown the same three things in full.
+   */
+  const [openScene, setOpenScene] = useState(false);
+  const [openFacts, setOpenFacts] = useState(false);
+  const [openRole, setOpenRole] = useState(false);
+  const [openOrdering, setOpenOrdering] = useState(false);
+
   const [predAnswered, setPredAnswered] = useState(false);
   const [predFirstChoiceId, setPredFirstChoiceId] = useState<string | null>(null);
 
@@ -1160,6 +1251,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         predictionWasRight: top?.optionId === firstChoice,
         soundsLikeMe: predSoundsLike,
         surprised: predSurprised,
+        shownOrder: displayOptions.map((o) => o.id),
         switchesBeforeGuess: predLogRef.current.switchesBefore,
         switchesAfterGuess: predLogRef.current.switchesAfter,
         rulesOpenedBeforeGuess: predLogRef.current.openedBefore.size,
@@ -1178,7 +1270,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       nextProfile, endorsement: "n/a", stakeholderGuided: null, predictionTest,
     });
   }, [selectedOption, profile, scenario, commitChoice, prediction, predFirstChoiceId,
-      predSoundsLike, predSurprised, progress.scenarioStartTime]);
+      predSoundsLike, predSurprised, progress.scenarioStartTime, displayOptions]);
 
   const handleConfirmEndorsement = useCallback(() => {
     // stakeholderMoved replaces the old "did hearing this influence you?" answer. It is set on
@@ -1355,17 +1447,21 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             rounded="2xl" overflow="hidden"
             style={{ boxShadow: pal.sidebarShadow }}
           >
-            <HStack
-              gap="2.5" px={{ base: "5", md: "6" }} py="3"
+            <CollapsibleHeader
+              open={openScene} onToggle={() => setOpenScene((v) => !v)}
+              px={{ base: "5", md: "6" }} py="3"
               style={{ background: pal.accent, color: onAccentText(pal.accent) }}
             >
               <Icon boxSize="4"><LuScale /></Icon>
               <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="widest">
                 The scenario
               </Text>
-            </HStack>
-            <VStack align="stretch" gap="5" px={{ base: "5", md: "6" }} py={{ base: "5", md: "5" }}>
-              <Text fontSize="md" color={pal.text} lineHeight="tall">{scenario.description}</Text>
+            </CollapsibleHeader>
+            <VStack align="stretch" gap="5" px={{ base: "5", md: "6" }}
+              py={openScene || openFacts ? { base: "5", md: "5" } : "0"}>
+              {openScene && (
+                <Text fontSize="md" color={pal.text} lineHeight="tall">{scenario.description}</Text>
+              )}
               {scenario.factBase && (
                 /*
                   THREE FIELDS, THREE JOBS — and they used to be two that said the same thing.
@@ -1380,14 +1476,19 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   read before the options, with its own rule above it.
                 */
                 <Box
-                  borderWidth="1px" borderLeftWidth="5px" rounded="lg" px="4" py="3.5"
+                  borderWidth="1px" borderLeftWidth="5px" rounded="lg" px="4"
+                  py={openFacts ? "3.5" : "2.5"}
+                  mt={openScene ? "0" : "5"}
                   style={{
                     background: `${pal.accent}1F`,
                     borderColor: `${pal.accent}59`,
                     borderLeftColor: pal.accent,
                   }}
                 >
-                  <HStack gap="2" mb="2">
+                  <CollapsibleHeader
+                    open={openFacts} onToggle={() => setOpenFacts((v) => !v)}
+                    px="0" py="0"
+                  >
                     <Center boxSize="5" minW="5" rounded="full"
                       style={{ background: pal.accent, color: onAccentText(pal.accent) }}>
                       <Icon boxSize="3"><LuTriangleAlert /></Icon>
@@ -1395,8 +1496,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                     <Text fontSize="2xs" fontWeight="bold" color={pal.text} textTransform="uppercase" letterSpacing="wider">
                       The situation right now
                     </Text>
-                  </HStack>
-                  <Text fontSize="md" color={pal.text} lineHeight="tall" fontWeight="semibold">{scenario.factBase}</Text>
+                  </CollapsibleHeader>
+                  {openFacts && (
+                    <Text mt="2" fontSize="md" color={pal.text} lineHeight="tall" fontWeight="semibold">{scenario.factBase}</Text>
+                  )}
                 </Box>
               )}
             </VStack>
@@ -1406,7 +1509,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             YOUR ROLE — its own card, and the loudest one in the column. See ScenarioRoleCard for
             why the block's independent variable is no longer a clause inside the scene.
           */}
-          {scenario.role && <ScenarioRoleCard scenario={scenario} pal={pal} />}
+          {scenario.role && (
+            <ScenarioRoleCard scenario={scenario} pal={pal}
+              open={openRole} onToggle={() => setOpenRole((v) => !v)} />
+          )}
 
           {/*
             THE EMPLOYER'S PUBLISHED PRINCIPLE — only in the workplace pair, and placed directly
@@ -1502,25 +1608,33 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           </Box>
 
           {/*
-            THE PLANNER PANEL. Shown identically in every scenario, for every participant, whether
-            or not anything is actually blocked. It must NOT appear only when a limit is crossed:
-            an explanation that fires exactly where the measurement is most sensitive would be an
-            uncontrolled manipulation. See docs/BLOCK5_PLANNER_ORDERING_PLAN.md §10.
+            THE PLANNER PANEL. Shown identically in every SCORED scenario, for every participant,
+            whether or not anything is actually blocked. It must NOT appear only when a limit is
+            crossed: an explanation that fires exactly where the measurement is most sensitive would
+            be an uncontrolled manipulation. See docs/BLOCK5_PLANNER_ORDERING_PLAN.md §10.
+
+            ABSENT IN SCENARIO 6, because there is no order to explain. Those four rules are
+            shuffled, and a panel headed "why these are in this order" above a random list would be
+            telling the participant something untrue.
           */}
+          {scenarioShowsPerformance(scenario) && (
           <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl"
             px={{ base: "3.5", md: "4" }} py="3">
-            <HStack gap="2" mb="2" align="center">
+            <CollapsibleHeader
+              open={openOrdering} onToggle={() => setOpenOrdering((v) => !v)} px="0" py="0"
+            >
               <Icon color={pal.accent} boxSize="3.5"><LuScale /></Icon>
               <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase" color={pal.accent}>
                 Why these are in this order
               </Text>
-            </HStack>
-            <Stack gap="1.5">
+            </CollapsibleHeader>
+            <Stack gap="1.5" mt={openOrdering ? "2" : "0"} display={openOrdering ? "flex" : "none"}>
               <Text fontSize="xs" color={pal.text} lineHeight="tall">{panelText.rankingLine}</Text>
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{panelText.limitsLine}</Text>
               <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">{panelText.noteLine}</Text>
             </Stack>
           </Box>
+          )}
 
           {displayOptions.map((opt, i) => {
             const ex = explanations[opt.id];
@@ -1935,7 +2049,11 @@ export function CompanyPrincipleCard({ company, pal, variant = "sidebar" }: {
   );
 }
 
-export function ScenarioRoleCard({ scenario, pal }: { scenario: Block5Scenario; pal: Block5Palette }) {
+export function ScenarioRoleCard({ scenario, pal, open = true, onToggle }: {
+  scenario: Block5Scenario; pal: Block5Palette;
+  /** Collapsed on the options page, where the intro has just shown this in full. Open elsewhere. */
+  open?: boolean; onToggle?: () => void;
+}) {
   const view = scenario.stakePosition ? STAKE_VIEW[scenario.stakePosition] : null;
   const onAccent = onAccentText(pal.accent);
   return (
@@ -1946,7 +2064,13 @@ export function ScenarioRoleCard({ scenario, pal }: { scenario: Block5Scenario; 
       rounded="2xl" overflow="hidden"
       style={{ boxShadow: `0 0 0 4px ${pal.accent}1F, ${pal.sidebarShadow}` }}
     >
+      {/* The badge stays on the header so the participant's position is legible even closed: it is
+          the block's independent variable, and folding it away entirely would hide the manipulation
+          rather than merely tidy the page. */}
       <HStack gap="2" px={{ base: "4", md: "5" }} py="3" justify="space-between" align="center"
+        as={onToggle ? "button" : undefined} w={onToggle ? "full" : undefined}
+        onClick={onToggle} cursor={onToggle ? "pointer" : undefined}
+        aria-expanded={onToggle ? open : undefined}
         style={{ background: pal.accent, color: onAccent }}>
         <HStack gap="2.5" minW="0">
           <Icon boxSize="4"><LuUserRound /></Icon>
@@ -1954,15 +2078,24 @@ export function ScenarioRoleCard({ scenario, pal }: { scenario: Block5Scenario; 
             Your role
           </Text>
         </HStack>
-        {view && (
-          <Text fontSize="2xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wider"
-            px="2" py="0.5" rounded="md" textAlign="right" lineHeight="short"
-            style={{ background: onAccent === "#ffffff" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.3)" }}>
-            {view.badge}
-          </Text>
-        )}
+        <HStack gap="2" minW="0">
+          {view && (
+            <Text fontSize="2xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wider"
+              px="2" py="0.5" rounded="md" textAlign="right" lineHeight="short"
+              style={{ background: onAccent === "#ffffff" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.3)" }}>
+              {view.badge}
+            </Text>
+          )}
+          {onToggle && (
+            <Icon boxSize="4" transition="transform 0.2s ease"
+              style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
+              <LuChevronDown />
+            </Icon>
+          )}
+        </HStack>
       </HStack>
 
+      {open && (
       <VStack align="stretch" gap="3.5" px={{ base: "5", md: "6" }} py={{ base: "4", md: "5" }}
         style={{ background: `${pal.accent}14` }}>
         {view && (
@@ -2005,6 +2138,7 @@ export function ScenarioRoleCard({ scenario, pal }: { scenario: Block5Scenario; 
           </Box>
         )}
       </VStack>
+      )}
     </Box>
   );
 }
@@ -2336,8 +2470,14 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
         WHY IT RANKED HERE — generated entirely from planner state (block5PlannerText.ts).
         Nothing here is authored per option: an explanation written by hand could disagree with the
         ordering it is explaining, and a participant who notices that stops believing any of it.
+
+        ABSENT IN SCENARIO 6. Every line of it describes a rank that scenario does not have: "beat
+        all 3 of the other options", "this is the option that stays inside every limit you set", and
+        the fit score out of 100. The rules there are shuffled, and the fit score is the raw material
+        the MPF's guess is built from - showing it beside the options and then showing the guess
+        would be marking the participant's answer before they had given it.
       */}
-      {explanation && (
+      {explanation && showPerformance && (
         <Box mt="3" bg={pal.panelDeep} borderWidth="1px" borderColor={pal.separator}
           rounded="xl" px={{ base: "3.5", md: "4" }} py="3">
           <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase"

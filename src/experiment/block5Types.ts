@@ -961,6 +961,15 @@ export interface PredictionTestRecord {
    */
   switchesBeforeGuess: number;
   switchesAfterGuess: number;
+  /**
+   * THE ORDER THE FOUR RULES WERE ACTUALLY SHOWN IN, top to bottom.
+   *
+   * Scenario 6 shuffles them per participant, so unlike every other scenario the display order is
+   * not recoverable from the scenario definition. Without this column an order effect could not be
+   * checked at all, which would make the shuffle a decision taken on faith.
+   */
+  shownOrder: string[];
+
   /** Distinct rules they opened into the confirm view, on each side of the guess. */
   rulesOpenedBeforeGuess: number;
   rulesOpenedAfterGuess: number;
