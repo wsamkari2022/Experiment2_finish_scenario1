@@ -1418,7 +1418,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     stakePosition: "behind_the_veil",
     decisionRole: "predicted",
     factBase:
-      "1 emergency kit for the whole city. It is big enough for about 33% of the people who will need it. It will be opened 1 time, some time in the next 2 years. The rule picked today is the rule that gets used.",
+      "1 emergency team for the whole city. It can help about 33% of the people who will need it. It will go out 1 time in the next 2 years. The rule you write today is the rule that will be used.",
     role:
       /*
         The veil itself. It names five concrete positions rather than gesturing at anyone at all,
@@ -1428,10 +1428,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         reserve stops the participant quietly assuming they will be the person in need — which is
         the assumption that collapses the exercise into ordinary self-interest.
       */
-      "You write the rule today. But {w|you do not know who you will be} on the day. You could be {w|the sick person waiting for help}. You could be {w|the nurse who has to follow your rule}, with someone standing in front of her. You could be {w|the worker who can turn the power back on in one building only}. You could be {w|a parent waiting outside}, not allowed in. You could be {w|someone who needs nothing at all}. You find out who you are only after the rule is set. So you are writing a rule that you will have to live with, without knowing which side of it you will be on.",
+      "You write the rule today. But {w|you do not know who you will be} later. You could be {w|the sick person who needs help}. You could be {w|the nurse who must use your rule} on a real person. You could be {w|the worker who can fix the power in one place only}. You could be {w|a parent waiting outside the gate}. You could be {w|someone who needs no help at all}. You learn who you are only after the rule is fixed. So the rule is for you too. You do not know if it will help you or hurt you.",
     title: "The Rule You Will Live Under",
     description:
-      "A city keeps one emergency kit. It holds spare doctors, trucks and generators. It can be opened only once, in the next big emergency. Today the city has to write one rule that says who gets help first. The rule cannot be changed later, and on the day nobody is allowed to argue with it.",
+      "A city has one emergency team. The team has doctors, trucks, and machines that make power. The city can send the team out only one time. That will be in the next big emergency. There will not be enough help for everyone. So today the city must write one rule. The rule says who gets help first. After it is written, it cannot be changed.",
     theme: {
       /* Violet rather than another emergency palette. This scenario is not a sixth emergency, and
          the colour is the first thing that says so. It is also the hue the CVR already uses for
@@ -1445,13 +1445,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "veil_worst_off_first",
         title: "Help the people who would be hurt the most",
         summary:
-          "The kit goes first to the people who would be hurt the most without it. That holds even when reaching them is slow, costs a lot, and helps only a few.",
-        gains: "Nobody is skipped just because helping them was hard.",
+          "The team goes first to the people who would be hurt the most. This is true even if helping them is slow and costs a lot.",
+        gains: "Nobody is skipped because helping them was hard.",
         consequence:
-          "The people in the worst trouble get help first, whatever it costs to reach them. But the kit then helps fewer people in total, so many others get nothing at all.",
-        givesUp: "The bigger number of people the same kit could have reached.",
+          "The people in the worst trouble get help first. But the team then helps fewer people, so many others get nothing.",
+        givesUp: "The bigger number of people the team could have helped.",
         moralTension:
-          "Is a rule fair if it helps fewer people on purpose, so that it can reach the people in the worst trouble?",
+          "Is it fair to help fewer people, so you can help those in the worst trouble?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 95, groupSizeSensitivity: 25,
           gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 25,
@@ -1481,13 +1481,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "veil_prevent_most_harm",
         title: "Stop the most people from being badly hurt",
         summary:
-          "The kit goes wherever it stops the most deaths and the most bad injuries. It does not matter who those people are.",
-        gains: "As few people end up badly hurt as this kit can manage.",
+          "The team goes where it stops the most deaths and bad injuries. It does not matter who those people are.",
+        gains: "As few people are badly hurt as possible.",
         consequence:
-          "Fewer people are badly hurt than under any other rule. But a person already in deep trouble can be skipped, because helping them would use up what could have saved more people somewhere else.",
+          "Fewer people are badly hurt than with any other rule. But a person in deep trouble can be skipped. That happens if helping them would save fewer people.",
         givesUp: "Any special claim a person has because of who they are.",
         moralTension:
-          "If the rule never looks at who a person is, is that fair, or is it only tidy?",
+          "If the rule never looks at who a person is, is that fair?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 95,
           gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 25,
@@ -1517,13 +1517,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "veil_reach_most_people",
         title: "Give a little help to as many people as possible",
         summary:
-          "The kit is shared out so that the most people get some help. Nobody gets very much, but almost everybody gets something.",
+          "The team is split up so the most people get some help. Nobody gets much, but almost everyone gets a little.",
         gains: "Almost nobody is left with nothing.",
         consequence:
-          "Help reaches more people than under any other rule, and very few are skipped. But spread this thin, it may be too small to change what happens to anyone in real danger.",
+          "Help reaches more people than with any other rule. But it may be too little to save anyone in real danger.",
         givesUp: "Enough help in one place to really change what happens.",
         moralTension:
-          "Is a little help for many people worth more than enough help for a few?",
+          "Is a little help for many worth more than real help for a few?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 25,
           gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 95,
@@ -1551,15 +1551,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
       {
         id: "veil_greatest_total",
-        title: "Use the kit where it does the most good",
+        title: "Use the team where it does the most good",
         summary:
-          "The kit goes where each part of it does the most good. This counts everyone and everything it touches.",
-        gains: "Nothing is wasted. Every part of the kit is used where it works hardest.",
+          "The team goes where it does the most good in total. Every part of it is used where it helps most.",
+        gains: "Nothing is wasted.",
         consequence:
-          "The kit does more good in total than under any other rule. But the people who are hardest and most expensive to reach are exactly the people this rule skips, every time.",
+          "The team does more good in total than with any other rule. But the people who are hardest to reach are always skipped.",
         givesUp: "The people who cost the most to help.",
         moralTension:
-          "When a rule is built to get the most out of what we have, who always ends up on the losing side of it?",
+          "When a rule tries to do the most good, who always loses out?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 25,
           gainResponsivenessSensitivity: 95, outcomeAggregationSensitivity: 25,
