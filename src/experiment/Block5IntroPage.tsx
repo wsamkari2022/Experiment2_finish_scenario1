@@ -384,7 +384,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
               textTransform="uppercase"
               letterSpacing="wider"
             >
-              5 scenarios ahead
+              {scenarioCountWord(BLOCK5_SCENARIOS.length)} scenarios ahead
             </Text>
             <Heading size={{ base: "2xl", md: "3xl" }} color="fg" letterSpacing="tight">
               The main study starts now

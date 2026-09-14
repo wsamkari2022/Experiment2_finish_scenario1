@@ -1,6 +1,10 @@
 import { Box, Center, HStack, Icon, Text, VStack } from "@chakra-ui/react";
 import { LuCheck, LuFlag } from "react-icons/lu";
 import { SHOW_INTER_BLOCK_PAGES } from "./interBlockPages";
+/* The scenario count is read from the deck, never written out: a literal "5" became wrong
+   the moment scenario 6 landed, and a stepper that disagrees with the study is a bug a
+   participant sees before anyone else does. */
+import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 
 /**
  * GlobalStepper — the sticky journey bar across the top of Blocks 1-4.
@@ -122,7 +126,7 @@ const STOPS: Stop[] = [
   {
     kind: "main",
     label: "Main study",
-    note: "5 scenarios",
+    note: `${BLOCK5_SCENARIOS.length} scenarios`,
     /* block5_intro is the doorway page and block5 the scenarios themselves; both are "here". */
     stages: ["block5_intro", "block5"],
     dots: 5,

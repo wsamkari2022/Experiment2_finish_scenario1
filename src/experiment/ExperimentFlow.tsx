@@ -414,7 +414,7 @@ export function ExperimentFlow() {
     setStage("block5");
   }, []);
 
-  /** Called when all 3 Block 5 scenarios are completed. */
+  /** Called when every Block 5 scenario is completed. The count lives in block5Scenarios.ts. */
   const handleBlock5Complete = useCallback((results: Block5Results) => {
     setBlock5Results(results);
     setStage("transition_block5_summary");

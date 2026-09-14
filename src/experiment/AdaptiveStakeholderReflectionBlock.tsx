@@ -28,6 +28,10 @@ import {
 } from "./vignetteLibrary";
 import type { Block4DecisionRecord } from "./finalAnalysis";
 import { useScrollToTop } from "./useScrollToTop";
+/* The scenario count is read from the deck, never written out: a literal "5" became wrong
+   the moment scenario 6 landed, and a stepper that disagrees with the study is a bug a
+   participant sees before anyone else does. */
+import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 
 /** Participant's binary policy choice: approve ("proceed") or reject ("do_not_proceed"). */
 type Decision = "proceed" | "do_not_proceed";
@@ -989,7 +993,7 @@ function Screen3FinalDecision({
                 ))}
               </HStack>
               <Text fontSize="xs" color="fg.muted" whiteSpace="nowrap">
-                5 scenarios
+                {BLOCK5_SCENARIOS.length} scenarios
               </Text>
             </HStack>
           </Box>
