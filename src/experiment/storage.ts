@@ -46,6 +46,7 @@ import {
   SHAPE_VERSION,
   buildHeadline,
   buildPositionSection,
+  buildScenario6Section,
   buildProfileChange,
   buildQuality,
   collectResumeFiles,
@@ -412,6 +413,15 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
       /* Position, per scenario and per chair — the reading the results page computes and drops. */
       const position = buildPositionSection(translated);
       if (position) sendOrQueue({ op: "saveSection", path: "analysis.position_effect", data: position });
+
+      /* Scenario 6's prediction test, in its own room and in plain words. Written outside `blocks`
+         because it measures the MODEL, not the participant, and an analyst should not have to dig
+         four levels into a scenario array to find the one section that answers a different
+         question from everything around it. */
+      const scenario6 = buildScenario6Section(translated);
+      if (scenario6) {
+        sendOrQueue({ op: "saveSection", path: "analysis.scenario6_mpf_test", data: scenario6 });
+      }
 
       /* The value profile before and after Block 5, and the movement between them. */
       const profiles = buildProfileChange(translated);

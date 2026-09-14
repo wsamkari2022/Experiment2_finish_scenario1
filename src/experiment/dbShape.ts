@@ -61,7 +61,7 @@ import { ACTIVE_TIME_KEY } from "./activeTime";
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-11-position-b";
+export const SHAPE_VERSION = "2026-09-14-scenario6";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -592,6 +592,103 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
  * and almost nothing in the second, so the raw number alone is not comparable across scenarios.
  * The share is what the headline compares; the raw distance is kept so the share can be audited.
  */
+/**
+ * SCENARIO 6, THE MPF PREDICTION TEST, LIFTED OUT AND WRITTEN IN PLAIN WORDS.
+ *
+ * WHY IT GETS ITS OWN SECTION. Buried where it is produced, this sits four levels down inside
+ * `blocks.block5_emergency_scenarios.scenarioResults[5].predictionTest`, beside five scenarios that
+ * measure something else entirely. An analyst opening the document would have to know it was there
+ * to find it. It is also a different KIND of thing: the other five measure the participant, and
+ * this one measures the model. Mixing the two in one box is how a junk drawer starts.
+ *
+ * WHY THE NAMES CHANGE HERE AND NOWHERE ELSE. This file is the one translator between the study's
+ * internal names and the database's. `probabilityOfFirstChoice` is precise and unreadable; the
+ * column is called `mpf_chance_of_your_pick` because six months from now that is the question being
+ * asked of it.
+ *
+ * WHAT IS DELIBERATELY REPEATED. `chance_if_guessing` is 25% for a four-option scenario and is
+ * written into every record rather than left to be remembered. A probability without its baseline
+ * invites a reader to credit the model with more than it did, and a stored number that needs an
+ * external fact to interpret is a number that will eventually be interpreted wrongly.
+ */
+export function buildScenario6Section(block5: unknown): Record<string, unknown> | null {
+  if (!block5 || typeof block5 !== "object") return null;
+  const results = (block5 as { scenarioResults?: unknown }).scenarioResults;
+  if (!Array.isArray(results)) return null;
+
+  const row = results.find(
+    (r) => r && typeof r === "object" && (r as { predictionTest?: unknown }).predictionTest,
+  ) as Record<string, unknown> | undefined;
+  if (!row) return null;
+
+  const p = row.predictionTest as Record<string, unknown>;
+  const shown = Array.isArray(p.shownProbabilities) ? p.shownProbabilities : [];
+  const pct = (n: unknown) => (typeof n === "number" ? Math.round(n * 1000) / 10 : null);
+
+  return {
+    what_this_is:
+      "Scenario 6 asks which principle the participant acts on when they do not know who they will "
+      + "be. After they chose, the Moral Prediction Function (MPF) showed them what it had expected. "
+      + "It is a test OF the model: it never updates the value profile and never enters VCI, "
+      + "Stability, Performance or the position effect.",
+
+    rule_version: p.version ?? null,
+    scenario_id: row.scenarioId ?? null,
+
+    /* ---- what the MPF said, before the participant saw anything ---- */
+    mpf_prediction: {
+      chance_if_guessing_percent: shown.length ? Math.round((100 / shown.length) * 10) / 10 : null,
+      by_rule: shown
+        .map((o) => {
+          const e = o as Record<string, unknown>;
+          return {
+            rule: e.optionId ?? null,
+            mpf_chance_percent: pct(e.probability),
+            rank: e.rank ?? null,
+            fit_score_shown: e.alignmentScore ?? null,
+          };
+        })
+        .sort((a, b) => (Number(a.rank) || 99) - (Number(b.rank) || 99)),
+      most_expected_rule: p.predictedTopOptionId ?? null,
+      /* How far apart the top two were, on the uncensored fit. Near zero means the MPF had no real
+         opinion, whatever the percentages looked like. */
+      gap_between_top_two: p.separation ?? null,
+      how_sure_the_mpf_was: p.confidence ?? null,
+      sharpness_setting: p.temperature ?? null,
+    },
+
+    /* ---- what the participant did ---- */
+    participant: {
+      rule_chosen_before_seeing_the_guess: p.firstChoiceOptionId ?? null,
+      rule_chosen_in_the_end: p.finalChoiceOptionId ?? null,
+      changed_after_seeing_the_guess: p.changedAfterSeeing ?? null,
+      mpf_chance_of_their_first_pick_percent: pct(p.probabilityOfFirstChoice),
+      mpf_guessed_right: p.predictionWasRight ?? null,
+      does_this_sound_like_me_1_to_7: p.soundsLikeMe ?? null,
+      were_you_surprised: p.surprised ?? null,
+      seconds_looking_at_the_guess: p.secondsViewingPrediction ?? null,
+    },
+
+    /* ---- how much they wavered, on each side of the guess ---- */
+    wavering: {
+      switches_before_the_guess: p.switchesBeforeGuess ?? null,
+      switches_after_the_guess: p.switchesAfterGuess ?? null,
+      rules_opened_before_the_guess: p.rulesOpenedBeforeGuess ?? null,
+      rules_opened_after_the_guess: p.rulesOpenedAfterGuess ?? null,
+    },
+
+    /* ---- the full trail, in order ---- */
+    every_interaction: Array.isArray(p.interactions)
+      ? (p.interactions as Record<string, unknown>[]).map((e) => ({
+          seconds_in: typeof e.atMs === "number" ? Math.round(e.atMs / 100) / 10 : null,
+          what_happened: e.what ?? null,
+          rule: e.optionId ?? null,
+          answer: e.value ?? null,
+        }))
+      : [],
+  };
+}
+
 export function buildPositionSection(block5: unknown): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
   const position = positionFor(block5 as Record<string, unknown>);
