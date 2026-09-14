@@ -859,6 +859,27 @@ export function scenarioShowsPerformance(scenario: { decisionRole?: Block5Decisi
   return (scenario.decisionRole ?? "decider") !== "predicted";
 }
 
+/**
+ * Is this the scenario-6 prediction test rather than one of the study's own measurements?
+ *
+ * Works on a scenario definition or on a stored result, because both carry `decisionRole`.
+ *
+ * WHY THIS IS NOT `resultIsScored`. That predicate answers "does this teach the profile", and it
+ * is false for the recipient scenario as well. The recipient scenario still BELONGS in the results
+ * charts: it is a real choice the participant made, it appears in the position effect and in the
+ * decided-versus-wished comparison, and hiding it would remove half of the study's own matched
+ * pair. Scenario 6 is a different kind of thing entirely - a test of the MODEL - and belongs in
+ * none of the charts that describe the participant.
+ *
+ * Drawn on a chart it would actively mislead. The value-drift line would show a flat sixth step,
+ * because scenario 6 cannot move the profile; the consistency line would show a sixth point that
+ * is excluded from the consistency score beside it; and a caption reading "across all 6 scenarios"
+ * would be counting two scenarios that were never able to move anything.
+ */
+export function isPredictionTest(x: { decisionRole?: Block5DecisionRole }): boolean {
+  return (x.decisionRole ?? "decider") === "predicted";
+}
+
 /** Same question, asked of a stored result rather than of a scenario definition. */
 export function resultIsScored(result: Block5ScenarioResult): boolean {
   return (result.decisionRole ?? "decider") === "decider";

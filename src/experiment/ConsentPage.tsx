@@ -48,7 +48,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { REQUIRED_ACTIVE_MINUTES } from "./dbShape";
 
 /** Bump whenever the consent wording below changes. Stored with every consent record. */
-export const CONSENT_VERSION = "2026-09-13";
+export const CONSENT_VERSION = "2026-09-14";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
@@ -235,7 +235,7 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
             </Section>
 
             <Section title="What You Will Do">
-              <Text>The study runs in your web browser and has four parts:</Text>
+              <Text>The study runs in your web browser and has five parts:</Text>
               <VStack align="stretch" gap="2" pl="1">
                 <Text>
                   <Text as="span" color="fg" fontWeight="semibold">
@@ -251,15 +251,35 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
                   take. Afterwards you see what your choice meant for the people it affected, and
                   you may keep your choice or change it. Both are fine.
                 </Text>
+                {/*
+                  THE PREDICTION STEP IS DESCRIBED BEFORE THEY AGREE, not discovered on the day.
+                  It is the one part of the study where the software makes a claim about the
+                  participant to their face, and a person is entitled to know that is coming.
+
+                  The wording does two jobs. It says the guess arrives AFTER their choice, so
+                  nobody expects to be steered while deciding. And it says plainly that the guess
+                  can be wrong and that they are not being marked, because the obvious way to
+                  misread a percentage about yourself is as a score you passed or failed.
+                */}
                 <Text>
                   <Text as="span" color="fg" fontWeight="semibold">
-                    3. Your results.
+                    3. One last situation, and a guess about you.
+                  </Text>{" "}
+                  This one is different. You write a rule before you know who you will be in the
+                  situation. After you choose, we show you what we expected you to pick, as a
+                  percentage for each option. Then we ask whether the guess sounds like you, and
+                  you may keep your answer or change it. The guess may well be wrong. It is a test
+                  of our software, not a test of you.
+                </Text>
+                <Text>
+                  <Text as="span" color="fg" fontWeight="semibold">
+                    4. Your results.
                   </Text>{" "}
                   A summary of the choices you made and the values behind them.
                 </Text>
                 <Text>
                   <Text as="span" color="fg" fontWeight="semibold">
-                    4. Feedback questions.
+                    5. Feedback questions.
                   </Text>{" "}
                   A few questions about your experience of taking part.
                 </Text>
@@ -267,7 +287,7 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
               <Text>
                 The whole study takes about{" "}
                 <Text as="span" color="fg" fontWeight="semibold">
-                  35 to 50 minutes
+                  40 to 55 minutes
                 </Text>
                 . You do not have to finish in one sitting — see below.
               </Text>

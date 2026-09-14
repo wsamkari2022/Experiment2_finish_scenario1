@@ -32,7 +32,7 @@ import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { ordinal } from "./block5Performance";
 import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from "./blocks123Consistency";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
-import { ALIGNMENT_LABEL, stabilityLevel } from "./block5CVR";
+import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest } from "./block5CVR";
 import { buildTimingSummary } from "./telemetry";
 import {
   POLICY_DIM_KEYS,
@@ -109,7 +109,22 @@ function ChartCard({ index, title, howTo, caption, children }: {
 /* ----------------------------------- the view ----------------------------------- */
 
 export function Block5VisualizationsView({ results, onBack, onContinueToFeedback }: Props) {
-  const scenarios = results.scenarioResults;
+  /*
+   * EVERY CHART ON THIS PAGE DESCRIBES THE PARTICIPANT, so the scenario-6 result is filtered out
+   * here, once, rather than at each of the dozen places that derive from this list.
+   *
+   * Scenario 6 tests the MODEL: it cannot move the profile, it contributes nothing to VCI,
+   * Stability, Performance or the position effect, and it is the one scenario whose result says
+   * something about the software rather than about the person. Left in, the value-drift line would
+   * draw a flat sixth step, the consistency line would plot a sixth point that the consistency
+   * score beside it deliberately excludes, and the captions would count six scenarios where only
+   * five measured anything.
+   *
+   * The recipient scenario is NOT filtered. It is a real choice, and it carries half of the
+   * decided-versus-wished pair.
+   */
+  const allScenarios = results.scenarioResults;
+  const scenarios = allScenarios.filter((r) => !isPredictionTest(r));
   const n = scenarios.length;
   const before = results.originalProfile;
   const after = results.userProfile;
@@ -437,7 +452,10 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   const switchMax = Math.max(3, ...switchBars.map((b) => b.value));
 
   /* 6 · Bars: time per stage */
-  const timing = buildTimingSummary(scenarios.map((r) => r.timeMs ?? 0));
+  /* THE ONE EXCEPTION, and deliberately so. This chart reports where the time went, not what the
+     participant values, and scenario 6 is real time they really spent. Leaving it out would show a
+     total that does not match the clock. */
+  const timing = buildTimingSummary(allScenarios.map((r) => r.timeMs ?? 0));
   const rawTimeBars: (HBar & { phase: keyof typeof PHASE_COLOR })[] = [
     { label: "Block 1", value: timing.block1Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
     { label: "Block 2", value: timing.block2Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
