@@ -103,6 +103,8 @@ export function Block5ScenarioIntro({ rootRef, scenario, frozenProfile, index, t
   /* Named by scenario id, never by position: the deck has already been reordered once, and a
      positional filename would have quietly attached the wrong picture to the wrong scenario. */
   const imageSrc = `${import.meta.env.BASE_URL}scenarios/${scenario.id}.webp`;
+  /* True where the picture must not be trimmed. See the note on the image panel below. */
+  const showWholeImage = (scenario.decisionRole ?? "decider") === "predicted";
   const [imageOk, setImageOk] = useState(true);
 
   return (
@@ -131,10 +133,25 @@ export function Block5ScenarioIntro({ rootRef, scenario, frozenProfile, index, t
         {/* ---- image + the scene ---- */}
         <Stack direction={{ base: "column", lg: "row" }} gap={{ base: "5", md: "6" }} align="stretch">
           {imageOk && (
+            /*
+             * SCENARIO 6'S PICTURE IS SHOWN WHOLE; the other five are cropped to fill.
+             *
+             * `cover` fills the panel and trims whatever does not fit, which is right for the five
+             * emergency photographs: they are atmosphere, the subject sits in the middle, and a
+             * trimmed edge costs nothing.
+             *
+             * Scenario 6's image is a made image rather than a scene, and it is nearly square where
+             * the panel is wide. Cropping it to fill would cut the top and bottom off the very thing
+             * it was drawn to show. `contain` fits the whole picture inside instead, letterboxed
+             * against the scenario's own dark ground so the empty space reads as a deliberate mount
+             * rather than a gap.
+             */
             <Box data-morph-fade flex="1 1 0" minW="0" rounded="2xl" overflow="hidden"
               borderWidth="1px" borderColor={pal.cardBorder}
-              style={{ boxShadow: pal.sidebarShadow }}>
-              <Image src={imageSrc} alt="" w="full" h="full" objectFit="cover"
+              display="flex" alignItems="center" justifyContent="center"
+              style={{ boxShadow: pal.sidebarShadow, background: showWholeImage ? pal.panelDeep : undefined }}>
+              <Image src={imageSrc} alt="" w="full" h="full"
+                objectFit={showWholeImage ? "contain" : "cover"}
                 onError={() => setImageOk(false)} />
             </Box>
           )}
