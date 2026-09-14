@@ -52,3 +52,12 @@ scoring model; treat a failure there as a blocker, not a warning.
 - Scenario 5 is a wish rather than a decision. It is excluded from consistency, stability and the
   reflection measures, but included in the position effect.
 - The option ordering (the planner) is settled. It has been reviewed and is not to be "fixed".
+- **Scenario 6 is a test of the model, not of the participant.** It runs four options rather than
+  six, shows no performance numbers, runs no reflection, and must never update the profile. If it
+  ever produced churn, `STABILITY_CHURN_CEILING` and every gate resting on it would be invalidated.
+  `decisionRole: "predicted"` is what keeps it out; do not remove it.
+- **The scenario-6 prediction is shown AFTER the choice.** Moving it earlier destroys the only
+  measurement the scenario exists for, because a choice made after seeing a guess cannot be told
+  from a choice suggested by it.
+- **`PREDICTION_VERSION` must move whenever the prediction rule does.** It is stamped on stored
+  predictions, and records made under different rules must not be pooled.

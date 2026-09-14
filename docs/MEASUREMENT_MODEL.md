@@ -560,6 +560,46 @@ values moved rather than whether the participant chose well, and points at the c
 
 ---
 
+### Scenario 6 — the MPF prediction test
+
+`block5Prediction.ts`, gated by `npm run validate:prediction`
+
+A sixth scenario, structurally unlike the other five. Four options rather than six, one pure
+champion per value at 95 against 25, under Rawls's veil: the participant writes a rule before
+learning which person in the situation they will be. It **never** updates the profile and enters no
+measure — `decisionRole: "predicted"` makes `scenarioIsScored()` false, which is the same switch the
+recipient scenario uses.
+
+**The rule.** Each option's uncensored shortfall against the participant's profile goes through a
+softmax. Temperature runs from 18 at full confidence to 60 at none, where confidence is VCI and
+Stability at equal weight. The uncensored shortfall, not the displayed score: the score floors at 0,
+and a demanding participant can push every option there, which would hand the softmax four identical
+inputs and return an even split at exactly the moment their values are most pronounced.
+
+**Why the predictions are modest.** Across 3,000 profiles the alignment gap between a scenario's
+best and second-best option is 7 points at the median and 0 at the tenth percentile. The instrument
+usually cannot separate the top two, so an honest prediction is usually hedged. The top option
+median is 27.5% on a six-option scenario and about 40% on scenario 6's four, against chance
+baselines of 16.7% and 25%.
+
+**Four options is not more informative than six.** Going from six to four raises the separation from
+7 to 11 purely because there are fewer order statistics; making them pure champions raises it from
+11 to 17, and only that second part is real. The headline percentage rises mostly because chance
+rose. **Report the chance baseline wherever the percentage appears.**
+
+**What offline validation can and cannot say.** Seven gates check the machinery. The calibration
+study measures accuracy against simulated choosers whose decision rule is stated, from 53.9% for one
+who almost always takes their best fit down to 17.8% for a random one against 16.7% chance. None of
+it says how real people behave; that is what scenario 6 is for.
+
+**Three measurements come out of it:** accuracy, self-recognition, and reactivity. The third exists
+only because the guess is shown after the choice.
+
+`PREDICTION_VERSION` is stamped on every stored prediction and predictions made under different
+versions must not be pooled.
+
+---
+
 ## 10. Honest summary of what is strong and what is not
 
 | Sensitivity | Sources | Assessment |

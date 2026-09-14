@@ -1,6 +1,7 @@
 # Scenario 6 — the Veil of Ignorance, and the prediction test
 
-**Status:** DRAFT FOR APPROVAL, 13 September 2026. Nothing in this file is wired into the app.
+**Status:** IMPLEMENTED, 14 September 2026. Everything below is live in the app.
+**Was:** a draft for approval on 13 September; the open questions in section 8 have been answered and are recorded there as decisions.
 **Depends on:** `src/experiment/block5Prediction.ts` (built and gated, `npm run validate:prediction`).
 
 ---
@@ -243,3 +244,45 @@ make the reactivity measure conditional on accuracy, which is one of the things 
 is recorded. Ordering them by the participant's own profile would put the predicted option in a
 position that correlates with the prediction, and any preference for the top of a list would then
 be indistinguishable from agreement with the model.
+
+
+---
+
+## 9. What was actually built, 14 September 2026
+
+Everything in sections 1 to 8 shipped, with these additions and two corrections found by running it.
+
+**The model has a name.** It is the Moral Prediction Function (MPF), written out on first use and
+abbreviated after, on the prediction screen and in the consent form.
+
+**The screens.** Pick, confirm, then the guess. A `"prediction"` FlowStep sits after the
+confirmation. The screen shows four rules with their probabilities, the chosen one marked, and the
+chance baseline in the same size type. No reasoning, per decision 1. Then the two questions and
+keep-or-change, both buttons locked until both are answered. The guess is shown once; a participant
+who goes back and picks again commits directly.
+
+**The record.** `PredictionTestRecord` on the scenario result, lifted by `dbShape` into
+`analysis.scenario6_mpf_test`. It carries the rule version, temperature, confidence, separation, all
+four probabilities as shown, the pick made before the guess, whether the top pick was right, both
+answers, whether they changed, seconds on the screen, switches and rules opened on each side of the
+guess, and the full interaction trail in order.
+
+**Two bugs a live run caught that reading could not.** The switch counters ran in every scenario, so
+selections from scenarios 1 to 5 were counted in and a real run reported six rules opened in a
+scenario with four. And a switch after "Change my answer" was never counted, because `resetFlow`
+clears the selection before the participant picks again, which silently zeroed the number the
+reactivity measure is built on. Both fixed and re-verified.
+
+**One defect in the rule itself.** The predictor originally ran its softmax over the DISPLAYED
+alignment score, which floors at 0. A demanding participant pushes every option to that floor and
+received four identical probabilities. It now runs over the uncensored shortfall.
+`PREDICTION_VERSION` moved to `2026-09-14-b`, and gate P8 reproduces that exact profile and fails if
+the even split ever returns.
+
+**The results pages.** Scenario 6 is filtered out of every chart that measures the participant, by
+`isPredictionTest()`. The timing chart is the one exception, because it reports where time went. On
+the summary page the row stays but its fit badges are replaced by what the guess did: what the MPF
+expected, whether it was right, and whether they changed.
+
+**Consent.** Five parts rather than four, 40 to 55 minutes rather than 35 to 50, and the prediction
+step described in advance, including that the guess may be wrong and is a test of the software.
