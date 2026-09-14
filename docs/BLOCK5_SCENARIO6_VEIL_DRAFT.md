@@ -223,13 +223,23 @@ effect, and the scenario 4/5 matched pair, which is located by explicit scenario
 
 ---
 
-## 8. Open questions for the researcher
+## 8. Decisions taken by the researcher, 13 September 2026
 
-1. **Does the participant see the model's reasoning, or only the numbers?** Reasoning makes the
-   prediction feel fair and testable. It also teaches them what the model thinks they value, which
-   could shape the self-recognition answer. Recommend showing it, and recording the choice as fixed.
-2. **Is "keep or change" offered to everyone, or only when the prediction was wrong?** Offering it
-   to everyone is cleaner, because a participant whose prediction was right and who is not offered
-   the option has been treated differently for a reason they can see.
-3. **Should the four options be shown in a fixed order, or ordered by the participant's profile?**
-   Recommend a fixed order for everyone, and recorded, so order cannot confound the choice.
+**1. The model's reasoning is NOT shown.** The participant sees the four probabilities and the
+chance baseline, and nothing about why. `predictionReason()` stays in the engine for analysis and
+for a debrief, and must not be rendered on the prediction panel.
+
+This makes the self-recognition measure cleaner than the alternative. With reasoning on screen the
+participant would be judging the model's account of them, which teaches them what the model thinks
+they value before they answer. Without it they judge the prediction itself, so "does this describe
+how you decide?" is answered against their own sense of themselves rather than against a sentence
+we just supplied.
+
+**2. Keep-or-change is offered to everyone**, whether the prediction was right or wrong. Offering it
+only after a wrong prediction would treat two groups differently in a way they can see, and would
+make the reactivity measure conditional on accuracy, which is one of the things being measured.
+
+**3. The four options are shown in a FIXED order, identical for every participant**, and the order
+is recorded. Ordering them by the participant's own profile would put the predicted option in a
+position that correlates with the prediction, and any preference for the top of a list would then
+be indistinguishable from agreement with the model.
