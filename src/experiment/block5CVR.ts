@@ -788,6 +788,25 @@ export function scenarioIsScored(scenario: { decisionRole?: Block5DecisionRole }
   return (scenario.decisionRole ?? "decider") === "decider";
 }
 
+/**
+ * Does this scenario show the participant its PERFORMANCE numbers?
+ *
+ * Everywhere except scenario 6. There the four options are standing rules rather than actions, so
+ * "how fast" and "how reversible" have no answer for them; their metrics are all 50 to say exactly
+ * that; and the scenario is excluded from the Performance measure along with VCI and Stability.
+ *
+ * Showing them anyway would be worse than useless. Six identical bars invite a participant to hunt
+ * for a difference that is not there, and a scenario built to ask which VALUE someone acts on would
+ * be handing them a second, meaningless thing to compare on. Scenario 6 asks one question and shows
+ * only what that question needs.
+ *
+ * One predicate, used by the dashboard, the card chips, the metric bars and the preview button, so
+ * the four cannot disagree about whether performance exists here.
+ */
+export function scenarioShowsPerformance(scenario: { decisionRole?: Block5DecisionRole }): boolean {
+  return (scenario.decisionRole ?? "decider") !== "predicted";
+}
+
 /** Same question, asked of a stored result rather than of a scenario definition. */
 export function resultIsScored(result: Block5ScenarioResult): boolean {
   return (result.decisionRole ?? "decider") === "decider";

@@ -1418,7 +1418,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     stakePosition: "behind_the_veil",
     decisionRole: "predicted",
     factBase:
-      "1 emergency reserve, held for the whole region. It covers roughly 33% of what a full-scale emergency would need. It will be triggered at some point in the next 2 years, once. Whatever rule is chosen is the rule that runs, and nobody gets to argue with it on the day.",
+      "1 emergency kit for the whole city. It is big enough for about 33% of the people who will need it. It will be opened 1 time, some time in the next 2 years. The rule picked today is the rule that gets used.",
     role:
       /*
         The veil itself. It names five concrete positions rather than gesturing at anyone at all,
@@ -1428,10 +1428,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         reserve stops the participant quietly assuming they will be the person in need — which is
         the assumption that collapses the exercise into ordinary self-interest.
       */
-      "You write the rule today. When the emergency comes, {w|your own place in it will be assigned at random}, and you will not know it until it happens. You could be {w|the person whose life depends on the reserve arriving}. You could be {w|the nurse who has to apply your rule} to someone standing in front of them. You could be {w|the technician who can restore power to one building and not the next}. You could be {w|a parent held outside the cordon}. You could be {w|someone who never needs the reserve at all}, and only pays for it. You are writing a rule you will have to live under, from a position you do not get to choose.",
+      "You write the rule today. But {w|you do not know who you will be} on the day. You could be {w|the sick person waiting for help}. You could be {w|the nurse who has to follow your rule}, with someone standing in front of her. You could be {w|the worker who can turn the power back on in one building only}. You could be {w|a parent waiting outside}, not allowed in. You could be {w|someone who needs nothing at all}. You find out who you are only after the rule is set. So you are writing a rule that you will have to live with, without knowing which side of it you will be on.",
     title: "The Rule You Will Live Under",
     description:
-      "A regional authority is writing the standing rule for its emergency reserve: the one stock of people, equipment and power it can release when the next crisis comes. The rule will be applied automatically, to everyone, with no exceptions and no appeal. It is written once, and it does not get revisited in the moment.",
+      "A city keeps one emergency kit. It holds spare doctors, trucks and generators. It can be opened only once, in the next big emergency. Today the city has to write one rule that says who gets help first. The rule cannot be changed later, and on the day nobody is allowed to argue with it.",
     theme: {
       /* Violet rather than another emergency palette. This scenario is not a sixth emergency, and
          the colour is the first thing that says so. It is also the hue the CVR already uses for
@@ -1443,15 +1443,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     options: [
       {
         id: "veil_worst_off_first",
-        title: "Whoever would suffer most without it",
+        title: "Help the people who would be hurt the most",
         summary:
-          "The reserve goes first to the people who would be worst off if it never reached them, even when reaching them is slow, expensive, and helps only a few.",
-        gains: "Nobody is left out because helping them was difficult or expensive.",
+          "The kit goes first to the people who would be hurt the most without it. That holds even when reaching them is slow, costs a lot, and helps only a few.",
+        gains: "Nobody is skipped just because helping them was hard.",
         consequence:
-          "The people in the worst position are reached first, whatever it costs to get to them. But the reserve does less in total, and many people who would have been helped by a wider rule get nothing.",
-        givesUp: "The larger number of people the same reserve could have reached.",
+          "The people in the worst trouble get help first, whatever it costs to reach them. But the kit then helps fewer people in total, so many others get nothing at all.",
+        givesUp: "The bigger number of people the same kit could have reached.",
         moralTension:
-          "Is a rule fair when it knowingly helps fewer people, in order to reach the people in the worst position?",
+          "Is a rule fair if it helps fewer people on purpose, so that it can reach the people in the worst trouble?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 95, groupSizeSensitivity: 25,
           gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 25,
@@ -1479,15 +1479,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
       {
         id: "veil_prevent_most_harm",
-        title: "Wherever it prevents the most serious harm",
+        title: "Stop the most people from being badly hurt",
         summary:
-          "The reserve goes wherever it stops the largest number of deaths and severe injuries, whoever those people turn out to be.",
-        gains: "The number of people seriously harmed is as low as this reserve can make it.",
+          "The kit goes wherever it stops the most deaths and the most bad injuries. It does not matter who those people are.",
+        gains: "As few people end up badly hurt as this kit can manage.",
         consequence:
-          "Fewer people are gravely hurt than under any other rule. But someone already in the worst position can be passed over, because reaching them would use up what could have prevented more severe harm elsewhere.",
-        givesUp: "Any claim a person has on the reserve because of who they are.",
+          "Fewer people are badly hurt than under any other rule. But a person already in deep trouble can be skipped, because helping them would use up what could have saved more people somewhere else.",
+        givesUp: "Any special claim a person has because of who they are.",
         moralTension:
-          "If the rule never looks at who a person is, is that fairness, or only efficiency wearing its name?",
+          "If the rule never looks at who a person is, is that fair, or is it only tidy?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 95,
           gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 25,
@@ -1515,15 +1515,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
       {
         id: "veil_reach_most_people",
-        title: "Wherever it reaches the most people",
+        title: "Give a little help to as many people as possible",
         summary:
-          "The reserve is spread so that the largest number of people get some help from it, even when nobody gets very much.",
-        gains: "Almost nobody is left with nothing at all.",
+          "The kit is shared out so that the most people get some help. Nobody gets very much, but almost everybody gets something.",
+        gains: "Almost nobody is left with nothing.",
         consequence:
-          "Help reaches further than under any other rule, and very few people are passed over entirely. But spread that thin it may be too little to change what happens to anyone in real danger.",
-        givesUp: "Enough help, concentrated, to actually change an outcome.",
+          "Help reaches more people than under any other rule, and very few are skipped. But spread this thin, it may be too small to change what happens to anyone in real danger.",
+        givesUp: "Enough help in one place to really change what happens.",
         moralTension:
-          "Is a little help to many worth more than enough help to a few?",
+          "Is a little help for many people worth more than enough help for a few?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 25,
           gainResponsivenessSensitivity: 25, outcomeAggregationSensitivity: 95,
@@ -1551,15 +1551,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
       {
         id: "veil_greatest_total",
-        title: "Wherever it achieves the most",
+        title: "Use the kit where it does the most good",
         summary:
-          "The reserve goes where each unit of it produces the greatest total result, measured across everything and everyone it touches.",
-        gains: "Nothing is wasted. Every unit is placed where it does the most work.",
+          "The kit goes where each part of it does the most good. This counts everyone and everything it touches.",
+        gains: "Nothing is wasted. Every part of the kit is used where it works hardest.",
         consequence:
-          "The reserve produces more than it would under any other rule. But the people who are hardest and most expensive to reach are, by this rule exactly, the people it will pass over every time.",
+          "The kit does more good in total than under any other rule. But the people who are hardest and most expensive to reach are exactly the people this rule skips, every time.",
         givesUp: "The people who cost the most to help.",
         moralTension:
-          "When a rule is written to get the most out of what we have, who reliably ends up on the wrong side of it?",
+          "When a rule is built to get the most out of what we have, who always ends up on the losing side of it?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 25, groupSizeSensitivity: 25,
           gainResponsivenessSensitivity: 95, outcomeAggregationSensitivity: 25,

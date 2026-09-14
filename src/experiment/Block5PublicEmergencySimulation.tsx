@@ -32,6 +32,7 @@ import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
   labelOptions, type LabeledOption, isMisaligned, cvrCoordinate,
   optionMetrics, applyEndorsementUpdates, applyKeepUpdates, applyApaUpdates, scenarioVciScore,
+  scenarioShowsPerformance,
   scenarioIsScored,
   performanceScore, computeVCI, computeStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
@@ -499,8 +500,14 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   /** Per-card explanation text, generated from planner state. Keyed by option id. */
   const explanations = useMemo<Record<string, CardExplanation>>(() => {
     if (!plan || !scenario) return {};
+    /* The chips are metric placings ("Durability 2nd of 6"). Scenario 6 keeps the explanation
+       text, which is about values, and drops the chips, which are about performance. */
+    const showPerf = scenarioShowsPerformance(scenario);
     return Object.fromEntries(
-      plan.orderedIds.map((id) => [id, explainOption(scenario, plan, decisionProfile, id)]),
+      plan.orderedIds.map((id) => {
+        const ex = explainOption(scenario, plan, decisionProfile, id);
+        return [id, showPerf ? ex : { ...ex, chips: [] }];
+      }),
     );
   }, [plan, scenario, decisionProfile]);
 
@@ -514,6 +521,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    */
   const standings = useMemo<Record<string, { rows: MetricStanding[]; overall: OverallStanding }>>(() => {
     if (!scenario) return {};
+    /* Scenario 6 shows no performance at all. Returning nothing here removes the "Performance Nth
+       of M" badge, the five metric bars inside the expanded card and the combined-standing
+       paragraph in one move, because every one of them is already guarded on `standing`. */
+    if (!scenarioShowsPerformance(scenario)) return {};
     return Object.fromEntries(scenario.options.map((o) => [
       o.id,
       { rows: metricStandings(scenario, o), overall: overallStanding(scenario, o) },
@@ -1112,11 +1123,13 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         </HStack>
       </VStack>
 
-      {/* Sticky cumulative performance dashboard (issues 1 & 2) */}
-      <Box ref={dashRef} position="sticky" top="2" zIndex="30" maxW="7xl" mx="auto" mb="6">
-        <MetricsDashboard current={cumulative} projected={projected} previewTitle={previewOption?.title ?? null}
-          accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} scenarioId={scenario.id} />
-      </Box>
+      {/* Sticky cumulative performance dashboard (issues 1 & 2). Absent in scenario 6. */}
+      {scenarioShowsPerformance(scenario) && (
+        <Box ref={dashRef} position="sticky" top="2" zIndex="30" maxW="7xl" mx="auto" mb="6">
+          <MetricsDashboard current={cumulative} projected={projected} previewTitle={previewOption?.title ?? null}
+            accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} scenarioId={scenario.id} />
+        </Box>
+      )}
 
       <Grid ref={gridRef} templateColumns={{ base: "1fr", lg: "352px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
         {/*
@@ -1348,6 +1361,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   /* Every card stops hinting the moment ANY of them has been opened. */
                   hintDetails={expandedOptions.size === 0}
                   onSelect={() => handleSelect(opt.id)}
+                  showPerformance={scenarioShowsPerformance(scenario)}
                   isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
                   impact={previewOptionId === opt.id ? impactFor(opt) : null}
                   disabled={step !== null} />
@@ -1971,7 +1985,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
 
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails }: {
+function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance }: {
   option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
   /** Planner state for this card, or null before the planner has run. */
   explanation: CardExplanation | null;
@@ -1983,6 +1997,8 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   copy: (typeof DECISION_COPY)[keyof typeof DECISION_COPY];
   expanded: boolean; onToggle: () => void; onSelect: () => void;
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
+  /** False in scenario 6: no performance exists there, so there is nothing to preview. */
+  showPerformance: boolean;
   /**
    * True until the participant has opened ANY option's details in this scenario.
    *
@@ -2295,13 +2311,17 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
             <Icon boxSize="3">{expanded ? <LuChevronUp /> : <LuChevronDown />}</Icon>
           </Center>
         </Button>
-        <Button size="sm" variant="outline"
-          borderColor={isPreviewing ? accent : pal.cardBorder} color={isPreviewing ? accent : pal.textMuted}
-          bg={isPreviewing ? pal.surfaceSubtle : "transparent"}
-          _hover={{ bg: pal.surfaceSubtle }} rounded="lg" onClick={onPreview} disabled={disabled} gap="1" fontSize="xs">
-          <Icon boxSize="3.5"><LuEye /></Icon>
-          {isPreviewing ? "Previewing impact" : "Preview impact"}
-        </Button>
+        {/* Previewing impact means projecting this option's METRICS onto the running totals.
+            Scenario 6 has no metrics worth projecting and no running total to project onto. */}
+        {showPerformance && (
+          <Button size="sm" variant="outline"
+            borderColor={isPreviewing ? accent : pal.cardBorder} color={isPreviewing ? accent : pal.textMuted}
+            bg={isPreviewing ? pal.surfaceSubtle : "transparent"}
+            _hover={{ bg: pal.surfaceSubtle }} rounded="lg" onClick={onPreview} disabled={disabled} gap="1" fontSize="xs">
+            <Icon boxSize="3.5"><LuEye /></Icon>
+            {isPreviewing ? "Previewing impact" : "Preview impact"}
+          </Button>
+        )}
         <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" onClick={onSelect} disabled={disabled} fontSize="xs" fontWeight="semibold">
           {copy.cardAction}
         </Button>
