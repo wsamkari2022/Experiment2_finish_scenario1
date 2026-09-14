@@ -1388,6 +1388,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
    * set before knowing which person in the situation they will be, then shows them what the model
    * expected and measures whether they recognise themselves in it.
    *
+   * THE SCENE IS A POWER CUT AFTER A STORM, and that is a deliberate choice of subject. Everyone
+   * has lived through one, so nothing has to be explained before the moral question can start. All
+   * four values fit it without strain: the worst off is the breathing machine, the most harm
+   * prevented is the clinic, the most people reached is whole streets, the most achieved is homes
+   * per hour of work. And it shares no ground with the cancer allocation in scenario 3, which a
+   * medicine shortage would have done.
+   *
    * IT NEVER FEEDS THE MODEL. `decisionRole: "predicted"` makes `scenarioIsScored()` false, so no
    * profile update, no churn, and no contribution to VCI, Stability or Performance. Two reasons,
    * both binding. STABILITY_CHURN_CEILING is a measurement OF THIS DECK, so a sixth scenario
@@ -1418,7 +1425,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     stakePosition: "behind_the_veil",
     decisionRole: "predicted",
     factBase:
-      "1 emergency team for the whole city. It can help about 33% of the people who will need it. It will go out 1 time in the next 2 years. The rule you write today is the rule that will be used.",
+      "1 crew. About 33% of what went dark can be brought back in the first week. Support from other regions is at least 3 days away. The rule chosen now is the one followed on the night.",
     role:
       /*
         The veil itself. It names five concrete positions rather than gesturing at anyone at all,
@@ -1428,28 +1435,47 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         reserve stops the participant quietly assuming they will be the person in need — which is
         the assumption that collapses the exercise into ordinary self-interest.
       */
-      "You write the rule today. But {w|you do not know who you will be} later. You could be {w|the sick person who needs help}. You could be {w|the nurse who must use your rule} on a real person. You could be {w|the worker who can fix the power in one place only}. You could be {w|a parent waiting outside the gate}. You could be {w|someone who needs no help at all}. You learn who you are only after the rule is fixed. So the rule is for you too. You do not know if it will help you or hurt you.",
+      "You write the rule today. But {w|you do not know who you will be} when the storm comes. You could be {w|the person at home on a breathing machine}. You could be {w|the nurse at the clinic working with no lights}. You could be {w|the shop owner whose food is going bad}. You could be {w|a parent with a small baby and no heating}. You could be {w|someone whose power never goes out}. You learn who you are only after the rule is fixed. So the rule is for you too. You do not know if it will help you or hurt you.",
     title: "The Rule You Will Live Under",
     description:
-      "A city has one emergency team. The team has doctors, trucks, and machines that make power. The city can send the team out only one time. That will be in the next big emergency. There will not be enough help for everyone. So today the city must write one rule. The rule says who gets help first. After it is written, it cannot be changed.",
+      "A big storm has torn down the electricity lines across the city. Only one repair crew is available, and they cannot get everywhere before help arrives from elsewhere. So the city must decide in advance which streets come first. Once that decision is made, it cannot be changed.",
     theme: {
-      /* Violet rather than another emergency palette. This scenario is not a sixth emergency, and
-         the colour is the first thing that says so. It is also the hue the CVR already uses for
-         "who is affected", which is exactly what the veil withholds. */
-      gradient: "radial-gradient(900px 420px at 12% -10%, rgba(124,58,237,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(76,29,149,0.42), transparent 55%), linear-gradient(155deg, #0f0b1a, #1e1433 50%, #33235c)",
-      accent: "#7C3AED",
-      shadow: "0 8px 32px rgba(124, 58, 237, 0.16)",
+      /*
+       * STEEL INDIGO — the one colour in Block 5 that belongs to nothing else, chosen by measuring
+       * rather than by taste.
+       *
+       * The five emergency scenarios sit at hues 0, 21, 68, 175 and 293. That leaves two real gaps
+       * on the wheel: 68 to 175, which is green, and 175 to 293, which is blue.
+       *
+       * Green is out. It is the app's "go" colour - every commit button in the study is green - and
+       * a scenario themed in it would compete with the one control the participant must never
+       * misread.
+       *
+       * So the blue gap, and its centre. This accent sits at hue 221, a full 46 degrees from the
+       * nearest scenario colour. The violet it replaces sat at 262, only 31 degrees from the care
+       * rota's fuchsia and squarely in the purple the interface already uses for badges, which is
+       * why it read as a repeat rather than a new thing.
+       *
+       * IT IS ALSO A DIFFERENT KIND OF COLOUR, not just a sixth hue. At 52% saturation it is the
+       * least saturated accent in the block, and at 37% lightness among the darkest. The other five
+       * are alarm colours for scenarios that are alarms. This one is cold and sober, because
+       * scenario 6 is not an emergency at all - it is a quiet exercise in writing a rule. A
+       * participant should feel the change of register before they read a word.
+       */
+      gradient: "radial-gradient(900px 420px at 12% -10%, rgba(45,75,142,0.22), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(23,37,74,0.48), transparent 55%), linear-gradient(155deg, #080b14, #0f1730 50%, #1b2a52)",
+      accent: "#2D4B8E",
+      shadow: "0 8px 32px rgba(45, 75, 142, 0.18)",
     },
     options: [
       {
         id: "veil_worst_off_first",
         title: "Help the people who would be hurt the most",
         summary:
-          "The team goes first to the people who would be hurt the most. This is true even if helping them is slow and costs a lot.",
+          "The crew goes first to the people who would be hurt the most without power. That holds even if reaching them is slow and costs a lot.",
         gains: "Nobody is skipped because helping them was hard.",
         consequence:
-          "The people in the worst trouble get help first. But the team then helps fewer people, so many others get nothing.",
-        givesUp: "The bigger number of people the team could have helped.",
+          "The people in the worst trouble get their power back first. But the crew then reaches fewer places, so many others stay dark.",
+        givesUp: "The bigger number of places the same crew could have reached.",
         moralTension:
           "Is it fair to help fewer people, so you can help those in the worst trouble?",
         fingerprint: {
@@ -1481,10 +1507,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "veil_prevent_most_harm",
         title: "Stop the most people from being badly hurt",
         summary:
-          "The team goes where it stops the most deaths and bad injuries. It does not matter who those people are.",
+          "The crew goes where it stops the most deaths and serious harm. It does not matter who those people are.",
         gains: "As few people are badly hurt as possible.",
         consequence:
-          "Fewer people are badly hurt than with any other rule. But a person in deep trouble can be skipped. That happens if helping them would save fewer people.",
+          "Fewer people are badly hurt than with any other rule. But a person in deep trouble can be skipped. That happens if reaching them would save fewer people.",
         givesUp: "Any special claim a person has because of who they are.",
         moralTension:
           "If the rule never looks at who a person is, is that fair?",
@@ -1515,13 +1541,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
       {
         id: "veil_reach_most_people",
-        title: "Give a little help to as many people as possible",
+        title: "Give power back to as many places as possible",
         summary:
-          "The team is split up so the most people get some help. Nobody gets much, but almost everyone gets a little.",
-        gains: "Almost nobody is left with nothing.",
+          "The crew works so the most homes get power back. Each place gets only a few hours a day, but almost everyone gets something.",
+        gains: "Almost nobody is left with no power at all.",
         consequence:
-          "Help reaches more people than with any other rule. But it may be too little to save anyone in real danger.",
-        givesUp: "Enough help in one place to really change what happens.",
+          "More homes get power than with any other rule. But a few hours a day may be too little for anyone in real danger.",
+        givesUp: "Full power in one place, where it would really change things.",
         moralTension:
           "Is a little help for many worth more than real help for a few?",
         fingerprint: {
@@ -1551,13 +1577,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
       {
         id: "veil_greatest_total",
-        title: "Use the team where it does the most good",
+        title: "Use the crew where it does the most good",
         summary:
-          "The team goes where it does the most good in total. Every part of it is used where it helps most.",
+          "The crew goes where each hour of work does the most good in total. No hour is spent where it helps less.",
         gains: "Nothing is wasted.",
         consequence:
-          "The team does more good in total than with any other rule. But the people who are hardest to reach are always skipped.",
-        givesUp: "The people who cost the most to help.",
+          "The crew does more good in total than with any other rule. But the places that are hardest to reach are always skipped.",
+        givesUp: "The places that cost the most to reach.",
         moralTension:
           "When a rule tries to do the most good, who always loses out?",
         fingerprint: {
