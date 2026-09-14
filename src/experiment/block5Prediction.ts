@@ -49,7 +49,24 @@ import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall } from 
  * or formula below changes, so a stored prediction can always be traced to the rule that produced
  * it. Predictions made under different versions must not be pooled.
  */
-export const PREDICTION_VERSION = "2026-09-13-a";
+export const PREDICTION_VERSION = "2026-09-14-b";
+
+/*
+ * VERSION HISTORY. Predictions made under different versions must not be pooled.
+ *
+ *   2026-09-13-a  First rule. Softmax over the DISPLAYED alignment score, which stops at 0.
+ *   2026-09-14-b  Softmax over the uncensored shortfall instead. The displayed score floors at 0,
+ *                 so a demanding participant could push every option there and receive four
+ *                 identical probabilities - the model declaring it knew nothing at exactly the
+ *                 moment their values were most pronounced. Away from the floor the two rules give
+ *                 identical probabilities, because a softmax is unchanged by adding a constant to
+ *                 every input, so only floored cases differ. `separation` moved onto the same
+ *                 uncensored quantity for the same reason.
+ *
+ * This bump was missed when the change was made, which is the failure the constant exists to
+ * prevent: for one commit, two different rules were stamped with the same version and could not be
+ * told apart in the data. No participant data was collected under either.
+ */
 
 /* ------------------------------------------------------------------ the confidence dial */
 
