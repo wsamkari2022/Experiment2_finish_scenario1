@@ -28,12 +28,13 @@ import {
 } from "@chakra-ui/react";
 import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2 } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
+import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
   labelOptions, type LabeledOption, isMisaligned, cvrCoordinate,
   optionMetrics, applyEndorsementUpdates, applyKeepUpdates, applyApaUpdates, scenarioVciScore,
   scenarioShowsPerformance,
-  scenarioIsScored,
+  scenarioIsScored, isPredictionTest,
   performanceScore, computeVCI, computeStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey,
@@ -56,6 +57,7 @@ import {
   METRIC_KEYS, METRIC_LABELS, metricMeaning, POLICY_DIM_KEYS, POLICY_DIM_EXPLAIN, POLICY_DIM_HIGHER_MEANS,
   POLICY_DIM_SHORT,
   type AlignmentLevel, type Block5Results, type Block5Scenario, type Block5ScenarioResult,
+  type PredictionTestRecord,
   type Block5UserProfile, type CVREndorsement, type Block5MetricProfile,
   type Block5PolicyDimKey, type CVRCoordinate, type WhoVariant,
   type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
@@ -93,7 +95,14 @@ interface ProgressState {
  * "person" is the page where one affected person argues against the answer just given.
  * review -> person -> (q1 -> confirm)  or  (apa)
  */
-type FlowStep = "review" | "person" | "q1" | "apa" | "confirm";
+/*
+ * "prediction" is scenario 6's extra screen, and it sits AFTER the confirmation on purpose.
+ *
+ * The participant picks, confirms, and only then sees what the model expected. Putting it any
+ * earlier would contaminate the one thing the scenario exists to measure: there would be no way to
+ * tell a choice they made from a choice the guess suggested.
+ */
+type FlowStep = "review" | "person" | "q1" | "apa" | "confirm" | "prediction";
 
 interface PreviewImpact {
   overall: number;
@@ -497,6 +506,44 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     return plan.orderedIds.map((id) => byId.get(id)).filter((o): o is LabeledOption => !!o);
   }, [plan, labeled]);
 
+  /*
+   * SCENARIO 6: THE GUESS, COMPUTED ONCE AND FROZEN.
+   *
+   * Built from the profile as it stands BEFORE this scenario, which is also the profile after it,
+   * because scenario 6 never updates anything. Its confidence comes from the VCI and Stability the
+   * participant has earned across the five real scenarios: a profile that has been predicting them
+   * correctly, and that held still while doing it, is allowed a sharper guess.
+   *
+   * Frozen in a memo keyed on the inputs so the number shown on screen and the number written to
+   * the record can never drift apart between renders.
+   */
+  const runningVci = useMemo(
+    () => computeVCI(progress.scenarioResults).value,
+    [progress.scenarioResults],
+  );
+  const runningStability = useMemo(
+    () => computeStability(progress.scenarioResults, userProfile).value,
+    [progress.scenarioResults, userProfile],
+  );
+  const prediction = useMemo<ChoicePrediction | null>(
+    () => (scenario && isPredictionTest(scenario)
+      ? predictChoice(scenario.options, profile, { vci: runningVci, stability: runningStability })
+      : null),
+    [scenario, profile, runningVci, runningStability],
+  );
+
+  /* The participant's answers on the prediction screen, and the clock on it. */
+  const [predSoundsLike, setPredSoundsLike] = useState<number | null>(null);
+  const [predSurprised, setPredSurprised] = useState<boolean | null>(null);
+  const predShownAtRef = useRef<number | null>(null);
+  /*
+   * Once the guess has been answered it is never shown again. A participant who goes back and picks
+   * differently is exercising the reactivity measure, and showing them a second guess would turn
+   * one clean before-and-after into an argument with the software.
+   */
+  const [predAnswered, setPredAnswered] = useState(false);
+  const [predFirstChoiceId, setPredFirstChoiceId] = useState<string | null>(null);
+
   /** Per-card explanation text, generated from planner state. Keyed by option id. */
   const explanations = useMemo<Record<string, CardExplanation>>(() => {
     if (!plan || !scenario) return {};
@@ -804,6 +851,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     nextProfile: Block5UserProfile;
     endorsement: CVREndorsement;
     stakeholderGuided: boolean | null;
+    /** Scenario 6 only. */
+    predictionTest?: PredictionTestRecord;
   }) => {
     if (!scenario) return;
 
@@ -867,6 +916,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       stakeholderGuided: opts.stakeholderGuided,
       alignedToOriginal,
       decisionRole: scenario.decisionRole ?? "decider",
+      predictionTest: opts.predictionTest,
       introSeconds: introSecondsRef.current[scenario.id],
       vciScore: scenarioVciScore(opt.level),
       performanceScore: performanceScore(opt),
@@ -967,6 +1017,21 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     finalizeScenario(result, nextProfile);
   }, [scenario, userProfile, expandedOptions, progress, cvrWho, finalizeScenario]);
 
+  /*
+   * THE PICK MADE BEFORE THE GUESS APPEARED.
+   *
+   * Recorded the first time the participant confirms in scenario 6, and never overwritten. If they
+   * go back and choose differently, that later pick is the reaction; this one is the answer they
+   * gave when nothing had been suggested to them, and it is the only uncontaminated choice the
+   * scenario produces.
+   */
+  const openPrediction = useCallback(() => {
+    if (!selectedOption) return;
+    if (predFirstChoiceId === null) setPredFirstChoiceId(selectedOption.id);
+    predShownAtRef.current = Date.now();
+    setStep("prediction");
+  }, [selectedOption, predFirstChoiceId]);
+
   const handleKeep = useCallback(() => {
     if (!selectedOption) return;
     // Keeping an option that already fits reinforces the value it is built on, and eases off a
@@ -987,8 +1052,46 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       : applyKeepUpdates(
           profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1,
         );
-    commitChoice(selectedOption, { nextProfile, endorsement: "n/a", stakeholderGuided: null });
-  }, [selectedOption, profile, scenario, commitChoice]);
+
+    /*
+     * SCENARIO 6 attaches what the participant was shown and what they did about it. `firstChoice`
+     * is the pick they made BEFORE the guess appeared, which is the only uncontaminated choice in
+     * this scenario; `selectedOption` is what they ended on.
+     */
+    let predictionTest: PredictionTestRecord | undefined;
+    if (prediction && scenario && isPredictionTest(scenario)) {
+      const firstChoice = predFirstChoiceId ?? selectedOption.id;
+      const onFirst = prediction.options.find((o) => o.optionId === firstChoice);
+      const top = prediction.options.find((o) => o.rank === 1);
+      predictionTest = {
+        version: prediction.version,
+        temperature: prediction.temperature,
+        confidence: prediction.confidence,
+        separation: prediction.separation,
+        shownProbabilities: prediction.options.map((o) => ({
+          optionId: o.optionId,
+          probability: o.probability,
+          rank: o.rank,
+          alignmentScore: o.alignmentScore,
+        })),
+        predictedTopOptionId: top?.optionId ?? "",
+        firstChoiceOptionId: firstChoice,
+        probabilityOfFirstChoice: onFirst?.probability ?? 0,
+        predictionWasRight: top?.optionId === firstChoice,
+        soundsLikeMe: predSoundsLike,
+        surprised: predSurprised,
+        changedAfterSeeing: selectedOption.id !== firstChoice,
+        finalChoiceOptionId: selectedOption.id,
+        secondsViewingPrediction: predShownAtRef.current
+          ? Math.round((Date.now() - predShownAtRef.current) / 1000)
+          : 0,
+      };
+    }
+    commitChoice(selectedOption, {
+      nextProfile, endorsement: "n/a", stakeholderGuided: null, predictionTest,
+    });
+  }, [selectedOption, profile, scenario, commitChoice, prediction, predFirstChoiceId,
+      predSoundsLike, predSurprised]);
 
   const handleConfirmEndorsement = useCallback(() => {
     // stakeholderMoved replaces the old "did hearing this influence you?" answer. It is set on
@@ -1395,6 +1498,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           q1Strong={q1Strong} setQ1Strong={setQ1Strong}
           stakeholderMoved={stakeholderMoved}
           onKeep={handleKeep}
+          prediction={prediction}
+          onOpenPrediction={openPrediction}
+          predSoundsLike={predSoundsLike} setPredSoundsLike={setPredSoundsLike}
+          predSurprised={predSurprised} setPredSurprised={setPredSurprised}
+          predAnswered={predAnswered} setPredAnswered={setPredAnswered}
           onConfirmEndorsement={handleConfirmEndorsement}
           onApaCommit={handleApaCommit}
           onChangeMyMind={resetFlow}
@@ -3010,6 +3118,8 @@ function FlowOverlay({
   onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange,
   cvrSaidYes, onPersonAnswer, onPersonBackout,
   altViewGenerated, onAltGenerated, framingChoiceYes, setFramingChoiceYes, mode,
+  prediction, onOpenPrediction, predSoundsLike, setPredSoundsLike, predSurprised, setPredSurprised,
+  predAnswered, setPredAnswered,
 }: {
   option: LabeledOption; profile: Block5UserProfile; scenario: Block5Scenario; accent: string;
   /** color mode for the modal (light/dark-aware surfaces + CVR highlight colors). */
@@ -3021,6 +3131,11 @@ function FlowOverlay({
   /** whether the person who spoke moved them — replaces the old self-report question. */
   stakeholderMoved: boolean | null;
   onKeep: () => void; onConfirmEndorsement: () => void; onApaCommit: (p: ApaCommitPayload) => void; onChangeMyMind: () => void;
+  /** Scenario 6 only: the frozen guess, and the three pieces of state its screen owns. */
+  prediction: ChoicePrediction | null; onOpenPrediction: () => void;
+  predSoundsLike: number | null; setPredSoundsLike: (n: number) => void;
+  predSurprised: boolean | null; setPredSurprised: (b: boolean) => void;
+  predAnswered: boolean; setPredAnswered: (b: boolean) => void;
   // Telemetry wrappers for the CVR/APA transitions (observation only — same navigation).
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
   onApaBail: () => void; onFinalDecisionChange: () => void;
@@ -3161,6 +3276,134 @@ function FlowOverlay({
           </Stack>
         )}
 
+        {step === "prediction" && prediction && (
+          <Stack gap="5">
+            <Box>
+              <Text fontSize="2xs" fontWeight="bold" color={accent} textTransform="uppercase" letterSpacing="widest">
+                Before you chose, this is what we expected
+              </Text>
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="2">
+                You picked <Text as="span" color="fg" fontWeight="semibold">{option.title}</Text>.
+                Here is how likely our software thought each rule was, for you.
+              </Text>
+            </Box>
+
+            {/*
+              NO REASONING IS SHOWN, by decision. Explaining the guess would teach the participant
+              what the model thinks they value, and they would then answer "does this sound like
+              you?" against a sentence we had just supplied rather than against themselves.
+
+              THE CHANCE BASELINE IS PRINTED IN THE SAME SIZE AS THE PERCENTAGES. With four options
+              a coin toss is already 25%, so a number like 33% is a far weaker claim than it looks,
+              and a participant reading it without that anchor would credit the model with more than
+              it did.
+            */}
+            <Stack gap="2">
+              {[...prediction.options].sort((a, b) => a.rank - b.rank).map((o) => {
+                const isChoice = o.optionId === option.id;
+                const pct = Math.round(o.probability * 100);
+                return (
+                  <Box key={o.optionId} borderWidth="1px" rounded="lg" px="3" py="2.5"
+                    borderColor={isChoice ? accent : "border.subtle"}
+                    bg={isChoice ? "bg.subtle" : "transparent"}>
+                    <HStack justify="space-between" gap="3" align="start">
+                      <Text fontSize="xs" color={isChoice ? "fg" : "fg.muted"} fontWeight={isChoice ? "semibold" : "normal"}>
+                        {o.optionTitle}
+                        {isChoice && (
+                          <Text as="span" color={accent} fontWeight="bold"> — you picked this</Text>
+                        )}
+                      </Text>
+                      <Text fontSize="sm" fontWeight="bold" color={isChoice ? accent : "fg.muted"} flexShrink={0}>
+                        {pct}%
+                      </Text>
+                    </HStack>
+                    <Box mt="1.5" h="1.5" bg="bg.muted" rounded="full" overflow="hidden">
+                      <Box h="100%" w={`${pct}%`} bg={isChoice ? accent : "fg.subtle"} rounded="full" />
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Stack>
+
+            <Text fontSize="xs" color="fg.subtle" lineHeight="tall">
+              With four rules, a coin toss would give <Text as="span" fontWeight="bold">25%</Text> to
+              each one. Our guess can be wrong, and there is nothing wrong with your answer. This
+              page is a test of our software, not of you.
+            </Text>
+
+            <Separator />
+
+            <Stack gap="3">
+              <Text fontSize="sm" color="fg" fontWeight="semibold">
+                Does this guess sound like how you decide?
+              </Text>
+              <HStack gap="1.5" wrap="wrap">
+                {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                  <Button key={n} size="sm" rounded="lg" minW="9" fontSize="xs"
+                    variant={predSoundsLike === n ? "solid" : "outline"}
+                    bg={predSoundsLike === n ? accent : "transparent"}
+                    color={predSoundsLike === n ? "white" : "fg.muted"}
+                    borderColor={predSoundsLike === n ? accent : "border.emphasized"}
+                    onClick={() => setPredSoundsLike(n)}>
+                    {n}
+                  </Button>
+                ))}
+              </HStack>
+              <HStack justify="space-between">
+                <Text fontSize="2xs" color="fg.subtle">1 = not like me at all</Text>
+                <Text fontSize="2xs" color="fg.subtle">7 = very much like me</Text>
+              </HStack>
+            </Stack>
+
+            <Stack gap="3">
+              <Text fontSize="sm" color="fg" fontWeight="semibold">
+                Were you surprised by the guess?
+              </Text>
+              <HStack gap="2">
+                {[["Yes", true], ["No", false]].map(([label, val]) => (
+                  <Button key={String(label)} size="sm" rounded="lg" fontSize="xs"
+                    variant={predSurprised === val ? "solid" : "outline"}
+                    bg={predSurprised === val ? accent : "transparent"}
+                    color={predSurprised === val ? "white" : "fg.muted"}
+                    borderColor={predSurprised === val ? accent : "border.emphasized"}
+                    onClick={() => setPredSurprised(val as boolean)}>
+                    {label as string}
+                  </Button>
+                ))}
+              </HStack>
+            </Stack>
+
+            <Separator />
+
+            {/*
+              KEEP OR CHANGE IS OFFERED TO EVERYONE, whether the guess was right or wrong. Offering
+              it only after a wrong guess would treat two groups differently in a way they can see,
+              and would make the reactivity measure depend on the accuracy it is meant to be read
+              against.
+            */}
+            <Stack gap="2">
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+                You can keep your answer, or change it. Both are completely fine.
+              </Text>
+              <HStack gap="3" wrap="wrap">
+                <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg"
+                  fontSize="xs" disabled={predSoundsLike === null || predSurprised === null}
+                  onClick={() => { setPredAnswered(true); onKeep(); }}>
+                  Keep my answer
+                </Button>
+                <Button size="sm" variant="outline" color="fg.muted" borderColor="border.emphasized"
+                  rounded="lg" fontSize="xs" disabled={predSoundsLike === null || predSurprised === null}
+                  onClick={() => { setPredAnswered(true); onChangeMyMind(); }}>
+                  Change my answer
+                </Button>
+              </HStack>
+              {(predSoundsLike === null || predSurprised === null) && (
+                <Text fontSize="2xs" color="fg.subtle">Please answer both questions to continue.</Text>
+              )}
+            </Stack>
+          </Stack>
+        )}
+
         {step === "review" && !misaligned && !isRecipient && (
           <Stack gap="4">
             {/* The verdict badge is not shown here either -- same reason. */}
@@ -3178,7 +3421,14 @@ function FlowOverlay({
               {tradeoffAck ? "I've considered the trade-off" : "Tap to acknowledge the trade-off"}
             </Button>
             <HStack gap="3" pt="1" wrap="wrap">
-              <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" onClick={onKeep} disabled={!tradeoffAck} fontSize="xs">
+              {/*
+                SCENARIO 6 GOES TO THE GUESS FIRST, and only the FIRST time through. Once the
+                participant has answered the guess, confirming again commits straight away: showing
+                a second guess would turn one clean before-and-after into an argument.
+              */}
+              <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg"
+                onClick={prediction && !predAnswered ? onOpenPrediction : onKeep}
+                disabled={!tradeoffAck} fontSize="xs">
                 {copy.commit}
               </Button>
               <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">

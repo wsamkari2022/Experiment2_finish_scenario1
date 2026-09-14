@@ -882,6 +882,72 @@ export interface Block5ScenarioResult {
    * so the results view can chart how Directness vs Context evolved across the scenarios.
    */
   framingSnapshotAfter?: { directnessSensitivity: number; contextSensitivity: number };
+
+  /**
+   * SCENARIO 6 ONLY. The prediction the participant was shown, and what they did about it.
+   *
+   * Carried on the scenario result so it travels with the rest of the run through one storage path
+   * rather than a second one, and lifted into its own database section by dbShape because it is a
+   * test of the model rather than a measurement of the person.
+   */
+  predictionTest?: PredictionTestRecord;
+}
+
+/**
+ * What scenario 6 produces. Attached to that scenario's result, and lifted into its own section of
+ * the database by dbShape.
+ *
+ * EVERYTHING NEEDED TO REPRODUCE THE PREDICTION IS STORED, not just the outcome. A prediction that
+ * cannot be recomputed cannot be defended: the version pins the rule, the temperature and
+ * confidence pin how sharp it was allowed to be, and the probabilities are the exact numbers the
+ * participant read. Predictions made under different `version` values must never be pooled.
+ */
+export interface PredictionTestRecord {
+  /** PREDICTION_VERSION at the moment it was made. */
+  version: string;
+  /** Softmax temperature actually used, and the 0-1 confidence it came from. */
+  temperature: number;
+  confidence: number;
+  /**
+   * Gap in fit between the best and second-best option.
+   *
+   * The honest headline for how much the model really knew here. A prediction with a separation
+   * near zero is a coin flip dressed up in percentages, and an analysis that ignores this column
+   * will read those cases as though the model had committed to something.
+   */
+  separation: number;
+  /** Exactly what was on screen, in the order it was shown. */
+  shownProbabilities: {
+    optionId: string;
+    probability: number;
+    rank: number;
+    alignmentScore: number;
+  }[];
+  predictedTopOptionId: string;
+
+  /** What they picked BEFORE the guess appeared. The only uncontaminated choice in this scenario. */
+  firstChoiceOptionId: string;
+  /** The probability the model had given to the option they actually picked. */
+  probabilityOfFirstChoice: number;
+  /** Whether the model's top pick was their first choice. */
+  predictionWasRight: boolean;
+
+  /** "Does this sound like how you decide?", 1-7. Null if somehow unanswered. */
+  soundsLikeMe: number | null;
+  /** "Were you surprised?" */
+  surprised: boolean | null;
+
+  /**
+   * Whether they changed their answer AFTER seeing the guess. The reactivity measure, and the one
+   * finding that only exists because the choice came first.
+   *
+   * A participant who changes may be correcting themselves or may be resisting being predicted,
+   * and this field alone cannot tell those apart. Read it with `soundsLikeMe`.
+   */
+  changedAfterSeeing: boolean;
+  finalChoiceOptionId: string;
+  /** Seconds spent on the prediction screen before answering. A two-second answer is not a judgment. */
+  secondsViewingPrediction: number;
 }
 
 export interface Block5Results {
