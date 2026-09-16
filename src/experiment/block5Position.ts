@@ -176,6 +176,34 @@ export function profileDistance(
   return total / POLICY_DIM_KEYS.length;
 }
 
+/**
+ * THE SAME DISTANCE, BETWEEN TWO CHOICES INSTEAD OF BETWEEN A PROFILE AND A CHOICE.
+ *
+ * `profileDistance` answers "how far did this choice sit from who they were before Block 5?".
+ * This answers "how far apart were these two choices from each other?" — which is the question
+ * "am I the same driver alone as I am with my children in the car?" asked directly, rather than
+ * through the frozen profile as an intermediary.
+ *
+ * IT IS THE SAME ARITHMETIC ON PURPOSE. Mean absolute difference over the four policy values, so a
+ * distance of 24 means the same thing in both measures and the two can be read side by side. Using
+ * a different formula here — Euclidean, say — would produce two numbers on two scales that an
+ * analyst would inevitably compare anyway.
+ *
+ * WHY IT IS HERE AND NOT IN dbShape.ts, WHICH IS ITS ONLY CALLER. The definition of "distance" in
+ * this study lives in this file. A second copy written next to the database writer is a second
+ * definition, and the moment one of them is tuned the two stop agreeing while both keep working.
+ */
+export function optionDistance(
+  a: Block5ScenarioOption,
+  b: Block5ScenarioOption,
+): number {
+  const total = POLICY_DIM_KEYS.reduce(
+    (sum, k) => sum + Math.abs((a.fingerprint[k] ?? 0) - (b.fingerprint[k] ?? 0)),
+    0,
+  );
+  return total / POLICY_DIM_KEYS.length;
+}
+
 /** What one scenario's menu made available: the nearest and farthest options from this profile. */
 function menuDistanceRange(profile: Block5UserProfile, scenario: Block5Scenario) {
   const all = scenario.options.map((o) => profileDistance(profile, o));

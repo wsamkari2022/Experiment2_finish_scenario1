@@ -975,21 +975,29 @@ export interface PredictionTestRecord {
   rulesOpenedAfterGuess: number;
 
   /**
-   * EVERY INTERACTION IN SCENARIO 6, IN ORDER, with milliseconds from the moment the scenario
-   * opened.
+   * THE DECISIONS IN SCENARIO 6, IN ORDER, with milliseconds from the moment the scenario opened.
    *
-   * The counters above are summaries and summaries lose the sequence. This keeps it: which rules
-   * they read, in what order, how long they sat on the guess before answering, whether the answer
-   * came before or after they decided to change. An analysis that needs none of it can ignore the
-   * field; an analysis that needs it cannot reconstruct it from anything else.
+   * WHAT IS HERE, AND WHY ONLY THIS. Seven kinds of moment, and every one of them is either a
+   * choice the participant made, the prediction arriving, or an answer they gave. The counters
+   * above are summaries and a summary loses the sequence; this keeps it, so an analysis can ask
+   * whether the answer came before or after they decided to change their mind.
+   *
+   * WHAT WAS REMOVED, ON THE RESEARCHER'S INSTRUCTION (15 September 2026). Two kinds of event used
+   * to be logged here and are now recorded nowhere:
+   *
+   *   opened_details  expanding a rule's value details
+   *   backed_out      leaving the confirm view without committing
+   *
+   * They were navigation, not decision. Neither answers a question the study asks, and the part of
+   * them that IS informative — how many distinct rules were opened on each side of the guess — is
+   * already counted in `rulesOpenedBeforeGuess` and `rulesOpenedAfterGuess`, which are unaffected
+   * because they are counted separately from this log.
    */
   interactions: {
     /** Milliseconds since this scenario opened. */
     atMs: number;
     what:
-      | "opened_details"   // expanded a rule's value details
-      | "selected"         // opened a rule into the confirm view
-      | "backed_out"       // left the confirm view without committing
+      | "selected"         // opened a rule into the confirm view — the choice, and every switch
       | "guess_shown"      // the MPF prediction appeared
       | "answered_sounds_like"
       | "answered_surprised"

@@ -47,6 +47,9 @@ import {
   buildHeadline,
   buildPositionSection,
   buildScenario6Section,
+  buildLiftedScenarios,
+  buildAlignmentRecords,
+  buildMpfPredictions,
   buildProfileChange,
   buildQuality,
   collectResumeFiles,
@@ -422,6 +425,33 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
       if (scenario6) {
         sendOrQueue({ op: "saveSection", path: "analysis.scenario6_mpf_test", data: scenario6 });
       }
+
+      /*
+       * SCENARIOS 5 AND 6, COPIED TO THE TOP OF `blocks`.
+       *
+       * Both are already inside `scenarioResults`, four levels down, indistinguishable from the
+       * four scenarios around them — and neither is the same kind of thing. One is a wish and one
+       * is a test of the model, and an analyst who averages either in with the decisions has made a
+       * real mistake that the array gives no warning about. Each copy carries `this_is_a_copy_of`
+       * so nobody counts the same answer twice.
+       */
+      const lifted = buildLiftedScenarios(translated);
+      if (lifted.scenario5) {
+        sendOrQueue({ op: "saveSection", path: "blocks.block5_scenario_5_wish_on_the_receiving_end", data: lifted.scenario5 });
+      }
+      if (lifted.scenario6) {
+        sendOrQueue({ op: "saveSection", path: "blocks.block5_scenario_6_veil_of_ignorance", data: lifted.scenario6 });
+      }
+
+      /* Alignment, reflection and clarification for every scenario, in one table instead of four
+         scattered optional fields per row. */
+      const alignment = buildAlignmentRecords(translated);
+      if (alignment) sendOrQueue({ op: "saveSection", path: "analysis.alignment_records", data: alignment });
+
+      /* The prediction function run over every scenario, not only the one where it was shown. Every
+         row says which it was. */
+      const mpf = buildMpfPredictions(translated);
+      if (mpf) sendOrQueue({ op: "saveSection", path: "analysis.mpf_predictions_every_scenario", data: mpf });
 
       /* The value profile before and after Block 5, and the movement between them. */
       const profiles = buildProfileChange(translated);

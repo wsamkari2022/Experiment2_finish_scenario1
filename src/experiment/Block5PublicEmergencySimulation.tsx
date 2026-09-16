@@ -680,11 +680,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     switchesAfter: number;
     openedBefore: Set<string>;
     openedAfter: Set<string>;
-    /** Rules whose details have already been logged, so one expansion is recorded once. */
-    expandedLogged: Set<string>;
     events: PredictionTestRecord["interactions"];
   }>({ guessShownAt: null, lastId: null, switchesBefore: 0, switchesAfter: 0,
-       openedBefore: new Set(), openedAfter: new Set(), expandedLogged: new Set(), events: [] });
+       openedBefore: new Set(), openedAfter: new Set(), events: [] });
 
   /** Append one observation. Time is measured from the moment this scenario opened. */
   const logPred = useCallback((
@@ -742,8 +740,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     [previewOption, progress.scenarioResults],
   );
 
+  /* Backing out of the confirm view is NOT logged. It is navigation rather than a decision, and
+     the switch counters already hold the part of it that means anything — see the note on
+     `interactions` in block5Types.ts. */
   const resetFlow = useCallback(() => {
-    if (selectedOptionId) logPred("backed_out", { optionId: selectedOptionId });
     setSelectedOptionId(null);
     setStep(null);
     setTradeoffAck(false);
@@ -752,7 +752,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setFramingChoiceYes(null);
     setCvrSaidYes(null);
     setStakeholderMoved(null);
-  }, [selectedOptionId, logPred]);
+  }, []);
 
   /**
    * Opening one option's detail panel CLOSES whichever was open before.
@@ -778,17 +778,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       return next;
     });
     /*
-     * LOGGED OUTSIDE THE STATE UPDATER, and guarded by its own set.
-     *
-     * React may run a state updater more than once for a single update, so a side effect placed
-     * inside one can fire twice. An over-counted counter is a nuisance; an interaction log with
-     * duplicate entries is a record of something the participant did not do.
+     * OPENING A CARD'S DETAILS IS NOT LOGGED IN SCENARIO 6 EITHER, for the same reason as backing
+     * out: it is reading, not deciding. `expandedOptions` above still records which options were
+     * inspected, for every scenario, which is where that fact belongs.
      */
-    if (!predLogRef.current.expandedLogged.has(id)) {
-      predLogRef.current.expandedLogged.add(id);
-      logPred("opened_details", { optionId: id });
-    }
-  }, [logPred]);
+  }, []);
 
   const togglePreview = useCallback((id: string) => {
     setPreviewOptionId((cur) => {
@@ -2720,18 +2714,26 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
       {expanded && (
         <Box mt="4" pt="4" borderTopWidth="1px" borderColor={pal.separator}>
           {/*
-            THE TWO EXPLAINERS INSIDE AN OPEN CARD ARE ONE STEP LARGER, on the advisor's instruction.
+            THE TWO EXPLAINERS INSIDE AN OPEN CARD, RAISED TWICE ON THE ADVISOR'S INSTRUCTION.
+            2xs on textFaint originally, then xs on textMuted, and now sm under md headings.
 
             Each is the instruction for reading the chart directly beneath it. A participant who
             cannot comfortably read "a bar that reaches the line satisfies that value" is left to
-            guess what the bars mean, and a misread chart is worse than no chart at all. The colour
-            moves from `textFaint` to `textMuted` for the same reason: size alone does not help if
-            the text is also the faintest thing on the page.
+            guess what the bars mean, and a misread chart is worse than no chart at all.
+
+            THE BODY NOW SITS AT `sm`, WHICH IS THE CARD'S OWN READING SIZE - the same size as the
+            option summary and the two trade-off lines. That is the reason for stopping here: these
+            sentences are prose to be read, so they belong at the size everything else that is read
+            rather than scanned is set in, and no larger.
+
+            THE HEADINGS TAKE `md` AND LOSE A STEP OF TRACKING. Wide letter-spacing is what makes a
+            10px all-caps label legible; at 16px it only makes the line long enough to wrap on a
+            phone. Bigger type needs less of it, not the same amount.
           */}
-          <Text fontSize="sm" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
+          <Text fontSize="md" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wide" mb="2.5">
             How this option fits your values
           </Text>
-          <Text fontSize="xs" color={pal.textMuted} mb="3.5" lineHeight="tall">
+          <Text fontSize="sm" color={pal.textMuted} mb="4" lineHeight="tall">
             The marker line is your priority for each value. A bar that reaches or passes the line satisfies that value;
             a gap below the line is a shortfall that lowers alignment. On every bar here a LONGER bar is better.
           </Text>
@@ -2761,10 +2763,12 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
           */}
           {standing && (
             <Box mt="5" pt="4" borderTopWidth="1px" borderColor={pal.separator}>
-              <Text fontSize="sm" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
+              {/* The same two sizes as the values explainer above it. They are read one after the
+                  other, and a difference between them would say that one mattered more. */}
+              <Text fontSize="md" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wide" mb="2.5">
                 What this option achieves
               </Text>
-              <Text fontSize="xs" color={pal.textMuted} mb="3.5" lineHeight="tall">
+              <Text fontSize="sm" color={pal.textMuted} mb="4" lineHeight="tall">
                 These five say how well the option works, never who it helps — that is what the values above
                 are for. Each one is scored against the other {standing.overall.total - 1} options on this
                 table, so a bar reaching the green tick is the best this situation allows, and one sitting at

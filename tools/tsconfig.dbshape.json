@@ -1,0 +1,14 @@
+{
+  "//": "Compiles dbShape.ts (and whatever it pulls in) to CommonJS so tools/validate_dbshape.cjs can run the REAL database writers rather than a copy of them. Needs jsx because one transitive import is a type-only reference into a .tsx component; that import is erased on emit, so nothing React is required at run time. Output is throwaway.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "../.sim-build",
+    "strict": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx"
+  },
+  "files": ["../src/experiment/dbShape.ts"]
+}

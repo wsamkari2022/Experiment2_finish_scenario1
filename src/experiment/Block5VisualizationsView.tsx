@@ -462,13 +462,16 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     { label: "Block 3", value: timing.block3Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
     { label: "Block 4", value: timing.block4Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
     /*
-      "Insights" and "Final analysis" are deliberately absent. They are read-only pages the
-      participant scrolls through rather than stages where they decide anything, so their times are
-      a few hundred milliseconds and render as a hairline labeled "0s" - a row that carries no
-      information while taking a full line of the chart. The `.value > 0` filter below does not
-      catch them, because a 400ms page is greater than zero and only LOOKS like zero once rounded
-      to seconds. The times are still recorded and still counted in the total below the chart;
-      only the two rows are dropped.
+      "Insights" and "Final analysis" are absent because they are NO LONGER MEASURED AT ALL.
+
+      They were dropped from this chart first, for a presentation reason: read-only pages the
+      participant scrolls through rather than stages where they decide anything, so their times
+      rendered as a hairline labeled "0s" — a row carrying no information while taking a full line.
+
+      Since 15 September 2026 they are not timed anywhere. See UNTIMED_DISPLAY_STAGES in
+      telemetry.ts for why, and note what did NOT change: `totalExperimentMs` below is the span
+      from the first stage to the last event, so the time spent on those two pages is still inside
+      the total the participant is shown.
     */
     // One row per Block-5 scenario, however many the deck holds (was hardcoded to three).
     ...timing.block5.scenarioMs.map((ms, i) => ({

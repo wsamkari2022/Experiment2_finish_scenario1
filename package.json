@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "validate:block5": "node tools/validate_block5.cjs && node tools/validate_block5_metrics.mjs && npm run validate:vci && npm run validate:stability && npm run validate:lenses && npm run validate:people && npm run validate:position && npm run verify:apa && npm run test:planner",
+    "validate:block5": "node tools/validate_block5.cjs && node tools/validate_block5_metrics.mjs && npm run validate:vci && npm run validate:stability && npm run validate:lenses && npm run validate:people && npm run validate:position && npm run verify:apa && npm run test:planner && npm run validate:dbshape",
     "check:images": "node tools/check_scenario_images.mjs",
     "validate:metrics": "node tools/validate_block5_metrics.mjs",
     "validate:vci": "tsc -p tools/tsconfig.sim.json && node tools/simulate_vci.cjs",
@@ -27,7 +27,8 @@
     "apa:walkthrough": "tsc -p tools/tsconfig.sim.json && node tools/apa_walkthrough.cjs",
     "apa:variants": "tsc -p tools/tsconfig.sim.json && node tools/apa_context_variants.cjs",
     "validate:planner": "tsc -p tools/tsconfig.sim.json && node tools/simulate_planner.cjs",
-    "server": "node server/index.js"
+    "server": "node server/index.js",
+    "validate:dbshape": "node tools/validate_dbshape.cjs"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.34.0",

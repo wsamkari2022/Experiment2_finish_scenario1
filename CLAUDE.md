@@ -38,8 +38,14 @@ or that session stays local-only.
 npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
-`validate:block5` must print `ALL TESTS PASS` and `ALL APA CHECKS PASS`. It is the guard on the
-scoring model; treat a failure there as a blocker, not a warning.
+`validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS` and `ALL DATABASE GATES
+PASSED`. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
+a blocker, not a warning.
+
+The last of those three comes from `npm run validate:dbshape`, which runs the real `dbShape.ts`
+builders over three simulated participants. It is the only check on `analysis` — nothing in there is
+ever displayed, so a wrong number would otherwise sit unnoticed until somebody opened the collection
+to write a paper.
 
 ## Two files that carry rules rather than code
 
@@ -48,12 +54,17 @@ scoring model; treat a failure there as a blocker, not a warning.
   their session. Do not add a second path to the server.
 - **`src/experiment/dbShape.ts`** — the only place where the study's internal names are translated
   into database names. If a field name in MongoDB looks wrong, it is defined here and nowhere else.
+  It also builds every `analysis.*` section, which means it runs real arithmetic; `npm run
+  validate:dbshape` is what stands over that.
 
 ## Things that are deliberate, not oversights
 
 - Participants are never shown an alignment verdict ("Misaligned with your values") or the scoring
   arithmetic. Both were removed on purpose: telling someone how they scored, or how the scoring
-  works, changes how they answer the remaining scenarios.
+  works, changes how they answer the remaining scenarios. The last place the verdict survived was a
+  badge under each option title in the compare-charts overlay, removed on 15 September 2026, so no
+  live scenario prints one anywhere. The level is still computed and still stored — it is simply
+  never shown while the participant is still choosing.
 - Scenario 5 is a wish rather than a decision. It is excluded from consistency, stability and the
   reflection measures, but included in the position effect.
 - The option ordering (the planner) is settled. It has been reviewed and is not to be "fixed".
@@ -66,3 +77,12 @@ scoring model; treat a failure there as a blocker, not a warning.
   from a choice suggested by it.
 - **`PREDICTION_VERSION` must move whenever the prediction rule does.** It is stamped on stored
   predictions, and records made under different rules must not be pooled.
+- **The insights page and the post-Block-4 final analysis page are not timed.** Removed on 15
+  September 2026: they are pages a participant reads, so their duration measures reading speed and
+  nothing the study asks about. The totals still include the time — only the two per-page numbers
+  are gone. `UNTIMED_DISPLAY_STAGES` in `telemetry.ts` is the list, and `dbShape.ts` uses it to
+  strip the two from any ledger written before the change.
+- **`analysis.mpf_predictions_every_scenario` is computed after the fact for scenarios 1–5.** Only
+  scenario 6's probabilities were ever on screen. Every row carries
+  `was_shown_to_the_participant`, and `self_check` re-derives scenario 6 by the same route to prove
+  the recomputation still matches the live one. If that check ever fails, the section is wrong.

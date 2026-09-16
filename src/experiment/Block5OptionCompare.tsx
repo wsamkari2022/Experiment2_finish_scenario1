@@ -37,14 +37,13 @@
  * can distinguish participants who consulted the comparison from those who did not.
  */
 
-import { useEffect, useMemo, useState } from "react";
-import { Badge, Box, Button, Grid, HStack, Heading, Icon, Separator, Text, VStack } from "@chakra-ui/react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Box, Button, Grid, HStack, Heading, Icon, Separator, Text, VStack } from "@chakra-ui/react";
 import { LuChartSpline, LuX, LuInfo } from "react-icons/lu";
 import { RadarChart, ChartLegend, type RadarSeries } from "./block5Charts";
 import { OPTION_SERIES_COLORS, REFERENCE_SERIES_COLOR } from "./block5ChartColors";
 import type { Block5Palette } from "./block5Palette";
 import type { LabeledOption } from "./block5CVR";
-import { ALIGNMENT_LABEL } from "./block5CVR";
 import {
   METRIC_KEYS, POLICY_DIM_KEYS,
   type Block5MetricKey, type Block5MetricProfile, type Block5PolicyDimKey, type Block5Scenario,
@@ -75,7 +74,7 @@ const CHART_HELP = {
   performance:
     "What each option actually achieves. Five measures of how well a plan performs — the further a corner reaches from the middle, the better that option does on that measure. These describe the outcome, not who it favors; that is the second chart.",
   policy:
-    "What each option is built to prioritize. These are the same four values your own answers were scored on, so this chart shows why each option received its alignment label.",
+    "What each option is built to prioritize. These are the same four values your own answers were scored on, so wherever an option's corner falls inside your dashed shape, that is something you said mattered and this option gives up.",
 } as const;
 
 interface Props {
@@ -254,14 +253,26 @@ export function Block5OptionCompare({
                     <Box mt="1" flexShrink="0" w="3" h="3" rounded="sm"
                       bg={on ? color : "transparent"}
                       borderWidth={on ? "0" : "2px"} borderColor={color} />
+                    {/*
+                      NO ALIGNMENT VERDICT HERE. A badge reading "Aligned" or "Strongly misaligned"
+                      used to sit under each title in this list.
+
+                      It was the last place in a live scenario where a participant was told how an
+                      option scored against their own values, and it undid what the option cards
+                      are careful about. VCI asks whether someone's choices match what they said
+                      mattered, so printing the answer on the option turns that into a
+                      reading-comprehension test: anyone who wants to look consistent only has to
+                      pick the badge.
+
+                      Nothing is lost. The chart on the right IS the verdict, drawn rather than
+                      pronounced - the dashed shape is the participant, and any corner sitting
+                      inside it is exactly a shortfall. Someone who wants to know where an option
+                      stands can still see it, without being handed a word for it.
+                    */}
                     <Box flex="1" minW="0">
-                      <Text fontSize="xs" fontWeight="medium" color={pal.text} lineHeight="short" lineClamp={2}>
+                      <Text fontSize="xs" fontWeight="medium" color={pal.text} lineHeight="short" lineClamp={3}>
                         {o.title}
                       </Text>
-                      <Badge mt="1" bg="transparent" color={pal.textMuted} borderWidth="1px"
-                        borderColor={pal.cardBorder} rounded="md" px="1.5" fontSize="2xs" fontWeight="semibold">
-                        {ALIGNMENT_LABEL[o.level]}
-                      </Badge>
                     </Box>
                   </HStack>
                 </Box>
@@ -311,21 +322,43 @@ export function Block5OptionCompare({
                 How to read these charts
               </Text>
             </HStack>
-            <VStack align="stretch" gap="1.5">
+            {/*
+              THE EMPHASIS CARRIES MEANING. IT IS NOT DECORATION.
+
+              Three colors, each one already in use elsewhere and meaning the same thing here.
+              Green is what an option DOES WELL and red is what it GIVES UP - the two colors of
+              the trade-off panel on every option card, and of the ticks on the metric bars. The
+              gray is not a third invention at all: it is the literal color of the dashed shape
+              the sentence is describing, so the word and the line on the chart match.
+
+              Everything else that is emphasized is bold and in full-contrast text rather than the
+              muted body, so a participant skimming three sentences still lands on the load-bearing
+              words: what a shape is, where 0 and 100 are, and that the dashed one is them.
+
+              THE SCENARIO ACCENT IS DELIBERATELY NOT USED. It is a different hue in each scenario,
+              so the same sentence would emphasize in six different colors, and in scenario 6 it is
+              a dark navy that would sit nearly invisible on this panel.
+            */}
+            <VStack align="stretch" gap="2">
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                Each colored shape is one option. Every corner is one measure, scored 0 at the
-                center and 100 at the outer ring. The further a corner stretches out, the higher
-                that option scores on that measure.
+                Each colored shape is <Key pal={pal}>one option</Key>. Every corner is one measure,
+                scored <Key pal={pal}>0 at the center</Key> and{" "}
+                <Key pal={pal}>100 at the outer ring</Key>. The further a corner stretches out, the
+                higher that option scores on that measure.
               </Text>
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                No option reaches the outer ring everywhere — a shape that bulges on one side is
-                strong there and weaker on the opposite side. That is the trade-off you are being
-                asked to make.
+                No option reaches the outer ring everywhere — a shape that bulges on one side is{" "}
+                <Key pal={pal} color={pal.gainColor}>strong there</Key> and{" "}
+                <Key pal={pal} color={pal.costColor}>weaker on the opposite side</Key>. That is the{" "}
+                <Key pal={pal}>trade-off you are being asked to make</Key>.
               </Text>
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                The <b>dashed gray shape</b> on the right-hand chart is <b>you</b> — your own four
-                value priorities. Wherever an option's corner falls short of your dashed line, that
-                option gives up something you said mattered.
+                The{" "}
+                <Key pal={pal} color={REFERENCE_SERIES_COLOR[pal.mode]}>dashed gray shape</Key>{" "}
+                on the right-hand chart is <Key pal={pal}>you</Key> — your own four value
+                priorities. Wherever an option's corner falls short of your dashed line, that
+                option{" "}
+                <Key pal={pal} color={pal.costColor}>gives up something you said mattered</Key>.
               </Text>
             </VStack>
           </Box>
@@ -347,6 +380,17 @@ export function Block5OptionCompare({
       </Box>
     </Box>
   );
+}
+
+/**
+ * A load-bearing phrase inside the closing note.
+ *
+ * BOLD AND a color change, never color alone: the bold survives a color-blind reader, a
+ * grayscale print and a screenshot in a paper, which leaves the color free to ADD the meaning
+ * rather than to carry it.
+ */
+function Key({ children, color, pal }: { children: ReactNode; color?: string; pal: Block5Palette }) {
+  return <Text as="span" fontWeight="bold" color={color ?? pal.text}>{children}</Text>;
 }
 
 /** One titled radar panel with its plain-English caption and a named legend. */

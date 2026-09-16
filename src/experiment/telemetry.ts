@@ -19,17 +19,39 @@ export type TelemetryStage =
   | "money"
   | "trolley"
   | "product"
-  | "insights"
   | "block4"
-  | "final_analysis"
   | "block5"
   | "block5_summary"
   | "feedback";
 
+/**
+ * THE TWO READ-ONLY PAGES, NOT TIMED AND NOT STORED — on the researcher's instruction,
+ * 15 September 2026.
+ *
+ *   insights        the profile summary shown after Block 3
+ *   final_analysis  the moral analysis shown after Block 4
+ *
+ * WHY THEY ARE DIFFERENT FROM EVERY OTHER STAGE. The seven stages above are places where a
+ * participant answers something, so their duration is a measure of effort on a task. These two are
+ * pages the participant reads and scrolls. Their duration measures reading speed and nothing the
+ * study asks about, and it was already being left out of the time chart on the results page for
+ * exactly that reason.
+ *
+ * WHAT IS STILL COUNTED. The totals are untouched. `totalExperimentMs` is the span from the first
+ * stage to the last event, and the active-time clock keeps counting on every page, so time spent
+ * reading these two is still inside both totals and still counts towards compensation. Only the
+ * two per-page numbers are gone.
+ *
+ * KEPT AS A NAMED LIST rather than deleted outright, because a ledger written before this change —
+ * or restored from the server for a participant who started earlier — still carries both entries,
+ * and dbShape.ts uses this list to strip them on the way into the database.
+ */
+export const UNTIMED_DISPLAY_STAGES = ["insights", "final_analysis"] as const;
+
 /** Stages that should be timed; anything else passed in is ignored (e.g. transition spinners). */
 const TIMED_STAGES: TelemetryStage[] = [
-  "money", "trolley", "product", "insights", "block4",
-  "final_analysis", "block5", "block5_summary", "feedback",
+  "money", "trolley", "product", "block4",
+  "block5", "block5_summary", "feedback",
 ];
 
 interface StageRecord {
@@ -50,9 +72,7 @@ const TIMING_OUTPUT_KEY: Record<TelemetryStage, string> = {
   money: "block1Ms",
   trolley: "block2Ms",
   product: "block3Ms",
-  insights: "insightsMs",
   block4: "block4Ms",
-  final_analysis: "finalAnalysisMs",
   block5: "block5TotalMs",
   block5_summary: "summaryMs",
   feedback: "feedbackMs",
@@ -139,8 +159,12 @@ export interface TimingSummary {
   block2Ms: number;
   block3Ms: number;
   block4Ms: number;
-  insightsMs: number;
-  finalAnalysisMs: number;
+  /*
+   * NO `insightsMs` AND NO `finalAnalysisMs`. See UNTIMED_DISPLAY_STAGES above: those two pages are
+   * read, not answered, and their per-page durations are neither measured nor stored. The fields
+   * were removed rather than left at zero, because a zero in a timing record reads as "they spent
+   * no time there" — a claim this study is no longer in a position to make.
+   */
   block5TotalMs: number;
   summaryMs: number;
   feedbackMs: number;
@@ -174,8 +198,6 @@ export function buildTimingSummary(scenarioMsList: number[] = []): TimingSummary
     block2Ms: dur("trolley"),
     block3Ms: dur("product"),
     block4Ms: dur("block4"),
-    insightsMs: dur("insights"),
-    finalAnalysisMs: dur("final_analysis"),
     block5TotalMs: dur("block5"),
     summaryMs: dur("block5_summary"),
     feedbackMs: dur("feedback"),
