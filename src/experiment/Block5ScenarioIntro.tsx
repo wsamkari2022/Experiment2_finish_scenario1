@@ -146,11 +146,29 @@ export function Block5ScenarioIntro({ rootRef, scenario, frozenProfile, index, t
              * against the scenario's own dark ground so the empty space reads as a deliberate mount
              * rather than a gap.
              */
-            <Box data-morph-fade flex="1 1 0" minW="0" rounded="2xl" overflow="hidden"
+            <Box data-morph-fade flex={{ base: "0 0 auto", lg: "1 1 0" }} minW="0" w="full"
+              rounded="2xl" overflow="hidden"
               borderWidth="1px" borderColor={pal.cardBorder}
               display="flex" alignItems="center" justifyContent="center"
+              /*
+               * A SHAPE ON SMALL SCREENS, STRETCH ON LARGE ONES.
+               *
+               * On a wide screen the picture sits beside the scene text and takes its height from
+               * that row, which is what `flex: 1 1 0` with `h="full"` gives.
+               *
+               * On a phone or a tablet in portrait the Stack turns into a column, and that same
+               * pair stops working: `height: 100%` inside a parent whose own height is `auto` has
+               * nothing to resolve against. The picture ends up sized by whatever the browser
+               * decides, which is not the same decision on every browser.
+               *
+               * So below `lg` the panel is given a real shape of its own and the picture fills it.
+               * Scenario 6 gets its own true ratio, because that one is shown whole and any other
+               * ratio would band it top and bottom for no reason; the five photographs get 4:3,
+               * which is close to their own 1100x825 and crops imperceptibly.
+               */
+              aspectRatio={{ base: showWholeImage ? "1100 / 938" : "4 / 3", lg: "auto" }}
               style={{ boxShadow: pal.sidebarShadow, background: showWholeImage ? pal.panelDeep : undefined }}>
-              <Image src={imageSrc} alt="" w="full" h="full"
+              <Image src={imageSrc} alt="" w="full" h="full" maxW="full"
                 objectFit={showWholeImage ? "contain" : "cover"}
                 onError={() => setImageOk(false)} />
             </Box>
@@ -220,7 +238,16 @@ export function Block5ScenarioIntro({ rootRef, scenario, frozenProfile, index, t
 
         {/* ---- continue ---- */}
         <Stack data-morph-fade align="center" gap="2" pt="1" pb="6">
-          <Button size="lg" px="8" rounded="xl" fontWeight="bold"
+          {/*
+            THE BUTTON HAS TO FIT A PHONE.
+            At `size="lg"` with `px="8"` this label is wider than a 375px screen, and a Chakra
+            button does not wrap or shrink on its own: it simply hangs 12px over each edge, which
+            is enough to make the whole page look broken on the one screen where the participant
+            cannot see the rest of it. It now shrinks a step on small screens, wraps its label if
+            it still needs to, and is capped at the width of its column.
+          */}
+          <Button size={{ base: "md", md: "lg" }} px={{ base: "5", md: "8" }} rounded="xl" fontWeight="bold"
+            maxW="full" whiteSpace="normal" height="auto" py={{ base: "3", md: "3.5" }}
             disabled={!ready}
             style={ready
               ? { background: pal.accent, color: onAccent, boxShadow: `0 8px 24px ${pal.accent}59` }

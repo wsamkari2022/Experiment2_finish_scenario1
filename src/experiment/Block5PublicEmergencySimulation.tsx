@@ -2589,8 +2589,16 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
 
           {(explanation.chips.length > 0 || standing) && (
             <Box mt="3" pt="2.5" borderTopWidth="1px" borderColor={pal.separator}>
-              <Text fontSize="2xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
-                color={pal.textMuted} mb="1.5">
+              {/*
+                THE PERFORMANCE ROW IS ONE STEP LARGER THAN IT WAS, on the advisor's instruction.
+
+                These chips carry the only outcome information on a collapsed card, and at 2xs they
+                were the smallest type on a page that already asks a great deal of reading. The
+                padding grows with the type so a chip keeps its proportions rather than becoming
+                text with a box drawn tightly round it.
+              */}
+              <Text fontSize="xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+                color={pal.textMuted} mb="2">
                 How it performs
               </Text>
               <HStack gap="2" wrap="wrap">
@@ -2606,7 +2614,7 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
                   disappears into its own components.
                 */}
                 {standing && (
-                  <Badge rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="bold"
+                  <Badge rounded="md" px="2.5" py="1" fontSize="xs" fontWeight="bold"
                     color={accent} borderWidth="1px"
                     style={{ background: `${accent}1A`, borderColor: `${accent}59` }}
                     title={`On the five outcome measures combined, this is the ${ordinal(standing.overall.rank)} strongest of the ${standing.overall.total} options in this scenario`}>
@@ -2614,7 +2622,7 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
                   </Badge>
                 )}
                 {explanation.chips.map((c) => (
-                  <Badge key={c} bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2" py="0.5" fontSize="2xs">
+                  <Badge key={c} bg={pal.badgeBg} color={pal.badgeText} rounded="md" px="2.5" py="1" fontSize="xs">
                     {c}
                   </Badge>
                 ))}
@@ -2711,10 +2719,19 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
 
       {expanded && (
         <Box mt="4" pt="4" borderTopWidth="1px" borderColor={pal.separator}>
-          <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
+          {/*
+            THE TWO EXPLAINERS INSIDE AN OPEN CARD ARE ONE STEP LARGER, on the advisor's instruction.
+
+            Each is the instruction for reading the chart directly beneath it. A participant who
+            cannot comfortably read "a bar that reaches the line satisfies that value" is left to
+            guess what the bars mean, and a misread chart is worse than no chart at all. The colour
+            moves from `textFaint` to `textMuted` for the same reason: size alone does not help if
+            the text is also the faintest thing on the page.
+          */}
+          <Text fontSize="sm" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
             How this option fits your values
           </Text>
-          <Text fontSize="2xs" color={pal.textFaint} mb="3" lineHeight="tall">
+          <Text fontSize="xs" color={pal.textMuted} mb="3.5" lineHeight="tall">
             The marker line is your priority for each value. A bar that reaches or passes the line satisfies that value;
             a gap below the line is a shortfall that lowers alignment. On every bar here a LONGER bar is better.
           </Text>
@@ -2744,10 +2761,10 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
           */}
           {standing && (
             <Box mt="5" pt="4" borderTopWidth="1px" borderColor={pal.separator}>
-              <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
+              <Text fontSize="sm" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider" mb="2">
                 What this option achieves
               </Text>
-              <Text fontSize="2xs" color={pal.textFaint} mb="3" lineHeight="tall">
+              <Text fontSize="xs" color={pal.textMuted} mb="3.5" lineHeight="tall">
                 These five say how well the option works, never who it helps — that is what the values above
                 are for. Each one is scored against the other {standing.overall.total - 1} options on this
                 table, so a bar reaching the green tick is the best this situation allows, and one sitting at

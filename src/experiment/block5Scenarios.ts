@@ -153,13 +153,24 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       "Six hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long, and one service road running past the tanker. Every option you will see gets you out inside the six hours. They differ only in what each one takes from the people still here.",
     role:
       /*
-        The closing clause — "but everything you use on the way out was something another resident
-        was counting on" — is gone. It sat one sentence after "nobody depends on you" and read as a
-        contradiction, and the cost to other people is already stated in `factBase`: "they differ
-        only in what each one takes from the people still here." Saying it twice, in opposite
-        directions, cost more than it added.
+        THE CLOSING CLAUSE IS BACK, ON THE ADVISOR'S INSTRUCTION (15 September 2026).
+
+        It had been removed because it sits one sentence after the line about nobody depending on you,
+        and can read as a contradiction. The cost to other people is also already stated in
+        `factBase`, which says the options differ only in what each one takes from the people still
+        here.
+
+        The argument for restoring it is the stronger one. The earlier line is about
+        OBLIGATION: nobody is relying on this participant to save them. The clause is about
+        CONSEQUENCE: what they take on the way out is taken from someone. Those are two different
+        facts and both are true at once, which is exactly the tension the scenario is built on. A
+        participant who believes they can leave at no cost to anyone is not facing the trade-off
+        this block measures.
+
+        APPENDED, NOT MERGED. The three sentences before it are untouched, so restoring this cannot
+        change what the earlier wording already said.
       */
-      "You are {w|a resident here, on your own}. {w|Nobody depends on you}, and nobody is coming for you. You are the only person your choice has to save.",
+      "You are {w|a resident here, on your own}. {w|Nobody depends on you}, and nobody is coming for you. You are the only person your choice has to save. But {w|everything you use on the way out was something another resident was counting on}.",
     title: "Six Hours to Clear the District",
     description:
       "A rail tanker has split open at the freight yard on the edge of the district. Chlorine is coming off it as a low plume, and the wind is pushing it street by street into the housing. The whole district has been ordered to clear out.",
