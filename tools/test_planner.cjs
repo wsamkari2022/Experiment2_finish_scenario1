@@ -354,17 +354,26 @@ assert("every blocked card says it can still be chosen",
   blockedRows.length > 0 && blockedRows.every((x) => /still choose it/.test(x.ex.breachLine ?? "")),
   `${blockedRows.length} blocked cards`);
 
-/* The panel is held constant: same three lines whatever the option set. */
+/* The panel is held constant: one sentence, the same one, whatever the option set — and since
+   16 September 2026 the same one for every participant too, because it no longer names their
+   value ranking. See the note on plannerPanelText for why that line had to go. */
 const panels = BLOCK5_SCENARIOS.map(() => plannerPanelText(textProfile)).map((p) => p.noteLine);
 assert("the panel note is identical in every scenario", new Set(panels).size === 1, panels[0]);
+
+/* The panel must not print the participant's own value order back at them while they choose. */
+const leak = plannerPanelText(textProfile).noteLine.toLowerCase();
+const valueWords = ["how much is gained", "how many are helped", "protecting the vulnerable",
+                    "reducing harm", "refused outright", "your order is"];
+assert("the panel names no value and no ranking",
+  valueWords.every((w) => !leak.includes(w)),
+  valueWords.filter((w) => leak.includes(w)).join(", ") || "clean");
 
 console.log("\n  --- sample card, scenario 1, as a participant would read it ---");
 {
   const scn = BLOCK5_SCENARIOS[0];
   const r = plannerRank(scn, textProfile);
   const pt = plannerPanelText(textProfile);
-  console.log(`  PANEL  ${pt.rankingLine}`);
-  console.log(`         ${pt.limitsLine}`);
+  console.log(`  PANEL  ${pt.noteLine}`);
   for (const id of r.orderedIds) {
     const ex = explainOption(scn, r, textProfile, id);
     const title = scn.options.find((o) => o.id === id).title;

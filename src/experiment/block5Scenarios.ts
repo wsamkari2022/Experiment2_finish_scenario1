@@ -150,7 +150,23 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     id: "chemical_release_escape",
     stakePosition: "self",
     factBase:
-      "Six hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long, and one service road running past the tanker. Every option you will see gets you out inside the six hours. They differ only in what each one takes from the people still here.",
+      /*
+        TWO FIXES HERE, BOTH ON THE ADVISOR'S INSTRUCTION, 16 September 2026.
+
+        NO DOUBLE QUOTES IN THIS COMMENT EITHER - see the note on `description` above. The digit
+        check and the overlap check both read the first quoted string after the field name, so a
+        quoted phrase here would be scored in place of the scenario text.
+
+        The box now OPENS WITH A SENTENCE rather than the fragment it used to start with. A
+        fragment is a label on a countdown, and it left the reader to work out whose six hours
+        these are. Handing the time to the participant is the only reading that matters, and it
+        puts the number the rest of the box depends on in the first four words.
+
+        WITHIN SIX HOURS replaces gets you out inside the six hours. Out and inside in one breath
+        reads for a moment as somewhere to get out inside of. The preposition was doing time, not
+        space, and within cannot be misread that way.
+      */
+      "You have 6 hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long, and one service road running past the tanker. Every option you will see gets you out within six hours. They differ only in what each one takes from the people still here.",
     role:
       /*
         THE CLOSING CLAUSE IS BACK, ON THE ADVISOR'S INSTRUCTION (15 September 2026).
@@ -173,7 +189,25 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       "You are {w|a resident here, on your own}. {w|Nobody depends on you}, and nobody is coming for you. You are the only person your choice has to save. But {w|everything you use on the way out was something another resident was counting on}.",
     title: "Six Hours to Clear the District",
     description:
-      "A rail tanker has split open at the freight yard on the edge of the district. Chlorine is coming off it as a low plume, and the wind is pushing it street by street into the housing. The whole district has been ordered to clear out.",
+      /*
+        REWORDED ON THE ADVISOR'S INSTRUCTION, 16 September 2026.
+
+        NO DOUBLE QUOTES ANYWHERE IN THIS COMMENT, and that is not a style preference. The scene
+        gate in tools/validate_block5.cjs finds this field by taking the first quoted string after
+        the field name, so a quoted phrase in the comment above it becomes the text the gate
+        measures. A first draft of this note quoted the old and new wording, and the overlap check
+        went on reporting PASS while measuring a comment.
+
+        The leak is now NAMED as the cause rather than described as chlorine coming off it. The old
+        clause asked the reader to carry an it back to the tanker two clauses earlier, and to read
+        coming off as a release rather than as something detaching.
+
+        The plume now moves into a housing neighborhood rather than into the housing. The latter is
+        the language of an incident report: a category, and one this scenario never introduced. A
+        neighborhood is a place with people in it, which is what the plume is moving towards and
+        what the whole scenario turns on.
+      */
+      "A rail tanker has split open at the freight yard on the edge of the district. A chlorine leak is causing a low plume, and the wind is pushing it street by street into a housing neighborhood. The whole district has been ordered to clear out.",
     theme: {
       gradient: "radial-gradient(900px 420px at 12% -10%, rgba(163,180,58,0.20), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(85,107,47,0.42), transparent 55%), linear-gradient(155deg, #12140b, #232a10 50%, #3d4718)",
       accent: "#A3B43A",

@@ -213,42 +213,48 @@ export function explainOption(
  * ------------------------------------------------------------------ */
 
 export interface PlannerPanelText {
-  /** "You ranked: how much is gained, then reducing harm, then …" */
-  rankingLine: string;
-  /** The limits being applied, or a line saying none were found. */
-  limitsLine: string;
-  /** Always shown, whether or not anything is actually blocked (see §10 — held constant). */
+  /**
+   * The only line the panel shows, and it is the same sentence for every participant.
+   *
+   * Always shown, whether or not anything is actually blocked (see §10 — held constant).
+   */
   noteLine: string;
 }
 
 /**
  * The per-scenario panel.
  *
- * SHOWN IDENTICALLY EVERY TIME. It does not appear only when something is blocked, and its wording
- * does not change with the option set. If it varied with the situation it would be a manipulation
- * that fires exactly where the drift measurement is most sensitive, and the study would not be able
- * to tell an effect of position from an effect of the interface noticing something.
+ * ────────────────────────────────────────────────────────────────────────────────────────────
+ * IT NO LONGER PRINTS THE PARTICIPANT'S OWN VALUE RANKING. Removed on the advisor's instruction,
+ * 16 September 2026, and the reason is a measurement one rather than a matter of length.
+ *
+ * The panel used to open with a line naming the participant's four values in order — "your order
+ * is: how much is gained → how many are helped → protecting the vulnerable → reducing harm" — and
+ * a second line describing which limits they had set. Both were true and both were a problem: they
+ * put the profile the block is about to measure on screen, above the options, while the
+ * participant is choosing. Somebody who reads their own ranking and then picks the option that
+ * matches it has been told the answer, and VCI can no longer tell a held position from a copied
+ * one. It is the same rule that keeps the alignment verdict off the cards.
+ *
+ * WHAT IS LEFT IS ONE SENTENCE, IDENTICAL FOR EVERY PARTICIPANT AND EVERY SCENARIO. It names the
+ * SOURCE of the order without disclosing its CONTENT, which is all a participant needs in order
+ * not to read the ordering as a ranking of quality. The wording matches the pre-Block-5 page word
+ * for word, so the sentence is a reminder rather than a new claim.
+ *
+ * A WELCOME SIDE EFFECT: the panel is now literally constant. It used to vary with the profile,
+ * which made it a small per-participant difference sitting exactly where the drift measurement is
+ * most sensitive. Now there is nothing to vary.
+ * ────────────────────────────────────────────────────────────────────────────────────────────
+ *
+ * The parameter is kept so the call site does not change and so a future panel can read the
+ * profile again without every caller being edited; nothing in the returned text depends on it.
  */
-export function plannerPanelText(profile: DecisionProfile): PlannerPanelText {
-  const ranking = profile.order.map((k) => POLICY_DIM_SHORT[k]);
-  const rankingLine = `From your earlier answers, your order is: ${ranking.join(" → ")}.`;
-
-  const limited = POLICY_DIM_KEYS.filter((k) => profile.thresholds[k]?.hasRedLine);
-  const limitsLine = limited.length
-    ? `You refused outright on ${listOf(limited.map((k) => POLICY_DIM_SHORT[k]))}, so options at the ` +
-      "bottom of the range there are shown lower down."
-    : "You named a price on every value rather than refusing outright, so nothing here is ruled out.";
-
+export function plannerPanelText(_profile: DecisionProfile): PlannerPanelText {
   const noteLine =
-    "The order below comes from comparing the options two at a time against that ranking — " +
-    "it is not a recommendation, and every option can be chosen.";
+    "These are ordered using the preferences shown by your earlier answers, "
+    + "not by which one we think is best.";
 
-  return { rankingLine, limitsLine, noteLine };
-}
-
-function listOf(items: string[]): string {
-  if (items.length <= 1) return items[0] ?? "";
-  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+  return { noteLine };
 }
 
 /** Heading shown on the divider before the first costed / blocked option. */

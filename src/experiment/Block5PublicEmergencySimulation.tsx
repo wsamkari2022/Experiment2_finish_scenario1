@@ -643,7 +643,21 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    */
   const [openScene, setOpenScene] = useState(false);
   const [openFacts, setOpenFacts] = useState(false);
-  const [openRole, setOpenRole] = useState(false);
+  /*
+   * THE ROLE OPENS BY DEFAULT, and it is the only one of the four that does.
+   *
+   * It is the block's independent variable: the one thing that genuinely differs between scenario
+   * 1 and scenario 2, and the thing a participant must have read for their answer to mean anything.
+   * Leaving it folded put the manipulation behind a click.
+   *
+   * It is also what stops the column reading as a summary. With all four closed, the sidebar is a
+   * stack of headings; with the role open it always carries real content, and the other three read
+   * as more of the same rather than as an index.
+   *
+   * The scene and the numbers stay closed on purpose. Both were read in full on the intro page
+   * fifteen seconds earlier, and opening all of them pushes the options themselves below the fold.
+   */
+  const [openRole, setOpenRole] = useState(true);
   const [openOrdering, setOpenOrdering] = useState(false);
 
   /*
@@ -654,7 +668,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * have not seen, and it deserves the same nudge. The cost of a second nudge is small; the cost of
    * a participant never reading the role in the scenario where the role is the manipulation is not.
    */
-  const [everOpened, setEverOpened] = useState<Set<string>>(new Set());
+  /* SEEDED WITH "role" BECAUSE THE ROLE CARD STARTS OPEN. The glow means "this can be opened", so
+     a section that is already open must never carry it — an open panel breathing at the participant
+     is an instruction to do something they have already had done for them. */
+  const [everOpened, setEverOpened] = useState<Set<string>>(() => new Set(["role"]));
   const markOpened = useCallback((key: string) => {
     setEverOpened((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
   }, []);
@@ -1455,6 +1472,34 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           }}
         >
           {/*
+            THE COLUMN SAYS WHAT IT IS, on the advisor's instruction (16 September 2026).
+
+            The objection was that this column reads as a summary of something that happened
+            elsewhere, when it is in fact the whole scenario: the scene, the numbers every option
+            shares, and the participant's role, which is the block's entire manipulation. Three
+            folded headings stacked in a narrow column look like a table of contents, and a reader
+            who takes it for a recap never opens any of it.
+
+            Two things fix that and neither of them un-folds the column. This header names the
+            column as the source material and says outright that it is not a summary — and the role
+            card below now opens by default, so the column always shows real content rather than a
+            list of titles.
+          */}
+          <Box px="1">
+            <HStack gap="2" mb="1">
+              <Icon color={pal.accent} boxSize="4"><LuScale /></Icon>
+              <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest"
+                textTransform="uppercase" color={pal.accent}>
+                What you are deciding on
+              </Text>
+            </HStack>
+            <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
+              The complete scenario, not a summary. Every option is built on exactly these facts —
+              open any section to read it again.
+            </Text>
+          </Box>
+
+          {/*
             The scenario card. The advisor's note was that this did not catch the eye, and it did
             not: a 5%-white panel, a 2xs label and body copy in the muted text color made the
             most important content on the page the faintest thing on it. It now leads with a
@@ -1617,7 +1662,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             onClick={() => { markOpened("charts"); openCompareCharts(); }}
           >
             <Icon boxSize="4"><LuChartSpline /></Icon>
-            <Text fontSize="sm" fontWeight="semibold">Compare all options on charts</Text>
+            <Text fontSize="sm" fontWeight="semibold">Compare all options</Text>
           </Button>
           <Text fontSize="2xs" color={pal.textFaint} textAlign="center" px="2" lineHeight="tall">
             Two radar charts: what each option achieves, and what each one prioritizes.
@@ -1648,9 +1693,13 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           {scenarioShowsPerformance(scenario) && (
           <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl"
             px={{ base: "3.5", md: "4" }} py="3">
+            {/* NO GLOW ON THIS ONE, on the advisor's instruction. Every other foldable section
+                holds something the participant needs — the scene, the numbers, their role. This one
+                holds a single sentence about how the list below was sorted, and a control that
+                breathes until it is opened is an instruction to open it. Drawing attention to the
+                ordering is the last thing this panel should do. */}
             <CollapsibleHeader
               open={openOrdering}
-              glow={!everOpened.has("ordering")}
               onToggle={() => { markOpened("ordering"); setOpenOrdering((v) => !v); }}
               px="0" py="0"
             >
@@ -1660,9 +1709,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
               </Text>
             </CollapsibleHeader>
             <Stack gap="1.5" mt={openOrdering ? "2" : "0"} display={openOrdering ? "flex" : "none"}>
-              <Text fontSize="xs" color={pal.text} lineHeight="tall">{panelText.rankingLine}</Text>
-              <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{panelText.limitsLine}</Text>
-              <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">{panelText.noteLine}</Text>
+              <Text fontSize="xs" color={pal.text} lineHeight="tall">{panelText.noteLine}</Text>
             </Stack>
           </Box>
           )}
@@ -2217,11 +2264,27 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
   const pos = pal.mode === "light" ? "#15803d" : "#86efac";
   const neg = pal.mode === "light" ? "#b91c1c" : "#fca5a5";
 
+  /*
+   * "CUMULATIVE", NOT JUST "PERFORMANCE", on the advisor's instruction (16 September 2026).
+   *
+   * This dashboard and the bars inside an option card carry the same five measure names and mean
+   * completely different things: this one is the average of everything already CONFIRMED, and the
+   * card's bars are a forecast for one option that has been chosen by nobody. Two panels titled
+   * "performance" invite a participant to read the card's numbers as their score, which turns every
+   * option into a verdict on them.
+   *
+   * The word is the cheapest possible fix and it has to match the pre-Block-5 page, which now
+   * teaches the same three things under the same names.
+   */
   const label = isPreview
     ? `Projected if you choose: ${previewTitle}`
     : completedCount === 0
-      ? "Your performance — starts at 0, fills in as you choose"
-      : `Your performance — average of ${completedCount} scenario${completedCount > 1 ? "s" : ""} so far`;
+      /* UPDATES WITH EACH SCENARIO, not "fills in as you choose". "As you choose" describes
+         something happening while the participant browses, which is exactly what Preview impact
+         does and exactly what this number does NOT do: it moves once per scenario, when a choice
+         is confirmed. The old wording promised the behaviour of the other control. */
+      ? "Your cumulative performance — starts at 0, updates with each scenario"
+      : `Your cumulative performance — average of ${completedCount} scenario${completedCount > 1 ? "s" : ""} so far`;
 
   return (
     <Box bg={pal.dashBg} backdropFilter={pal.backdropBlur} borderWidth="1px"
@@ -2630,7 +2693,9 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
       {impact && (
         <Box mt="3" bg={pal.panelDeep} borderWidth="1px" borderColor={accent} rounded="lg" px="3" py="2">
           <HStack justify="space-between" mb="1" wrap="wrap" gap="1">
-            <Text fontSize="2xs" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">Impact on your overall performance</Text>
+            {/* Same wording as the worked example on the pre-Block-5 page, so the widget is recognized
+                rather than met for the first time here. */}
+            <Text fontSize="2xs" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">Impact on your cumulative performance</Text>
             <Text fontSize="xs" fontWeight="bold" color={pal.text}>
               {impact.baseOverall} → {impact.overall}{" "}
               <Text as="span" color={impact.overall >= impact.baseOverall ? pos : neg}>

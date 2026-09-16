@@ -37,10 +37,10 @@
  */
 
 import { Badge, Box, Button, Grid, HStack, Heading, Icon, Stack, Text, VStack } from "@chakra-ui/react";
-import { LuArrowRight, LuChartColumn, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers, LuInfo } from "react-icons/lu";
+import { LuArrowRight, LuChartColumn, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
 
-import { HBarChart, RadarChart } from "./block5Charts";
-import { SERIES_COLORS } from "./block5ChartColors";
+import { ChartLegend, HBarChart, RadarChart } from "./block5Charts";
+import { REFERENCE_SERIES_COLOR, SERIES_COLORS } from "./block5ChartColors";
 import { MetricStandingBar } from "./block5Meters";
 import { useColorMode } from "@/components/ui/color-mode";
 import {
@@ -75,10 +75,32 @@ const scenarioCountWord = (n: number): string => COUNT_WORDS[n] ?? String(n);
  */
 const EXAMPLE_VALUES = [88, 34, 62, 30];
 const EXAMPLE_ALTERNATIVE = [36, 84, 45, 78];
+
+/**
+ * THE DASHED SHAPE IS THE PARTICIPANT. It used to be a second option here, and that was a
+ * teaching error rather than a cosmetic one.
+ *
+ * On the real chart a dashed gray outline is ALWAYS the participant - their four value priorities
+ * on the left chart, their running performance on the right - and every option is a solid colored
+ * line. This page existed to make that chart recognizable, and it was teaching the opposite: that
+ * a dashed shape is one more option. A participant who learned it here would read their own line
+ * as a rival option in every scenario, and the one thing the chart is for - seeing where an option
+ * falls short of YOU - would be invisible to them.
+ *
+ * So the miniature now draws what the real one draws: two solid options and one dashed gray line
+ * that is them, with the same series names the real chart uses.
+ *
+ * These four cross the option shapes rather than sitting inside or outside them, so both readings
+ * are visible at once: corners where the option clears the dashed line, and corners where it falls
+ * short of it. They are also kept a clear distance from BOTH option shapes on every axis — an
+ * earlier set tracked the second option closely on two corners, and a dashed line that hugs a solid
+ * one teaches nothing, however well the caption is worded.
+ */
+const EXAMPLE_YOUR_VALUES = [62, 58, 78, 48];
 const EXAMPLE_METRICS = [42, 78, 65, 88, 30];
 /* A second, deliberately different shape, so the pair demonstrates what comparing two
    options on one chart actually looks like rather than one shape on its own. */
-const EXAMPLE_METRICS_ALT = [80, 38, 72, 45, 66];
+const EXAMPLE_METRICS_ALT = [80, 38, 50, 45, 74];
 
 /**
  * The running gauge in the left-hand miniature. These five average to exactly 62, which is the
@@ -86,6 +108,16 @@ const EXAMPLE_METRICS_ALT = [80, 38, 72, 45, 66];
  * no illustration, because the participant is being taught how to read the real one.
  */
 const EXAMPLE_RUNNING = [58, 64, 71, 55, 62];
+
+/**
+ * The Preview impact illustration, and it adds up for the same reason.
+ *
+ * Two situations already confirmed at an average of 62 — the gauge above — plus one option whose
+ * own composite is 74 gives (62 + 62 + 74) / 3 = 66. A participant who checks the arithmetic of
+ * the example finds it holds, and 74 is in the range the three sample bars beside it describe.
+ */
+const EXAMPLE_PREVIEW_FROM = 62;
+const EXAMPLE_PREVIEW_TO = 66;
 
 /**
  * The two bars in the right-hand miniature, chosen to make the contrast the panel exists to teach.
@@ -124,11 +156,20 @@ const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const HOW_IT_WORKS = [
   {
     title: "Read the situation",
-    body: "What has happened, the numbers everyone is working from, and who you are in it. Your position changes from one situation to the next.",
+    /* "Your role in the story", not "your position". POSITION is the study's own word for the
+       block's manipulation, and it is the one word on this page a participant could read as a
+       ranking - a position in a list, a position in a queue - which is the opposite of what it
+       means here. "Role in the story" cannot be read that way and says the same thing. */
+    body: "What has happened, the numbers everyone is working from, and who you are in it. Your role in the story changes from one situation to the next.",
   },
   {
     title: "Look at six options",
-    body: "Every one of the six can be chosen. They are put in order using your own earlier answers, not by which one we think is best.",
+    /* "Ordered using the preferences shown by your earlier answers" rather than "put in order
+       using your own earlier answers". The old wording named the source but not the mechanism, and
+       a participant could reasonably read it as the study having ranked them somehow. This says
+       WHAT was taken from those answers - the preferences - and the second clause still says what
+       the order is not. */
+    body: "Every one of the six can be chosen. They are ordered using the preferences shown by your earlier answers, not by which one we think is best.",
   },
   {
     title: "Choose one",
@@ -144,29 +185,90 @@ const HOW_IT_WORKS = [
   },
 ];
 
+/**
+ * THE HEADING EVERY SECTION OF THIS PAGE WEARS, AND WHY IT IS NUMBERED.
+ *
+ * The page is five things a participant has to hold at once: how a scenario runs, two charts, two
+ * different performance readings, three habits, and the four values. Unnumbered, they read as five
+ * separate notices and a reader who looks away has no way back to their place. Numbered, the page
+ * becomes a list with a length - and a participant who can see there are five can pace themselves
+ * through them.
+ *
+ * IT LOOKS DELIBERATELY UNLIKE THE STEP CHIPS INSIDE THE SECTIONS. Two of these sections contain
+ * their own numbered items - the five steps of a scenario, the two performance readings - so the
+ * page carries two counting systems at once, and if they looked alike, section 3 containing an item
+ * numbered 1 would read as a contradiction.
+ *
+ * So a section marker is OUTLINED, tinted and set in mono: a chapter number. A step chip is a
+ * FILLED solid purple square: an item in a sequence. One says where you are on the page; the other
+ * says where you are inside a section.
+ *
+ * The hairline rule is what makes it read as a divider rather than a label, and it is dropped on
+ * phones where there is no width to spare for it.
+ */
+function SectionHeading({ n, icon, title, children }: {
+  n: number;
+  icon?: React.ReactNode;
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <VStack align="start" gap="1.5" mb="4">
+      <HStack gap="2.5" align="center" w="full">
+        <Box
+          minW="6" h="6" px="1.5" rounded="md" flexShrink={0}
+          borderWidth="1px" borderColor="purple.muted" bg="purple.subtle" color="purple.fg"
+          display="flex" alignItems="center" justifyContent="center"
+          fontSize="2xs" fontWeight="bold" fontFamily="mono" lineHeight="1"
+        >
+          {n}
+        </Box>
+        {icon ? (
+          <Box color="purple.fg" lineHeight="1" flexShrink={0}><Icon boxSize="4">{icon}</Icon></Box>
+        ) : null}
+        <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
+          {title}
+        </Text>
+        <Box flex="1" minW="6" h="1px" bg="border" display={{ base: "none", sm: "block" }} />
+      </HStack>
+      {children ? (
+        <Text fontSize="sm" color="fg.muted" lineHeight="tall">{children}</Text>
+      ) : null}
+    </VStack>
+  );
+}
+
 /** One numbered step in "How the main study works". */
 function StepCard({ n, title, body }: { n: number; title: string; body: string }) {
   return (
     <VStack
-      align="start" gap="2.5" h="full" position="relative" overflow="hidden"
+      align="start" gap="2" h="full" position="relative" overflow="hidden"
       bg="bg.panel" borderWidth="1px" borderColor="border" rounded="xl"
       px={{ base: "4", md: "4" }} py={{ base: "4", md: "5" }}
     >
-      {/* The watermark carries the sequence at a glance; the chip carries it for a screen reader. */}
+      {/*
+        ONE NUMBER PER CARD, AND IT IS THE BIG ONE.
+
+        There used to be two: a large watermark numeral and a small filled chip saying the same
+        thing an inch apart. Two printings of one number is not emphasis, it is a reader wondering
+        whether they mean different things.
+
+        THE WATERMARK IS NOW REAL TEXT, not decoration. It carried `aria-hidden` while the chip
+        carried the number for a screen reader; with the chip gone, hiding it would have deleted the
+        sequence for anyone not reading by eye. It is also darker than it was — a 0.1 opacity
+        numeral is fine as a background flourish and far too faint to be the only copy of a fact.
+
+        The title reserves the top-right corner so a two-line heading cannot run underneath it.
+      */}
       <Text
-        aria-hidden="true" position="absolute" top="-2" right="1"
-        fontSize="6xl" fontWeight="bold" color="purple.fg" opacity={0.1} lineHeight="1"
+        position="absolute" top="-2" right="1"
+        fontSize="6xl" fontWeight="bold" color="purple.fg" opacity={0.22} lineHeight="1"
       >
         {n}
       </Text>
-      <Box
-        boxSize="7" rounded="lg" bg="purple.solid" color="white"
-        display="flex" alignItems="center" justifyContent="center"
-        fontSize="xs" fontWeight="bold" flexShrink={0}
-      >
-        {n}
-      </Box>
-      <Text fontSize="sm" fontWeight="semibold" color="fg" lineHeight="short">{title}</Text>
+      <Text fontSize="sm" fontWeight="semibold" color="fg" lineHeight="short" pr={{ base: "9", md: "11" }}>
+        {title}
+      </Text>
       <Text fontSize="xs" color="fg.muted" lineHeight="tall">{body}</Text>
     </VStack>
   );
@@ -303,6 +405,10 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
   const { colorMode } = useColorMode();
   /* MetricStandingBar resolves its own colors per mode; this page has no Block5Palette. */
   const meterMode = colorMode === "dark" ? "dark" : "light";
+  /* The exact gray the real charts use for the participant's own dashed line. Taken from the same
+     constant rather than picked by eye, so the shape taught here and the shape drawn in a scenario
+     are the same color in both light and dark mode. */
+  const referenceColor = REFERENCE_SERIES_COLOR[meterMode];
   const axes = POLICY_DIM_KEYS.map((k) => sentenceCase(POLICY_DIM_SHORT[k]));
   const runningBars = METRIC_KEYS.map((k, i) => ({
     label: METRIC_DEFS[k].label,
@@ -408,18 +514,10 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           or keeping the choice are equally fine, removes that surprise before it can bias anything.
         */}
         <Box>
-          <VStack align="start" gap="1" mb="4">
-            <HStack gap="2">
-              <Box color="purple.fg" lineHeight="1"><Icon boxSize="4"><LuRoute /></Icon></Box>
-              <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
-                How the main study works
-              </Text>
-            </HStack>
-            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              {scenarioCountWord(BLOCK5_SCENARIOS.length).replace(/^./, (c) => c.toUpperCase())}{" "}
-              situations, one after another. Each one runs the same {HOW_IT_WORKS.length} steps.
-            </Text>
-          </VStack>
+          <SectionHeading n={1} icon={<LuRoute />} title="How the main study works">
+            {scenarioCountWord(BLOCK5_SCENARIOS.length).replace(/^./, (c) => c.toUpperCase())}{" "}
+            situations, one after another. Each one runs the same {HOW_IT_WORKS.length} steps.
+          </SectionHeading>
           <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr", lg: "repeat(5, 1fr)" }} gap="3">
             {HOW_IT_WORKS.map((s, i) => (
               <StepCard key={s.title} n={i + 1} title={s.title} body={s.body} />
@@ -432,16 +530,11 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           a radar chart on a calm page recognizes it on a page where a decision is waiting.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
-          <VStack align="start" gap="1" mb="4">
-            <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
-              The two charts, and how to open them
-            </Text>
-            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              On every scenario page there is a button marked{" "}
-              <Text as="span" color="fg" fontWeight="semibold">“Compare all options on charts”</Text>.
-              It draws all six options on these two shapes at once.
-            </Text>
-          </VStack>
+          <SectionHeading n={2} icon={<LuChartColumn />} title="The two charts, and how to open them">
+            On every scenario page there is a button marked{" "}
+            <Text as="span" color="fg" fontWeight="semibold">“Compare all options”</Text>.
+            It draws all six options on these two shapes at once.
+          </SectionHeading>
 
           {/*
             ONE RULE FOR BOTH CHARTS, STATED BEFORE EITHER IS SHOWN.
@@ -470,11 +563,18 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
                 What the option is built to protect. The same four values your earlier answers were
                 scored on.
               </Text>
+              {/* LIGHTER FILLS THAN THE DEFAULT, because there are three shapes here rather than
+                  two. At 0.14 each, three translucent fills stack in the middle and the dashed gray
+                  line — the one thing this panel exists to point at — disappears into them. The
+                  real chart solves the same problem by fading its fills as more options are shown. */}
               <RadarChart
+                fillOpacity={0.07}
                 axes={axes}
                 series={[
                   { name: "This option", color: SERIES_COLORS[1], values: EXAMPLE_VALUES },
-                  { name: "Another option", color: SERIES_COLORS[2], values: EXAMPLE_ALTERNATIVE, dashed: true },
+                  { name: "Another option", color: SERIES_COLORS[2], values: EXAMPLE_ALTERNATIVE },
+                  /* Dashed, gray, and named exactly as the real chart names it. */
+                  { name: "Your value priorities", color: referenceColor, values: EXAMPLE_YOUR_VALUES, dashed: true },
                 ]}
               />
             </VStack>
@@ -487,57 +587,81 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
                 What the option actually achieves. This describes the outcome, not who it favors.
               </Text>
               <RadarChart
+                fillOpacity={0.07}
                 axes={METRIC_KEYS.map((k) => METRIC_DEFS[k].label)}
                 series={[
                   { name: "This option", color: SERIES_COLORS[1], values: EXAMPLE_METRICS },
-                  { name: "Another option", color: SERIES_COLORS[2], values: EXAMPLE_METRICS_ALT, dashed: true },
+                  { name: "Another option", color: SERIES_COLORS[2], values: EXAMPLE_METRICS_ALT },
+                  /* The same five numbers as the running gauge further down this page, on purpose:
+                     one imaginary participant runs through every illustration here, so the gauge
+                     and this dashed line are the same fact drawn two ways. */
+                  { name: "Your performance so far", color: referenceColor, values: EXAMPLE_RUNNING, dashed: true },
                 ]}
               />
             </VStack>
           </Grid>
 
-          <HStack gap="5" justify="center" mt="4">
-            {[
-              { name: "This option", color: SERIES_COLORS[1] },
-              { name: "Another option", color: SERIES_COLORS[2] },
-            ].map((sr) => (
-              <HStack key={sr.name} gap="1.5">
-                <Box boxSize="2.5" rounded="sm" bg={sr.color} />
-                <Text fontSize="2xs" color="fg.muted">{sr.name}</Text>
-              </HStack>
-            ))}
-          </HStack>
+          {/* The real chart's own legend component, so a solid line and a dashed line are drawn
+              here exactly as they will be drawn there. A colored square would have taught the
+              participant to look for a square. */}
+          <ChartLegend
+            items={[
+              { label: "An option", color: SERIES_COLORS[1] },
+              { label: "Another option", color: SERIES_COLORS[2] },
+              { label: "You", color: referenceColor, dashed: true },
+            ]}
+          />
 
-          <Text fontSize="xs" color="fg.subtle" mt="3" textAlign="center" lineHeight="tall">
-            An example, not a real option. Every option in the study has a shape of its own.
-          </Text>
+          <Box bg="bg" borderWidth="1px" borderColor="border" rounded="lg" px="4" py="3" mt="4">
+            <Text fontSize="xs" color="fg" lineHeight="tall" textAlign="center">
+              <Text as="span" fontWeight="semibold">The dashed gray shape is you.</Text>{" "}
+              Every option is a solid colored line; the dashed one is your own answers, drawn on top
+              so you can see where an option reaches past what you asked for and where it falls
+              short of it.
+            </Text>
+            <Text fontSize="2xs" color="fg.subtle" lineHeight="tall" textAlign="center" mt="1.5">
+              These are example shapes, not real options. Your line on the right-hand chart appears
+              from the second situation onward, once there is something to average.
+            </Text>
+          </Box>
         </Box>
 
         {/*
-          TWO PERFORMANCE READINGS — the one thing on the scenario page that is genuinely easy to
-          misread, cleared up before the participant meets either of them.
+          THREE PERFORMANCE THINGS, NOT TWO — the part of the scenario page that is genuinely easy
+          to misread, cleared up before the participant meets any of it.
 
-          The page shows performance in two places that share five names and answer different
-          questions: the running gauge at the top is the AVERAGE OF THE OPTIONS ALREADY CONFIRMED,
-          and the panel inside a card is ONE OPTION THE PARTICIPANT HAS NOT CHOSEN, placed against
-          what the other five on that table manage. A participant who thinks the card's numbers
-          are their score reads every card as a verdict on themselves.
+          The same five measure names appear three times, meaning three different things:
 
-          Both miniatures are live components. The right-hand one is the real MetricStandingBar,
-          so the red and green ticks introduced here are the same marks, drawn by the same code,
-          that appear on every option card.
+            1. THE GAUGE AT THE TOP is the average of the options ALREADY CONFIRMED. It is a running
+               total for the whole block and says nothing about the situation on screen.
+            2. THE BARS INSIDE A CARD are the option the participant currently has OPEN, placed
+               against what the other five on that table manage. A forecast, not a record.
+            3. PREVIEW IMPACT is a button that shows what (1) would become if (2) were confirmed —
+               and changes nothing at all.
+
+          This panel used to present only the first two, with the button mentioned in a footnote.
+          The advisor's objection was that the section read as two readings plus an aside, when the
+          button is the thing that JOINS them, and the one place a participant can most easily
+          believe they have already committed to something. It is now the third numbered item, with
+          its own worked example.
+
+          A participant who thinks the card's numbers are their score reads every card as a verdict
+          on themselves. A participant who thinks pressing Preview has chosen for them stops
+          pressing it, and loses the one tool on the page for comparing consequences.
+
+          Every miniature is a live component. The bars in item 2 are the real MetricStandingBar, so
+          the red and green ticks introduced here are the same marks, drawn by the same code, that
+          appear on every option card.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
-          <VStack align="start" gap="1" mb="5">
-            <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
-              Two performance readings, and they are not the same thing
-            </Text>
-            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              You will see the same five measure names in two places. One is about{" "}
-              <Text as="span" color="fg" fontWeight="semibold">you</Text>. The other is about{" "}
-              <Text as="span" color="fg" fontWeight="semibold">one option</Text>.
-            </Text>
-          </VStack>
+          <SectionHeading n={3} icon={<LuGauge />} title="Performance shows up in three places, and they mean different things">
+            The same five measure names appear three times on a scenario page. One is{" "}
+            <Text as="span" color="fg" fontWeight="semibold">your running total</Text>, one is{" "}
+            <Text as="span" color="fg" fontWeight="semibold">the option you are looking at</Text>, and
+            one is a button that shows{" "}
+            <Text as="span" color="fg" fontWeight="semibold">what would happen if you took it</Text>.
+            Nothing moves your total until you confirm a choice.
+          </SectionHeading>
 
           <Grid
             templateColumns={{ base: "1fr", md: "1fr 1px 1fr" }}
@@ -547,13 +671,13 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
             <ReadingColumn
               n={1}
               where="At the top of every page"
-              title="Your performance"
+              title="Your cumulative performance"
               icon={<LuGauge />}
               sample={
                 <VStack align="stretch" gap="2.5">
                   <HStack justify="space-between">
                     <Text fontSize="2xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
-                      Your performance
+                      Your cumulative performance
                     </Text>
                     <Badge colorPalette="purple" rounded="md" px="2" fontSize="2xs" fontWeight="bold">
                       Overall 62/100
@@ -563,9 +687,9 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
                 </VStack>
               }
               facts={[
-                { label: "What it is about", value: "Every option you have already confirmed, averaged together." },
-                { label: "When it changes", value: "Only when you confirm a choice. It starts at zero and fills in as you go." },
-                { label: "What it is measured against", value: "Nothing. It simply reports how the options you picked have performed." },
+                { label: "What it is about", value: "Every option you have already confirmed, added up and averaged. It is a running total for the whole block — not a score for the situation on screen." },
+                { label: "When it changes", value: "Only when you confirm a choice. It starts at zero and updates once with each scenario — never while you are still looking." },
+                { label: "What it is measured against", value: "Nothing. It simply reports how the options you confirmed have performed." },
               ]}
             />
 
@@ -573,8 +697,8 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
 
             <ReadingColumn
               n={2}
-              where="Inside every option card"
-              title="What this option achieves"
+              where="Inside the option you select"
+              title="What the selected option achieves"
               icon={<LuLayers />}
               sample={
                 <VStack align="stretch" gap="3">
@@ -594,35 +718,102 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
                 </VStack>
               }
               facts={[
-                { label: "What it is about", value: "One option you have not chosen yet — a forecast, not a record." },
-                { label: "When it changes", value: "Never. It is fixed for that situation, whatever you decide." },
+                { label: "What it is about", value: "The one option whose details you have opened. Selecting it here only means looking at it — you have not chosen anything yet." },
+                { label: "When it changes", value: "It changes when you open a different option, and each option's own bars never move. They are a forecast for that option, not a record of what you did." },
                 { label: "What it is measured against", value: "Only the five options beside it. That is what a place like “1st of 6” counts — 1st is the strongest of the six there, 6th the weakest." },
               ]}
             />
           </Grid>
 
-          <Box mt="6" bg="bg" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3.5">
-            <HStack gap="2.5" align="start">
-              <Box color="purple.fg" lineHeight="1" pt="0.5"><Icon boxSize="4"><LuInfo /></Icon></Box>
-              <VStack align="start" gap="1.5">
-                <Text fontSize="xs" color="fg" lineHeight="tall">
-                  <Text as="span" fontWeight="semibold">The two are linked.</Text> Press{" "}
-                  <Text as="span" fontWeight="semibold">Preview impact</Text> on any card and the number at
-                  the top will show what it would become if you chose that option — without choosing it.
+          {/*
+            THE THIRD ITEM, AND THE ONE MOST WORTH GETTING RIGHT.
+
+            It is laid out across the full width rather than as a third column, because it is not a
+            third reading — it is the bridge between the two above it. The worked example is the
+            real widget's own wording and arithmetic, so a participant meets "62 → 66" here and
+            recognizes it on a card.
+          */}
+          <Box
+            mt="7" bg="bg" borderWidth="1px" borderColor="purple.muted" borderLeftWidth="4px"
+            borderLeftColor="purple.solid" rounded="xl" px={{ base: "4", md: "5" }} py="4"
+          >
+            <HStack gap="2.5" align="center" mb="3">
+              <Box
+                boxSize="7" rounded="lg" bg="purple.solid" color="white" flexShrink={0}
+                display="flex" alignItems="center" justifyContent="center" fontSize="xs" fontWeight="bold"
+              >
+                3
+              </Box>
+              <VStack align="start" gap="0" minW="0">
+                <Text fontSize="2xs" fontWeight="bold" color="purple.fg" textTransform="uppercase" letterSpacing="wider">
+                  A button on the option you are looking at
                 </Text>
-                <Text fontSize="2xs" color="fg.subtle" lineHeight="tall">
-                  The measure readings use the same 0–100 scale in both places, so a 65 in one is the same
-                  size as a 65 in the other. The one exception is the sentence at the foot of an option card:
-                  the “out of 100” there is a position between the weakest and strongest option on that
-                  table, not a reading.
-                </Text>
+                <HStack gap="1.5">
+                  <Box color="fg.muted" lineHeight="1"><Icon boxSize="3.5"><LuEye /></Icon></Box>
+                  <Text fontSize="sm" fontWeight="semibold" color="fg">Preview impact</Text>
+                </HStack>
               </VStack>
             </HStack>
+
+            <Grid templateColumns={{ base: "1fr", md: "auto 1fr" }} gap={{ base: "4", md: "6" }} alignItems="center">
+              {/* The real widget, in miniature. Same label, same arrow, same footnote. */}
+              <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="lg" px="4" py="3" minW={{ md: "56" }}>
+                <Text fontSize="2xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold" mb="1.5">
+                  Impact on your cumulative performance
+                </Text>
+                <HStack gap="2.5" align="center">
+                  <Text fontSize="xl" fontWeight="bold" color="fg.muted" lineHeight="1">{EXAMPLE_PREVIEW_FROM}</Text>
+                  <Box color="fg.subtle" lineHeight="1"><Icon boxSize="4"><LuArrowRight /></Icon></Box>
+                  <Text fontSize="xl" fontWeight="bold" color="fg" lineHeight="1">{EXAMPLE_PREVIEW_TO}</Text>
+                  <Badge colorPalette="green" rounded="md" px="2" fontSize="2xs" fontWeight="bold">
+                    ▲ +{EXAMPLE_PREVIEW_TO - EXAMPLE_PREVIEW_FROM}
+                  </Badge>
+                </HStack>
+                <Text fontSize="2xs" color="fg.subtle" mt="2" lineHeight="tall">
+                  Preview only — not saved until you confirm.
+                </Text>
+              </Box>
+
+              <VStack align="start" gap="2.5">
+                <Text fontSize="sm" color="fg" lineHeight="tall">
+                  <Text as="span" fontWeight="semibold">What it does.</Text> It takes the option you
+                  are looking at and shows what your{" "}
+                  <Text as="span" fontWeight="semibold">cumulative performance</Text> at the top of
+                  the page would become if you confirmed it. The number moves so you can see the
+                  size of the difference instead of imagining it.
+                </Text>
+                <Text fontSize="sm" color="fg" lineHeight="tall">
+                  <Text as="span" fontWeight="semibold">What it does not do.</Text> It does not
+                  choose anything, and your cumulative performance does not really move.{" "}
+                  <Text as="span" fontWeight="semibold">
+                    Nothing is recorded until you confirm your choice for that situation.
+                  </Text>{" "}
+                  Press it on as many options as you like, in any order.
+                </Text>
+              </VStack>
+            </Grid>
+
+            <Text fontSize="2xs" color="fg.subtle" lineHeight="tall" mt="4">
+              All three use the same 0–100 scale, so a 65 in one is the same size as a 65 in another.
+              The one exception is the sentence at the foot of an option card: the “out of 100” there
+              is a position between the weakest and strongest option on that table, not a reading.
+            </Text>
           </Box>
         </Box>
 
-        {/* THE THREE THINGS TO DO — read, compare, look ahead. */}
-        <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap="4">
+        {/*
+          THE THREE THINGS TO DO — read, compare, look ahead.
+
+          This was the one section on the page with no heading, which is why it read as three loose
+          cards rather than as advice. Numbering the page made the gap obvious: a list of five with
+          a silent fourth item is worse than no list.
+        */}
+        <Box>
+          <SectionHeading n={4} icon={<LuEye />} title="Three things that help">
+            None of this is required. They are the habits that make the options easier to tell
+            apart.
+          </SectionHeading>
+          <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap="4">
           <ToolCard
             icon={<LuEye />}
             title="Read it first"
@@ -633,12 +824,13 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
             title="Compare, don't guess"
             body="The bars and the radar chart put your option next to the others, so you can see the difference instead of imagining it."
           />
-          <ToolCard
-            icon={<LuMilestone />}
-            title="Look ahead"
-            body="You can see the impact in the situation in front of you, and how your choice shapes the situations that come after it."
-          />
-        </Grid>
+            <ToolCard
+              icon={<LuMilestone />}
+              title="Look ahead"
+              body="You can see the impact in the situation in front of you, and how your choice shapes the situations that come after it."
+            />
+          </Grid>
+        </Box>
 
         {/*
           WHAT WE ALREADY KNOW — naming the four values does two things: it tells the participant
@@ -646,15 +838,10 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           they are about to meet on every option card.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
-          <VStack align="start" gap="1" mb="4">
-            <Text fontSize="xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
-              What we already know about you
-            </Text>
-            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              Your earlier answers measured four values. Each option will show you how closely it
-              matches them.
-            </Text>
-          </VStack>
+          <SectionHeading n={5} icon={<LuLayers />} title="What we already know about you">
+            Your earlier answers measured four values. Each option will show you how closely it
+            matches them.
+          </SectionHeading>
           <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="3">
             {POLICY_DIM_KEYS.map((k) => (
               <ValueChip key={k} name={POLICY_DIM_SHORT[k]} meaning={POLICY_DIM_EXPLAIN[k]}
