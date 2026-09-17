@@ -964,8 +964,37 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
   {
     id: "cancer_treatment_allocation",
     stakePosition: "others",
+    methodLabel: "How the doses are picked",
+    /*
+     * ───────────────────────────────────────────────────────────────────────────────
+     * PASS D — TWO FACTS THAT EVERY OPTION NEEDED AND NONE OF THEM HAD, 17 September 2026.
+     *
+     * THE CLOSING CLAIM WAS FALSE, and it was the third scenario in a row to make the same kind of
+     * promise. It said every option GIVES OUT ALL 20 DOSES, while the reserve option's own text
+     * says holding doses back means fewer are used and some may be wasted. On the researcher's
+     * instruction the claim gives way rather than the option: the waste is a real cost and removing
+     * it would make the reserve too easy a choice.
+     *
+     * WHAT HAPPENS TO THE 100 WHO DO NOT GET ONE was never stated, so no option could say what it
+     * costs. They go back onto next month's list. That single fact turns every card from "more
+     * lives saved" into something a reader can count: 20 treated, 100 waiting, and a named reason
+     * for which 100.
+     *
+     * THE DOSES HAVE A DATE ON THEM. Without it "some may be wasted" is an assertion; with it the
+     * reserve option's whole trade-off is visible on the card, and its reliability score of 30 has
+     * something to point at.
+     *
+     * NO PERFORMANCE NUMBER MOVED BECAUSE OF THESE. Pass B moved ten of them for its own reasons,
+     * recorded on each option.
+     * ───────────────────────────────────────────────────────────────────────────────
+     */
     factBase:
-      "About 120 eligible patients this month. 20 doses. One month before any further supply is even possible. Every option you will see gives out all 20 doses — they differ only in who receives them.",
+      /*
+        NO DOUBLE QUOTES IN THIS COMMENT. The digit check and the description-overlap check both
+        read the first quoted string after the field name, so a quoted phrase here would be scored
+        in place of the scenario text.
+      */
+      "About 120 eligible patients this month, and 20 doses with a date on them. One month before any further supply is even possible, and everyone who does not get a dose now goes back onto next month's list. Every option you will see spends from the same 20 doses and the same 120 names. They differ only in who ends up with one.",
     role:
       "You sit on the allocation team. {w|You are not a patient}, {w|nobody close to you is on the list}, and whatever you decide your own care is unaffected. The whole cost of this decision falls on {w|strangers}.",
     title: "Limited Cancer Treatment Allocation",
@@ -1014,20 +1043,28 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The delay is what made those odds low, and the rule reads low odds as a reason to pass them over",
           benefitCase: "have exactly the odds this rule looks for, and a cancer caught early",
           benefitLost: "Any rule that ignores odds is one where their good chance counts for nothing",
+          act: "You score all {a|120} on their chance of coming through, and sign off the top {a|20}. Nobody you pass over is told why.",
+          parallelAct: "{w|A winch operator lifts the twenty who can hold on to the strop. The rest of the roof waits for a pass that is not coming.}",
           consequences: {
-            soon: "The mix of patients chosen saves more lives this month than any other mix would.",
-            later: "Late-diagnosed patients are passed over again, as they were last year and the year before.",
+            soon: "20 doses go to the patients whose odds were already the best on the list.",
+            later: "The people found too late may wait another month. Some could be past treating by the time their turn comes.",
           },
           parallelConsequences: {
-            soon: "The mix chosen brings more people through the flight than any other mix would.",
-            later: "The people found late are passed over again, as they were in the last two floods.",
+            soon: "20 places go to the people on the roof who can still hold on by themselves.",
+            later: "The ones who cannot grip may wait for a pass that never comes. Some could be in the water within the hour.",
           },
         },
-        title: "Maximize total lives saved",
-        summary: "Give the treatment to the mix of patients that saves the most lives overall.",
-        gains: "The largest number of lives saved this month.",
-        consequence: "More people survive than with any other policy. But patients whose odds are low, often because they were diagnosed late, are passed over.",
-        givesUp: "The most vulnerable. Patients with low survival odds and late diagnoses receive nothing.",
+        /* PASS B, 17 September 2026 — reliability 76 -> 90 because this rule picks the best responders on purpose, which is the definition of likely to work. speed 45 -> 48 and resources 49 -> 46: scoring 120 people takes staff time, but less of it than the life-years model below. */
+        method: {
+          kind: "score",
+          by: "Ranked by survival odds",
+          detail: "all 120 are scored on their chance of coming through, and the top 20 are treated.",
+        },
+        title: "Treat the 20 most likely to survive",
+        summary: "The most lives saved. Every one of the 120 is given a survival score, and the 20 highest are treated.",
+        gains: "More of the people treated come through than under any other rule on this list.",
+        consequence: "The 20 chosen are the ones most likely to recover, so this month's survival count is the highest here. But a late diagnosis lowers your score, so most of the 100 who wait are the people the system found too late — the same ones who waited last month.",
+        givesUp: "The patients the system already failed. Being found late is what puts them at the bottom of this list, and the bottom is where they stay.",
         moralTension: "Is saving the greatest number the right goal, even when the people left out are the ones the system already failed?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 53,
@@ -1039,11 +1076,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 60,
         },
         metrics: {
-          speed: 45,
-          resourceUse: 49,
-          reliability: 76,
-          durability: 75,
-          reversibility: 37,
+          speed: 48,
+          resourceUse: 46,
+          reliability: 90,
+          durability: 70,
+          reversibility: 32,
         },
       },
       {
@@ -1055,20 +1092,28 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "They wait another month, and by then they are inside it",
           benefitCase: "are the kind of patient this rule protects, and have been passed over twice already",
           benefitLost: "Every other rule here reads their condition as a reason to treat someone else",
+          act: "You work down the list by how ill each of the {a|120} is, and sign off the sickest {a|20}. You do not look at their odds at all.",
+          parallelAct: "{w|A winch operator takes the twenty least able to hold on, one at a time, and the lifts run long.}",
           consequences: {
-            soon: "The sickest patients are treated first, and they respond slowly.",
-            later: "Fewer people are alive at the end of the year than under any other policy on this list.",
+            soon: "20 doses go to patients who are too ill to make much use of them.",
+            later: "Fewer of the 120 may be alive a month from now than under any other rule here.",
           },
           parallelConsequences: {
-            soon: "The weakest are lifted first, and they take the longest to move.",
-            later: "Fewer people are alive at the end of the night than under any other rule here.",
+            soon: "20 places go to the people least able to help themselves aboard.",
+            later: "The slow lifts may cost the pass its last minutes. Fewer people could come off that roof in the next hour.",
           },
         },
-        title: "Protect the most vulnerable first",
-        summary: "Give the treatment to the sickest and least-served patients first.",
-        gains: "Protection for the patients who are sickest and least able to cope.",
-        consequence: "The patients in the worst condition are treated first. But because their odds are lower, fewer people survive overall.",
-        givesUp: "Total lives saved. Some doses go to patients who are unlikely to recover.",
+        /* PASS B, 17 September 2026 — reliability 60 -> 35 and durability 52 -> 50. The card's own consequence line says these patients respond slowly and fewer people survive; reliability asks exactly that question and was answering it differently. reversibility 82 -> 30: a dose given is a dose given, and nothing about treating the sickest makes it easier to take back. */
+        method: {
+          kind: "list",
+          by: "Worked down a severity list",
+          detail: "the 120 are sorted by how ill they are, and the 20 in the worst condition are treated.",
+        },
+        title: "Treat the 20 who are sickest",
+        summary: "The most vulnerable first. The 120 are sorted by how ill they are, and the 20 worst off are treated.",
+        gains: "The 20 least able to cope are treated, and nobody is ranked by how useful their recovery would be.",
+        consequence: "The 20 in the worst condition are treated first. But they respond slowly and some will not recover, so fewer of the 120 are alive at the end of the year than under any other rule here.",
+        givesUp: "Lives. Doses go to patients who may not be able to use them, and the 100 who wait include people who would have recovered.",
         moralTension: "Do you treat the people who need help most, even if that means fewer people survive?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 96,
@@ -1080,11 +1125,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 85,
         },
         metrics: {
-          speed: 42,
-          resourceUse: 60,
-          reliability: 60,
-          durability: 52,
-          reversibility: 82,
+          speed: 58,
+          resourceUse: 52,
+          reliability: 35,
+          durability: 56,
+          reversibility: 30,
         },
       },
       {
@@ -1096,20 +1141,28 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The rule counts the years they have left, and never asks who depends on them",
           benefitCase: "are twenty-six, and were told this treatment would give them decades",
           benefitLost: "This is the only rule that counts those decades as worth anything",
+          act: "You have each of the {a|120} modeled for the years a dose would add, and sign off the top {a|20}. Age does most of the deciding.",
+          parallelAct: "{w|A winch operator lifts the twenty with the most years ahead of them, and the oldest stay where they are.}",
           consequences: {
-            soon: "All 20 doses go to the patients most likely to do well on them.",
-            later: "Nobody diagnosed late gets anything, this month or next. The gap widens every year it runs.",
+            soon: "20 doses go to the youngest patients the list will allow.",
+            later: "The oldest may wait another month. Some could be told next month that they are no longer eligible.",
           },
           parallelConsequences: {
-            soon: "All 20 places go to the people expected to live longest afterwards.",
-            later: "Nobody found late is lifted, that night or the next. The gap grows every time it runs.",
+            soon: "20 places go to the youngest people on the roof.",
+            later: "The oldest may still be up there at first light. Some could be too cold to lift after a night in the open.",
           },
         },
-        title: "Maximize life-years (treat the best responders)",
-        summary: "Give the treatment to patients who would gain the most years of life.",
-        gains: "The greatest number of future years of life saved.",
-        consequence: "Each dose is used where it adds the most years of life. But this favors younger patients, and older patients are pushed down the list.",
-        givesUp: "Older patients. A life with fewer years left is counted as worth less.",
+        /* PASS B, 17 September 2026 — durability 74 -> 92, because years of benefit is the one thing this rule maximises and it should lead that metric. reliability 45 -> 68: it picks good responders, so it works more often than the old number allowed. speed 91 -> 28 and resources 51 -> 28 are the big ones: modeling remaining life for 120 people is the SLOWEST and most staff-hungry rule here, and it was scored as the fastest. */
+        method: {
+          kind: "score",
+          by: "Ranked by years of life gained",
+          detail: "each of the 120 is modeled for the years a dose would add, and the top 20 are treated.",
+        },
+        title: "Treat the 20 with the most years ahead",
+        summary: "The most life-years. Each of the 120 is estimated for the years a dose would add, and the 20 highest are treated.",
+        gains: "The 20 doses buy more future years of life than they could under any other rule here.",
+        consequence: "The years bought are the most this month's supply can buy. But the estimate rewards having longer left, so most of the 100 who wait are the oldest patients on the list.",
+        givesUp: "Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated.",
         moralTension: "Is a year of life the right way to measure a person, when it means the old always lose?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 18,
@@ -1121,11 +1174,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 32,
         },
         metrics: {
-          speed: 91,
-          resourceUse: 51,
+          speed: 24,
+          resourceUse: 24,
           reliability: 45,
-          durability: 74,
-          reversibility: 49,
+          durability: 92,
+          reversibility: 30,
         },
       },
       {
@@ -1137,20 +1190,28 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The dose is used, and the person behind them is told there are none left",
           benefitCase: "have been ranked last by every rule the hospital has tried",
           benefitLost: "The draw is the only one that ever gave them a real chance",
+          act: "You put all {a|120} names into a sealed draw, add a few slips for the sickest, and sign off whichever {a|20} come out.",
+          parallelAct: "{w|A winch operator picks by lot rather than by sight, drawing for each place, with extra slips for the weakest.}",
           consequences: {
-            soon: "All 20 names are drawn. Some very ill patients get nothing, and some mild cases are treated.",
-            later: "Families are still asking a year later why a draw decided it. The hospital has no answer.",
+            soon: "20 doses go out within the hour, and nobody on the list was ranked against anybody else.",
+            later: "Some of the 20 may barely benefit. A patient the treatment would have saved could be left waiting.",
           },
           parallelConsequences: {
-            soon: "All 20 names are drawn. Some badly hurt people get nothing, some barely hurt are lifted.",
-            later: "Families are still asking a year later why a draw decided it. Nobody has an answer.",
+            soon: "20 places go out fast, and nobody on the roof is judged.",
+            later: "Some lifted may have been safe where they were. Somebody who was not could still be up there an hour later.",
           },
         },
-        title: "Equal-chance lottery (small boost for vulnerable)",
-        summary: "Everyone eligible gets a chance; vulnerable patients get slightly better odds.",
-        gains: "An equal, unbiased chance for every eligible patient.",
-        consequence: "Nobody is judged or ranked, and every patient has a real chance. But doses may go to the people who benefit least.",
-        givesUp: "Results. Chance decides, so doses can be used where they do very little good.",
+        /* PASS B, 17 September 2026 — speed 45 -> 92 and resources 82 -> 86: a draw needs no assessment, no scoring and no committee, so it is both the fastest rule here and the one that spares the most staff time. reversibility 90 -> 78 stays high but below the reserve, which still physically holds its doses. */
+        method: {
+          kind: "draw",
+          by: "A sealed draw",
+          detail: "all 120 names go in, with a few extra slips for the most vulnerable, and 20 are drawn.",
+        },
+        title: "Draw the 20 names",
+        summary: "An equal chance. Every one of the 120 goes into a sealed draw, with a few extra slips for the most vulnerable.",
+        gains: "Nobody is scored, ranked or judged. All 120 have a real chance, and the 20 who get one got it fairly.",
+        consequence: "The draw takes a morning and nobody is measured against anybody else. But chance does not know who would benefit, so some of the 20 doses go to patients they will barely help.",
+        givesUp: "Results. The 20 doses are spent without regard for what each one can do.",
         moralTension: "Is treating everyone equally worth accepting a worse outcome for everyone?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 56,
@@ -1162,11 +1223,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 43,
         },
         metrics: {
-          speed: 45,
-          resourceUse: 82,
-          reliability: 42,
-          durability: 64,
-          reversibility: 90,
+          speed: 92,
+          resourceUse: 86,
+          reliability: 38,
+          durability: 55,
+          reversibility: 78,
         },
       },
       {
@@ -1178,36 +1239,65 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The dose held back for someone who never came is the one they were waiting for",
           benefitCase: "live four hours from the hospital, and have never once been on a list in time",
           benefitLost: "The reserve is the only reason a dose would still be there when they arrive",
+          act: "You hold part of the {a|20} back for the patients furthest out, and send a nurse to find them.",
+          parallelAct: "{w|A winch operator keeps places free for the roofs nobody has reached yet, and flies on to look for them.}",
           consequences: {
-            soon: "Twenty doses go out. Four are held for patients who live too far to come in easily.",
-            later: "Three patients with better odds were passed over. Two of them do not live out the year.",
+            soon: "The nurse sets out with two addresses, and the held doses go back into the cabinet.",
+            later: "Some may be delivered in time. Any that are not could go past their date and help nobody at all.",
           },
           parallelConsequences: {
-            soon: "Twenty people are lifted. Four places are held for rooftops nobody has reached yet.",
-            later: "Three people with a better chance were passed over. Two do not last the night.",
+            soon: "The helicopter goes looking, and the free places stay empty over two more roofs.",
+            later: "Some of those roofs may be found in time. The places kept for the ones that are not could carry nobody.",
           },
         },
-        title: "Reserve a share for patients who are hard to reach",
-        summary: "Hold back some doses for country patients and others the system usually misses.",
-        gains: "Doses finally reach communities that are usually overlooked.",
-        consequence: "Groups that normally miss out finally get a share. But holding doses in reserve means fewer are used, and some may be wasted.",
-        givesUp: "Reach and certainty. Fewer patients are treated, and reserved doses may go unused.",
+        /* PASS B, 17 September 2026 — reliability 92 -> 30, the worst number in the scenario. It held the HIGHEST reliability score of all six while its own text said doses may go unused and some may be wasted. Reliability asks how likely the treatment achieves what is hoped, and a dose sitting in a cupboard past its date achieves nothing. speed 50 -> 22: reaching people the system misses takes weeks, which is the slowest thing any rule here does. reversibility 86 -> 94 moved UP: a held dose is the only dose in the scenario still in somebody's hands. */
+        method: {
+          kind: "hold",
+          by: "A block held back",
+          detail: "some of the 20 are kept for the patients furthest out, and released only if a nurse can reach them in time.",
+        },
+        title: "Hold some doses back for the patients nobody reaches",
+        summary: "A share reserved. Some of the 20 are held for the patients who live too far out to reach a clinic quickly.",
+        gains: "Patients who are on the list but never near the front of it get a share of this month's supply.",
+        consequence: "The held doses reach people every other rule here leaves at the bottom. But reaching them takes weeks, and any dose still held when its date passes helps nobody at all.",
+        givesUp: "Certainty. Fewer than 20 patients may be treated this month, and a dose that goes past its date cannot be recovered.",
         moralTension: "Is correcting an old unfairness worth using fewer doses today?",
+        /*
+         * THE FINGERPRINT CONTRADICTED THE CARD, 17 September 2026.
+         *
+         * `gainResponsivenessSensitivity` was 82 - the second highest in the scenario, on the one
+         * option whose defining feature is that some of its doses may never be used. The card's own
+         * givesUp line reads "Certainty. Fewer than 20 patients may be treated this month, and a
+         * dose that goes past its date cannot be recovered." That is a line about GIVING UP gain,
+         * sitting under a bar telling the participant this rule is nearly the best at producing it.
+         *
+         * 45 is what the option actually offers: a real gain for the few patients it reaches, and
+         * no gain at all from the doses that expire. The other three values are unchanged and were
+         * checked against the same text - protecting the vulnerable 68 and reducing harm 64 are
+         * both defensible for a rule that targets an overlooked group and pushes nobody down a list.
+         *
+         * IT WAS ALSO RUNNER-UP ON THREE VALUES OF FOUR, which is a design smell on its own: an
+         * option that is second-best at almost everything gives a participant little to choose
+         * against. It is now runner-up on two.
+         *
+         * Every gate re-run after the change: all nine suites pass, and `npm run audit:rules` is
+         * clean on scenarios 1, 2 and 3.
+         */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 68,
           groupSizeSensitivity: 64,
-          gainResponsivenessSensitivity: 82,
+          gainResponsivenessSensitivity: 45,
           outcomeAggregationSensitivity: 52,
           directnessSensitivity: 41,
           contextSensitivity: 48,
           stakeholderPerspectiveShiftSensitivity: 53,
         },
         metrics: {
-          speed: 50,
-          resourceUse: 56,
-          reliability: 92,
-          durability: 66,
-          reversibility: 86,
+          speed: 22,
+          resourceUse: 34,
+          reliability: 30,
+          durability: 62,
+          reversibility: 82,
         },
       },
       {
@@ -1219,19 +1309,27 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "Nobody depends on them any more, and the rule reads that as a reason to wait",
           benefitCase: "are one of only two people who can keep the dialysis unit open",
           benefitLost: "If they are not treated the unit closes, and forty other people lose their week",
+          act: "You take the {a|20} names on the keyworker register and sign them off first, whatever their odds or their condition.",
+          parallelAct: "{w|A winch operator lifts the crew who can help work the next roof, and the rest of this one waits.}",
           consequences: {
-            soon: "Doses go to nurses and caregivers first. Most are back at work within weeks.",
-            later: "Patients with no job to return to wait another month. Some of them stop asking.",
+            soon: "20 doses go to nurses, caregivers, drivers and teachers before anybody else on the list.",
+            later: "The sickest may wait another month. Some could be beyond treating by the time their turn comes.",
           },
           parallelConsequences: {
-            soon: "The pilots, medics and engineers go first. Most are working again within weeks.",
-            later: "People with no job to go back to wait another night. Some of them stop signaling.",
+            soon: "20 places go to the people who can help get others off the next roof.",
+            later: "The ones left behind may wait for a pass that runs out of light. Some could still be there after a night in the open.",
           },
         },
-        title: "Prioritize essential workers / caregivers",
-        summary: "Give the treatment first to people others depend on (key workers, caregivers).",
-        gains: "Hospitals and key services keep running for everyone.",
-        consequence: "Protecting key workers keeps the whole health system running for the whole city. But it can push the sickest patients down the list.",
+        /* PASS B, 17 September 2026 — THE CLAIM SHRANK TO FIT THE NUMBER. The card said treating these patients keeps hospitals and key services running FOR THE WHOLE CITY, which is a very large promise to make about 20 people. It now says their wards keep the staff they need. resources 85 -> 88 survives that edit and is the honest reason for it: 20 caregivers back on shift is staff time returned to the system. durability 39 -> 44, reliability 76 -> 74, speed 90 -> 86: the register already exists, so this is fast, but not faster than a draw. */
+        method: {
+          kind: "list",
+          by: "The city's keyworker register",
+          detail: "names already on the register are treated first: nurses, caregivers, drivers and teachers.",
+        },
+        title: "Treat the 20 who others depend on",
+        summary: "Key workers first. The city's keyworker register decides, and the 20 treated are nurses, caregivers, drivers and teachers.",
+        gains: "Twenty people others rely on go back to work, and the wards and classrooms they staff keep running.",
+        consequence: "The 20 treated are back at work within weeks, and the places that depend on them keep the staff they need. But being needed at work is not the same as being ill, and the sickest of the 120 are pushed down the list.",
         givesUp: "The sickest patients, and the idea that every life counts the same.",
         moralTension: "Is it right to treat people according to how useful they are to everyone else?",
         fingerprint: {
@@ -1244,11 +1342,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           stakeholderPerspectiveShiftSensitivity: 46,
         },
         metrics: {
-          speed: 90,
-          resourceUse: 85,
-          reliability: 76,
-          durability: 39,
-          reversibility: 46,
+          speed: 86,
+          resourceUse: 88,
+          reliability: 74,
+          durability: 44,
+          reversibility: 38,
         },
       },
     ],
@@ -1784,7 +1882,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
        * rota's fuchsia and squarely in the purple the interface already uses for badges, which is
        * why it read as a repeat rather than a new thing.
        *
-       * IT IS ALSO A DIFFERENT KIND OF COLOUR, not just a sixth hue. At 52% saturation it is the
+       * IT IS ALSO A DIFFERENT KIND OF Color, not just a sixth hue. At 52% saturation it is the
        * least saturated accent in the block, and at 37% lightness among the darkest. The other five
        * are alarm colors for scenarios that are alarms. This one is cold and sober, because
        * scenario 6 is not an emergency at all - it is a quiet exercise in writing a rule. A

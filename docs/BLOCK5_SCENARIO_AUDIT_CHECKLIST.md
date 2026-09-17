@@ -595,6 +595,78 @@ The instrument is new; the defect is not.
 
 ---
 
+## 2c. WHAT AN ALLOCATION SCENARIO NEEDS THAT AN ESCAPE DOES NOT
+
+Scenarios 1 and 2 are escapes: somebody travels, and it is over in a night. Scenarios 3, 4 and 5
+hand out a short supply and nobody goes anywhere. Six things in the shared code were written for an
+escape and had to be taught the difference. **Scenarios 4 and 5 are the same shape as 3, so expect
+all six again.**
+
+| What | Escape | Allocation |
+|---|---|---|
+| `methodLabel` | "How you travel" | **"How the doses are picked"** |
+| `method.kind` | car / bus / van / foot / stay | **score / list / draw / hold** (added for scenario 3) |
+| `horizon` | Within the hour / Before midnight | **The same day / Before the next batch** |
+| `closingLine` | "the way you chose to leave" | **"the rule you chose to hand them out by"** |
+| what counts as "soon" | minutes | the same day |
+| what counts as "too far" | a week | **a year** — a month is inside the cycle |
+
+### ⚠ The time labels and the consequence text must agree
+
+Every lens prints its two consequences under time labels, and they were **hardcoded to one night**.
+Scenario 3's clock is a month, so the page said, on one line:
+
+> **Before midnight:** the people found too late may wait another month.
+
+`horizon` on `ScenarioCVRContent` fixes the directness lens. **Then it broke the context lens the
+other way**, because the parallel world is a flood rescue that is over before morning:
+
+> **Before the next batch:** the ones who cannot grip may wait for a pass that never comes.
+
+There are no batches in a flood. **The horizon belongs to the WORLD, not the scenario** — there is a
+second `horizon` on `CVRParallelWorld` for exactly this. Check both when the clocks differ.
+
+### ⚠ The closing line names an action the participant may not have taken
+
+The directness lens ends "*No list and no system decided this. You did. If it happens, it happens
+because of the way you chose to **leave**.*" Scenario 3's participant sits on an allocation team.
+They leave nowhere, and the option they picked may literally **be** a list — so the line denied the
+thing the card had just described and attributed an act they never performed. Attribution is the
+whole instrument of this lens. `closingLine` overrides it.
+
+### ⚠ The concreteness gate only sees a SINGLE digit
+
+`CONCRETE` in validate_block5.cjs is `/\b(\d|two…ten|one|month|week|day|hour|year|night|…)\b/i`.
+`\b\d\b` matches **one** digit between word boundaries, so **"20" and "120" do not satisfy it**, and
+neither does "twenty". Scenarios 1 and 2 never noticed because they say "four hours" and "nine
+groups". A scenario whose numbers are all in the twenties and hundreds must carry a **timescale**
+in every `soon` + `later` pair. "tonight", "morning" and "dawn" do not match either — `\bnight\b`
+does not fire inside "tonight".
+
+### ⚠ Re-read the FINGERPRINT after rewriting a card
+
+Pass B audits the five performance metrics. **It does not look at the four policy values**, and a
+rewritten card can end up contradicting them. Scenario 3's reserve option carried
+`gainResponsivenessSensitivity: 82` — second highest in the scenario — on the one option whose
+defining feature is that some of its doses are never used, directly under a `givesUp` line reading
+"Certainty. Fewer than 20 patients may be treated this month." Now 45.
+
+**Also watch for an option that is runner-up on three values of four.** That gives a participant
+very little to choose against, and no gate measures it.
+
+### ⚠ The vulnerability champion must not be the WORST performer
+
+No metric gate says so — G5 asks only for 3rd or worse — and `npm run validate:position` fails if it
+is. That suite builds a **protector** who deliberately takes the weakest option and checks that the
+results page reports them as having given up both values and performance. If the weakest option is
+the protector's own best fit, their departure is zero, the sentence cannot be produced, and a whole
+quadrant of the position analysis becomes unreachable for the archetype the study cares most about.
+
+**Put the champion 3rd, 4th or 5th, and make the worst performer the option furthest from a
+protector** — in scenario 3, the rule that maximizes the value a protector scores lowest.
+
+---
+
 ## 3. Two gates that bite when editing scene text
 
 - **`description` may contain no digits; `factBase` must contain some.** Numbers live in the

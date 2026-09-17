@@ -404,7 +404,16 @@ export interface OptionCVRSeed {
  * The shape an option's method takes, which picks its icon. Presentation only — nothing is scored
  * from it and nothing branches on it.
  */
-export type Block5MethodKind = "car" | "bus" | "van" | "foot" | "stay";
+/*
+ * HOW AN OPTION IS CARRIED OUT. The first five are ways of traveling, because the first two
+ * scenarios are escapes. The last four are ways of CHOOSING, added 17 September 2026 for the
+ * allocation scenarios, where nobody goes anywhere and the method is how the short supply is
+ * handed out: by a number you calculate, by working down a list, by a draw, or by holding some
+ * back. Scenario 3's own label is "How the doses are picked" rather than "How you travel".
+ */
+export type Block5MethodKind =
+  | "car" | "bus" | "van" | "foot" | "stay"
+  | "score" | "list" | "draw" | "hold";
 
 /**
  * HOW THIS OPTION IS ACTUALLY CARRIED OUT.

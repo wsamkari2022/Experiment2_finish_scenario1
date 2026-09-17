@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse } from "react-icons/lu";
+import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
@@ -259,6 +259,11 @@ const METHOD_ICON: Record<Block5MethodKind, ReactNode> = {
   van: <LuTruck />,
   foot: <LuFootprints />,
   stay: <LuHouse />,
+  /* The allocation scenarios: nobody travels, so the icon shows how the choosing is done. */
+  score: <LuGauge />,
+  list: <LuListOrdered />,
+  draw: <LuShuffle />,
+  hold: <LuLock />,
 };
 
 const VALUE_NAME: Record<Block5PolicyDimKey, string> = {
@@ -589,7 +594,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * has to stay still while the thing being measured moves.
    *
    * (The alignment tier above DOES follow the live profile. That is intended — the tier is a
-   * running judgement, the ordering is a fixed frame. Keeping them on different clocks is what
+   * running judgment, the ordering is a fixed frame. Keeping them on different clocks is what
    * lets the analysis ask whether the two came apart.)
    */
   const decisionProfile = useMemo<DecisionProfile>(
@@ -708,7 +713,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * THE SCENARIO-6 INTERACTION LOG.
    *
    * A ref rather than state on purpose: every entry is an observation, nothing on screen depends on
-   * it, and putting it in state would re-render the page on each keystroke of behaviour we record.
+   * it, and putting it in state would re-render the page on each keystroke of behavior we record.
    *
    * It is kept separate from the shared `telRef` telemetry because those fields are defined for all
    * six scenarios and mean the same thing in each; these exist only where there is a guess to be on
@@ -2376,7 +2381,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
       /* UPDATES WITH EACH SCENARIO, not "fills in as you choose". "As you choose" describes
          something happening while the participant browses, which is exactly what Preview impact
          does and exactly what this number does NOT do: it moves once per scenario, when a choice
-         is confirmed. The old wording promised the behaviour of the other control. */
+         is confirmed. The old wording promised the behavior of the other control. */
       ? "Your cumulative performance — starts at 0, updates with each scenario"
       : `Your cumulative performance — average of ${completedCount} scenario${completedCount > 1 ? "s" : ""} so far`;
 
@@ -2707,7 +2712,7 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
         <HStack align="start" gap="3" minW="0" flex="1">
           {explanation && showPerformance && (
             /* The planner's position. Deliberately NOT merged with the alignment tier beside it:
-               a participant must be able to see a card labelled "Aligned" sitting at rank 4.
+               a participant must be able to see a card labeled "Aligned" sitting at rank 4.
 
                ABSENT IN SCENARIO 6. Those four rules are shuffled, so a number beside them would be
                read as a ranking that does not exist - and worse, as a ranking the MPF is about to
@@ -3484,7 +3489,7 @@ function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onLensShown,
         {/*
           The mark for this step, so the feedback question that asks about it later can carry the
           same one. The participant is never told the acronym; they are given something to
-          recognise. See MethodLogo.
+          recognize. See MethodLogo.
         */}
         <MethodLogo method="cvr" />
         {/* Top-right control: Skip (during the first reveal) → Generate the other view → switch toggle. */}
@@ -3638,7 +3643,7 @@ function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onLensShown,
       {/* The color key that used to sit here is gone along with the verdict badge. It named the
           highlight colors, and one of the things it named was the framing — the very thing this
           page is asking the participant to notice for themselves. The highlights stay in the
-          prose, where they do their work without being labelled. */}
+          prose, where they do their work without being labeled. */}
 
       {showButtons && (
         <HStack gap="3" wrap="wrap" animationName="fade-in" animationDuration="moderate">

@@ -38,6 +38,14 @@ interface CVRParallelWorld {
   register: CVRRegister;
   /** the opening lines that set the scene, with the same shape of scarcity. */
   setting: string;
+  /**
+   * THE TWO TIME LABELS FOR THIS WORLD, when its clock is not the default one night.
+   *
+   * The scenario's own `horizon` must not be used here. Scenario 3 hands out a month's supply and
+   * labels its consequences "Before the next batch"; its parallel is a flood rescue that is over
+   * before morning, and a batch means nothing there. Each world is labeled by its own clock.
+   */
+  horizon?: { soon: string; later: string };
   /** what each of the four values looks like THERE — same meaning, that world's nouns. */
   valuePhrase: Record<Block5PolicyDimKey, string>;
   /**
@@ -67,6 +75,30 @@ interface ScenarioCVRContent {
   register?: CVRRegister;
   /** the impersonal agent the DIRECTNESS lens contrasts the participant against. */
   impersonalAgent?: string;
+  /**
+   * THE TWO TIME LABELS THE CONSEQUENCES SIT UNDER, when this scenario's clock is not one night.
+   *
+   * Defaults to "Within the hour" / "Before midnight", which is right for an escape and wrong for
+   * an allocation: scenario 3 hands out a month's supply, and its real cost is the wait for the
+   * next batch. A consequence reading "may wait another month" under a label reading "Before
+   * midnight" contradicts itself on one line.
+   *
+   * The rule this serves is unchanged: a consequence must sit inside the scenario's own decision
+   * cycle, near enough that a reader joins it to the choice. Only the length of that cycle differs.
+   */
+  horizon?: { soon: string; later: string };
+  /**
+   * THE DIRECTNESS LENS'S CLOSING LINE, when "the way you chose to leave" is the wrong verb.
+   *
+   * The default denies that a list or a system decided, and attributes the choice to the
+   * participant's own departure. That is exactly right for an escape and wrong twice over for an
+   * allocation: nobody leaves, and the option the participant picked may literally BE a list.
+   *
+   * Attribution is what this lens measures, so the sentence has to name something they actually
+   * did. Whatever a scenario supplies here must still put the attribution LAST - see the note in
+   * buildLens on why attribution before the content is an accusation and after it is a fact.
+   */
+  closingLine?: string;
   /** the equally-serious second setting the CONTEXT lens moves the same rule into. */
   parallel?: CVRParallelWorld;
 }
@@ -121,14 +153,48 @@ const VOICE: Record<SalienceWho, VoiceLevel> = {
 const CANCER: ScenarioCVRContent = {
   register: "life_and_death",
   impersonalAgent: "the hospital's scheduling system",
+  /* A month's supply, and no more for a month. See `horizon` on ScenarioCVRContent. */
+  horizon: { soon: "The same day", later: "Before the next batch" },
+  closingLine:
+    "{f|No register and no scoring system decided this.} {b|You did.} If it happens, it happens "
+    + "because of the rule you chose to hand them out by.",
+  /*
+   * ───────────────────────────────────────────────────────────────────────────────
+   * THE PARALLEL WORLD IS A FLOOD RESCUE, AND IT WAS ALREADY RIGHT.
+   *
+   * Twenty places on the last helicopter against twenty doses; a hundred and twenty people on the
+   * rooftops against a hundred and twenty eligible patients. Whoever wrote it had already solved
+   * the hard part - it is a life-and-death shortage of exactly the same shape, and it is NOT A
+   * HOSPITAL, which matters more here than anywhere else in the deck because scenario 3 IS one.
+   *
+   * WHAT PASS E ADDED, 17 September 2026: the numbers now carry {a|...} on both sides, the third
+   * and fourth facts of the scenario have partners here (one month before more supply becomes one
+   * more pass before the water is too high; a dose with a date on it becomes a winch that can only
+   * lift so many times), and every option has an authored act rather than the generic fallback.
+   *
+   * THE MARKING IS WHAT DOES THE WORK THE BANNED WORD "SAME" USED TO DO. Twenty and a hundred and
+   * twenty light up in the color the participant has been reading on their own situation box, and
+   * the recognition is theirs to have or to miss. That is part of what the lens measures.
+   * ───────────────────────────────────────────────────────────────────────────────
+   */
   parallel: {
     register: "life_and_death",
     setting:
-      "Twenty places on the last helicopter off the flooded rooftops. A hundred and twenty people still up there, and the water still rising.",
+      "The water is still rising, and one helicopter is coming back for a last run. {a|Twenty} places on it. {a|A hundred and twenty} people are still on the rooftops. {a|One} more pass before the water is too high to hover. {a|One} winch, with only so many lifts left in it.",
+    mirror: [
+      { here: "{a|20} doses this month",
+        there: "{a|Twenty} places on the last helicopter" },
+      { here: "About {a|120} eligible patients",
+        there: "{a|A hundred and twenty} people still on the rooftops" },
+      { here: "{a|One} month before any further supply",
+        there: "{a|One} more pass before the water is too high" },
+      { here: "{a|One} batch of doses, with a date on them",
+        there: "{a|One} winch, with only so many lifts left in it" },
+    ],
     valuePhrase: {
-      vulnerabilityProtectionSensitivity: "the people who most need lifting",
-      groupSizeSensitivity: "much of the larger crowd who could be lifted",
-      gainResponsivenessSensitivity: "the people the crew could have carried most easily",
+      vulnerabilityProtectionSensitivity: "the people on those roofs who most need lifting",
+      groupSizeSensitivity: "much of the larger crowd up there who could have been lifted",
+      gainResponsivenessSensitivity: "the good one place on that helicopter could have done for somebody else",
       outcomeAggregationSensitivity: "the greater number those twenty places could have carried",
     },
   },
@@ -263,7 +329,7 @@ const WILDFIRE: ScenarioCVRContent = {
    * having to explain it. A cargo ship has a crew and no class structure to mirror.
    *
    * NOT THE TITANIC, DELIBERATELY. The researcher named it as an example of scale and it is the
-   * right scale. It is the wrong ship. A participant who recognises the Titanic brings a century of
+   * right scale. It is the wrong ship. A participant who recognizes the Titanic brings a century of
    * script with them - women and children first, the locked gates, the band - and that script does
    * the persuading instead of the structure doing it. Worse, it arrives with a verdict on the class
    * question already reached, which is the exact variable this lens exists to put in front of them
@@ -564,10 +630,11 @@ function buildLens(
         : p
           ? `${p.setting} A rule decides there too — it ${rule}.`
           : `A shortage of the very same shape, somewhere else entirely, where a rule would ${rule}.`,
+      /* THE PARALLEL WORLD'S OWN CLOCK, never the scenario's - see `horizon` on CVRParallelWorld. */
       points: pc
         ? [
-            { label: "Within the hour", text: `{b|${pc.soon}}` },
-            { label: "Before midnight", text: `{v|${pc.later}}` },
+            { label: p?.horizon?.soon ?? "Within the hour", text: `{b|${pc.soon}}` },
+            { label: p?.horizon?.later ?? "Before midnight", text: `{v|${pc.later}}` },
           ]
         : undefined,
       /*
@@ -615,17 +682,17 @@ function buildLens(
         + "shown when you picked it.",
     points: cons
       ? [
-          { label: "Within the hour", text: `{b|${cons.soon}}` },
-          { label: "Before midnight", text: `{v|${cons.later}}` },
+          { label: c.horizon?.soon ?? "Within the hour", text: `{b|${cons.soon}}` },
+          { label: c.horizon?.later ?? "Before midnight", text: `{v|${cons.later}}` },
         ]
       : undefined,
     /*
      * ATTRIBUTION LAST, NEVER FIRST. Attribution before the content is an accusation the reader
      * braces against; attribution after it is a fact they can check against what they just read.
      */
-    prompt:
-      "{f|No list and no system decided this.} {b|You did.} If it happens, it happens because of "
-      + "the way you chose to leave.",
+    prompt: c.closingLine
+      ?? "{f|No list and no system decided this.} {b|You did.} If it happens, it happens because of "
+         + "the way you chose to leave.",
   };
 }
 
@@ -633,7 +700,7 @@ function buildLens(
  * The two worlds side by side, or nothing when this scenario has not been given a mirror.
  *
  * Only scenarios whose CONTEXT lens has been rewritten carry one. The APA table simply does not
- * render for the others, which is the correct behaviour rather than a gap: a scenario with no
+ * render for the others, which is the correct behavior rather than a gap: a scenario with no
  * authored mirror has no second world worth tabulating.
  */
 export function getCVRMirror(scenario: Block5Scenario): { here: string; there: string }[] {

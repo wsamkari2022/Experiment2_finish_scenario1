@@ -58,7 +58,10 @@ for (const SCEN of WITH_LENSES) {
     }),
   }));
   const whole = (L) =>
-    [strip(L.heading), strip(L.body), ...(L.points || []).map((p) => strip(p.text)), strip(L.prompt || "")].join(" ");
+    /* JOINED WITH A PERIOD, not a space: the heading has no full stop of its own, so a space glued
+       it onto the body's first sentence and R8 measured a 27-word sentence nobody ever reads. */
+    [strip(L.heading), strip(L.body), ...(L.points || []).map((p) => strip(p.text)), strip(L.prompt || "")]
+      .filter(Boolean).join(". ");
 
   let fails = 0;
   const ok = (name, cond, detail) => {
@@ -82,7 +85,19 @@ for (const SCEN of WITH_LENSES) {
 
   /* R2 — nothing happens more than 24 hours out. A span in the PAST is backstory, not a
      consequence: "he has been on home oxygen for two years" explains why he needs the mask. */
-  const FAR = /\b(month|months|week|weeks|year|years|winter|spring|summer|season|fortnight)\b/i;
+  /*
+   * THE HORIZON IS THE SCENARIO'S OWN DECISION CYCLE, not a fixed 24 hours.
+   *
+   * The rule is that a consequence must land near enough for a reader to join it to the choice.
+   * For an escape that is the night, and anything in weeks or months broke it. For an ALLOCATION
+   * the cycle is the month before more supply arrives, and the cost of being passed over IS the
+   * wait for the next batch - so a month is inside the cycle there, and a year is still outside it.
+   * The lens labels move with it: see `horizon` in block5CVRContent.ts.
+   */
+  const MONTHLY = SCEN.options.some((o) => /dose|visit|round/i.test(o.summary || ""));
+  const FAR = MONTHLY
+    ? /\b(years|year|winter|spring|summer|season)\b/i
+    : /\b(month|months|week|weeks|year|years|winter|spring|summer|season|fortnight)\b/i;
   const far = [];
   for (const { o, pair } of lenses) for (const f of ["context", "directness"]) {
     for (const p of pair[f].points || []) {
@@ -103,6 +118,11 @@ for (const SCEN of WITH_LENSES) {
       car: /\bcar\b|\bdrive|\bdriving\b/i, bus: /\bbus\b|\bboat\b|\bhoist\b/i,
       van: /\bminibus\b|\bvan\b/i, foot: /\bwalk|\bfoot|\bclimb|\bpath\b|\bladder\b/i,
       stay: /\bstay|\btape|\binside\b/i,
+      /* The allocation scenarios, where the method is how the short supply is handed out. */
+      score: /\bscore|\brank|\bmodel|\bodds\b/i,
+      list: /\blist\b|\bregister\b|\bsort|\bworked down/i,
+      draw: /\bdraw\b|\bdrawn\b|\blottery\b|\bslip/i,
+      hold: /\bhold|\bheld\b|\bkept\b|\breserv/i,
     }[kind];
     if (!words) { noMethod.push(o.id + " (no method on the card)"); continue; }
     if (!words.test(strip(pair.directness.body))) noMethod.push(o.id + "/directness");
@@ -143,12 +163,12 @@ for (const SCEN of WITH_LENSES) {
   ok("R6  only directness closes on a line", closes.length === 0,
      closes.join("; ") || "context ends on its last consequence");
 
-  /* R7 — the whole parallel sentence carries the person colour, and markup does not nest. */
-  const colour = SCEN.options
+  /* R7 — the whole parallel sentence carries the person color, and markup does not nest. */
+  const color = SCEN.options
     .filter((o) => { const s = (o.cvrSeed || {}).parallelAct; return !s || !/^\{w\|[^{}]*\}$/.test(s); })
     .map((o) => o.id);
-  ok("R7  every parallel sentence is one whole {w|...}", colour.length === 0,
-     colour.join(", ") || "6 of 6, and no nested markup");
+  ok("R7  every parallel sentence is one whole {w|...}", color.length === 0,
+     color.join(", ") || "6 of 6, and no nested markup");
 
   /* R8 — participants read this in a second language. */
   let worst = 0, worstAt = "";
