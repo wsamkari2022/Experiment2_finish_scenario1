@@ -208,6 +208,36 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
      */
     id: "chemical_release_escape",
     stakePosition: "self",
+    methodLabel: "How you travel",
+    /*
+     * ─────────────────────────────────────────────────────────────────────────────────────────
+     * EVERY OPTION NAMES ITS OWN METHOD, 16 September 2026, and one fact was added to make the six
+     * of them describe a single world.
+     *
+     * WHAT THE ADVISOR HIT, reading the six in a row. The minibus option cleared "two streets of
+     * people who have no transport of their own", while the facts described a convoy list nine
+     * streets long - so who exactly has no transport? And the service-road option said "drive out"
+     * when the only vehicle named anywhere in the scenario was the minibus that a different option
+     * uses. Two questions, one cause: not one of the six said HOW the participant travels, so a
+     * reader had to infer it, and the inferences collided.
+     *
+     * THE FACT THAT RESOLVES IT: the participant has a car, and the cleared streets are closed to
+     * private cars, so the service road is the only road it may use. That one sentence does three
+     * jobs at once:
+     *
+     *   - "drive out" now plainly means the participant's own car, not the district's minibus.
+     *   - walking four hours stays rational. A car that may only go one way - past a leaking
+     *     chlorine tanker, single-track, no turning back - is not a free pass out. Without this
+     *     sentence, owning a car and choosing to walk would look absurd.
+     *   - "no transport of their own" becomes sayable: those two streets have no car AND their
+     *     convoy slot is hours off. The line now says that instead.
+     *
+     * NOT ONE PERFORMANCE NUMBER MOVED, and that was a condition rather than a coincidence. A
+     * private car takes nothing from the shared pool, which is exactly what the service road's
+     * resources-spared score of 84 already assumed. Had the answer instead been that the service
+     * road uses the minibus, the whole column audited the day before would have had to be redone.
+     * ─────────────────────────────────────────────────────────────────────────────────────────
+     */
     factBase:
       /*
         TWO FIXES HERE, BOTH ON THE ADVISOR'S INSTRUCTION, 16 September 2026.
@@ -225,7 +255,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         reads for a moment as somewhere to get out inside of. The preposition was doing time, not
         space, and within cannot be misread that way.
       */
-      "You have 6 hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long, and one service road running past the tanker. Every option you will see gets you out within six hours. They differ only in what each one takes from the people still here.",
+      "You have 6 hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long. Your own car is outside, but the district is being cleared in timed groups and closed to private cars, so the service road past the tanker is the only road your car may use. Every option you will see gets you out within six hours. They differ only in what each one takes from the people still here.",
     role:
       /*
         THE CLOSING CLAUSE IS BACK, ON THE ADVISOR'S INSTRUCTION (15 September 2026).
@@ -292,6 +322,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Leave with the registered convoy at your assigned time",
+        method: {
+          kind: "bus",
+          by: "The convoy bus",
+          detail: "in your street's assigned slot. Your car stays parked where it is.",
+        },
         summary: "The district is being cleared street by street in timed groups. You wait for your street's slot, board with your neighbors, and go when they go.",
         gains: "You get out well inside the six hours, and nobody loses their place so that you can have yours.",
         consequence: "You reach the center in good time. You take nothing that was set aside for anyone else. But you leave when the list says, not when you want. The last hour is spent watching the plume come down the road.",
@@ -329,6 +364,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Take the sealed respirator the clinic had reserved",
+        method: {
+          kind: "foot",
+          by: "On foot, wearing the clinic's respirator",
+          detail: "straight out by the shortest street, breathing clean air the whole way.",
+        },
         summary: "One full-face respirator is left in the clinic cabinet, tagged for a patient on home oxygen. With it you can walk out through the plume immediately, by whichever route is shortest.",
         gains: "You leave right now, by the shortest way, breathing clean air the whole distance.",
         consequence: "You are clear of the district within the hour and never wait in line at all. But the mask was tagged for someone whose lungs cannot manage the walk without it, and there is not another one.",
@@ -366,6 +406,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Walk out the long way and leave the kit where it is",
+        method: {
+          kind: "foot",
+          by: "On foot, with nothing",
+          detail: "by the river path, upwind and slow. No seat, no mask, and your car left behind.",
+        },
         summary: "You take neither a shuttle seat nor the clinic's respirator. You go on foot by the river path, upwind and slow, and everything set aside for someone else stays set aside.",
         gains: "Every seat and every mask stays available for the people who cannot manage without them.",
         consequence: "Nothing set aside for someone who needs it is touched. But the river path takes four hours on foot. You breathe the edge of the plume the whole way, and you arrive last.",
@@ -403,8 +448,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Drive the community shuttle for two loops before you go",
-        summary: "The district minibus has no driver. You can drive it, clear two streets of people who have no transport of their own, and leave on the third run.",
-        gains: "Two full streets of people who had no way out are clear of the district because you drove.",
+        method: {
+          kind: "van",
+          by: "The district minibus, with you driving",
+          detail: "two loops carrying other people out, and you leave on the third.",
+        },
+        summary: "The district minibus has no driver. You can drive it, clear two streets whose convoy slot is hours away and who have no car between them, and leave on the third run.",
+        gains: "Two full streets of people who would still be waiting for their slot are clear of the district because you drove.",
         consequence: "You get more people out than any other option here manages. But you are still inside the district when the plume arrives, and the third loop is the one you are on.",
         givesUp: "Your own margin of safety. Every person you carry out is another loop you spend breathing the district's air.",
         moralTension: "How many strangers is one more hour of your own exposure worth?",
@@ -440,6 +490,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Seal your apartment and shelter until the plume passes",
+        method: {
+          kind: "stay",
+          by: "You do not travel at all",
+          detail: "you stay in your own apartment and let the plume pass over you.",
+        },
         summary: "Tape the doors, wet towels along the gaps, and stay put. Nothing is taken from anyone, nobody is moved out of their place, and no seat, road or mask is used.",
         gains: "You take absolutely nothing from anyone — no seat, no mask, no road, no crew time.",
         consequence: "Not one other person is worse off for what you chose, and you can still leave later if the wind turns. But you spend the night inside a plume with tape on the doors.",
@@ -477,7 +532,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Drive out on the industrial service road",
-        summary: "The freight yard's service road runs upwind and is standing empty. It is the fastest way out for anyone who uses it, and word spreads the moment the first vehicle goes down it.",
+        method: {
+          kind: "car",
+          by: "Your own car",
+          detail: "down the freight yard's service road, the only road a private car may use today.",
+        },
+        summary: "You take your own car. The freight yard's service road runs upwind and is standing empty, and it is the only road a private car is allowed on today. It is the fastest way out for anyone who uses it, and word spreads the moment the first vehicle goes down it.",
         gains: "The fastest clear route out of the district, and once you have opened it the streets behind you follow.",
         consequence: "You are out in twenty minutes and so is everyone behind you. But the road runs past the split tanker itself, and once you are committed to it there is no turning round.",
         givesUp: "Any chance to change your mind. It is single-track past the yard and it passes closer to the tanker than any other route here.",
@@ -1490,7 +1550,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
    *
    * The first five scenarios ask what the participant would do. This one asks what rule they would
    * set before knowing which person in the situation they will be, then shows them what the model
-   * expected and measures whether they recognise themselves in it.
+   * expected and measures whether they recognize themselves in it.
    *
    * THE SCENE IS A POWER CUT AFTER A STORM, and that is a deliberate choice of subject. Everyone
    * has lived through one, so nothing has to be explained before the moral question can start. All
@@ -1545,24 +1605,24 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       "A big storm has torn down the electricity lines across the city. Only one repair crew is available, and they cannot get everywhere before help arrives from elsewhere. So the city must decide in advance which streets come first. Once that decision is made, it cannot be changed.",
     theme: {
       /*
-       * STEEL INDIGO — the one colour in Block 5 that belongs to nothing else, chosen by measuring
+       * STEEL INDIGO — the one color in Block 5 that belongs to nothing else, chosen by measuring
        * rather than by taste.
        *
        * The five emergency scenarios sit at hues 0, 21, 68, 175 and 293. That leaves two real gaps
        * on the wheel: 68 to 175, which is green, and 175 to 293, which is blue.
        *
-       * Green is out. It is the app's "go" colour - every commit button in the study is green - and
+       * Green is out. It is the app's "go" color - every commit button in the study is green - and
        * a scenario themed in it would compete with the one control the participant must never
        * misread.
        *
-       * So the blue gap, and its centre. This accent sits at hue 221, a full 46 degrees from the
-       * nearest scenario colour. The violet it replaces sat at 262, only 31 degrees from the care
+       * So the blue gap, and its center. This accent sits at hue 221, a full 46 degrees from the
+       * nearest scenario color. The violet it replaces sat at 262, only 31 degrees from the care
        * rota's fuchsia and squarely in the purple the interface already uses for badges, which is
        * why it read as a repeat rather than a new thing.
        *
        * IT IS ALSO A DIFFERENT KIND OF COLOUR, not just a sixth hue. At 52% saturation it is the
        * least saturated accent in the block, and at 37% lightness among the darkest. The other five
-       * are alarm colours for scenarios that are alarms. This one is cold and sober, because
+       * are alarm colors for scenarios that are alarms. This one is cold and sober, because
        * scenario 6 is not an emergency at all - it is a quiet exercise in writing a rule. A
        * participant should feel the change of register before they read a word.
        */

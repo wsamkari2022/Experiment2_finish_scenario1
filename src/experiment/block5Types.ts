@@ -386,10 +386,44 @@ export interface OptionCVRSeed {
   parallelRule?: string;
 }
 
+/**
+ * The shape an option's method takes, which picks its icon. Presentation only — nothing is scored
+ * from it and nothing branches on it.
+ */
+export type Block5MethodKind = "car" | "bus" | "van" | "foot" | "stay";
+
+/**
+ * HOW THIS OPTION IS ACTUALLY CARRIED OUT.
+ *
+ * WHY IT EXISTS. Reading scenario 1's six options in a row, the advisor hit two questions the cards
+ * could not answer: one option cleared "two streets of people who have no transport of their own"
+ * while another described a convoy list nine streets long (so who has transport?), and one option
+ * said "drive out" while the facts named exactly one vehicle in the whole district — the minibus
+ * somebody else's option uses. Neither was a wrong number; both were the same missing fact. Not one
+ * of the six said HOW the participant travels, so a reader had to infer it, and two of the
+ * inferences collided.
+ *
+ * Six options that each name their own method cannot contradict each other about the world. It is
+ * the cheapest possible way to keep a scenario coherent as options are edited over time.
+ *
+ * `by` is the method itself and is the part that gets emphasis on the card. `detail` is the
+ * qualifying clause. Splitting them means the card can style the important half without a markup
+ * parser, and means nobody can bury the vehicle mid-sentence.
+ */
+export interface Block5OptionMethod {
+  kind: Block5MethodKind;
+  /** The method in as few words as possible: "Your own car", "On foot". */
+  by: string;
+  /** The qualifying clause: which route, what it costs, what stays behind. */
+  detail: string;
+}
+
 export interface Block5ScenarioOption {
   id: string;
   title: string;
   summary: string;
+  /** See Block5OptionMethod. Optional so scenarios that have not been given methods still build. */
+  method?: Block5OptionMethod;
   fingerprint: Block5OptionFingerprint;
   /**
    * The five performance metrics for this option. REQUIRED, deliberately: the previous
@@ -550,6 +584,13 @@ export interface Block5Scenario {
    * mid-sentence. A validator now enforces the split (numbers appear here, not there).
    */
   factBase?: string;
+  /**
+   * The heading over each option's method box, in this scenario's own language.
+   *
+   * "How you travel" is right for an evacuation and wrong for a treatment rota, so it is authored
+   * per scenario rather than hard-coded on the card. Absent means the box is not shown at all.
+   */
+  methodLabel?: string;
   /**
    * WHO THE PARTICIPANT IS in this scene, and who carries the cost of what they decide.
    *

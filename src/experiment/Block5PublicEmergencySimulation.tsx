@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2 } from "react-icons/lu";
+import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
@@ -63,6 +63,7 @@ import {
   type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
   type CVRFraming, type FramingAdjust, type StakePosition,
   BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
+  type Block5MethodKind,
 } from "./block5Types";
 import { plannerRank, type PlannerResult } from "./block5Planner";
 import { deriveDecisionProfile, type DecisionProfile } from "./block5Thresholds";
@@ -245,6 +246,19 @@ function renderCVRMarkup(text: string, marks: MarkSet): ReactNode[] {
   if (last < text.length) nodes.push(text.slice(last));
   return nodes;
 }
+
+/**
+ * One icon per method, so a participant scanning six cards can tell them apart before reading a
+ * word. The kinds are a closed union, so adding one to the type without an icon here is a compile
+ * error rather than a blank square on a card.
+ */
+const METHOD_ICON: Record<Block5MethodKind, ReactNode> = {
+  car: <LuCar />,
+  bus: <LuBus />,
+  van: <LuTruck />,
+  foot: <LuFootprints />,
+  stay: <LuHouse />,
+};
 
 const VALUE_NAME: Record<Block5PolicyDimKey, string> = {
   vulnerabilityProtectionSensitivity: "Protecting the vulnerable",
@@ -1784,6 +1798,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   explanation={ex ?? null}
                   standing={standings[opt.id] ?? null}
                   scenarioId={scenario.id}
+                  methodLabel={scenario.methodLabel}
                   copy={decisionCopy}
                   expanded={openOptionId === opt.id} onToggle={() => toggleExpand(opt.id)}
                   /* Every card stops hinting the moment ANY of them has been opened. */
@@ -2595,8 +2610,10 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
 
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance }: {
+function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, methodLabel, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance }: {
   option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
+  /** The scenario's own heading for the method box ("How you travel"). Absent hides the box. */
+  methodLabel?: string;
   /** Planner state for this card, or null before the planner has run. */
   explanation: CardExplanation | null;
   /** Where this option's five metrics sit inside the range its scenario offers. */
@@ -2686,6 +2703,45 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
           <VStack align="start" gap="1" minW="0" flex="1">
             <Text color={pal.text} fontWeight="semibold" fontSize="md" lineHeight="short">{option.title}</Text>
             <Text color={pal.textMuted} fontSize="sm" lineHeight="tall">{option.summary}</Text>
+
+            {/*
+              HOW THIS OPTION IS ACTUALLY CARRIED OUT — see Block5OptionMethod in block5Types.ts for
+              the reading that produced it.
+
+              IT SITS DIRECTLY UNDER THE SUMMARY, above the trade-off, because it is part of what
+              the option IS rather than part of what it costs. A participant comparing two cards is
+              comparing two methods first and two trade-offs second.
+
+              THE METHOD ITSELF CARRIES THE EMPHASIS and the qualifying clause does not. On a page
+              of six cards the one word that has to survive a skim is the vehicle.
+            */}
+            {methodLabel && option.method && (
+              <HStack
+                gap="2.5" align="start" mt="0.5" px="3" py="2" rounded="lg"
+                borderWidth="1px" borderLeftWidth="3px"
+                style={{
+                  background: `${accent}12`,
+                  borderColor: `${accent}33`,
+                  borderLeftColor: accent,
+                }}
+              >
+                <Center boxSize="5" minW="5" rounded="md" flexShrink={0} mt="0.5"
+                  style={{ background: accent, color: onAccentText(accent) }}>
+                  <Icon boxSize="3">{METHOD_ICON[option.method.kind]}</Icon>
+                </Center>
+                <Box minW="0">
+                  <Text fontSize="2xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+                    color={pal.textMuted} mb="0.5">
+                    {methodLabel}
+                  </Text>
+                  <Text fontSize="sm" color={pal.textMuted} lineHeight="tall">
+                    <Text as="span" fontWeight="bold" color={pal.text}>{option.method.by}</Text>
+                    {" — "}
+                    {option.method.detail}
+                  </Text>
+                </Box>
+              </HStack>
+            )}
           </VStack>
         </HStack>
         {/*
