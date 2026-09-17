@@ -144,7 +144,14 @@ export const ALIGNMENT_RANK_RULE = { aligned: 1, weaklyAligned: 1 } as const;
  *      cross-scenario ambiguity the readings below exist to prevent.
  * The five that remain keep the same referent in all five scenarios.
  *
- * HIGHER IS ALWAYS BETTER, on every metric. "Resource use 85" means it uses LITTLE.
+ * HIGHER IS ALWAYS BETTER, on every metric. "Resources spared 85" means it leaves a lot of the
+ * limited supply for other people.
+ *
+ * THAT METRIC IS NAMED FOR WHAT IS LEFT, NOT FOR WHAT IS TAKEN, and it was renamed on 16 September
+ * 2026 for that reason. It read "Resource use", and every other metric on the page rewards a high
+ * number, so a participant who trusted the rule read "Resource use 85" as "uses a great deal" and
+ * inverted the only metric on the dashboard that can be inverted. A definition underneath fixed it
+ * for whoever read the definition. The name now agrees with the direction on its own.
  *
  * SCORES ARE RELATIVE TO THE SITUATION, NOT ABSOLUTE
  * --------------------------------------------------
@@ -219,16 +226,21 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
     },
   },
   resourceUse: {
+    /*
+     * THE KEY STAYS `resourceUse`. Only the words a participant reads changed. Every stored record,
+     * every metric profile in the database and every analysis written against them keeps working,
+     * which is the whole point of renaming the label rather than the field.
+     */
     key: "resourceUse",
-    label: "Resource use",
-    invariant: "How little of the limited supply the option consumes. Higher means leaner.",
-    hover: "How little of the limited supply this uses — higher means leaner.",
+    label: "Resources spared",
+    invariant: "How much of the limited supply the option leaves for other people. Higher means less of it was used.",
+    hover: "How much of the limited supply this leaves for other people — higher means less of it was used.",
     readings: {
-      chemical_release_escape: "how little of the shuttle, the clinic stock and the crews it uses",
-      wildfire_household_evacuation: "how little road capacity, fuel and crew time it ties up",
-      cancer_treatment_allocation: "how little of the 20 doses and staff time it wastes",
-      care_rota_reduction: "how little of the remaining caregiver-hours and budget it wastes",
-      care_rota_receiving: "how little of the remaining caregiver-hours and budget it wastes",
+      chemical_release_escape: "how much of the shuttle, the clinic stock and the crews it leaves for other people",
+      wildfire_household_evacuation: "how much road capacity, fuel and crew time it leaves for other households",
+      cancer_treatment_allocation: "how much of the 20 doses and staff time it leaves for other patients",
+      care_rota_reduction: "how much of the remaining caregiver-hours and budget it leaves in place",
+      care_rota_receiving: "how much of the remaining caregiver-hours and budget it leaves in place",
     },
   },
   reliability: {

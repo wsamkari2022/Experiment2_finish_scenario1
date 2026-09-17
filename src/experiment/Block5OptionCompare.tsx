@@ -56,7 +56,7 @@ import {
  */
 const METRIC_AXIS_LABEL: Record<Block5MetricKey, string> = {
   speed: "Speed",
-  resourceUse: "Resource use",
+  resourceUse: "Resources spared",
   reliability: "Reliability",
   durability: "Durability",
   reversibility: "Reversibility",

@@ -2253,8 +2253,21 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
       return next;
     });
   }, []);
+  /*
+   * TWO EXPLANATIONS, EACH WITH ITS OWN ICON AND ITS OWN OPEN/CLOSED STATE.
+   *
+   * They used to be mutually exclusive — pressing the info button swapped one for the other — which
+   * is why they read as two unrelated things rather than as one explanation and its detail. Each is
+   * now a foldable panel that opens and closes on its own heading.
+   *
+   * BOTH START CLOSED. Their headings stay on screen either way, so what a closed panel hides is
+   * the text and never the offer — a participant can always see that an explanation of a high or
+   * low number exists, and open it the moment they want it. Two open panels on a dashboard that
+   * reappears on all six scenarios pushes the numbers they explain off the top of the page, which
+   * is the opposite of helping.
+   */
+  const [showHighLow, setShowHighLow] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [infoOpened, setInfoOpened] = useState(false); // stops the glow once the user opens the explanation
   const isPreview = !!projected;
   const display = projected ?? current;
   const overall = metricProfileScore(display);
@@ -2295,21 +2308,9 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
         <HStack gap="2">
           <Icon color={accent}>{isPreview ? <LuEye /> : <LuGauge />}</Icon>
           <Text fontSize="xs" fontWeight="bold" color={pal.dashTitleColor} textTransform="uppercase" letterSpacing="wider">{label}</Text>
-          <Button
-            aria-label="How this works"
-            size="2xs"
-            variant="ghost"
-            color={infoOpened ? pal.textMuted : accent}
-            _hover={{ bg: pal.surfaceSubtle, color: pal.text }}
-            rounded="full"
-            px="1"
-            minW="auto"
-            className={infoOpened ? undefined : "vrds-glow-ring"}
-            animation={infoOpened ? undefined : "glow-ring 1.6s ease-in-out infinite"}
-            onClick={() => { setShowInfo((s) => !s); setInfoOpened(true); }}
-          >
-            <Icon boxSize="3.5"><LuInfo /></Icon>
-          </Button>
+          {/* NO INFO BUTTON HERE ANY MORE. It opened a panel that now carries its own heading and
+              its own chevron, so a second control for the same thing in the title row was one
+              control too many — and the one further from what it opened. */}
         </HStack>
         <HStack gap="2">
           {isPreview && overallDelta !== 0 && (
@@ -2329,48 +2330,158 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
         </HStack>
       </HStack>
 
-      {showInfo && (
-        <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="lg" px="4" py="3" mb="3">
-          {/*
-            THIS PANEL USED TO DESCRIBE A BLOCK THAT NO LONGER EXISTS. It said "these 8 bars" when
-            there are five, and it named the four VALUES — total benefit, fairness, protecting the
-            vulnerable — as though they were the performance measures. Those are the two things a
-            participant most needs kept apart, and the one explanation offered for the gauge was
-            running them together.
+      {/*
+        ═══════════════════════════════════════════════════════════════════════════════════════
+        THE TWO EXPLANATIONS OF THIS DASHBOARD, AS A MATCHED, FOLDABLE PAIR.
+        ═══════════════════════════════════════════════════════════════════════════════════════
 
-            It now says the three things that are actually true and are actually confusable: this
-            is a record of choices already made, the same five names inside a card are a forecast
-            for one option not yet chosen, and neither has anything to do with the alignment label.
-          */}
-          <VStack align="start" gap="2">
-            <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-              These five bars are a running record of <b>your own choices</b> — not a score for any option
-              in front of you. Each time you confirm a choice, that option's five readings are
-              <b> averaged</b> in, so the bars start at zero, fill in as you go, and can never pass 100.
-              “Preview impact” on a card shows what they <b>would become</b> if you picked it, without
-              picking it.
-            </Text>
-            <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-              The same five names appear inside each option card, under “What this option achieves”. Those
-              describe <b>one option you have not chosen</b>, placed against the other five on this table.
-              They are not your score.
-            </Text>
-            <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">
-              All of this is <b>outcome quality</b>. How well an option matches <b>your values</b> is a
-              separate thing entirely — that is the alignment label on each card.
-            </Text>
-          </VStack>
-        </Box>
-      )}
+        WHAT WAS WRONG. There were two explanations of the same five numbers and they were mutually
+        exclusive: the short one showed until you pressed an info button in the title row, and then
+        it was replaced by the long one. Only the short one had a heading. So a participant pressing
+        the button saw one block of text vanish and a different block appear, with nothing to say
+        that the second was the first one going deeper.
 
-      {!showInfo && (
+        WHAT THEY ARE NOW. Two panels, stacked, sharing a container, an accent spine and a heading
+        shape, each opening and closing on its own heading:
+
+          [dial]  What a high or low number means here   how to READ the number.
+          [info]  Where these numbers come from          the MECHANICS behind it.
+
+        BOTH START CLOSED, and both headings stay on screen either way, so a closed panel hides its
+        text and never the offer. The dashboard reappears on all six scenarios; two open panels of
+        explanation above the numbers they explain is the opposite of helping.
+
+        The info mark is the same icon that used to sit in the title row, so the control a
+        participant learned is still the control - it has just moved onto the thing it opens.
+        ═══════════════════════════════════════════════════════════════════════════════════════
+      */}
+      {isPreview ? (
         <Text fontSize="xs" color={pal.textFaint} mb="3" lineHeight="tall">
-          {isPreview
-            ? "Preview only — your choice isn't saved until you confirm it."
-            : completedCount === 0
-              ? "This is the average outcome quality of the policies you choose. Each measure says what it means for this scenario."
-              : "Average across the scenarios you've completed. Each measure says what it means for this scenario."}
+          Preview only — your choice isn&apos;t saved until you confirm it.
         </Text>
+      ) : (
+        <VStack align="stretch" gap="2" mb="3">
+          {/* ---- 1 - how to read the number ------------------------------------------------ */}
+          <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder}
+            borderLeftWidth="4px" rounded="lg" px={{ base: "3.5", md: "4" }} py="2.5"
+            style={{ borderLeftColor: accent }}>
+            <CollapsibleHeader
+              open={showHighLow} onToggle={() => setShowHighLow((s) => !s)} px="0" py="0"
+            >
+              <Icon color={accent} boxSize="3.5"><LuGauge /></Icon>
+              <Text fontSize="2xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+                color={pal.textMuted}>
+                What a high or low number means here
+              </Text>
+            </CollapsibleHeader>
+            {showHighLow && (
+              <Box mt="2.5">
+                {/*
+                  WHY THIS IS PHRASED SO CAREFULLY. The honest reading of a high number is that the
+                  options this participant kept choosing scored well on that measure. It is NOT a
+                  claim about what they consciously intended: somebody can finish the block with a
+                  high speed score having never once thought about speed. The copy describes the
+                  pattern in the choices and stops there.
+
+                  THE SECOND PARAGRAPH IS NOT DECORATION. Telling somebody mid-block that these five
+                  are a picture of what has been mattering to them is a mirror, and a mirror invites
+                  tidying: a participant who reads a low bar as a gap in themselves starts choosing
+                  to fill it, and the block stops measuring what they value and starts measuring
+                  what they think looks balanced. Saying plainly that no shape is the right one is
+                  what keeps an explanation from becoming an instruction.
+
+                  THE COLORS ARE THE PAIR USED EVERYWHERE ELSE IN THE BLOCK: green for what an
+                  option achieves, red for what it gives up - the same two on every card's trade-off
+                  panel and under the radar charts.
+                */}
+                <Text fontSize="xs" color={pal.text} lineHeight="tall">
+                  {completedCount === 0
+                    ? "These five are empty until you confirm your first choice. After that they are the average of every option you have confirmed. "
+                    : "These five are the average of every option you have already confirmed. "}
+                  <Text as="span" fontWeight="bold" color={pal.gainColor}>A high number</Text> means
+                  the options you kept choosing scored well on that measure.{" "}
+                  <Text as="span" fontWeight="bold" color={pal.costColor}>A low number</Text> means
+                  you kept choosing options that gave it up to get something else. Together they are
+                  a picture of{" "}
+                  <Text as="span" fontWeight="bold" color={pal.text}>
+                    what has been weighing most in your decisions across the whole block
+                  </Text>
+                  {" "}— not a mark on this situation.
+                </Text>
+                <Text fontSize="xs" color={pal.textMuted} lineHeight="tall" mt="2">
+                  <Text as="span" fontWeight="bold" color={pal.text}>No shape is the right one</Text>,
+                  and there is nothing here to even out. Someone who always takes the fastest way out
+                  and someone who always takes the one they can undo are both answering honestly.
+                </Text>
+              </Box>
+            )}
+          </Box>
+
+          {/* ---- 2 - where the number comes from -------------------------------------------- */}
+          <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder}
+            borderLeftWidth="4px" rounded="lg" px={{ base: "3.5", md: "4" }} py="2.5"
+            style={{ borderLeftColor: accent }}>
+            {/* NO GLOW, on the researcher's instruction. Both panels carry a heading, an icon and a
+                chevron sitting directly above the numbers they explain, which is affordance enough
+                — and a control that breathes on a dashboard the participant meets on every one of
+                six scenarios is nagging rather than helping. The `infoOpened` flag that used to stop
+                the glow after the first open went with it; it fed nothing else. */}
+            <CollapsibleHeader
+              open={showInfo}
+              onToggle={() => setShowInfo((s) => !s)}
+              px="0" py="0"
+            >
+              <Icon color={accent} boxSize="3.5"><LuInfo /></Icon>
+              <Text fontSize="2xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+                color={pal.textMuted}>
+                Where these numbers come from
+              </Text>
+            </CollapsibleHeader>
+            {showInfo && (
+              <VStack align="start" gap="2" mt="2.5">
+                {/*
+                  THIS PANEL ONCE DESCRIBED A BLOCK THAT NO LONGER EXISTS. It said "these 8 bars"
+                  when there are five, and it named the four VALUES as though they were the
+                  performance measures - the two things a participant most needs kept apart.
+
+                  It now says the three things that are true and are genuinely confusable: this is a
+                  record of choices already made, the same five names inside a card are a forecast
+                  for one option not yet chosen, and neither of them is about the participant's
+                  values.
+                */}
+                <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
+                  These five bars are a running record of <b>your own choices</b> — not a score for
+                  any option in front of you. Each time you confirm a choice, that option&apos;s five
+                  readings are <b>averaged</b> in, so the bars start at zero, update with each
+                  scenario, and can never pass 100. “Preview impact” on a card shows what they{" "}
+                  <b>would become</b> if you picked it, without picking it.
+                </Text>
+                <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
+                  The same five names appear inside each option card, under “What this option
+                  achieves”. Those describe <b>one option you have not chosen</b>, placed against the
+                  other five on this table. They are not your score.
+                </Text>
+                {/*
+                  IT NO LONGER POINTS AT A LABEL THAT IS NOT THERE. This sentence used to end with
+                  the alignment label on each card, and there is no alignment label on a card any
+                  more: the tier badge came off the card corner, and the last copy of it came off the
+                  compare-charts overlay on 15 September 2026. An explanation that sends a
+                  participant looking for something that does not exist is worse than no explanation,
+                  because they conclude they have missed it.
+
+                  The one place their values are still reported to them is the quiet line at the foot
+                  of an open card's values section, so that is what it names now, in the card's own
+                  words.
+                */}
+                <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">
+                  All of this is <b>outcome quality</b> — how well an option works. How well it
+                  matches <b>your values</b> is a separate thing entirely. You will find that inside
+                  an open card, on the line that reads <b>“Matches your earlier answers”</b>.
+                </Text>
+              </VStack>
+            )}
+          </Box>
+        </VStack>
       )}
 
       <Grid templateColumns={{ base: "repeat(2, 1fr)", md: "repeat(5, 1fr)" }} gap={{ base: "3", md: "4" }}>

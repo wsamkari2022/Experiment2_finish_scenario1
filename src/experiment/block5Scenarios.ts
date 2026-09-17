@@ -147,6 +147,65 @@ const MERIDIAN: Block5Employer = {
 
 export const BLOCK5_SCENARIOS: Block5Scenario[] = [
   {
+    /*
+     * ─────────────────────────────────────────────────────────────────────────────────────────
+     * THE PERFORMANCE COLUMN WAS AUDITED AGAINST THE OPTIONS' OWN TEXT, 16 September 2026.
+     *
+     * The advisor asked why sealing the apartment was not top of the resource metric when the
+     * option consumes nothing. It should have been: the gains line on that option reads "You take
+     * absolutely nothing from anyone - no seat, no mask, no road, no crew time", and the number
+     * beside it ranked it second. Reading the rest of the column the same way - what does each
+     * option's own copy say it does? - found four more places where a number contradicted the
+     * sentence printed next to it.
+     *
+     * RESOURCES SPARED, re-derived as QUANTITY OF SUPPLY CONSUMED:
+     *
+     *   seal and shelter    82 -> 97   takes nothing at all. Its own text says so.
+     *   walk out on foot    65 -> 92   "Every seat and every mask stays available."
+     *   service road        88 -> 84   takes no supply, but spends the one road for everyone else.
+     *   registered convoy   73 -> 73   one seat on shared transport. Its fair share, unchanged.
+     *   reserved respirator 57 -> 45   takes all of one small stock, and nothing else.
+     *   shuttle loop        46 -> 40   the minibus, its fuel and three runs of it. The most consumed.
+     *
+     * A FIRST PASS PUT THE RESPIRATOR AT 21 AND WAS WRONG, which is worth recording. The argument
+     * was that it takes the single irreplaceable item from a named person who cannot breathe
+     * outside air. But that is a statement about WHO the taking lands on, and this metric measures
+     * HOW MUCH is consumed. Loading the moral weight into the metric is exactly the value-into-
+     * performance contamination that G5 exists to catch, and G5 caught it: the correlation between
+     * protecting the vulnerable and performance went to 0.54 against a ceiling of 0.30. The moral
+     * weight of taking that mask is already carried by the option's fingerprint and by its givesUp
+     * line, and it does not belong here as well.
+     *
+     * SHELTERING WAS THE OPTION MOST AT ODDS WITH ITSELF, on three more numbers:
+     *
+     *   speed         48 -> 18   The scenario-1 reading is "how soon you are out of the plume, and
+     *                            how much of the six hours is left". Sheltering never gets you out
+     *                            and spends all six hours. It was scored ABOVE walking out.
+     *   reversibility 94 -> 30   It held the highest score in the scenario while its own givesUp
+     *                            line reads "If the seal does not hold you are inside the worst air
+     *                            in the district with no way out". Reversibility asks what happens
+     *                            when the choice turns out to be wrong; the card already answered.
+     *   reliability   52 -> 40   Tape and wet towels against chlorine, which is heavier than air
+     *                            and finds the gaps. "Any margin for error", says the same line.
+     *   durability    65 -> 82   This one moved UP. The reading is "whether the way out stays open
+     *                            for the people still behind you", and sheltering uses no route at
+     *                            all and frees the convoy slot that was yours.
+     *
+     * WALKING OUT: reliability 57 -> 48, because its own givesUp line says "You are the most
+     * exposed person on any of these routes", and reliability asks how likely you are to get clear
+     * without the route failing.
+     *
+     * WHAT THIS DOES TO THE THESIS TRADE-OFF, which is the number that matters most here. G5
+     * requires that protecting the vulnerable COSTS performance: the vulnerability champion must
+     * not be a top performer, and the correlation must stay under 0.30. Walking out is that
+     * champion, and it finishes 3rd of 6 with r = 0.22. Before this audit it was 3rd with r = -0.09.
+     * The trade-off survives; it is not manufactured, and it is not free.
+     *
+     * NOTHING ELSE MOVED. The convoy and the service road were checked line by line against the
+     * same copy and hold up as authored.
+     * ─────────────────────────────────────────────────────────────────────────────────────────
+     * ─────────────────────────────────────────────────────────────────────────────────────────
+     */
     id: "chemical_release_escape",
     stakePosition: "self",
     factBase:
@@ -282,7 +341,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         metrics: {
           speed: 85,
-          resourceUse: 57,
+          resourceUse: 45,
           reliability: 54,
           durability: 76,
           reversibility: 52,
@@ -319,8 +378,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         metrics: {
           speed: 30,
-          resourceUse: 65,
-          reliability: 57,
+          resourceUse: 92,
+          reliability: 48,
           durability: 78,
           reversibility: 81,
         },
@@ -356,7 +415,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         metrics: {
           speed: 45,
-          resourceUse: 46,
+          resourceUse: 40,
           reliability: 71,
           durability: 72,
           reversibility: 37,
@@ -392,11 +451,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 48, contextSensitivity: 67, stakeholderPerspectiveShiftSensitivity: 54,
         },
         metrics: {
-          speed: 48,
-          resourceUse: 82,
-          reliability: 52,
-          durability: 65,
-          reversibility: 94,
+          speed: 18,
+          resourceUse: 97,
+          reliability: 40,
+          durability: 82,
+          reversibility: 30,
         },
       },
       {
@@ -430,7 +489,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         metrics: {
           speed: 89,
-          resourceUse: 88,
+          resourceUse: 84,
           reliability: 76,
           durability: 45,
           reversibility: 45,
