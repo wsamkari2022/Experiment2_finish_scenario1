@@ -809,6 +809,52 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     });
   }, []);
 
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * A PREVIEW BELONGS TO ITS OPTION, AND ENDS WHEN THE PARTICIPANT LEAVES IT.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   *
+   * THE PROBLEM, as the advisor put it: press "Preview impact" on one option, scroll on to read
+   * the others, and the dashboard at the top is still showing that option's projection. It is
+   * sticky, so it follows you down the page — a number attached to an option you can no longer
+   * see, sitting above the option you are actually reading. The honest reading of that screen is
+   * "your overall performance has changed", and it has not: nothing is recorded until the choice
+   * is confirmed.
+   *
+   * THE RULE: the preview lives exactly as long as its card is on screen. Scroll the card away and
+   * the dashboard returns to the real running total by itself.
+   *
+   * WHY AN OBSERVER AND NOT A SCROLL HANDLER. A scroll handler would have to measure the card on
+   * every frame of every scroll, on a page that is several thousand pixels long, and it would miss
+   * a card that leaves the viewport for any other reason — a section collapsing above it, the
+   * window resizing, another card expanding. The browser already tracks exactly this and reports
+   * it once, when it changes.
+   *
+   * THE TOP MARGIN IS THE DASHBOARD'S OWN HEIGHT, measured rather than guessed. The dashboard is
+   * sticky, so a card sliding underneath it is technically still inside the viewport while being
+   * completely hidden behind the very panel showing its numbers. Shrinking the observed area by
+   * that height makes "hidden behind the dashboard" count as gone, which is what a participant
+   * sees.
+   */
+  useEffect(() => {
+    if (!previewOptionId) return;
+    if (typeof IntersectionObserver === "undefined") return; // very old browser: preview simply stays
+    const card = document.querySelector(`[data-option-id="${previewOptionId}"]`);
+    if (!card) return;
+
+    const dashH = Math.round(dashRef.current?.getBoundingClientRect().height ?? 0);
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) setPreviewOptionId(null);
+        }
+      },
+      { threshold: 0, rootMargin: `-${dashH}px 0px 0px 0px` },
+    );
+    io.observe(card);
+    return () => io.disconnect();
+  }, [previewOptionId]);
+
   const openCompareCharts = useCallback(() => {
     if (telRef.current) telRef.current.compareChartsOpens += 1; // info-seeking signal
     setCompareChartsOpen(true);
@@ -2305,9 +2351,30 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
       borderTopWidth="3px" borderTopColor={isPreview ? accent : pal.dashTopBorder}
       rounded="2xl" p={{ base: "4", md: "5" }} style={{ boxShadow: pal.dashShadow }} transition="border-color 0.2s ease">
       <HStack justify="space-between" mb="2" wrap="wrap" gap="2">
-        <HStack gap="2">
-          <Icon color={accent}>{isPreview ? <LuEye /> : <LuGauge />}</Icon>
-          <Text fontSize="xs" fontWeight="bold" color={pal.dashTitleColor} textTransform="uppercase" letterSpacing="wider">{label}</Text>
+        <HStack gap="2" minW="0" flex="1">
+          <Icon color={accent} flexShrink={0}>{isPreview ? <LuEye /> : <LuGauge />}</Icon>
+          {isPreview ? (
+            /*
+              THE PREVIEW STATE NAMES THE OPTION, AS A CHIP RATHER THAN AS A TITLE.
+              It used to read "Projected if you choose: Drive out on the industrial service road" in
+              the same small uppercase type as the real heading, which is how a temporary state ends
+              up looking like a new permanent one. A tinted chip beside the option's own title, in
+              the option's own sentence case, reads as something switched on — and switched on by
+              the participant, over there, on that card.
+            */
+            <HStack gap="2" minW="0">
+              <Badge bg={accent} color={onAccentText(accent)} rounded="md" px="2" py="0.5"
+                fontSize="2xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+                flexShrink={0}>
+                Previewing
+              </Badge>
+              <Text fontSize="xs" fontWeight="semibold" color={pal.dashTitleColor} lineClamp={1}>
+                {previewTitle}
+              </Text>
+            </HStack>
+          ) : (
+            <Text fontSize="xs" fontWeight="bold" color={pal.dashTitleColor} textTransform="uppercase" letterSpacing="wider">{label}</Text>
+          )}
           {/* NO INFO BUTTON HERE ANY MORE. It opened a panel that now carries its own heading and
               its own chevron, so a second control for the same thing in the title row was one
               control too many — and the one further from what it opened. */}
@@ -2356,8 +2423,12 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
         ═══════════════════════════════════════════════════════════════════════════════════════
       */}
       {isPreview ? (
+        /* The second sentence exists so the automatic clear reads as a rule rather than a glitch.
+           A number that disappears on its own, unexplained, is the kind of thing a participant
+           quietly stops trusting. */
         <Text fontSize="xs" color={pal.textFaint} mb="3" lineHeight="tall">
-          Preview only — your choice isn&apos;t saved until you confirm it.
+          Preview only — your choice isn&apos;t saved until you confirm it. This goes back to your real
+          total as soon as you scroll away from that option.
         </Text>
       ) : (
         <VStack align="stretch" gap="2" mb="3">
@@ -2580,6 +2651,9 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   */
   return (
     <Box data-card-open={expanded ? "1" : "0"}
+      /* The preview watcher in the parent finds this card by its option id. See the effect that
+         clears a preview once its card scrolls out of sight. */
+      data-option-id={option.id}
       backdropFilter={pal.backdropBlur}
       rounded="2xl" p={{ base: "5", md: "6" }}
       style={{
