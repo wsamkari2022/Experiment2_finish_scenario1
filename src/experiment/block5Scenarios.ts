@@ -520,9 +520,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           detail: "you stay in your own apartment and let the plume pass over you.",
         },
         summary: "Tape the doors, wet towels along the gaps, and stay put. Nothing is taken from anyone, nobody is moved out of their place, and no seat, road or mask is used.",
-        gains: "You take absolutely nothing from anyone — no seat, no mask, no road, no crew time.",
+        gains: "You take no seat, no mask and no road from anybody, and nobody is moved down a list to make room for you.",
         consequence: "Not one other person is worse off for what you chose, and you can still leave later if the wind turns. But you spend the night inside a plume with tape on the doors.",
-        givesUp: "Any margin for error. If the seal does not hold you are inside the worst air in the district with no way out of it.",
+        givesUp: "Any margin for error. If the seal does not hold you are inside the worst air in the district with no way out of it, and a sweep team comes into your block to find out whether you are.",
         moralTension: "Is taking nothing from anybody the same thing as doing right by them?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 53, groupSizeSensitivity: 93,
@@ -642,12 +642,25 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         the situation box has to say the same things differently. Check with npm run validate:block5
         before assuming a rewrite here is free.
       */
-      "You have 8 hours before the front reaches the valley floor. Around 600 residents across nine blocks. One highway out, to be released in nine timed slots - the nine slots are assigned and the first has not been called yet. One bus with a wheelchair lift. One ridge road, closed off and kept clear for fire crews. Your own car is outside with seven seats in it, and the refuge school on the hill has only a footpath up to it, too narrow for any vehicle. Every option you will see keeps your household alive for the eight hours. They differ only in what each one takes from the rest of the valley.",
+      "You have 8 hours before the front reaches the valley floor. Around 600 residents across nine blocks on the valley wall. The blocks leave in nine timed slots, ordered by how near the highway junction each one sits - yours is fifth, and the first has not been called yet. One bus with a wheelchair lift. One ridge road, cut years ago to serve the big houses on the cleared shelf at the top and held today for fire crews. Those houses have never needed a slot. The refuge school stands on that shelf too, and with the ridge road closed the only way up to it is a footpath too narrow for any vehicle. Your own car is outside with seven seats in it. Every option you will see keeps your household alive for the eight hours. They differ only in what each one takes from the rest of the valley.",
     role:
-      "You are a resident, and {w|you are not leaving alone}. Your household is four. You, {w|two children} — one needs an inhaler in smoke — and {w|your mother, who walks with a frame}. You carry the cost of this choice, and so do they.",
+      "You are a resident, and {w|you are not leaving alone}. Your household is four. You, {w|two children} — one needs an inhaler in smoke — and {w|your mother, who walks with a frame}. You carry the cost of this choice, and so do the three of them.",
     title: "Eight Hours Ahead of the Fire",
     description:
-      "A wildfire front has crossed the ridge above the valley and is running downhill through dry timber. The valley is under an evacuation order, and smoke has already reached the valley floor.",
+      /*
+        THE VALLEY NOW HAS A SHAPE, 17 September 2026. NO DOUBLE QUOTES IN THIS COMMENT - the scene
+        gate reads the first quoted string after the field name, so a quoted phrase here would be
+        scored in place of the paragraph.
+
+        The scene said a fire was coming and said nothing about the place it was coming to. The
+        situation box then had to introduce the shelf, the wall and the blocks all at once, on top
+        of carrying every number. Geography belongs here; numbers belong there.
+
+        FIVE WORDS ARE SHARED with the situation box - front, valley, floor, ridge, shelf - which is
+        21% against a ceiling of 30%. Shelf is deliberately spent in both, because it is the one
+        word a reader has to carry from the scene into the facts.
+      */
+      "A wildfire front has crossed the ridge above the valley and is running downhill through dry timber. Below the shelf at the top, homes are strung along the valley wall. The whole valley is under an evacuation order, and smoke has already reached the floor.",
     theme: {
       gradient: "radial-gradient(900px 420px at 12% -10%, rgba(234,88,12,0.22), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(124,45,18,0.45), transparent 55%), linear-gradient(155deg, #1a0f08, #35160a 50%, #5c2410)",
       accent: "#EA580C",
@@ -663,13 +676,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The staging kept the road clear, and it kept them sitting in it three hours longer",
           benefitCase: "were marshaling the convoy and needed the blocks to leave in the order set",
           benefitLost: "One household leaving early is what turns a staged convoy back into a jam",
+          act: "You wait for your block to be called, then drive out in the convoy. You take the {a|fifth} slot of {a|nine}, which is yours. Nothing set aside for anybody else is touched.",
+          parallelAct: "{w|A passenger waits for their deck to be called and boards the boat when it comes. They take the fifth place of nine, which is theirs. Nothing held for anybody else is touched.}",
           consequences: {
-            soon: "Your child uses the inhaler twice while you wait for slot five to be called.",
-            later: "The wait goes down as normal, so the same nine slots are used again next fire season.",
+            soon: "The blocks behind yours wait longer, because the line only moves as fast as its slowest block.",
+            later: "Block nine may still be waiting when the wind turns. The people on it could be the last out tonight.",
           },
           parallelConsequences: {
-            soon: "Your group waits for boat five while the deck tilts further under you.",
-            later: "The wait is written down as normal, so the same nine boats are loaded that way next time.",
+            soon: "The decks below theirs wait longer, because the line only moves as fast as its slowest group.",
+            later: "Group nine may still be waiting when the ship lists further. The people in it could be the last off tonight.",
           },
         },
         title: "Take your household's assigned place in the staged convoy",
@@ -683,7 +698,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The valley is set to leave in timed blocks so the highway does not seize up. Your four go together in your block's slot, with a guide ahead of you and behind you.",
         gains: "All four of you leave together, in a guided group, on a road that is kept moving.",
         consequence: "Nobody in your household is separated and nobody else is pushed down the list to make room for you. But your slot is the fifth of nine, and the smoke is well into the valley by the time you roll.",
-        givesUp: "Three hours of waiting, with an asthmatic child, while the air gets steadily worse.",
+        givesUp: "Three hours of waiting, with a child who needs an inhaler, while the air gets steadily worse.",
         moralTension: "Is waiting your turn still right when the person waiting beside you cannot breathe the wait?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 59,
@@ -707,13 +722,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The crew reversed two miles to let you past, and reached them forty minutes late",
           benefitCase: "are eight years old, sitting behind you, and already on the inhaler",
           benefitLost: "Those forty minutes are the whole difference between smoke and clean air for them",
+          act: "You drive your own car up the ridge road, the lane held for the fire crews. It is {a|forty} minutes over the top and out.",
+          parallelAct: "{w|A passenger climbs the crew stair, the one stair being held for the crew. It puts them at the boats forty minutes ahead of their group. A crew coming down has to turn back to let them by.}",
           consequences: {
-            soon: "A fire engine reverses two miles down the ridge road to let your car through.",
-            later: "It reaches the care home forty minutes late. Two residents there do not recover.",
+            soon: "A fire engine backs two miles down the ridge road to let your car through.",
+            later: "It may reach the care home forty minutes late. Two residents there could be beyond help by then.",
           },
           parallelConsequences: {
-            soon: "A crew has to clear the davit they were holding so your group can board.",
-            later: "They reach the lower deck forty minutes late. Two people down there do not recover.",
+            soon: "A crew backs down two flights of that stair to let one passenger up.",
+            later: "They may reach the flooded deck forty minutes late. Two people down there could be beyond help by then.",
           },
         },
         title: "Take the closed ridge road",
@@ -722,9 +739,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "Your own car, on the closed ridge road",
           detail: "over the ridge in forty minutes, up the lane held clear for fire crews coming down.",
         },
-        summary: "The ridge road is closed off and kept clear for fire crews coming the other way. It is empty, it is fast, and your four could be over the ridge and out of the valley in forty minutes.",
+        summary: "The ridge road was cut for the big houses on the shelf, and today it is closed off and kept clear for fire crews coming down it. It is empty, it is fast, and your four could be over the ridge and out of the valley in forty minutes.",
         gains: "Your household is out of the valley in forty minutes — hours ahead of anything else here.",
-        consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept open for crews coming the other way. A car on it turns a fire engine back.",
+        consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept clear for crews coming the other way. A car on it turns a fire engine back.",
         givesUp: "The road the fire crews need. An engine that reverses is one that does not reach the care home on the far side.",
         moralTension: "Would you take a road kept clear for rescuers, if it were your own children in the back?",
         fingerprint: {
@@ -745,17 +762,19 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "gives its own places to the people who cannot board anything else and waits",
           parallelRule: "gives its own slot to the patients who cannot be moved again and waits",
-          identifiedCase: "spent five hours in the shelter hall with an inhaler that was running low",
+          identifiedCase: "spent six hours in the shelter hall with an inhaler that was running low",
           harm: "They were still in the valley at the seventh hour because you gave the seats away",
           benefitCase: "use a frame and cannot climb the step onto any of the standard coaches",
-          benefitLost: "Your two seats were the only ones in the valley they could actually get into",
+          benefitLost: "Your seats were the only ones that could take them out before the last hour",
+          act: "You hand your car keys to the {a|two} neighbors with frames, and they drive out in your slot. Your four take their places on the lift bus, last out of the valley.",
+          parallelAct: "{w|A passenger gives their boat place to two people who cannot climb down, and waits for the hoist boat instead. That boat is the last one lowered.}",
           consequences: {
-            soon: "Your household waits five hours in a shelter hall. Your child's inhaler runs low.",
-            later: "Both neighbors who took your seats are safe. Your mother's chest is worse all winter.",
+            soon: "Your four wait six hours in a shelter hall while the smoke thickens outside it.",
+            later: "The lift bus may come late. Your child's inhaler could be empty before it reaches the valley road.",
           },
           parallelConsequences: {
-            soon: "Your group gives up its places and waits five hours for the last boat.",
-            later: "Both people who took your places are safe. One of yours is ill all winter from the wait.",
+            soon: "Their group waits six hours on a tilting deck while the water rises below it.",
+            later: "The hoist boat may come late. A child in that group could be very cold before it is lowered.",
           },
         },
         title: "Give your car seats to the two frame users and wait for the lift bus",
@@ -766,15 +785,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         method: {
           kind: "bus",
           by: "The lift-equipped bus, last out of the valley",
-          detail: "your car takes your block's slot with the two neighbors in it, one of them driving. Your four wait.",
+          detail: "your car goes at your slot with the two neighbors and their frames in it, one of them driving. You take their places on the bus.",
         },
-        summary: "Two neighbors use walking frames and cannot board the standard coaches. Your car can take them out in your block's slot, with one of them driving it. Your own household then waits for the lift-equipped bus, which is the last vehicle scheduled to leave the valley.",
-        gains: "The two people least able to get themselves out of the valley leave first, in your seats.",
-        consequence: "Nobody who needs a lift is left behind. But your own four are then on the last vehicle out. Your mother waits five hours in a shelter hall for it.",
+        summary: "Two neighbors use walking frames and cannot board the standard coaches. The lift bus can take them, but it is the last vehicle scheduled to leave the valley. Your car can take them out in your block's slot instead, with one of them driving - though folding the rear row flat for their frames leaves five seats, and two of those are theirs. Three is not four, and you are not splitting your household. So your own four take their places on the lift bus.",
+        /* WHAT IS GIVEN AWAY IS THE PLACE, not only the seats. The car goes out in the household's
+           own slot, so the neighbors inherit a position in the line as well as four seats - and the
+           household drops from fifth of nine to last. The card was naming half the gift. */
+        gains: "The two people least able to get themselves out leave in your seats, and in your place in the line.",
+        consequence: "Nobody who needs a lift is left behind. But your own four are then on the last vehicle out. Your mother waits six hours in a shelter hall for it.",
         /* PASS D: NOT NEAR THE FRONT. The household's slot is the fifth of nine - option 1 says so
            twice - which is the middle of the line, and this card was selling a place it never had.
            The sacrifice is real without the exaggeration: middle of the line to last out. */
-        givesUp: "Your slot in the middle of the line. Your household leaves last, with a child on an inhaler and five hours to wait.",
+        givesUp: "Your slot in the middle of the line. Your household leaves last, with a child on an inhaler and six hours to wait.",
         moralTension: "Do your own dependents come first, or the dependents who have nobody at all?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 56,
@@ -784,7 +806,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         metrics: {
           speed: 26,
           resourceUse: 80,
-          reliability: 58,
+          reliability: 55,
           durability: 86,
           reversibility: 30,
         },
@@ -798,13 +820,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "They watched seven people pull away from a street that had eight waiting on it",
           benefitCase: "have no vehicle and were third on that street with nobody coming for you",
           benefitLost: "There was one car on the street with room left in it, and it was yours",
+          act: "You fill all {a|seven} seats in your car and drive out in your slot. Your mother's frame is strapped to the roof. A fourth neighbor is still on the street when you go.",
+          parallelAct: "{w|A passenger fills every place in their boat, taking three people who had none. A frame is lashed across the stern. A fourth is left on the deck as it lowers.}",
           consequences: {
             soon: "Seven people ride in a car built for seven, with the walking frame tied to the roof.",
-            later: "The frame is broken and takes two months to replace. Your mother cannot leave the house.",
+            later: "The frame may not survive the drive. The fourth neighbor could still be on foot at midnight.",
           },
           parallelConsequences: {
-            soon: "Every seat in the boat is filled, so it sits low and moves slowly in the swell.",
-            later: "The frame lashed on top is smashed in the crossing. It takes two months to replace.",
+            soon: "Every place in the boat is taken by the three who had none, so it sits low and moves slowly.",
+            later: "The frame lashed across it may be lost overboard. The fourth person could still be on deck at midnight.",
           },
         },
         title: "Fill every seat in the car with neighbors who have none",
@@ -813,9 +837,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "Your own car, all seven seats full",
           detail: "in your block's slot, with the walking frame strapped to the roof and no fast line through the bends.",
         },
-        summary: "Your car holds seven and your household is four. Three people on your street have no vehicle at all, and taking them costs you nothing but the space.",
+        summary: "Your car holds seven and your household is four. Four people on your street have no vehicle at all, so you have room for three of them, and taking them costs you nothing but the space.",
         gains: "Seven people leave the valley instead of four, in one vehicle, on one tank of fuel.",
-        consequence: "Three people who had no way out at all are in your car. But seven in a seven-seat car means the walking frame goes on the roof. The drive is slow and very hot.",
+        consequence: "Three people who had no way out at all are in your car, and a fourth is still on the street. Seven in a seven-seat car also means the walking frame goes on the roof. The drive is slow and very hot.",
         givesUp: "Room and speed. The car is full, the frame is strapped above it, and you cannot take the fast line through the bends.",
         moralTension: "How much of your own family's room do you owe the neighbors who have no car?",
         fingerprint: {
@@ -837,16 +861,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           rule: "takes nothing from the shared roads and holds its ground instead",
           parallelRule: "takes nothing from the shared supply and holds its position instead",
           identifiedCase: "were on the crew that had to check the school roll at the ninth hour",
-          harm: "They came back into the valley for a building never meant to hold four households",
+          harm: "They came back into the valley to account for four households that never left it",
           benefitCase: "took the convoy slot and the car seats that your household did not use",
           benefitLost: "Both of those were free that afternoon only because you went up the hill",
+          act: "You walk your household up the footpath to the school, past the big houses on the shelf. You take no seat, no lane and no fuel. Nobody is told you are up there.",
+          parallelAct: "{w|A passenger climbs to the open deck instead of taking a place in any boat. They take no seat and no hoist. Nobody is told they are up there.}",
           consequences: {
-            soon: "Your children watch the fire front arrive from inside a school building.",
-            later: "Both sleep badly for months. A crew came back into the valley to check the building held.",
+            soon: "A crew comes back into the valley to find out whether anyone is still in the blocks.",
+            later: "Two of them may spend an hour in the smoke looking for your household. One could be off work tomorrow.",
           },
           parallelConsequences: {
-            soon: "Your group takes no boat and no place. You wait it out on the upper deck.",
-            later: "The children sleep badly for months. A crew came back up to check you were alive.",
+            soon: "A crew climbs back up to find out whether anybody is still above the boat deck.",
+            later: "Two of them may spend an hour below the waterline searching. One could be signed off before morning.",
           },
         },
         title: "Take your household to the concrete school on the hill",
@@ -866,12 +892,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         method: {
           kind: "foot",
           by: "On foot, up the hill path",
-          detail: "twenty minutes of narrow path, slow with the frame. Your car stays at the house.",
+          detail: "twenty minutes of narrow path past the big houses, slow with the frame. Your car stays at the house.",
         },
-        summary: "The school is concrete, stands on cleared ground above the treeline, and is the valley's designated refuge. The only way up is a footpath too narrow for a vehicle, so your car stays at the house and the four of you walk. Going there uses no road capacity and displaces nobody at all.",
-        gains: "You take no seat, no lane, no fuel and no crew time from anybody, and you can still walk back down if the front turns.",
-        consequence: "Nothing you do makes anyone else's evacuation harder, and the way back down stays open all night. But the climb is twenty minutes of narrow path, slow with your mother's frame, and you are then inside the fire's path in a building rather than outside it. Your children watch the front arrive.",
-        givesUp: "Distance from the fire, and your car. You leave it at the house, walk your mother up a narrow path, and trust a building to hold.",
+        summary: "The school is concrete, stands on the cleared shelf at the top of the valley, and is the designated refuge. The ridge road runs up to that shelf and is closed today, and the footpath beside it is too narrow for a vehicle. So your car stays at the house and the four of you walk. Going there uses no road capacity and displaces nobody at all.",
+        gains: "You take no seat, no lane and no fuel from anybody, and you can still walk back down if the front turns.",
+        consequence: "Nobody loses a place on the road to you, and the way back down stays open all night. But the climb is twenty minutes of narrow path, slow with your mother's frame, and it takes you up past the big houses where the ridge road begins. You are then inside the fire's path in a building rather than outside it, and your children watch the front arrive.",
+        givesUp: "Distance from the fire, and your car. You trust a building to hold, and a crew comes back into the valley to find out whether anybody stayed in the blocks.",
         moralTension: "Is refusing to take anything from anyone worth putting your own children nearer the fire?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 56, groupSizeSensitivity: 94,
@@ -882,7 +908,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           speed: 15,
           resourceUse: 93,
           reliability: 40,
-          durability: 50,
+          durability: 84,
           reversibility: 90,
         },
       },
@@ -895,13 +921,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The staging that would have kept it moving had collapsed three hours before that",
           benefitCase: "left the valley when you did and were over the county line before the smoke",
           benefitLost: "That road stayed clear for exactly as long as the early movers kept it clear",
+          act: "You drive out on the main highway before the first slot is called. Everyone who sees your car go follows it, and the staging never starts.",
+          parallelAct: "{w|A passenger goes down to the boats before their group is called. Others see it and follow, and the order collapses.}",
           consequences: {
-            soon: "You are gone before the staging starts, and so is everyone who saw you leave.",
-            later: "The highway jams at hour six. The last three blocks sit in stopped traffic as the fire comes down.",
+            soon: "The highway fills with cars that were meant to leave in nine groups, not one.",
+            later: "It may seize up by the sixth hour. The last three blocks could still be sitting in it as the fire comes down.",
           },
           parallelConsequences: {
-            soon: "You board before the list is called, and so does everyone who sees you do it.",
-            later: "The ladder jams at hour six. The last groups are still on deck as the water comes over.",
+            soon: "The boat deck fills with passengers who were meant to come down in nine groups, not one.",
+            later: "The ladders may jam by the sixth hour. The last three decks could still be waiting as the ship goes over.",
           },
         },
         title: "Leave immediately on the main highway, before the staging starts",
@@ -914,9 +942,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           detail: "away before the first slot is called, while the road is still empty.",
         },
         summary: "The highway is still empty and the first slot has not been called. Going now, before the timed convoy starts, is the fastest and cheapest way out. That is true for you, and for everyone who leaves when you do.",
-        gains: "The quickest, cleanest run out of the valley, and the ones who follow you get the same clear road.",
-        consequence: "Your household is out early on an open highway, and so is everybody who moves when you move. But once the highway fills there is no staging left to organize it, and no way back in for anything you forgot.",
-        givesUp: "The staging system, and any way back. Once the highway is moving unstaged it cannot be re-formed.",
+        gains: "The quickest, cleanest run out of the valley, and the first few who follow you get a clear road as well.",
+        consequence: "Your household is out early on an open highway. But your neighbors see you go and follow, so nine blocks that were meant to leave in turn are all on the road at once. Staging cannot be re-formed once it breaks, and the blocks furthest from the junction are the ones still sitting in the jam when the fire comes down.",
+        givesUp: "The staging system itself, and any way back in. Nine blocks moving at once is the one thing it was built to prevent.",
         moralTension: "If everyone leaving early is what causes the jam, does it matter that you left before it?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 44, groupSizeSensitivity: 43,

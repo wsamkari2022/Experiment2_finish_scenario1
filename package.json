@@ -28,7 +28,8 @@
     "apa:variants": "tsc -p tools/tsconfig.sim.json && node tools/apa_context_variants.cjs",
     "validate:planner": "tsc -p tools/tsconfig.sim.json && node tools/simulate_planner.cjs",
     "server": "node server/index.js",
-    "validate:dbshape": "node tools/validate_dbshape.cjs"
+    "validate:dbshape": "node tools/validate_dbshape.cjs",
+    "audit:rules": "tsc -p tools/tsconfig.sim.json && node tools/audit_cvr_rules.cjs"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.34.0",

@@ -2819,10 +2819,22 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
               </HStack>
             )}
           </Stack>
+          {/*
+            THE QUESTION IS SET AT THE SIZE OF THE THINGS IT ASKS ABOUT, on the researcher's
+            instruction, 17 September 2026.
+
+            It was `xs` and `textMuted` under a hairline rule - the smallest, faintest text on a card
+            whose gain and cost lines are both `sm`. That is the one line that asks the participant
+            something instead of telling them something, and it was set like a footnote, so it read
+            as decoration after the decision rather than as part of it.
+
+            Now `sm` and `pal.text`, matching the gain and the cost. The italic still separates it,
+            so it cannot be mistaken for a third fact.
+          */}
           {option.moralTension && (
             <HStack align="start" gap="2.5" mt="3" pt="2.5" borderTopWidth="1px" borderTopColor={pal.separator}>
-              <Icon color={pal.textFaint} boxSize="3.5" mt="0.5" flexShrink={0}><LuScale /></Icon>
-              <Text fontSize="xs" fontStyle="italic" color={pal.textMuted} lineHeight="tall">
+              <Icon color={pal.textMuted} boxSize="4" mt="0.5" flexShrink={0}><LuScale /></Icon>
+              <Text fontSize="sm" fontStyle="italic" color={pal.text} lineHeight="tall">
                 {option.moralTension}
               </Text>
             </HStack>

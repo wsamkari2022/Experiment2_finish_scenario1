@@ -286,10 +286,18 @@ console.log("\n=== 10. CVR CONSEQUENCES: present, concrete, readable, and balanc
     if (psoon && plater) {
       const a = (soon + later).length, b = (psoon + plater).length;
       if (Math.abs(a - b) > Math.max(a, b) * 0.35) lopsided.push(oid + " (" + a + " vs " + b + ")");
-      // The CONTEXT lens must never accuse. A "you" in it makes it a second directness lens and
-      // the difference between the two measures stops meaning anything. The two scenarios where
-      // the participant's own household is literally the subject are the documented exception.
-      if (!oid.startsWith("fire_") && /\byou\b|\byour\b/i.test(psoon + " " + plater)) accuses.push(oid);
+      /*
+       * The CONTEXT lens must never accuse. A "you" in it makes it a second directness lens and
+       * the difference between the two measures stops meaning anything.
+       *
+       * THE EXEMPTION IS GONE (17 September 2026). This read `!oid.startsWith("fire_") &&`, which
+       * excused every option in scenario 2 on the grounds that the participant's own household is
+       * the subject there. That was never a reason. It is a reason the DIRECTNESS lens says "you";
+       * it is not a reason the context lens may. Scenario 2's parallel world was rewritten in
+       * Pass E and now says "a passenger", "their group" and "a crew" throughout, so the exemption
+       * had nothing left to excuse. Every option in the deck is held to one rule.
+       */
+      if (/\byou\b|\byour\b/i.test(psoon + " " + plater)) accuses.push(oid);
     }
   }
 
@@ -300,7 +308,7 @@ console.log("\n=== 10. CVR CONSEQUENCES: present, concrete, readable, and balanc
   ok("each pair names a number or a timescale".padEnd(46), abstract.length === 0, abstract.join(", ") || "all concrete");
   ok("no two consequences are identical".padEnd(46), dupes.length === 0, dupes.join("; ") || "all 120 distinct");
   ok("the two lenses carry equal weight".padEnd(46), lopsided.length === 0, lopsided.join("; ") || "within 35% on all 30");
-  ok("the context lens never says \"you\"".padEnd(46), accuses.length === 0, accuses.join(", ") || "no accusation outside the household scenarios");
+  ok("the context lens never says \"you\"".padEnd(46), accuses.length === 0, accuses.join(", ") || "no accusation in any of the 30");
 }
 console.log("\n"+(fails?"### "+fails+" CHECK(S) FAILED ###":"### ALL CHECKS PASSED ###")+"\n");
 process.exit(fails?1:0);

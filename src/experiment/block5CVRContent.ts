@@ -242,23 +242,63 @@ const CHEMICAL: ScenarioCVRContent = {
  * WILDFIRE — the "self and dependents" scenario. Same construction rules as CHEMICAL and the
  * three allocation scenarios: every value phrase names something that can genuinely be given up,
  * and the framing clauses speak about the people behind the numbers rather than about the options.
- *
- * The parallel world is a ship's evacuation rather than a second hospital, so that the CONTEXT
- * lens does not transplant both everyday-position scenarios into the same second setting — a
- * participant who met the identical parallel twice would be reading the lens, not the transplant.
  */
 const WILDFIRE: ScenarioCVRContent = {
   register: "life_and_death",
   impersonalAgent: "the valley's automated evacuation staging",
+  /*
+   * ───────────────────────────────────────────────────────────────────────────────
+   * THE PARALLEL WORLD IS A PASSENGER SHIP BEING ABANDONED, 17 September 2026.
+   *
+   * WHAT IT REPLACED. A cargo ship listing in heavy weather, with three facts in it and no numbers
+   * at all - one lift-equipped boat, one held davit, one clear ladder. The valley has eight hours,
+   * six hundred people, nine blocks, nine slots, a lift bus, a road held for crews and a refuge
+   * reached on foot. Three nouns cannot mirror seven facts, so the transplant had nothing to carry
+   * and the lens was asking the participant to notice a resemblance that was not on the page.
+   *
+   * WHY A PASSENGER SHIP AND NOT A CARGO ONE. The valley's whole shape is now social: the blocks
+   * run in order of how near the junction each one sits, and the big houses on the shelf have their
+   * own road and never needed a slot. A ship carrying passengers has exactly that shape already -
+   * decks, boat groups, and a stair cut for the suites at the top - and it has it without anybody
+   * having to explain it. A cargo ship has a crew and no class structure to mirror.
+   *
+   * NOT THE TITANIC, DELIBERATELY. The researcher named it as an example of scale and it is the
+   * right scale. It is the wrong ship. A participant who recognises the Titanic brings a century of
+   * script with them - women and children first, the locked gates, the band - and that script does
+   * the persuading instead of the structure doing it. Worse, it arrives with a verdict on the class
+   * question already reached, which is the exact variable this lens exists to put in front of them
+   * unsettled. A large modern ship gives identical machinery and no verdict.
+   *
+   * SIX FACTS, SIX PARTNERS, AND NOT ONE SENTENCE SAYING SO. The numbers carry {a|...} on both
+   * sides, which is the only thing doing the work the banned word "same" used to do.
+   *
+   * THE STAKES MATCH, which the validator enforces: both are life_and_death. A transplant between
+   * two settings of unequal seriousness measures stakes sensitivity wearing context's name.
+   * ───────────────────────────────────────────────────────────────────────────────
+   */
   parallel: {
     register: "life_and_death",
     setting:
-      "A cargo ship listing in heavy weather, with the boats being loaded in order. One lift-equipped boat, one held davit, one clear ladder. Every way of using them takes something from somebody still aboard.",
+      "A cruise ship is listing after a flood below her waterline. {a|Eight hours} before she goes down. About {a|six hundred} passengers are spread across {a|nine} decks, and they are called to the boats in {a|nine} groups. {a|One} boat is lowered by hoist, for the passengers who cannot climb down to it. {a|One} crew stair was cut for the top-deck suites and is held tonight for the crew. The open deck above is reached by {a|one} ladder, too narrow to carry anybody up.",
+    mirror: [
+      { here: "{a|8 hours} before the front reaches the valley floor",
+        there: "{a|Eight hours} before the ship goes down" },
+      { here: "Around {a|600} residents across {a|nine} blocks",
+        there: "About {a|six hundred} passengers across {a|nine} decks" },
+      { here: "{a|Nine} timed slots on one highway out",
+        there: "{a|Nine} boat groups on one boat deck" },
+      { here: "{a|One} bus with a wheelchair lift",
+        there: "{a|One} boat lowered by hoist" },
+      { here: "{a|One} ridge road, cut for the big houses, held for crews",
+        there: "{a|One} crew stair, cut for the top-deck suites, held for the crew" },
+      { here: "{a|One} refuge reached only on foot",
+        there: "{a|One} open deck reached only by ladder" },
+    ],
     valuePhrase: {
-      vulnerabilityProtectionSensitivity: "the people aboard who most need protection from how the boats are filled",
-      groupSizeSensitivity: "the many others aboard who share those same boats",
-      gainResponsivenessSensitivity: "the good the same places could have done for somebody else aboard",
-      outcomeAggregationSensitivity: "the larger total the loading could have come to for everyone aboard",
+      vulnerabilityProtectionSensitivity: "the passengers who most need protection from how these boats are filled",
+      groupSizeSensitivity: "the many others aboard who depend on these few ways down",
+      gainResponsivenessSensitivity: "the good one place in a boat could have done for somebody else aboard",
+      outcomeAggregationSensitivity: "the larger total this ship could have reached for everyone still on it",
     },
   },
   valuePhrase: {
@@ -267,9 +307,26 @@ const WILDFIRE: ScenarioCVRContent = {
     gainResponsivenessSensitivity: "the good this evacuation could have done for everything it costs",
     outcomeAggregationSensitivity: "the larger overall good this evacuation could have done for everyone it touches",
   },
+  /*
+   * THE CONTEXT CLAUSE NOW RECALLS A FACT INSTEAD OF INTRODUCING ONE, 17 September 2026.
+   *
+   * It used to say the ridge road was cut for the estates above the treeline — and nothing in the
+   * scenario said so. A claim about WHY some households sit further back was therefore appearing
+   * for the first time in the reflection: after the choice, under the most persuasive conditions
+   * the block has, and only for the participants whose choice had been judged misaligned.
+   *
+   * The fact moved into `factBase`, where everyone meets it before choosing: the blocks are ordered
+   * by how near the junction each one sits, the participant's is fifth, and the big houses on the
+   * shelf have their own road and never needed a slot. The clause below now points back at
+   * something the participant has already read, which is both fairer and much harder to argue with.
+   *
+   * ITS VOCABULARY IS PINNED TO THE SITUATION BOX: big houses, the shelf, near the junction. If the
+   * scene wording changes, this has to change with it, or the reflection will be recalling a fact
+   * in words the participant never saw.
+   */
   framingClause: {
     context:
-      "the reason some households sit further back is which side of the valley they could afford, not what they are worth — the ridge road was cut for the estates above the treeline",
+      "the reason your slot is fifth and somebody else's is ninth is how near the junction their family could afford to live, not what they are worth — and the big houses on the shelf never needed a slot at all",
     directness:
       "this is not the staging system deciding — your own vehicle is what moves this evacuation's cost onto them",
   },

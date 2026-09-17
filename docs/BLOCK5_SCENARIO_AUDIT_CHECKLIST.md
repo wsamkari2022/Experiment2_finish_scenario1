@@ -193,6 +193,93 @@ That one sentence did three jobs:
 > already assumed. Had the answer instead been that the service road uses the minibus, the whole
 > column audited the day before would have needed redoing.
 
+#### Scenario 2 went further: a world has a SOCIAL shape too
+
+Scenario 1's resolving fact was physical — who owns a vehicle, which road it may use. Scenario 2
+needed a second kind, and it turned out to be the stronger one.
+
+**The question that opened it:** *why is your household fifth of nine?* The number was on the card
+and meant nothing. Making the blocks run in order of how near the highway junction each one sits,
+and saying that the big houses on the cleared shelf have their own road and never needed a slot,
+answered four questions at once with a single clause:
+
+- why your slot is fifth — you live in the middle of the valley, and of its prices;
+- why two neighbors have no vehicle and three more have none;
+- why *the last three blocks* are the ones trapped when the early-highway option jams the road;
+- why the ridge road exists at all, and why taking it takes something that money built.
+
+**It also placed the participant in the middle of the structure rather than at either end**, which
+is where the choices are actually hard. A participant who is clearly among the privileged, or
+clearly among the abandoned, has a much easier time deciding.
+
+#### ⚠ A framing clause must RECALL a fact, never introduce one
+
+Scenario 2's context lens said the ridge road *"was cut for the estates above the treeline"* — and
+nothing in the scenario said so. A claim about **why** some households sit further back was therefore
+appearing for the first time **in the reflection**: after the choice, under the most persuasive
+conditions the block has, and **only for the participants whose choice had been judged misaligned**.
+
+The fact moved into `factBase`, where everyone meets it before choosing, and the clause now points
+back at something already read. Fairer, and much harder to argue with.
+
+**Check every `framingClause` against `factBase` before writing a lens.** If the clause knows
+something the situation box does not, the fact is in the wrong place.
+
+#### ⚠ Adding a place gives it everything else that is already there
+
+Putting the refuge school on the same shelf as the big houses was the right call — and it instantly
+broke the school's own claim. The shelf has a road: the ridge road was cut to serve those houses. So
+*"the only way up is a footpath"* was false the moment the school moved there.
+
+The fix is the shape scenario 1 already used: **the road exists and the participant may not use it.**
+With the ridge road closed, the footpath is the only way up *for them*, which makes the claim true
+instead of merely asserted — and ties two facts together that were sitting adjacent and unrelated.
+
+**When you move something into an existing location, re-read every other fact about that location.**
+
+#### ⚠ The advisor read — four things Passes A–D all missed
+
+Scenario 2 passed every gate, and then a deliberate hostile re-read found six more. **Run this as a
+separate step, after B/C/D and before E.** None of these is catchable by a validator.
+
+**1. COUNT THE SEATS. An option's premise can be arithmetically impossible.**
+The car holds **seven**. The household is **four**. "Give your car seats to the two frame users"
+is **six** — they all fit, and the participant was being asked to sacrifice something the vehicle
+never required. The option had no reason to exist. The repair was the two walking frames: the rear
+row folds flat for them, a seven-seater becomes a five, two of those five are the neighbors', and
+three seats is not four. **Take every capacity stated anywhere in the scenario and check it against
+every option that spends it.**
+
+**2. AN OPTION MUST NOT ARGUE AS IF ANOTHER OPTION'S RESOURCE DID NOT EXIST.**
+The same card said its seats "were the only ones in the valley they could actually get into" —
+while the situation box lists **one bus with a wheelchair lift**, which is exactly what a person
+using a frame boards. Admitting the bus turned the option into something better than it had been
+pretending to be: a **swap**. They take your slot at the third hour; you take their places on the
+last vehicle at the sixth. **Read each option's claim of uniqueness against the full fact base.**
+
+**3. CLOSE THE CLOCK.** Nine slots with the fifth called at three hours puts the ninth at about six.
+The lift bus is "the last vehicle scheduled to leave" and the household was waiting **five** hours
+for it — which places the last vehicle out in the middle of the queue. **Put every duration in the
+scenario on one timeline and check it closes.** Six hours closes this one, and agrees with the
+option's own vignette, which already had them "still in the valley at the seventh hour".
+
+**4. ONE VULNERABILITY PER PERSON, AND DO NOT SWAP THEM.** The household has two and they are not
+interchangeable: a child who needs an inhaler in smoke, and a mother who walks with a frame. One
+vignette made a six-hour wait in a smoky hall cost **the mother her chest** — a respiratory injury
+to the person whose established vulnerability is mobility — while the child, whose inhaler the line
+directly above says is running low, walked away unharmed.
+
+**Also: do not hand anyone a diagnosis the role did not give.** One card said "an asthmatic child"
+where the role says "needs an inhaler in smoke". That is an exposure, not a condition, and the other
+five cards all say inhaler.
+
+#### ⚠ One ordering axis, not two
+
+The scene said smoke had reached *the lowest streets*, which invites a reader to order the nine blocks
+by height. The situation box ordered them by distance from the junction. Two answers to "why is mine
+fifth" is worse than none, and the whole social reading rests on there being exactly one. Height is
+now scenery in the scene paragraph and sequence lives only in the facts.
+
 ### Pass E — the two CVR lenses
 
 Done for scenario 1 on 16–17 September 2026. **Scenarios 2–6 still have the old vignettes.**
@@ -243,6 +330,60 @@ and `parallelAct` (the same act in the parallel world, containing no "you"), plu
 | content | no sentence over **20 words** |
 | content | each `soon` + `later` pair names a **number or a timescale** — and `night` matches, `tonight` does not |
 | content | the two pairs stay within **35%** of each other in length |
+
+#### Scenario 2's parallel world, and how to choose the next one
+
+**A cruise ship being abandoned.** Seven facts, seven partners: eight hours, six hundred people
+across nine decks, nine boat groups, one boat lowered by hoist, one crew stair cut for the top-deck
+suites and held for the crew, one open deck up a ladder. It replaced a cargo ship that had **three
+nouns and no numbers at all**, which cannot mirror seven facts — so the lens was asking a
+participant to notice a resemblance that was not on the page.
+
+**It had to be a PASSENGER ship, not a cargo one.** Scenario 2's world is now social: the blocks run
+in order of how near the junction each sits, and the big houses on the shelf have their own road.
+A ship carrying passengers has exactly that shape already — decks, boat groups, a stair cut for the
+suites — and it has it without anybody having to explain it. A cargo ship has a crew and no class
+structure to mirror.
+
+> **⚠ NOT THE TITANIC, and this generalizes.** The researcher named it as an example of scale and it
+> is the right scale; it is the wrong ship. A participant who recognizes a real disaster brings its
+> whole script with them — women and children first, the locked gates, the band — and that script
+> does the persuading instead of the structure doing it. Worse, it arrives with a **verdict on the
+> class question already reached**, which is the exact variable the lens exists to put in front of
+> them unsettled. **Never pick a parallel world a participant can name.**
+
+**Three things only a RENDERED read catches.** All the gates passed and then reading the twelve
+lenses as printed text found:
+
+- **the valley's weather in a world that has none.** "An hour in the smoke" walked into a ship that
+  floods rather than burns. Check every noun in the parallel consequences against the parallel world.
+- **a shortcut that read as a slog.** The ridge road is the FASTEST way out; its partner said "forty
+  minutes up to the boat deck", which reads as a long climb. The transplanted option was no longer
+  the option being transplanted. It now "puts them at the boats forty minutes ahead of their group".
+- **"she" for the ship inside a sentence about people.** The setting establishes the pronoun, but a
+  consequence line is a list of what happens to passengers, and a reader meeting "when she lists
+  further" there has to stop and work out that it means the vessel.
+
+#### The new instrument: `npm run audit:rules`
+
+`tools/audit_cvr_rules.cjs` checks the **researcher's** ten rules rather than the repo's gates, and
+writing scenario 2 the two disagreed twice — both times the repo's gates were the ones missing
+something. The repo bans "same" in a heading and prompt only; R1 reads every word of both lenses.
+The repo checks the 24-hour rule **nowhere at all**; R2 does.
+
+**It is not in the blocking chain, deliberately.** Scenarios 3 and 4 have not had Pass E, so they
+would fail half of it today, and a validator that cannot pass is a validator that gets switched off.
+It reports on every scenario and **fails only for scenarios that have finished Pass E**, which it
+detects by the presence of an authored `parallelAct`. Each scenario arms itself as its lenses land.
+
+**Its TODO list for scenarios 3 and 4 is their Pass E work queue** — run it first and work the list.
+
+**One gate got stronger because of this pass.** `validate_block5.cjs` used to excuse every option in
+scenario 2 from "the context lens never says you", on the grounds that the participant's own
+household is the subject there. That was never a reason: it is a reason the DIRECTNESS lens says
+"you", not a reason the context lens may. Scenario 2's parallel now says "a passenger", "their
+group" and "a crew" throughout, so the exemption had nothing left to excuse and is gone. **All 30
+options are held to one rule.**
 
 **Two markup traps.** Do **not** put markup inside `consequences` — `buildLens` wraps those in
 `{b|…}` and `{v|…}` itself, and **the parser does not nest**. For the same reason a fully wrapped
@@ -352,6 +493,108 @@ after a clarification: a persuasive demo today, built on numbers that are going 
 
 ---
 
+## 2b. THE SEVEN AUDITS — what to run, in what order, and what each one catches
+
+The six passes are the WORK. These seven are the CHECKING, and they are not the same thing: every
+one of them has caught something after all six passes were finished and every gate was green.
+
+Four are automated and four are read by a person (the rendered read counts twice). **Run them in
+this order**, because each one assumes the one before it has already passed.
+
+| # | Audit | How | What only this one catches |
+|---|---|---|---|
+| **A1** | The gate suite | `npm run validate:block5` | numbers outside 0–100, metrics that restate a value, options too alike, the G5 trade-off collapsing |
+| **A2** | Candidate scoring | scratch script, **before** editing | a number that breaks a gate you would otherwise discover three edits later |
+| **A3** | The researcher's rules | `npm run audit:rules` | the 24-hour rule, "same" anywhere in a lens, a context lens that says "you", a missing mirror row |
+| **A4** | The six-in-a-row read | by eye, all six cards in order | capacities that do not add up, an option arguing as if another's resource did not exist, a clock that does not close, harms on the wrong person |
+| **A5** | The rendered-lens read | print all 12 lenses as plain text | the first world's nouns in the second world, a fast option that reads slow, a pronoun that needs working out |
+| **A6** | Card-versus-story | print card next to both lenses | a card that claims something its own reflection disproves |
+| **A7** | Run it backwards | every audit, on the scenarios already signed off | the defect you only learned to see while doing the NEXT scenario |
+
+### A1 — the gate suite
+
+`npm run validate:block5`, and it must print all nine PASS banners. It is the guard on the scoring
+model and on what reaches MongoDB; treat a failure as a blocker, not a warning.
+
+### A2 — score candidate numbers BEFORE editing the file
+
+`validate_block5_metrics.mjs` reads `src/experiment/block5Scenarios.ts` **relative to the current
+working directory**, so a scratch directory holding a patched copy of that one file runs the shipped
+gates over numbers that have not been committed to anything:
+
+1. copy `block5Scenarios.ts` into `<scratch>/src/experiment/`, with the candidate numbers in it;
+2. `node <repo>/tools/validate_block5_metrics.mjs` with `cwd` set to the scratch directory.
+
+**Do not reimplement the gates in the scratch script.** A checker carrying its own copy of the math
+drifts from the code and then certifies the drift.
+
+This is not optional bookkeeping. Scenario 2's first candidate set priced the ridge road's two deaths
+into its durability and sent `vulnerability x performance` to **r = 0.50** against a ceiling of 0.30.
+The harness caught it before a single character was written to the repo.
+
+### A3 — `npm run audit:rules`
+
+Ten rules, the ones the researcher actually stated, in `tools/audit_cvr_rules.cjs`. See §2 Pass E.
+**It disagreed with the repo's own gates twice while scenario 2 was being written, and both times the
+repo's gates were the ones missing something.**
+
+### A4 — the six-in-a-row read
+
+Read all six cards in one sitting, in order, as a participant would, hunting for four specific
+things. See the "advisor read" box in §2 Pass D for what each one found. **Scenario 2 passed every
+gate and this step still found six defects, one of which had left an option with no reason to exist.**
+
+### A5 — read the lenses RENDERED, not in the source
+
+Print all twelve with the markup stripped and the lines wrapped. Reading them in the source file does
+not work: the `{w|...}` and `{a|...}` marks break up the sentences, and the setting paragraph is
+stored once and repeated twelve times, so it is invisible until it is rendered beside each act.
+
+Three defects in scenario 2 survived every gate and every source read, and all three were obvious
+within a minute of the rendered text:
+
+- **the first world's weather in the second.** "An hour in the smoke" walked into a ship that floods
+  rather than burns. **Check every noun in the parallel consequences against the parallel world.**
+- **a fast option that read as slow.** The ridge road is the FASTEST way out; its partner said "forty
+  minutes up to the boat deck", which reads as a long climb, so the transplanted option was no longer
+  the option being transplanted.
+- **a pronoun that needed working out.** "when she lists further" means the vessel, in a sentence that
+  is otherwise a list of what happens to people.
+
+### A6 — card versus story
+
+Print each option's `method`, `gains`, `givesUp` and `moralTension` directly above its `act` +
+consequences and its `parallelAct` + parallel consequences. **A card that claims something its own
+reflection disproves is the single most common defect found so far, and it has now appeared in both
+finished scenarios:**
+
+| | scenario 1, shelter | scenario 2, hill school |
+|---|---|---|
+| the card said | "no seat, no mask, no road, **no crew time**" | "no seat, no lane, no fuel and **no crew time**" |
+| its own lens said | "a sweep team breaks into your block… **two of them may spend forty minutes** in the worst air of the night" | "a crew comes back into the valley… **two of them may spend an hour** in the smoke" |
+
+Both were fixed the same way: drop the false clause from `gains`, and move the real cost into
+`givesUp`, where the option's costs belong. **Neither number moved** — resources spared was already
+97 and 93 rather than 100, and the Pass B notes already said the crew check is why. Only the cards
+were claiming to be free.
+
+> **The shape to look for: an option that says it takes NOTHING.** There is one in most scenarios —
+> the shelter, the refuge, the do-nothing. It is the option most likely to overclaim, because
+> "takes nothing" is its whole pitch, and the sweep team that comes looking for it is exactly the
+> cost its pitch forgets.
+
+### A7 — run every audit BACKWARDS over the scenarios already finished
+
+**This is the one that is easiest to skip and it has already paid for itself.** A4, A5 and A6 were
+all invented while auditing scenario 2, which means scenario 1 was signed off without them. Running
+A6 backwards over scenario 1 found the crew-time defect above, in a scenario that had passed every
+gate for two days.
+
+**Every time an audit finds a new KIND of defect, re-run that audit on every scenario already done.**
+The instrument is new; the defect is not.
+
+---
+
 ## 3. Two gates that bite when editing scene text
 
 - **`description` may contain no digits; `factBase` must contain some.** Numbers live in the
@@ -381,12 +624,19 @@ now carry a line saying so.
 4. **Pass B** — audit the numbers against the (now coherent) text. Score candidates against the gates
    before editing.
 5. **Pass A** — tidy the scene and situation wording.
-6. **Pass E** — rewrite the two CVR lenses. Last of the scene work, because it reuses the method
+6. **Audit A4**, the six-in-a-row read — see §2b. Do it before the lenses, because a lens written
+   on top of a card that does not add up inherits the fault.
+7. **Pass E** — `npm run audit:rules` first to see the work queue, then rewrite the two CVR lenses. Last of the scene work, because it reuses the method
    from C and the world from D.
-7. **Pass F** — write the scenario's `mirror` rows. Nothing else in Pass F is per-scenario, so this
+8. **Pass F** — write the scenario's `mirror` rows. Nothing else in Pass F is per-scenario, so this
    is a short step: one `{ here, there }` pair per number, taken from the world Pass E just built.
-8. `npm run typecheck && npm run validate:block5 && npm run lint && npm run build`
-9. Check it in the browser at desktop and at 375px.
+9. **Audits A1, A3, A5, A6** — the gate suite, the researcher's rules, the rendered-lens read and
+   the card-versus-story read. See §2b; A5 and A6 are read by a person and are the two that keep
+   finding things after everything is green.
+10. `npm run typecheck && npm run validate:block5 && npm run audit:rules && npm run lint && npm run build`
+11. Check it in the browser at desktop and at 375px.
+12. **Audit A7** — if any audit above found a NEW KIND of defect, re-run that audit over every
+    scenario already finished. The instrument is new; the defect is not.
 
 ---
 
