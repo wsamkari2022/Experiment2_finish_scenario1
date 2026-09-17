@@ -48,7 +48,16 @@ What changed in scenario 1:
 |---|---|---|
 | `description` | "Chlorine is coming off it as a low plume … into **the housing**" | "**A chlorine leak is causing** a low plume … into **a housing neighborhood**" |
 | `factBase` | "**Six hours before** the plume covers the district." (a fragment) | "**You have 6 hours before** the plume covers the district." |
-| `factBase` | "gets you out **inside** the six hours" | "gets you out **within** six hours" |
+| `factBase` | "Every option … **gets you out** within six hours" | "Every option … **keeps you alive for** the six hours" |
+| `gains` (convoy) | "You get out well **inside** the six hours" | "You get out well **within** the six hours" |
+
+Scenario 2 got the same first two, plus the closing-claim fix:
+
+| Field | Before | After |
+|---|---|---|
+| `factBase` | "**Eight hours before** the front reaches the valley floor." (a fragment) | "**You have 8 hours before** the front reaches the valley floor." |
+| `factBase` | "gets your household **out inside** the eight hours" | "**keeps your household alive for** the eight hours" |
+| `STAKE_VIEW` | "your own way out as well as **theirs**" | "your own way out **and your household's**" |
 
 The reasons generalize:
 
@@ -57,8 +66,21 @@ The reasons generalize:
 - **Open the situation box with a sentence, not a label.** A fragment leaves the reader working out
   whose six hours these are, and the first four words should carry the number everything depends on.
 - **Watch prepositions doing double duty.** "Gets you out inside the six hours" puts *out* and
-  *inside* in one breath. The preposition meant time; a reader hears space.
+  *inside* in one breath. The preposition meant time; a reader hears space. **It hides in `gains`
+  and `consequence` too** — scenario 1's convoy card still said "well inside the six hours" a day
+  after the situation box was cleared of it, because that pass only looked at `factBase`. Grep the
+  whole scenario for the phrase, not just the field you are editing.
+- **⚠ The closing claim of `factBase` is usually false, and it is the easiest line to skim past.**
+  Both scenarios said every option *gets you out* inside the time — and both have a **shelter-in-place
+  option that never leaves**. Scenario 1 said it while its own Pass B had already scored sheltering
+  **speed 18** on the grounds that it never gets you out, so the file contradicted itself in two
+  places at once. The sentence is doing real work (these six are equally viable and differ only in
+  cost), so keep that half and drop the half that is untrue: **"keeps you alive for the N hours."**
+  Check this line against the shelter option of every scenario that has one.
 - **Avoid category nouns for places people live.** "The housing" is incident-report language.
+- **A pronoun in the first row of a card points at nothing.** Scenario 2's role card opened with
+  "your own way out as well as theirs" when *theirs* is introduced on the row underneath. Naming the
+  group costs a few words and removes the only part of the card that had to be worked out.
 
 ### Pass B — the performance numbers, read against each option's own text
 

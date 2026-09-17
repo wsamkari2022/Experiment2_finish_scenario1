@@ -240,7 +240,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
      */
     factBase:
       /*
-        TWO FIXES HERE, BOTH ON THE ADVISOR'S INSTRUCTION, 16 September 2026.
+        THREE FIXES HERE. The first two on the advisor's instruction, 16 September 2026; the third
+        on the researcher's, 17 September 2026, after the same defect was found in scenario 2.
 
         NO DOUBLE QUOTES IN THIS COMMENT EITHER - see the note on `description` above. The digit
         check and the overlap check both read the first quoted string after the field name, so a
@@ -251,11 +252,21 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         these are. Handing the time to the participant is the only reading that matters, and it
         puts the number the rest of the box depends on in the first four words.
 
-        WITHIN SIX HOURS replaces gets you out inside the six hours. Out and inside in one breath
-        reads for a moment as somewhere to get out inside of. The preposition was doing time, not
-        space, and within cannot be misread that way.
+        THE CLOSING CLAIM WAS FALSE FOR ONE OF THE SIX OPTIONS. It read: every option you will see
+        gets you out within six hours. Sealing your apartment and letting the plume pass over you
+        does not get you out of anywhere - its own givesUp line says you are inside the worst air
+        in the district with no way out. The sentence is there to tell the participant that the six
+        options are equally viable and differ only in cost, so the half that was doing the work is
+        kept and the half that was untrue is dropped. KEEPS YOU ALIVE is true of all six, including
+        the one that never leaves the apartment.
+
+        That also retires an earlier fix rather than reversing it. WITHIN six hours had replaced
+        gets you out INSIDE the six hours, because out and inside in one breath reads for a moment
+        as somewhere to get out inside of. The whole clause has now gone, so the trap it avoided
+        cannot come back - but the reasoning is worth keeping for the next scenario that needs a
+        preposition to carry time rather than space.
       */
-      "You have 6 hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long. Your own car is outside, but the district is being cleared in timed groups and closed to private cars, so the service road past the tanker is the only road your car may use. Every option you will see gets you out within six hours. They differ only in what each one takes from the people still here.",
+      "You have 6 hours before the plume covers the district. Around 4,000 residents still to move. One community minibus, parked with no driver. One clinic cabinet holding a single full-face respirator. A convoy list nine streets long. Your own car is outside, but the district is being cleared in timed groups and closed to private cars, so the service road past the tanker is the only road your car may use. Every option you will see keeps you alive for the six hours. They differ only in what each one takes from the people still here.",
     role:
       /*
         THE CLOSING CLAUSE IS BACK, ON THE ADVISOR'S INSTRUCTION (15 September 2026).
@@ -330,7 +341,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           detail: "in your street's assigned slot. Your car stays parked where it is.",
         },
         summary: "The district is being cleared street by street in timed groups. You wait for your street's slot, board with your neighbors, and go when they go.",
-        gains: "You get out well inside the six hours, and nobody loses their place so that you can have yours.",
+        /* WELL WITHIN, not WELL INSIDE. The same preposition trap the situation box was cleared of
+           on 16 September 2026, left behind on this card because the pass only looked at factBase.
+           Out and inside in one breath reads for a moment as somewhere to get out inside of. */
+        gains: "You get out well within the six hours, and nobody loses their place so that you can have yours.",
         consequence: "You reach the center in good time. You take nothing that was set aside for anyone else. But you leave when the list says, not when you want. The last hour is spent watching the plume come down the road.",
         givesUp: "Control over your own timing. You go when your street is called, and not a minute sooner.",
         moralTension: "Is a fair line still fair, when the people at the back breathe the same air as the people at the front?",
@@ -572,8 +586,63 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
   {
     id: "wildfire_household_evacuation",
     stakePosition: "self_and_group",
+    methodLabel: "How you travel",
+    /*
+     * ──────────────────────────────────────────────────────────────────────────────────────
+     * PASS D — THE SIX OPTIONS DESCRIBE ONE WORLD, 17 September 2026.
+     *
+     * THE CONTRADICTION THE ADVISOR HIT. Option 6 is titled leave immediately, BEFORE THE STAGING
+     * STARTS. Option 1 said the valley IS LEAVING in timed blocks, option 3 named the lift bus as
+     * the last vehicle scheduled out, and option 1 had a participant waiting for slot five TO BE
+     * CALLED. So has the staging started or not? Read in a row, the six cards answered both ways.
+     *
+     * THE FACT THAT RESOLVES IT: the order is drawn and the first slot has not been called yet.
+     * The plan exists, which is what options 1 and 3 need. Nothing has been released, which is what
+     * option 6 needs. One clause, both halves true.
+     *
+     * TWO MORE COLLISIONS FIXED IN THE SAME SENTENCE:
+     *
+     *   - HOW DOES ANYONE TRAVEL? Four of the six options move the household by car, one gives that
+     *     car away and one walks, and not one of them said the household owned a car. Option 4 let
+     *     it slip sideways — your car holds seven — four cards later.
+     *   - THE HILL SCHOOL. Its own text claimed it uses no road capacity, which is only true if
+     *     nobody drives there. Nothing said so, and the reader was free to picture the family
+     *     driving up. The footpath makes the claim true instead of merely asserted.
+     *
+     * AND ONE SENTENCE THAT WAS SIMPLY FALSE: every option gets your household OUT within eight
+     * hours. The hill school does not get them out at all — its own givesUp line says they are
+     * choosing to stay in the valley. It now says what is true of all six.
+     *
+     * COST TO THE PERFORMANCE NUMBERS: none of these forced a change. The car takes nothing from
+     * the shared pool, and the footpath only confirms the road capacity the hill school was already
+     * scored as sparing. Pass B moved numbers for its own reasons, listed on each option.
+     * ──────────────────────────────────────────────────────────────────────────────────────
+     */
     factBase:
-      "Eight hours before the front reaches the valley floor. Around 600 residents across nine blocks. One highway out, released in nine timed slots. One bus with a wheelchair lift. One ridge road, closed off and kept clear for fire crews. Every option you will see gets your household out inside the eight hours. They differ only in what each one takes from the rest of the valley.",
+      /*
+        PASS A, 17 September 2026, on the researcher instruction.
+
+        NO DOUBLE QUOTES IN THIS COMMENT. The digit check and the description-overlap check in
+        tools/validate_block5.cjs both read the first quoted string after the field name, so a
+        quoted phrase here would be scored in place of the scenario text. This has caught me three
+        times; see docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md.
+
+        OPENS WITH A SENTENCE, not a fragment. Eight hours before the front reaches the valley floor
+        is a label on a countdown. It leaves the reader working out whose eight hours these are, and
+        the first four words should hand the participant the number the rest of the box depends on.
+        Same fix, same reason, as scenario 1.
+
+        WITHIN EIGHT HOURS replaces inside the eight hours, for the reason scenario 1 changed it:
+        out and inside in one breath reads for a moment as somewhere to get out inside of.
+
+        FOUR WORDS ARE AVOIDED HERE DELIBERATELY - above, order, reached and through. The scene
+        gate fails a factBase that reuses 30% or more of the description paragraph words of five
+        letters or more, and the first draft of this sentence hit 47% by reaching for the obvious
+        word four times. The scene already spends running, order, above, through and reached, so
+        the situation box has to say the same things differently. Check with npm run validate:block5
+        before assuming a rewrite here is free.
+      */
+      "You have 8 hours before the front reaches the valley floor. Around 600 residents across nine blocks. One highway out, to be released in nine timed slots - the nine slots are assigned and the first has not been called yet. One bus with a wheelchair lift. One ridge road, closed off and kept clear for fire crews. Your own car is outside with seven seats in it, and the refuge school on the hill has only a footpath up to it, too narrow for any vehicle. Every option you will see keeps your household alive for the eight hours. They differ only in what each one takes from the rest of the valley.",
     role:
       "You are a resident, and {w|you are not leaving alone}. Your household is four. You, {w|two children} — one needs an inhaler in smoke — and {w|your mother, who walks with a frame}. You carry the cost of this choice, and so do they.",
     title: "Eight Hours Ahead of the Fire",
@@ -604,7 +673,14 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Take your household's assigned place in the staged convoy",
-        summary: "The valley is leaving in timed blocks so the highway does not seize up. Your four go together in your block's slot, with a guide ahead of you and behind you.",
+        method: {
+          kind: "car",
+          by: "Your own car, in the staged convoy",
+          detail: "in your block's slot, fifth of nine, with a guide ahead of you and behind you.",
+        },
+        /* PASS D: IS SET TO LEAVE, not IS LEAVING. The old present tense said the staging had begun,
+           which is the half of the contradiction that option 6 could not live with. */
+        summary: "The valley is set to leave in timed blocks so the highway does not seize up. Your four go together in your block's slot, with a guide ahead of you and behind you.",
         gains: "All four of you leave together, in a guided group, on a road that is kept moving.",
         consequence: "Nobody in your household is separated and nobody else is pushed down the list to make room for you. But your slot is the fifth of nine, and the smoke is well into the valley by the time you roll.",
         givesUp: "Three hours of waiting, with an asthmatic child, while the air gets steadily worse.",
@@ -616,9 +692,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         metrics: {
           speed: 48,
-          resourceUse: 57,
+          resourceUse: 72,
           reliability: 92,
-          durability: 73,
+          durability: 82,
           reversibility: 62,
         },
       },
@@ -641,6 +717,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Take the closed ridge road",
+        method: {
+          kind: "car",
+          by: "Your own car, on the closed ridge road",
+          detail: "over the ridge in forty minutes, up the lane held clear for fire crews coming down.",
+        },
         summary: "The ridge road is closed off and kept clear for fire crews coming the other way. It is empty, it is fast, and your four could be over the ridge and out of the valley in forty minutes.",
         gains: "Your household is out of the valley in forty minutes — hours ahead of anything else here.",
         consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept open for crews coming the other way. A car on it turns a fire engine back.",
@@ -653,10 +734,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         metrics: {
           speed: 92,
-          resourceUse: 51,
+          resourceUse: 18,
           reliability: 62,
-          durability: 72,
-          reversibility: 51,
+          durability: 70,
+          reversibility: 45,
         },
       },
       {
@@ -678,10 +759,22 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Give your car seats to the two frame users and wait for the lift bus",
-        summary: "Two neighbors use walking frames and cannot board the standard coaches. Your car can take them out now. Your own household then waits for the lift-equipped bus, which is the last vehicle scheduled to leave the valley.",
+        /* PASS D: WHO DRIVES? The card gave your car away without ever saying who was at the wheel,
+           and the reader's only candidates were two people using walking frames. A frame is no bar
+           to driving, and saying so costs the scenario nothing - no crew time, no second vehicle,
+           so the resources-spared score does not have to carry a driver it never had. */
+        method: {
+          kind: "bus",
+          by: "The lift-equipped bus, last out of the valley",
+          detail: "your car takes your block's slot with the two neighbors in it, one of them driving. Your four wait.",
+        },
+        summary: "Two neighbors use walking frames and cannot board the standard coaches. Your car can take them out in your block's slot, with one of them driving it. Your own household then waits for the lift-equipped bus, which is the last vehicle scheduled to leave the valley.",
         gains: "The two people least able to get themselves out of the valley leave first, in your seats.",
         consequence: "Nobody who needs a lift is left behind. But your own four are then on the last vehicle out. Your mother waits five hours in a shelter hall for it.",
-        givesUp: "Your place near the front of the line. Your household leaves last, with a child on an inhaler and five hours to wait.",
+        /* PASS D: NOT NEAR THE FRONT. The household's slot is the fifth of nine - option 1 says so
+           twice - which is the middle of the line, and this card was selling a place it never had.
+           The sacrifice is real without the exaggeration: middle of the line to last out. */
+        givesUp: "Your slot in the middle of the line. Your household leaves last, with a child on an inhaler and five hours to wait.",
         moralTension: "Do your own dependents come first, or the dependents who have nobody at all?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 56,
@@ -689,11 +782,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 65, contextSensitivity: 78, stakeholderPerspectiveShiftSensitivity: 75,
         },
         metrics: {
-          speed: 31,
-          resourceUse: 64,
-          reliability: 64,
-          durability: 85,
-          reversibility: 81,
+          speed: 26,
+          resourceUse: 80,
+          reliability: 58,
+          durability: 86,
+          reversibility: 30,
         },
       },
       {
@@ -715,6 +808,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Fill every seat in the car with neighbors who have none",
+        method: {
+          kind: "car",
+          by: "Your own car, all seven seats full",
+          detail: "in your block's slot, with the walking frame strapped to the roof and no fast line through the bends.",
+        },
         summary: "Your car holds seven and your household is four. Three people on your street have no vehicle at all, and taking them costs you nothing but the space.",
         gains: "Seven people leave the valley instead of four, in one vehicle, on one tank of fuel.",
         consequence: "Three people who had no way out at all are in your car. But seven in a seven-seat car means the walking frame goes on the roof. The drive is slow and very hot.",
@@ -726,11 +824,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 43, contextSensitivity: 62, stakeholderPerspectiveShiftSensitivity: 58,
         },
         metrics: {
-          speed: 47,
-          resourceUse: 45,
-          reliability: 76,
-          durability: 70,
-          reversibility: 40,
+          speed: 42,
+          resourceUse: 88,
+          reliability: 65,
+          durability: 80,
+          reversibility: 44,
         },
       },
       {
@@ -752,10 +850,28 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Take your household to the concrete school on the hill",
-        summary: "The school is concrete, stands on cleared ground above the treeline, and is the valley's designated refuge. Going there uses no road capacity and displaces nobody at all.",
-        gains: "You take no seat, no lane and no crew time from anybody, and you can still leave later if the front turns.",
-        consequence: "Nothing you do makes anyone else's evacuation harder, and the option of leaving stays open all night. But you are inside the fire's path in a building rather than outside it, and your children watch the front arrive.",
-        givesUp: "Distance from the fire. You are choosing to stay in the valley and trust a building to hold.",
+        /*
+          PASS D + PASS C, on the researcher instruction, 17 September 2026.
+
+          THE CLAIM THAT NEEDED A FACT UNDER IT. This option said it uses no road capacity, which is
+          only true if nobody drives up. Nothing on the card said so, and a reader was free to
+          picture the family driving - at which point the claim is simply wrong and the
+          resources-spared score with it. The footpath makes the claim true rather than asserted.
+
+          IT ALSO COSTS SOMETHING, and that is the point. Twenty minutes of narrow path, slow with a
+          walking frame, and the car left at the house. Pass B priced both: reliability came down
+          because the climb is the frame user's hardest moment in the scenario, and speed came down
+          to the floor because this household never leaves the valley at all.
+        */
+        method: {
+          kind: "foot",
+          by: "On foot, up the hill path",
+          detail: "twenty minutes of narrow path, slow with the frame. Your car stays at the house.",
+        },
+        summary: "The school is concrete, stands on cleared ground above the treeline, and is the valley's designated refuge. The only way up is a footpath too narrow for a vehicle, so your car stays at the house and the four of you walk. Going there uses no road capacity and displaces nobody at all.",
+        gains: "You take no seat, no lane, no fuel and no crew time from anybody, and you can still walk back down if the front turns.",
+        consequence: "Nothing you do makes anyone else's evacuation harder, and the way back down stays open all night. But the climb is twenty minutes of narrow path, slow with your mother's frame, and you are then inside the fire's path in a building rather than outside it. Your children watch the front arrive.",
+        givesUp: "Distance from the fire, and your car. You leave it at the house, walk your mother up a narrow path, and trust a building to hold.",
         moralTension: "Is refusing to take anything from anyone worth putting your own children nearer the fire?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 56, groupSizeSensitivity: 94,
@@ -763,11 +879,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           directnessSensitivity: 28, contextSensitivity: 51, stakeholderPerspectiveShiftSensitivity: 49,
         },
         metrics: {
-          speed: 48,
-          resourceUse: 75,
-          reliability: 56,
-          durability: 72,
-          reversibility: 95,
+          speed: 15,
+          resourceUse: 93,
+          reliability: 40,
+          durability: 50,
+          reversibility: 90,
         },
       },
       {
@@ -789,7 +905,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
         },
         title: "Leave immediately on the main highway, before the staging starts",
-        summary: "The highway is still empty. Going now, before the timed convoy starts, is the fastest and cheapest way out. That is true for you, and for everyone who leaves when you do.",
+        /* PASS D: this option is the one that made the contradiction visible, and it is the one that
+           did NOT have to change. The nine slots are drawn but uncalled, so before the staging
+           starts is now literally true and the title stands as written. */
+        method: {
+          kind: "car",
+          by: "Your own car, on the main highway",
+          detail: "away before the first slot is called, while the road is still empty.",
+        },
+        summary: "The highway is still empty and the first slot has not been called. Going now, before the timed convoy starts, is the fastest and cheapest way out. That is true for you, and for everyone who leaves when you do.",
         gains: "The quickest, cleanest run out of the valley, and the ones who follow you get the same clear road.",
         consequence: "Your household is out early on an open highway, and so is everybody who moves when you move. But once the highway fills there is no staging left to organize it, and no way back in for anything you forgot.",
         givesUp: "The staging system, and any way back. Once the highway is moving unstaged it cannot be re-formed.",
@@ -801,10 +925,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         metrics: {
           speed: 90,
-          resourceUse: 89,
-          reliability: 79,
-          durability: 43,
-          reversibility: 46,
+          resourceUse: 22,
+          reliability: 84,
+          durability: 18,
+          reversibility: 28,
         },
       },
     ],

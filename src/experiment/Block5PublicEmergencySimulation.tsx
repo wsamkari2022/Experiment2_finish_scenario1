@@ -2006,8 +2006,14 @@ const STAKE_VIEW: Record<StakePosition, {
     badge: "Deciding for your household",
     headline: "You are at risk, and so are the people who depend on you.",
     actors: [
+      /*
+        "AS WELL AS THEIRS" NAMED NOBODY. Changed on the researcher's instruction, 17 September 2026.
+        A pronoun in the FIRST row pointed at a group the reader had not met yet — the household is
+        introduced on the row below it. Naming them costs four words and removes the only piece of
+        this card that had to be worked out rather than read.
+      */
       { key: "you", icon: <LuUserRound />, label: "You",
-        state: "At risk. You are choosing your own way out as well as theirs.", strong: true },
+        state: "At risk. You are choosing your own way out and your household's.", strong: true },
       { key: "with", icon: <LuUsersRound />, label: "Your household",
         state: "At risk with you, and they cannot make this choice for themselves.", strong: true },
       { key: "other", icon: <LuGlobe />, label: "Everyone else",
