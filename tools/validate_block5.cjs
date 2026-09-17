@@ -104,10 +104,10 @@ for(const n of CVR_ALL){
   const vp=K.filter(k=>new RegExp(k+': "').test(t)).length;
   const fr=/context:/.test(t)&&/directness:/.test(t);
   ok((n+" content").padEnd(30),i>=0&&vp===4&&fr,vp+"/4 value phrases, framing:"+fr);
-  // anchorNoun is rendered as `The same ${anchorNoun} are committed...`, so a leading article
-  // produces "The same the six hours are committed". That shipped once; this stops it recurring.
-  const an=(t.match(/anchorNoun: "([^"]*)"/)||[])[1];
-  ok((n+" anchorNoun has no article").padEnd(30), !!an && !/^(the|a|an)\s/i.test(an), an||"MISSING");}
+  // NO anchorNoun GATE ANY MORE. The field is gone: it existed only to build the sentence
+  // "The same ${anchorNoun} are committed under the plan you chose", and that sentence was removed
+  // on 16 September 2026 because no participant could parse it. See CVRStory in block5Types.ts.
+}
 
 // THE THREE VOICES. One per stakeholder level, shared by every scenario. They differ only in
 // social closeness, which is what the dimension measures. The old per-scenario casts (nurses,

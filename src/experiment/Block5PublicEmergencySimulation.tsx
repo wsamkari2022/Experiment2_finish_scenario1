@@ -61,6 +61,7 @@ import {
   type Block5UserProfile, type CVREndorsement, type Block5MetricProfile,
   type Block5PolicyDimKey, type CVRCoordinate, type WhoVariant,
   type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
+  type CVRLensBlock,
   type CVRFraming, type FramingAdjust, type StakePosition,
   BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
   type Block5MethodKind,
@@ -3132,6 +3133,18 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
 
 interface CVRSeg { text: string; color?: string; bold?: boolean; italic?: boolean }
 
+/**
+ * The one line that best stands for a lens, for the comparison card.
+ *
+ * The directness lens closes by naming the participant, so that is its line. The context lens
+ * closes on nothing at all (see CVRLensBlock.prompt), so its last consequence speaks for it.
+ */
+function lensClosingLine(lens: CVRLensBlock): string {
+  if (lens.prompt) return lens.prompt;
+  const pts = lens.points ?? [];
+  return pts.length ? pts[pts.length - 1].text : lens.body;
+}
+
 /** Parses {x|…} CVR markup into styled segments (same color key as renderCVRMarkup). */
 function parseCVRSegments(text: string, marks: MarkSet): CVRSeg[] {
   const segs: CVRSeg[] = [];
@@ -3263,7 +3276,17 @@ function FramingComparisonTable({ scenario, option, coord, mode }: {
         <Text as="span" color="fg.subtle" fontWeight="normal"> — {FRAMING_META[framing].gloss}</Text>
       </Text>
       <Text fontSize="2xs" color="fg.subtle" fontWeight="semibold" mb="1">{lenses[framing].heading}</Text>
-      <Text fontSize="2xs" color="fg.muted" lineHeight="tall">{renderCVRMarkup(lenses[framing].prompt, marks)}</Text>
+      {/*
+        THE LINE THAT STANDS FOR EACH LENS in the comparison card.
+
+        It was always the lens prompt. The context lens no longer has one - it ends on its last
+        consequence - so this falls back to that consequence, which is the strongest line in the
+        block and the one a participant is most likely to remember. An empty half of a comparison
+        card would make the question unanswerable.
+      */}
+      <Text fontSize="2xs" color="fg.muted" lineHeight="tall">
+        {renderCVRMarkup(lensClosingLine(lenses[framing]), marks)}
+      </Text>
     </Box>
   );
   return (
@@ -3284,11 +3307,10 @@ function FramingComparisonTable({ scenario, option, coord, mode }: {
  * answer: a random 2–5s "thinking" pause, then box 1 fades in and types, then box 2 fades in
  * and types, then the legend, then the response buttons. A "Skip" control reveals it all at once.
  */
-function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
+function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
   story: ReturnType<typeof getCVRStory>;
   /** the SAME vignette with the framing flipped (the other reflection lens). */
   altStory: ReturnType<typeof getCVRStory>;
-  factBase?: string;
   level: AlignmentLevel;
   accent: string;
   /** color mode — picks the bright (dark) vs darker (light) CVR highlight colors. */
@@ -3297,7 +3319,12 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
   onAltGenerated: () => void;
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
 }) {
-  type Phase = "thinking" | "box1" | "box2" | "settle" | "done";
+  /*
+   * NO "box1" PHASE ANY MORE. It typed out the recontext paragraph, and both the paragraph and the
+   * faint recap of the situation above it were removed on 16 September 2026 — see CVRStory in
+   * block5Types.ts. The page now goes straight from the thinking pause to the lens.
+   */
+  type Phase = "thinking" | "box2" | "settle" | "done";
   const [phase, setPhase] = useState<Phase>("thinking");
   const [b2Step, setB2Step] = useState(0); // the re-endorse question: 0 = typing, 2 = done
   /**
@@ -3326,7 +3353,7 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
   // Random "thinking" wait (2–5s) on every arrival, then begin generating the first view.
   useEffect(() => {
     const ms = 2000 + Math.random() * 3000;
-    const id = setTimeout(() => setPhase("box1"), ms);
+    const id = setTimeout(() => setPhase("box2"), ms);
     return () => clearTimeout(id);
   }, []);
 
@@ -3371,7 +3398,9 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
 
   /** The lens block's parts, and the cursor value that means "all of it is on screen". */
   const lensPoints = shownStory.lens?.points ?? [];
-  const b2Done = lensPoints.length + 2;
+  /* The body, then one step per point, then the closing line IF there is one. The context lens
+     has none, so without this the reveal would wait forever for a line that never types. */
+  const b2Done = lensPoints.length + (shownStory.lens?.prompt ? 2 : 1);
   /** A vignette with no lens block has nothing to wait for, so it must not gate what follows. */
   const b2Complete = skipped || !shownStory.lens || b2Part >= b2Done;
 
@@ -3389,7 +3418,6 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
     }
   }, [altState, b2Part, b2Done]);
 
-  const showBox1 = skipped || phase !== "thinking";
   const showBox2 = skipped || phase === "box2" || phase === "settle" || phase === "done";
   const showButtons = skipped || phase === "done";
   const revealComplete = skipped || phase === "done";
@@ -3402,16 +3430,6 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
    * animation was re-typing the same sentence while the actual change happened silently below.
    * The regeneration now plays where the change really is: in the lens block.
    */
-  let box1Inner: ReactNode;
-  if (phase === "box1" && !skipped && altState === "none") {
-    box1Inner = (
-      <Typed text={story.recontext} marks={marks} accent={accent} fontSize="sm" color="fg" lineHeight="tall"
-        onComplete={() => setPhase("box2")} />
-    );
-  } else {
-    box1Inner = <Text fontSize="sm" color="fg" lineHeight="tall">{renderCVRMarkup(shownStory.recontext, marks)}</Text>;
-  }
-
   return (
     <Stack gap="4">
       {/* No alignment verdict is shown here. This page asks the participant to re-read the choice
@@ -3451,15 +3469,12 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
 
       {phase === "thinking" && !skipped && <CVRThinking accent={accent} />}
 
-      {showBox1 && (
-        <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3" animationName="fade-in" animationDuration="moderate">
-          {factBase && (
-            <Text fontSize="2xs" color="fg.subtle" fontStyle="italic" mb="2">{factBase}</Text>
-          )}
-          {box1Inner}
-        </Box>
-      )}
-
+      {/*
+        THE FAINT RECAP OF THE SITUATION IS GONE, with the paragraph it sat above. It restated the
+        situation box the participant had read minutes earlier, in the smallest and lowest-contrast
+        text on the page — a recap nobody reads, above a paragraph nobody could parse. The vignette
+        now opens on the lens itself.
+      */}
       {/*
         THE LENS — the reflection made visible rather than asserted.
 
@@ -3534,8 +3549,8 @@ function CVRReveal({ story, altStory, factBase, accent, mode, onAltGenerated, on
                 </Stack>
               )}
 
-              {/* the closing line — who decided this */}
-              {(skipped || b2Part >= lensPoints.length + 1) && (
+              {/* the closing line — who decided this. Absent on the context lens, on purpose. */}
+              {shownStory.lens.prompt && (skipped || b2Part >= lensPoints.length + 1) && (
                 skipped || b2Part > lensPoints.length + 1 ? (
                   <Text fontSize="sm" color="fg" fontWeight="semibold" lineHeight="tall">
                     {renderCVRMarkup(shownStory.lens.prompt, marks)}
@@ -4064,7 +4079,6 @@ function FlowOverlay({
           <CVRReveal
             story={story}
             altStory={altStory}
-            factBase={scenario.factBase}
             level={option.level}
             accent={accent}
             mode={mode}

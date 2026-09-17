@@ -43,14 +43,12 @@ interface CVRParallelWorld {
 }
 
 interface ScenarioCVRContent {
-  /**
-   * The scarce thing, as a BARE NOUN PHRASE with no leading article.
-   *
-   * It is rendered as `The same ${anchorNoun} are committed…`, so "the six hours" produces
-   * "The same the six hours are committed" — which shipped once and read as gibberish. Start it
-   * with a number or a plural noun: "20 doses", "six hours and one plume", "buses and rescue hours".
+  /*
+   * NO `anchorNoun`. It existed only to build the sentence "The same ${anchorNoun} are
+   * committed under the plan you chose", and that sentence is gone — see CVRStory in
+   * block5Types.ts. The vignette no longer announces that the numbers match. It prints them and
+   * lets the participant notice.
    */
-  anchorNoun: string;
   valuePhrase: Record<Block5PolicyDimKey, string>;
   framingClause: Record<CVRFraming, string>;
   /** how serious this scenario is — checked against parallel.register. */
@@ -109,7 +107,6 @@ const VOICE: Record<SalienceWho, VoiceLevel> = {
 };
 
 const CANCER: ScenarioCVRContent = {
-  anchorNoun: "20 doses",
   register: "life_and_death",
   impersonalAgent: "the hospital's scheduling system",
   parallel: {
@@ -161,18 +158,46 @@ const CANCER: ScenarioCVRContent = {
 const CHEMICAL: ScenarioCVRContent = {
   register: "life_and_death",
   impersonalAgent: "the district evacuation system's own priority list",
+  /*
+   * ────────────────────────────────────────────────────────────────────────────────────────────
+   * THE PARALLEL WORLD IS AN AIRPORT. It was a hospital under a mass-casualty alert, and that was
+   * wrong for a reason that has nothing to do with how it was written: SCENARIO 3 IS A HOSPITAL.
+   * A participant met an invented hospital here and then a real one two scenarios later, and the
+   * two would blur into each other in memory.
+   *
+   * THE NUMBERS ARE THE DISTRICT'S NUMBERS, WITH NOTHING SAYING SO. Six hours, about four
+   * thousand people, one vehicle nobody is driving, one piece of breathing equipment, a list nine
+   * long, one service lane past the hazard. Every fact in the scenario has a partner here. No
+   * sentence points at the resemblance; the participant either notices or does not, and which of
+   * those happens is part of what the lens measures.
+   *
+   * THE PERSON AND THE NUMBERS CARRY THEIR OWN COLORS, using two marks the block already has
+   * rather than two new ones. {w|...} is the "who is affected" mark - violet, bold and italic -
+   * and it is the same color a participant has been reading on the role card and in the
+   * stakeholder voice since scenario 1 opened, so the person in the parallel world looks like a
+   * person and not like scenery. {a|...} is the numbers anchor, gold and bold.
+   *
+   * MARKING THE NUMBERS DOES THE ONE JOB THE WORD "SAME" USED TO DO, without saying it. Six hours,
+   * four thousand, one vehicle, one piece of breathing gear, nine on the list: they light up in
+   * the same color the participant saw on their own situation box, and the recognition is theirs
+   * to have or to miss.
+   *
+   * THE STAKES MATCH, which the validator enforces: a transplant is only valid between two
+   * settings of equal seriousness, or a participant answering differently is showing stakes
+   * sensitivity wearing context's name.
+   * ────────────────────────────────────────────────────────────────────────────────────────────
+   */
   parallel: {
     register: "life_and_death",
     setting:
-      "A hospital under a mass-casualty alert. One ventilator left, one sealed side room, one working lift. Every way of using them takes something from somebody still on the ward.",
+      "An airport terminal is being cleared after a fuel spill on the runway. {a|Six hours} before the fumes reach the gates. About {a|four thousand} travelers are still inside. {a|One} shuttle bus is parked with nobody driving it. {a|One} escape hood sits in the first-aid cabinet. The boarding list is {a|nine} gates long, and {a|one} service lane runs past the spill.",
     valuePhrase: {
-      vulnerabilityProtectionSensitivity: "the patients who most need protection from how the ward is cleared",
-      groupSizeSensitivity: "the many others on that ward who share the same equipment",
-      gainResponsivenessSensitivity: "the good the same equipment could have done somewhere else on it",
-      outcomeAggregationSensitivity: "the larger total the ward could have come to for everyone on it",
+      vulnerabilityProtectionSensitivity: "the travelers who most need protection from how this terminal is cleared",
+      groupSizeSensitivity: "the many others in the terminal who depend on these same few ways out",
+      gainResponsivenessSensitivity: "the good this one way out could have done for everything it costs",
+      outcomeAggregationSensitivity: "the larger total this terminal could have reached for everyone in it",
     },
   },
-  anchorNoun: "six hours and one plume",
   valuePhrase: {
     vulnerabilityProtectionSensitivity: "the people who most need protection from the way this district is being cleared",
     groupSizeSensitivity: "much of the wider district that shares these routes and depends on them",
@@ -210,7 +235,6 @@ const WILDFIRE: ScenarioCVRContent = {
       outcomeAggregationSensitivity: "the larger total the loading could have come to for everyone aboard",
     },
   },
-  anchorNoun: "eight hours and one valley",
   valuePhrase: {
     vulnerabilityProtectionSensitivity: "the people who most need protection from the way this valley is emptying",
     groupSizeSensitivity: "much of the wider valley that shares these roads and depends on them",
@@ -238,7 +262,6 @@ const GENERIC: ScenarioCVRContent = {
       outcomeAggregationSensitivity: "the greater number this could have reached",
     },
   },
-  anchorNoun: "resources",
   valuePhrase: {
     vulnerabilityProtectionSensitivity: "the people who most need protection",
     groupSizeSensitivity: "much of the larger group who could be reached",
@@ -254,7 +277,6 @@ const GENERIC: ScenarioCVRContent = {
 };
 
 const CARE: ScenarioCVRContent = {
-  anchorNoun: "1,200 visit-hours",
   register: "life_and_death",
   impersonalAgent: "the rostering system",
   parallel: {
@@ -342,18 +364,6 @@ export function getCVRStory(
   const c = CONTENT[scenario.id] ?? GENERIC;
   const seed = option.cvrSeed ?? genericSeed();
 
-  /*
-   * The framing clause used to be tacked onto the end of this sentence. It now has its own block
-   * (see buildLens), because a dimension defined as "between contexts" cannot be probed with one
-   * more clause inside a single context. When SHOW_LENS_VIGNETTES is off, the original sentence
-   * comes back exactly as it was.
-   */
-  const recontext = SHOW_LENS_VIGNETTES
-    ? `{a|The same ${c.anchorNoun}} are committed under the plan you chose — it ${seed.rule}. ` +
-      `What it trades away is {v|${c.valuePhrase[coord.violatedKey]}}.`
-    : `{a|The same ${c.anchorNoun}} are committed under the plan you chose — it ${seed.rule}. ` +
-      `What it trades away is {v|${c.valuePhrase[coord.violatedKey]}}: {f|${c.framingClause[coord.framing]}}.`;
-
   const stakeholder =
     `{w|${who.lead}} ${seed.identifiedCase}. {b|${seed.harm}.}`;
 
@@ -379,7 +389,6 @@ export function getCVRStory(
 
   return {
     coordinateKey: `${coord.violatedKey}|${coord.framing}|${coord.who}`,
-    recontext,
     stakeholder,
     reendorseQuestion,
     people,
@@ -406,6 +415,36 @@ function buildLens(
   seed: OptionCVRSeed,
   coord: CVRCoordinate,
 ): CVRLensBlock {
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * TWO RULES NOW GOVERN BOTH LENSES. Set by the researcher, 16 September 2026.
+   *
+   * 1. NEITHER LENS MAY SAY "SAME". No "same", no "also", no "just like", no "too". The old text
+   *    told the participant that the numbers matched, which did the noticing for them. Both
+   *    lenses now simply PRINT the numbers, the method and the trade-off, and leave the
+   *    recognition to the reader. Whether they make the connection is part of what is being
+   *    measured; a sentence announcing it destroys that.
+   *
+   * 2. NOTHING HAPPENS MORE THAN 24 HOURS LATER. The old second consequence sat weeks or months
+   *    out — "three weeks in hospital", "still unwell in the spring" — and one of them left smoke
+   *    hanging over a district for three weeks, which a reader simply does not believe. A reader
+   *    who stops believing the page stops engaging with any of it.
+   *
+   *    THE COST OF THIS, STATED HONESTLY. The directness lens was built on a gap: show a harm far
+   *    enough away in time that nobody would connect it to a decision made this afternoon, then
+   *    attribute it. Inside a day that gap mostly closes and the lens hits a little softer. The
+   *    trade is worth it, because a vivid harm nobody believes is worth less than a smaller one
+   *    they do.
+   *
+   * BOTH ALSO NAME THE TRAVEL METHOD, which is now printed on the option card. "You take the
+   * wheel of the district minibus" is a fact the participant can check against the card they
+   * just clicked. "You picked this option" is not.
+   *
+   * CONSEQUENCES ARE WRITTEN WITH "MAY" AND "COULD", not as certainties. Nobody knows what
+   * happens next, and a page that predicts the future in the indicative is making a claim it
+   * cannot support — which is also the first thing a careful reader stops trusting.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
   if (coord.framing === "context") {
     /*
      * CONTEXT — the same rule, running somewhere else, with nobody blamed.
@@ -431,18 +470,37 @@ function buildLens(
     const pc = seed.parallelConsequences;
     return {
       framing: "context",
-      heading: "The same rule, somewhere else",
-      body: p
-        ? `${p.setting} A rule decides there too, and it is the same one — it ${rule}.`
-        : `The same shortage, somewhere else entirely — and the same rule would ${rule} there too.`,
+      heading: "Somewhere else tonight",
+      /*
+       * `parallelAct` is the authored version: a whole sentence naming what somebody does there,
+       * with the method in it. The older construction is kept as a fallback so scenarios that have
+       * not been rewritten yet still build — see docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md.
+       */
+      body: seed.parallelAct && p
+        ? `${p.setting} ${seed.parallelAct}`
+        : p
+          ? `${p.setting} A rule decides there too — it ${rule}.`
+          : `A shortage of the very same shape, somewhere else entirely, where a rule would ${rule}.`,
       points: pc
         ? [
-            { label: "In the first hours", text: `{b|${pc.soon}}` },
-            { label: "Weeks later", text: `{v|${pc.later}}` },
+            { label: "Within the hour", text: `{b|${pc.soon}}` },
+            { label: "Before midnight", text: `{v|${pc.later}}` },
           ]
         : undefined,
-      // No "you" anywhere. See the note above — the missing accusation is the manipulation.
-      prompt: "{a|A different place. The same rule, and the same result.}",
+      /*
+       * IT CLOSES ON NOTHING, and that silence is the instrument.
+       *
+       * There was a closing line here: "A different place, a different night, and nobody to blame
+       * for how it ends." It was removed on the researcher's instruction, and the instruction is
+       * the right one. A sentence insisting nobody is to blame raises blame as surely as naming
+       * somebody would, and it told the reader what to feel about a scene that should have been
+       * left to speak for itself.
+       *
+       * NO "YOU" ANYWHERE IN THIS BLOCK either. The directness lens ends by naming the
+       * participant; this one ends. If this block also pointed at them it would be a second
+       * directness lens under another name, and the difference between the two measures would
+       * mean nothing.
+       */
     };
   }
   /*
@@ -468,19 +526,23 @@ function buildLens(
   const cons = seed.consequences;
   return {
     framing: "directness",
-    heading: "What this choice does",
-    body:
-      "You picked this option. Here is what it does to other people — the part you were not shown " +
-      "when you picked it.",
+    heading: "What your choice does",
+    body: seed.act
+      ?? "You picked this option. Here is what it does to other people — the part you were not "
+        + "shown when you picked it.",
     points: cons
       ? [
-          { label: "In the first hours", text: `{b|${cons.soon}}` },
-          { label: "Weeks later", text: `{v|${cons.later}}` },
+          { label: "Within the hour", text: `{b|${cons.soon}}` },
+          { label: "Before midnight", text: `{v|${cons.later}}` },
         ]
       : undefined,
+    /*
+     * ATTRIBUTION LAST, NEVER FIRST. Attribution before the content is an accusation the reader
+     * braces against; attribution after it is a fact they can check against what they just read.
+     */
     prompt:
-      `{f|No rule and no system decided this.} {b|You did.} If these things happen, they happen ` +
-      "because of the option you chose.",
+      "{f|No list and no system decided this.} {b|You did.} If it happens, it happens because of "
+      + "the way you chose to leave.",
   };
 }
 

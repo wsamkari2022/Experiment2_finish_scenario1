@@ -61,18 +61,53 @@ for (const s of LENS_SCENARIOS) {
         const st = getCVRStory(s, o, { violatedKey, framing, who: "close" }, WHO);
         built++;
         if (!st.lens) { bad.push(`${where}: no lens`); continue; }
-        const { heading, body, prompt } = st.lens;
-        if (!heading || !body || !prompt) bad.push(`${where}: empty field`);
+        const { heading, body } = st.lens;
+        /*
+         * A LENS MAY CLOSE ON NOTHING. The context lens has no `prompt` any more: it ends on its
+         * last consequence, because a closing line insisting nobody is to blame raises blame as
+         * surely as naming somebody would. So `prompt` is optional here, and the directness gate
+         * below is what keeps the directness lens from quietly losing its own closing line.
+         */
+        const prompt = st.lens.prompt ?? "";
+        if (!heading || !body) bad.push(`${where}: empty field`);
         if (/undefined|\[object/.test(body + prompt)) bad.push(`${where}: unresolved value in text`);
-        // The framing clause must have moved OUT of the recontext paragraph — leaving it there
-        // would mean the participant reads the lens twice, once as an assertion.
-        if (/\{f\|/.test(st.recontext)) bad.push(`${where}: framing clause still inside recontext`);
-        // The context lens must actually name a second place; the directness lens must not.
-        if (framing === "context" && !/A rule decides there too/.test(body) && !/somewhere else entirely/.test(body)) {
-          bad.push(`${where}: context lens does not transplant`);
+        // Only the directness lens is REQUIRED to close on a line, and it must name the participant.
+        if (framing === "directness" && !prompt) bad.push(`${where}: directness lens has no closing line`);
+        if (framing === "context" && prompt) bad.push(`${where}: context lens has a closing line - it must end on its consequence`);
+        /*
+         * THE GATES BELOW REPLACED PHRASE-MATCHING, and the reason is worth keeping.
+         *
+         * They used to require the literal string "A rule decides there too" in every context
+         * body. That is a check on one author's sentence, not on the property the lens has to
+         * have, and it broke the moment the sentence was rewritten — while a lens that genuinely
+         * stopped transplanting would have sailed through as long as it kept the phrase.
+         *
+         * These check the properties instead: nobody is named in the context lens, the
+         * participant is named in the directness lens, and neither says "same".
+         */
+
+        // NOBODY IS BLAMED IN THE CONTEXT LENS. The missing accusation IS the manipulation: if
+        // this block also pointed at the participant it would be a second directness lens.
+        if (framing === "context" && /\byou\b|\byour\b/i.test(plain(body) + " " + plain(prompt))) {
+          bad.push(`${where}: context lens says "you" — it must blame nobody`);
         }
-        if (framing === "directness" && /somewhere else/.test(body)) {
-          bad.push(`${where}: directness lens leaves its own context`);
+        // THE DIRECTNESS LENS MUST NAME THE PARTICIPANT. That is the whole of what it varies.
+        if (framing === "directness" && !/\byou\b/i.test(plain(body) + " " + plain(prompt))) {
+          bad.push(`${where}: directness lens never names the participant`);
+        }
+        /*
+         * NEITHER LENS MAY ANNOUNCE THE RESEMBLANCE — checked on the HEADING and the PROMPT, not
+         * on the whole block.
+         *
+         * Those two are ours: written once per lens, identical for every option, and they are
+         * where an announcement would live ("The same rule, somewhere else"). The BODY is
+         * different — it carries authored option text, and an option can legitimately be ABOUT
+         * sameness. Scenario 4 has one that "takes the same share off every client", where the
+         * word is the option's own meaning rather than a nudge. Banning the English word outright
+         * would have forced that option to be reworded into something it is not.
+         */
+        if (/\bsame\b|\bjust like\b/i.test(plain(heading) + " " + plain(prompt))) {
+          bad.push(`${where}: lens heading or prompt announces the resemblance`);
         }
       }
     }
@@ -88,8 +123,8 @@ const pair = getCVRLensPair(s0, s0.options[0],
   { violatedKey: POLICY[0], framing: "context", who: "close" });
 gate(pair.context.framing === "context" && pair.directness.framing === "directness",
   "the comparison pair returns one lens of each kind");
-gate(plain(pair.context.prompt) !== plain(pair.directness.prompt),
-  "the two lenses ask visibly different questions");
+gate(!pair.context.prompt && !!pair.directness.prompt,
+  "only the directness lens closes by naming anybody");
 
 console.log("\n" + "=".repeat(72));
 console.log(fails === 0 ? "### ALL CVR LENS GATES PASSED ###" : `### ${fails} LENS GATE FAILURE(S) ###`);

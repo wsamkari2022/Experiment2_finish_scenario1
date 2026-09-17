@@ -329,6 +329,20 @@ export type Block5OptionFingerprint = Record<Block5SensitivityKey, number>;
 export interface OptionCVRSeed {
   /** what the option does to the shared pool, phrased to follow "it …" (e.g. "gives them to the highest-odds patients"). */
   rule: string;
+  /**
+   * WHAT THE PARTICIPANT ACTUALLY DID, in one or two plain sentences, naming the travel method.
+   *
+   * This is the opening line of the DIRECTNESS lens. It replaced a fixed sentence that was
+   * identical on all six options ("You picked this option. Here is what it does to other
+   * people..."), which named no vehicle, no route and no act. Naming the method ties the lens to
+   * the thing the participant clicked: "You take the wheel of the district minibus" is a fact they
+   * can check against their own card, and "you picked this option" is not.
+   *
+   * Optional, with a fallback, so scenarios that have not been rewritten yet still build.
+   */
+  act?: string;
+  /** The same act carried out in the parallel world, for the CONTEXT lens. No "you" in it. */
+  parallelAct?: string;
   /** the concrete, identified person/group the option leaves out (AHA, gender-neutral). */
   identifiedCase: string;
   /** the concrete harm that case experiences. */
@@ -694,8 +708,17 @@ export interface CVRLensBlock {
    * Separate lines also read far better in a second language than a long sentence with clauses.
    */
   points?: { label: string; text: string }[];
-  /** the one-line challenge that closes it (with {markup}). */
-  prompt: string;
+  /**
+   * The one line that closes the block, with {markup}. OPTIONAL, and its absence is the point.
+   *
+   * The DIRECTNESS lens closes by naming the participant: "No list and no system decided this. You
+   * did." The CONTEXT lens closes on nothing. It used to end "A different place, a different
+   * night, and nobody to blame for how it ends", which announced the very thing it was supposed to
+   * leave the reader to feel - and a line insisting nobody is to blame puts blame in the reader's
+   * head as surely as naming somebody would. Ending on the consequence and stopping is stronger,
+   * and it keeps the two lenses differing in exactly the way they are meant to.
+   */
+  prompt?: string;
 }
 
 export interface CVRStory {
@@ -707,8 +730,20 @@ export interface CVRStory {
    */
   people?: { hurt: string; need: string };
   coordinateKey: string;
-  /** the recontextualized scenario: same trade-off + numbers, re-framed (with {markup}). */
-  recontext: string;
+  /*
+   * THERE IS NO `recontext` FIELD ANY MORE. Removed 16 September 2026, on the advisor's reading.
+   *
+   * It produced one sentence at the top of the vignette: "The same six hours and one plume are
+   * committed under the plan you chose - it spends the escape window carrying other people out
+   * before itself. What it trades away is the good this escape could have done for everything it
+   * costs." Three jobs in one sentence: announce that the numbers had not changed, restate the
+   * rule in abstract grammar, and name the cost as a category. Nothing in it happens to anybody,
+   * so there was nothing to picture and nothing to disagree with. The advisor could not read it,
+   * and he was right not to be able to.
+   *
+   * It also carried the word the method now avoids on purpose: SAME. The vignette no longer tells
+   * the participant that the numbers match; it prints the numbers and lets them notice.
+   */
   /** the AHA-style stakeholder vignette: who appears + identified case + harm (with {markup}). */
   stakeholder: string;
   /** the re-endorsement question (with {markup}). */
