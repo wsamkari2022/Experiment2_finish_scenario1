@@ -74,7 +74,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-15-alignment-position-mpf-b";
+export const SHAPE_VERSION = "2026-09-17-apa-single-question";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -947,7 +947,19 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       apa: r.apa
         ? {
             ran: true,
-            what_they_said: r.apa.q1,
+            /*
+             * `what_they_said` IS GONE from this section as of 17 September 2026.
+             *
+             * It held the APA page's first question — "endorse" / "context" / "unsure" — and that
+             * question was removed along with the two-way trade it rested on. See APARecord in
+             * block5Types.ts for what it meant.
+             *
+             * RUNS COLLECTED BEFORE THAT DATE STILL HAVE THE FIELD, because this builder only writes
+             * what it is given and older stored runs still carry the answer. Do not pool the two:
+             * the profile arithmetic behind an APA commit is different on either side of the change,
+             * so `value_they_prioritized` moves the profile by a different rule. `shape_version` on
+             * the document is what tells the two apart.
+             */
             confidence_1_to_5: r.apa.confidence,
             the_stakeholder_influenced_them: r.apa.stakeholderInfluenced,
             value_they_prioritized: r.apa.prioritizedValue,

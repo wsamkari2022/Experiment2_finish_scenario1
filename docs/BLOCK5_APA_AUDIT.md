@@ -1,8 +1,36 @@
 # The APA — what the follow-up questions do to a profile
 
 **Reproduce every number here:**
-`npm run verify:apa` (19 assertions) · `npm run apa:personas` (§3) · `npm run apa:variants` (§5) ·
+`npm run verify:apa` (32 assertions) · `npm run apa:personas` (§3) · `npm run apa:variants` (§5) ·
 `npm run apa:walkthrough` (one participant end to end)
+
+---
+
+> ## ⚠ THIS DOCUMENT MEASURES THE RULE AS IT STOOD BEFORE 17 SEPTEMBER 2026
+>
+> Two things changed on that date, on the researcher's instruction, and every measured number below
+> predates both:
+>
+> | | before | after |
+> |---|---|---|
+> | questions that move the profile | **two** — Q1 (the endorsement) and Q2 (the value they name) | **one** — the value they name |
+> | what naming a value does | +30 to it, **−20 to whichever value was on top** | +30 to it, **−10 to each of the other three** |
+> | is it zero-sum? | no — naming the value already on top added 30 and subtracted nothing | yes — +30 in, three lots of −10 out |
+>
+> **Q1 was removed with the trade it rested on.** The page asserted "this option delivers X and gives
+> up Y" and then asked the participant to defend that swap. An option usually falls short on several
+> of the four values at once, so the sentence described a choice they had not made.
+>
+> **What is still true here:** §1's description of Q3 and the observed stakeholder switch, §2's
+> confidence scaling (0.6–1.0) and the 30 × w cap, and the reasoning in §5 about why the "just this
+> situation" bump was set to 0 — which is now history rather than documentation, because there is no
+> such answer any more.
+>
+> **What is stale:** every persona in §3, the Q1 rows of §2, and the double-count discussion, which
+> described two bumps landing on one value. One question cannot collide with itself.
+>
+> **The live specification is `tools/verify_apa.cjs`.** It asserts the shipped arithmetic and fails
+> when the prose and the code disagree; this file is prose, and prose is a claim.
 
 ---
 
@@ -236,7 +264,7 @@ moved"*, not as a fact about their morality.
 | File | What it holds |
 |---|---|
 | `src/experiment/block5CVR.ts` | `applyApaUpdates()` — the rule itself |
-| `tools/verify_apa.cjs` | 19 assertions on the arithmetic, including the cap (`npm run verify:apa`) |
+| `tools/verify_apa.cjs` | 32 assertions on the arithmetic, including the cap and the zero-sum property (`npm run verify:apa`) |
 | `tools/apa_personas.cjs` | the six runs in §3 (`npm run apa:personas`) |
 | `tools/apa_context_variants.cjs` | the comparison in §5 (`npm run apa:variants`) |
 | `tools/apa_walkthrough.cjs` | one participant through CVR and APA, and the next scenario's labels changing |

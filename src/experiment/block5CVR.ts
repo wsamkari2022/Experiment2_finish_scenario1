@@ -564,10 +564,14 @@ export function confidenceWeight(confidence: number): number {
  * Reproduce: `npm run apa:personas` (six answer patterns) · `npm run apa:variants` (the constants)
  * Full working: docs/BLOCK5_APA_AUDIT.md
  */
+/*
+ * NO `misalignedOption` PARAMETER EITHER. It was read only by the removed first question, which
+ * needed the option to work out which value it served and which it undercut. The update now
+ * depends on nothing but what the participant said, and a parameter the arithmetic never touches
+ * is a standing invitation to believe it does.
+ */
 export function applyApaUpdates(
   profile: Block5UserProfile,
-  misalignedOption: Block5ScenarioOption,
-  q1: "endorse" | "context" | "unsure",
   stakeholderInfluenced: boolean,
   prioritizedValue: Block5PolicyDimKey,
   framingAdjust?: FramingAdjust | null,
@@ -576,59 +580,57 @@ export function applyApaUpdates(
 ): Block5UserProfile {
   const p = cloneProfile(profile);
   /*
-   * ONE WEIGHT FOR THE WHOLE CLARIFICATION.
+   * ONE WEIGHT FOR ONE CLARIFICATION. Confidence scales the value move below.
    *
-   * Confidence scales every value move this function makes, not just the one asked next to it. The
-   * rating is the participant's answer to "how sure are you about this clarification", and the
-   * clarification is Q1 and Q2 together — one act of the participant telling the model who they
-   * are. Splitting the weight so that only Q2 responded to it made a participant who answered
-   * "not sure" move just as far on Q1 as one who answered "very sure", which is the same defect
-   * the rating was introduced to remove.
-   *
-   * The stakeholder move below is the exception, and is deliberately left alone: it comes from a
+   * The stakeholder move is the exception, and is deliberately left alone: it comes from a
    * separate yes/no question about whether a person's story swayed them, and it is not a matter of
    * degree.
    */
   const w = stakesWeight * confidenceWeight(confidence);
-  const optionValue = optionMainValue(misalignedOption);
-  const topValue = violatedValue(misalignedOption, profile);
-  if (q1 === "endorse") {
-    bump(p, optionValue, 15 * w);
-    if (topValue !== optionValue) bump(p, topValue, -10 * w);
-  } else if (q1 === "context") {
-    bump(p, optionValue, 5 * w);
-    /*
-     * THE SACRIFICED VALUE IS DELIBERATELY NOT RAISED HERE. It used to get +10 x w.
-     *
-     * The +10 was not the wrong direction. This answer reads, on screen, "overall, [sacrificed]
-     * still matters more to me than [served]" — the participant is contradicting their own choice
-     * and reasserting that value, so raising it was faithful to what they said.
-     *
-     * It was, however, SELF-DEFEATING. Q2 below subtracts 20 from whichever value is top, and it
-     * reads "top" AFTER this block has run. Measured over 2,500 simulated participants, the +10
-     * promoted the sacrificed value to top 87.6% of the time (vs 76% without it) and the -20 then
-     * landed on it in 25.7% of all cases: +10 followed by -20 is a NET LOSS of 10 on the one value
-     * the participant had just said mattered more.
-     *
-     * On the only claim they make — that the sacrificed value outranks the served one — removing
-     * the bump does BETTER than keeping it: 79.5% of profiles end up agreeing, against 71.9% with
-     * the +10. Values pinned at the 0/100 ceiling also fall from 14.3% to 12.0%.
-     *
-     * Lowering it instead (-5 was tested) scores worse again at 75.8% AND records the opposite of
-     * what the participant said, so it was rejected.
-     *
-     * The division of labor is now clean: Q1 records what they DID, Q2 records what they WANT.
-     * The sacrificed value is carried by Q2, where naming it is worth +30.
-     *
-     * Reproduce: npm run apa:variants   ·   Full reasoning: docs/BLOCK5_APA_AUDIT.md
-     */
-  }
+  /*
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THERE IS NO LONGER A FIRST QUESTION, AND THIS FUNCTION NO LONGER READS ONE.
+   * Removed on the researcher's instruction, 17 September 2026.
+   *
+   * WHAT WENT. The page used to open by asking "which is closer to the truth?" - did you really
+   * rank this value above that one, or was it just this situation - and the answer moved the
+   * profile: endorse gave +15 to the option's value and -10 to the value it undercut, context gave
+   * +5. The question rested on a two-way trade the page asserted and the arithmetic does not have.
+   * An option usually falls short on SEVERAL of the four values at once, so naming one as "served"
+   * and one as "sacrificed" described a choice the participant had not made, and then asked them to
+   * defend it.
+   *
+   * WHAT REPLACES IT. Nothing. One question now carries the whole clarification: the participant
+   * names the value they want weighted, and that is the update. The division of labour used to be
+   * "Q1 records what they DID, Q2 records what they WANT"; the first half is gone, and what is left
+   * is the half that was doing the useful work.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
   // The stakeholder move is answered by a separate question and is NOT a matter of degree, so the
   // confidence rating attached to Q1 has no business scaling it.
   bump(p, "stakeholderPerspectiveShiftSensitivity",
     (stakeholderInfluenced ? 25 : -25) * stakesWeight);
   /*
-   * THE PRIORITIZED VALUE: +30, and the value currently on top comes DOWN 20.
+   * THE PRIORITIZED VALUE: +30, AND THE OTHER THREE COME DOWN 10 EACH.
+   *
+   * SET BY THE RESEARCHER, 17 September 2026, when this became the only question that moves the
+   * profile. It replaced "+30 to the named value, -20 to whichever value happens to be on top".
+   *
+   * IT IS ZERO-SUM BY CONSTRUCTION: +30 in, 3 x -10 out. The four scores cannot drift upward
+   * together however many clarifications a participant runs, which is what eventually stops a
+   * ranking from discriminating at all. The old rule only pushed down the incumbent, so a
+   * participant who named the SAME value twice raised it twice and lowered nothing the second time.
+   *
+   * IT ALSO TREATS THE THREE UNNAMED VALUES ALIKE. Under the old rule the value in second place was
+   * untouched while the leader took the whole -20, so naming your third choice could leave your
+   * second choice ahead of it. Every value the participant did not name now gives way by the same
+   * amount, which is what "this is the one I want weighted" actually means.
+   *
+   * The gap the named value opens over each other value is 40 x w, against 50 x w over the former
+   * leader and 30 x w over everyone else under the old rule - slightly tighter at the top, much
+   * more even across the rest.
+   *
+   * WHAT THE OLD RULE WAS FOR, kept here because the reasoning still holds for the +30 half:
    *
    * This was a flat +10 with no counterweight, and it did not work. Measured over 5,056 simulated
    * clarifications, the value the participant NAMED as their priority rose in the ranking only
@@ -647,9 +649,10 @@ export function applyApaUpdates(
    * exactly as much as a strong endorsement of a choice. Measured, it lifts the named value in the
    * ranking 59% of the time without inflating profiles any further than the old rule did.
    */
-  const currentTop = [...POLICY_DIM_KEYS].sort((a, b) => scoreOf(p, b) - scoreOf(p, a))[0];
   bump(p, prioritizedValue, 30 * w);
-  if (currentTop !== prioritizedValue) bump(p, currentTop, -20 * w);
+  for (const k of POLICY_DIM_KEYS) {
+    if (k !== prioritizedValue) bump(p, k, -10 * w);
+  }
   // Dual-perspective: NO path = +20 to the lens that changed their mind (only when answered).
   if (framingAdjust) bump(p, framingAdjust.sensitivityKey, framingAdjust.delta * w);
 

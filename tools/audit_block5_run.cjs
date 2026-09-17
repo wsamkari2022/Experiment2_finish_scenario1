@@ -127,8 +127,7 @@ for (const [pname, scores] of Object.entries(PARTICIPANTS)) {
         if (i % 2 === 0) {
           profile = CVR.applyEndorsementUpdates(profile, chosen, true, i % 4 === 0, null, w);
         } else {
-          profile = CVR.applyApaUpdates(profile, chosen, "endorse", i % 3 === 0,
-            POLICY_DIM_KEYS[i % POLICY_DIM_KEYS.length], null, w);
+          profile = CVR.applyApaUpdates(profile, i % 3 === 0, POLICY_DIM_KEYS[i % POLICY_DIM_KEYS.length], null, w);
         }
       } else {
         profile = CVR.applyKeepUpdates(profile, chosen, chosen.level, w);

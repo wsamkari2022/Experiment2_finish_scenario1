@@ -51,8 +51,8 @@ console.log("  serves:", S[optionMainValue(pick)], "| sacrifices:", S[violatedVa
 const coord=cvrCoordinate(pick, before, s1);
 console.log("  CVR fires -> lens:", coord.framing, "| voice:", coord.who);
 
-const after=applyApaUpdates(before,pick,"context",true,"vulnerabilityProtectionSensitivity",null,1,5);
-console.log("\nAPA answers: Q1='just this situation' | Q2 names 'protecting the vulnerable' | confidence 5 | switched after the person");
+const after=applyApaUpdates(before, true, "vulnerabilityProtectionSensitivity", null, 1, 5);
+console.log("\nAPA answers: names 'protecting the vulnerable' | confidence 5 | switched after the person");
 console.log("AFTER   "+show(after));
 console.log("\nMOVES:");
 ALL.forEach(k=>{const d=Math.round(sc(after,k)-sc(before,k)); if(d) console.log("   "+(S[k]||k).padEnd(26)+Math.round(sc(before,k))+" -> "+Math.round(sc(after,k))+"  ("+(d>0?"+":"")+d+")");});

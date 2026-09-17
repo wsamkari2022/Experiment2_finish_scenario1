@@ -40,6 +40,18 @@ interface CVRParallelWorld {
   setting: string;
   /** what each of the four values looks like THERE — same meaning, that world's nouns. */
   valuePhrase: Record<Block5PolicyDimKey, string>;
+  /**
+   * THE FACT-FOR-FACT CORRESPONDENCE, one row per number, for the table on the APA page.
+   *
+   * The vignette is not allowed to say that the two worlds match; it prints both sets of numbers
+   * and leaves the participant to see it. This is where that is finally made explicit — after the
+   * choice and the reflection are over, so it cannot steer either.
+   *
+   * Authored rather than derived. The numbers appear in prose on both sides, in different
+   * sentences and different orders, and any parser clever enough to pair them up would be one
+   * rewording away from pairing them up wrongly.
+   */
+  mirror?: { here: string; there: string }[];
 }
 
 interface ScenarioCVRContent {
@@ -191,6 +203,20 @@ const CHEMICAL: ScenarioCVRContent = {
     register: "life_and_death",
     setting:
       "An airport terminal is being cleared after a fuel spill on the runway. {a|Six hours} before the fumes reach the gates. About {a|four thousand} travelers are still inside. {a|One} shuttle bus is parked with nobody driving it. {a|One} escape hood sits in the first-aid cabinet. The boarding list is {a|nine} gates long, and {a|one} service lane runs past the spill.",
+    mirror: [
+      { here: "{a|6 hours} before the plume covers the district",
+        there: "{a|Six hours} before the fumes reach the gates" },
+      { here: "Around {a|4,000} residents still to move",
+        there: "About {a|four thousand} travelers still inside" },
+      { here: "{a|One} community minibus, parked with no driver",
+        there: "{a|One} shuttle bus, parked with nobody driving it" },
+      { here: "{a|One} clinic cabinet holding a single respirator",
+        there: "{a|One} escape hood in the first-aid cabinet" },
+      { here: "A convoy list {a|nine} streets long",
+        there: "A boarding list {a|nine} gates long" },
+      { here: "{a|One} service road running past the tanker",
+        there: "{a|One} service lane running past the spill" },
+    ],
     valuePhrase: {
       vulnerabilityProtectionSensitivity: "the travelers who most need protection from how this terminal is cleared",
       groupSizeSensitivity: "the many others in the terminal who depend on these same few ways out",
@@ -544,6 +570,17 @@ function buildLens(
       "{f|No list and no system decided this.} {b|You did.} If it happens, it happens because of "
       + "the way you chose to leave.",
   };
+}
+
+/**
+ * The two worlds side by side, or nothing when this scenario has not been given a mirror.
+ *
+ * Only scenarios whose CONTEXT lens has been rewritten carry one. The APA table simply does not
+ * render for the others, which is the correct behaviour rather than a gap: a scenario with no
+ * authored mirror has no second world worth tabulating.
+ */
+export function getCVRMirror(scenario: Block5Scenario): { here: string; there: string }[] {
+  return (CONTENT[scenario.id] ?? GENERIC).parallel?.mirror ?? [];
 }
 
 /**

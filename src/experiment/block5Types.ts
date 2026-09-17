@@ -765,7 +765,18 @@ export type CVREndorsement = "strong" | "weak" | "no" | "n/a";
 
 /** What the participant clarified in APA (recorded for analysis; committed only on a final decision). */
 export interface APARecord {
-  q1: "endorse" | "context" | "unsure";
+  /*
+   * THERE IS NO `q1` HERE ANY MORE. Removed 17 September 2026 with the question itself.
+   *
+   * It stored "endorse" / "context" / "unsure" — whether the participant said they really do rank
+   * the option's value above the one it undercut, or only did so for this situation. The page
+   * asserted a two-way trade that the arithmetic does not have, so the question was asking them to
+   * defend a swap they had not made. See `applyApaUpdates` in block5CVR.ts.
+   *
+   * RECORDS WRITTEN BEFORE THIS DATE STILL HAVE THE FIELD. Anything reading a stored run must treat
+   * it as optional and must not pool it with runs made after the change — the profile arithmetic
+   * behind it is different.
+   */
   confidence: number;               // 1–5
   stakeholderInfluenced: boolean;
   prioritizedValue: Block5PolicyDimKey;

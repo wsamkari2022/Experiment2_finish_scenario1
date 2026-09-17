@@ -1,8 +1,19 @@
 /**
  * apa_context_variants.cjs — should Q1 = "just this situation" RAISE the sacrificed value?
  *
- * THE QUESTION
- * ------------
+ * ╔════════════════════════════════════════════════════════════════════════════════════╗
+ * ║  KEPT AS A RECORD. THE QUESTION IT STUDIES NO LONGER EXISTS.                              ║
+ * ║                                                                                          ║
+ * ║  Q1 was removed from the APA page on 17 September 2026, along with every bump it applied. ║
+ * ║  Nothing below describes the shipped code any more. It is kept because the reasoning is   ║
+ * ║  the written record of why the bump was set to 0 rather than to +5 or +10, and that       ║
+ * ║  finding is cited in docs/BLOCK5_APA_AUDIT.md.                                            ║
+ * ║                                                                                          ║
+ * ║  DO NOT READ IT AS DOCUMENTATION OF THE CURRENT RULE. That is verify_apa.cjs.             ║
+ * ╚════════════════════════════════════════════════════════════════════════════════════╝
+ *
+ * THE QUESTION (as it stood)
+ * --------------------------
  * Q1's second answer applies +5 to the value the option served, and nothing to the value it
  * sacrificed. Raising the sacrificed value looks like the obvious thing to do — the participant has
  * just told us it matters more to them — so this measures why it is not.
@@ -120,7 +131,7 @@ while (CASES.length < 2500) {
 /* ── GATE: the harness must reproduce the shipped function exactly ──────────────────────────── */
 let mismatch = 0;
 for (const c of CASES.slice(0, 2000)) {
-  const real = applyApaUpdates(c.prof, c.option, "context", c.moved, c.prioritized, null, 1, c.confidence);
+  const real = applyApaUpdates(c.prof, c.moved, c.prioritized, null, 1, c.confidence);
   const mine = applyVariant(c.prof, c.option, c.prioritized, c.confidence, c.moved, 0);
   for (const k of POLICY) if (Math.abs(sc(real, k) - sc(mine, k)) > 1e-9) { mismatch++; break; }
 }

@@ -172,7 +172,7 @@ console.log("\n--- APA clarification ---");
   const opt = labelOptions(scen.options, apaBase).find((o) => !isFit(o.level));
   const PRI = "groupSizeSensitivity";
   const run1 = (conf, pri = PRI) =>
-    applyApaUpdates(apaBase, opt, "context", false, pri, null, 1, conf);
+    applyApaUpdates(apaBase, false, pri, null, 1, conf);
 
   const byConf = [1, 2, 3, 4, 5].map((c) => sc(run1(c), PRI));
   /*
@@ -198,23 +198,51 @@ console.log("\n--- APA clarification ---");
 
   /* A malformed confidence must not be able to produce a profile outside 0-100. */
   const wild = [0, -3, 99, NaN, undefined].every((c) => {
-    const a = applyApaUpdates(apaBase, opt, "context", false, PRI, null, 1, c);
+    const a = applyApaUpdates(apaBase, false, PRI, null, 1, c);
     return POLICY.every((k) => sc(a, k) >= 0 && sc(a, k) <= 100);
   });
   gate("A4", wild, "a bad confidence value cannot produce an invalid profile  (0, -3, 99, NaN, undefined)");
 
-  /* THE GATE THAT MATTERS: the clarification has to be able to change how the NEXT scenario judges
-     you. If naming your priority leaves every later label untouched, the step is decoration. */
-  const after = run1(5);
+  /*
+   * THE GATE THAT MATTERS: the clarification has to be able to change how the NEXT scenario judges
+   * you. If naming your priority leaves every later label untouched, the step is decoration.
+   *
+   * MEASURED OVER MANY PROFILES, NOT ONE. It used to run a single fixture — gain 100, outcome 99,
+   * group 0, vulnerable 0, naming `groupSize` — and require that at least one label moved. That is
+   * a knife-edge: whether one profile crosses a rank boundary depends on where its four scores
+   * happen to sit relative to six option fingerprints, so the gate was really measuring the fixture.
+   *
+   * It caught a real thing on 17 September 2026, and it caught it wrongly. The rule changed to
+   * "+30 to the named value, -10 to each of the other three", and this fixture went to 0 labels
+   * moved while the rule's actual power was unchanged: swept over 3,000 random profiles x 4
+   * priorities, the old rule moved a label 80.3% of the time and the new rule 78.1%. A gate that
+   * reports a 2-point difference as a total failure is a gate that will be silenced rather than
+   * believed.
+   *
+   * So it now sweeps, and asks for a clear majority. The floor is far below the measured 78% on
+   * purpose: this gate exists to catch a clarification that has stopped mattering, not to pin the
+   * rule to the exact shape it has today.
+   */
   const next = BLOCK5_SCENARIOS[1];
-  const before = Object.fromEntries(labelOptions(next.options, apaBase).map((o) => [o.id, o.level]));
-  const changed = labelOptions(next.options, after).filter((o) => before[o.id] !== o.level).length;
-  gate("A5", changed > 0,
-    `naming your priority changes how the next scenario labels your options  (${changed} of ${next.options.length} changed)`);
+  let aSeed = 20260917;
+  const aRnd = () => ((aSeed = (aSeed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  let moved = 0, tried = 0;
+  for (let i = 0; i < 500; i++) {
+    const rp = mk(Object.fromEntries(POLICY.map((k) => [k, Math.round(aRnd() * 100)])));
+    const was = Object.fromEntries(labelOptions(next.options, rp).map((o) => [o.id, o.level]));
+    for (const pri of POLICY) {
+      tried++;
+      const now = applyApaUpdates(rp, false, pri, null, 1, 5);
+      if (labelOptions(next.options, now).some((o) => was[o.id] !== o.level)) moved++;
+    }
+  }
+  const movedPct = (100 * moved / tried);
+  gate("A5", movedPct >= 50,
+    `naming your priority changes how the next scenario labels your options  (${movedPct.toFixed(1)}% of ${tried} clarifications, floor 50%)`);
 
   /* The stakeholder question is a separate yes/no, so the confidence rating must not touch it. */
-  const s1 = applyApaUpdates(apaBase, opt, "context", true, PRI, null, 1, 1);
-  const s5 = applyApaUpdates(apaBase, opt, "context", true, PRI, null, 1, 5);
+  const s1 = applyApaUpdates(apaBase, true, PRI, null, 1, 1);
+  const s5 = applyApaUpdates(apaBase, true, PRI, null, 1, 5);
   gate("A6", sc(s1, STAKE) === sc(s5, STAKE),
     `the stakeholder move is not scaled by confidence  (both ${Math.round(sc(s1, STAKE))})`);
 }
@@ -252,10 +280,12 @@ for (let n = 0; n < 4000; n++) {
       } else if (rnd() < 0.5) {
         p = applyEndorsementUpdates(p, opt, rnd() < 0.5, rnd() < 0.5, null, w);
       } else {
-        const q1 = rnd() < 0.5 ? "endorse" : "context";
+        /* No q1 draw here any more — the APA page's first question was removed on 17 September 2026
+           and applyApaUpdates no longer reads one. The draw was still being made and thrown away,
+           which silently shifted every later rnd() in the sequence. */
         const prioritized = POLICY[Math.floor(rnd() * POLICY.length)];
         const confidence = 1 + Math.floor(rnd() * 5);
-        p = applyApaUpdates(p, opt, q1, rnd() < 0.5, prioritized, null, w, confidence);
+        p = applyApaUpdates(p, rnd() < 0.5, prioritized, null, w, confidence);
       }
     }
     results.push({

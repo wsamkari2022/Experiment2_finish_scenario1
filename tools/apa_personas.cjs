@@ -3,14 +3,19 @@
  *
  * WHY THIS EXISTS
  * ---------------
- * The APA rule can be stated in a sentence ("+30 to the value you name, -20 to the incumbent,
- * scaled 0.6-1.0 by confidence"), and that sentence is true of the code read in isolation. It is
- * NOT a complete account of what a participant experiences, because Q1 and Q2 can land on the same
- * value and add together, and the 0-100 clamp then hides the excess.
+ * The APA rule can be stated in a sentence — "+30 to the value you name, -10 to each of the other
+ * three, scaled 0.6-1.0 by confidence" — and that sentence is true of the code read in isolation.
+ * It is not a complete account of what a participant experiences, because the 0-100 clamp can
+ * swallow part of a move and the stakeholder bump lands on top of it.
  *
- * This script makes that visible. Every persona below starts from the SAME profile, so every
- * difference in the output is caused purely by the answers they gave. It reads the shipped code
- * and changes nothing.
+ * WHAT IT ORIGINALLY EXISTED TO SHOW, and no longer can: the page used to ask TWO questions that
+ * moved the profile, and both could land on the same value and add, with the clamp hiding the
+ * excess. The first question was removed on 17 September 2026 and that collision cannot happen any
+ * more — A-APA-8 in verify_apa.cjs is what stands guard in case a second bump is ever added back.
+ *
+ * It still earns its place: every persona below starts from the SAME profile, so every difference
+ * in the output is caused purely by the answers they gave. It reads the shipped code and changes
+ * nothing.
  *
  * READ THE FINDINGS IN: docs/BLOCK5_APA_AUDIT.md
  * SEE ALSO: tools/verify_apa.cjs, which asserts the arithmetic rather than displaying it.
@@ -50,25 +55,33 @@ console.log("order:", order(mk(START)));
 console.log("option they picked:", JSON.stringify(OPT.title));
 console.log("   it serves:", POLICY_DIM_SHORT[served], "| it sacrifices:", POLICY_DIM_SHORT[sacrificed]);
 
+/*
+ * SIX PEOPLE, TOLD APART BY THE THREE THINGS THE PAGE STILL ASKS.
+ *
+ * They used to be told apart by four. The first APA question — endorse / just-this-time / not sure
+ * — was removed on 17 September 2026 with the trade it rested on, so the personas that differed
+ * ONLY in that answer are now the same person. The set below was rebuilt around what is left:
+ * which value they name, how sure they are, whether the stakeholder moved them, and which lens.
+ */
 const USERS=[
- ["A  endorse · sure 5 · names 'vulnerable' · switched after person · Context lens",
-  {q1:"endorse",conf:5,prior:"vulnerabilityProtectionSensitivity",moved:true,lens:"contextSensitivity"}],
- ["B  endorse · not sure 1 · names 'gained' (already top) · not moved",
-  {q1:"endorse",conf:1,prior:"gainResponsivenessSensitivity",moved:false,lens:null}],
- ["C  just-this-time · sure 5 · names 'harm' · switched",
-  {q1:"context",conf:5,prior:"groupSizeSensitivity",moved:true,lens:null}],
- ["D  not sure · mid 3 · names 'helped' · not moved",
-  {q1:"unsure",conf:3,prior:"outcomeAggregationSensitivity",moved:false,lens:null}],
- ["E  not sure · sure 5 · names 'vulnerable' (their lowest) · switched · Directness lens",
-  {q1:"unsure",conf:5,prior:"vulnerabilityProtectionSensitivity",moved:true,lens:"directnessSensitivity"}],
- ["F  just-this-time · not sure 1 · names 'vulnerable' · not moved",
-  {q1:"context",conf:1,prior:"vulnerabilityProtectionSensitivity",moved:false,lens:null}],
+ ["A  sure 5 · names 'vulnerable' (their lowest) · switched after person · Context lens",
+  {conf:5,prior:"vulnerabilityProtectionSensitivity",moved:true,lens:"contextSensitivity"}],
+ ["B  not sure 1 · names 'gained' (already top) · not moved",
+  {conf:1,prior:"gainResponsivenessSensitivity",moved:false,lens:null}],
+ ["C  sure 5 · names 'harm' · switched",
+  {conf:5,prior:"groupSizeSensitivity",moved:true,lens:null}],
+ ["D  mid 3 · names 'helped' · not moved",
+  {conf:3,prior:"outcomeAggregationSensitivity",moved:false,lens:null}],
+ ["E  sure 5 · names 'vulnerable' · switched · Directness lens",
+  {conf:5,prior:"vulnerabilityProtectionSensitivity",moved:true,lens:"directnessSensitivity"}],
+ ["F  not sure 1 · names 'vulnerable' · not moved",
+  {conf:1,prior:"vulnerabilityProtectionSensitivity",moved:false,lens:null}],
 ];
 
 for(const [name,u] of USERS){
   const before=mk(START);
   const fa=u.lens?{sensitivityKey:u.lens,delta:20}:null;
-  const after=applyApaUpdates(before,OPT,u.q1,u.moved,u.prior,fa,1,u.conf);
+  const after=applyApaUpdates(before, u.moved, u.prior, fa, 1, u.conf);
   const chg=ALL.map(k=>{const d=Math.round(sc(after,k)-sc(before,k));
     return d===0?null:SHORT[k]+" "+Math.round(sc(before,k))+"->"+Math.round(sc(after,k))+" ("+(d>0?"+":"")+d+")";}).filter(Boolean);
   console.log("\n"+name);

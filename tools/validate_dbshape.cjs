@@ -128,8 +128,10 @@ function makeParticipant(startScores, pick) {
       cvrCoordinate: index === 0
         ? { violatedKey: POLICY[0], framing: "context", who: "identified" }
         : undefined,
+      /* No `q1`: the APA page's first question was removed on 17 September 2026, and this fixture
+         is what a run recorded AFTER that change looks like. */
       apa: index === 0
-        ? { q1: "context", confidence: 4, stakeholderInfluenced: true,
+        ? { confidence: 4, stakeholderInfluenced: true,
             prioritizedValue: POLICY[1], originalOptionId: chosen.id }
         : undefined,
       policySnapshotAfter: Object.fromEntries(

@@ -37,9 +37,9 @@ import {
   scenarioIsScored, isPredictionTest,
   performanceScore, computeVCI, computeStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
-  chooseFraming, otherFraming, framingSensitivityKey,
+  chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall,
 } from "./block5CVR";
-import { getCVRStory, pickWhoVariant, getCVRLensPair } from "./block5CVRContent";
+import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
 import { Block5OptionCompare } from "./Block5OptionCompare";
@@ -277,7 +277,6 @@ const VALUE_BENEFIT: Record<Block5PolicyDimKey, string> = {
 interface ApaCommitPayload {
   finalOption: LabeledOption;
   pendingProfile: Block5UserProfile;
-  q1: "endorse" | "context" | "unsure";
   confidence: number;
   q2Influenced: boolean;
   q3Value: Block5PolicyDimKey;
@@ -533,6 +532,17 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   // (YES path) which lens did they say did NOT influence keeping the option? Both reset per option.
   const [altViewGenerated, setAltViewGenerated] = useState(false);
   /**
+   * WHICH LENS WAS ON SCREEN WHEN THEY LEFT THE VIGNETTE — not which one came first.
+   *
+   * The APA page's mirror table only makes sense to somebody who has just read the second world.
+   * A participant who generated the other lens and then toggled BACK ended on the directness
+   * lens, which never mentions that world, so for them the table would introduce a place rather
+   * than explain one. `coord.framing` cannot answer this: it is the lens shown FIRST, and the
+   * toggle moves freely after that. CVRReveal reports every change, so this always holds what is
+   * actually in front of them.
+   */
+  const [lastLensSeen, setLastLensSeen] = useState<CVRFraming | null>(null);
+  /**
    * Which side the participant took on the vignette page, and whether the person who spoke
    * afterwards moved them off it.
    *
@@ -781,6 +791,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setTradeoffAck(false);
     setQ1Strong(null);
     setAltViewGenerated(false);
+    setLastLensSeen(null);
     setFramingChoiceYes(null);
     setCvrSaidYes(null);
     setStakeholderMoved(null);
@@ -920,6 +931,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setTradeoffAck(false);
     setQ1Strong(null);
     setAltViewGenerated(false);   // a fresh CVR starts with only the first lens
+    setLastLensSeen(null);        // and with no lens read yet
     setFramingChoiceYes(null);
     setProgress((p) => (p.firstChoiceId ? p : { ...p, firstChoiceId: id }));
     // Lock in a random stakeholder voice now (only for a misaligned choice that triggers CVR),
@@ -1267,7 +1279,6 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       performanceMenu: { worst: Math.round(menuRange(scenario).worst), best: Math.round(menuRange(scenario).best) },
       metrics: optionMetrics(opt),
       apa: {
-        q1: payload.q1,
         confidence: payload.confidence,
         stakeholderInfluenced: payload.q2Influenced,
         prioritizedValue: payload.q3Value,
@@ -1858,6 +1869,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           onFinalDecisionChange={handleFinalDecisionChange}
           altViewGenerated={altViewGenerated}
           onAltGenerated={() => setAltViewGenerated(true)}
+          lastLensSeen={lastLensSeen}
+          onLensShown={setLastLensSeen}
           framingChoiceYes={framingChoiceYes}
           setFramingChoiceYes={setFramingChoiceYes}
           mode={pal.mode}
@@ -3307,7 +3320,7 @@ function FramingComparisonTable({ scenario, option, coord, mode }: {
  * answer: a random 2–5s "thinking" pause, then box 1 fades in and types, then box 2 fades in
  * and types, then the legend, then the response buttons. A "Skip" control reveals it all at once.
  */
-function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onCvrYes, onCvrNo, onCvrBackout }: {
+function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onLensShown, onCvrYes, onCvrNo, onCvrBackout }: {
   story: ReturnType<typeof getCVRStory>;
   /** the SAME vignette with the framing flipped (the other reflection lens). */
   altStory: ReturnType<typeof getCVRStory>;
@@ -3317,6 +3330,8 @@ function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onCvrYes, on
   mode: "light" | "dark";
   /** called once when the participant generates the alternate lens (lifts state to FlowOverlay). */
   onAltGenerated: () => void;
+  /** called with the lens now on screen, every time the toggle moves it. */
+  onLensShown: (f: CVRFraming) => void;
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
 }) {
   /*
@@ -3395,6 +3410,18 @@ function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onCvrYes, on
    * Both the recontext paragraph and the lens block read from this, so they can never disagree.
    */
   const shownStory = altState === "ready" && currentView === "second" ? altStory : story;
+
+  /*
+   * REPORT THE LENS UPWARD, on arrival and on every toggle.
+   *
+   * The APA page asks a question only the CURRENT lens can answer — see `lastLensSeen`. Reporting
+   * on the toggle rather than once at the start is the whole point: a participant may read the
+   * second lens and go back, and the last thing they read is the one that counts.
+   */
+  const shownFraming = shownStory.lens?.framing;
+  useEffect(() => {
+    if (shownFraming) onLensShown(shownFraming);
+  }, [shownFraming, onLensShown]);
 
   /** The lens block's parts, and the cursor value that means "all of it is on screen". */
   const lensPoints = shownStory.lens?.points ?? [];
@@ -3733,7 +3760,7 @@ function FlowOverlay({
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
   onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange,
   cvrSaidYes, onPersonAnswer, onPersonBackout,
-  altViewGenerated, onAltGenerated, framingChoiceYes, setFramingChoiceYes, mode,
+  altViewGenerated, onAltGenerated, lastLensSeen, onLensShown, framingChoiceYes, setFramingChoiceYes, mode,
   prediction, onOpenPrediction, predSoundsLike, setPredSoundsLike, predSurprised, setPredSurprised,
   predAnswered, setPredAnswered, onLogPred,
 }: {
@@ -3763,6 +3790,8 @@ function FlowOverlay({
   onPersonBackout: () => void;
   // Dual-perspective (Directness ↔ Context): generation flag + the YES-path "did NOT influence" answer.
   altViewGenerated: boolean; onAltGenerated: () => void;
+  /** which lens is in front of them right now, and the reporter that keeps it current. */
+  lastLensSeen: CVRFraming | null; onLensShown: (f: CVRFraming) => void;
   framingChoiceYes: CVRFraming | null; setFramingChoiceYes: (f: CVRFraming) => void;
 }) {
   /*
@@ -4077,6 +4106,7 @@ function FlowOverlay({
 
         {step === "review" && misaligned && story && altStory && framingFirst && (
           <CVRReveal
+            onLensShown={onLensShown}
             story={story}
             altStory={altStory}
             level={option.level}
@@ -4099,7 +4129,9 @@ function FlowOverlay({
 
             {/* Question count is 3 only when the participant generated the second lens. */}
             <QuestionCard
-              accent={accent} index={1} total={altViewGenerated ? 2 : 1} answered={q1Strong !== null}
+              /* Numbered only when the second lens has added a second question — see QuestionCard. */
+              accent={accent} index={altViewGenerated ? 1 : undefined} total={altViewGenerated ? 2 : undefined}
+              answered={q1Strong !== null}
               /*
                 THE SAME TRADE THE APA PAGE NAMES, AND THE SAME PAIR THE PROFILE UPDATE MOVES.
                 "This option focuses most on X. Do you genuinely value this?" was a fair question
@@ -4206,6 +4238,7 @@ function FlowOverlay({
             onFinalDecisionChange={onFinalDecisionChange}
             altViewGenerated={altViewGenerated}
             framingFirst={coord.framing}
+            lastLensSeen={lastLensSeen ?? coord.framing}
             mode={mode}
           />
         )}
@@ -4248,7 +4281,17 @@ function FlowOverlay({
  */
 function QuestionCard({ accent, index, total, label, question, answered, children }: {
   accent: string;
-  /** 1-based position. Omit along with `total` on a screen that asks only one thing. */
+  /**
+   * 1-based position. OMIT IT, ALONG WITH `total`, ON A SCREEN THAT ASKS ONLY ONE THING.
+   *
+   * The numbered chip and the "Question n of m" eyebrow then disappear entirely and the eyebrow
+   * reads just "Question". Counting to one tells the participant nothing, and it used to tell them
+   * something wrong: the APA page printed "QUESTION 2 OF 1" for months, because the question kept
+   * the position it held when the page asked two and the total had since dropped to one.
+   *
+   * Pass both only where the count is real — the pages that gain a second question when the
+   * participant generates the other reflection lens.
+   */
   index?: number;
   total?: number;
   /** Overrides the default "Question n of m" eyebrow. */
@@ -4258,7 +4301,8 @@ function QuestionCard({ accent, index, total, label, question, answered, childre
   answered?: boolean;
   children: ReactNode;
 }) {
-  const eyebrow = label ?? (index && total ? `Question ${index} of ${total}` : "Question");
+  const numbered = Boolean(index && total);
+  const eyebrow = label ?? (numbered ? `Question ${index} of ${total}` : "Question");
   return (
     <Box
       bg="bg.subtle"
@@ -4273,10 +4317,14 @@ function QuestionCard({ accent, index, total, label, question, answered, childre
       transition="border-color 0.2s ease"
     >
       <HStack gap="2.5" mb="2.5" align="center">
-        <Center boxSize="6" minW="6" rounded="md" bg={accent} color={onAccentText(accent)}
-          fontSize="2xs" fontWeight="bold" lineHeight="1">
-          {index ?? "?"}
-        </Center>
+        {/* The chip is the position, so a card with no position has no chip. It used to fall back
+            to a literal "?", which read as a question the interface could not identify. */}
+        {numbered && (
+          <Center boxSize="6" minW="6" rounded="md" bg={accent} color={onAccentText(accent)}
+            fontSize="2xs" fontWeight="bold" lineHeight="1">
+            {index}
+          </Center>
+        )}
         <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">
           {eyebrow}
         </Text>
@@ -4337,7 +4385,7 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
   );
 }
 
-function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, mode }: {
+function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, lastLensSeen, mode }: {
   option: LabeledOption;
   profile: Block5UserProfile;
   scenario: Block5Scenario;
@@ -4352,6 +4400,8 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   /** dual-perspective: did the participant generate the other lens, and which lens was shown first. */
   altViewGenerated: boolean;
   framingFirst: CVRFraming;
+  /** the lens on screen when they left the vignette — decides whether the table shows. */
+  lastLensSeen: CVRFraming;
   /** color mode — light/dark-aware surfaces + highlight colors. */
   mode: "light" | "dark";
 }) {
@@ -4362,32 +4412,65 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   const PURPLE = marks.w.color as string;   // the stakeholder
 
   /*
-   * THE TWO VALUES THIS PAGE IS ABOUT — named for what they are.
+   * ═════════════════════════════════════════════
+   * WHAT THIS PAGE MEASURES THE OPTION AGAINST, AND WHAT IT NO LONGER CLAIMS.
    *
-   * `sacrificed` was previously called `topValue` and described to the participant as "what you
-   * leaned most toward". It is not that. It is `violatedValue`: the value this option most
-   * under-serves, weighted by how much the participant said they care. Across 60,000 misaligned
-   * choices it was NOT the participant's highest-scoring value 20.9% of the time, so one reader in
-   * five was told a plain untruth about their own answers.
+   * GONE (17 September 2026): `served` and `sacrificed` — the option's strongest value and the one
+   * it most under-serves — and the sentence built on them, "this option delivers X and gives up Y".
+   * That sentence described a two-way trade, and the arithmetic does not have one. An option
+   * usually falls short on SEVERAL of the four values at once, and naming exactly one as the
+   * casualty made the other shortfalls invisible while asking the participant to defend a swap
+   * they never made.
    *
-   * The page now states the TRADE instead of guessing at a priority: this option delivers X and
-   * gives up Y, and here is what you scored on each. That is true in every case, including the one
-   * that broke the old wording — where the option's own value IS the participant's top value, so
-   * "you leaned toward something else" was doubly wrong.
-   *
-   * These are the same two values `applyEndorsementUpdates` moves, deliberately: the sentence and
-   * the arithmetic now describe one trade rather than two different ones.
+   * HERE INSTEAD: the total distance, and an honest count of how many values it fell short on.
+   * ═════════════════════════════════════════════
    */
-  const sacrificed = violatedValue(option, profile);
-  const served = optionMainValue(option);
+
+  /** Each value's score in the profile, rounded the way the participant last saw it. */
   const scoreOfDim = (k: Block5PolicyDimKey) =>
     Math.round(profile.dimensions.find((d) => d.key === k)?.score ?? 0);
-  /* True only when the option's strongest value is also the one it most under-serves. There is no
-     two-sided trade to describe then, so the page asks the simpler question instead. */
-  const noTrade = served === sacrificed;
+
+  /**
+   * HOW FAR THIS OPTION LANDED FROM WHAT THEY ASKED FOR, in points.
+   *
+   * This is `policyAlignmentShortfall` — the UNCENSORED penalty: summed over the four values,
+   * (score / 100) × (score − what the option delivers), counting only the values the option falls
+   * BELOW. It is the same quantity the alignment score is built from, before that score is clamped
+   * into 0–100.
+   *
+   * THE SHORTFALL IS SHOWN AND THE FIT SCORE IS NOT, on the researcher's instruction. "Missed by
+   * 34" is a distance from their own stated values; "matched 66 out of 100" is a grade, with a
+   * ceiling to be measured against and a passing mark to be inferred. The project's standing rule
+   * is that no participant is shown an alignment verdict while they are still choosing, and a score
+   * out of 100 is a verdict wearing a number's clothes. The distance says what this cost them
+   * without ranking them.
+   *
+   * It is deliberately NOT stored from here — `analysis.alignment_records` computes it again from
+   * the same function, so the database never depends on what a screen happened to render.
+   */
+  const shortfallPoints = Math.round(policyAlignmentShortfall(option, profile));
+
+  /**
+   * WHICH values it fell short on — every one of them, not the worst one.
+   *
+   * The same test the shortfall uses: the participant's score for that value is above what the
+   * option delivers. Naming all of them is the correction to the old single-trade sentence; there
+   * are commonly two or three, and a participant told about one of three was told something true
+   * and badly incomplete.
+   */
+  const shortValues = POLICY_DIM_KEYS.filter((k) => scoreOfDim(k) > option.fingerprint[k]);
+
+  /**
+   * THE MIRROR TABLE'S ROWS, and whether this participant gets to see them.
+   *
+   * Only for somebody who ended on the CONTEXT lens: the table is the plain statement of the thing
+   * that lens leaves unsaid, and it is meaningless — worse, confusing — to anyone who never met
+   * the other world. See `lastLensSeen`.
+   */
+  const mirrorRows = getCVRMirror(scenario);
+  const showMirror = lastLensSeen === "context";
 
   const [stage, setStage] = useState<"questions" | "options" | "confirm">("questions");
-  const [q1, setQ1] = useState<"endorse" | "context" | "unsure" | null>(null);
   // No default — the participant must choose a confidence level (it is a required answer).
   const [confidence, setConfidence] = useState<number | null>(null);
   const [q3, setQ3] = useState<Block5PolicyDimKey | null>(null);
@@ -4407,23 +4490,25 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
 
   // q2 (the stakeholder question) is gone from this page: the ±25 now comes from whether the
   // participant switched after the person spoke, which happens before they ever get here.
-  const ready = q1 !== null && confidence !== null && q3 !== null && (!altViewGenerated || framingInfluential !== null);
+  const ready = confidence !== null && q3 !== null && (!altViewGenerated || framingInfluential !== null);
 
-  /** 3 questions, or 4 when the participant generated the second CVR lens. Drives "n of m". */
-  const apaTotal = altViewGenerated ? 3 : 2;
+  /*
+   * NO `apaTotal` ANY MORE. It held "1 question, or 2 when the participant generated the second CVR
+   * lens", and fed the "n of m" eyebrow on both cards. The cards now take their own numbers, and
+   * take none at all when there is only one question to count — see QuestionCard. `altViewGenerated`
+   * is the whole condition, so a second name for it was one more thing to keep in step.
+   */
   /**
    * How many are still outstanding. Continue stays disabled until this reaches 0, and a disabled
    * button with no explanation is the classic way to strand someone who scrolled past one card.
    */
   const unanswered =
-    (q1 === null || confidence === null ? 1 : 0) +
-    (q3 === null ? 1 : 0) +
+    (confidence === null || q3 === null ? 1 : 0) +
     (altViewGenerated && framingInfluential === null ? 1 : 0);
 
   const pending = useMemo(
-    () => (q1 !== null && q3 !== null
-      ? applyApaUpdates(profile, option, q1, stakeholderMoved === true, q3, framingAdjust,
-          scenario.stakesWeight ?? 1, confidence ?? 3)
+    () => (q3 !== null
+      ? applyApaUpdates(profile, stakeholderMoved === true, q3, framingAdjust, scenario.stakesWeight ?? 1, confidence ?? 3)
       : profile),
     /*
      * `confidence` MUST be listed here even though it is only read inside the call above.
@@ -4434,8 +4519,13 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
      * the last time one of the OTHER values changed. A participant who answered the confidence
      * slider last, or who went back and revised it, was scored with the placeholder 3 instead of
      * their own answer - silently, and only sometimes, which is the worst kind of wrong number.
+     *
+     * `option` IS NO LONGER HERE. The update used to be computed from the misaligned option — it
+     * read the option's own strongest value and the value it most under-served. It does not any
+     * more: the only thing that moves the profile is the value the participant names. Leaving the
+     * option in the list would recompute on a change that cannot alter the answer.
      */
-    [q1, q3, confidence, stakeholderMoved, profile, option, framingAdjust, scenario],
+    [q3, confidence, stakeholderMoved, profile, framingAdjust, scenario],
   );
 
   const matching = useMemo<LabeledOption[]>(() => {
@@ -4512,7 +4602,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
             </Button>
           </Stack>
         )}
-        {stage === "confirm" && section4 && q1 !== null && confidence !== null && q3 !== null && (
+        {stage === "confirm" && section4 && confidence !== null && q3 !== null && (
           <Stack gap="4">
             <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
               <Text fontSize="xs" color="fg.subtle" mb="1">Your final decision</Text>
@@ -4523,7 +4613,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" fontSize="xs"
                 onClick={() => onCommit({
                   finalOption: section4, pendingProfile: pending,
-                  q1, confidence, q2Influenced: stakeholderMoved === true, q3Value: q3, originalOptionId: option.id,
+                  confidence, q2Influenced: stakeholderMoved === true, q3Value: q3, originalOptionId: option.id,
                   altViewGenerated, framingShownFirst: framingFirst,
                   framingSelected: framingInfluential, framingAdjust,
                 })}>
@@ -4557,47 +4647,109 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
         </Text>
       </Box>
 
+      {/*
+        ══════════════════════════════════════════════════════════════════════════════════════
+        WHAT USED TO SIT HERE, AND WHY IT IS GONE (17 September 2026).
+
+        A PARAGRAPH ASSERTING A TWO-WAY TRADE: "This option delivers How much is gained - which you
+        rated 100 out of 100. To do that it gives up How many are helped - which you rated 99 out of
+        100." It named one value served and one sacrificed. An option usually falls short on SEVERAL
+        of the four at once, so that sentence described a trade the participant had not made and
+        then asked them to defend it.
+
+        AND A FIRST QUESTION BUILT ON THAT TRADE: "which is closer to the truth - I do put X above Y,
+        or I chose it for this situation?" With the trade gone the question has no subject, so it
+        went too, along with the profile movement behind it. See applyApaUpdates.
+
+        WHAT REPLACES THEM: the mirror table below, and one number.
+        ══════════════════════════════════════════════════════════════════════════════════════
+      */}
+
+      {/*
+        THE MIRROR TABLE — shown only to participants whose LAST lens was the context one.
+
+        THE COST IT PAYS BACK. The CVR vignette is forbidden from saying "same": it prints the
+        second world's numbers and leaves the participant to notice that they match their own. That
+        is deliberate, and it has a price - somebody who does not notice gets nothing from the
+        context lens at all. This table is where the noticing is finally made free, AFTER the choice
+        and the reflection are behind them, so it cannot steer either one.
+
+        NOT SHOWN TO EVERYONE. Whoever ended on the directness lens never met the airport, and a
+        table comparing their district to a terminal they have not read would introduce a world
+        rather than reveal one.
+      */}
+      {showMirror && mirrorRows.length > 0 && (
+        <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3.5">
+          <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider"
+            fontWeight="bold" mb="2.5">
+            The two situations you were shown
+          </Text>
+          <Box overflowX="auto">
+            <Box as="table" w="full" style={{ borderCollapse: "collapse" }}>
+              <Box as="thead">
+                <Box as="tr">
+                  <Box as="th" textAlign="left" pb="2" pr="3" borderBottomWidth="1px" borderColor="border">
+                    <Text fontSize="2xs" fontWeight="bold" color={accent} textTransform="uppercase" letterSpacing="wider">
+                      Where you decided
+                    </Text>
+                  </Box>
+                  <Box as="th" textAlign="left" pb="2" borderBottomWidth="1px" borderColor="border">
+                    <Text fontSize="2xs" fontWeight="bold" color={PURPLE} textTransform="uppercase" letterSpacing="wider">
+                      The other place
+                    </Text>
+                  </Box>
+                </Box>
+              </Box>
+              <Box as="tbody">
+                {mirrorRows.map((row) => (
+                  <Box as="tr" key={row.here}>
+                    <Box as="td" verticalAlign="top" py="1.5" pr="4" borderBottomWidth="1px" borderColor="border.subtle">
+                      <Text fontSize="xs" color="fg" lineHeight="tall">{renderCVRMarkup(row.here, marks)}</Text>
+                    </Box>
+                    <Box as="td" verticalAlign="top" py="1.5" borderBottomWidth="1px" borderColor="border.subtle">
+                      <Text fontSize="xs" color="fg" lineHeight="tall">{renderCVRMarkup(row.there, marks)}</Text>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {/*
+        HOW FAR THIS OPTION FELL SHORT — the number, and which values it fell short on, in words.
+
+        IT SHOWS THE SHORTFALL AND NOT THE FIT SCORE, on the researcher's instruction. "Missed by
+        34" is a distance; "matched 66 out of 100" is a verdict with a ceiling to be graded
+        against, and the project's standing rule is that no participant is shown one of those while
+        they are still choosing. The distance answers the question this page is actually asking -
+        what did this cost you against what you asked for - without handing them a mark.
+
+        THE VALUES ARE NAMED IN WORDS, not listed with their arithmetic, for the same reason.
+      */}
       <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
         <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-          {noTrade ? (
-            <>
-              This option is built around {vSpan(served, ORANGE)} — {VALUE_BENEFIT[served]} — but it
-              delivers less of it than your earlier answers asked for. You rated {vSpan(served, ORANGE)}{" "}
-              <b>{scoreOfDim(served)} out of 100</b>. That is what we would like you to confirm.
-            </>
+          Against what your earlier answers asked for, this option{" "}
+          <Text as="span" color="fg" fontWeight="bold">missed by {shortfallPoints} points</Text>
+          {shortValues.length === 0 ? (
+            <> in total. It met every one of your four values.</>
           ) : (
             <>
-              This option delivers {vSpan(served, ORANGE)} — {VALUE_BENEFIT[served]} — which you rated{" "}
-              <b>{scoreOfDim(served)} out of 100</b>.
-              {" "}To do that it gives up {vSpan(sacrificed, TEAL)} — {VALUE_BENEFIT[sacrificed]} — which you
-              rated <b>{scoreOfDim(sacrificed)} out of 100</b>.
-              {" "}<b>That trade is what we would like you to clarify.</b>
+              {" "}in total. It fell short on{" "}
+              <Text as="span" color="fg" fontWeight="bold">
+                {shortValues.length === 1 ? "one" : shortValues.length === 2 ? "two" : shortValues.length === 3 ? "three" : "all four"}
+              </Text>{" "}
+              of your four values — {shortValues.map((k, i) => (
+                <Text as="span" key={k}>
+                  {i > 0 && (i === shortValues.length - 1 ? " and " : ", ")}
+                  {vSpan(k, i === 0 ? ORANGE : TEAL)}
+                </Text>
+              ))}.
             </>
           )}
         </Text>
       </Box>
-
-      <QuestionCard
-        accent={accent} index={1} total={apaTotal} answered={q1 !== null}
-        question="When you made this choice, which is closer to the truth?"
-      >
-        <Stack gap="2">
-          <ApaChoice selected={q1 === "endorse"} accent={accent} onClick={() => setQ1("endorse")}>
-            {noTrade
-              ? <>Yes — I stand by choosing {vSpan(served, ORANGE)} here.</>
-              : <>I do put {vSpan(served, ORANGE)} above {vSpan(sacrificed, TEAL)}.</>}
-          </ApaChoice>
-          <ApaChoice selected={q1 === "context"} accent={accent} onClick={() => setQ1("context")}>
-            {noTrade
-              ? <>I chose it for <i>this particular situation</i> — it is not how I usually think.</>
-              : <>I chose it for <i>this particular situation</i> — overall, {vSpan(sacrificed, TEAL)} still
-                 matters more to me than {vSpan(served, ORANGE)}.</>}
-          </ApaChoice>
-          <ApaChoice selected={q1 === "unsure"} accent={accent} onClick={() => setQ1("unsure")}>
-            I'm honestly not sure.
-          </ApaChoice>
-        </Stack>
-      </QuestionCard>
 
       {/*
         THE CONFIDENCE RATING BELONGS TO THIS QUESTION, NOT THE ONE ABOVE.
@@ -4607,7 +4759,11 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
         for it.
       */}
       <QuestionCard
-        accent={accent} index={2} total={apaTotal} answered={q3 !== null && confidence !== null}
+        /* Numbered only when the second lens has added a second question — see QuestionCard. This
+           card was hard-coded to 2 from when the page opened with a first question; that question
+           was removed on 17 September 2026 and the eyebrow went on saying "Question 2 of 1". */
+        accent={accent} index={altViewGenerated ? 1 : undefined} total={altViewGenerated ? 2 : undefined}
+        answered={q3 !== null && confidence !== null}
         question="Pick the one value you most want the system to weight for you — you'll then see the options that fit it:"
       >
         <Stack gap="2">
@@ -4635,7 +4791,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
 
       {altViewGenerated && (
         <QuestionCard
-          accent={accent} index={3} total={apaTotal} answered={framingInfluential !== null}
+          accent={accent} index={2} total={2} answered={framingInfluential !== null}
           question={<>You looked at this from two perspectives. Which one most <Text as="span" color={PURPLE} fontWeight="bold">changed your mind</Text> toward not keeping this option?</>}
         >
           <Box mb="3"><FramingComparisonTable scenario={scenario} option={option} coord={coord} mode={mode} /></Box>
