@@ -768,6 +768,54 @@ gate reads `soon` and `later` together**, so as long as the `later` line carries
 
 ---
 
+## 2e. SCENARIO 6, AND THE AUDIT OF ALL SIX TOGETHER
+
+Scenario 6 is a test of the model, not the participant, and it is kept deliberately light: four
+options, no method box, no performance numbers, no reflection and no clarification. **Its passes are
+A and D and the A4 read only.** B, C, E and F do not apply. Every edit to it was TEXT ONLY — no
+fingerprint moved, so the prediction it exists to test is untouched and `PREDICTION_VERSION` did not
+have to move (CLAUDE.md).
+
+### ⚠ The veil only works if the event has not happened yet
+
+The scene said the storm **had torn down** the lines; the role said "you do not know who you will be
+**when the storm comes**", and the scene itself said the city decides "**in advance**". Once the lines
+are down a participant knows whether their own power is out, and the veil is gone. **Check the tense
+of every sentence against the design, not only against the other sentences.**
+
+### ⚠ Two titles built from the same words
+
+"Help the people who would be **hurt the most**" and "Stop the **most** people from being badly
+**hurt**" are the worst-off and the fewest-harmed — the two options that most need telling apart —
+spelled with the same four words. Each title now says the one thing that separates it.
+
+### ⚠ The mechanism has to fit the scenario's shortage
+
+"Each place gets only a few hours a day" is rationing — rolling cuts when there is not enough power
+to go round. Scenario 6's shortage is **one repair crew**. A crew trying to reach everyone makes quick
+temporary repairs that keep failing. Same trade-off, a mechanism that belongs to this scenario.
+
+### A9 — the whole-block audit
+
+Some defects only exist ACROSS scenarios, and three passes over one scenario at a time will never
+see them. After the last scenario, run these over all six at once:
+
+| Check | Found on 18 September 2026 |
+|---|---|
+| two titles in one scenario sharing most of their words | scenario 6 only, fixed |
+| a percent sign in anything a participant reads | scenario 6's "33%", fixed |
+| every situation box opens with a sentence | **3, 4 and 5 still opened with a label** after 1, 2 and 6 were fixed |
+| every closing claim of a situation box is true of all its options | all six hold |
+| the same title in two scenarios, other than the 4/5 twins | none |
+| no two parallel worlds send a participant to the same place | airport, cruise ship, flood rescue, night shelter |
+| British spelling in anything a participant reads | none (one false alarm: "folding the rear row **flat**" is the adjective) |
+
+**Read the output rather than trusting it.** The sentence check passed scenario 3's opener — "About
+120 eligible patients this month, and 20 doses with a date on them" — because it is long enough. It
+has no verb. It was caught by reading the line, not by the rule.
+
+---
+
 ## 3. Two gates that bite when editing scene text
 
 - **`description` may contain no digits; `factBase` must contain some.** Numbers live in the
@@ -810,6 +858,7 @@ now carry a line saying so.
 11. Check it in the browser at desktop and at 375px.
 12. **Audit A7** — if any audit above found a NEW KIND of defect, re-run that audit over every
     scenario already finished. The instrument is new; the defect is not.
+13. **Audit A9**, once the last scenario is done — the whole-block checks in §2e, over all six.
 
 ---
 

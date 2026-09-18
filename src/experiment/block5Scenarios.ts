@@ -994,7 +994,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         read the first quoted string after the field name, so a quoted phrase here would be scored
         in place of the scenario text.
       */
-      "About 120 eligible patients this month, and 20 doses with a date on them. One month before any further supply is even possible, and everyone who does not get a dose now goes back onto next month's list. Every option you will see spends from the same 20 doses and the same 120 names. They differ only in who ends up with one.",
+      "You have 20 doses this month for about 120 eligible patients, and the doses have a date on them. One month before any further supply is even possible, and everyone who does not get a dose now goes back onto next month's list. Every option you will see spends from the same 20 doses and the same 120 names. They differ only in who ends up with one.",
     role:
       "You sit on the allocation team. {w|You are not a patient}, {w|nobody close to you is on the list}, and whatever you decide your own care is unaffected. The whole cost of this decision falls on {w|strangers}.",
     title: "Limited Cancer Treatment Allocation",
@@ -1387,7 +1387,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         NO DOUBLE QUOTES IN THIS COMMENT: the digit and overlap checks read the first quoted string
         after the field name, so a quoted phrase here would be scored in place of the text.
       */
-      "240 clients and 40 caregivers. 1,600 caregiver-hours a week, cut to 1,200 for the next three months. About 500 of those hours are spent driving between homes. The town rounds are paid by a council contract, and the rural rounds are paid by the visit and lose money on the driving. Every option you will see fits inside the 1,200 hours. They differ only in where the 400 cut hours come from.",
+      "You have 40 caregivers and 240 clients. The 1,600 caregiver-hours a week are cut to 1,200 for the next three months. About 500 of those hours are spent driving between homes. The town rounds are paid by a council contract, and the rural rounds are paid by the visit and lose money on the driving. Every option you will see fits inside the 1,200 hours. They differ only in where the 400 cut hours come from.",
     role:
       "You are the shift coordinator. {w|Your own hours are not touched}, and {w|nobody you know is a client}. You set the work schedule that {w|forty caregivers} will work and {w|240 clients} will live with — and you set it under a principle {w|your employer has already published}.",
     title: "The Care Visits You Have to Cut",
@@ -1711,7 +1711,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     decisionRole: "recipient",
     employer: MERIDIAN,
     factBase:
-      "The same 240 clients. The same 40 caregivers. The same 1,600 caregiver-hours cut to 1,200. The same six options — but this time your own round and your own clients are among the ones being cut.",
+      "This is the same cut: 240 clients, 40 caregivers, and 1,600 caregiver-hours a week cut to 1,200. The same six options are on the table — but this time your own round and your own clients are among the ones being cut.",
     role:
       "You are one of the forty caregivers. {w|You are not deciding this}. The coordinator decides, and they are choosing from {w|the same six options you can see here}. Whatever they choose, {w|you have to work it} — and {w|the people on your round} have to live with it.",
     title: "The Same Cut, Decided Without You",
@@ -1951,7 +1951,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     stakePosition: "behind_the_veil",
     decisionRole: "predicted",
     factBase:
-      "1 crew. About 33% of what went dark can be brought back in the first week. Support from other regions is at least 3 days away. The rule chosen now is the one followed on the night.",
+      "You have one repair crew. Help from other regions is at least 3 days away, and until it comes the crew can bring back about a third of what goes dark. The rule chosen now is the one the crew follows on the night the storm hits.",
     role:
       /*
         The veil itself. It names five concrete positions rather than gesturing at anyone at all,
@@ -1964,7 +1964,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       "You write the rule today. But {w|you do not know who you will be} when the storm comes. You could be {w|the person at home on a breathing machine}. You could be {w|the nurse at the clinic working with no lights}. You could be {w|the shop owner whose food is going bad}. You could be {w|a parent with a small baby and no heating}. You could be {w|someone whose power never goes out}. You learn who you are only after the rule is fixed. So the rule is for you too. You do not know if it will help you or hurt you.",
     title: "The Rule You Will Live Under",
     description:
-      "A big storm has torn down the electricity lines across the city. Only one repair crew is available, and they cannot get everywhere before help arrives from elsewhere. So the city must decide in advance which streets come first. Once that decision is made, it cannot be changed.",
+      /*
+        THE STORM HAS NOT HIT YET, 18 September 2026. It used to say the storm had already torn the
+        lines down, which contradicted the role and made the veil impossible - see the note above
+        factBase. NO DOUBLE QUOTES IN THIS COMMENT: the scene gates read the first quoted string
+        after the field name.
+      */
+      "A big storm is on its way, and it is expected to tear down electricity lines across the city. Only one repair crew will be available, and it will not reach everywhere before help comes from elsewhere. So the city must decide now which streets come first. Once that decision is made, it cannot be changed.",
     theme: {
       /*
        * STEEL INDIGO — the one color in Block 5 that belongs to nothing else, chosen by measuring
@@ -1995,7 +2001,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     options: [
       {
         id: "veil_worst_off_first",
-        title: "Help the people who would be hurt the most",
+        title: "Help the people in the worst trouble first",
         summary:
           "The crew goes first to the people who would be hurt the most without power. That holds even if reaching them is slow and costs a lot.",
         gains: "Nobody is skipped because helping them was hard.",
@@ -2031,7 +2037,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       },
       {
         id: "veil_prevent_most_harm",
-        title: "Stop the most people from being badly hurt",
+        title: "Keep the number of people badly hurt as low as possible",
         summary:
           "The crew goes where it stops the most deaths and serious harm. It does not matter who those people are.",
         gains: "As few people are badly hurt as possible.",
@@ -2069,10 +2075,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "veil_reach_most_people",
         title: "Give power back to as many places as possible",
         summary:
-          "The crew works so the most homes get power back. Each place gets only a few hours a day, but almost everyone gets something.",
+          "The crew makes quick temporary repairs in as many places as it can. The repairs are weak and the power keeps cutting out, but almost everyone gets something.",
         gains: "Almost nobody is left with no power at all.",
         consequence:
-          "More homes get power than with any other rule. But a few hours a day may be too little for anyone in real danger.",
+          "More homes get some power than with any other rule. But power that keeps cutting out may be too little for anyone in real danger.",
         givesUp: "Full power in one place, where it would really change things.",
         moralTension:
           "Is a little help for many worth more than real help for a few?",
