@@ -122,6 +122,16 @@ interface ScenarioCVRContent {
  *
  * Two leads per level, because the person argues against whatever the participant just said:
  * after "yes" they report what the choice costs; after "no" they report what it would have given.
+ *
+ * EVERY LEAD OPENS WITH "Imagine", on the researcher's instruction, 18 September 2026. The person
+ * is imagined: the page asks the participant to picture someone at that distance from them caught
+ * in the situation, and to decide with that person in mind. Without the word, the page stated it
+ * as fact, and in scenarios 3 and 4 it then contradicted the role box ("nobody close to you is on
+ * the list", "nobody you know is a client"). With it, both are true: nobody you know is involved,
+ * and you are asked to imagine that someone were. The roles were deliberately left as written.
+ *
+ * Only the leads changed. The label, which is what the database stores as stakeholder_text_shown,
+ * did not, so records from before and after the change still compare on that field.
  */
 export interface VoiceLevel {
   /** who they are — used in the leads and in logging. */
@@ -135,18 +145,18 @@ export interface VoiceLevel {
 const VOICE: Record<SalienceWho, VoiceLevel> = {
   close: {
     label: "someone you have known for twenty years",
-    hurtLead: "Someone you have known for twenty years, and care about very much, is affected by what you chose.",
-    needLead: "Someone you have known for twenty years, and care about very much, tells you this choice would have helped them.",
+    hurtLead: "Imagine someone you have known for twenty years, and care about very much, is affected by what you chose.",
+    needLead: "Imagine someone you have known for twenty years, and care about very much, tells you this choice would have helped them.",
   },
   group: {
     label: "someone you have known for a year",
-    hurtLead: "Someone you have known for about a year, and might care about, is affected by what you chose.",
-    needLead: "Someone you have known for about a year, and might care about, tells you this choice would have helped them.",
+    hurtLead: "Imagine someone you have known for about a year, and might care about, is affected by what you chose.",
+    needLead: "Imagine someone you have known for about a year, and might care about, tells you this choice would have helped them.",
   },
   system: {
     label: "someone you have just met",
-    hurtLead: "Someone you have only just met is affected by what you chose.",
-    needLead: "Someone you have only just met tells you this choice would have helped them.",
+    hurtLead: "Imagine someone you have only just met is affected by what you chose.",
+    needLead: "Imagine someone you have only just met tells you this choice would have helped them.",
   },
 };
 
@@ -403,7 +413,7 @@ const GENERIC: ScenarioCVRContent = {
   impersonalAgent: "a standard procedure",
   parallel: {
     register: "everyday",
-    setting: "The same shortage, somewhere else entirely, with the same amount to go round.",
+    setting: "The same shortage, somewhere else entirely, with the same amount to go around.",
     valuePhrase: {
       vulnerabilityProtectionSensitivity: "the people who most need protection",
       groupSizeSensitivity: "much of the larger group who could be reached",
@@ -454,10 +464,10 @@ const CARE: ScenarioCVRContent = {
    *
    * THE SCARCE THING IS NOW STAFF TIME ON BOTH SIDES, cut by a quarter for three months, with a
    * share of it spent on overhead: driving between homes there, paperwork and handovers here. That
-   * is what lets "redraw the rounds to cut the driving" transplant at all.
+   * is what lets "redraw the routes to cut the driving" transplant at all.
    *
-   * AND THE REVENUE FACT HAS A PARTNER: council-paid beds and donation-run beds, as the scenario has
-   * council-contract rounds and pay-by-visit rounds. Without it "drop the rural rounds" has nothing
+   * AND THE REVENUE FACT HAS A PARTNER: city-paid beds and donation-run beds, as the scenario has
+   * city-contract routes and pay-by-visit routes. Without it "drop the rural routes" has nothing
    * to become over here.
    *
    * The clock is the parallel's own — see `horizon` on CVRParallelWorld. A night shelter's first
@@ -468,7 +478,7 @@ const CARE: ScenarioCVRContent = {
     register: "life_and_death",
     horizon: { soon: "The first night", later: "Before the cold months end" },
     setting:
-      "A winter night shelter has lost a quarter of its funding. {a|240} people rely on it, and {a|40} staff keep it open. {a|1,600} staff-hours a week, cut to {a|1,200} for the {a|three} coldest months. About {a|500} of those hours go on paperwork and handovers. The council pays for some of the beds, and the rest run on donations that no longer cover them.",
+      "A winter night shelter has lost a quarter of its funding. {a|240} people rely on it, and {a|40} staff keep it open. {a|1,600} staff-hours a week, cut to {a|1,200} for the {a|three} coldest months. About {a|500} of those hours go to paperwork and handovers. The city pays for some of the beds, and the rest run on donations that no longer cover them.",
     mirror: [
       { here: "{a|240} clients",
         there: "{a|240} people who rely on the shelter" },

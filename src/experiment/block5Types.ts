@@ -275,7 +275,7 @@ export const METRIC_DEFS: Record<Block5MetricKey, MetricDef> = {
     invariant: "Recoverability — how easily course can be changed if the choice proves wrong.",
     hover: "If this turns out to be wrong, how easily you can change course.",
     readings: {
-      chemical_release_escape: "whether you can turn round and take another way out",
+      chemical_release_escape: "whether you can turn around and take another way out",
       wildfire_household_evacuation: "whether you can change course once you have committed",
       cancer_treatment_allocation: "whether doses can be reallocated, or the decision is final",
       care_rota_reduction: "whether visits can be restored if it goes wrong",

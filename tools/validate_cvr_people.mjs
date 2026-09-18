@@ -1,5 +1,7 @@
 /**
- * validate_cvr_people.mjs — guards the 60 little stories.
+ * validate_cvr_people.mjs — guards the stakeholder stories: two per option, in every scenario that
+ * runs the reflection. That is scenarios 1 to 4 — 24 options, 48 stories. Scenario 5 is a wish and
+ * scenario 6 tests the model, so neither has any.
  *
  * Each option carries two: the person the choice HURTS (shown after "yes") and the person who
  * NEEDED it (shown after "no"). Both are dropped in after a lead that has already introduced
@@ -17,6 +19,13 @@
  *      "…what you chose. They is unwell."
  *   5. NEITHER SIDE PUSHES HARDER — hurt and need should be similar in length, or the measure
  *      partly reflects which story was written with more force.
+ *
+ * WHAT THIS FILE CANNOT CHECK. On 18 September 2026 all five gates passed while 21 of the 48
+ * stories were wrong: two made the speaker the participant's own child, which no stranger can be;
+ * others contradicted their own card, their lens or the scenario's clock, or claimed that "only"
+ * this option would help when another one also would. Those need a person reading every story under
+ * its card, in all three voices. The method, and every defect it found, is audit A10 in
+ * docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md (section 2f).
  *
  * Run: npm run validate:people   (chained into npm run validate:block5)
  */
@@ -58,7 +67,7 @@ const overlap = (story, givesUp) => {
   return a.filter((w) => b.has(w)).length / a.length;
 };
 
-console.log("\n=== THE 60 STORIES ===\n");
+console.log(`\n=== THE ${opts.length * 2} STORIES ===\n`);
 
 /* Counted against the options that ship, not against a number written down here: a hardcoded
    30 keeps reporting PASS after a scenario is added or removed, over exactly the gap it exists

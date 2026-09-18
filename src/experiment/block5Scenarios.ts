@@ -318,13 +318,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "chem_registered_convoy",
         cvrSeed: {
           rule: "waits for its assigned slot and takes nothing that was set aside for anyone else",
-          parallelRule: "waits for the ward's assigned round and takes no bed that was held for another ward",
+          parallelRule: "waits for the ward's assigned turn and takes no bed that was held for another ward",
           act: "You wait for your street to be called, and you board the convoy bus when it is. Your car stays parked. Nothing that was set aside for anybody else is touched.",
           parallelAct: "{w|A traveler waits for their gate to be called and boards the shuttle when it comes. They take nothing that was being held for anyone else.}",
-          identifiedCase: "were three streets further down the list, and the plume reached them first",
-          harm: "The convoy that would have carried them out was still loading when the wind turned",
-          benefitCase: "are on the same list as you and have been waiting since the order came",
-          benefitLost: "The order holds only while people keep their places, and one skipped slot unravels it",
+          identifiedCase: "were three streets behind yours on the list, and the plume reached their street before the convoy did",
+          harm: "The list moved only as fast as the streets ahead of them, and yours was one of those streets",
+          benefitCase: "are on the same list as you, and have kept their place since the district was told to clear out",
+          benefitLost: "The list holds only while everyone keeps their place, and one person leaving out of turn unravels it",
           consequences: {
             soon: "The streets behind yours wait longer, because the list only moves as fast as its slowest street.",
             later: "Street nine may still be waiting when the wind turns. The people on it could be the last ones out tonight, if they get out at all.",
@@ -368,10 +368,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelRule: "takes the one ventilator that had been tagged and held for another patient",
           act: "You open the clinic cabinet, take the respirator, and walk out by the shortest street with it on your face. The tag hanging from it has somebody else's name.",
           parallelAct: "{w|A traveler opens the first-aid cabinet, takes the escape hood, and walks out through the fumes by the nearest door. The label on it has another passenger's name.}",
-          identifiedCase: "have been on home oxygen for two years and cannot walk the distance unaided",
+          identifiedCase: "have been on home oxygen for two years, and cannot walk that far without a mask",
           harm: "They wait in a sealed room for a mask that has already left the district on your face",
-          benefitCase: "were behind you in the convoy line and move up a place when you walk out",
-          benefitLost: "The seat you would have filled is the last one on the last bus that runs",
+          benefitCase: "were on your street's list for the convoy bus, with no seat left for them",
+          benefitLost: "Your seat was free the moment you walked out with the mask, and it went to them",
           consequences: {
             soon: "The man it was tagged for stays in a sealed room. He has been on home oxygen for two years and cannot walk that far without it.",
             later: "He may wait hours for a mask that left the district on your face. The clinic could stop holding masks for anyone after this.",
@@ -408,14 +408,14 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "chem_walk_out_on_foot",
         cvrSeed: {
-          rule: "leaves every reserved seat and every tagged mask untouched and goes the long way round",
+          rule: "leaves every reserved seat and every tagged mask untouched and goes the long way around",
           parallelRule: "leaves every held bed and every reserved dose untouched and waits for the next round",
           act: "You leave the seat and the mask where they are, and you walk out the long way by the river path. Nobody is told that your street is now empty.",
           parallelAct: "{w|A traveler leaves the seat and the hood untouched and walks out the long way, around the outside of the terminal. Nobody is told that their gate is now clear.}",
-          identifiedCase: "were counting on you to reach the center and confirm your street was empty",
-          harm: "The sweep team spent two more hours on a street you had in fact already cleared",
-          benefitCase: "cannot walk unaided and were the one tagged for the mask you did not take",
-          benefitLost: "The mask was still in the cabinet when the ambulance finally got to them",
+          identifiedCase: "lived on the next street the sweep team was due to search, and waited two hours longer for the team",
+          harm: "The team was still going door to door on a street you had walked out of hours before",
+          benefitCase: "are on home oxygen, and were the patient the clinic's mask was tagged for",
+          benefitLost: "It was still in the cabinet when the clinic nurse came to fetch it for them",
           consequences: {
             soon: "You breathe the edge of the plume for four hours. A sweep team searches a street you walked out of hours ago.",
             later: "Your chest may not feel right by morning. The two hours that team spent on your street could be the two hours another street was waiting for.",
@@ -425,7 +425,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
             later: "Their chest may not feel right by morning, and the crew could lose time that another gate was counting on.",
           },
         },
-        title: "Walk out the long way and leave the kit where it is",
+        title: "Walk out the long way and leave the seats and the mask for others",
         method: {
           kind: "foot",
           by: "On foot, with nothing",
@@ -456,10 +456,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelRule: "spends the treatment window on the ward's other patients before its own",
           act: "You take the wheel of the district minibus. {a|Two} streets get out because you drove. Then you stay for a {a|third} run.",
           parallelAct: "{w|A traveler picks up the shuttle keys and drives two gates out before boarding anything themselves. Then they go back for a third run.}",
-          identifiedCase: "waited at the third stop and watched the minibus fill before it reached them",
-          harm: "The plume crossed that street while the shuttle was still two roads away from it",
-          benefitCase: "had no car and no way out of either of the two streets you cleared",
-          benefitLost: "Nobody else was going to drive that minibus, and it does not leave without a driver",
+          identifiedCase: "lived on the third street, and waited at the stop for a minibus that never came",
+          harm: "By the third run the plume was on the road, and the minibus carried you out instead",
+          benefitCase: "lived on one of the two streets you cleared, and had no car to get out in",
+          benefitLost: "Nobody else was going to drive that minibus, and it could not leave without a driver",
           consequences: {
             soon: "You are still driving when the plume reaches the road, and you breathe it for the last hour.",
             later: "The third street may never be collected. A man there could wait for a bus that never comes, and walk out through the plume.",
@@ -500,12 +500,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelRule: "uses none of the ward's shared supply and absorbs the whole of the risk itself",
           act: "You tape the doors, lay wet towels along the gaps, and stay in your apartment. You ask nobody for anything, and you tell nobody you are in there.",
           parallelAct: "{w|A traveler tapes the door of a quiet room, lays wet cloths along the gaps, and stays inside. They ask for nothing, and nobody is told where they are.}",
-          identifiedCase: "were on the sweep team and had to enter the block to confirm you were alive",
-          harm: "Two of them spent forty minutes in the worst air of that night looking for you",
-          benefitCase: "took the convoy seat and the mask that you never asked anyone for",
-          benefitLost: "Both were still there because you stayed, and both were gone within the hour",
+          identifiedCase: "were on the sweep team, and had to break into your building to check it was empty",
+          harm: "They and a partner spent forty minutes in the worst air of the night looking for you",
+          benefitCase: "were waiting on your street for a convoy seat, and there was one more because you stayed in",
+          benefitLost: "The seat you never asked for went to them, and they were out of the district within the hour",
           consequences: {
-            soon: "A sweep team breaks into your block to find out whether anyone is still alive inside it.",
+            soon: "A sweep team breaks into your building to find out whether anyone is still alive inside it.",
             later: "Two of them may spend forty minutes in the worst air of the night looking for you. One could be off work tomorrow, and nobody would connect it to a door that stayed shut.",
           },
           parallelConsequences: {
@@ -544,10 +544,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelRule: "opens the fastest treatment path it can find and lets every other case follow it",
           act: "You take your own car down the freight yard's service road. It is one lane wide, it runs past the split tanker, and word spreads the moment your tail lights go down it.",
           parallelAct: "{w|A traveler drives out along the service lane beside the runway. It is one lane wide, it runs past the spill, and word spreads as soon as the first car goes down it.}",
-          identifiedCase: "followed your tail lights down the service road and stopped level with the tanker",
-          harm: "Their car stalled where the air was worst, and the road was too narrow to turn on",
-          benefitCase: "were still waiting in line for the convoy when your route opened up behind you",
-          benefitLost: "Four streets emptied down that road within the hour, and not one of them waited",
+          identifiedCase: "followed your tail lights down the service road, and their car stalled level with the tanker",
+          harm: "It stopped where the air was worst, on a road too narrow to turn around on",
+          benefitCase: "were still waiting for the convoy when your car showed them the service road was open",
+          benefitLost: "They followed you down it with four streets of neighbors, and were out within the hour",
           consequences: {
             soon: "Four streets follow you onto a single-lane road that passes the leak.",
             later: "A car may stall level with the tanker. The family inside could be treated through the night, and the road behind them could stay blocked until morning.",
@@ -565,7 +565,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         summary: "You take your own car. The freight yard's service road runs upwind and is standing empty, and it is the only road a private car is allowed on today. It is the fastest way out for anyone who uses it, and word spreads the moment the first vehicle goes down it.",
         gains: "The fastest clear route out of the district, and once you have opened it the streets behind you follow.",
-        consequence: "You are out in twenty minutes and so is everyone behind you. But the road runs past the split tanker itself, and once you are committed to it there is no turning round.",
+        consequence: "You are out in twenty minutes and so is everyone behind you. But the road runs past the split tanker itself, and once you are committed to it there is no turning around.",
         givesUp: "Any chance to change your mind. It is single-track past the yard and it passes closer to the tanker than any other route here.",
         moralTension: "Is the quickest way out still the right one when it takes everyone else past the leak?",
         fingerprint: {
@@ -644,7 +644,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       */
       "You have 8 hours before the front reaches the valley floor. Around 600 residents across nine blocks on the valley wall. The blocks leave in nine timed slots, ordered by how near the highway junction each one sits - yours is fifth, and the first has not been called yet. One bus with a wheelchair lift. One ridge road, cut years ago to serve the big houses on the cleared shelf at the top and held today for fire crews. Those houses have never needed a slot. The refuge school stands on that shelf too, and with the ridge road closed the only way up to it is a footpath too narrow for any vehicle. Your own car is outside with seven seats in it. Every option you will see keeps your household alive for the eight hours. They differ only in what each one takes from the rest of the valley.",
     role:
-      "You are a resident, and {w|you are not leaving alone}. Your household is four. You, {w|two children} — one needs an inhaler in smoke — and {w|your mother, who walks with a frame}. You carry the cost of this choice, and so do the three of them.",
+      "You are a resident, and {w|you are not leaving alone}. Your household is four. You, {w|two children} — one needs an inhaler in smoke — and {w|your mother, who uses a walker}. You carry the cost of this choice, and so do the three of them.",
     title: "Eight Hours Ahead of the Fire",
     description:
       /*
@@ -672,10 +672,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "keeps its assigned place in line and moves nobody out of the way",
           parallelRule: "keeps its assigned place on the list and moves no other case down it",
-          identifiedCase: "were in the ninth slot and left as the fire crossed the valley floor",
-          harm: "The staging kept the road clear, and it kept them sitting in it three hours longer",
-          benefitCase: "were marshaling the convoy and needed the blocks to leave in the order set",
-          benefitLost: "One household leaving early is what turns a staged convoy back into a jam",
+          identifiedCase: "were in the ninth block, the last one called, and left in the sixth hour with the smoke already thick",
+          harm: "The line moved only as fast as the blocks ahead of them, and yours was one of those blocks",
+          benefitCase: "were in the block after yours, and could leave only once yours had gone in its turn",
+          benefitLost: "Every household that kept its place is why the road was still moving when their slot came",
           act: "You wait for your block to be called, then drive out in the convoy. You take the {a|fifth} slot of {a|nine}, which is yours. Nothing set aside for anybody else is touched.",
           parallelAct: "{w|A passenger waits for their deck to be called and boards the boat when it comes. They take the fifth place of nine, which is theirs. Nothing held for anybody else is touched.}",
           consequences: {
@@ -718,15 +718,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "uses the lane that was being held clear for the people going the other way",
           parallelRule: "uses the operating room slot that was being held clear for the emergency list",
-          identifiedCase: "were waiting at the care home for the engine that you turned back",
+          identifiedCase: "were waiting at the nursing home for the engine that you turned back",
           harm: "The crew reversed two miles to let you past, and reached them forty minutes late",
-          benefitCase: "are eight years old, sitting behind you, and already on the inhaler",
-          benefitLost: "Those forty minutes are the whole difference between smoke and clean air for them",
+          benefitCase: "were in the block behind yours, waiting in the line for the highway",
+          benefitLost: "Your car went over the ridge instead, so there was one car fewer ahead of them in that line",
           act: "You drive your own car up the ridge road, the lane held for the fire crews. It is {a|forty} minutes over the top and out.",
           parallelAct: "{w|A passenger climbs the crew stair, the one stair being held for the crew. It puts them at the boats forty minutes ahead of their group. A crew coming down has to turn back to let them by.}",
           consequences: {
             soon: "A fire engine backs two miles down the ridge road to let your car through.",
-            later: "It may reach the care home forty minutes late. Two residents there could be beyond help by then.",
+            later: "It may reach the nursing home forty minutes late. Two residents there could be beyond help by then.",
           },
           parallelConsequences: {
             soon: "A crew backs down two flights of that stair to let one passenger up.",
@@ -742,7 +742,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The ridge road was cut for the big houses on the shelf, and today it is closed off and kept clear for fire crews coming down it. It is empty, it is fast, and your four could be over the ridge and out of the valley in forty minutes.",
         gains: "Your household is out of the valley in forty minutes — hours ahead of anything else here.",
         consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept clear for crews coming the other way. A car on it turns a fire engine back.",
-        givesUp: "The road the fire crews need. An engine that reverses is one that does not reach the care home on the far side.",
+        givesUp: "The road the fire crews need. An engine that reverses is one that does not reach the nursing home on the far side.",
         moralTension: "Would you take a road kept clear for rescuers, if it were your own children in the back?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 18, groupSizeSensitivity: 23,
@@ -762,11 +762,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "gives its own places to the people who cannot board anything else and waits",
           parallelRule: "gives its own slot to the patients who cannot be moved again and waits",
-          identifiedCase: "spent six hours in the shelter hall with an inhaler that was running low",
-          harm: "They were still in the valley at the seventh hour because you gave the seats away",
-          benefitCase: "use a frame and cannot climb the step onto any of the standard coaches",
-          benefitLost: "Your seats were the only ones that could take them out before the last hour",
-          act: "You hand your car keys to the {a|two} neighbors with frames, and they drive out in your slot. Your four take their places on the lift bus, last out of the valley.",
+          identifiedCase: "were the nurse on duty in the shelter hall, and spent the sixth hour hunting for a spare inhaler for your child",
+          harm: "Everyone else in that hall went without a nurse while they searched, because you gave your seats away",
+          benefitCase: "use a walker, and cannot climb the steps onto any of the regular buses",
+          benefitLost: "Your car took them out in your slot, hours before the last bus",
+          act: "You hand your car keys to the {a|two} neighbors with walkers, and they drive out in your slot. Your four take their places on the lift bus, last out of the valley.",
           parallelAct: "{w|A passenger gives their boat place to two people who cannot climb down, and waits for the hoist boat instead. That boat is the last one lowered.}",
           consequences: {
             soon: "Your four wait six hours in a shelter hall while the smoke thickens outside it.",
@@ -777,22 +777,22 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
             later: "The hoist boat may come late. A child in that group could be very cold before it is lowered.",
           },
         },
-        title: "Give your car seats to the two frame users and wait for the lift bus",
+        title: "Give your car seats to the two neighbors with walkers and wait for the lift bus",
         /* PASS D: WHO DRIVES? The card gave your car away without ever saying who was at the wheel,
-           and the reader's only candidates were two people using walking frames. A frame is no bar
+           and the reader's only candidates were two people using walkers. A walker is no bar
            to driving, and saying so costs the scenario nothing - no crew time, no second vehicle,
            so the resources-spared score does not have to carry a driver it never had. */
         method: {
           kind: "bus",
           by: "The lift-equipped bus, last out of the valley",
-          detail: "your car goes at your slot with the two neighbors and their frames in it, one of them driving. You take their places on the bus.",
+          detail: "your car goes at your slot with the two neighbors and their walkers in it, one of them driving. You take their places on the bus.",
         },
-        summary: "Two neighbors use walking frames and cannot board the standard coaches. The lift bus can take them, but it is the last vehicle scheduled to leave the valley. Your car can take them out in your block's slot instead, with one of them driving - though folding the rear row flat for their frames leaves five seats, and two of those are theirs. Three is not four, and you are not splitting your household. So your own four take their places on the lift bus.",
+        summary: "Two neighbors use walkers and cannot board the regular buses. The lift bus can take them, but it is the last vehicle scheduled to leave the valley. Your car can take them out in your block's slot instead, with one of them driving - though folding the rear row flat for their walkers leaves five seats, and two of those are theirs. Three is not four, and you are not splitting your household. So your own four take their places on the lift bus.",
         /* WHAT IS GIVEN AWAY IS THE PLACE, not only the seats. The car goes out in the household's
            own slot, so the neighbors inherit a position in the line as well as four seats - and the
            household drops from fifth of nine to last. The card was naming half the gift. */
         gains: "The two people least able to get themselves out leave in your seats, and in your place in the line.",
-        consequence: "Nobody who needs a lift is left behind. But your own four are then on the last vehicle out. Your mother waits six hours in a shelter hall for it.",
+        consequence: "Nobody who needs the lift is left behind. But your own four are then on the last vehicle out. Your mother waits six hours in a shelter hall for it.",
         /* PASS D: NOT NEAR THE FRONT. The household's slot is the fifth of nine - option 1 says so
            twice - which is the middle of the line, and this card was selling a place it never had.
            The sacrifice is real without the exaggeration: middle of the line to last out. */
@@ -815,32 +815,32 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "fire_fill_every_seat",
         cvrSeed: {
           rule: "fills every empty seat it has before it leaves",
-          parallelRule: "fills every empty place on the round before it closes the list",
-          identifiedCase: "were the fourth person on the street without a car, and the car was full",
+          parallelRule: "fills every empty place before the list closes",
+          identifiedCase: "were the fourth person on your street without a car, and your car was full",
           harm: "They watched seven people pull away from a street that had eight waiting on it",
-          benefitCase: "have no vehicle and were third on that street with nobody coming for you",
+          benefitCase: "have no vehicle, and were one of the four on your street with nobody coming for them",
           benefitLost: "There was one car on the street with room left in it, and it was yours",
-          act: "You fill all {a|seven} seats in your car and drive out in your slot. Your mother's frame is strapped to the roof. A fourth neighbor is still on the street when you go.",
-          parallelAct: "{w|A passenger fills every place in their boat, taking three people who had none. A frame is lashed across the stern. A fourth is left on the deck as it lowers.}",
+          act: "You fill all {a|seven} seats in your car and drive out in your slot. Your mother's walker is strapped to the roof. A fourth neighbor is still on the street when you go.",
+          parallelAct: "{w|A passenger fills every place in their boat, taking three people who had none. A walker is lashed across the stern. A fourth is left on the deck as it lowers.}",
           consequences: {
-            soon: "Seven people ride in a car built for seven, with the walking frame tied to the roof.",
-            later: "The frame may not survive the drive. The fourth neighbor could still be on foot at midnight.",
+            soon: "Seven people ride in a car built for seven, with the walker tied to the roof.",
+            later: "The walker may not survive the drive. The fourth neighbor could still be on foot at midnight.",
           },
           parallelConsequences: {
             soon: "Every place in the boat is taken by the three who had none, so it sits low and moves slowly.",
-            later: "The frame lashed across it may be lost overboard. The fourth person could still be on deck at midnight.",
+            later: "The walker lashed across it may be lost overboard. The fourth person could still be on deck at midnight.",
           },
         },
         title: "Fill every seat in the car with neighbors who have none",
         method: {
           kind: "car",
           by: "Your own car, all seven seats full",
-          detail: "in your block's slot, with the walking frame strapped to the roof and no fast line through the bends.",
+          detail: "in your block's slot, with the walker strapped to the roof and no taking the curves fast.",
         },
         summary: "Your car holds seven and your household is four. Four people on your street have no vehicle at all, so you have room for three of them, and taking them costs you nothing but the space.",
         gains: "Seven people leave the valley instead of four, in one vehicle, on one tank of fuel.",
-        consequence: "Three people who had no way out at all are in your car, and a fourth is still on the street. Seven in a seven-seat car also means the walking frame goes on the roof. The drive is slow and very hot.",
-        givesUp: "Room and speed. The car is full, the frame is strapped above it, and you cannot take the fast line through the bends.",
+        consequence: "Three people who had no way out at all are in your car, and a fourth is still on the street. Seven in a seven-seat car also means the walker goes on the roof. The drive is slow and very hot.",
+        givesUp: "Room and speed. The car is full, the walker is strapped above it, and you cannot take the curves fast.",
         moralTension: "How much of your own family's room do you owe the neighbors who have no car?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 54, groupSizeSensitivity: 50,
@@ -860,10 +860,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "takes nothing from the shared roads and holds its ground instead",
           parallelRule: "takes nothing from the shared supply and holds its position instead",
-          identifiedCase: "were on the crew that had to check the school roll at the ninth hour",
-          harm: "They came back into the valley to account for four households that never left it",
-          benefitCase: "took the convoy slot and the car seats that your household did not use",
-          benefitLost: "Both of those were free that afternoon only because you went up the hill",
+          identifiedCase: "were on the crew that came back into the valley to search the blocks, because nobody had told them where you were",
+          harm: "They spent an hour in the smoke looking for a household that was safe up at the school",
+          benefitCase: "were in the ninth block, the last one called, and waited behind every car that did leave",
+          benefitLost: "Yours stayed at the house, and that was one car fewer between them and the way out",
           act: "You walk your household up the footpath to the school, past the big houses on the shelf. You take no seat, no lane and no fuel. Nobody is told you are up there.",
           parallelAct: "{w|A passenger climbs to the open deck instead of taking a place in any boat. They take no seat and no hoist. Nobody is told they are up there.}",
           consequences: {
@@ -872,7 +872,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           },
           parallelConsequences: {
             soon: "A crew climbs back up to find out whether anybody is still above the boat deck.",
-            later: "Two of them may spend an hour below the waterline searching. One could be signed off before morning.",
+            later: "Two of them may spend an hour below the waterline searching. One could be on sick leave by morning.",
           },
         },
         title: "Take your household to the concrete school on the hill",
@@ -885,18 +885,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           resources-spared score with it. The footpath makes the claim true rather than asserted.
 
           IT ALSO COSTS SOMETHING, and that is the point. Twenty minutes of narrow path, slow with a
-          walking frame, and the car left at the house. Pass B priced both: reliability came down
-          because the climb is the frame user's hardest moment in the scenario, and speed came down
+          walker, and the car left at the house. Pass B priced both: reliability came down
+          because the climb is the walker user's hardest moment in the scenario, and speed came down
           to the floor because this household never leaves the valley at all.
         */
         method: {
           kind: "foot",
           by: "On foot, up the hill path",
-          detail: "twenty minutes of narrow path past the big houses, slow with the frame. Your car stays at the house.",
+          detail: "twenty minutes of narrow path past the big houses, slow with the walker. Your car stays at the house.",
         },
         summary: "The school is concrete, stands on the cleared shelf at the top of the valley, and is the designated refuge. The ridge road runs up to that shelf and is closed today, and the footpath beside it is too narrow for a vehicle. So your car stays at the house and the four of you walk. Going there uses no road capacity and displaces nobody at all.",
         gains: "You take no seat, no lane and no fuel from anybody, and you can still walk back down if the front turns.",
-        consequence: "Nobody loses a place on the road to you, and the way back down stays open all night. But the climb is twenty minutes of narrow path, slow with your mother's frame, and it takes you up past the big houses where the ridge road begins. You are then inside the fire's path in a building rather than outside it, and your children watch the front arrive.",
+        consequence: "Nobody loses a place on the road to you, and the way back down stays open all night. But the climb is twenty minutes of narrow path, slow with your mother's walker, and it takes you up past the big houses where the ridge road begins. You are then inside the fire's path in a building rather than outside it, and your children watch the front arrive.",
         givesUp: "Distance from the fire, and your car. You trust a building to hold, and a crew comes back into the valley to find out whether anybody stayed in the blocks.",
         moralTension: "Is refusing to take anything from anyone worth putting your own children nearer the fire?",
         fingerprint: {
@@ -917,10 +917,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "moves before the system starts and takes the open road while it is still open",
           parallelRule: "moves before the list is drawn and takes the open slot while it is still open",
-          identifiedCase: "reached the highway at the sixth hour and found four lanes of stationary traffic",
-          harm: "The staging that would have kept it moving had collapsed three hours before that",
-          benefitCase: "left the valley when you did and were over the county line before the smoke",
-          benefitLost: "That road stayed clear for exactly as long as the early movers kept it clear",
+          identifiedCase: "were in one of the last three blocks, and reached the highway in the sixth hour to find it at a standstill",
+          harm: "The staging that would have kept it moving never started, because everyone followed your car out",
+          benefitCase: "saw your car leave and followed it at once, while the highway was still empty",
+          benefitLost: "They were over the county line before the smoke thickened, among the first few out on a clear road",
           act: "You drive out on the main highway before the first slot is called. Everyone who sees your car go follows it, and the staging never starts.",
           parallelAct: "{w|A passenger goes down to the boats before their group is called. Others see it and follow, and the order collapses.}",
           consequences: {
@@ -1039,11 +1039,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "gives them to the patients with the highest survival odds",
           parallelRule: "lifts the people most likely to come through the flight alive",
-          identifiedCase: "were diagnosed late, because the first two appointments were canceled",
-          harm: "The delay is what made those odds low, and the rule reads low odds as a reason to pass them over",
-          benefitCase: "have exactly the odds this rule looks for, and a cancer caught early",
-          benefitLost: "Any rule that ignores odds is one where their good chance counts for nothing",
-          act: "You score all {a|120} on their chance of coming through, and sign off the top {a|20}. Nobody you pass over is told why.",
+          identifiedCase: "were diagnosed late, because their first two appointments were canceled",
+          harm: "The delay is what made their odds low, and this rule reads low odds as a reason to pass them over",
+          benefitCase: "had their cancer caught early, and have one of the best chances on the list of coming through",
+          benefitLost: "Under a rule that ignores the odds, that good chance counts for nothing",
+          act: "You score all {a|120} on their chance of coming through, and approve the top {a|20}. Nobody you pass over is told why.",
           parallelAct: "{w|A winch operator lifts the twenty who can hold on to the strop. The rest of the roof waits for a pass that is not coming.}",
           consequences: {
             soon: "20 doses go to the patients whose odds were already the best on the list.",
@@ -1088,11 +1088,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "reserves them for the most vulnerable patients first",
           parallelRule: "reserves the places for the weakest and worst-injured first",
-          identifiedCase: "would have recovered fully, and sit just outside the sickest group",
+          identifiedCase: "would recover fully if treated now, and sit just outside the sickest group",
           harm: "They wait another month, and by then they are inside it",
-          benefitCase: "are the kind of patient this rule protects, and have been passed over twice already",
+          benefitCase: "are among the sickest on the list, and have been passed over twice already",
           benefitLost: "Only this rule treats how ill they are as the reason to go first",
-          act: "You work down the list by how ill each of the {a|120} is, and sign off the sickest {a|20}. You do not look at their odds at all.",
+          act: "You work down the list by how ill each of the {a|120} is, and approve the sickest {a|20}. You do not look at their odds at all.",
           parallelAct: "{w|A winch operator takes the twenty least able to hold on, one at a time, and the lifts run long.}",
           consequences: {
             soon: "20 doses go to patients who are too ill to make much use of them.",
@@ -1140,8 +1140,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           identifiedCase: "are seventy-one, and are raising a grandchild on their own",
           harm: "The rule counts the years they have left, and never asks who depends on them",
           benefitCase: "are twenty-six, and were told this treatment would give them decades",
-          benefitLost: "This is the only rule that counts those decades as worth anything",
-          act: "You have each of the {a|120} modeled for the years a dose would add, and sign off the top {a|20}. Age does most of the deciding.",
+          benefitLost: "This is the only rule that puts the years they have ahead of them first",
+          act: "You have each of the {a|120} modeled for the years a dose would add, and approve the top {a|20}. Age does most of the deciding.",
           parallelAct: "{w|A winch operator lifts the twenty with the most years ahead of them, and the oldest stay where they are.}",
           consequences: {
             soon: "20 doses go to the youngest patients the list will allow.",
@@ -1186,11 +1186,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "draws the recipients at random, with only a small boost for vulnerable patients",
           parallelRule: "draws the names at random, with only a small boost for the frailest",
-          identifiedCase: "drew a place, and are already too weak for the treatment to do much",
-          harm: "The dose is used, and the person behind them is told there are none left",
+          identifiedCase: "would have responded well, and their name was not drawn",
+          harm: "A dose went to someone already too weak for it to do much",
           benefitCase: "have been ranked last by every rule the hospital has tried",
-          benefitLost: "The draw is the only one that ever gave them a real chance",
-          act: "You put all {a|120} names into a sealed draw, add a few slips for the sickest, and sign off whichever {a|20} come out.",
+          benefitLost: "The draw is the only rule that ever gave them a real chance",
+          act: "You put all {a|120} names into a sealed draw, add a few slips for the sickest, and approve whichever {a|20} come out.",
           parallelAct: "{w|A winch operator picks by lot rather than by sight, drawing for each place, with extra slips for the weakest.}",
           consequences: {
             soon: "20 doses go out within the hour, and nobody on the list was ranked against anybody else.",
@@ -1236,9 +1236,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           rule: "holds part of them back for hard-to-reach patients",
           parallelRule: "holds part of the places back for the rooftops nobody has reached yet",
           identifiedCase: "were next on the list on the day the reserve was set aside",
-          harm: "The dose held back for someone who never came is the one they were waiting for",
-          benefitCase: "live four hours from the hospital, and have never once been on a list in time",
-          benefitLost: "The reserve is the only reason a dose would still be there when they arrive",
+          harm: "The dose held back for someone the nurse never reached was the one they were waiting for",
+          benefitCase: "live four hours from the hospital, and have never once been near the front of the list",
+          benefitLost: "The reserve is what keeps a dose waiting for them until the nurse can get there",
           act: "You hold part of the {a|20} back for the patients furthest out, and send a nurse to find them.",
           parallelAct: "{w|A winch operator keeps places free for the roofs nobody has reached yet, and flies on to look for them.}",
           consequences: {
@@ -1303,13 +1303,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "cancer_essential_workers",
         cvrSeed: {
-          rule: "gives them first to key workers and caregivers",
+          rule: "gives them first to essential workers and caregivers",
           parallelRule: "lifts first the people the town depends on",
           identifiedCase: "are sicker than anyone else on the list, and retired eight years ago",
-          harm: "Nobody depends on them any more, and the rule reads that as a reason to wait",
-          benefitCase: "are one of only two people who can keep the dialysis unit open",
-          benefitLost: "If they are not treated the unit closes, and forty other people lose their week",
-          act: "You take the {a|20} names on the keyworker register and sign them off first, whatever their odds or their condition.",
+          harm: "Retired people are not on the essential-worker register, so this rule puts them behind everyone who is",
+          benefitCase: "are a dialysis nurse, one of only two who can keep the unit open",
+          benefitLost: "If they are not treated the unit closes, and forty patients miss their dialysis",
+          act: "You take the {a|20} names on the essential-worker register and approve them first, whatever their odds or their condition.",
           parallelAct: "{w|A winch operator lifts the crew who can help work the next roof, and the rest of this one waits.}",
           consequences: {
             soon: "20 doses go to nurses, caregivers, drivers and teachers before anybody else on the list.",
@@ -1323,11 +1323,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* PASS B, 17 September 2026 — THE CLAIM SHRANK TO FIT THE NUMBER. The card said treating these patients keeps hospitals and key services running FOR THE WHOLE CITY, which is a very large promise to make about 20 people. It now says their wards keep the staff they need. resources 85 -> 88 survives that edit and is the honest reason for it: 20 caregivers back on shift is staff time returned to the system. durability 39 -> 44, reliability 76 -> 74, speed 90 -> 86: the register already exists, so this is fast, but not faster than a draw. */
         method: {
           kind: "list",
-          by: "The city's keyworker register",
+          by: "The city's essential-worker register",
           detail: "names already on the register are treated first: nurses, caregivers, drivers and teachers.",
         },
         title: "Treat the 20 who others depend on",
-        summary: "Key workers first. The city's keyworker register decides, and the 20 treated are nurses, caregivers, drivers and teachers.",
+        summary: "Essential workers first. The city's essential-worker register decides, and the 20 treated are nurses, caregivers, drivers and teachers.",
         gains: "Twenty people others rely on go back to work, and the wards and classrooms they staff keep running.",
         consequence: "The 20 treated are back at work within weeks, and the places that depend on them keep the staff they need. But being needed at work is not the same as being ill, and the sickest of the 120 are pushed down the list.",
         givesUp: "The sickest patients, and the idea that every life counts the same.",
@@ -1368,18 +1368,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
      * metric reading for this scenario already called it.
      *
      * HOW MUCH OF IT IS DRIVING was never said, and three options depend on it:
-     *   - rebuilding the rounds recovers 300 of the 400 cut hours from it;
+     *   - rebuilding the routes recovers 300 of the 400 cut hours from it;
      *   - SHORTENING EVERY VISIT keeps every trip, so the visits absorb the whole 400 and come out
      *     about a third shorter, not the quarter the old text implied. That hidden cost is now on
      *     the card, where it belongs;
      *   - dropping a client drops their driving too, which is why about 60 clients free 400 hours.
      *
      * WHY ONLY ONE OPTION KEEPS THE COMPANY SOLVENT was never said either. Every option fits inside
-     * the same 1,200 hours, so COSTS are equal; the difference is REVENUE. The town rounds are on a
-     * council contract and the rural ones are paid by the visit and lose money on the driving.
+     * the same 1,200 hours, so COSTS are equal; the difference is REVENUE. The town routes are on a
+     * city contract and the rural ones are paid by the visit and lose money on the driving.
      *
      * THE CLOSING CLAIM WAS HALF TRUE. "They differ only in whose visits are cut" — but rebuilding
-     * the rounds cuts driving, not visits. They differ in where the 400 hours come from.
+     * the routes cuts driving, not visits. They differ in where the 400 hours come from.
      * ───────────────────────────────────────────────────────────────────────────────
      */
     factBase:
@@ -1387,12 +1387,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         NO DOUBLE QUOTES IN THIS COMMENT: the digit and overlap checks read the first quoted string
         after the field name, so a quoted phrase here would be scored in place of the text.
       */
-      "You have 40 caregivers and 240 clients. The 1,600 caregiver-hours a week are cut to 1,200 for the next three months. About 500 of those hours are spent driving between homes. The town rounds are paid by a council contract, and the rural rounds are paid by the visit and lose money on the driving. Every option you will see fits inside the 1,200 hours. They differ only in where the 400 cut hours come from.",
+      "You have 40 caregivers and 240 clients. The 1,600 caregiver-hours a week are cut to 1,200 for the next three months. About 500 of those hours are spent driving between homes. The town routes are paid by a city contract, and the rural routes are paid by the visit and lose money on the driving. Every option you will see fits inside the 1,200 hours. They differ only in where the 400 cut hours come from.",
     role:
       "You are the shift coordinator. {w|Your own hours are not touched}, and {w|nobody you know is a client}. You set the work schedule that {w|forty caregivers} will work and {w|240 clients} will live with — and you set it under a principle {w|your employer has already published}.",
     title: "The Care Visits You Have to Cut",
     description:
-      "Meridian Care is a company that sends caregivers to people's homes. The caregivers help with washing, medicines and meals. These visits are the reason those people can stay in their own homes instead of moving into a nursing home. The company has lost funding, so it must cut a quarter of its caregivers' time for the next three months. Your job is to decide where the cut falls.",
+      "Meridian Care is a company that sends caregivers to people's homes. The caregivers help with bathing, medications and meals. These visits are the reason those people can stay in their own homes instead of moving into a nursing home. The company has lost funding, so it must cut a quarter of its caregivers' time for the next three months. Your job is to decide where the cut falls.",
     theme: {
       gradient: "radial-gradient(900px 420px at 12% -10%, rgba(192,38,211,0.26), transparent 62%), radial-gradient(700px 480px at 105% 115%, rgba(86,14,96,0.36), transparent 55%), linear-gradient(155deg, #16081a, #2c0d33 50%, #4d1657)",
       accent: "#C026D3",
@@ -1402,13 +1402,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "care_rebuild_rounds_by_travel",
         cvrSeed: {
-          rule: "redraws every round on the map to cut the driving",
-          parallelRule: "redraws the intake lists to cut the queue outside",
-          identifiedCase: "have had one caregiver for nine years, and cannot follow a new face",
-          harm: "The round is efficient now, and the person at the door is a stranger every week",
+          rule: "redraws every route on the map to cut the driving",
+          parallelRule: "redraws the intake lists to cut the line outside",
+          identifiedCase: "have had one caregiver for nine years, and cannot get used to a new face",
+          harm: "The new route saves hours of driving, and to them the caregiver at the door is a stranger every week",
           benefitCase: "lost two visits last month to a caregiver stuck in traffic across town",
-          benefitLost: "Only this rule cuts the driving without cutting anybody's visits",
-          act: "You redraw every round on the map so caregivers spend less of the week driving. Most of the cut comes off the road, not off the visits.",
+          benefitLost: "Routes drawn with homes close together are what keep a caregiver out of that traffic",
+          act: "You redraw every route on the map so caregivers spend less of the week driving. Most of the cut comes off the road, not off the visits.",
           parallelAct: "{w|A shelter manager rewrites every shift to cut the paperwork and handovers. Most of the cut comes off the desk, not off the beds.}",
           consequences: {
             soon: "Three hundred hours a week come back from driving, and most visits stay full length.",
@@ -1421,13 +1421,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         method: {
           kind: "route",
-          by: "Every round redrawn on the map",
-          detail: "homes close together grouped into one round.",
+          by: "Every route redrawn on the map",
+          detail: "homes close together grouped into one route.",
         },
-        title: "Redraw the rounds to cut the driving",
-        summary: "Redraw every round so caregivers spend less time driving and more time at doors.",
+        title: "Redraw the routes to cut the driving",
+        summary: "Redraw every route so caregivers spend less time driving and more time at doors.",
         gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.",
-        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new rounds pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
+        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
         fingerprint: {
@@ -1460,7 +1460,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelAct: "{w|A shelter manager takes one night in four away from every person on the list, and leaves the nights they keep untouched.}",
           consequences: {
             soon: "All 240 clients lose one visit in four.",
-            later: "The clients who needed the most help may lose the most of it. Some could go two days without a wash.",
+            later: "The clients who needed the most help may lose the most of it. Some could go two days without being washed.",
           },
           parallelConsequences: {
             soon: "All 240 people lose one night in four.",
@@ -1473,7 +1473,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Give every client a quarter fewer visits",
         summary: "Every client is still visited, but loses one visit in four. The visits that are left stay full length.",
-        gains: "Nobody is singled out. Every client loses one visit in four, and every caregiver's round shrinks by the same amount.",
+        gains: "Nobody is singled out. Every client loses one visit in four, and every caregiver's schedule shrinks by the same amount.",
         consequence: "The cut is spread thin enough that no client loses everything. But one visit in four off a larger need is a larger loss, so the clients who needed the most help lose the most of it.",
         givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
         moralTension: "Is treating everyone alike the same as treating everyone fairly?",
@@ -1500,9 +1500,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           rule: "cuts only where a relative lives close enough to step in",
           parallelRule: "turns away only the people who have somewhere else to sleep",
           identifiedCase: "have a son who works nights and has two young children of his own",
-          harm: "The rule counted him as cover, and never asked him whether he was",
+          harm: "The rule counted him as their cover, and nobody asked him whether he could do it",
           benefitCase: "look after a husband who cannot walk, and have no family within forty miles",
-          benefitLost: "They do not live alone, so no other rule here protects their visits",
+          benefitLost: "Nobody can be counted as their cover, so this rule leaves every one of their visits alone",
           act: "You go down the client list, find who has a relative living nearby, and take the visits away from those clients only. Nobody asks the relatives first.",
           parallelAct: "{w|A shelter manager turns away only the people with a sofa somewhere to go to, and nobody asks whoever owns the sofa.}",
           consequences: {
@@ -1549,13 +1549,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           parallelRule: "keeps every name on the list by shortening every stay",
           identifiedCase: "cannot be washed and fed in the shorter visit the new plan allows",
           harm: "The visit still happens, and the thing the visit was for does not",
-          benefitCase: "need a medicine given every single day, and cannot go a day without a visit",
-          benefitLost: "This is the only rule here that keeps every visit on every client's schedule",
+          benefitCase: "need a medication given every single day, and cannot go a day without a visit",
+          benefitLost: "Under this rule every client keeps every visit, even if each one is shorter",
           act: "You keep all {a|240} clients on the schedule and cut every visit short. Every trip still has to be driven, so the visits take the whole cut.",
           parallelAct: "{w|A shelter manager keeps every name on the list, and opens later and closes earlier. Every bed still has to be made up, so the nights take the whole cut.}",
           consequences: {
             soon: "All 240 clients keep every visit, and every visit is about a third shorter.",
-            later: "Caregivers may leave with tasks undone at many doors. A client could miss a meal three days running.",
+            later: "Caregivers may leave with tasks undone at many doors. A client could miss a meal three days in a row.",
           },
           parallelConsequences: {
             soon: "All 240 people keep a bed, and every stay is about a third shorter.",
@@ -1593,29 +1593,29 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "care_profitable_rounds",
         cvrSeed: {
-          rule: "keeps the rounds that pay and drops the ones that do not",
+          rule: "keeps the routes that pay and drops the ones that do not",
           parallelRule: "keeps the places the grant covers and closes the ones it does not",
           identifiedCase: "live far out of town, and have seen nobody but their caregiver for months",
-          harm: "Distance is what makes their round cost more, and the rule reads that as a reason to stop",
-          benefitCase: "are one of the 40 caregivers, and their job lasts only as long as the company does",
-          benefitLost: "Every other option here leaves the company short by March",
-          act: "You rank the rounds by what they pay. You keep the town rounds on the council contract, and drop the rural ones.",
-          parallelAct: "{w|A shelter manager keeps the beds the council pays for, and closes the ones that run on donations.}",
+          harm: "Their route loses money on the driving, so they are handed to a county agency with nobody to send",
+          benefitCase: "are one of the 40 caregivers, and their job lasts only as long as the service does",
+          benefitLost: "This rule puts the service in its strongest position, and keeps it open next year",
+          act: "You rank the routes by what they pay. You keep the town routes on the city contract, and drop the rural ones.",
+          parallelAct: "{w|A shelter manager keeps the beds the city pays for, and closes the ones that run on donations.}",
           consequences: {
-            soon: "Every caregiver keeps a job, and the council contract keeps paying.",
+            soon: "Every caregiver keeps a job, and the city contract keeps paying.",
             later: "About 45 rural clients may wait weeks for the county to send anyone. Some could see nobody at all.",
           },
           parallelConsequences: {
-            soon: "Every member of staff keeps a job, and the council keeps paying for its beds.",
+            soon: "Every staff member keeps a job, and the city keeps paying for its beds.",
             later: "About 45 people may be sent to a county list with no beds on it. Some could sleep outside for weeks.",
           },
         },
         method: {
           kind: "score",
-          by: "Rounds ranked by what they pay",
+          by: "Routes ranked by what they pay",
         },
-        title: "Keep the town rounds that pay, and drop the rural ones",
-        summary: "Keep the town rounds the council contract pays for, and transfer the rural clients to the county.",
+        title: "Keep the town routes that pay, and drop the rural ones",
+        summary: "Keep the town routes the city contract pays for, and transfer the rural clients to the county.",
         gains: "The strongest financial position, and a service that is still open next year.",
         consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But about 45 rural clients are transferred to a county agency with nobody to send, and most of them have nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",
@@ -1642,8 +1642,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         cvrSeed: {
           rule: "protects full visits for the clients with no other support",
           parallelRule: "protects places for the people with nowhere else at all",
-          identifiedCase: "manage well on one daily visit, and lose it in the third week",
-          harm: "Managing well is what the rule reads as a reason to take the visit away",
+          identifiedCase: "manage on one visit a day, and share a house with a sister who is almost as frail",
+          harm: "Because they do not live alone, they are among the 190 who absorb the whole cut",
           benefitCase: "live alone, fell twice in January, and have a daughter nearby who works two jobs",
           benefitLost: "Only this rule counts living alone, whatever family lives nearby",
           act: "You protect every visit for the {a|50} clients who live alone, and spread the whole cut across the other {a|190}.",
@@ -1711,9 +1711,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
     decisionRole: "recipient",
     employer: MERIDIAN,
     factBase:
-      "This is the same cut: 240 clients, 40 caregivers, and 1,600 caregiver-hours a week cut to 1,200. The same six options are on the table — but this time your own round and your own clients are among the ones being cut.",
+      "This is the same cut: 240 clients, 40 caregivers, and 1,600 caregiver-hours a week cut to 1,200. The same six options are on the table — but this time your own route and your own clients are among the ones being cut.",
     role:
-      "You are one of the forty caregivers. {w|You are not deciding this}. The coordinator decides, and they are choosing from {w|the same six options you can see here}. Whatever they choose, {w|you have to work it} — and {w|the people on your round} have to live with it.",
+      "You are one of the forty caregivers. {w|You are not deciding this}. The coordinator decides, and they are choosing from {w|the same six options you can see here}. Whatever they choose, {w|you have to work it} — and {w|the people on your route} have to live with it.",
     title: "The Same Cut, Decided Without You",
     description:
       "The same company, the same cut, and the same six choices you saw a moment ago. This time you are not the coordinator. You are one of the caregivers, and this time the cut reaches your own hours and your own clients. You cannot decide anything here. You can only say which choice you hope the coordinator will make.",
@@ -1727,13 +1727,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "wish_rebuild_rounds_by_travel",
         method: {
           kind: "route",
-          by: "Every round redrawn on the map",
+          by: "Every route redrawn on the map",
           detail: "so caregivers drive less between homes and spend the saved time at doors.",
         },
-        title: "Redraw the rounds to cut the driving",
-        summary: "Redraw every round so caregivers spend less time driving and more time at doors.",
+        title: "Redraw the routes to cut the driving",
+        summary: "Redraw every route so caregivers spend less time driving and more time at doors.",
         gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.",
-        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new rounds pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
+        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
         fingerprint: {
@@ -1762,7 +1762,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Give every client a quarter fewer visits",
         summary: "Every client is still visited, but loses one visit in four. The visits that are left stay full length.",
-        gains: "Nobody is singled out. Every client loses one visit in four, and every caregiver's round shrinks by the same amount.",
+        gains: "Nobody is singled out. Every client loses one visit in four, and every caregiver's schedule shrinks by the same amount.",
         consequence: "The cut is spread thin enough that no client loses everything. But one visit in four off a larger need is a larger loss, so the clients who needed the most help lose the most of it.",
         givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
         moralTension: "Is treating everyone alike the same as treating everyone fairly?",
@@ -1847,11 +1847,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         id: "wish_profitable_rounds",
         method: {
           kind: "score",
-          by: "Rounds ranked by what they pay",
-          detail: "the town rounds on the council contract stay, and the rural rounds that lose money are dropped.",
+          by: "Routes ranked by what they pay",
+          detail: "the town routes on the city contract stay, and the rural routes that lose money are dropped.",
         },
-        title: "Keep the town rounds that pay, and drop the rural ones",
-        summary: "Keep the town rounds the council contract pays for, and transfer the rural clients to the county.",
+        title: "Keep the town routes that pay, and drop the rural ones",
+        summary: "Keep the town routes the city contract pays for, and transfer the rural clients to the county.",
         gains: "The strongest financial position, and a service that is still open next year.",
         consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But about 45 rural clients are transferred to a county agency with nobody to send, and most of them have nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",

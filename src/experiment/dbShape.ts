@@ -184,7 +184,7 @@ function summariseActiveTime(value: unknown): unknown {
     breakdown_note:
       "by_stage_minutes does NOT sum to total_active_minutes. The insights page and the final "
       + "analysis page are read rather than answered, so they are no longer broken out; the minutes "
-      + "spent on them are still inside total_active_minutes and still count towards compensation.",
+      + "spent on them are still inside total_active_minutes and still count toward compensation.",
     sittings: l.sittings ?? null,
     longest_idle_minutes: minutes(l.longestIdleMs),
     first_seen_at: l.firstSeenAt ? new Date(l.firstSeenAt).toISOString() : null,
@@ -1213,7 +1213,7 @@ export function buildMpfPredictions(block5: unknown): Record<string, unknown> | 
       + "what the participant answered when they were shown it. It is the same numbers, not a second "
       + "measurement; `self_check` below proves the two agree.",
     read_this_first:
-      "ONLY SCENARIO 6 WAS SHOWN TO THE PARTICIPANT. Every other row was computed afterwards from "
+      "ONLY SCENARIO 6 WAS SHOWN TO THE PARTICIPANT. Every other row was computed afterward from "
       + "stored data and was never on screen while they decided. Check was_shown_to_the_participant "
       + "before describing any of this as a prediction the study made in advance.",
     rule_version: PREDICTION_VERSION,

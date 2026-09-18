@@ -493,13 +493,14 @@ after a clarification: a persuasive demo today, built on numbers that are going 
 
 ---
 
-## 2b. THE SEVEN AUDITS — what to run, in what order, and what each one catches
+## 2b. THE TEN AUDITS — what to run, in what order, and what each one catches
 
 The six passes are the WORK. These seven are the CHECKING, and they are not the same thing: every
 one of them has caught something after all six passes were finished and every gate was green.
 
-Four are automated and four are read by a person (the rendered read counts twice). **Run them in
-this order**, because each one assumes the one before it has already passed.
+A1, A2, A3 and A8 are automated. A4 to A7 are read by a person. A9 and A10 are both: a script
+prints, and a person reads what it printed. **Run them in this order**, because each one assumes the
+one before it has already passed.
 
 | # | Audit | How | What only this one catches |
 |---|---|---|---|
@@ -511,6 +512,8 @@ this order**, because each one assumes the one before it has already passed.
 | **A6** | Card-versus-story | print card next to both lenses | a card that claims something its own reflection disproves |
 | **A7** | Run it backwards | every audit, on the scenarios already signed off | the defect you only learned to see while doing the NEXT scenario |
 | **A8** | The matched pair | `npm run validate:twins` | scenario 4 and scenario 5 drifting apart, which nothing else can see |
+| **A9** | The whole block | the checks in §2e, over all six at once | a defect that only exists ACROSS scenarios |
+| **A10** | The stakeholder stories | `npm run validate:people`, then `/my-advisor stakeholder stories` — every story printed under its card, in all three voices | a story about a different option, a person who cannot be a stranger, a timeline the scenario contradicts |
 
 ### A8 — scenarios 4 and 5 are one option set written twice
 
@@ -816,6 +819,142 @@ has no verb. It was caught by reading the line, not by the rule.
 
 ---
 
+## 2f. THE STAKEHOLDER STORIES — audit A10
+
+After the lens, the participant answers yes or no, and then **one person speaks**. They always
+argue against the answer just given:
+
+| The participant said | The story shown | What it must be about |
+|---|---|---|
+| **yes**, I still choose this | the **hurt** story — `identifiedCase` + `harm` | somebody this option costs |
+| **no**, I do not want it | the **need** story — `benefitCase` + `benefitLost` | somebody this option would have helped |
+
+Only scenarios 1 to 4 have stories: 24 options, 48 stories. Scenario 5 is a wish and scenario 6 is a
+test of the model, so neither runs the reflection. **Whether the participant switches after hearing
+this person is the whole stakeholder measurement**, so a story that is untrue, or about the wrong
+option, moves a number that goes into the paper.
+
+### The researcher's rules, 18 September 2026
+
+1. **A story is about the option the participant chose** — its title, its summary and its method.
+2. **The voice levels are settled and are not to be changed.** The page opens with one of three
+   leads, picked from the participant's "Hearing someone's story" score: *Imagine* someone you have
+   **only just met** (high), someone you have known for **about a year** (medium), or someone you
+   have known for **twenty years** (low). The word *Imagine* was added on 18 September 2026 — see
+   below.
+3. The other stakeholder rules are settled. What needed checking was whether the stories still
+   matched the options after six scenarios' worth of rewriting.
+4. **Both stories must follow from the option.** The hurt story from what it costs, the need story
+   from what it gives.
+
+### What a script can check, and what it cannot
+
+`npm run validate:people` checks five mechanical things: both stories exist, neither repeats the
+option's `givesUp` line, neither opens on a new person ("A child…"), both read correctly after
+"They", and the two are similar in length. **All five passed before this audit, and 21 of the 48
+stories were still wrong.** Everything below has to be read by a person:
+
+| Read for | Why no script sees it |
+|---|---|
+| **The story fits ALL THREE voices.** Read it once as someone you just met. | "They are eight years old, sitting behind you" is the participant's own child. Nobody has *just met* their own child, and nobody has known an eight-year-old for twenty years. |
+| **The story agrees with the card, the method and the lens.** | The hill-school crew was "checking the school roll" while the card and the lens both send it to "search the blocks". |
+| **Every time and number agrees with the situation box.** | Slot nine left "as the fire crossed the valley floor", about the sixth hour, in a valley told it has 8 hours before the front reaches the floor. |
+| **The person is the one who is hurt, or the one who is helped.** | The draw's hurt story was told by the patient who WON a place. The person hurt was "the person behind them". |
+| **Every *only*, *every other* and *no other* is tested against all six cards** (§2d). | Written once, true once. One rewrite of a different card later and it is false. |
+
+### What the audit found
+
+**21 stories changed across the four scenarios. 27 were read and left alone.** Every fix changed
+the story's words only. No voice, gate, fingerprint, number, card or lens moved.
+
+| Kind of defect | Stories |
+|---|---|
+| **The person could not be a stranger** — the participant's own child | scenario 2: the ridge road's need story, the lift bus's hurt story |
+| **Disagreed with its own card or lens** | scenario 1: walking out ("a street you had **cleared**" is the minibus option's word), the minibus's hurt story (it "filled before it reached them"; the lens says it **never came**); scenario 2: the hill school's both stories (the crew, "four households", car seats from a car that stays at the house); scenario 3: the reserve's both stories (the patient "arrives"; the method sends a **nurse** to them) |
+| **A time the scenario contradicts** | scenario 2: slot nine and the fire front; the hill-school crew "at the ninth hour", after the front has arrived; the early leaver over the county line "before the smoke", when the scene says smoke has already reached the valley floor |
+| **An *only* that is false** | scenario 4: redrawing the rounds (a quarter of the cut still comes off visits), the family rule (the rural cut keeps every town client's visits), shortening every visit (unprovable against the redraw); scenario 3: the reserve (a far-away patient can also be drawn) |
+| **A claim the card never makes** | scenario 4: "short by **March**" (the scenario has no calendar), the protected list's hurt story ("managing well is what the rule reads" — the rule reads **living alone**) |
+| **The wrong person, or too vague to picture** | scenario 3: the draw's hurt story, "the kind of patient this rule protects", "forty other people lose their week", "counts those decades as worth anything"; scenario 2: "nobody coming for **you**" in a story about them; scenario 1: "no way out of **either** of the two streets", when a person lives on one |
+
+### ⚠ Two options may share a beneficiary, and that is allowed
+
+In scenario 2 the ridge road and the hill school both help the same kind of person: somebody further
+back in the convoy line, who has one car fewer ahead of them. Both options take your car off the
+highway, so both stories are true. **A participant only ever hears the story for the option they
+chose**, so the overlap is never seen. Do not invent a weaker beneficiary to keep them apart.
+
+### ⚠ A self-interested option still needs a stranger who gains
+
+The ridge road helps your own household, and nobody in your household can be someone you have *just
+met*. The need story therefore has to find a person OUTSIDE the household whom the option still
+helps. Scenario 1's respirator had already solved this — the person behind you in the convoy line
+moves up a place — and scenario 2 now uses the same shape.
+
+### The advisor's second read, 18 September 2026
+
+The same day, the stories were read again as a PhD advisor would read them: every mismatch,
+contradiction, thing that makes no sense, unclear sentence, missing fact and British word. That read
+is now a skill — **`/my-advisor`** (`.claude/skills/my-advisor/`) — with two read-only scripts: one
+prints every option exactly as a participant sees it, the other finds British English.
+
+**It found 47 more story fields to change, in stories that had passed the first audit and all five
+gates.** The kinds, with one example each:
+
+| Kind | Example, before → after |
+|---|---|
+| **One word in two senses** | "waiting since the **order** came… the **order** holds" (an evacuation order, then a queue) → "since the district was told to clear out… the **list** holds" |
+| **No cause from the participant** | the convoy's ninth block "waited three hours longer" — but nothing said what YOUR choice did → "the line moved only as fast as the blocks ahead of them, and yours was one of those blocks" |
+| **A fact the lens contradicts** | the early leaver's staging "collapsed three hours before" — the lens says it **never started** |
+| **A person the card cannot have** | "cannot walk **unaided**" for the oxygen patient — their problem is breathing, and the mask is what lets them walk |
+| **Missing why** | the minibus's third run "carried you out" — why not the third street? → "by the third run the plume was on the road" |
+| **An unclear pronoun** | "They were on the sweep team… **Two of them** spent forty minutes" → "They and a partner spent forty minutes" |
+| **A sentence that stops early** | "never asked him whether he was" → "nobody asked him whether he could do it" |
+| **British English** | "care home", "walking frame", "standard coaches", "stationary traffic", "any more", "round" (a caregiver's round) |
+
+### ⚠ The stakeholder is IMAGINED — and now the page says so
+
+Scenario 3's role says "nobody close to you is on the list" and scenario 4's says "nobody you know is
+a client". The twenty-year voice then said "Someone you have known for twenty years… **is affected**".
+Read as fact, that is a contradiction. **The researcher's intent is that the person is imagined**:
+picture someone at that distance from you in this situation, and decide with them in mind. The page
+never said so. **Every lead now opens with "Imagine"**, and the roles are left exactly as written.
+Only the six leads changed; the voice **label**, which is what the database stores as
+`stakeholder_text_shown`, did not.
+
+### ⚠ American English is swept from the whole study, not just the stories
+
+The researcher's rule is *always American English*. A story cannot say "walker" while its card says
+"walking frame", so the sweep covered every card, lens, scene and role that a story leans on — and
+then the scanner ran over every file in `src/`.
+
+| British | American | Where |
+|---|---|---|
+| walking frame, frame | walker | scenario 2: role, title, cards, lenses, the cruise-ship world |
+| care home | nursing home | scenario 2: the ridge road's cost, lens and story |
+| standard coaches | regular buses | scenario 2: the lift bus's card and story |
+| needs a lift (a ride) | needs the lift (the wheelchair lift) | scenario 2 |
+| the fast line through the bends | take the curves fast | scenario 2 |
+| signed off (sick) | on sick leave | scenario 2's cruise-ship world |
+| key worker, keyworker register | essential worker, essential-worker register | scenario 3 |
+| sign off (approve) | approve | scenario 3's lenses |
+| round, rounds | route, routes | scenarios 4 and 5 — titles, cards, lenses, the scene, the role |
+| council contract | city contract | scenarios 4 and 5, and the night-shelter world |
+| washing, medicines | bathing, medications | scenario 4's scene ("washing" is laundry in America) |
+| a wash · three days running · queue · member of staff · go on paperwork | being washed · in a row · line · staff member · go to paperwork | scenario 4 and its world |
+| turning round · the long way round · to go round | around | scenario 1, the reversibility meter, the fallback lens |
+| leave the kit where it is | leave the seats and the mask for others | scenario 1's title |
+| breaks into your block (of flats) | breaks into your building | scenario 1's lens |
+| any more (meaning "now") | anymore | two Block 5 buttons participants click |
+| towards · afterwards | toward · afterward | two notes the database stores for the analyst |
+
+Scenario 4's preview had said "the new **rounds**… the **routes** cannot be redrawn" in one sentence;
+the sweep made it one word. Scenarios 4 and 5 moved together, and `npm run validate:twins` held.
+
+**The scanner is a word list, not a reader.** It found "any more" only because reading scenario 3
+had turned it up first. Read, then scan, then read what the scanner printed.
+
+---
+
 ## 3. Two gates that bite when editing scene text
 
 - **`description` may contain no digits; `factBase` must contain some.** Numbers live in the
@@ -851,9 +990,9 @@ now carry a line saying so.
    from C and the world from D.
 8. **Pass F** — write the scenario's `mirror` rows. Nothing else in Pass F is per-scenario, so this
    is a short step: one `{ here, there }` pair per number, taken from the world Pass E just built.
-9. **Audits A1, A3, A5, A6** — the gate suite, the researcher's rules, the rendered-lens read and
-   the card-versus-story read. See §2b; A5 and A6 are read by a person and are the two that keep
-   finding things after everything is green.
+9. **Audits A1, A3, A5, A6, A10** — the gate suite, the researcher's rules, the rendered-lens read,
+   the card-versus-story read and the stakeholder stories. See §2b; A5, A6 and A10 are read by a
+   person and are the ones that keep finding things after everything is green.
 10. `npm run typecheck && npm run validate:block5 && npm run audit:rules && npm run lint && npm run build`
 11. Check it in the browser at desktop and at 375px.
 12. **Audit A7** — if any audit above found a NEW KIND of defect, re-run that audit over every

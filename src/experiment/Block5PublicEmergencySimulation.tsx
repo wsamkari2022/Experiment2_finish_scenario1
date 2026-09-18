@@ -3389,7 +3389,7 @@ function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onLensShown,
   type AltState = "none" | "regenThinking" | "regenTyping" | "ready";
   const [altState, setAltState] = useState<AltState>("none");
   const [currentView, setCurrentView] = useState<"first" | "second">("first");
-  /* Nothing on screen names a lens any more, so the second framing is no longer needed here —
+  /* Nothing on screen names a lens anymore, so the second framing is no longer needed here —
      `altStory` is passed in already built. */
   const marks = cvrMarks(mode); // mode-aware highlight colors for the vignette markup
 
@@ -3660,7 +3660,7 @@ function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onLensShown,
           />
           <ChoiceWithMeaning
             accent={accent}
-            label="No, not any more"
+            label="No, not anymore"
             meaning="No — after seeing this, I would not choose this option."
             onClick={onCvrNo}
           />
@@ -3750,7 +3750,7 @@ function PersonSpeaksPage({ story, saidYes, accent, marks, onAnswer, onBack }: {
             <ChoiceWithMeaning
               accent={accent}
               label="I've changed my mind — I don't want this now"
-              meaning="I do not want this option any more. Hearing this person changed what matters to me."
+              meaning="I do not want this option anymore. Hearing this person changed what matters to me."
               onClick={() => onAnswer(true)}
             />
           </>
