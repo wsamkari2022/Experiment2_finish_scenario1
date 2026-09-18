@@ -70,6 +70,20 @@ interface ScenarioCVRContent {
    * lets the participant notice.
    */
   valuePhrase: Record<Block5PolicyDimKey, string>;
+  /**
+   * WHAT EACH VALUE MEANS IN THIS SCENARIO, shown on the APA page under the value's general
+   * definition as "In this scenario: …" (researcher, 18 September 2026).
+   *
+   * The general definitions ("how much harm is prevented") are the ones Blocks 1–4 and the results
+   * page use, and they stay. But picking a value on the APA page is followed at once by "the
+   * options that fit it", and a general definition did not always predict those: in scenario 3,
+   * "Reducing harm" led to a draw. EACH LINE IS WRITTEN FROM THE OPTIONS THAT VALUE LEADS TO, so
+   * what the participant reads before choosing is what they see after. If an option's value
+   * numbers change, re-read these four lines against `optionMainValue` for that scenario.
+   *
+   * Written to follow "In this scenario:", lower case, no full stop, no option title.
+   */
+  valueHere?: Record<Block5PolicyDimKey, string>;
   framingClause: Record<CVRFraming, string>;
   /** how serious this scenario is — checked against parallel.register. */
   register?: CVRRegister;
@@ -219,6 +233,12 @@ const CANCER: ScenarioCVRContent = {
     gainResponsivenessSensitivity: "the patients who would benefit the most",
     outcomeAggregationSensitivity: "the larger total benefit these doses could achieve",
   },
+  valueHere: {
+    vulnerabilityProtectionSensitivity: "treating first the patients who are sickest or hardest to reach",
+    groupSizeSensitivity: "keeping as few patients as possible from losing their chance for good",
+    gainResponsivenessSensitivity: "how many years of life the 20 doses add",
+    outcomeAggregationSensitivity: "how many lives are saved, directly or through the people others depend on",
+  },
   framingClause: {
     context:
       "the reason some patients rank lower here is context, not worth — late diagnosis, unequal access, and where people live shape the very numbers the rule uses",
@@ -310,6 +330,12 @@ const CHEMICAL: ScenarioCVRContent = {
     groupSizeSensitivity: "much of the wider district that shares these routes and depends on them",
     gainResponsivenessSensitivity: "the good this escape could have done for everything it costs",
     outcomeAggregationSensitivity: "the larger overall good this escape could have done for everyone it touches",
+  },
+  valueHere: {
+    vulnerabilityProtectionSensitivity: "making sure the people who cannot get out on their own still can",
+    groupSizeSensitivity: "keeping the risk your choice puts on everyone else as low as possible",
+    gainResponsivenessSensitivity: "how quickly and how surely you yourself get out",
+    outcomeAggregationSensitivity: "how many other people get out because of what you do",
   },
   framingClause: {
     context:
@@ -405,6 +431,12 @@ const WILDFIRE: ScenarioCVRContent = {
    * scene wording changes, this has to change with it, or the reflection will be recalling a fact
    * in words the participant never saw.
    */
+  valueHere: {
+    vulnerabilityProtectionSensitivity: "making sure the neighbors least able to leave are not left until last",
+    groupSizeSensitivity: "keeping the risk your household puts on everyone else as low as possible",
+    gainResponsivenessSensitivity: "how quickly and how safely your own household gets out",
+    outcomeAggregationSensitivity: "how many people get out of the valley because of your choice",
+  },
   framingClause: {
     context:
       "the reason your slot is fifth and somebody else's is ninth is how near the junction their family could afford to live, not what they are worth — and the big houses on the shelf never needed a slot at all",
@@ -442,7 +474,7 @@ const GENERIC: ScenarioCVRContent = {
 
 const CARE: ScenarioCVRContent = {
   register: "life_and_death",
-  impersonalAgent: "the rostering system",
+  impersonalAgent: "the scheduling system",
   /* A three-month cut. See `horizon` on ScenarioCVRContent. */
   horizon: { soon: "The first week", later: "Before the three months are out" },
   /*
@@ -455,7 +487,7 @@ const CARE: ScenarioCVRContent = {
    * defers to it, and this lens is where they are told the schedule is theirs.
    */
   closingLine:
-    "{f|No rostering system decided this.} {b|You did.} If it happens, it happens because of the "
+    "{f|No scheduling system decided this.} {b|You did.} If it happens, it happens because of the "
     + "schedule you chose to set.",
   /*
    * ───────────────────────────────────────────────────────────────────────────────
@@ -508,6 +540,12 @@ const CARE: ScenarioCVRContent = {
     groupSizeSensitivity: "much of the larger group who could have kept their visits",
     gainResponsivenessSensitivity: "the money that keeps the service running",
     outcomeAggregationSensitivity: "the greater number of clients these hours could reach",
+  },
+  valueHere: {
+    vulnerabilityProtectionSensitivity: "protecting the clients who have nobody else at home",
+    groupSizeSensitivity: "making the cut land where someone else can step in, so it hurts least",
+    gainResponsivenessSensitivity: "keeping the service paid for and open next year",
+    outcomeAggregationSensitivity: "keeping as many clients as possible visited, as often as possible",
   },
   framingClause: {
     context:
@@ -769,6 +807,11 @@ function buildLens(
  */
 export function getCVRMirror(scenario: Block5Scenario): { here: string; there: string }[] {
   return (CONTENT[scenario.id] ?? GENERIC).parallel?.mirror ?? [];
+}
+
+/** The "In this scenario" line for each value on the APA page, or null for a scenario with none. */
+export function getCVRValueHere(scenario: Block5Scenario): Record<Block5PolicyDimKey, string> | null {
+  return CONTENT[scenario.id]?.valueHere ?? null;
 }
 
 /**

@@ -456,6 +456,33 @@ nothing until their Pass E is done, and gain the table the moment their rows are
 only whichever value happened to be on top. `docs/BLOCK5_APA_AUDIT.md` measures the OLD rule and says
 so at the top; `tools/verify_apa.cjs` is the live specification.
 
+#### The second per-scenario part: `valueHere` (18 September 2026)
+
+Under each value's general definition the APA page now prints **"In this scenario: …"**, from
+`valueHere` on the scenario's `ScenarioCVRContent`. The general definitions stay, because Blocks 1–4
+and the results page use them. But choosing a value is followed at once by *the options that fit
+it*, and in scenario 3 "Reducing harm — how much harm is prevented" used to lead to a draw.
+**Each line is written from the options that value leads to** (`value_audit.cjs` prints them), so
+what the participant reads before choosing is what they see after. `validate_block5.cjs` fails a
+scenario that runs the reflection without all four lines. If an option's numbers change, re-read
+the four lines for its scenario.
+
+#### The APA and keep pages, as the researcher reviewed them on 18 September 2026
+
+| Was | Now | Why |
+|---|---|---|
+| "Which one did **NOT** play a part in your decision to keep this option?" | "Which one **mattered less** in your decision to keep it?" | a question built on NOT is the one most often answered backwards; stored value and −20 unchanged |
+| "Which one most changed your mind toward not keeping this option?" | "Which one did more to make you **drop** this option?" | said the same thing twice; stored value and +20 unchanged |
+| "two perspectives" | "two views" | the study calls them views everywhere else; *perspective* is kept for the stakeholder |
+| each box: the lens's LAST line ("She may wait hours… the hood…") | each box: the lens's OPENING sentence (`act`, `parallelAct`), in plain type | the last line needed the lens beside it; the violet box shouted louder than the plain one, a nudge |
+| boxes fixed as directness, then context | boxes in the order the participant met them | the answers below were already in that order |
+| "it's your own rule, your responsibility" / "circumstances shaped the numbers" | "what your choice does, and that it was yours" / "the same choice, made somewhere else" | "rule" is wrong in the escapes; the other was jargon |
+| "How sure are you about your answers on this page?" | "…about the value you picked?" | it scales the value only, never the lens answer |
+| the missed values in two colors, in a fixed order | every missed value, one color, biggest miss first | same kind of thing; ranked by its share of the "missed by" total (`policyShortfallByValue`) |
+
+Kept on purpose: who is asked the lens question. A participant who kept the option after the views
+and was then moved by the stakeholder still answers it — the researcher's decision.
+
 #### Question numbering: a page that asks one thing must not count it
 
 The APA page printed **"QUESTION 2 OF 1"** — the card kept the position it held when the page asked
@@ -493,13 +520,13 @@ after a clarification: a persuasive demo today, built on numbers that are going 
 
 ---
 
-## 2b. THE TEN AUDITS — what to run, in what order, and what each one catches
+## 2b. THE ELEVEN AUDITS — what to run, in what order, and what each one catches
 
 The six passes are the WORK. These seven are the CHECKING, and they are not the same thing: every
 one of them has caught something after all six passes were finished and every gate was green.
 
-A1, A2, A3 and A8 are automated. A4 to A7 are read by a person. A9 and A10 are both: a script
-prints, and a person reads what it printed. **Run them in this order**, because each one assumes the
+A1, A2, A3 and A8 are automated. A4 to A7 are read by a person. A9, A10 and A11 are both: a
+script prints, and a person reads what it printed. **Run them in this order**, because each one assumes the
 one before it has already passed.
 
 | # | Audit | How | What only this one catches |
@@ -513,6 +540,7 @@ one before it has already passed.
 | **A7** | Run it backwards | every audit, on the scenarios already signed off | the defect you only learned to see while doing the NEXT scenario |
 | **A8** | The matched pair | `npm run validate:twins` | scenario 4 and scenario 5 drifting apart, which nothing else can see |
 | **A9** | The whole block | the checks in §2e, over all six at once | a defect that only exists ACROSS scenarios |
+| **A11** | The value numbers | `value_audit.cjs` in the `/my-advisor` skill, then every number read against its card and against what Blocks 1–4 measure | a number the card does not earn — read against the value's NAME it looked fine |
 | **A10** | The stakeholder stories | `npm run validate:people`, then `/my-advisor stakeholder stories` — every story printed under its card, in all three voices | a story about a different option, a person who cannot be a stranger, a timeline the scenario contradicts |
 
 ### A8 — scenarios 4 and 5 are one option set written twice
@@ -972,6 +1000,64 @@ participant. The researcher weighed that and kept the blame, made plain. The rul
 
 ---
 
+## 2g. THE VALUE AUDIT — every option's four numbers against its own card (audit A11)
+
+**Why it was needed.** Earlier passes read each value number against how the value's NAME sounds.
+"Reducing harm" was read loosely as *nobody is singled out*, and on that reading a draw scored 94
+looked right. Blocks 1–4 measure something else: **Reducing harm is how much more a person demands
+as the harmed group grows** — so an option scores high when the fewest people end up harmed. Read
+that way, the draw's own card gave up "Results". The table of what each value measures is in the
+`/my-advisor` skill; read every number against it.
+
+**What was checked.** All 96 numbers in scenarios 1–4 (scenario 5 copies 4; scenario 6's pure
+champions all fit). 78 fit, 9 contradicted their own card, 9 were doubtful.
+
+| Found | Fixed by |
+|---|---|
+| S3 draw: Reducing harm 94, card gives up "Results" | **words, not numbers** — now *Draw the 20 names from the patients who cannot wait*: nobody who would lose their chance for good is passed over for someone who could wait |
+| S4 even cut (+ S5 twin): its top value was How much is gained 74, card claims no payoff | gained 74 → 50, harm 60 → 44 |
+| S3 sickest: helped 40, card says fewer alive "than under any other rule here" | 40 → 35 |
+| S3 hold doses back: helped 52, card says "fewer than 20 may be treated" | 52 → 37; gained 45 → 30 (doses may expire) |
+| S2 early highway: helped 85 and harm 43 with far blocks "still sitting in the jam" | helped 85 → 45, harm 43 → 20, gained 68 → 80 ("quickest, cleanest run") |
+| S2 staged convoy: gained 81, card: "three hours of waiting… air steadily worse" | 81 → 65 |
+| S1 respirator harms one person, service road sends four streets past the leak | harm 24 → 45 and 39 → 25; service road gained 71 → 80 ("fastest clear route"), convoy 82 → 70 |
+| S1 walking out and sealing in both take nothing from anyone | walk harm 56 → 65, seal vulnerable 53 → 60 — **partly**, see below |
+| S3 most likely to survive: vulnerable 53, cost is "the patients the system already failed" | 53 → 30 |
+| S4 family cover keeps 180 clients whole; town routes harm the fewest people | helped 41 → 65; harm 28 → 55 (+ S5 twins) |
+
+Every changed number carries a `VALUE AUDIT, 18 September 2026` comment in `block5Scenarios.ts`
+quoting the card that justifies it. All eleven checks passed, the random one eight runs in eight.
+
+### ⚠ One champion per value — a fix must name the successor
+
+`validate_block5.cjs` requires each value's highest option to be unique and different for each
+value. Every fix above kept all four champions in every scenario. An honest re-score of the whole
+scenario 3 harm column was also tested; it passed, but moved the champion and made the draw the best
+fit for 0.1% of people — it was set aside for the rewrite, which keeps every number.
+
+### ⚠ Two options that are the same underneath cannot be separated by numbers
+
+Walking out and sealing in both take nothing from anyone. Closing their gap on harm and on the
+vulnerable made them near-twins, and **the stability simulation (S4) and the VCI simulation (V5)
+failed**: the instrument needs its options to differ. The gentler fix passed. The real remedy, if
+wanted later, is in the WORDS — give the two cards a difference as clear as their numbers claim.
+
+### ⚠ "Treat everyone the same" has no value to live on
+
+The even cut and the old draw were both *equal treatment* options, and none of the four values
+measures equal treatment. Each had been given a high score on some value to give it a home. With
+honest numbers such an option is rarely anyone's best fit (the even cut: 29% of random profiles
+before, 2.0% after), which is TRUE of this instrument and belongs in the methods section.
+
+### ⚠ Changing numbers moves who is aligned — check the best-fit shares
+
+`value_audit.cjs` prints how often each option is the best fit. After this audit, for example,
+scenario 3's essential-worker rule fits 39% of profiles (was 26%) and most-likely-to-survive 12%
+(was 22%). Nothing failed, but these shares decide who meets the reflection, so read them after
+every change to a number.
+
+---
+
 ## 3. Two gates that bite when editing scene text
 
 - **`description` may contain no digits; `factBase` must contain some.** Numbers live in the
@@ -1007,8 +1093,8 @@ now carry a line saying so.
    from C and the world from D.
 8. **Pass F** — write the scenario's `mirror` rows. Nothing else in Pass F is per-scenario, so this
    is a short step: one `{ here, there }` pair per number, taken from the world Pass E just built.
-9. **Audits A1, A3, A5, A6, A10** — the gate suite, the researcher's rules, the rendered-lens read,
-   the card-versus-story read and the stakeholder stories. See §2b; A5, A6 and A10 are read by a
+9. **Audits A1, A3, A5, A6, A10, A11** — the gate suite, the researcher's rules, the rendered-lens
+   read, the card-versus-story read, the stakeholder stories and the value numbers. See §2b; A5, A6 and A10 are read by a
    person and are the ones that keep finding things after everything is green.
 10. `npm run typecheck && npm run validate:block5 && npm run audit:rules && npm run lint && npm run build`
 11. Check it in the browser at desktop and at 375px.

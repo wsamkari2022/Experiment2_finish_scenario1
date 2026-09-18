@@ -26,19 +26,22 @@ What to review: **$ARGUMENTS**. If that is empty, ask Waseem what to review befo
    npx tsc -p tools/tsconfig.sim.json
    node .claude/skills/my-advisor/scripts/render_stories.cjs [scenario-id-part] [--voices]
    node .claude/skills/my-advisor/scripts/british_scan.cjs [--all | file ...]
+   node .claude/skills/my-advisor/scripts/value_audit.cjs [scenario-id-part]
    ```
 
    `render_stories.cjs` prints each scenario's scene, situation box and role, then every option's
    card, method, preview, lens and both stakeholder stories. `--voices` prints each story under all
    three voices. `british_scan.cjs` lists British English inside strings and JSX text (never
    comments); `BRITISH` hits are certain, `CHECK` hits need a person to read the sentence.
+   `value_audit.cjs` prints every option's four value numbers beside its card, each value's
+   champion, what the APA page lists for each value, and how often each option is the best fit.
 3. For pages that are not Block 5 content, read the `.tsx` file itself, and look at the page in the
    browser if the question is how it looks.
 
 **Read the rendered text, not the source.** A defect that is invisible in a `.ts` file is obvious
 on the page, and a story is only ever wrong *in relation to* something printed above it.
 
-## 2. The seven things the advisor hunts for
+## 2. The eight things the advisor hunts for
 
 | # | Hunt for | Example from this study |
 |---|---|---|
@@ -49,9 +52,32 @@ on the page, and a story is only ever wrong *in relation to* something printed a
 | 5 | **Missing information** — who, where, how many, why, that the reader needs and no text gives | "the third run carried you out" — but why not them? (the plume had reached the road) |
 | 6 | **British English** — always American. Run the scanner, then read for phrasing it cannot catch | walking frame → walker, care home → nursing home, rounds → routes, council → city, key worker → essential worker, "any more" → "anymore", "washing" (laundry, in America) → bathing |
 | 7 | **"Only", "every other", "no other"** — test each one against all six cards | "only this rule cuts the driving without cutting visits" — a quarter of the cut still came off visits |
+| 8 | **A value number the card does not earn** — read every number against the card AND against what Blocks 1–4 measure (table below), never against how the value's name sounds | a draw scored 94 on "Reducing harm" while its own card gave up "Results" |
 
 Read the whole target once as a participant who knows nothing, and once as a reviewer who knows
 everything. Then read each item against the things printed above it.
+
+### What the four values MEASURE (read numbers against this, not the name)
+
+| Value | Blocks 1–4 measure it as | An option scores HIGH when its card shows… |
+|---|---|---|
+| Protecting the vulnerable | extra reluctance to harm the worse-off (Block 3 buffer gap, Block 1 need) | the people least able to cope are protected or put first |
+| Reducing harm | how much more a person demands as the HARMED GROUP GROWS (Block 3, groups of ~10 to ~100,000) | the FEWEST people end up harmed by this choice — not "nobody is singled out" |
+| How much is gained | how readily a PAYOFF moved them (Block 3 gain level, Block 4) | the biggest payoff: money for an organization, speed and safety for the chooser, years of life per dose |
+| How many are helped | willingness to act for the larger total (Block 2 trolley) | the MOST people helped in total — net of anyone it harms |
+
+Rules the checks enforce and the audit found the hard way (checklist §2g):
+- **One champion per value, a different option for each** (`validate_block5.cjs`). A fix that
+  lowers a champion must name its successor.
+- **No option may be beaten on all four values.** Lowering one number can make an option dominated.
+- **Two options that are the same underneath cannot be pulled apart by numbers alone.** Walking out
+  and sealing in both take nothing from anyone; closing their gap failed the stability and VCI
+  simulations. The fix for that is in the words (make the options differ), not in the numbers.
+- **Words may be rewritten to earn the numbers** (the draw became a draw among the patients who
+  cannot wait) — that keeps alignment, CVR, APA, stability and position exactly as they are.
+- Every changed number carries a `VALUE AUDIT` comment quoting the card that justifies it.
+- Scenario 4's numbers must be copied to scenario 5's twin. Scenario 6's numbers feed the
+  prediction test: changing them means moving `PREDICTION_VERSION`.
 
 ## 3. The stakeholder stories — what they must be
 

@@ -377,7 +377,7 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
               <>
                 <Separator borderColor="border.subtle" />
                 <Text fontSize="xs" fontWeight="semibold" color="teal.fg" textTransform="uppercase" letterSpacing="wider">
-                  Comparing the two perspectives
+                  Comparing the two views
                 </Text>
                 {DUAL_VIEW_QUESTIONS.map((q) =>
                   q.type === "likert" ? (

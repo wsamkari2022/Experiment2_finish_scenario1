@@ -63,10 +63,15 @@ export const CVR_QUESTIONS: FeedbackQuestion[] = [
 /**
  * ① CVR dual-perspective — extra questions shown ONLY if the participant generated the alternate
  * lens (Directness ↔ Context) in at least one reflection. Rendered inside the CVR section.
+ *
+ * "VIEW", NOT "PERSPECTIVE" (researcher, 18 September 2026). The study calls the two lenses the
+ * Main view and the Alternative view everywhere a participant meets them, and keeps "perspective"
+ * for the affected person on the stakeholder page (CVR_reconsider above uses it that way, rightly).
+ * Only the wording changed; the codes, and so the stored answers, are the same.
  */
 export const DUAL_VIEW_QUESTIONS: FeedbackQuestion[] = [
-  { code: "CVR_dual_helpful", type: "likert", text: "Being able to generate and compare a second perspective helped me reflect more carefully on my choice." },
-  { code: "CVR_dual_changed", type: "yesno", text: "Did comparing the two perspectives change how you felt about your choice?" },
+  { code: "CVR_dual_helpful", type: "likert", text: "Being able to generate and compare a second view helped me reflect more carefully on my choice." },
+  { code: "CVR_dual_changed", type: "yesno", text: "Did comparing the two views change how you felt about your choice?" },
 ];
 
 /** ② APA — shown only when the APA value-clarification panel opened. */

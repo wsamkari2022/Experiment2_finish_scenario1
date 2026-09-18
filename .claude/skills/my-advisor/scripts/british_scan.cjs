@@ -66,7 +66,7 @@ const WORDS = [
   ["stationary traffic", "stopped traffic / a standstill", "word"], ["signed off( work| sick)?", "on sick leave", "word"],
   ["high streets?", "main street", "word"], ["lay-bys?", "rest area", "word"], ["full stop", "period", "word"],
   ["have a wash|a wash\\b", "a bath / get washed", "word"], ["ring road", "beltway", "word"],
-  ["blocks? of flats", "apartment building", "word"], ["members? of staff", "staff member", "word"], ["go(es)? on (paperwork|admin|handovers)", "go to", "word"],
+  ["blocks? of flats", "apartment building", "word"], ["roster(ing|ed)", "scheduling", "word"], ["members? of staff", "staff member", "word"], ["go(es)? on (paperwork|admin|handovers)", "go to", "word"],
   ["the long way round|to go round|all year round", "around", "word"], ["standard coach(es)?", "regular bus", "word"],
   // one sense is British — read the sentence
   ["rounds?", "route (a caregiver's round) — fine for a doctor's rounds", "check"],

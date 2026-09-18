@@ -111,14 +111,28 @@ export function policyAlignmentShortfall(
   option: Block5ScenarioOption,
   profile: Block5UserProfile,
 ): number {
-  let penalty = 0;
+  const by = policyShortfallByValue(option, profile);
+  return POLICY_DIM_KEYS.reduce((sum, k) => sum + by[k], 0);
+}
+
+/**
+ * The same shortfall, value by value: (score / 100) × (score − what the option delivers), and 0
+ * where the option delivers at least the score. `policyAlignmentShortfall` is exactly their sum.
+ *
+ * The APA page uses it to list the values an option fell short on in order, biggest miss first,
+ * so the order on screen comes from the number on screen and cannot drift from it.
+ */
+export function policyShortfallByValue(
+  option: Block5ScenarioOption,
+  profile: Block5UserProfile,
+): Record<Block5PolicyDimKey, number> {
+  const out = {} as Record<Block5PolicyDimKey, number>;
   for (const k of POLICY_DIM_KEYS) {
     const u = scoreOf(profile, k);
     const o = option.fingerprint[k];
-    const shortfall = Math.max(0, u - o); // only falling BELOW the threshold counts
-    penalty += (u / 100) * shortfall;
+    out[k] = (u / 100) * Math.max(0, u - o); // only falling BELOW the threshold counts
   }
-  return penalty;
+  return out;
 }
 
 /**

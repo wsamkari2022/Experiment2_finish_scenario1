@@ -348,9 +348,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "You reach the center in good time. You take nothing that was set aside for anyone else. But you leave when the list says, not when you want. The last hour is spent watching the plume come down the road.",
         givesUp: "Control over your own timing. You go when your street is called, and not a minute sooner.",
         moralTension: "Is a fair line still fair, when the people at the back breathe the same air as the people at the front?",
+        /* VALUE AUDIT, 18 September 2026: How much is gained 82 -> 70.
+           A sure way out "well within the six hours", but slower than the service road, which is "the fastest clear route out".
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 67, groupSizeSensitivity: 61,
-          gainResponsivenessSensitivity: 82, outcomeAggregationSensitivity: 56,
+          gainResponsivenessSensitivity: 70, outcomeAggregationSensitivity: 56,
           directnessSensitivity: 44, contextSensitivity: 61, stakeholderPerspectiveShiftSensitivity: 56,
         },
         metrics: {
@@ -392,8 +395,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "You are clear of the district within the hour and never wait in line at all. But the mask was tagged for someone whose lungs cannot manage the walk without it, and there is not another one.",
         givesUp: "The one piece of equipment set aside for a person who cannot breathe the outside air.",
         moralTension: "If a mask protects whoever is wearing it, does it matter whose name was on the tag?",
+        /* VALUE AUDIT, 18 September 2026: Reducing harm 24 -> 45.
+           It harms ONE person, the patient the mask was tagged for; the service road sends four streets past the leak.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 15, groupSizeSensitivity: 24,
+          vulnerabilityProtectionSensitivity: 15, groupSizeSensitivity: 45,
           gainResponsivenessSensitivity: 94, outcomeAggregationSensitivity: 41,
           directnessSensitivity: 81, contextSensitivity: 31, stakeholderPerspectiveShiftSensitivity: 23,
         },
@@ -436,8 +442,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Nothing set aside for someone who needs it is touched. But the river path takes four hours on foot. You breathe the edge of the plume the whole way, and you arrive last.",
         givesUp: "Four hours, and a great deal of your own safety. You are the most exposed person on any of these routes.",
         moralTension: "How much of your own lungs is a stranger's oxygen mask worth?",
+        /* VALUE AUDIT, 18 September 2026: Reducing harm 56 -> 65.
+           It takes nothing from anyone. It stays well below sealing in (93) because you spend four hours at the
+           edge of the plume and arrive last. Raising it further made walking and sealing near-twins, and the
+           stability and VCI simulations failed: the two options differ in emphasis more than in substance.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 96, groupSizeSensitivity: 56,
+          vulnerabilityProtectionSensitivity: 96, groupSizeSensitivity: 65,
           gainResponsivenessSensitivity: 26, outcomeAggregationSensitivity: 39,
           directnessSensitivity: 64, contextSensitivity: 72, stakeholderPerspectiveShiftSensitivity: 68,
         },
@@ -524,8 +535,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Not one other person is worse off for what you chose, and you can still leave later if the wind turns. But you spend the night inside a plume with tape on the doors.",
         givesUp: "Any margin for error. If the seal does not hold you are inside the worst air in the district with no way out of it, and a sweep team comes into your block to find out whether you are.",
         moralTension: "Is taking nothing from anybody the same thing as doing right by them?",
+        /* VALUE AUDIT, 18 September 2026: Protecting the vulnerable 53 -> 60.
+           "No seat, road or mask is used", so the clinic's mask stays for the patient it was tagged for. Kept well
+           below walking out (96) for the same reason walking out stays below this option on Reducing harm.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 53, groupSizeSensitivity: 93,
+          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 93,
           gainResponsivenessSensitivity: 32, outcomeAggregationSensitivity: 33,
           directnessSensitivity: 48, contextSensitivity: 67, stakeholderPerspectiveShiftSensitivity: 54,
         },
@@ -568,9 +583,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "You are out in twenty minutes and so is everyone behind you. But the road runs past the split tanker itself, and once you are committed to it there is no turning around.",
         givesUp: "Any chance to change your mind. It is single-track past the yard and it passes closer to the tanker than any other route here.",
         moralTension: "Is the quickest way out still the right one when it takes everyone else past the leak?",
+        /* VALUE AUDIT, 18 September 2026: Reducing harm 39 -> 25, How much is gained 71 -> 80.
+           "Word spreads the moment the first vehicle goes down it", past the tanker, so many are put at risk; and it
+           is "the fastest clear route out of the district".
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 43, groupSizeSensitivity: 39,
-          gainResponsivenessSensitivity: 71, outcomeAggregationSensitivity: 87,
+          vulnerabilityProtectionSensitivity: 43, groupSizeSensitivity: 25,
+          gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 87,
           directnessSensitivity: 62, contextSensitivity: 45, stakeholderPerspectiveShiftSensitivity: 44,
         },
         metrics: {
@@ -700,9 +719,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Nobody in your household is separated and nobody else is pushed down the list to make room for you. But your slot is the fifth of nine, and the smoke is well into the valley by the time you roll.",
         givesUp: "Three hours of waiting, with a child who needs an inhaler, while the air gets steadily worse.",
         moralTension: "Is waiting your turn still right when the person waiting beside you cannot breathe the wait?",
+        /* VALUE AUDIT, 18 September 2026: How much is gained 81 -> 65.
+           "Three hours of waiting, with a child who needs an inhaler, while the air gets steadily worse": a smaller
+           payoff for the household than the ridge road or the early run.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 59,
-          gainResponsivenessSensitivity: 81, outcomeAggregationSensitivity: 53,
+          gainResponsivenessSensitivity: 65, outcomeAggregationSensitivity: 53,
           directnessSensitivity: 58, contextSensitivity: 49, stakeholderPerspectiveShiftSensitivity: 40,
         },
         metrics: {
@@ -946,9 +969,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Your household is out early on an open highway. But your neighbors see you go and follow, so nine blocks that were meant to leave in turn are all on the road at once. Staging cannot be re-formed once it breaks, and the blocks furthest from the junction are the ones still sitting in the jam when the fire comes down.",
         givesUp: "The staging system itself, and any way back in. Nine blocks moving at once is the one thing it was built to prevent.",
         moralTension: "If everyone leaving early is what causes the jam, does it matter that you left before it?",
+        /* VALUE AUDIT, 18 September 2026: How many are helped 85 -> 45, How much is gained 68 -> 80, Reducing harm 43 -> 20.
+           Its own preview leaves "the blocks furthest from the junction" in the jam "when the fire comes down": it
+           helps the first few and harms whole blocks. And it is "the quickest, cleanest run out of the valley".
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 44, groupSizeSensitivity: 43,
-          gainResponsivenessSensitivity: 68, outcomeAggregationSensitivity: 85,
+          vulnerabilityProtectionSensitivity: 44, groupSizeSensitivity: 20,
+          gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 45,
           directnessSensitivity: 59, contextSensitivity: 51, stakeholderPerspectiveShiftSensitivity: 39,
         },
         metrics: {
@@ -1066,8 +1093,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The 20 chosen are the ones most likely to recover, so this month's survival count is the highest here. But a late diagnosis lowers your score, so most of the 100 who wait are the people the system found too late — the same ones who waited last month.",
         givesUp: "The patients the system already failed. Being found late is what puts them at the bottom of this list, and the bottom is where they stay.",
         moralTension: "Is saving the greatest number the right goal, even when the people left out are the ones the system already failed?",
+        /* VALUE AUDIT, 18 September 2026: Protecting the vulnerable 53 -> 30.
+           Its cost line: "The patients the system already failed... the bottom is where they stay."
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 53,
+          vulnerabilityProtectionSensitivity: 30,
           groupSizeSensitivity: 48,
           gainResponsivenessSensitivity: 39,
           outcomeAggregationSensitivity: 94,
@@ -1115,11 +1145,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The 20 in the worst condition are treated first. But they respond slowly and some will not recover, so fewer of the 120 are alive at the end of the year than under any other rule here.",
         givesUp: "Lives. Doses go to patients who may not be able to use them, and the 100 who wait include people who would have recovered.",
         moralTension: "Do you treat the people who need help most, even if that means fewer people survive?",
+        /* VALUE AUDIT, 18 September 2026: How many are helped 40 -> 35.
+           Its preview: "fewer of the 120 are alive at the end of the year than under any other rule here" - so it
+           must be the lowest on How many are helped, and the draw sat below it.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 96,
           groupSizeSensitivity: 57,
           gainResponsivenessSensitivity: 20,
-          outcomeAggregationSensitivity: 40,
+          outcomeAggregationSensitivity: 35,
           directnessSensitivity: 58,
           contextSensitivity: 66,
           stakeholderPerspectiveShiftSensitivity: 85,
@@ -1184,35 +1218,42 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "cancer_weighted_lottery",
         cvrSeed: {
-          rule: "draws the recipients at random, with only a small boost for vulnerable patients",
-          parallelRule: "draws the names at random, with only a small boost for the frailest",
-          identifiedCase: "would have responded well, and their name was not drawn",
-          harm: "A dose went to someone already too weak for it to do much",
-          benefitCase: "have been ranked last by every rule the hospital has tried",
-          benefitLost: "The draw is the only rule that ever gave them a real chance",
-          act: "You put all {a|120} names into a sealed draw, add a few slips for the sickest, and approve whichever {a|20} come out.",
-          parallelAct: "{w|A winch operator picks by lot rather than by sight, drawing for each place, with extra slips for the weakest.}",
+          rule: "draws the recipients from the patients who cannot wait, with a small boost for the most vulnerable",
+          parallelRule: "draws the places from the roofs the water reaches first, with a small boost for the frailest",
+          identifiedCase: "could have waited a month, and would have responded well if treated now",
+          harm: "The rule you chose left them out of the draw, and the dose went to someone less likely to come through",
+          benefitCase: "are one of the 45 patients who will be past treating before next month's supply comes",
+          benefitLost: "Under this rule no dose goes to someone who could still wait while they go without",
+          act: "You put the names of the {a|45} patients who cannot wait into a sealed draw, with extra slips for the sickest. You approve whichever {a|20} come out.",
+          parallelAct: "{w|A winch operator lifts only from the roofs the water will reach first, and draws by lot among them, with extra slips for the weakest.}",
           consequences: {
-            soon: "20 doses go out within the hour, and nobody on the list was ranked against anybody else.",
-            later: "Some of the 20 may barely benefit. A patient the treatment would have saved could be left waiting.",
+            soon: "20 doses go out within the hour, to patients who would have been past treating by next month.",
+            later: "Some of the 20 may barely respond. A patient who could have waited another month could be worse when their turn comes.",
           },
           parallelConsequences: {
-            soon: "20 places go out fast, and nobody on the roof is judged.",
-            later: "Some lifted may have been safe where they were. Somebody who was not could still be up there an hour later.",
+            soon: "20 places go out fast, all from the roofs the water will reach first.",
+            later: "Some lifted may be too weak to hold on. Somebody on a higher roof could still be up there an hour later.",
           },
         },
-        /* PASS B, 17 September 2026 — speed 45 -> 92 and resources 82 -> 86: a draw needs no assessment, no scoring and no committee, so it is both the fastest rule here and the one that spares the most staff time. reversibility 90 -> 78 stays high but below the reserve, which still physically holds its doses. */
+        /* PASS B, 17 September 2026 — speed 45 -> 92 and resources 82 -> 86: a draw needs no assessment, no scoring and no committee, so it is both the fastest rule here and the one that spares the most staff time. reversibility 90 -> 78 stays high but below the reserve, which still physically holds its doses.
+           VALUE AUDIT, 18 September 2026: REWRITTEN, NOT RE-SCORED. The option was a draw among all 120, and its
+           Reducing harm 94 contradicted its own card, which gave up "Results". It is now a draw among the patients
+           who cannot wait, and every number stands as it was: Reducing harm 94 (nobody who would lose their chance
+           for good is passed over for someone who could wait), Protecting the vulnerable 56 (the extra slips), How
+           much is gained 33 and How many are helped 38 (the patients with least time left respond least). Speed and
+           staff time stay true because the list is one the clinic ALREADY keeps - the draw adds no assessment.
+           The id still says weighted_lottery because the database stores it. See the checklist, section 2g. */
         method: {
           kind: "draw",
-          by: "A sealed draw",
-          detail: "all 120 names go in, with a few extra slips for the most vulnerable, and 20 are drawn.",
+          by: "A sealed draw among the patients who cannot wait",
+          detail: "the 45 the clinic has flagged as past treating by next month go in, with a few extra slips for the most vulnerable, and 20 are drawn.",
         },
-        title: "Draw the 20 names",
-        summary: "An equal chance. Every one of the 120 goes into a sealed draw, with a few extra slips for the most vulnerable.",
-        gains: "Nobody is scored, ranked or judged. All 120 have a real chance, and the 20 who get one got it fairly.",
-        consequence: "The draw takes a morning and nobody is measured against anybody else. But chance does not know who would benefit, so some of the 20 doses go to patients they will barely help.",
-        givesUp: "Results. The 20 doses are spent without regard for what each one can do.",
-        moralTension: "Is treating everyone equally worth accepting a worse outcome for everyone?",
+        title: "Draw the 20 names from the patients who cannot wait",
+        summary: "The clinic already flags the 45 patients who will be past treating before next month's supply comes. The 20 are drawn from those 45, with a few extra slips for the most vulnerable. Everyone who can wait goes back onto next month's list.",
+        gains: "Nobody who would lose their chance for good is passed over for somebody who could still wait, and among the 45 nobody is scored or ranked.",
+        consequence: "The draw takes a morning, from a list the clinic already keeps. But the patients who cannot wait are the ones least likely to respond, and chance does not know which of them will, so fewer of the 20 come through than under the rule that ranks by odds.",
+        givesUp: "Results. The doses go to the patients with the least time left, who are also the least likely to respond.",
+        moralTension: "Should a dose go first to whoever would lose their chance for good, even if others would gain more from it?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 56,
           groupSizeSensitivity: 94,
@@ -1283,11 +1324,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
          * Every gate re-run after the change: all nine suites pass, and `npm run audit:rules` is
          * clean on scenarios 1, 2 and 3.
          */
+        /* VALUE AUDIT, 18 September 2026: How many are helped 52 -> 37, How much is gained 45 -> 30.
+           "Fewer than 20 patients may be treated this month, and a dose that goes past its date cannot be
+           recovered." It scored above three rules that use all 20 doses.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 68,
           groupSizeSensitivity: 64,
-          gainResponsivenessSensitivity: 45,
-          outcomeAggregationSensitivity: 52,
+          gainResponsivenessSensitivity: 30,
+          outcomeAggregationSensitivity: 37,
           directnessSensitivity: 41,
           contextSensitivity: 48,
           stakeholderPerspectiveShiftSensitivity: 53,
@@ -1477,10 +1522,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The cut is spread thin enough that no client loses everything. But one visit in four off a larger need is a larger loss, so the clients who needed the most help lose the most of it.",
         givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
         moralTension: "Is treating everyone alike the same as treating everyone fairly?",
+        /* VALUE AUDIT, 18 September 2026: How much is gained 74 -> 50, Reducing harm 60 -> 44.
+           It earns nothing: it saves only the driving to the visits it drops (more than shortening, less than
+           redrawing). And every one of the 240 clients loses a visit in four. How much is gained was its top
+           value, which sent a participant who picked that value on the APA page to an even cut.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 48,
-          groupSizeSensitivity: 60,
-          gainResponsivenessSensitivity: 74,
+          groupSizeSensitivity: 44,
+          gainResponsivenessSensitivity: 50,
           outcomeAggregationSensitivity: 55,
           directnessSensitivity: 52,
           contextSensitivity: 58,
@@ -1525,11 +1575,14 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "About 60 clients lose their visits, and each has a relative nearby to take them on. But the families absorb work they never agreed to, and some of them are already stretched thin.",
         givesUp: "The families. The cost is moved onto relatives rather than removed.",
         moralTension: "Is that a smaller harm, or the same harm moved somewhere nobody counts it?",
+        /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
+           About 60 clients lose their visits; the other 180 keep every one - more than the even cut keeps whole.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 58,
           groupSizeSensitivity: 93,
           gainResponsivenessSensitivity: 30,
-          outcomeAggregationSensitivity: 41,
+          outcomeAggregationSensitivity: 65,
           directnessSensitivity: 60,
           contextSensitivity: 62,
           stakeholderPerspectiveShiftSensitivity: 58,
@@ -1620,9 +1673,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But about 45 rural clients are transferred to a county agency with nobody to send, and most of them have nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",
         moralTension: "Is keeping the service alive worth the people it was built for?",
+        /* VALUE AUDIT, 18 September 2026: Reducing harm 28 -> 55.
+           It harms the fewest people - about 45 rural clients - though the most severely, and that severity is
+           already counted where it belongs, in Protecting the vulnerable (16).
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 16,
-          groupSizeSensitivity: 28,
+          groupSizeSensitivity: 55,
           gainResponsivenessSensitivity: 93,
           outcomeAggregationSensitivity: 45,
           directnessSensitivity: 68,
@@ -1766,10 +1823,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The cut is spread thin enough that no client loses everything. But one visit in four off a larger need is a larger loss, so the clients who needed the most help lose the most of it.",
         givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
         moralTension: "Is treating everyone alike the same as treating everyone fairly?",
+        /* VALUE AUDIT, 18 September 2026: How much is gained 74 -> 50, Reducing harm 60 -> 44.
+           Scenario 4's twin - see care_equal_share.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 48,
-          groupSizeSensitivity: 60,
-          gainResponsivenessSensitivity: 74,
+          groupSizeSensitivity: 44,
+          gainResponsivenessSensitivity: 50,
           outcomeAggregationSensitivity: 55,
           directnessSensitivity: 52,
           contextSensitivity: 58,
@@ -1796,11 +1856,14 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "About 60 clients lose their visits, and each has a relative nearby to take them on. But the families absorb work they never agreed to, and some of them are already stretched thin.",
         givesUp: "The families. The cost is moved onto relatives rather than removed.",
         moralTension: "Is that a smaller harm, or the same harm moved somewhere nobody counts it?",
+        /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
+           Scenario 4's twin - see care_cut_where_family_covers.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 58,
           groupSizeSensitivity: 93,
           gainResponsivenessSensitivity: 30,
-          outcomeAggregationSensitivity: 41,
+          outcomeAggregationSensitivity: 65,
           directnessSensitivity: 60,
           contextSensitivity: 62,
           stakeholderPerspectiveShiftSensitivity: 58,
@@ -1856,9 +1919,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But about 45 rural clients are transferred to a county agency with nobody to send, and most of them have nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",
         moralTension: "Is keeping the service alive worth the people it was built for?",
+        /* VALUE AUDIT, 18 September 2026: Reducing harm 28 -> 55.
+           Scenario 4's twin - see care_profitable_rounds.
+           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 16,
-          groupSizeSensitivity: 28,
+          groupSizeSensitivity: 55,
           gainResponsivenessSensitivity: 93,
           outcomeAggregationSensitivity: 45,
           directnessSensitivity: 68,

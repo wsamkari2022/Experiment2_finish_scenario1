@@ -104,6 +104,13 @@ for(const n of CVR_ALL){
   const vp=K.filter(k=>new RegExp(k+': "').test(t)).length;
   const fr=/context:/.test(t)&&/directness:/.test(t);
   ok((n+" content").padEnd(30),i>=0&&vp===4&&fr,vp+"/4 value phrases, framing:"+fr);
+  // THE APA PAGE'S "In this scenario" LINES: every scenario that runs the reflection carries all
+  // four, so no value on that page is left with only its general definition. See `valueHere`.
+  if(n!=="GENERIC"){
+    const vh=(t.match(/\n  valueHere: \{([\s\S]*?)\n  \},/)||[,""])[1];
+    const vhN=K.filter(k=>new RegExp(k+': "[^"]+"').test(vh)).length;
+    ok((n+" value lines").padEnd(30),vhN===4,vhN+"/4 'In this scenario' lines");
+  }
   // NO anchorNoun GATE ANY MORE. The field is gone: it existed only to build the sentence
   // "The same ${anchorNoun} are committed under the plan you chose", and that sentence was removed
   // on 16 September 2026 because no participant could parse it. See CVRStory in block5Types.ts.

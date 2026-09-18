@@ -960,6 +960,12 @@ export interface Block5ScenarioResult {
    * What the selection meant:
    *  - "not_influential" → YES path: the lens that did NOT influence keeping the option (→ −20)
    *  - "influential"     → NO path: the lens that DID change their mind to reject it (→ +20)
+   *
+   * The QUESTIONS were reworded on 18 September 2026 and the stored values were not. The keep page
+   * now asks "Which one mattered less in your decision to keep it?" (no "NOT", which is the word a
+   * question is most often answered backwards on), and the APA page asks "Which one did more to
+   * make you drop this option?". Each asks for the same lens as before, so the two values above,
+   * and the ±20 behind them, mean exactly what they meant.
    */
   cvrFramingSelectedRole?: "not_influential" | "influential";
   /** The committed sensitivity change for the selected lens (e.g. {key:"contextSensitivity", delta:-20}). */

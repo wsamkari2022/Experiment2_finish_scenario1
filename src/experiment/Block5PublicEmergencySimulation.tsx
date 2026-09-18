@@ -37,9 +37,9 @@ import {
   scenarioIsScored, isPredictionTest,
   performanceScore, computeVCI, computeStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
-  chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall,
+  chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall, policyShortfallByValue,
 } from "./block5CVR";
-import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror } from "./block5CVRContent";
+import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
 import { Block5OptionCompare } from "./Block5OptionCompare";
@@ -376,10 +376,15 @@ function framingScoresOf(profile: Block5UserProfile): { directnessSensitivity: n
  *
  * Removing the field rather than leaving it unused is deliberate. It makes showing the internal
  * term a compile error instead of a thing somebody has to remember not to do.
+ *
+ * THE GLOSSES SAY WHAT EACH VIEW SHOWED (researcher, 18 September 2026). They used to read "it's
+ * your own rule, your responsibility" and "circumstances shaped the numbers". The first is wrong in
+ * scenarios 1 and 2, where the participant picked a way out rather than a rule; the second is
+ * jargon, and not what the context view shows — the same choice, made in another place.
  */
 const FRAMING_META: Record<CVRFraming, { gloss: string }> = {
-  directness: { gloss: "it's your own rule, your responsibility" },
-  context: { gloss: "circumstances shaped the numbers" },
+  directness: { gloss: "what your choice does, and that it was yours" },
+  context: { gloss: "the same choice, made somewhere else" },
 };
 
 /**
@@ -3310,34 +3315,52 @@ function FramingComparisonTable({ scenario, option, coord, mode }: {
   const marks = cvrMarks(mode);
   const lenses = getCVRLensPair(scenario, option, coord);
   const markColor = marks.f.color;
+  const seed = option.cvrSeed;
+  /*
+   * THE LINE THAT STANDS FOR EACH VIEW is the view's OPENING sentence — what somebody does there
+   * (researcher, 18 September 2026).
+   *
+   * It used to be the view's LAST line, cut out on its own: "She may wait hours for the crew to
+   * reach that room. By then the hood could be across the city." Nothing in the box said who she
+   * was, which room, or what hood, and the directness box read "If it happens…" with no "it".
+   * The authored `act` and `parallelAct` each name who, what and where in one sentence, so each
+   * box can be read without the lens beside it. The last line stays as the fallback for an option
+   * written before those fields existed, because an empty half would make the question unanswerable.
+   *
+   * BOTH BOXES ARE SET IN THE SAME PLAIN STYLE: the lens markup is stripped. On the lens page the
+   * whole other-place sentence is violet, bold and italic, which is right there. Here the
+   * participant is asked to CHOOSE between the two boxes, and one printed louder than the other is
+   * a nudge toward it (found on screen, 18 September 2026).
+   */
+  const line = (framing: CVRFraming) =>
+    ((framing === "directness" ? seed?.act : seed?.parallelAct) ?? lensClosingLine(lenses[framing]))
+      .replace(/\{[a-z]\|([^{}]*)\}/g, "$1");
   const cell = (framing: CVRFraming) => (
-    <Box flex="1" minW="0" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="lg" px="3" py="2.5">
-      <Text fontSize="2xs" fontWeight="bold" color="fg" mb="1">
+    <Box flex="1" minW="0" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="lg" px="3.5" py="3">
+      <Text fontSize="xs" fontWeight="bold" color="fg" mb="1">
         <Text as="span" color={markColor}>▍</Text> {viewLabelFor(framing, coord.framing)}
         <Text as="span" color="fg.subtle" fontWeight="normal"> — {FRAMING_META[framing].gloss}</Text>
       </Text>
-      <Text fontSize="2xs" color="fg.subtle" fontWeight="semibold" mb="1">{lenses[framing].heading}</Text>
-      {/*
-        THE LINE THAT STANDS FOR EACH LENS in the comparison card.
-
-        It was always the lens prompt. The context lens no longer has one - it ends on its last
-        consequence - so this falls back to that consequence, which is the strongest line in the
-        block and the one a participant is most likely to remember. An empty half of a comparison
-        card would make the question unanswerable.
-      */}
-      <Text fontSize="2xs" color="fg.muted" lineHeight="tall">
-        {renderCVRMarkup(lensClosingLine(lenses[framing]), marks)}
+      <Text fontSize="xs" color="fg.subtle" fontWeight="semibold" mb="1">{lenses[framing].heading}</Text>
+      <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+        {renderCVRMarkup(line(framing), marks)}
       </Text>
     </Box>
   );
+  /*
+   * IN THE ORDER THE PARTICIPANT MET THEM — the Main view first — which is also the order of the
+   * answers underneath. The boxes used to be fixed as directness-then-context, so whenever the
+   * context view came first the two rows ran in opposite directions ("Alternative | Main" above,
+   * "Main, Alternative" below).
+   */
   return (
     <Stack gap="1.5">
       <Text fontSize="2xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold">
-        The two perspectives you saw
+        The two views you saw
       </Text>
       <Stack direction={{ base: "column", md: "row" }} gap="2" align="stretch">
-        {cell("directness")}
-        {cell("context")}
+        {cell(coord.framing)}
+        {cell(otherFraming(coord.framing))}
       </Stack>
     </Stack>
   );
@@ -4190,8 +4213,14 @@ function FlowOverlay({
 
             {altViewGenerated && (
               <QuestionCard
-                accent={accent} index={2} total={2} answered={framingChoiceYes !== null}
-                question={<>You looked at this from two perspectives. <Text as="span" color={accent}>Which one did NOT play a part</Text> in your decision to keep this option?</>}
+                accent={accent} index={2} total={2} answered={framingChoiceYes !== null} size="lg"
+                /*
+                  NO "NOT" IN THE QUESTION (researcher, 18 September 2026). It read "Which one did NOT
+                  play a part…", and a question built on a negative is the one most often answered
+                  backwards. "Mattered less" asks the same thing: the view picked is still stored as
+                  "not_influential" and still takes the −20, exactly as before.
+                */
+                question={<>You looked at this option from two views. Which one <Text as="span" color={accent} fontWeight="bold">mattered less</Text> in your decision to keep it?</>}
               >
                 <Box mb="3"><FramingComparisonTable scenario={scenario} option={option} coord={coord} mode={mode} /></Box>
                 {/*
@@ -4203,7 +4232,7 @@ function FlowOverlay({
                   {[coord.framing, otherFraming(coord.framing)].map((f) => (
                     <ApaChoice key={f} selected={framingChoiceYes === f} accent={accent}
                       onClick={() => setFramingChoiceYes(f)}>
-                      The <b>{viewLabelFor(f, coord.framing)}</b> didn't influence me —{" "}
+                      The <b>{viewLabelFor(f, coord.framing)}</b> mattered less —{" "}
                       <Text as="span" color="fg.subtle">{FRAMING_META[f].gloss}</Text>
                     </ApaChoice>
                   ))}
@@ -4307,7 +4336,7 @@ function FlowOverlay({
  * The scenario accent is passed in rather than read from a token because Block 5 recolors
  * itself per scenario (see block5Palette.ts).
  */
-function QuestionCard({ accent, index, total, label, question, answered, children }: {
+function QuestionCard({ accent, index, total, label, question, answered, size, children }: {
   accent: string;
   /**
    * 1-based position. OMIT IT, ALONG WITH `total`, ON A SCREEN THAT ASKS ONLY ONE THING.
@@ -4327,6 +4356,12 @@ function QuestionCard({ accent, index, total, label, question, answered, childre
   question: ReactNode;
   /** Drives the tick and the border tint. Omit where the answer is not a required field. */
   answered?: boolean;
+  /**
+   * "lg" sets the question one step larger. Used by the two lens questions only (researcher, 18
+   * September 2026): they ask the participant to compare two boxes of text, and are the hardest
+   * questions on either page to read at a glance.
+   */
+  size?: "md" | "lg";
   children: ReactNode;
 }) {
   const numbered = Boolean(index && total);
@@ -4358,7 +4393,7 @@ function QuestionCard({ accent, index, total, label, question, answered, childre
         </Text>
         {answered && <Icon boxSize="3.5" color="green.fg"><LuCheck /></Icon>}
       </HStack>
-      <Box fontSize="md" fontWeight="semibold" color="fg" lineHeight="tall" mb="3">
+      <Box fontSize={size ?? "md"} fontWeight="semibold" color="fg" lineHeight="tall" mb="3">
         {question}
       </Box>
       {children}
@@ -4436,7 +4471,6 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   // Highlight colors for the value-name spans, tuned for the current modal background.
   const marks = cvrMarks(mode);
   const TEAL = marks.v.color as string;     // the participant's leaning value
-  const ORANGE = marks.f.color as string;   // the option's value
   const PURPLE = marks.w.color as string;   // the stakeholder
 
   /*
@@ -4453,10 +4487,6 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
    * HERE INSTEAD: the total distance, and an honest count of how many values it fell short on.
    * ═════════════════════════════════════════════
    */
-
-  /** Each value's score in the profile, rounded the way the participant last saw it. */
-  const scoreOfDim = (k: Block5PolicyDimKey) =>
-    Math.round(profile.dimensions.find((d) => d.key === k)?.score ?? 0);
 
   /**
    * HOW FAR THIS OPTION LANDED FROM WHAT THEY ASKED FOR, in points.
@@ -4486,7 +4516,15 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
    * are commonly two or three, and a participant told about one of three was told something true
    * and badly incomplete.
    */
-  const shortValues = POLICY_DIM_KEYS.filter((k) => scoreOfDim(k) > option.fingerprint[k]);
+  const shortValues = (() => {
+    /*
+     * BIGGEST MISS FIRST (researcher, 18 September 2026). Each value is ranked by its own share of
+     * the total above — the same term `policyAlignmentShortfall` adds up — so the list reads in the
+     * order the points were lost, and the shares sum to the "missed by" number on screen.
+     */
+    const by = policyShortfallByValue(option, profile);
+    return POLICY_DIM_KEYS.filter((k) => by[k] > 0).sort((a, b) => by[b] - by[a]);
+  })();
 
   /**
    * THE MIRROR TABLE'S ROWS, and whether this participant gets to see them.
@@ -4497,6 +4535,8 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
    */
   const mirrorRows = getCVRMirror(scenario);
   const showMirror = lastLensSeen === "context";
+  /** Each value's meaning in THIS scenario, shown under its general definition. See `valueHere`. */
+  const valueHere = getCVRValueHere(scenario);
 
   const [stage, setStage] = useState<"questions" | "options" | "confirm">("questions");
   // No default — the participant must choose a confidence level (it is a required answer).
@@ -4771,7 +4811,10 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
               of your four values — {shortValues.map((k, i) => (
                 <Text as="span" key={k}>
                   {i > 0 && (i === shortValues.length - 1 ? " and " : ", ")}
-                  {vSpan(k, i === 0 ? ORANGE : TEAL)}
+                  {/* ONE COLOR FOR ALL OF THEM: they are one kind of thing, the participant's own
+                      values that this option missed. The first used to be orange and the rest teal,
+                      and on the lens pages those two colors mean different things. */}
+                  {vSpan(k, TEAL)}
                 </Text>
               ))}.
             </>
@@ -4792,17 +4835,25 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
            was removed on 17 September 2026 and the eyebrow went on saying "Question 2 of 1". */
         accent={accent} index={altViewGenerated ? 1 : undefined} total={altViewGenerated ? 2 : undefined}
         answered={q3 !== null && confidence !== null}
-        question="Pick the one value you most want the system to weight for you — you'll then see the options that fit it:"
+        question="Which one value should the system give the most weight to for you? After you pick it, you'll see the options that fit it."
       >
         <Stack gap="2">
           {POLICY_DIM_KEYS.map((k) => (
             <ApaChoice key={k} selected={q3 === k} accent={accent} onClick={() => setQ3(k)}>
               <b>{VALUE_NAME[k]}</b> — <Text as="span" color="fg.subtle">{VALUE_BENEFIT[k]}</Text>
+              {/* A span, not a paragraph: the choice is a <button>, which may hold phrasing content only. */}
+              {valueHere && (
+                <Text as="span" display="block" fontSize="xs" color="fg.muted" mt="1" lineHeight="1.5">
+                  <Text as="span" fontStyle="italic">In this scenario:</Text> {valueHere[k]}
+                </Text>
+              )}
             </ApaChoice>
           ))}
         </Stack>
         <HStack gap="2" mt="3.5" pt="3" borderTopWidth="1px" borderColor="border.subtle" wrap="wrap">
-          <Text fontSize="xs" color="fg.muted" fontWeight="medium">How sure are you about your answers on this page?</Text>
+          {/* It scales the value move only, never the lens answer below (see applyApaUpdates), so it
+              asks about the value. It used to say "your answers on this page", which counted both. */}
+          <Text fontSize="xs" color="fg.muted" fontWeight="medium">How sure are you about the value you picked?</Text>
           {[1, 2, 3, 4, 5].map((n) => (
             <Button key={n} minW="9" h="9" px="0" rounded="lg" fontSize="sm" fontWeight="semibold"
               borderWidth="1px" borderColor="border" bg="bg.subtle" color="fg"
@@ -4819,8 +4870,12 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
 
       {altViewGenerated && (
         <QuestionCard
-          accent={accent} index={2} total={2} answered={framingInfluential !== null}
-          question={<>You looked at this from two perspectives. Which one most <Text as="span" color={PURPLE} fontWeight="bold">changed your mind</Text> toward not keeping this option?</>}
+          accent={accent} index={2} total={2} answered={framingInfluential !== null} size="lg"
+          /* "…changed your mind toward not keeping this option" said the same thing twice, awkwardly
+             (researcher, 18 September 2026). The view picked is still stored as "influential" and
+             still takes the +20. "Views", not "perspectives": the study calls them views everywhere
+             else, and keeps "perspective" for the person on the stakeholder page. */
+          question={<>You looked at this option from two views. Which one did more to make you <Text as="span" color={PURPLE} fontWeight="bold">drop</Text> this option?</>}
         >
           <Box mb="3"><FramingComparisonTable scenario={scenario} option={option} coord={coord} mode={mode} /></Box>
           {/* Same as the confirm-page question above: ordered and named by position, storing the
@@ -4829,7 +4884,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
             {[coord.framing, otherFraming(coord.framing)].map((f) => (
               <ApaChoice key={f} selected={framingInfluential === f} accent={accent}
                 onClick={() => setFramingInfluential(f)}>
-                The <b>{viewLabelFor(f, coord.framing)}</b> changed my mind —{" "}
+                The <b>{viewLabelFor(f, coord.framing)}</b> did more —{" "}
                 <Text as="span" color="fg.subtle">{FRAMING_META[f].gloss}</Text>
               </ApaChoice>
             ))}

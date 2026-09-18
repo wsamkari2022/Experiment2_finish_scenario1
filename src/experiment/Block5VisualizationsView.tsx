@@ -204,7 +204,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     : `“${moverLabel}” moved the most across the journey (by ${Math.round(moverDelta)} points).`;
 
   /* 7 · Line: how the two reflection views shifted across the journey. These only move when the
-     participant generated and compared the second perspective inside a reflection.
+     participant generated and compared the second view inside a reflection.
 
      NAMED DESCRIPTIVELY HERE, NOT "Main" AND "Alternative". Inside a scenario those two words are
      exact — one view is shown first and the other is generated. Across scenarios they are not:
