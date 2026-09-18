@@ -132,6 +132,11 @@ interface ScenarioCVRContent {
  *
  * Only the leads changed. The label, which is what the database stores as stakeholder_text_shown,
  * did not, so records from before and after the change still compare on that field.
+ *
+ * THE HURT LEAD SAYS "is hurt by", not "is affected by" (researcher, 18 September 2026). "Affected"
+ * can be good or bad, so a participant only learned which way the story went from its second
+ * sentence, while the need lead had always said "would have helped them" at once. Both sides are
+ * now equally clear from the first line.
  */
 export interface VoiceLevel {
   /** who they are — used in the leads and in logging. */
@@ -145,17 +150,17 @@ export interface VoiceLevel {
 const VOICE: Record<SalienceWho, VoiceLevel> = {
   close: {
     label: "someone you have known for twenty years",
-    hurtLead: "Imagine someone you have known for twenty years, and care about very much, is affected by what you chose.",
+    hurtLead: "Imagine someone you have known for twenty years, and care about very much, is hurt by what you chose.",
     needLead: "Imagine someone you have known for twenty years, and care about very much, tells you this choice would have helped them.",
   },
   group: {
     label: "someone you have known for a year",
-    hurtLead: "Imagine someone you have known for about a year, and might care about, is affected by what you chose.",
+    hurtLead: "Imagine someone you have known for about a year, and might care about, is hurt by what you chose.",
     needLead: "Imagine someone you have known for about a year, and might care about, tells you this choice would have helped them.",
   },
   system: {
     label: "someone you have just met",
-    hurtLead: "Imagine someone you have only just met is affected by what you chose.",
+    hurtLead: "Imagine someone you have only just met is hurt by what you chose.",
     needLead: "Imagine someone you have only just met tells you this choice would have helped them.",
   },
 };

@@ -953,6 +953,23 @@ the sweep made it one word. Scenarios 4 and 5 moved together, and `npm run valid
 **The scanner is a word list, not a reader.** It found "any more" only because reading scenario 3
 had turned it up first. Read, then scan, then read what the scanner printed.
 
+### The participant's read, and three more decisions — 18 September 2026
+
+The researcher read the minibus story on screen as a participant would, and asked three things:
+what does it mean, is it positive or negative, and why is "you" inside it. Reading it that way
+turned up three problems, and he decided each one:
+
+| Problem found by reading as a participant | His decision |
+|---|---|
+| "Is **affected** by what you chose" does not say good or bad; the reader finds out from the second sentence. The need lead says "would have helped them" at once. | The hurt lead now says **"is hurt by what you chose"**, in all three voices. |
+| The minibus story's "third street" is on no card — only the directness lens mentions it. A participant who saw only the context lens meets it for the first time in the story. The walking story's sweep team was the same. | **Card facts only.** A story may use only what the scene, situation, role or option cards say. Both stories were rewritten. |
+| Some stories left the participant's part to be inferred ("yours was one of those streets"), which reads as bad luck. | **Keep the "you", and say the blame plainly**: "because you chose the long way out", "the rule you chose". 15 hurt stories changed (11 in scenarios 1 and 2, 4 in scenarios 3 and 4); the need stories already said "would have helped them". |
+
+⚠ **The blame is deliberate — do not "fix" it.** The advisor's first instinct was that "you" in the
+story mixes the stakeholder measure with the directness lens, which is the lens that names the
+participant. The researcher weighed that and kept the blame, made plain. The rules are written on
+`identifiedCase` in `block5Types.ts`.
+
 ---
 
 ## 3. Two gates that bite when editing scene text

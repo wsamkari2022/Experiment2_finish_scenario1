@@ -25,7 +25,8 @@
  * others contradicted their own card, their lens or the scenario's clock, or claimed that "only"
  * this option would help when another one also would. Those need a person reading every story under
  * its card, in all three voices. The method, and every defect it found, is audit A10 in
- * docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md (section 2f).
+ * docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md (section 2f). Two of the rules a person must check are
+ * written on `identifiedCase` in block5Types.ts: card facts only, and the blame said plainly.
  *
  * Run: npm run validate:people   (chained into npm run validate:block5)
  */

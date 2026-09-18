@@ -343,9 +343,21 @@ export interface OptionCVRSeed {
   act?: string;
   /** The same act carried out in the parallel world, for the CONTEXT lens. No "you" in it. */
   parallelAct?: string;
-  /** the concrete, identified person/group the option leaves out (AHA, gender-neutral). */
+  /**
+   * The concrete, identified person the option HURTS, shown after the participant says "yes, I
+   * still choose this". It follows "Imagine someone … is hurt by what you chose." and "They", so it
+   * describes what happens to "them" and never names a new person.
+   *
+   * Two rules set by the researcher on 18 September 2026 bind this field and `harm`:
+   *   - CARD FACTS ONLY. Every fact the story needs must be on a card every participant has read:
+   *     the scene, the situation box, the role, or one of the six option cards. Never a fact that
+   *     only a lens gives, because a participant may have seen only the other lens.
+   *   - THE BLAME IS SAID PLAINLY. Where the participant's own act caused the harm, one sentence says
+   *     so in words a child would follow: "…because you chose the long way out", "…the rule you
+   *     chose…". A harm left to be inferred reads as bad luck.
+   */
   identifiedCase: string;
-  /** the concrete harm that case experiences. */
+  /** the concrete harm that case experiences, and — plainly — what the participant did to cause it. */
   harm: string;
   /**
    * The person who NEEDS this option, shown when the participant refuses it. Written to follow the

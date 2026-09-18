@@ -60,9 +60,17 @@ everything. Then read each item against the things printed above it.
   (`benefitCase` + `benefitLost`): somebody this option would have helped, following from its
   `gains`. Both are about the option the participant chose — its title, summary and method.
 - Each opens with one of three leads: "Imagine someone you have **only just met**…", "…known for
-  **about a year**…", "…known for **twenty years**…". **Read every story under all three**
+  **about a year**…", "…known for **twenty years**…" — then "…**is hurt by** what you chose" or
+  "…tells you this choice **would have helped** them". **Read every story under all three**
   (`--voices`). The person can never be in the participant's own household — nobody has "just met"
   their own child.
+- **Card facts only.** Every fact a story needs must be on the scene, situation box, role or one of
+  the six option cards. A fact only a lens gives is a defect: some participants saw the other lens.
+  (A small detail such as "forty minutes" is allowed; a fact the story depends on is not.)
+- **The blame is said plainly.** A hurt story says in plain words what the participant did —
+  "because you chose the long way out", "the rule you chose". A harm left to be inferred is a
+  defect ("not clear"). Do NOT flag the blame itself as mixing in the directness lens — Waseem
+  weighed that and chose it.
 - `npm run validate:people` checks five mechanical rules. On 18 September 2026 all five passed
   while 21 of 48 stories were wrong. The gates are the floor, not the review.
 
@@ -71,7 +79,8 @@ everything. Then read each item against the things printed above it.
 - **The stakeholder is IMAGINED.** Every lead opens with "Imagine". So "nobody close to you is on
   the list" (scenario 3's role) and "nobody you know is a client" (scenario 4's) are NOT
   contradicted by the twenty-year voice. The roles stay as written.
-- The three voice levels and their wording are settled.
+- The three voice levels and their wording are settled (including "Imagine" and "is hurt by").
+- The hurt stories blame the participant plainly, on purpose.
 - The option ordering (the planner) is settled. Never propose reordering.
 - Scenario 5 is a wish, scenario 6 tests the model; both are deliberately light (no lens, no
   stories, no reflection). Scenario 5's method boxes are longer than scenario 4's on purpose; the
