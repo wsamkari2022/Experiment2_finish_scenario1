@@ -3462,12 +3462,14 @@ function CVRReveal({ story, altStory, accent, mode, onAltGenerated, onLensShown,
   /* Generating the second lens re-streams the whole block, not just its first paragraph — the
      consequences are what actually differ between the two lenses. */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- part of the lens reveal's sequencing, which participants see; moving it out of the effect would change the reveal, so it is left as is.
     if (altState === "regenTyping") setB2Part(0);
   }, [altState]);
 
   /* The second lens is "ready" once its LAST line has typed, not its first. */
   useEffect(() => {
     if (altState === "regenTyping" && b2Part >= b2Done) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- same as above: the lens reveal's sequencing is left as is.
       setAltState("ready");
       setCurrentView("second");
     }

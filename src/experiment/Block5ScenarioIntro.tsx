@@ -69,6 +69,7 @@ export function Block5ScenarioIntro({ rootRef, scenario, frozenProfile, index, t
   const pal: Block5Palette = getBlock5Palette(scenario, mode);
   const onAccent = onAccentText(pal.accent);
 
+  // eslint-disable-next-line react-hooks/purity -- useRef keeps only the first render's value, so this is the time the intro appeared; later calls are discarded. Left as is because the stored dwell is measured from it.
   const startedAt = useRef(Date.now());
   const [waited, setWaited] = useState(0);
   useEffect(() => {
