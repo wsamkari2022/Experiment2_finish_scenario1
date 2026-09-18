@@ -428,15 +428,64 @@ const GENERIC: ScenarioCVRContent = {
 const CARE: ScenarioCVRContent = {
   register: "life_and_death",
   impersonalAgent: "the rostering system",
+  /* A three-month cut. See `horizon` on ScenarioCVRContent. */
+  horizon: { soon: "The first week", later: "Before the three months are out" },
+  /*
+   * THE PARTICIPANT SETS A SCHEDULE; THEY DO NOT LEAVE ANYWHERE. The default closing line ends on
+   * "the way you chose to leave", written for the two escapes. See `closingLine`.
+   *
+   * It still says YOU DID, although this scenario is set under a principle the employer published.
+   * That is deliberate and it matches the directness framing clause below ("this is not head office
+   * deciding"): the under-authority manipulation asks whether the participant owns the principle or
+   * defers to it, and this lens is where they are told the schedule is theirs.
+   */
+  closingLine:
+    "{f|No rostering system decided this.} {b|You did.} If it happens, it happens because of the "
+    + "schedule you chose to set.",
+  /*
+   * ───────────────────────────────────────────────────────────────────────────────
+   * THE PARALLEL WORLD IS A WINTER NIGHT SHELTER, AND ITS NUMBERS NOW MATCH, 17 September 2026.
+   *
+   * THE WORLD WAS RIGHT AND THE NUMBERS WERE NOT. A shelter losing a quarter of its capacity in the
+   * cold is the same shape as a care service losing a quarter of its hours, it is life and death,
+   * and it collides with no other scenario's parallel (an airport, a ship, a flood rescue). But it
+   * had 200 people where the scenario has 240, beds where the scenario has hours, two weeks where
+   * the scenario has three months, and "a two weeks of hard frost" as a sentence.
+   *
+   * THE SCARCE THING IS NOW STAFF TIME ON BOTH SIDES, cut by a quarter for three months, with a
+   * share of it spent on overhead: driving between homes there, paperwork and handovers here. That
+   * is what lets "redraw the rounds to cut the driving" transplant at all.
+   *
+   * AND THE REVENUE FACT HAS A PARTNER: council-paid beds and donation-run beds, as the scenario has
+   * council-contract rounds and pay-by-visit rounds. Without it "drop the rural rounds" has nothing
+   * to become over here.
+   *
+   * The clock is the parallel's own — see `horizon` on CVRParallelWorld. A night shelter's first
+   * cost lands on the first night, not in the first week.
+   * ───────────────────────────────────────────────────────────────────────────────
+   */
   parallel: {
     register: "life_and_death",
+    horizon: { soon: "The first night", later: "Before the cold months end" },
     setting:
-      "Forty-five beds left in the winter night shelter, down from sixty. Two hundred people on the list, and a two weeks of hard frost forecast.",
+      "A winter night shelter has lost a quarter of its funding. {a|240} people rely on it, and {a|40} staff keep it open. {a|1,600} staff-hours a week, cut to {a|1,200} for the {a|three} coldest months. About {a|500} of those hours go on paperwork and handovers. The council pays for some of the beds, and the rest run on donations that no longer cover them.",
+    mirror: [
+      { here: "{a|240} clients",
+        there: "{a|240} people who rely on the shelter" },
+      { here: "{a|40} caregivers",
+        there: "{a|40} staff" },
+      { here: "{a|1,600} caregiver-hours a week, cut to {a|1,200}",
+        there: "{a|1,600} staff-hours a week, cut to {a|1,200}" },
+      { here: "About {a|500} of those hours spent driving",
+        there: "About {a|500} of those hours on paperwork and handovers" },
+      { here: "For the next {a|three} months",
+        there: "For the {a|three} coldest months" },
+    ],
     valuePhrase: {
       vulnerabilityProtectionSensitivity: "the people who would not survive a night outside",
       groupSizeSensitivity: "much of the larger group who could have been let in",
       gainResponsivenessSensitivity: "the funding that keeps the doors open at all",
-      outcomeAggregationSensitivity: "the greater number those beds could have sheltered",
+      outcomeAggregationSensitivity: "the greater number those staff-hours could have sheltered",
     },
   },
   valuePhrase: {

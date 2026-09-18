@@ -413,7 +413,10 @@ export interface OptionCVRSeed {
  */
 export type Block5MethodKind =
   | "car" | "bus" | "van" | "foot" | "stay"
-  | "score" | "list" | "draw" | "hold";
+  | "score" | "list" | "draw" | "hold"
+  /* Scenario 4 cuts HOURS rather than handing out a supply: a round redrawn on the map, one even
+     cut for everybody, and every visit trimmed. Added 17 September 2026. */
+  | "route" | "even" | "trim";
 
 /**
  * HOW THIS OPTION IS ACTUALLY CARRIED OUT.
@@ -437,8 +440,16 @@ export interface Block5OptionMethod {
   kind: Block5MethodKind;
   /** The method in as few words as possible: "Your own car", "On foot". */
   by: string;
-  /** The qualifying clause: which route, what it costs, what stays behind. */
-  detail: string;
+  /**
+   * The qualifying clause: which route, what it costs, what stays behind. OPTIONAL.
+   *
+   * It must say something the rest of the card does not. Written 18 September 2026, after the
+   * researcher noticed scenario 4's boxes repeating their own summaries almost word for word: the
+   * box sits directly under the summary, so a detail that restates it is the same sentence read
+   * twice. When the method's name is all there is to add, leave this out and the card shows the
+   * name alone.
+   */
+  detail?: string;
 }
 
 export interface Block5ScenarioOption {

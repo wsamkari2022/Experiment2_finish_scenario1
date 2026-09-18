@@ -534,6 +534,14 @@ somewhere, so a field added to `Block5ScenarioOption` later cannot slip through 
 deliberately ignores: the prefixed ids, the recipient half's absent `cvrSeed`, and the two
 scenarios' own situation boxes, roles and titles — those are meant to differ.
 
+**ONE PERMITTED DIFFERENCE, since 18 September 2026: the method box's detail line.** The
+researcher's decision. Scenario 4's detail lines were shortened so none repeats its own card;
+scenario 5 keeps its longer ones. Scenarios 5 and 6 are kept deliberately light - they test the
+position effect and nothing else, with no reflection and no clarification - and scenario 5 already
+differs from 4 in running no misaligned check at all. **Only the detail line is exempt:** the
+method's icon and bold name are still compared, and a mutation test confirms a one-sided change to
+either, or to any other field, still fails the gate.
+
 **In the blocking chain**, unlike `audit:rules`, because it passes today. A validator that cannot
 pass gets switched off; one that can, and does, is worth stopping a build for.
 
@@ -690,6 +698,73 @@ quadrant of the position analysis becomes unreachable for the archetype the stud
 
 **Put the champion 3rd, 4th or 5th, and make the worst performer the option furthest from a
 protector** — in scenario 3, the rule that maximizes the value a protector scores lowest.
+
+---
+
+## 2d. WHAT SCENARIOS 4 AND 5 TAUGHT
+
+### ⚠ A6 has to cover the STAKEHOLDER story, and every "only" in it
+
+The person who speaks after the lens makes the case for an option by saying **nobody else would
+have helped them**. That word *only* is the whole force of the story, and it is the easiest thing
+in the scenario to make false: rewrite one card precisely and a story on another card stops being
+true. **Scenario 4 had six of these, and running the check backwards found a seventh in scenario 3.**
+
+| The story said | Why it was false |
+|---|---|
+| "Every other option leaves that driving time exactly where it is" | dropping 60 clients, or the rural rounds, also cuts driving |
+| "the only rule under which they are still a client at all" | four of the six rules keep every client |
+| "Every other rule here takes their hours" | the protected list keeps the hours of anyone who lives alone |
+| "the only rule here that does not rank them at all" | shortening every visit ranks nobody either |
+| "Under every other rule their visit is cut" | the family rule also protects somebody with nobody nearby |
+| (scenario 3) "Every other rule reads their condition as a reason to treat someone else" | the draw gives the sickest EXTRA slips |
+
+**The method:** print every `benefitLost` containing *only*, *every other*, *no other* or *any
+other*, and test it against all six cards. The fix is always the same — find the person that
+option, and that option alone, would help. It usually makes a better story than the one it replaces.
+
+### ⚠ A fix can create the next contradiction — re-read after every fix
+
+The A6 fix for the protected list gave its stakeholder "a daughter nearby", to make the story true.
+The card still said the protected 50 "live alone **with no other support**" — and a daughter nearby
+IS support. The fix had made the card and its own story disagree. **After fixing a story, re-read the
+card it belongs to.**
+
+### ⚠ Two options can be the same option in different words
+
+"Cut every round by the same share" and "Shorten every visit" read differently and **did the same
+thing**: the first one's own reflection said *every visit is a quarter shorter*. G6 did not notice,
+because their NUMBERS were far enough apart. Now one takes whole visits away and keeps the rest full
+length; the other keeps every visit and shortens each. **Three full visits against four short ones
+is a difference a reader can see.** Check the MECHANISM of every pair, not just the metrics.
+
+### ⚠ The unit has to work for every option's arithmetic
+
+The box said 1,600 **visit**-hours. One option recovers 300 of the lost hours from **driving**, and
+driving is not visit time, so under the box's own unit that option could not work. The budget is
+caregiver-hours, driving included — exactly 40 caregivers at 40 hours. Stating how much of it is
+driving then exposed a hidden cost: shortening every visit keeps every trip, so the visits absorb
+the whole cut and come out **a third** shorter, not a quarter.
+
+### ⚠ Count every "about N people" against the capacity it has to absorb
+
+"Twelve clients lose a visit" cannot find 400 hours a week — that is over thirty hours each, and
+nobody gets thirty hours of home care. A client is about five visit-hours plus their share of the
+driving, so it takes about 60.
+
+### ⚠ The twins are read from TWO chairs
+
+Scenario 4's reader is the coordinator; scenario 5's is a caregiver who decides nothing. A shared card
+that asks **"Do you protect a few people completely, or many a little?"** is asking the caregiver
+about a power they were explicitly told they do not have. **Every "you" on a shared card has to be
+true from both seats** — ask the question impersonally.
+
+### ⚠ The time label and the line under it must not repeat each other, or disagree
+
+Satisfying the concreteness gate by adding "in the first week" to a line printed under the label
+**"The first night"** produced *The first night: 60 people are turned away in the first week.* **The
+gate reads `soon` and `later` together**, so as long as the `later` line carries a timescale, the
+`soon` line does not need one of its own — and should not echo the label above it.
 
 ---
 

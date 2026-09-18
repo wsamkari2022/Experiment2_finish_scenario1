@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock } from "react-icons/lu";
+import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock, LuRoute, LuEqual, LuClock } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
@@ -264,6 +264,10 @@ const METHOD_ICON: Record<Block5MethodKind, ReactNode> = {
   list: <LuListOrdered />,
   draw: <LuShuffle />,
   hold: <LuLock />,
+  /* Scenario 4: how the 400 cut hours are found. */
+  route: <LuRoute />,
+  even: <LuEqual />,
+  trim: <LuClock />,
 };
 
 const VALUE_NAME: Record<Block5PolicyDimKey, string> = {
@@ -2761,8 +2765,9 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
                   </Text>
                   <Text fontSize="sm" color={pal.textMuted} lineHeight="tall">
                     <Text as="span" fontWeight="bold" color={pal.text}>{option.method.by}</Text>
-                    {" — "}
-                    {option.method.detail}
+                    {/* No dash when there is no detail: the name alone is the whole box. See the
+                        note on `detail` in block5Types.ts for when a card should have one. */}
+                    {option.method.detail && <>{" — "}{option.method.detail}</>}
                   </Text>
                 </Box>
               </HStack>

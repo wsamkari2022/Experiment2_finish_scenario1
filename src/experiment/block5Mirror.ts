@@ -166,6 +166,21 @@ function findPair(): { decider: string; recipient: string } | null {
  *   - `id`, because the two halves are prefixed (care_… and wish_…);
  *   - `cvrSeed`, because a recipient scenario runs no reflection and carries none by design —
  *     simulate_position.cjs asserts that separately;
+ *   - `method.detail` — THE ONE LINE UNDER THE METHOD'S NAME. The researcher's decision,
+ *     18 September 2026. Scenario 4's boxes were shortened so that no detail line repeats its own
+ *     card; scenario 5 keeps its original, longer lines. The reasoning: scenario 5 differs from 4
+ *     only in this box and in running no misaligned check at all, and scenarios 5 and 6 are kept
+ *     deliberately light - they test the position effect and nothing else, without the reflection
+ *     and clarification that scenario 4 puts a participant through.
+ *
+ *     ONLY THE DETAIL LINE IS EXEMPT. The method's `kind` (its icon) and `by` (its bold name) are
+ *     still compared, so both halves must still name the same method the same way. A change to
+ *     either on one side alone is still caught.
+ *
+ *     WHAT THIS COSTS, recorded so nobody rediscovers it: the two screens now differ by one short
+ *     line per card. The position effect assumes the content is held constant, and this is a small,
+ *     known exception to that - a difference in how the method is explained, not in what the option
+ *     is, does, costs or scores.
  *   - everything at SCENARIO level: the situation box, the role and the title are meant to differ,
  *     since one scenario asks what you decide and the other what you hope somebody else decides.
  *
@@ -205,7 +220,10 @@ export function mirrorContentDifferences(deciderId: string, recipientId: string)
          sides, so a difference is a real difference and not a reordering of the same object. */
       const norm = (v: unknown) =>
         v && typeof v === "object"
-          ? JSON.stringify(Object.fromEntries(Object.entries(v as object).sort()))
+          ? JSON.stringify(Object.fromEntries(Object.entries(v as object)
+              /* the one permitted difference: see `method.detail` in the note above */
+              .filter(([sub]) => !(k === "method" && sub === "detail"))
+              .sort()))
           : JSON.stringify(v);
       if (norm(xv) !== norm(yv)) {
         out.push(`option ${i + 1} (${x.id} / ${y.id}) differs on "${k}": ${short(xv)}  ≠  ${short(yv)}`);

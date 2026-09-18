@@ -122,7 +122,11 @@ for (const SCEN of WITH_LENSES) {
       score: /\bscore|\brank|\bmodel|\bodds\b/i,
       list: /\blist\b|\bregister\b|\bsort|\bworked down/i,
       draw: /\bdraw\b|\bdrawn\b|\blottery\b|\bslip/i,
-      hold: /\bhold|\bheld\b|\bkept\b|\breserv/i,
+      hold: /\bhold|\bheld\b|\bkept\b|\breserv|\bprotect/i,
+      /* Scenario 4: cutting HOURS. */
+      route: /\bround|\bmap\b|\bdriv|\broute/i,
+      even: /\bevery client|\bone visit in four|\bequal/i,
+      trim: /\bshort|\btrim|\bcut every visit/i,
     }[kind];
     if (!words) { noMethod.push(o.id + " (no method on the card)"); continue; }
     if (!words.test(strip(pair.directness.body))) noMethod.push(o.id + "/directness");

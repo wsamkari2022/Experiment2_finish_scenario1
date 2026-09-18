@@ -26,6 +26,10 @@
  * cvrSeed by design, and the two scenarios' own situation boxes, roles and titles are MEANT to
  * differ, because one asks what you decide and the other what you hope somebody else decides.
  *
+ * AND THE METHOD BOX'S DETAIL LINE, since 18 September 2026, on the researcher's decision: scenario
+ * 4's boxes were shortened and scenario 5 keeps its longer ones. The method's icon and bold name are
+ * still compared. See the note in block5Mirror.ts for the reasoning and what it costs.
+ *
  * Run: npm run validate:twins   (chained into npm run validate:block5)
  */
 const path = require("node:path");
@@ -86,7 +90,7 @@ ok("the two halves offer the same number of options",
 ok("every option matches its twin on every authored field",
    diffs.length === 0,
    diffs.length === 0
-     ? `${decider.options.length} options, all fields identical`
+     ? `${decider.options.length} options, all fields identical (method detail exempt)`
      : `${diffs.length} difference(s)`);
 
 for (const d of diffs) console.log("          " + d);
