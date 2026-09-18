@@ -84,8 +84,13 @@ export interface RemoteBackend {
  */
 let remote: RemoteBackend | null = null;
 
-/** Installs the server backend. Called once at startup in step 8. */
-export function useRemoteBackend(backend: RemoteBackend | null): void {
+/**
+ * Installs the server backend. Called once at startup in step 8.
+ *
+ * Not a React hook, so it must not be named `use…`: that prefix tells the hooks linter to demand
+ * hook call rules, and the call site is inside an async callback on purpose.
+ */
+export function setRemoteBackend(backend: RemoteBackend | null): void {
   remote = backend;
   if (backend) void flushOutbox();
 }

@@ -12,9 +12,9 @@ import {
   saveCompletion,
   saveParticipant,
   saveProgress,
+  setRemoteBackend,
   syncBlocks,
   syncResumeState,
-  useRemoteBackend,
 } from "./storage";
 import { apiClient, isApiAvailable } from "./apiClient";
 import { setActiveStage, startActiveClock, stopActiveClock } from "./activeTime";
@@ -290,7 +290,7 @@ export function ExperimentFlow() {
       const available = await isApiAvailable();
       if (cancelled) return;
       if (available) {
-        useRemoteBackend(apiClient);
+        setRemoteBackend(apiClient);
         void flushOutbox();
         /*
          * Sync immediately, because this effect finishes AFTER the first stage effect has already
