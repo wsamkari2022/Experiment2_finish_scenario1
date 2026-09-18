@@ -510,6 +510,32 @@ this order**, because each one assumes the one before it has already passed.
 | **A5** | The rendered-lens read | print all 12 lenses as plain text | the first world's nouns in the second world, a fast option that reads slow, a pronoun that needs working out |
 | **A6** | Card-versus-story | print card next to both lenses | a card that claims something its own reflection disproves |
 | **A7** | Run it backwards | every audit, on the scenarios already signed off | the defect you only learned to see while doing the NEXT scenario |
+| **A8** | The matched pair | `npm run validate:twins` | scenario 4 and scenario 5 drifting apart, which nothing else can see |
+
+### A8 — scenarios 4 and 5 are one option set written twice
+
+**Read this before touching scenario 4.** From block5Mirror.ts, on the measure the pair exists for:
+
+> Because the content is held exactly constant, ANY difference between the two is attributable to
+> position and to nothing else.
+
+That sentence is the claim, and `tools/validate_twins.cjs` is the only thing that makes it true.
+Edit one half alone and **every number downstream still computes** — the position effect, the
+decided-versus-wished comparison, the whole matched pair — and silently starts measuring CONTENT
+instead of POSITION, which is the single confound the design was built to remove.
+
+**A check already existed and compared TITLES ONLY.** Mutation-tested against five deliberate
+one-sided edits, that version would have passed three of them: a rewritten `givesUp`, a changed
+performance number and a changed fingerprint. All five are caught now, and the gate names the
+option and the field.
+
+It compares every authored field by reading the objects' own keys rather than a list written down
+somewhere, so a field added to `Block5ScenarioOption` later cannot slip through un-compared. What it
+deliberately ignores: the prefixed ids, the recipient half's absent `cvrSeed`, and the two
+scenarios' own situation boxes, roles and titles — those are meant to differ.
+
+**In the blocking chain**, unlike `audit:rules`, because it passes today. A validator that cannot
+pass gets switched off; one that can, and does, is worth stopping a build for.
 
 ### A1 — the gate suite
 

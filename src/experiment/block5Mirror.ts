@@ -149,20 +149,82 @@ function findPair(): { decider: string; recipient: string } | null {
 }
 
 /**
+ * ════════════════════════════════════════════════════════════════════════════════════════════
+ * EVERY WAY THE TWINS COULD DRIFT APART, LISTED.
+ *
+ * THIS IS A PRECONDITION OF THE MEASURE, NOT A NICETY. The mirror's whole claim is that nothing
+ * changed except the chair the participant sits in — decide for others, then wish for yourself.
+ * The moment one side is edited alone, every number downstream still computes and silently starts
+ * measuring CONTENT instead of POSITION, which is the one thing it exists to rule out.
+ *
+ * IT USED TO COMPARE TITLES AND NOTHING ELSE. That is the weakest version of this check there is:
+ * it passes while a `givesUp` line, a whole fingerprint or all five performance numbers differ
+ * between the two halves. Scenario 4's audit is about to rewrite exactly those fields, six options
+ * at a time, and a title-only guard would have reported everything fine.
+ *
+ * WHAT MAY LEGITIMATELY DIFFER, and is therefore not compared:
+ *   - `id`, because the two halves are prefixed (care_… and wish_…);
+ *   - `cvrSeed`, because a recipient scenario runs no reflection and carries none by design —
+ *     simulate_position.cjs asserts that separately;
+ *   - everything at SCENARIO level: the situation box, the role and the title are meant to differ,
+ *     since one scenario asks what you decide and the other what you hope somebody else decides.
+ *
+ * FIELDS ARE READ OFF THE OBJECTS rather than from a list written here. A list is a thing to
+ * forget to update: add a field to Block5ScenarioOption, author it on one side, and a hardcoded
+ * comparison keeps reporting a match. The union of both sides' own keys cannot miss one.
+ *
+ * Returns a readable description of each difference, most useful first.
+ * ════════════════════════════════════════════════════════════════════════════════════════════
+ */
+export function mirrorContentDifferences(deciderId: string, recipientId: string): string[] {
+  const a = BLOCK5_SCENARIOS.find((s) => s.id === deciderId);
+  const b = BLOCK5_SCENARIOS.find((s) => s.id === recipientId);
+  if (!a) return [`no scenario with id ${deciderId}`];
+  if (!b) return [`no scenario with id ${recipientId}`];
+  if (a.options.length !== b.options.length) {
+    return [`option counts differ: ${a.options.length} vs ${b.options.length}`];
+  }
+
+  /** Field names that are allowed to differ, for the reasons in the note above. */
+  const EXEMPT = new Set(["id", "cvrSeed"]);
+
+  const out: string[] = [];
+  const short = (v: unknown) => {
+    const s = typeof v === "string" ? v : JSON.stringify(v);
+    return s === undefined ? "(absent)" : s.length > 64 ? s.slice(0, 61) + "…" : s;
+  };
+
+  a.options.forEach((x, i) => {
+    const y = b.options[i];
+    /* The union, so a field authored on ONE side only is caught rather than skipped. */
+    const keys = [...new Set([...Object.keys(x), ...Object.keys(y)])].filter((k) => !EXEMPT.has(k));
+    for (const k of keys) {
+      const xv = (x as unknown as Record<string, unknown>)[k];
+      const yv = (y as unknown as Record<string, unknown>)[k];
+      /* Deep for fingerprint, metrics and method; plain for the strings. Stable key order both
+         sides, so a difference is a real difference and not a reordering of the same object. */
+      const norm = (v: unknown) =>
+        v && typeof v === "object"
+          ? JSON.stringify(Object.fromEntries(Object.entries(v as object).sort()))
+          : JSON.stringify(v);
+      if (norm(xv) !== norm(yv)) {
+        out.push(`option ${i + 1} (${x.id} / ${y.id}) differs on "${k}": ${short(xv)}  ≠  ${short(yv)}`);
+      }
+    }
+  });
+  return out;
+}
+
+/**
  * Do the two scenarios really offer the same six options?
  *
- * The mirror only measures position if the content is identical, so this is a PRECONDITION of the
- * measure rather than a nicety. Titles are compared in order because the pair is authored as one
- * option set written twice; if an edit ever changes one side only, every number below would still
- * compute and would silently be measuring content instead of position.
+ * Kept as a boolean for the callers that only need one, and now backed by the full comparison
+ * above rather than by a title check. See `mirrorContentDifferences` for what is compared and why.
  *
  * Exported so tools/simulate_position.cjs can assert it rather than trusting it.
  */
 export function mirrorContentMatches(deciderId: string, recipientId: string): boolean {
-  const a = BLOCK5_SCENARIOS.find((s) => s.id === deciderId);
-  const b = BLOCK5_SCENARIOS.find((s) => s.id === recipientId);
-  if (!a || !b || a.options.length !== b.options.length) return false;
-  return a.options.every((o, i) => o.title === b.options[i].title);
+  return mirrorContentDifferences(deciderId, recipientId).length === 0;
 }
 
 /**
