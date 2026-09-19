@@ -530,7 +530,7 @@ export type StakePosition =
    * SCENARIO 6 ONLY. The participant is behind Rawls's veil: they write a rule before learning
    * which person in the situation they will be.
    *
-   * This is not a sixth rung on the same ladder, and it must never be analysed as one. The other
+   * This is not a sixth rung on the same ladder, and it must never be analyzed as one. The other
    * five vary WHO CARRIES THE COST, which is the block's manipulation. This one removes the
    * question: there is no position to occupy, because not knowing is the condition of the
    * exercise. `positionRows()` skips it for that reason.
@@ -901,7 +901,10 @@ export interface Block5ScenarioResult {
    */
   introSeconds?: number;
   /**
-   * per-scenario VCI contribution S_i (0–1).
+   * Per-scenario VCI contribution, 0–1: the weight of the final choice's alignment label on this
+   * scenario's menu (`scenarioVciScore` in block5CVR.ts). Six options: Aligned 1.00, Weakly aligned
+   * 0.80, Misaligned 0.50, Strongly misaligned 0.10. Four options (scenario 6): 1.00 / 0.67 / 0.33 /
+   * 0.00. The label is the one the option had on the profile brought INTO the scenario.
    *
    * Recorded for recipient scenarios too, but NOT averaged into VCI — see `computeVCI`. Keeping
    * the number lets the Responsibility Gap compare "consistency when deciding" against

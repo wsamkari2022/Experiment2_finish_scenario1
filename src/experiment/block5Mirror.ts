@@ -89,7 +89,7 @@ export interface MirrorSide {
   optionTitle: string;
   /** 0–100: share of the distance this menu made available that the participant used */
   departure: number;
-  /** 0–1 alignment credit, the same quantity VCI averages */
+  /** 0–1 label weight (`scenarioVciScore`), the same quantity VCI averages */
   vciScore: number;
   /** seconds spent on this scenario, rounded */
   seconds: number;
@@ -283,7 +283,12 @@ export function analyseMirror(
     optionId: res.selectedOptionId,
     optionTitle: titleOf(row.scenarioId, res.selectedOptionId),
     departure: row.departure,
-    vciScore: res.vciScore ?? scenarioVciScore(res.alignmentLevel ?? "misaligned"),
+    // A stored weight wins. The fallback recomputes it from the stored label on this scenario's own
+    // menu size, exactly as the simulation page does when it saves the result.
+    vciScore: res.vciScore ?? scenarioVciScore(
+      res.alignmentLevel ?? "misaligned",
+      BLOCK5_SCENARIOS.find((s) => s.id === row.scenarioId)?.options.length ?? 6,
+    ),
     seconds: Math.round((res.timeMs ?? 0) / 1000),
   });
 
@@ -313,7 +318,7 @@ export function analyseMirror(
    *
    * The two can still differ when the SAME option is chosen twice, and legitimately so: scenario 4
    * is scored against the profile as it stood before its own update, scenario 5 against the profile
-   * after it. That residue is real movement in the participant's values, not an artefact — but it
+   * after it. That residue is real movement in the participant's values, not an artifact — but it
    * is small, where the old figure was dominated by scenarios that had nothing to do with the pair.
    */
   const vciActed = Math.round(decided.vciScore * 100);

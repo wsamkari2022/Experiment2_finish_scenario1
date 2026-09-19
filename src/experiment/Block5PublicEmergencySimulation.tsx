@@ -1213,7 +1213,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       decisionRole: scenario.decisionRole ?? "decider",
       predictionTest: opts.predictionTest,
       introSeconds: introSecondsRef.current[scenario.id],
-      vciScore: scenarioVciScore(opt.level),
+      vciScore: scenarioVciScore(opt.level, scenario.options.length),
       performanceScore: performanceScore(opt),
       performanceCaptured: capturedOf(scenario, opt),
       performanceMenu: { worst: Math.round(menuRange(scenario).worst), best: Math.round(menuRange(scenario).best) },
@@ -1244,16 +1244,15 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     /*
      * THE FINAL CHOICE IS JUDGED ON THE PROFILE THE PARTICIPANT BROUGHT INTO THIS SCENARIO - the same
      * `labeled` the options were shown with, and the same one the keep path uses in commitChoice.
-     * Changed on 18 September 2026; it used to re-label on `nextProfile`, the profile AFTER this
-     * clarification had moved it.
+     * NOT `nextProfile`, the profile AFTER this clarification has moved it.
      *
      * WHY. The keep path never re-labels: an endorsement moves the profile for the NEXT scenario and
-     * the choice itself keeps the label it had. Re-labelling here meant the same choice, for the same
-     * reason, earned more credit when the participant walked through APA instead - naming a value
-     * lifts that value by 30 and lowers the rest by 10, and the option they then pick is scored on the
-     * profile they just moved. Measured over 2,000 random profiles: a participant who takes up a new
-     * value in every scenario scored VCI 21 by keeping and 49 by clarifying - the one behavior VCI
-     * exists to catch, hidden by the route taken. Judged at entry on both paths it scores 20.
+     * the choice itself keeps the label it had. Relabeling here would let the same choice, for the
+     * same reason, earn more when the participant walks through APA instead - naming a value lifts it
+     * by 30 and lowers the rest by 10, and the option they then pick would be scored on the profile
+     * they just moved. Measured over 2,000 random starting profiles: a participant who takes up a new
+     * value in every scenario scores VCI 31 by either route; relabeled here, the APA route would give
+     * 56 - a random responder's score, for the one behavior VCI exists to catch. Gate V8 guards it.
      *
      * NOTHING IS LOST. What the participant said is stored in `apa`, and the moved profile in
      * `policySnapshotAfter`, so the post-clarification label can be recomputed whenever it is wanted.
@@ -1305,7 +1304,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       alignedToOriginal,
       decisionRole: scenario.decisionRole ?? "decider",
       introSeconds: introSecondsRef.current[scenario.id],
-      vciScore: scenarioVciScore(opt.level),
+      vciScore: scenarioVciScore(opt.level, scenario.options.length),
       performanceScore: performanceScore(opt),
       performanceCaptured: capturedOf(scenario, opt),
       performanceMenu: { worst: Math.round(menuRange(scenario).worst), best: Math.round(menuRange(scenario).best) },

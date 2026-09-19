@@ -3,7 +3,7 @@
 A PhD study: participants answer four short blocks, then five emergency scenarios, then see their
 results, then give feedback. React 19 + Chakra UI v3 + Vite + TypeScript.
 
-## Before analysing any collected data
+## Before analyzing any collected data
 
 **Read these two, in this order.**
 
@@ -66,9 +66,16 @@ to write a paper.
   numbers to make one of these pass — see `docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md`, section 2g.
 - **A final choice reached through APA is judged on the profile the participant brought into the
   scenario**, exactly like a choice kept after the CVR (since 18 September 2026). Neither path
-  re-labels the choice inside its own scenario; both move the profile for the next one. Re-labelling
-  on the clarified profile let a participant who changes value every scenario score 49 instead of 21.
-  Gate V8 in `simulate_vci.cjs` guards it; ties in fit are broken by `policyDelivery`, never by id (V9).
+  re-labels the choice inside its own scenario; both move the profile for the next one. Relabeling
+  on the clarified profile would let a participant who changes value every scenario score 56 instead
+  of 31. Gate V8 in `simulate_vci.cjs` guards it; ties in fit are broken by `policyDelivery`, never
+  by id (V9).
+- **VCI's label weights are derived, not chosen (since 19 September 2026).** Each label carries the
+  average place score of the places it covers, `b(r) = (n − r) / (n − 1)`: on six options 1.00 /
+  0.80 / 0.50 / 0.10, so blind picking is exactly 50. The six levels (Highly Consistent, Mostly
+  Consistent, Moderate, Low, Very Low, Highly Inconsistent) sit at 90 / 80 / 65 / 50 / 30, computed
+  from the same weights. Do not hand-tune either; gates V10–V12 check both. Method:
+  `docs/BLOCK5_VCI_METHOD.md`; figures: `npm run report:vci`.
 - The "How to read the four values in this scenario" section is absent from scenario 6 on purpose:
   its four options are the four values, and naming them would turn the prediction test into "pick
   your value".

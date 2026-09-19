@@ -1,260 +1,271 @@
-# Value Consistency Index (VCI) — change plan
+# Value Consistency Index (VCI) — method
 
-**Status:** APPROVED AND IMPLEMENTED, 2026-08-25. Section 8 holds the measured before/after.
-**Scope:** VCI only. **Stability is deliberately excluded** and will be discussed separately.
-**Written:** 2026-08-25
-
----
-
-## 1. What VCI is supposed to answer
-
-> *Across the five Block-5 scenarios, did this participant choose options that fitted their own
-> values — judged against their values **as they stood at that moment**?*
-
-The profile is not fixed. It moves as the participant makes choices, which is the point of the
-block. VCI therefore has to be judged against a moving target, and that is correct.
+**Adopted:** 19 September 2026, by the researcher.
+**Authority:** the code. The VCI section of `src/experiment/block5CVR.ts` is the specification; this
+page restates it for reading away from the code. If the two ever disagree, the code is right and
+this page is stale.
+**Checked by:** `npm run validate:vci` (gates V1–V12) and `npm run report:vci` (every measured figure
+below).
 
 ---
 
-## 2. What is wrong today
+## 1. The question VCI answers
 
-### 2.1 The reward for a genuine endorsement is paid twice
+> Across the scenarios in which the participant **decided**, how well did the option they finally
+> chose fit their own values — judged against their values **as they stood when that scenario
+> opened**?
 
-When a participant picks an option that clashes with their values and then says *"yes, I genuinely
-endorse this"*, two separate things happen:
-
-1. **Their profile moves.** The endorsed value gains **+30**, the value it displaced loses **−20**
-   (`applyEndorsementUpdates`). From the next scenario onward, options built on that value are
-   labeled aligned or weakly aligned — so choosing it again scores full credit, naturally.
-2. **That same scenario's VCI score jumps** from 0.35 to 0.9, via
-   `Math.max(BASE_CREDIT[level], reflectiveCredit(endorsement))`.
-
-Step 1 is the design working as intended. Step 2 pays for the same act a second time.
-
-### 2.2 What that lets through
-
-Because the reflective credit is re-earned every time a participant goes against their (newly
-moved) profile, a participant who changes what they value **in every single scenario** collects
-0.9 five times over.
-
-| Participant | Behavior | VCI today |
-|---|---|---|
-| Mixed-loyal | always picks a fitting option | 90 |
-| **Flip-flopper** | **a different clashing value every scenario**, endorses each one | **90** |
-| **Contrarian** | **always picks the option furthest from their values** | **90** |
-
-The two least consistent participants possible score the same as a consistent one. The single
-thing VCI exists to detect is the thing it currently cannot see.
-
-### 2.3 A second, smaller problem
-
-`BASE_CREDIT` gives a second-best-fit option only **0.75**. A participant who always stays inside
-their own top two options — never once choosing against themselves — cannot reach 100.
+100 means they chose the option that fit them best every time. VCI is about **choices**. Whether the
+values themselves moved is Stability; how good the chosen options were on their outcomes is
+Performance. The three are kept apart so that one number never answers two questions.
 
 ---
 
-## 3. The change
+## 2. Where the label comes from
 
-### 3.1 The scale
+VCI scores the **alignment label** of the final choice, so it starts where the label does
+(`labelOptions` and `rankLabel` in `block5CVR.ts`).
 
-`scenarioVciScore` stops consulting the endorsement. It becomes the base credit alone:
+**Shortfall.** For a participant whose score on policy value *k* is *u_k*, and an option that
+delivers *f_k* on it, over the four policy values:
 
-| What the participant chose | Credit |
+```
+shortfall(option) = Σ_k (u_k / 100) × max(0, u_k − f_k)
+```
+
+Only falling **below** the participant's score counts, and a miss on a value they hold strongly
+counts more.
+
+**Place in line.** The options are ordered from the smallest shortfall (place 1) to the largest
+(place *n*). Options with the same shortfall are ordered by how much they give of what the
+participant holds, `Σ_k (u_k / 100) × f_k` (`policyDelivery`), and only then by id.
+
+**Label.** On a six-option menu: place 1 **Aligned**, place 2 **Weakly aligned**, places 3–4
+**Misaligned**, places 5–6 **Strongly misaligned**. On the four-option menu of scenario 6: one of
+each, in that order.
+
+---
+
+## 3. The three equations
+
+```
+(1) Place score    b(r) = (n − r) / (n − 1)
+                   the share of the OTHER options on the menu that fit worse than place r
+
+(2) Label weight   w(L) = the average of b(r) over the places r that carry label L
+
+(3) VCI            VCI = round( 100 × ( w(L_1) + w(L_2) + … + w(L_K) ) / K )
+                   L_k = the label of the final choice in the k-th scenario that counts
+                   K   = the number of scenarios that count (the deciders, 1–4, so K = 4)
+```
+
+| Code | Equation |
 |---|---|
-| their best-fit option (*aligned*) | **1.00** |
-| their second-best option (*weakly aligned*) | **0.85** |
-| *misaligned* | **0.35** |
-| *strongly misaligned* | **0.00** |
-
-VCI = mean of the five scenario credits × 100.
-
-`reflectiveCredit()` and the `Math.max` are deleted.
-
-**Chosen deliberately over the alternative** of treating best-fit and second-best as equal (both
-1.00). That variant would give every "stayed inside my top two" participant a flat 100 and lose
-the distinction between *always picked my favourite* and *always picked my second favourite*.
-Option B keeps that distinction at a cost of 15 points.
-
-### 3.2 No data is lost
-
-The raw answer is already stored separately as `cvrEndorsement` on each scenario result
-(`"strong" | "weak" | "no" | "n/a"`). Removing it from the VCI *formula* does not remove it from
-the *record*. Every analysis that wants to relate endorsement to behavior can still do so, and
-the participant record carries it unchanged.
-
-### 3.3 The profile bump, corrected
-
-Raised in review: *"if the user keeps the best-fit option, why decrease the old value by −10? The
-best-fit value is the same as the top value."*
-
-Correct, and the current proposal was wrong. Two guards are needed.
-
-**Guard 1 — never subtract from the value just raised.** The CVR path already does this
-(`if (displaced && displaced !== endorsed)`). The keep path must do the same.
-
-**Guard 2 — only subtract from a value the option genuinely neglects.** `displacedTopValue()`
-looks for the highest-scoring value this option falls short on by more than 5 points — which is
-right — but if the option falls short on *nothing*, it falls back to returning the top value
-anyway. That fallback must return `null` instead, so an option that satisfies every value costs
-the participant nothing.
-
-The corrected rule:
-
-| The participant keeps | Its main value | A value the option actually neglects |
-|---|---|---|
-| their **best-fit** option | **+15** | **−10**, or nothing if it neglects none |
-| their **second-best** option | **+20** | **−15**, or nothing if it neglects none |
-
-**Why the second row moves further.** Keeping your top option tells the system almost nothing it
-did not already believe. Keeping your **second** tells it the ordering may be wrong, so it should
-move further. This is what makes the value you picked climb toward the top and the previous top
-settle beneath it — the behavior asked for in review.
-
-**Honest limit.** This cannot guarantee the picked value becomes #1 after exactly one choice.
-Which options count as fitting depends on all four values together
-(`policyAlignmentScore` is threshold satisfaction across the set), not on one value alone. What it
-does guarantee is a decisive move, typically overtaking within one or two scenarios. Forcing a
-guaranteed swap would make the profile jump, and since the CVR aims at whichever value is on top,
-the reflection questions would jump with it.
-
-### 3.4 What the participant is told
-
-The current wording on the results card is about to become false:
-
-> "How consistent your final choices were with your evolving values. **A choice you firmly stood
-> by after a recontextualization still counts as consistent.**"
-
-Replaced with:
-
-> "How often your choices matched your own values — judged against your values as they stood at
-> that moment. Your values update as you go, so a value you take on during the block counts from
-> then on."
+| `placeScore(place, menuSize)` | (1) |
+| `labelWeight(level, menuSize)` | (2) |
+| `scenarioVciScore(level, menuSize)` | the weight stored on each scenario as `vciScore` |
+| `computeVCI(results)` | (3) |
+| `consistencyLevel(value)`, `VCI_LEVELS` | the six levels (section 6) |
 
 ---
 
-## 4. What this produces
+## 4. The weights
 
-| Participant | Behavior across the five scenarios | Now | After |
+| Label | Six options (scenarios 1–5) | Four options (scenario 6) | In words (six options) |
 |---|---|---|---|
-| **Loyal** | always the best fit | 100 | **100** |
-| **Near-loyal** | always the second best fit | 75 | **85** |
-| **Mixed-loyal** | mixes best and second-best | 90 | **94** |
-| **Convert** | goes against their values once, genuinely endorses, then stays true to that new value | 98 | **87** |
-| **Hesitant convert** | the same, endorsed with doubt, so the value climbs more slowly | 87 | **84** |
-| **Flip-flopper** | a different clashing value every scenario | 90 | **35** |
-| **Contrarian** | always the furthest option | 90 | **0** |
+| Aligned | place 1 → **1.00** | 1.00 | fit better than every other option |
+| Weakly aligned | place 2 → **0.80** | 0.67 | fit better than four of the other five |
+| Misaligned | places 3–4 → (0.6 + 0.4) / 2 = **0.50** | 0.33 | no better than picking blindly |
+| Strongly misaligned | places 5–6 → (0.2 + 0.0) / 2 = **0.10** | 0.00 | worse than picking blindly |
 
-The Convert drops from 98 to 87 and that is intended: in Scenario 1 they genuinely did choose
-against their measured values. The system stops pretending otherwise — and then stops holding it
-against them, because from Scenario 2 the value is really theirs.
+**Worked example.** Final choices Aligned, Weakly aligned, Misaligned, Aligned:
 
----
+```
+VCI = 100 × (1.00 + 0.80 + 0.50 + 1.00) / 4 = 82.5  →  83, "Mostly Consistent"
+```
 
-## 5. How this gets verified, not just asserted
+**Anchors.**
 
-The table above is a claim. It becomes a test.
-
-**New: `tools/simulate_vci.mjs`.** Runs synthetic participants — one per row above — through the
-*real* `labelOptions`, `applyValueBump`, `applyEndorsementUpdates` and `scenarioVciScore`, over
-the real five scenarios, and prints each one's VCI. Added to `npm run validate:block5`, with
-assertions:
-
-| ID | Gate |
+| VCI | Means |
 |---|---|
-| **V1** | Loyal scores 100. |
-| **V2** | Near-loyal scores ≥ 80 — staying inside your own top two is consistent behavior. |
-| **V3** | Flip-flopper scores < 50 — *the gate that today's code fails.* |
-| **V4** | Contrarian scores < Flip-flopper — never fitting is worse than sometimes fitting. |
-| **V5** | Convert scores ≥ 80 — a genuine change of heart, held to, is consistent. |
-| **V6** | Convert > Hesitant convert — doubt should cost something. |
-| **V7** | Keeping a best-fit option built on your top value never lowers that value (the review's objection, as an executable check). |
+| 100 | the best-fitting option in every scenario |
+| 80 | the second-best option in every scenario |
+| 50 | what blind picking gives, on average |
+| 10 | the lowest possible score — a Strongly misaligned option every time. Not 0, because the label cannot tell the 5th option from the 6th, and its weight is their average |
 
-Run against the current code first, to confirm V3 and V4 fail — a gate that cannot fail is not a
-gate.
+Thirty different values are possible with four scenarios, from 10 to 100.
 
 ---
 
-## 6. Files touched
+## 5. Why these weights
 
-| File | Change |
+1. **No number is chosen by hand.** All four weights follow from equation (1) and the label rule.
+   *b(r)* is a percentile rank within the option's own menu: the share of the other options it
+   beats.
+2. **A label that covers two places gets their average.** The label does not say whether a
+   Misaligned choice was the 3rd or the 4th option, and their average is the fair, unbiased guess.
+   It is the mid-rank rule that rank statistics use for ties (Mann–Whitney U, Spearman's rho).
+   Taking the worse place would short-change everyone who took the better one; taking the better
+   place would flatter everyone who took the worse one.
+3. **Blind picking scores exactly 50, on a menu of any size.** The average of *b(r)* over the
+   places 1…*n* is one half, and averaging within labels does not move an average. So 50 is a
+   fixed yardstick: above it, the choices fit the participant better than chance; below it, worse.
+   Gate V11 checks it for menus of 3 to 10 options.
+4. **The fit numbers agree with the rule.** Over 2,000 random starting profiles on scenarios 1–4,
+   the options carrying each label come this close, on average, to the participant's best
+   available fit — closeness = 1 − (its shortfall − the best shortfall) / (the worst shortfall −
+   the best shortfall):
+
+   | Label | Rule weight | Measured closeness |
+   |---|---|---|
+   | Aligned | 1.00 | 1.00 |
+   | Weakly aligned | 0.80 | 0.83 |
+   | Misaligned | 0.50 | 0.57 |
+   | Strongly misaligned | 0.10 | 0.13 |
+
+   Within 0.07 everywhere. The rule is used rather than the measurement because a measurement
+   would have to be redone every time an option changed.
+5. **One rule for every menu.** Scenario 6 takes its weights from the same two equations. If
+   `ALIGNMENT_RANK_RULE` ever changes, `labelWeight` follows it; gate V10 then reports that the
+   published table in this page and in the code is stale.
+
+### Alternatives considered and not used
+
+| Alternative | Why not |
 |---|---|
-| `block5CVR.ts` | `scenarioVciScore` drops the endorsement argument; delete `reflectiveCredit`; `BASE_CREDIT` weakly-aligned 0.75 → 0.85; `displacedTopValue` returns `null` when nothing is neglected; `applyValueBump` gains the displacement with both guards. |
-| `Block5PublicEmergencySimulation.tsx` | two `scenarioVciScore(...)` call sites; the keep-path bump becomes +15 / +20 by level. |
-| `Block5SimulationSummaryPage.tsx` | the VCI hint text. |
-| `tools/simulate_vci.mjs` | new. |
-| `docs/MEASUREMENT_MODEL.md` | the VCI section. |
+| The worse place of each label: 1.00 / 0.80 / 0.40 / 0.00 | Lets 0 be reached, but short-changes everyone who took the better of a label's two places, and moves blind picking to 43, an anchor with no meaning |
+| The measured closeness itself: 1.00 / 0.83 / 0.57 / 0.13 | Almost the same numbers, but tied to today's option numbers and to one population draw |
+| Closeness scored choice by choice, against the participant's own total demand | Pushes everyone toward the top: blind picking scored 82 and always choosing the worst option 66 |
 
-**Not touched:** `computeStability`, `alignedToOriginal`, and everything else on the Stability
-side. Deferred by request.
-
----
-
-## 7. Two things to settle, and one to note
-
-1. **`consistencyLevel()` is shared between VCI and Stability.** Under the new scale the top band
-   (85+, "Highly consistent") holds 85, 87, 94 and 100 — four quite different participants get the
-   same word. I would give VCI its own bands, but that function is shared with Stability, so I
-   propose leaving it alone until the Stability discussion and revisiting both together.
-
-2. **Should a *misaligned* choice score 0.35 at all?** It is currently partial credit for picking
-   your third or fourth best fit. Keeping it means Flip-flopper lands at 35 rather than 0. I
-   recommend keeping it — it distinguishes "chose badly" from "chose the worst possible thing" —
-   but it is a free parameter and worth one sentence in the methods chapter.
-
-3. **This is a measurement change.** No data is collected yet, so nothing is invalidated. It must
-   land before launch.
+None of the three told the kinds of participant apart better than the rule. The weights change
+what the numbers read, not the order in which participants fall. (These comparisons were run once,
+on the same 2,000 profiles, while the rule was being chosen; `report:vci` reproduces the rule, not
+the alternatives.)
 
 ---
 
-## 8. Measured result
+## 6. The six levels
 
-Not predicted — measured, by running each participant through the real scoring code
-(`npm run validate:vci`).
+A level says which label the participant's **average** choice sits nearest. The edges are the four
+"the same label every time" scores and the midpoints between neighbors, computed from the weights
+(`VCI_LEVELS`), so they follow the weights and are never tuned by hand.
 
-| Participant | Before | After | Predicted |
+| Level | VCI | Meaning | Edge |
 |---|---|---|---|
-| Loyal | 100 | **100** | 100 |
-| Near-loyal | 75 | **85** | 85 |
-| Mixed-loyal | 90 | **94** | 94 |
-| Convert | 93 | **84** | 87 |
-| Hesitant convert | 87 | **84** | 84 |
-| **Flip-flopper** | **90** | **35** | 35 |
-| **Contrarian** | **90** | **0** | 0 |
+| **Highly Consistent** | 90–100 | nearer the best fit than the second best | midpoint of always-Aligned (100) and always-Weakly (80) |
+| **Mostly Consistent** | 80–89 | about the second-best fit, on average | always-Weakly (80) |
+| **Moderate** | 65–79 | between the second best and a misaligned choice | midpoint of always-Weakly (80) and always-Misaligned (50) |
+| **Low** | 50–64 | nearer a misaligned choice | always-Misaligned (50), which is also blind picking |
+| **Very Low** | 30–49 | worse than picking blindly | midpoint of always-Misaligned (50) and always-Strongly (10) |
+| **Highly Inconsistent** | 10–29 | nearer the options that fit worst | — |
 
-The gates were run against the old code first and **V2 and V3 failed there**, which is the point:
-a gate that cannot fail proves nothing.
+The level is shown on the results page and stored as `vciLevel` (`consistency_label` in the
+database). It is presentation only and never feeds any calculation.
 
-### Two honest notes
+---
 
-**Convert and Hesitant convert both land on 84.** The plan predicted 87 and 84. The +30 vs +15
-difference between a genuine and a doubtful endorsement did move their profiles by different
-amounts — but not by enough to change which *alignment band* their later choices fell into, so
-the VCI came out identical. Gate V6 passes only because it is written `>=`. The distinction is
-real in the profile and in the stored `cvrEndorsement`; it is simply not always visible in VCI.
-Whether that matters is a question for the Stability discussion, where the same profile movement
-is the thing being measured.
+## 7. What counts, and against what
 
-**Convert came out at 84, not the predicted 87**, because scenario 2 landed on *weakly aligned*
-(0.85) rather than *aligned* (1.00) — the +30 bump is scaled by headroom (`bump()`), so a value
-that is already fairly high climbs more slowly than a flat +30 would suggest. The ordering the
-plan argued for is unaffected.
+**Which scenarios.** Only the scenarios in which the participant decides — scenarios 1–4
+(`scenarioIsScored`, `resultIsScored`). Scenario 5 asks for a wish and scenario 6 tests the model.
+Both still **record** a per-scenario weight (`vciScore`); scenario 5's feeds the responsibility gap
+(`block5Mirror.ts`), and neither is ever averaged into VCI.
 
-> **Superseded on 2026-08-31.** `bump()` no longer scales by headroom; deltas are flat. The
-> observed result (Convert at 84) stands as a record of the run made on the date above, but the
-> explanation given for it does not apply to the current code. Re-run `npm run validate:vci` before
-> citing either number.
+**Which profile.** The profile the participant brought **into** the scenario: Blocks 1–4, as moved
+by the CVR and APA answers of **earlier** scenarios. This holds on every path. Keeping an option
+after the reflection (CVR) and finishing through the clarification (APA) both move the profile for
+the **next** scenario, and neither re-labels the choice made in this one (`commitChoice`,
+`handleApaCommit`). A value taken on during the block therefore counts from the next scenario on.
+Relabeling the APA route on the profile it had just moved would lift a participant who takes up
+a new value in every scenario from 31 to 56, a random responder's score. Gate V8 guards it.
 
-## 9. Files changed
+**What VCI does not read.** The endorsement answer after the CVR, the APA answers, whether the
+stakeholder moved them, and the performance metrics. All are stored per scenario and can be analyzed
+next to VCI. The endorsement is rewarded once, through the profile update: the endorsed value is
+raised, so from the next scenario on, choosing it earns full weight. Crediting it again inside VCI
+would let a participant who endorses a different clashing value in every scenario score like one
+who never chose against themselves — the one pattern VCI exists to catch.
 
-`block5CVR.ts` — `scenarioVciScore(level)` drops the endorsement; `reflectiveCredit` deleted;
-weakly-aligned credit 0.75 → 0.85; `displacedTopValue` returns `null` when the option neglects
-nothing; `applyValueBump` replaced by `applyKeepUpdates` (+15/−10 best-fit, +20/−15 second-best,
-both guards).
-`Block5PublicEmergencySimulation.tsx` — two call sites, and the keep path now delegates to
-`applyKeepUpdates` instead of holding the point values in the UI layer.
-`Block5SimulationSummaryPage.tsx` — the VCI hint no longer claims a firmly-endorsed clashing
-choice counts as consistent.
-`tools/simulate_vci.cjs`, `tools/tsconfig.sim.json` — new; chained into `npm run validate:block5`.
+---
 
-**Stability untouched**, by request: `computeStability` and `alignedToOriginal` are exactly as
-they were.
+## 8. How it behaves
+
+`npm run report:vci` — 2,000 seeded random starting profiles, every one of them run through the real
+scoring code by each kind of participant.
+
+| Kind of participant | Mean VCI | Most common level |
+|---|---|---|
+| Always the best fit | 100 | Highly Consistent (100%) |
+| Corrected by APA — tempted every time, then names their top value | 95 | Highly Consistent (72%) |
+| True to their Blocks 1–4 top value | 91 | Highly Consistent (57%) |
+| Mixes their best and second-best fit | 90 | Highly Consistent (71%) |
+| Always the second-best fit | 80 | Mostly Consistent (100%) |
+| Chases the best performance numbers | 73 | Moderate (47%) |
+| Changes value once, through APA, then holds it | 70 | Moderate (37%) |
+| Changes value once, keeps it after the CVR, then holds it | 69 | Moderate (47%) |
+| Random everywhere | 56 | Low (32%) |
+| Takes up a new value every scenario (either route) | 31 | Very Low (56–57%) |
+| Always the worst fit | 10 | Highly Inconsistent (100%) |
+
+**Separation** — how often the first kind outscores the second:
+
+| Pair | |
+|---|---|
+| True to top value > random | 96% |
+| Random > flip-flopper | 88% |
+| One-time convert > random | 71% |
+| One-time convert > flip-flopper | 97% |
+| One-time convert > performance chaser | 42% |
+
+---
+
+## 9. Known limits — to state in the write-up
+
+1. **It is ordinal.** The weight follows the option's place, not how much worse it fit. When two
+   neighboring options fit almost equally well, the boundary between their labels can move one
+   scenario by up to 0.40 of weight, which is 10 VCI points. 26–31% of label boundaries are decided
+   by under 3 points of fit.
+2. **Four scenarios count,** so the scale is coarse: 30 possible values.
+3. **A change of heart is learned over about two scenarios.** One strong endorsement makes the
+   newly endorsed value the participant's top value in 56% of profiles, so a genuine convert usually
+   loses part of the next scenario as well as the one in which they changed. They average 69, and
+   come out ahead of a performance chaser only 42% of the time (ties counted half).
+4. **Random answering.** Blind picking averages exactly 50. A responder who also answers the CVR and
+   APA at random averages 56, because APA lists only the options built on the value they name,
+   which steers some random choices toward a fit.
+5. **Gate V5 fails.** Its convert adopts, in scenario 1, the value of a middle-of-the-road option
+   and is then asked to follow that value into an extreme option later, so it pays twice (75
+   against a floor of 78). The researcher's decision on this persona is pending; see CLAUDE.md.
+
+---
+
+## 10. The gates (`npm run validate:vci`)
+
+| Gate | Asserts |
+|---|---|
+| V1 | Always the best fit scores 100 |
+| V2 | Always the second best scores 80 and reads "Mostly Consistent" |
+| V3 | A flip-flopper scores below 50, below blind picking |
+| V4 | Always the worst fit scores 10, the floor, and no more than a flip-flopper |
+| V5 | A one-time convert scores at least 100 × ((K − 1) + 0.10) / K — the lowest label once and the best every time after |
+| V6 | A convert who endorses firmly scores at least as much as one who endorses with doubt |
+| V7 | Keeping your best-fit option never lowers the value it is built on |
+| V8 | The APA route does not rescue a flip-flopper |
+| V9 | Ties in fit are ordered by what the option delivers, never by name |
+| V10 | The weights are the published ones on six and four options |
+| V11 | Blind picking scores exactly 50 on every menu size from 3 to 10 |
+| V12 | The level edges are 90 / 80 / 65 / 50 / 30, and twelve test scores land in the right level |
+
+---
+
+## 11. In the stored data
+
+| In the app | In MongoDB | Holds |
+|---|---|---|
+| `result.vciScore` | `per_scenario_consistency_0_to_1` | the label weight of that scenario's final choice |
+| `vci` | `consistency_score` (in `headline`) | VCI, 10–100 (0 only when no decider scenario ran) |
+| `vciLevel` | `consistency_label` | one of the six levels |
+
+VCI also sets part of the scenario-6 prediction's confidence (`predictionConfidence` in
+`block5Prediction.ts`), which is why `PREDICTION_VERSION` moved to `2026-09-19-d` with this method.
+Records made under an earlier version must not be pooled with these.

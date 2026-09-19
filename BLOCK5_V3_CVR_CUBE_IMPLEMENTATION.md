@@ -53,8 +53,9 @@ keep track of changes and later replicate the pattern to Scenarios 2–5.
   **#1** top value: −20 / −10; Q2 stakeholder: +25 (guided) / −25 (not). All clamped 0–100,
   committed only on **Confirm** (Change-my-mind discards).
 - **Weakly aligned + Keep:** +10 to the option's main value. **Aligned + Keep:** no change.
-- **Graded VCI:** per scenario `S = max(base, reflective)`; base {Aligned 1.0, Weakly 0.75,
-  Misaligned 0.35, Strongly 0.0}; reflective {strong 0.9, weak 0.6, no 0}. VCI = mean(S)×100.
+- **VCI:** each alignment label carries the weight of its place in line — on six options Aligned
+  1.00, Weakly aligned 0.80, Misaligned 0.50, Strongly misaligned 0.10 — and VCI is the average
+  weight over the decider scenarios × 100. The current method is `docs/BLOCK5_VCI_METHOD.md`.
 - **Stability:** share of final choices that align with the **original** pre-Block-5 profile.
 - **Performance:** average of the option's 8 metrics (kept separate from alignment).
 

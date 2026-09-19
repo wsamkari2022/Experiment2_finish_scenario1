@@ -49,7 +49,7 @@ import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall } from 
  * or formula below changes, so a stored prediction can always be traced to the rule that produced
  * it. Predictions made under different versions must not be pooled.
  */
-export const PREDICTION_VERSION = "2026-09-18-c";
+export const PREDICTION_VERSION = "2026-09-19-d";
 
 /*
  * VERSION HISTORY. Predictions made under different versions must not be pooled.
@@ -68,6 +68,10 @@ export const PREDICTION_VERSION = "2026-09-18-c";
  *                 what an option delivers rather than by its id (see block5CVR.ts). The same run of
  *                 choices can therefore give a different VCI, so a different confidence and
  *                 temperature here. Moved so that the two can never be pooled by mistake.
+ *   2026-09-19-d  Nothing in this file changed. Its VCI INPUT did again: each alignment label now
+ *                 carries the weight given by its place in line (1.00 / 0.80 / 0.50 / 0.10 on six
+ *                 options; see the VCI section of block5CVR.ts), so the same run of choices gives a
+ *                 different VCI, and so a different confidence and temperature here.
  *
  * This bump was missed when the change was made, which is the failure the constant exists to
  * prevent: for one commit, two different rules were stamped with the same version and could not be

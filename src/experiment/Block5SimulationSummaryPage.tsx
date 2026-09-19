@@ -140,7 +140,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
         <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap="4">
           <MeasureCard icon={<LuTrendingUp />} palette="blue" label="Value Consistency (VCI)"
             value={`${vci}`} sub={results.vciLevel ?? "—"}
-            hint="How often your choices matched your own values — judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
+            hint="How closely your choices matched your own values: 100 means you chose the option that fit you best every time, and 50 is what choosing blindly would give. It is judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
           <MeasureCard icon={<LuScale />} palette="purple" label="Stability"
             value={`${stability}`} sub={results.stabilityLevel ?? "—"}
             hint="How much your own values moved during Block 5, compared with where they stood after Blocks 1-4. It combines whether your priorities changed order with how far they traveled along the way." />

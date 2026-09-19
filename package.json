@@ -13,6 +13,7 @@
     "check:images": "node tools/check_scenario_images.mjs",
     "validate:metrics": "node tools/validate_block5_metrics.mjs",
     "validate:vci": "tsc -p tools/tsconfig.sim.json && node tools/simulate_vci.cjs",
+    "report:vci": "tsc -p tools/tsconfig.sim.json && node tools/vci_distribution.cjs",
     "validate:stability": "tsc -p tools/tsconfig.sim.json && node tools/simulate_stability.cjs",
     "validate:prediction": "tsc -p tools/tsconfig.sim.json && node tools/validate_prediction.cjs",
     "report:stability": "tsc -p tools/tsconfig.sim.json && node tools/stability_distribution.cjs",

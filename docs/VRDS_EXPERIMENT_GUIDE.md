@@ -453,8 +453,22 @@ the pair.
 
 *Did your choices fit your values, judged as they stood at that moment?*
 
-Per scenario, the alignment tier of the final choice becomes a 0–1 credit; VCI is their mean × 100.
-Judged against **CURRENT**, so a value taken on mid-block counts from then on.
+Per scenario, the alignment label of the final choice becomes a 0–1 weight, from the label's
+place in line on that menu:
+
+```
+place score    b(r) = (n − r) / (n − 1)          share of the other options that fit worse
+label weight   w(L) = average of b(r) over the places carrying label L
+VCI            = round( 100 × average of w over the decider scenarios 1–4 )
+```
+
+On six options: Aligned 1.00, Weakly aligned 0.80, Misaligned 0.50, Strongly misaligned 0.10.
+Blind picking scores exactly 50. Levels: Highly Consistent 90+, Mostly Consistent 80–89,
+Moderate 65–79, Low 50–64, Very Low 30–49, Highly Inconsistent below 30.
+
+Judged against **CURRENT** as it stood when the scenario opened — on the keep path and the APA path
+alike — so a value taken on mid-block counts from the next scenario on. Full method, reasons and
+limits: `docs/BLOCK5_VCI_METHOD.md`.
 
 ### 9.2 Stability
 

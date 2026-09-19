@@ -1,7 +1,7 @@
 # Stability — what it now measures
 
 **Status:** IMPLEMENTED, 2026-08-25.
-**Scope:** Stability only. VCI is covered in `BLOCK5_VCI_PLAN.md`.
+**Scope:** Stability only. VCI is covered in `BLOCK5_VCI_METHOD.md`.
 
 ---
 
@@ -86,10 +86,10 @@ from it — so a change to the bump magnitudes or the scenario set cannot silent
 
 ## 5. Its own words
 
-Stability no longer borrows VCI's labels. "Moderately consistent" was the wrong phrase for a drift
-measure — consistent with what? It now reads **Held steady / Mostly steady / Shifted a little /
-Shifted a lot / Changed substantially**. `consistencyLevel()` is left untouched and is now used
-only by VCI, which resolves the shared-function problem noted in the VCI plan.
+Stability does not borrow VCI's labels. Words about consistency are the wrong phrase for a drift
+measure — consistent with what? It reads **Held steady / Mostly steady / Shifted a little /
+Shifted a lot / Changed substantially** (`stabilityLevel()`). `consistencyLevel()` belongs to VCI
+alone; its six levels are described in `BLOCK5_VCI_METHOD.md`.
 
 ## 6. A limitation worth stating in the methods chapter
 

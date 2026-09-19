@@ -1,15 +1,22 @@
 /**
- * simulate_vci.cjs — walks synthetic participants through the REAL Block-5 scoring code.
+ * simulate_vci.cjs — walks synthetic participants through the REAL Block-5 scoring code, and checks
+ * that VCI and its levels are exactly what the VCI section of src/experiment/block5CVR.ts says.
  *
- * WHY THIS EXISTS
- * ---------------
- * The VCI formula was changed on the strength of a table of predicted scores. A table is a claim.
- * This turns it into a test: each participant below is run through the actual `labelOptions`,
- * `applyKeepUpdates`, `applyEndorsementUpdates` and `scenarioVciScore` over whatever scenarios
- * actually ship, and the resulting VCI is asserted.
+ * WHAT IT CHECKS
+ * --------------
+ *   V1-V6   each kind of participant scores where the method says it should (loyal, near-loyal,
+ *           flip-flopper, contrarian, convert, hesitant convert)
+ *   V7      keeping your best-fit option never lowers the value it is built on
+ *   V8      the APA route does not rescue a flip-flopper (choices are judged at entry on every path)
+ *   V9      ties in fit are broken by what an option delivers, never by its name
+ *   V10     the label weights are the published ones: 1.00 / 0.80 / 0.50 / 0.10 on six options,
+ *           1.00 / 0.67 / 0.33 / 0.00 on four
+ *   V11     blind picking scores exactly 50, on every menu size
+ *   V12     the six levels sit at the published edges: 90 / 80 / 65 / 50 / 30
  *
  * It imports the compiled modules rather than re-implementing the formulas, deliberately — a
- * simulator that carries its own copy of the math drifts from the code and then lies.
+ * simulator that carries its own copy of the math drifts from the code and then lies. The two
+ * places it has to MIRROR the app (the fit path and the APA path) say so where they do it.
  *
  * Run: npm run validate:vci    (chained into npm run validate:block5)
  */
@@ -28,16 +35,16 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 const B = (f) => require(path.join(BUILD, f));
 
 const { labelOptions, scenarioVciScore, applyKeepUpdates, applyEndorsementUpdates, applyApaUpdates,
-        optionMainValue, computeVCI, scenarioIsScored, policyDelivery } = B("block5CVR.js");
+        optionMainValue, computeVCI, scenarioIsScored, policyDelivery, labelWeight, rankLabel,
+        consistencyLevel, VCI_LEVELS } = B("block5CVR.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 
-/* Deck size, read from the scenarios that ship, counting only the ones VCI is computed over.
-   Recipient scenarios ask for a wish rather than a choice and are excluded from VCI, so a floor
-   derived from the full deck length would be measuring against scenarios that never entered the
-   average. Gates below are expressed against this so they keep asserting the same property when
-   a scenario is added, removed, or changes role. */
+/* How many scenarios VCI averages over, read from the scenarios that ship: only the deciders.
+   Scenario 5 asks for a wish and scenario 6 tests the model, so neither enters the average. Gates
+   below are expressed against this, so they keep asserting the same property if a scenario is
+   added, removed, or changes role. */
 const N_SCENARIOS = BLOCK5_SCENARIOS.filter(scenarioIsScored).length;
-const N_WISH = BLOCK5_SCENARIOS.length - N_SCENARIOS;
+const N_UNSCORED = BLOCK5_SCENARIOS.length - N_SCENARIOS;
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
                 "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
@@ -68,11 +75,11 @@ const START = () => makeProfile({
 });
 const scoreOf = (p, k) => p.dimensions.find((d) => d.key === k)?.score ?? 50;
 const isFit = (lv) => lv === "aligned" || lv === "weakly_aligned";
+const near = (a, b) => Math.abs(a - b) < 1e-9;
 
 /**
  * Each participant is a function that, given this scenario's options ranked by fit and the
- * profile, returns the option to choose. `adoptedValue` lets the converts remember what they
- * took on in scenario 1.
+ * profile, returns the option to choose. `st` lets a participant remember what it did earlier.
  */
 const PARTICIPANTS = {
   "Loyal": { pick: (r) => r[0] },
@@ -129,18 +136,17 @@ function run(name) {
   BLOCK5_SCENARIOS.forEach((scenario, i) => {
     const ranked = labelOptions(scenario.options, profile);
     const opt = spec.pick(ranked, profile, i, st);
-    // Mirror the app exactly: the fit path records "n/a", only the CVR path records an
-    // endorsement. (After the change scenarioVciScore ignores the argument entirely.)
-    const endorsement = isFit(opt.level) ? "n/a" : (spec.strong ? "strong" : "weak");
-    const credit = scenarioVciScore(opt.level, endorsement);
+    const menuSize = scenario.options.length;
+    // MIRRORS commitChoice / handleApaCommit: the weight of the label the option had on the profile
+    // brought INTO this scenario, on this scenario's own menu size.
+    const credit = scenarioVciScore(opt.level, menuSize);
     // The role travels with the row, exactly as it does on a stored result, so computeVCI
     // filters here for the same reason and by the same field that it filters in the app.
     const decisionRole = scenario.decisionRole ?? "decider";
     const w = scenario.stakesWeight ?? 1;
-    /* What the RETIRED rule would have credited: before 18 September 2026 an APA choice was
-       re-labelled on the profile the clarification had just moved. Kept only so the output shows
-       the size of the hole V8 guards; nothing is scored with it. */
-    let oldRuleCredit = credit;
+    /* What relabeling on the profile APA has just moved WOULD credit. VCI does not use it; it is
+       printed only so the output shows the size of the hole V8 guards. */
+    let relabeledCredit = credit;
     if (scenarioIsScored(scenario)) {
       if (isFit(opt.level)) {
         profile = applyKeepUpdates(profile, opt, opt.level, w);
@@ -148,19 +154,20 @@ function run(name) {
         /* MIRRORS handleApaCommit (Block5PublicEmergencySimulation.tsx). The participant names the
            value this option stands for, at full confidence; the profile moves by applyApaUpdates;
            and the final choice KEEPS the label it had when the scenario opened - `credit` above is
-           not recomputed. If handleApaCommit ever goes back to re-labelling on the moved profile,
-           this mirror no longer describes the app and must change with it. */
+           not recomputed. If handleApaCommit ever re-labels on the moved profile, this mirror no
+           longer describes the app and must change with it. */
         profile = applyApaUpdates(profile, true, optionMainValue(opt), null, w, 5);
-        oldRuleCredit = scenarioVciScore(labelOptions(scenario.options, profile).find((o) => o.id === opt.id).level);
+        relabeledCredit = scenarioVciScore(
+          labelOptions(scenario.options, profile).find((o) => o.id === opt.id).level, menuSize);
       } else {
         profile = applyEndorsementUpdates(profile, opt, !!spec.strong, true, null, w);
       }
     }
-    perScenario.push({ level: opt.level, credit, oldRuleCredit, title: opt.title, decisionRole });
+    perScenario.push({ level: opt.level, credit, relabeledCredit, title: opt.title, decisionRole });
   });
-  const vci = computeVCI(perScenario.map((s) => ({ vciScore: s.credit, decisionRole: s.decisionRole }))).value;
-  const oldRuleVci = computeVCI(perScenario.map((s) => ({ vciScore: s.oldRuleCredit, decisionRole: s.decisionRole }))).value;
-  return { vci, oldRuleVci, perScenario };
+  const vci = computeVCI(perScenario.map((s) => ({ vciScore: s.credit, decisionRole: s.decisionRole })));
+  const relabeledVci = computeVCI(perScenario.map((s) => ({ vciScore: s.relabeledCredit, decisionRole: s.decisionRole }))).value;
+  return { vci: vci.value, level: vci.level, relabeledVci, perScenario };
 }
 
 /* ------------------------------------------------------------------ */
@@ -170,36 +177,52 @@ const gate = (id, ok, msg) => {
   if (!ok) fails++;
 };
 
-console.log("\n=== VCI SIMULATION — synthetic participants through the real scoring code ===\n");
+const W = {
+  aligned: labelWeight("aligned"), weakly: labelWeight("weakly_aligned"),
+  misaligned: labelWeight("misaligned"), strongly: labelWeight("strongly_misaligned"),
+};
+
+console.log("\n=== VCI SIMULATION — synthetic participants through the real scoring code ===");
+console.log(`  Label weights on six options: Aligned ${W.aligned.toFixed(2)}, Weakly aligned ${W.weakly.toFixed(2)}, ` +
+  `Misaligned ${W.misaligned.toFixed(2)}, Strongly misaligned ${W.strongly.toFixed(2)}\n`);
 const out = {};
+const lvl = {};
 Object.keys(PARTICIPANTS).forEach((name) => {
   const r = run(name);
   out[name] = r.vci;
+  lvl[name] = r.level;
   const shape = r.perScenario.map((s) => s.credit.toFixed(2)).join("  ");
-  console.log(`  ${name.padEnd(18)} VCI ${String(r.vci).padStart(3)}    per scenario: ${shape}`);
-  if (N_WISH > 0) console.log(`  ${"".padEnd(18)}            (last ${N_WISH} shown for reference only — a wish is not averaged into VCI)`);
-  console.log(`  ${"".padEnd(18)}            ${r.perScenario.map((s) => s.level.replace("_", " ")).join(", ")}`);
-  if (PARTICIPANTS[name].apa) console.log(`  ${"".padEnd(18)}            (the retired rule, re-labelling after APA, would have given ${r.oldRuleVci})`);
+  console.log(`  ${name.padEnd(18)} VCI ${String(r.vci).padStart(3)} ${r.level.padEnd(20)} per scenario: ${shape}`);
+  if (N_UNSCORED > 0) console.log(`  ${"".padEnd(18)}                          (last ${N_UNSCORED} recorded for reference only — never averaged into VCI)`);
+  console.log(`  ${"".padEnd(18)}                          ${r.perScenario.map((s) => s.level.replace("_", " ")).join(", ")}`);
+  if (PARTICIPANTS[name].apa) console.log(`  ${"".padEnd(18)}                          (relabeling on the moved profile, which VCI does not do, would give ${r.relabeledVci})`);
 });
 
 console.log("\n--- gates ---");
 gate("V1", out["Loyal"] === 100, `Loyal scores 100  (got ${out["Loyal"]})`);
-gate("V2", out["Near-loyal"] >= 80, `Near-loyal >= 80 — staying in your own top two is consistent  (got ${out["Near-loyal"]})`);
-gate("V3", out["Flip-flopper"] < 50, `Flip-flopper < 50 — changing what you value every scenario is NOT consistent  (got ${out["Flip-flopper"]})`);
-gate("V4", out["Contrarian"] <= out["Flip-flopper"], `Contrarian <= Flip-flopper — never fitting is at least as bad as sometimes  (${out["Contrarian"]} vs ${out["Flip-flopper"]})`);
-/* V5 — the convert pays for the ONE scenario in which they changed, and for nothing after it.
-   This was written as ">= 80", which is not the claim: 80 is (5-1)/5, so the number silently
-   encoded a five-scenario deck. On a three-scenario deck a single change is a third of the run
-   rather than a fifth, so the same behavior scores lower and a fixed threshold would fail a
-   participant who did nothing wrong. Expressed against the deck size, the gate keeps testing the
-   property instead of the arithmetic: a convert must do at least as well as someone who scored
-   zero once and perfectly every time after. */
-const FLOOR_ONE_CHANGE = Math.round((100 * (N_SCENARIOS - 1)) / N_SCENARIOS);
+/* V2 — always the second-best option scores exactly the Weakly-aligned weight, and reads
+   "Mostly Consistent": every choice fit well, one place below the best. */
+gate("V2", out["Near-loyal"] === Math.round(100 * W.weakly) && lvl["Near-loyal"] === "Mostly Consistent",
+  `Near-loyal = ${Math.round(100 * W.weakly)}, "Mostly Consistent" — always your second best  (got ${out["Near-loyal"]}, "${lvl["Near-loyal"]}")`);
+/* V3 — 50 is what blind picking gives (V11). Changing what you value in every scenario must fall
+   below it. */
+gate("V3", out["Flip-flopper"] < 50, `Flip-flopper < 50 — below blind picking  (got ${out["Flip-flopper"]})`);
+gate("V4", out["Contrarian"] <= out["Flip-flopper"] && out["Contrarian"] === Math.round(100 * W.strongly),
+  `Contrarian = ${Math.round(100 * W.strongly)}, the floor, and <= Flip-flopper  (${out["Contrarian"]} vs ${out["Flip-flopper"]})`);
+/* V5 — a genuine change of heart, held to, costs only the scenario in which it happened. The floor
+   is a participant who took the LOWEST label once and the best option every time after:
+       100 x ((K - 1) x 1.00 + w(Strongly misaligned)) / K
+   expressed against the deck size, so the gate tests the property rather than one deck's arithmetic.
+   This persona adopts the value of the first option outside its top two in scenario 1; when that
+   option is a middle-of-the-road one rather than one that stands for a single value, the persona
+   is then asked to follow the value into an extreme option later, and pays twice. That is a known
+   open failure, listed in CLAUDE.md. */
+const FLOOR_ONE_CHANGE = Math.round((100 * ((N_SCENARIOS - 1) + W.strongly)) / N_SCENARIOS);
 gate("V5", out["Convert"] >= FLOOR_ONE_CHANGE,
-  `Convert >= ${FLOOR_ONE_CHANGE} (= ${N_SCENARIOS - 1}/${N_SCENARIOS}) — a genuine change of heart, held to, costs only the scenario it happened in  (got ${out["Convert"]})`);
+  `Convert >= ${FLOOR_ONE_CHANGE} — a genuine change of heart, held to, costs only the scenario it happened in  (got ${out["Convert"]})`);
 gate("V6", out["Convert"] >= out["Hesitant convert"], `Convert >= Hesitant convert — doubt costs something  (${out["Convert"]} vs ${out["Hesitant convert"]})`);
 
-/* V7 — the reviewer's objection, as an executable check. */
+/* V7 — keeping your best fit reinforces the value it is built on. */
 {
   const p = START();
   const scenario = BLOCK5_SCENARIOS[0];
@@ -212,8 +235,8 @@ gate("V6", out["Convert"] >= out["Hesitant convert"], `Convert >= Hesitant conve
 }
 
 /* V8 — the ROUTE does not rescue a flip-flopper. Changing value every scenario through APA must be
-   caught exactly as it is on the keep path; before 18 September 2026 it was not (see the retired-rule
-   figure printed above). */
+   caught exactly as it is on the keep path, because both are judged on the profile brought into the
+   scenario. The figure printed beside the APA flip-flopper shows what relabeling would give. */
 gate("V8", out["Flip-flopper (APA)"] < 50,
   `Flip-flopper through APA < 50 — clarifying instead of keeping does not hide a change of value  (got ${out["Flip-flopper (APA)"]}, keep path ${out["Flip-flopper"]})`);
 
@@ -236,6 +259,45 @@ gate("V8", out["Flip-flopper (APA)"] < 50,
   }
   gate("V9", ties > 0 && wrong === 0,
     `tied options are ordered by what they deliver, not by name  (${ties} ties met, ${wrong} out of order)`);
+}
+
+/* V10 — the weights in the code are the weights in the documentation, on both menu sizes the deck
+   uses. If ALIGNMENT_RANK_RULE changes, this is the gate that says the published table is stale. */
+{
+  const six = [1, 0.8, 0.5, 0.1];
+  const four = [1, 2 / 3, 1 / 3, 0];
+  const L = ["aligned", "weakly_aligned", "misaligned", "strongly_misaligned"];
+  const got6 = L.map((l) => labelWeight(l, 6));
+  const got4 = L.map((l) => labelWeight(l, 4));
+  gate("V10", got6.every((x, i) => near(x, six[i])) && got4.every((x, i) => near(x, four[i])),
+    `label weights are the published ones  (six options ${got6.map((x) => x.toFixed(2)).join(" / ")}; four ${got4.map((x) => x.toFixed(2)).join(" / ")})`);
+}
+
+/* V11 — blind picking scores exactly 50. A uniform pick lands on every place once, so its expected
+   weight is the average of the label weights over all places; the mid-rank rule makes that one
+   half on any menu. Checked on every size from 3 to 10 options. */
+{
+  const sizes = [3, 4, 5, 6, 7, 8, 9, 10];
+  const means = sizes.map((n) => {
+    let s = 0;
+    for (let i = 0; i < n; i++) s += labelWeight(rankLabel(i, n), n);
+    return s / n;
+  });
+  gate("V11", means.every((m) => near(m, 0.5)),
+    `blind picking scores exactly 50 on every menu size  (${sizes.map((n, i) => `${n}: ${(100 * means[i]).toFixed(1)}`).join(", ")})`);
+}
+
+/* V12 — the six levels sit at the published edges, and each score lands in the level the
+   documentation gives it. */
+{
+  const edges = VCI_LEVELS.slice(0, -1).map((l) => l.from);
+  const want = [90, 80, 65, 50, 30];
+  const cases = [[100, "Highly Consistent"], [90, "Highly Consistent"], [89, "Mostly Consistent"],
+    [80, "Mostly Consistent"], [79, "Moderate"], [65, "Moderate"], [64, "Low"], [50, "Low"],
+    [49, "Very Low"], [30, "Very Low"], [29, "Highly Inconsistent"], [10, "Highly Inconsistent"]];
+  const wrongCase = cases.filter(([v, l]) => consistencyLevel(v) !== l);
+  gate("V12", edges.every((e, i) => near(e, want[i])) && wrongCase.length === 0,
+    `levels at 90 / 80 / 65 / 50 / 30  (edges ${edges.join(" / ")}; ${wrongCase.length ? "misplaced: " + wrongCase.map((c) => c[0]).join(", ") : "all 12 test scores land correctly"})`);
 }
 
 console.log("\n" + "=".repeat(72));
