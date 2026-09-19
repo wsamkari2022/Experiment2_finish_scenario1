@@ -344,10 +344,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* WELL WITHIN, not WELL INSIDE. The same preposition trap the situation box was cleared of
            on 16 September 2026, left behind on this card because the pass only looked at factBase.
            Out and inside in one breath reads for a moment as somewhere to get out inside of. */
-        gains: "You get out well within the six hours, and nobody loses their place so that you can have yours.",
+        gains: "You get out well within the six hours, and nobody loses their place in the line so that you can have yours.",
         consequence: "You reach the center in good time. You take nothing that was set aside for anyone else. But you leave when the list says, not when you want. The last hour is spent watching the plume come down the road.",
         givesUp: "Control over your own timing. You go when your street is called, and not a minute sooner.",
-        moralTension: "Is a fair line still fair, when the people at the back breathe the same air as the people at the front?",
+        moralTension: "Is a fair line still fair, when the people at the back are still breathing the plume after the people at the front are out?",
         /* VALUE AUDIT, 18 September 2026: How much is gained 82 -> 70.
            A sure way out "well within the six hours", but slower than the service road, which is "the fastest clear route out".
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
@@ -394,7 +394,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "One full-face respirator is left in the clinic cabinet, tagged for a patient on home oxygen. With it you can walk out through the plume immediately, by whichever route is shortest.",
         gains: "You leave right now, by the shortest way, breathing clean air the whole distance.",
         consequence: "You are clear of the district within the hour and never wait in line at all. But the mask was tagged for someone whose lungs cannot manage the walk without it, and there is not another one.",
-        givesUp: "The one piece of equipment set aside for a person who cannot breathe the outside air.",
+        givesUp: "The clinic's only respirator, set aside for the patient on home oxygen who cannot walk out without it.",
         moralTension: "If a mask protects whoever is wearing it, does it matter whose name was on the tag?",
         /* VALUE AUDIT, 18 September 2026: Reducing harm 24 -> 45.
            It harms ONE person, the patient the mask was tagged for; the service road sends four streets past the leak.
@@ -440,9 +440,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           detail: "by the river path, upwind and at their pace. They wear the respirator; you go without.",
         },
         summary: "The clinic's one respirator is tagged for a patient on home oxygen who cannot walk out without it. You take it to them, and the two of you go out on foot by the river path, upwind and at their pace. Your car is no help here. The only road it may use runs past the split tanker, and even with the respirator on, their lungs could not take that air.",
-        gains: "The one person least able to get out alone gets out, wearing the mask that was kept for them.",
+        gains: "The patient on home oxygen, the one person least able to get out alone, gets out wearing the mask that was tagged for that patient.",
         consequence: "The patient the mask was kept for is out, breathing clean air the whole way. But the river path takes four hours at their pace, you breathe the edge of the plume the whole way, and the two of you arrive last.",
-        givesUp: "Four hours, and a great deal of your own safety. You are the most exposed person on any of these routes, and the two of you are only as fast as the slower one.",
+        givesUp: "Four hours, and a great deal of your own safety. You are the most exposed person on any of these routes, and the two of you can only move at the patient's pace.",
         moralTension: "How much of your own lungs is a stranger's way out worth?",
         /* REDESIGNED, 18 September 2026, on the researcher's instruction. This option used to be "walk out
            the long way and leave the seats and the mask for others", and sealing in also took nothing from
@@ -505,7 +505,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The district minibus has no driver. You can drive it, clear two streets whose convoy slot is hours away and who have no car between them, and leave on the third run.",
         gains: "Two full streets of people who would still be waiting for their slot are clear of the district because you drove.",
         consequence: "You get more people out than any other option here manages. But you are still inside the district when the plume arrives, and the third loop is the one you are on.",
-        givesUp: "Your own margin of safety. Every person you carry out is another loop you spend breathing the district's air.",
+        givesUp: "Your own margin of safety. Each loop you drive is another trip through the district's air, and you leave on the last one.",
         moralTension: "How many strangers is one more hour of your own exposure worth?",
         /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 51 -> 62. It carries out two streets with no car between them - more than options that only take nothing. */
         /* VALUE AUDIT, second pass, 18 September 2026: Reducing harm 45 -> 62. Nobody else is put at risk: the danger on the card is your own, loop after loop. */
@@ -552,7 +552,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         gains: "You take nothing from anybody, and nobody is put at risk on your account.",
         consequence: "Nobody loses a seat, a mask or a place in line to you, and nobody has to come looking. But you spend the night inside the plume with tape on the doors, and if the seal fails there is no way out.",
         givesUp: "Any margin for error. If the seal does not hold, you are inside the worst air in the district, and help cannot reach you until the plume has passed.",
-        moralTension: "Is taking nothing from anybody the same thing as doing right by them?",
+        moralTension: "Is taking nothing from your neighbors the same thing as doing right by them?",
         /* REDESIGNED, 18 September 2026, on the researcher's instruction. The card used to say "Not one other
            person is worse off" while its own cost line sent a sweep team into the plume to look for you - a
            contradiction on one card - and it overlapped walking out, which also took nothing. Now you tell the
@@ -604,10 +604,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           detail: "down the freight yard's service road, the only road a private car may use today.",
         },
         summary: "You take your own car. The freight yard's service road runs upwind and is standing empty, and it is the only road a private car is allowed on today. It is the fastest way out for anyone who uses it, and word spreads the moment the first vehicle goes down it.",
-        gains: "The fastest clear route out of the district, and once you have opened it the streets behind you follow.",
+        gains: "The fastest clear route out of the district, and once you have opened the service road the streets behind you follow.",
         consequence: "You are out in twenty minutes and so is everyone behind you. But the road runs past the split tanker itself, and once you are committed to it there is no turning around.",
-        givesUp: "Any chance to change your mind. It is single-track past the yard and it passes closer to the tanker than any other route here.",
-        moralTension: "Is the quickest way out still the right one when it takes everyone else past the leak?",
+        givesUp: "Any chance to change your mind. The service road is single-track past the freight yard, and it passes closer to the tanker than any other route here.",
+        moralTension: "Is the quickest way out still the right one when that road takes everyone else past the leak?",
         /* VALUE AUDIT, 18 September 2026: Reducing harm 39 -> 25, How much is gained 71 -> 80.
            "Word spreads the moment the first vehicle goes down it", past the tanker, so many are put at risk; and it
            is "the fastest clear route out of the district".
@@ -739,11 +739,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         /* PASS D: IS SET TO LEAVE, not IS LEAVING. The old present tense said the staging had begun,
            which is the half of the contradiction that option 6 could not live with. */
-        summary: "The valley is set to leave in timed blocks so the highway does not seize up. Your four go together in your block's slot, with a guide ahead of you and behind you.",
+        summary: "The valley is set to leave in timed blocks so the highway does not seize up. You four (you and your household) go together in your block's slot, with a guide ahead of you and behind you.",
         gains: "All four of you leave together, in a guided group, on a road that is kept moving.",
         consequence: "Nobody in your household is separated and nobody else is pushed down the list to make room for you. But your slot is the fifth of nine, and the smoke is well into the valley by the time you roll.",
         givesUp: "Three hours of waiting, with a child who needs an inhaler, while the air gets steadily worse.",
-        moralTension: "Is waiting your turn still right when the person waiting beside you cannot breathe the wait?",
+        moralTension: "Is waiting your turn still right when the child waiting beside you cannot breathe the smoke?",
         /* VALUE AUDIT, 18 September 2026: How much is gained 81 -> 65.
            "Three hours of waiting, with a child who needs an inhaler, while the air gets steadily worse": a smaller
            payoff for the household than the ridge road or the early run.
@@ -787,7 +787,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "Your own car, on the closed ridge road",
           detail: "over the ridge in forty minutes, up the lane held clear for fire crews coming down.",
         },
-        summary: "The ridge road was cut for the big houses on the shelf, and today it is closed off and kept clear for fire crews coming down it. It is empty, it is fast, and your four could be over the ridge and out of the valley in forty minutes.",
+        summary: "The ridge road was cut for the big houses on the shelf, and today it is closed off and kept clear for fire crews coming down it. It is empty, it is fast, and you four (you and your household) could be over the ridge and out of the valley in forty minutes.",
         gains: "Your household is out of the valley in forty minutes — hours ahead of anything else here.",
         consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept clear for crews coming the other way. A car on it turns a fire engine back.",
         givesUp: "The road the fire crews need. An engine that reverses is one that does not reach the nursing home on the far side.",
@@ -815,10 +815,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "Everyone else in that hall went without a nurse while they searched, because you gave your seats away",
           benefitCase: "use a walker, and cannot climb the steps onto any of the regular buses",
           benefitLost: "Your car took them out in your slot, hours before the last bus",
-          act: "You hand your car keys to the {a|two} neighbors with walkers, and they drive out in your slot. Your four take their places on the lift bus, last out of the valley.",
+          act: "You hand your car keys to the {a|two} neighbors with walkers, and they drive out in your slot. You four take the neighbors' places on the lift bus, last out of the valley.",
           parallelAct: "{w|A passenger gives their boat place to two people who cannot climb down, and waits for the hoist boat instead. That boat is the last one lowered.}",
           consequences: {
-            soon: "Your four wait six hours in a shelter hall while the smoke thickens outside it.",
+            soon: "You four wait six hours in a shelter hall while the smoke thickens outside.",
             later: "The lift bus may come late. Your child's inhaler could be empty before it reaches the valley road.",
           },
           parallelConsequences: {
@@ -836,12 +836,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "The lift-equipped bus, last out of the valley",
           detail: "your car goes at your slot with the two neighbors and their walkers in it, one of them driving. You take their places on the bus.",
         },
-        summary: "Two neighbors use walkers and cannot board the regular buses. The lift bus can take them, but it is the last vehicle scheduled to leave the valley. Your car can take them out in your block's slot instead, with one of them driving - though folding the rear row flat for their walkers leaves five seats, and two of those are theirs. Three is not four, and you are not splitting your household. So your own four take their places on the lift bus.",
+        summary: "Two neighbors use walkers and cannot board the regular buses. The lift bus can take them, but it is the last vehicle scheduled to leave the valley. Your car can take them out in your block's slot instead, with one of them driving - though folding the rear row flat for the two walkers leaves five seats, and two of those five are the neighbors'. Three is not four, and you are not splitting your household. So you four (you and your household) take the neighbors' places on the lift bus.",
         /* WHAT IS GIVEN AWAY IS THE PLACE, not only the seats. The car goes out in the household's
            own slot, so the neighbors inherit a position in the line as well as four seats - and the
            household drops from fifth of nine to last. The card was naming half the gift. */
         gains: "The two people least able to get themselves out leave in your seats, and in your place in the line.",
-        consequence: "Nobody who needs the lift is left behind. But your own four are then on the last vehicle out. Your mother waits six hours in a shelter hall for it.",
+        consequence: "Nobody who needs the lift is left behind. But you four are then on the last vehicle out. Your mother waits six hours in a shelter hall for that bus.",
         /* PASS D: NOT NEAR THE FRONT. The household's slot is the fifth of nine - option 1 says so
            twice - which is the middle of the line, and this card was selling a place it never had.
            The sacrifice is real without the exaggeration: middle of the line to last out. */
@@ -889,7 +889,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "Your car holds seven and your household is four. Four people on your street have no vehicle at all, so you have room for three of them, and taking them costs you nothing but the space.",
         gains: "Seven people leave the valley instead of four, in one vehicle, on one tank of fuel.",
         consequence: "Three people who had no way out at all are in your car, and a fourth is still on the street. Seven in a seven-seat car also means the walker goes on the roof. The drive is slow and very hot.",
-        givesUp: "Room and speed. The car is full, the walker is strapped above it, and you cannot take the curves fast.",
+        givesUp: "Room and speed. The car is full, your mother's walker is strapped to the roof, and you cannot take the curves fast.",
         moralTension: "How much of your own family's room do you owe the neighbors who have no car?",
         /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 54 -> 62. It takes three neighbors who have no vehicle at all. */
         fingerprint: {
@@ -945,7 +945,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           detail: "twenty minutes of narrow path past the big houses, slow with the walker. Your car stays at the house.",
         },
         summary: "The school is concrete, stands on the cleared shelf at the top of the valley, and is the designated refuge. The ridge road runs up to that shelf and is closed today, and the footpath beside it is too narrow for a vehicle. So your car stays at the house and the four of you walk. Going there uses no road capacity and displaces nobody at all.",
-        gains: "You take no seat, no lane and no fuel from anybody, and you can still walk back down if the front turns.",
+        gains: "You take no seat, no lane and no fuel from anybody, and you can still walk back down if the fire front turns.",
         consequence: "Nobody loses a place on the road to you, and the way back down stays open all night. But the climb is twenty minutes of narrow path, slow with your mother's walker, and it takes you up past the big houses where the ridge road begins. You are then inside the fire's path in a building rather than outside it, and your children watch the front arrive.",
         givesUp: "Distance from the fire, and your car. You trust a building to hold, and a crew comes back into the valley to find out whether anybody stayed in the blocks.",
         moralTension: "Is refusing to take anything from anyone worth putting your own children nearer the fire?",
@@ -994,8 +994,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The highway is still empty and the first slot has not been called. Going now, before the timed convoy starts, is the fastest and cheapest way out. That is true for you, and for everyone who leaves when you do.",
         gains: "The quickest, cleanest run out of the valley, and the first few who follow you get a clear road as well.",
         consequence: "Your household is out early on an open highway. But your neighbors see you go and follow, so nine blocks that were meant to leave in turn are all on the road at once. Staging cannot be re-formed once it breaks, and the blocks furthest from the junction are the ones still sitting in the jam when the fire comes down.",
-        givesUp: "The staging system itself, and any way back in. Nine blocks moving at once is the one thing it was built to prevent.",
-        moralTension: "If everyone leaving early is what causes the jam, does it matter that you left before it?",
+        givesUp: "The staging system itself, and any way back in. Nine blocks moving at once is the one thing the staging was built to prevent.",
+        moralTension: "If everyone leaving early is what causes the jam, does it matter that you left before the jam started?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 85 -> 45, How much is gained 68 -> 80, Reducing harm 43 -> 20.
            Its own preview leaves "the blocks furthest from the junction" in the jam "when the fire comes down": it
            helps the first few and harms whole blocks. And it is "the quickest, cleanest run out of the valley".
@@ -1119,7 +1119,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The most lives saved. Every one of the 120 is given a survival score, and the 20 highest are treated.",
         gains: "More of the people treated come through than under any other rule on this list.",
         consequence: "The 20 chosen are the ones most likely to recover, so this month's survival count is the highest here. But a late diagnosis lowers your score, so most of the 100 who wait are the people the system found too late — the same ones who waited last month.",
-        givesUp: "The patients the system already failed. Being found late is what puts them at the bottom of this list, and the bottom is where they stay.",
+        givesUp: "The patients the system already failed. Being found late is what puts those patients at the bottom of this list, and the bottom is where they stay.",
         moralTension: "Is saving the greatest number the right goal, even when the people left out are the ones the system already failed?",
         /* VALUE AUDIT, 18 September 2026: Protecting the vulnerable 53 -> 30.
            Its cost line: "The patients the system already failed... the bottom is where they stay."
@@ -1171,7 +1171,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The most vulnerable first. The 120 are sorted by how ill they are, and the 20 worst off are treated.",
         gains: "The 20 least able to cope are treated, and nobody is ranked by how useful their recovery would be.",
         consequence: "The 20 in the worst condition are treated first. But they respond slowly and some will not recover, so fewer of the 120 are alive at the end of the year than under any other rule here.",
-        givesUp: "Lives. Doses go to patients who may not be able to use them, and the 100 who wait include people who would have recovered.",
+        givesUp: "Lives. Doses go to patients who may be too ill to recover even with treatment, and the 100 who wait include people who would have recovered.",
         moralTension: "Do you treat the people who need help most, even if that means fewer people survive?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 40 -> 35.
            Its preview: "fewer of the 120 are alive at the end of the year than under any other rule here" - so it
@@ -1328,7 +1328,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Hold some doses back for the patients nobody reaches",
         summary: "A share reserved. Some of the 20 are held for the patients who live too far out to reach a clinic quickly.",
-        gains: "Patients who are on the list but never near the front of it get a share of this month's supply.",
+        gains: "The patients who live too far out to reach a clinic quickly, and so are never near the front of the list, get a share of this month's supply.",
         consequence: "The held doses reach people every other rule here leaves at the bottom. But reaching them takes weeks, and any dose still held when its date passes helps nobody at all.",
         givesUp: "Certainty. Fewer than 20 patients may be treated this month, and a dose that goes past its date cannot be recovered.",
         moralTension: "Is correcting an old unfairness worth using fewer doses today?",
@@ -1610,10 +1610,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Cut only where a family member can cover",
         summary: "Remove visits only from clients who have relatives living close enough to step in.",
-        gains: "Every client without family nearby keeps every visit. The cut lands only on people who have somebody to cover it.",
+        gains: "Every client without family nearby keeps every visit. The cut lands only on clients who have a relative nearby to take the visits on.",
         consequence: "About 60 clients lose their visits, and each has a relative nearby to take them on. But the families absorb work they never agreed to, and some of them are already stretched thin.",
         givesUp: "The families. The cost is moved onto relatives rather than removed.",
-        moralTension: "Is that a smaller harm, or the same harm moved somewhere nobody counts it?",
+        moralTension: "Is moving the visits onto the families a smaller harm, or the same harm moved somewhere nobody counts it?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
            About 60 clients lose their visits; the other 180 keep every one - more than the even cut keeps whole.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
@@ -1663,8 +1663,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "Keep all 240 clients on the schedule, with less time at each door.",
         gains: "Every client keeps a caregiver coming through the door.",
         consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But every trip still has to be driven, so the visits absorb the whole cut and come out about a third shorter. Caregivers report leaving with tasks undone.",
-        givesUp: "Depth. Everyone is seen, and fewer are properly cared for.",
-        moralTension: "Is reaching everyone worth reaching nobody properly?",
+        givesUp: "Depth. Every client is still seen, and caregivers leave tasks undone at door after door.",
+        moralTension: "Is reaching every client worth leaving tasks undone at every door?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 38,
           groupSizeSensitivity: 44,
@@ -1711,7 +1711,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         gains: "The strongest financial position, and a service that is still open next year.",
         consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But about 45 rural clients are transferred to a county agency with nobody to send, and most of them have nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",
-        moralTension: "Is keeping the service alive worth the people it was built for?",
+        moralTension: "Is keeping the service alive worth losing the rural clients the service was built for?",
         /* VALUE AUDIT, 18 September 2026: Reducing harm 28 -> 55.
            It harms the fewest people - about 45 rural clients - though the most severely, and that severity is
            already counted where it belongs, in Protecting the vulnerable (16).
@@ -1889,10 +1889,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Cut only where a family member can cover",
         summary: "Remove visits only from clients who have relatives living close enough to step in.",
-        gains: "Every client without family nearby keeps every visit. The cut lands only on people who have somebody to cover it.",
+        gains: "Every client without family nearby keeps every visit. The cut lands only on clients who have a relative nearby to take the visits on.",
         consequence: "About 60 clients lose their visits, and each has a relative nearby to take them on. But the families absorb work they never agreed to, and some of them are already stretched thin.",
         givesUp: "The families. The cost is moved onto relatives rather than removed.",
-        moralTension: "Is that a smaller harm, or the same harm moved somewhere nobody counts it?",
+        moralTension: "Is moving the visits onto the families a smaller harm, or the same harm moved somewhere nobody counts it?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
            Scenario 4's twin - see care_cut_where_family_covers.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
@@ -1924,8 +1924,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "Keep all 240 clients on the schedule, with less time at each door.",
         gains: "Every client keeps a caregiver coming through the door.",
         consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But every trip still has to be driven, so the visits absorb the whole cut and come out about a third shorter. Caregivers report leaving with tasks undone.",
-        givesUp: "Depth. Everyone is seen, and fewer are properly cared for.",
-        moralTension: "Is reaching everyone worth reaching nobody properly?",
+        givesUp: "Depth. Every client is still seen, and caregivers leave tasks undone at door after door.",
+        moralTension: "Is reaching every client worth leaving tasks undone at every door?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 38,
           groupSizeSensitivity: 44,
@@ -1955,7 +1955,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         gains: "The strongest financial position, and a service that is still open next year.",
         consequence: "The company comes out of the three months solvent and every caregiver's job survives, which no other option here guarantees. But about 45 rural clients are transferred to a county agency with nobody to send, and most of them have nobody else.",
         givesUp: "The most isolated clients. Distance is treated as a reason to stop coming.",
-        moralTension: "Is keeping the service alive worth the people it was built for?",
+        moralTension: "Is keeping the service alive worth losing the rural clients the service was built for?",
         /* VALUE AUDIT, 18 September 2026: Reducing harm 28 -> 55.
            Scenario 4's twin - see care_profitable_rounds.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
@@ -2107,7 +2107,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Help the people in the worst trouble first",
         summary:
           "The crew goes first to the people who would be hurt the most without power. That holds even if reaching them is slow and costs a lot.",
-        gains: "Nobody is skipped because helping them was hard.",
+        gains: "Nobody in the worst trouble is skipped because reaching that person is hard.",
         consequence:
           "The people in the worst trouble get their power back first. But the crew then reaches fewer places, so many others stay dark.",
         givesUp: "The bigger number of places the same crew could have reached.",
@@ -2182,7 +2182,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         gains: "Almost nobody is left with no power at all.",
         consequence:
           "More homes get some power than with any other rule. But power that keeps cutting out may be too little for anyone in real danger.",
-        givesUp: "Full power in one place, where it would really change things.",
+        givesUp: "Full power in the few places where full power would really change things.",
         moralTension:
           "Is a little help for many worth more than real help for a few?",
         fingerprint: {
@@ -2215,7 +2215,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Use the crew where it does the most good",
         summary:
           "The crew goes where each hour of work does the most good in total. No hour is spent where it helps less.",
-        gains: "Nothing is wasted.",
+        gains: "Every hour the crew works goes where that hour does the most good.",
         consequence:
           "The crew does more good in total than with any other rule. But the places that are hardest to reach are always skipped.",
         givesUp: "The places that cost the most to reach.",

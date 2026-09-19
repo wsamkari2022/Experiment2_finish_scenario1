@@ -133,29 +133,24 @@ type FlowStep = "review" | "person" | "q1" | "apa" | "confirm" | "prediction";
  * participant always knows the information is there; only the body is folded. A design that removed
  * the role would be removing the block's independent variable from the page.
  */
-function CollapsibleHeader({ open, onToggle, children, style, px, py, glow }: {
+/**
+ * A folding section header. The chevron on the right is the whole affordance.
+ *
+ * NO COLLAPSIBLE IN BLOCK 5 GLOWS (researcher's instruction, 20 September 2026). The scene, the
+ * situation box and the role card used to breathe until they had been opened once. With three of
+ * them breathing on every scenario the page read as an alarm, and a participant cannot tell which
+ * of three pulsing panels matters. The one control that still glows is the compare-charts button,
+ * which opens something a participant would otherwise never know existed.
+ */
+function CollapsibleHeader({ open, onToggle, children, style, px, py }: {
   open: boolean; onToggle: () => void; children: ReactNode;
   style?: React.CSSProperties; px?: unknown; py?: unknown;
-  /**
-   * Breathe until this section has been opened once, then stop for good.
-   *
-   * A FOLDED SECTION HAS ONE PROBLEM: it is easy to miss that it opens at all. A heading with no
-   * affordance reads as a label, and a participant who never realises the scene is one click away
-   * has effectively had it taken from them.
-   *
-   * IT STOPS AFTER THE FIRST OPEN, not after the first render or on a timer. The glow is an
-   * instruction - "this can be opened" - and once the participant has proved they understood it,
-   * continuing would be nagging. A signal that never turns off stops being a signal.
-   */
-  glow?: boolean;
 }) {
   return (
     <HStack
       as="button" w="full" gap="2.5" px={px as never} py={py as never} style={style}
       onClick={onToggle} cursor="pointer" textAlign="left"
       aria-expanded={open}
-      className={glow ? "vrds-glow-ring" : undefined}
-      animation={glow ? "glow-ring 2.4s ease-in-out infinite" : undefined}
     >
       {children}
       <Box flex="1" />
@@ -678,39 +673,52 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * one clean before-and-after into an argument with the software.
    */
   /*
-   * WHICH SIDEBAR SECTIONS ARE OPEN. All closed to begin with, and reset for each scenario, because
-   * each scenario has its own intro page that has just shown the same three things in full.
+   * WHICH SIDEBAR SECTIONS ARE OPEN. The scene, the situation and the role all open by default
+   * (researcher's instruction, 20 September 2026), and they reopen for each scenario.
+   *
+   * WHY ALL THREE ARE OPEN. Every option on the page is built on exactly these facts, and an
+   * option card cannot be judged without them: which route is closed, how many hours are left, who
+   * else is in the car. Folded, they read as an index of things already dealt with - and they were
+   * shown on the intro page a minute earlier, which makes skipping them feel reasonable. The role
+   * in particular is the block's independent variable, the one thing that genuinely differs between
+   * scenario 1 and scenario 2, and it must have been read for an answer to mean anything.
+   *
+   * They still fold, because a participant who has taken them in wants the options higher up the
+   * page. That is what the chevron is for.
+   *
+   * AND THEY OPEN AGAIN FOR EVERY SCENARIO. This component is not remounted between scenarios, so
+   * a fold carried over would silently hide scenario 4's facts - different numbers, a different
+   * route, a different role, never seen. The fold therefore remembers WHICH scenario it was made
+   * on, and any other scenario reads as open. That is why this is one piece of state carrying the
+   * index rather than three booleans reset in an effect: nothing has to fire for the next page to
+   * be correct, and the page cannot render for one frame with the previous page's folds.
    */
-  const [openScene, setOpenScene] = useState(false);
-  const [openFacts, setOpenFacts] = useState(false);
-  /*
-   * THE ROLE OPENS BY DEFAULT, and it is the only one of the four that does.
-   *
-   * It is the block's independent variable: the one thing that genuinely differs between scenario
-   * 1 and scenario 2, and the thing a participant must have read for their answer to mean anything.
-   * Leaving it folded put the manipulation behind a click.
-   *
-   * It is also what stops the column reading as a summary. With all four closed, the sidebar is a
-   * stack of headings; with the role open it always carries real content, and the other three read
-   * as more of the same rather than as an index.
-   *
-   * The scene and the numbers stay closed on purpose. Both were read in full on the intro page
-   * fifteen seconds earlier, and opening all of them pushes the options themselves below the fold.
-   */
-  const [openRole, setOpenRole] = useState(true);
+  const [folds, setFolds] = useState<{ index: number; scene: boolean; facts: boolean; role: boolean }>(
+    { index: progress.currentScenarioIndex, scene: true, facts: true, role: true },
+  );
+  const foldsAreThisScenario = folds.index === progress.currentScenarioIndex;
+  const openScene = foldsAreThisScenario ? folds.scene : true;
+  const openFacts = foldsAreThisScenario ? folds.facts : true;
+  const openRole = foldsAreThisScenario ? folds.role : true;
+  const toggleFold = useCallback((key: "scene" | "facts" | "role") => {
+    setFolds((f) => {
+      const here = f.index === progress.currentScenarioIndex
+        ? f
+        : { index: progress.currentScenarioIndex, scene: true, facts: true, role: true };
+      return { ...here, index: progress.currentScenarioIndex, [key]: !here[key] };
+    });
+  }, [progress.currentScenarioIndex]);
   const [openOrdering, setOpenOrdering] = useState(false);
 
   /*
-   * WHICH FOLDABLE THINGS HAVE EVER BEEN OPENED, so each can stop asking.
+   * WHICH FOLDABLE THINGS HAVE EVER BEEN OPENED.
    *
-   * Kept per scenario rather than for the whole block. A participant who opened the scene in
-   * scenario 1 has learned that headings open, but the scene in scenario 4 is different text they
-   * have not seen, and it deserves the same nudge. The cost of a second nudge is small; the cost of
-   * a participant never reading the role in the scenario where the role is the manipulation is not.
+   * Only "charts" still reads this: the compare-charts button glows until the participant has
+   * opened the comparison once, because nothing else on the page hints that the six options can be
+   * seen side by side. The sidebar sections used to glow too and no longer do - they are open from
+   * the start (researcher's instruction, 20 September 2026), and an open panel that breathes at the
+   * participant is an instruction to do something already done for them.
    */
-  /* SEEDED WITH "role" BECAUSE THE ROLE CARD STARTS OPEN. The glow means "this can be opened", so
-     a section that is already open must never carry it — an open panel breathing at the participant
-     is an instruction to do something they have already had done for them. */
   const [everOpened, setEverOpened] = useState<Set<string>>(() => new Set(["role"]));
   const markOpened = useCallback((key: string) => {
     setEverOpened((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
@@ -1622,8 +1630,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           >
             <CollapsibleHeader
               open={openScene}
-              glow={!everOpened.has("scene")}
-              onToggle={() => { markOpened("scene"); setOpenScene((v) => !v); }}
+              onToggle={() => { markOpened("scene"); toggleFold("scene"); }}
               px={{ base: "5", md: "6" }} py="3"
               style={{ background: pal.accent, color: onAccentText(pal.accent) }}
             >
@@ -1662,8 +1669,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                 >
                   <CollapsibleHeader
                     open={openFacts}
-                    glow={!everOpened.has("facts")}
-                    onToggle={() => { markOpened("facts"); setOpenFacts((v) => !v); }}
+                    onToggle={() => { markOpened("facts"); toggleFold("facts"); }}
                     px="0" py="0"
                   >
                     <Center boxSize="5" minW="5" rounded="full"
@@ -1688,8 +1694,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           */}
           {scenario.role && (
             <ScenarioRoleCard scenario={scenario} pal={pal}
-              open={openRole} glow={!everOpened.has("role")}
-              onToggle={() => { markOpened("role"); setOpenRole((v) => !v); }} />
+              open={openRole}
+              onToggle={() => { markOpened("role"); toggleFold("role"); }} />
           )}
 
           {/*
@@ -2243,12 +2249,10 @@ export function CompanyPrincipleCard({ company, pal, variant = "sidebar" }: {
   );
 }
 
-export function ScenarioRoleCard({ scenario, pal, open = true, onToggle, glow }: {
+export function ScenarioRoleCard({ scenario, pal, open = true, onToggle }: {
   scenario: Block5Scenario; pal: Block5Palette;
   /** Collapsed on the options page, where the intro has just shown this in full. Open elsewhere. */
   open?: boolean; onToggle?: () => void;
-  /** Breathe until opened once. See CollapsibleHeader for why it stops rather than looping. */
-  glow?: boolean;
 }) {
   const view = scenario.stakePosition ? STAKE_VIEW[scenario.stakePosition] : null;
   const onAccent = onAccentText(pal.accent);
@@ -2267,8 +2271,6 @@ export function ScenarioRoleCard({ scenario, pal, open = true, onToggle, glow }:
         as={onToggle ? "button" : undefined} w={onToggle ? "full" : undefined}
         onClick={onToggle} cursor={onToggle ? "pointer" : undefined}
         aria-expanded={onToggle ? open : undefined}
-        className={glow ? "vrds-glow-ring" : undefined}
-        animation={glow ? "glow-ring 2.4s ease-in-out infinite" : undefined}
         style={{ background: pal.accent, color: onAccent }}>
         <HStack gap="2.5" minW="0">
           <Icon boxSize="4"><LuUserRound /></Icon>

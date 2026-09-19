@@ -39,6 +39,7 @@ import { useScrollToTop } from "./useScrollToTop";
 import { extractBlock5Profile } from "./block5Profile";
 import { buildThresholdTree } from "./thresholdTree";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
+import { STAGE_STORAGE_KEY, announceStage } from "./stageSignal";
 import type { Block5Results } from "./block5Types";
 import type { TrolleyBlockResults } from "./trolleyTypes";
 import type { MoneyBlockResults } from "./types";
@@ -96,8 +97,9 @@ const STAGES_WITH_TRANSITION: Stage[] = [
 
 /** Pause (ms) shown on transition spinner screens before advancing. */
 const TRANSITION_MS = 900;
-/** localStorage key that persists the current non-transition stage across refreshes. */
-const STORAGE_KEY_STAGE = "experiment_flow_stage";
+/** localStorage key that persists the current non-transition stage across refreshes. Defined in
+ *  stageSignal.ts, which is also where anything outside the flow reads it. */
+const STORAGE_KEY_STAGE = STAGE_STORAGE_KEY;
 /** localStorage key for the InsightsPayload forwarded from the Insights page to Block 4. */
 const STORAGE_KEY_INSIGHTS = "experiment_flow_insights";
 /** localStorage key for the completed Block4CompletionPayload. */
@@ -245,6 +247,10 @@ export function ExperimentFlow() {
     } catch {
       // ignore
     }
+    /* Say so out loud, for the parts of the page that live ABOVE the flow and cannot be handed
+       this state - today, the light/dark toggle, which stops asking for attention once the
+       participant reaches Block 5. See stageSignal.ts. */
+    announceStage(stage);
     /*
      * Mirror the stopping point into the participant directory as well.
      *

@@ -6,6 +6,7 @@ import { ThemeProvider, useTheme } from "next-themes"
 import type { ThemeProviderProps } from "next-themes"
 import * as React from "react"
 import { LuMoon, LuSun } from "react-icons/lu"
+import { STAGE_CHANGED_EVENT, isBlock5OrLater, savedStage } from "@/experiment/stageSignal"
 
 export interface ColorModeProviderProps extends ThemeProviderProps {}
 
@@ -91,6 +92,28 @@ export const ColorModeButton = React.forwardRef<
   const { toggleColorMode } = useColorMode()
   /** False until the participant has clicked the toggle at least once, ever. */
   const [hasBeenUsed, setHasBeenUsed] = React.useState(readToggleUsed)
+  /**
+   * THE GLOW STOPS AT BLOCK 5, WHETHER OR NOT THE TOGGLE WAS EVER USED (researcher's instruction,
+   * 20 September 2026).
+   *
+   * The nudge exists for the early blocks, where a participant is settling into the study and may
+   * want a lighter or darker page. From Block 5 on they are reading scenarios and making the
+   * choices the study measures, and a control pulsing in the corner of every one of those pages is
+   * a distraction competing with the task. It never comes back afterwards: the summary, the charts
+   * and the feedback page are all past that line.
+   *
+   * The stage is read once on mount, for a page opened directly in the middle of the study, and
+   * then kept current by the flow's own announcement. See stageSignal.ts.
+   */
+  const [inBlock5OrLater, setInBlock5OrLater] = React.useState(() => isBlock5OrLater(savedStage()))
+  React.useEffect(() => {
+    const onStage = (e: Event) => {
+      const stage = (e as CustomEvent<string>).detail ?? savedStage()
+      setInBlock5OrLater(isBlock5OrLater(stage))
+    }
+    window.addEventListener(STAGE_CHANGED_EVENT, onStage)
+    return () => window.removeEventListener(STAGE_CHANGED_EVENT, onStage)
+  }, [])
 
   const handleClick = React.useCallback(() => {
     if (!hasBeenUsed) {
@@ -113,9 +136,9 @@ export const ColorModeButton = React.forwardRef<
         size="sm"
         ref={ref}
         rounded="full"
-        // Pulses until first use, to point out that the appearance can be changed. The
-        // `glow-ring` keyframes live in index.html so Chakra's css-in-js cannot strip them.
-        animation={hasBeenUsed ? undefined : "glow-ring 1.8s ease-in-out infinite"}
+        // Pulses until first use, and never from Block 5 onward. The `glow-ring` keyframes live in
+        // index.html so Chakra's css-in-js cannot strip them.
+        animation={hasBeenUsed || inBlock5OrLater ? undefined : "glow-ring 1.8s ease-in-out infinite"}
         {...props}
         css={{
           _icon: {
