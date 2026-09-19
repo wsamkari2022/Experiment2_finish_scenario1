@@ -440,21 +440,33 @@ console.log("===================================================================
       /*
        * AND THE RESPONSIBILITY GAP MUST AGREE WITH IT.
        *
-       * This gate exists because the first version of the measure failed it, and nothing caught
-       * that until a live run: `vciActed` averaged EVERY decider scenario and compared the result
-       * to the single wish, so a participant who wished for exactly what they had chosen was
-       * reported as "much truer to their values when the decision was not yours" (60 vs 85). The
-       * number was reading the other three scenarios, not the change of chair.
-       *
-       * Both halves now come from the pair. A small residue is legitimate — the deciding half is
-       * scored before its own APA update and the wish after it — so this allows a little movement
-       * rather than demanding zero, which would fail for a real reason.
+       * Both halves come from the pair, never from the whole run: averaged over every decider
+       * scenario, a participant who wished for exactly what they had chosen would be reported as
+       * truer to their values when not deciding, because the other three scenarios drag the
+       * average. A small residue is legitimate — the deciding half is scored before its own profile
+       * update and the wish after it — so this allows ONE label of movement rather than demanding
+       * zero, which would fail for a real reason.
        */
       if (m2) {
-        check("wishing for what you chose leaves the responsibility gap near zero",
-          Math.abs(m2.responsibilityGap) <= 20,
-          `acted ${m2.vciActed}, wished ${m2.vciWished}, gap ${m2.responsibilityGap}`);
+        check("wishing for what you chose leaves the two choices at most one label apart",
+          m2.labelSteps <= 1,
+          `acted ${m2.vciActed}, wished ${m2.vciWished}, gap ${m2.responsibilityGap}, ${m2.labelSteps} label(s) apart`);
       }
+    }
+    /* The responsibility-gap words count labels, so every reading is reachable under the VCI
+       weights: none of them may be dead text. */
+    {
+      const L = MIR.responsibilityGapLabel;
+      const cases = [
+        [0, 0, "About the same whether or not the decision was yours"],
+        [20, 1, "Somewhat truer to your values when the decision was not yours"],
+        [-30, 1, "Somewhat truer to your values when you had to decide"],
+        [50, 2, "Much truer to your values when the decision was not yours"],
+        [-90, 3, "Much truer to your values when you had to decide"],
+      ];
+      const wrong = cases.filter(([g, s, want]) => L(g, s) !== want);
+      check("every responsibility-gap reading is reachable and says what the label count means",
+        wrong.length === 0, wrong.length ? `wrong for gaps ${wrong.map((c) => c[0]).join(", ")}` : "5 of 5 readings correct");
     }
   }
 }

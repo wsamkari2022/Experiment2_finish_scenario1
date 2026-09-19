@@ -55,6 +55,16 @@
  *                        Positive = they were TRUER to their values with nothing on their
  *                        shoulders, i.e. responsibility pushed them off.
  *
+ * The responsibility gap, as equations. Each half is the VCI label weight of that one choice (see
+ * the VCI section of block5CVR.ts), judged on the profile brought into its own scenario:
+ *
+ *     VCI acted            = 100 × w(label of the decision, scenario 4)
+ *     VCI wished           = 100 × w(label of the wish, scenario 5)
+ *     responsibility gap   = VCI wished − VCI acted          one of 0, ±20, ±30, ±40, ±50, ±70, ±90
+ *
+ * with w = 1.00 / 0.80 / 0.50 / 0.10 for Aligned / Weakly / Misaligned / Strongly misaligned. Its
+ * words count how many labels apart the two choices are (responsibilityGapLabel).
+ *
  * They usually agree and do not have to. One is about distance from a profile, the other about
  * alignment tiers; a participant can move a long way while staying inside the same tier. Reporting
  * one number would hide that, so both are returned and both are captioned separately.
@@ -78,9 +88,13 @@ import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { positionRows } from "./block5Position";
 import { scenarioVciScore } from "./block5CVR";
 import type {
+  AlignmentLevel,
   Block5ScenarioResult,
   Block5UserProfile,
 } from "./block5Types";
+
+/** The four alignment labels from best fit to worst, so two labels can be counted apart. */
+const LABEL_ORDER: AlignmentLevel[] = ["aligned", "weakly_aligned", "misaligned", "strongly_misaligned"];
 
 /** One side of the mirror. */
 export interface MirrorSide {
@@ -89,6 +103,8 @@ export interface MirrorSide {
   optionTitle: string;
   /** 0–100: share of the distance this menu made available that the participant used */
   departure: number;
+  /** the alignment label of the choice, judged on the profile brought into that scenario */
+  level: AlignmentLevel;
   /** 0–1 label weight (`scenarioVciScore`), the same quantity VCI averages */
   vciScore: number;
   /** seconds spent on this scenario, rounded */
@@ -108,6 +124,11 @@ export interface MirrorReading {
   vciWished: number;
   /** vciWished − vciActed. Positive = truer to their values when not responsible. */
   responsibilityGap: number;
+  /**
+   * How many alignment labels apart the two choices sit: 0 (the same label) to 3 (Aligned against
+   * Strongly misaligned). It is what `responsibilityGapLabel` reads for "somewhat" or "much".
+   */
+  labelSteps: number;
   /**
    * True when the wish came back fast enough to be recall rather than reflection.
    *
@@ -283,6 +304,7 @@ export function analyseMirror(
     optionId: res.selectedOptionId,
     optionTitle: titleOf(row.scenarioId, res.selectedOptionId),
     departure: row.departure,
+    level: res.alignmentLevel ?? "misaligned",
     // A stored weight wins. The fallback recomputes it from the stored label on this scenario's own
     // menu size, exactly as the simulation page does when it saves the result.
     vciScore: res.vciScore ?? scenarioVciScore(
@@ -326,6 +348,7 @@ export function analyseMirror(
 
   const mirrorGap = Math.round(decided.departure - wished.departure);
   const responsibilityGap = vciWished - vciActed;
+  const labelSteps = Math.abs(LABEL_ORDER.indexOf(decided.level) - LABEL_ORDER.indexOf(wished.level));
 
   const sentence = sameOption
     ? `You wished for exactly what you chose. Deciding for your colleagues and being on the receiving end produced the same answer.`
@@ -336,14 +359,29 @@ export function analyseMirror(
         : `You chose “${decided.optionTitle}” and wished for “${wished.optionTitle}” — different options, but the same distance from your own values.`;
 
   const hurried = wished.seconds > 0 && wished.seconds < HURRIED_WISH_SECONDS;
-  return { decided, wished, sameOption, mirrorGap, vciActed, vciWished, responsibilityGap, hurried, sentence };
+  return { decided, wished, sameOption, mirrorGap, vciActed, vciWished, responsibilityGap, labelSteps, hurried, sentence };
 }
 
-/** Plain words for the responsibility gap. Deliberately about the situation, never the person. */
-export function responsibilityGapLabel(gap: number): string {
-  if (gap >= 20) return "Much truer to your values when the decision was not yours";
-  if (gap >= 8) return "Somewhat truer to your values when the decision was not yours";
-  if (gap > -8) return "About the same whether or not the decision was yours";
-  if (gap > -20) return "Somewhat truer to your values when you had to decide";
-  return "Much truer to your values when you had to decide";
+/**
+ * Plain words for the responsibility gap. Deliberately about the situation, never the person.
+ *
+ * THE WORDS COUNT LABELS, NOT POINTS. Both halves of the pair carry a VCI label weight, and on six
+ * options those are 100 / 80 / 50 / 10, so two neighboring labels are 20, 30 or 40 points apart
+ * and nothing is ever 1-19 apart. The reading therefore follows how many labels separate the two
+ * choices:
+ *
+ *     the same label             "About the same whether or not the decision was yours"
+ *     one label apart            "Somewhat truer to your values when ..."
+ *     two or three labels apart  "Much truer to your values when ..."
+ *
+ * and the sign of the gap says which chair: positive, truer when the decision was not theirs.
+ * Counting labels keeps the words right whatever the weights are, where fixed point cut-offs would
+ * silently go stale the next time the weights moved.
+ */
+export function responsibilityGapLabel(gap: number, labelSteps: number): string {
+  if (labelSteps === 0 || gap === 0) return "About the same whether or not the decision was yours";
+  const degree = labelSteps >= 2 ? "Much" : "Somewhat";
+  return gap > 0
+    ? `${degree} truer to your values when the decision was not yours`
+    : `${degree} truer to your values when you had to decide`;
 }

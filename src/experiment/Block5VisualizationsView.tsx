@@ -789,7 +789,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
               howTo={<>These two scenarios were <b>the same company, the same decision, and the same six options</b> — the only thing that changed was whether you were making the call or living with it. Each bar is how far your answer sat from <b>your own</b> values, as a share of the room that menu allowed. Because nothing else differed, <b>any gap between them is about position and nothing else.</b></>}
               caption={<>
                 {mirror.sentence}
-                {" "}<b>Consistency when deciding {mirror.vciActed}/100, when only wishing {mirror.vciWished}/100</b> — {responsibilityGapLabel(mirror.responsibilityGap).toLowerCase()}.
+                {" "}<b>Consistency when deciding {mirror.vciActed}/100, when only wishing {mirror.vciWished}/100</b> — {responsibilityGapLabel(mirror.responsibilityGap, mirror.labelSteps).toLowerCase()}.
                 {mirror.hurried && (
                   <> <b>Read with care:</b> the wish came back in {mirror.wished.seconds} seconds, which is fast
                   enough to be recall of the earlier screen rather than a fresh judgment.</>

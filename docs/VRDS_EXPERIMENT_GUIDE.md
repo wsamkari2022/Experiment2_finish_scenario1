@@ -686,13 +686,19 @@ frozen profile, so Block 5's own updates cannot move it.
 #### 4 · Responsibility Gap
 
 ```
-responsibilityGap = vciWished − vciActed
+vciActed          = 100 × w(label of the decision, scenario 4)
+vciWished         = 100 × w(label of the wish, scenario 5)
+responsibilityGap = vciWished − vciActed        one of 0, ±20, ±30, ±40, ±50, ±70, ±90
 ```
 
-Both halves come from **the pair only** — scenario 4 against scenario 5. An earlier version averaged
-every decider scenario against the single wish, and reported a 25-point gap for a participant who
-wished for *exactly what they chose*; it was reading the other three scenarios, not the change of
-chair.
+`w` is the VCI label weight (1.00 / 0.80 / 0.50 / 0.10), each half judged on the profile brought into
+its own scenario. Both halves come from **the pair only** — scenario 4 against scenario 5 — never
+from the whole run, which would read the other three scenarios rather than the change of chair.
+
+Its words count **labels**, not points: the same label → "About the same"; one label apart →
+"Somewhat truer to your values when …"; two or three apart → "Much truer …". The sign says which
+chair (positive = truer when the decision was not theirs). `responsibilityGapLabel` in
+`block5Mirror.ts`.
 
 > **Read the two gaps together, never one alone.** They use different profiles by design: the mirror
 > gap reads the frozen profile, the responsibility gap reads values *as they stood*, exactly as VCI
