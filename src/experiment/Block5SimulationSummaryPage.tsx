@@ -143,7 +143,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
             hint="How closely your choices matched your own values: 100 means you chose the option that fit you best every time, and 50 is what choosing blindly would give. It is judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
           <MeasureCard icon={<LuScale />} palette="purple" label="Stability"
             value={`${stability}`} sub={results.stabilityLevel ?? "—"}
-            hint="How much your own values moved during Block 5, compared with where they stood after Blocks 1-4. It combines whether your priorities changed order with how far they traveled along the way." />
+            hint="Whether the order of your priorities changed during Block 5, at the moments you chose against the option that fit you best. 100 means none of your four values traded places with another." />
           <MeasureCard icon={<LuTarget />} palette="teal"
             label={hasCaptured ? "Performance taken" : "Performance"}
             value={hasCaptured ? `${captured}` : `${performance}`}

@@ -50,6 +50,7 @@ import { ACTIVE_TIME_KEY } from "./activeTime";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
 import { ALIGNMENT_LABEL } from "./block5CVR";
+import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
 import type {
   Block5PolicyDimKey,
@@ -154,7 +155,7 @@ function dropUntimedStages(value: unknown): unknown {
  * The active-time ledger, tidied for a reader.
  *
  * The stored version keeps milliseconds and raw timestamps because that is what arithmetic needs.
- * Nobody analysing a dataset wants to divide by 60000 in their head, so the database gets minutes
+ * Nobody analyzing a dataset wants to divide by 60000 in their head, so the database gets minutes
  * and ISO dates, plus a sentence stating the counting rule — so a reader never has to guess
  * whether "42" meant minutes of work or minutes of having the tab open.
  *
@@ -626,6 +627,18 @@ function totalTimeMs(timings: unknown): number | null {
   return seen ? sum : null;
 }
 
+/** One of the three sensitivity stabilities off the stored Block 5 results, or null. */
+function sensitivityStabilityOf(
+  b5: Record<string, unknown>,
+  which: "directness" | "context" | "stakeholder",
+): { value: number; level: string } | null {
+  const all = b5.sensitivityStability as Record<string, { value?: unknown; level?: unknown } | null> | undefined;
+  const one = all?.[which];
+  return one && typeof one.value === "number" && typeof one.level === "string"
+    ? { value: one.value, level: one.level }
+    : null;
+}
+
 export function buildHeadline(block5: unknown, timings: unknown): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
   const b5 = block5 as Record<string, unknown>;
@@ -639,8 +652,17 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
        it is called here. The original field stays in blocks for anyone checking the maths. */
     consistency_score: b5.vci ?? null,
     consistency_label: b5.vciLevel ?? null,
+    /* Stability is the four policy values only: swaps in their order at the conflict steps. */
     stability_score: b5.stability ?? null,
     stability_label: b5.stabilityLevel ?? null,
+    /* The three sensitivities each have their own: how far each traveled on its 0-100 scale.
+       Null for a run recorded before 19 September 2026, or when a snapshot is missing. */
+    directness_stability_score: sensitivityStabilityOf(b5, "directness")?.value ?? null,
+    directness_stability_label: sensitivityStabilityOf(b5, "directness")?.level ?? null,
+    context_stability_score: sensitivityStabilityOf(b5, "context")?.value ?? null,
+    context_stability_label: sensitivityStabilityOf(b5, "context")?.level ?? null,
+    stakeholder_stability_score: sensitivityStabilityOf(b5, "stakeholder")?.value ?? null,
+    stakeholder_stability_label: sensitivityStabilityOf(b5, "stakeholder")?.level ?? null,
     performance_score: b5.performance ?? null,
     performance_captured: b5.performanceCaptured ?? null,
     position_effect: position?.effect ?? null,
@@ -1448,8 +1470,67 @@ export function buildPositionSection(block5: unknown): Record<string, unknown> |
     drift_check_explained:
       "Whether departure grew simply because the study went on, rather than because position changed. A large value here weakens any position reading.",
     direction_sentence: position.sentence,
+    decided_versus_wished: decidedVersusWished(block5 as Record<string, unknown>),
     source: "Computed from blocks.block5_emergency_scenarios. Saved because the results page works these out live and would otherwise discard them.",
   };
+}
+
+/**
+ * THE DECISION AND THE WISH, SIDE BY SIDE: scenario 4 (the participant decides, it lands on their
+ * colleagues) against scenario 5 (someone else decides, it lands on them, and they only wish).
+ *
+ * The same numbers the results page shows under the mirror chart - "consistency when deciding" and
+ * "when only wishing" - which until now were worked out live and discarded. They come from
+ * analyseMirror (block5Mirror.ts), the function the page itself calls, so the page and the record
+ * cannot disagree.
+ *
+ *   vci_acted                   100 × the VCI weight of the decision's label   (100 / 80 / 50 / 10)
+ *   vci_wished                  100 × the VCI weight of the wish's label
+ *   acted_choice_was_aligned    the decision was the option labeled Aligned (the best fit)
+ *   wished_choice_was_aligned   the wish was the option labeled Aligned
+ *   responsibility_gap          vci_wished − vci_acted; positive = truer to their values when the
+ *                               decision was not theirs
+ *   labels_apart                0-3; what the reading's "somewhat" or "much" counts
+ *
+ * "Aligned" means exactly the Aligned label. A Weakly aligned choice reads false, and its label is
+ * stored beside the flag so the two can be told apart. Each side is judged on the profile the
+ * participant brought into its own scenario, exactly as VCI is.
+ *
+ * Null when either half is missing - a participant who stopped before scenario 5.
+ */
+function decidedVersusWished(b5: Record<string, unknown>): Record<string, unknown> | null {
+  try {
+    const results = b5.scenarioResults;
+    const before = b5.originalProfile;
+    if (!Array.isArray(results) || !before) return null;
+    const m = analyseMirror(results as never, before as never);
+    if (!m) return null;
+    return {
+      what_this_is:
+        "Scenario 4 (you decide, it lands on your colleagues) against scenario 5 (someone else "
+        + "decides, it lands on you, and you only wish). The same employer, cut and six options; "
+        + "only the position changed.",
+      acted_scenario_id: m.decided.scenarioId,
+      acted_option_title: m.decided.optionTitle,
+      acted_alignment_label: ALIGNMENT_LABEL[m.decided.level],
+      acted_choice_was_aligned: m.decisionWasAligned,
+      vci_acted: m.vciActed,
+      wished_scenario_id: m.wished.scenarioId,
+      wished_option_title: m.wished.optionTitle,
+      wished_alignment_label: ALIGNMENT_LABEL[m.wished.level],
+      wished_choice_was_aligned: m.wishWasAligned,
+      vci_wished: m.vciWished,
+      responsibility_gap: m.responsibilityGap,
+      labels_apart: m.labelSteps,
+      responsibility_gap_reading: responsibilityGapLabel(m.responsibilityGap, m.labelSteps),
+      wished_for_the_same_option: m.sameOption,
+      mirror_gap: m.mirrorGap,
+      wish_seconds: m.wished.seconds,
+      wish_was_hurried: m.hurried,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**

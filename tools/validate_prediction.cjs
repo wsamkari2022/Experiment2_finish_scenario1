@@ -31,7 +31,7 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 const B = (f) => require(path.join(BUILD, f));
 
 const { predictChoice, predictionConfidence, PREDICTION_VERSION } = B("block5Prediction.js");
-const { policyAlignmentScore, policyAlignmentShortfall } = B("block5CVR.js");
+const { policyAlignmentScore, policyAlignmentShortfall, labelOptions } = B("block5CVR.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
@@ -164,6 +164,26 @@ console.log("--- gates ---");
   const none = predictChoice(BLOCK5_SCENARIOS[0].options, draw(), { vci: null, stability: null });
   gate("P7", none.confidence === 0,
     "an unknown confidence is treated as NO confidence, not as average confidence");
+}
+
+/* P9 — the MPF's "most likely" option is the option labeled Aligned, ties included. Both rank an
+   exact tie in fit by what the option delivers, then by id; were the prediction to break ties by
+   card position instead, the two would disagree whenever two options fit identically. Required to
+   meet real ties, so the gate cannot pass by finding none. */
+{
+  let cases = 0, tiesMet = 0, disagree = 0;
+  for (let n = 0; n < 2000; n++) {
+    const p = draw();
+    for (const s of BLOCK5_SCENARIOS) {
+      const lab = labelOptions(s.options, p);
+      const pr = predictChoice(s.options, p, { vci: 70, stability: 70 });
+      cases++;
+      if (lab[0].matchShortfall === lab[1].matchShortfall) tiesMet++;
+      if (pr.options.find((o) => o.rank === 1).optionId !== lab[0].id) disagree++;
+    }
+  }
+  gate("P9", tiesMet > 0 && disagree === 0,
+    `the most likely option is always the Aligned one  (${cases} cases, ${tiesMet} with a tie at the top, ${disagree} disagreements)`);
 }
 
 /* ================================================= 2 · what the predictions actually look like */

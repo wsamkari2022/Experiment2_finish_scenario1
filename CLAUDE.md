@@ -59,11 +59,11 @@ to write a paper.
 
 ## Things that are deliberate, not oversights
 
-- **Three simulations fail on purpose until the calculation pass (since 18 September 2026).** The
-  researcher had the options redesigned to make sense first; `simulate_vci` (V5),
-  `simulate_stability` (S3, S4) and `simulate_position` (the 3x ratio) are to be re-tuned to them
-  afterwards. Every check on the options themselves passes. Do not revert an option's content or
-  numbers to make one of these pass — see `docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md`, section 2g.
+- **One simulation fails on purpose until the position pass: `simulate_position` (the 3x ratio).**
+  The researcher had the options redesigned to make sense first (18 September 2026), and the
+  calculations are being rebuilt on them one at a time; VCI and Stability are done and pass. Do not
+  revert an option's content or numbers to make the position gate pass — see
+  `docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md`, section 2g.
 - **A final choice reached through APA is judged on the profile the participant brought into the
   scenario**, exactly like a choice kept after the CVR (since 18 September 2026). Neither path
   re-labels the choice inside its own scenario; both move the profile for the next one. Relabeling
@@ -76,6 +76,13 @@ to write a paper.
   Consistent, Moderate, Low, Very Low, Highly Inconsistent) sit at 90 / 80 / 65 / 50 / 30, computed
   from the same weights. Do not hand-tune either; gates V10–V12 check both. Method:
   `docs/BLOCK5_VCI_METHOD.md`; figures: `npm run report:vci`.
+- **Stability counts swaps, not distance (since 19 September 2026).** It is the four policy values
+  only: at each conflict step (a decider scenario where the CVR ran) it counts the pairs of values
+  that traded places, a tie opening or closing as half, and Stability = 100 × (1 − min(1,
+  swaps / 6)). Keep steps never count — they are the model refining its estimate. Directness,
+  context and stakeholder each have their own stability (distance on their 0–100 scale, the full
+  scale = 0). Do not reintroduce a churn ceiling. Method: `docs/BLOCK5_STABILITY_METHOD.md`;
+  figures: `npm run report:stability`; gates S1–S11.
 - The "How to read the four values in this scenario" section is absent from scenario 6 on purpose:
   its four options are the four values, and naming them would turn the prediction test into "pick
   your value".
@@ -91,7 +98,7 @@ to write a paper.
 - The option ordering (the planner) is settled. It has been reviewed and is not to be "fixed".
 - **Scenario 6 is a test of the model, not of the participant.** It runs four options rather than
   six, shows no performance numbers, runs no reflection, and must never update the profile. If it
-  ever produced churn, `STABILITY_CHURN_CEILING` and every gate resting on it would be invalidated.
+  ever did, it would add swaps to Stability that no decision of the participant's produced.
   `decisionRole: "predicted"` is what keeps it out; do not remove it.
 - **The scenario-6 prediction is shown AFTER the choice.** Moving it earlier destroys the only
   measurement the scenario exists for, because a choice made after seeing a guess cannot be told

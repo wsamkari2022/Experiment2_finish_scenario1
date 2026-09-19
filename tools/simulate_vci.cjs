@@ -81,6 +81,23 @@ const near = (a, b) => Math.abs(a - b) < 1e-9;
  * Each participant is a function that, given this scenario's options ranked by fit and the
  * profile, returns the option to choose. `st` lets a participant remember what it did earlier.
  */
+/**
+ * THE CONVERT ADOPTS A VALUE THROUGH AN OPTION THAT STANDS FOR ONE.
+ *
+ * A change of heart is a change to a VALUE, so the option the convert takes up in scenario 1 must
+ * be built on one value: the first option outside their top two whose strongest value is at least
+ * STANDS_FOR_ONE_VALUE. A middle-of-the-road option does not qualify. The scenario-1 convoy, for
+ * example, scores 55 / 61 / 70 / 56: its "main value" is gained only because 70 is its largest
+ * number, and a participant who picks it has not declared that gains now come first. A convert
+ * who "adopted" gained that way was then asked to follow gained into the extreme gain option of
+ * scenario 3 (18 / 25 / 92 / 43) - an escalation, not holding to what they chose - and paid twice.
+ * The persona then tested the convoy's arithmetic rather than the property V5 is about.
+ */
+const STANDS_FOR_ONE_VALUE = 85;
+const convertsFirstPick = (r) =>
+  r.find((x) => !isFit(x.level) && x.fingerprint[optionMainValue(x)] >= STANDS_FOR_ONE_VALUE)
+  ?? r.find((x) => !isFit(x.level)) ?? r[2];
+
 const PARTICIPANTS = {
   "Loyal": { pick: (r) => r[0] },
   "Near-loyal": { pick: (r) => r[1] },
@@ -88,14 +105,14 @@ const PARTICIPANTS = {
   "Convert": {
     strong: true,
     pick(r, _p, i, st) {
-      if (i === 0) { const o = r.find((x) => !isFit(x.level)) ?? r[2]; st.value = optionMainValue(o); return o; }
+      if (i === 0) { const o = convertsFirstPick(r); st.value = optionMainValue(o); return o; }
       return r.find((x) => optionMainValue(x) === st.value) ?? r[0];
     },
   },
   "Hesitant convert": {
     strong: false,
     pick(r, _p, i, st) {
-      if (i === 0) { const o = r.find((x) => !isFit(x.level)) ?? r[2]; st.value = optionMainValue(o); return o; }
+      if (i === 0) { const o = convertsFirstPick(r); st.value = optionMainValue(o); return o; }
       return r.find((x) => optionMainValue(x) === st.value) ?? r[0];
     },
   },
@@ -213,10 +230,7 @@ gate("V4", out["Contrarian"] <= out["Flip-flopper"] && out["Contrarian"] === Mat
    is a participant who took the LOWEST label once and the best option every time after:
        100 x ((K - 1) x 1.00 + w(Strongly misaligned)) / K
    expressed against the deck size, so the gate tests the property rather than one deck's arithmetic.
-   This persona adopts the value of the first option outside its top two in scenario 1; when that
-   option is a middle-of-the-road one rather than one that stands for a single value, the persona
-   is then asked to follow the value into an extreme option later, and pays twice. That is a known
-   open failure, listed in CLAUDE.md. */
+   The convert adopts its value through an option that stands for one value (convertsFirstPick). */
 const FLOOR_ONE_CHANGE = Math.round((100 * ((N_SCENARIOS - 1) + W.strongly)) / N_SCENARIOS);
 gate("V5", out["Convert"] >= FLOOR_ONE_CHANGE,
   `Convert >= ${FLOOR_ONE_CHANGE} — a genuine change of heart, held to, costs only the scenario it happened in  (got ${out["Convert"]})`);

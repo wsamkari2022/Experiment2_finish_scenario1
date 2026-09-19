@@ -57,7 +57,7 @@
  * tracks a value makes choosing that value free — and a choice that costs nothing measures
  * nothing. Across the v5 set, `speed` correlated r = 0.84 with the gain fingerprint: barely
  * inside the 0.85 limit. Dropping to three scenarios moved it to 0.86 and the gate failed. The
- * gate was right, and the coupling was real rather than a rounding artefact — every high-gain
+ * gate was right, and the coupling was real rather than a rounding artifact — every high-gain
  * option had been written fast, and every low-gain option slow.
  *
  * Three options were re-timed, each because the card's OWN TEXT already said so. All three are
@@ -2025,10 +2025,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
    * medicine shortage would have done.
    *
    * IT NEVER FEEDS THE MODEL. `decisionRole: "predicted"` makes `scenarioIsScored()` false, so no
-   * profile update, no churn, and no contribution to VCI, Stability or Performance. Two reasons,
-   * both binding. STABILITY_CHURN_CEILING is a measurement OF THIS DECK, so a sixth scenario
-   * producing churn would invalidate it and every gate resting on it. And a scenario built to check
-   * whether the model predicted correctly cannot also be evidence for the model.
+   * profile update, no swaps, and no contribution to VCI, Stability or Performance. Two reasons,
+   * both binding. A sixth scenario that moved the profile would add swaps to Stability that no
+   * decision of the participant's produced. And a scenario built to check whether the model
+   * predicted correctly cannot also be evidence for the model.
    *
    * IT HAS FOUR OPTIONS, NOT SIX, AND THEY ARE PURE CHAMPIONS. Measured across 3,000 profiles, the
    * alignment gap between a scenario's best and second-best option is 7 points at the median, so

@@ -11,9 +11,8 @@
  * THIS FILE READS THE MODEL. IT MUST NEVER WRITE TO IT.
  * Nothing here returns a profile, and nothing here may be wired into a profile update. Scenario 6
  * is a test OF the model, so letting it feed the model would make the test evidence for the thing
- * it is testing. The same rule keeps `STABILITY_CHURN_CEILING` intact: that constant is a
- * measurement of the scenario deck, and a sixth scenario that produced churn would invalidate it
- * along with every gate built on it.
+ * it is testing. The same rule keeps Stability honest: a sixth scenario that moved the profile
+ * would add swaps that no decision of the participant's produced.
  * ────────────────────────────────────────────────────────────────────────────────────────────
  *
  * THE ONE MEASUREMENT THAT SHAPED EVERY CHOICE BELOW
@@ -39,7 +38,7 @@ import type {
   Block5UserProfile,
 } from "./block5Types";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
-import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall } from "./block5CVR";
+import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall, policyDelivery } from "./block5CVR";
 
 /**
  * Stamped onto every stored prediction.
@@ -49,7 +48,7 @@ import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall } from 
  * or formula below changes, so a stored prediction can always be traced to the rule that produced
  * it. Predictions made under different versions must not be pooled.
  */
-export const PREDICTION_VERSION = "2026-09-19-d";
+export const PREDICTION_VERSION = "2026-09-19-e";
 
 /*
  * VERSION HISTORY. Predictions made under different versions must not be pooled.
@@ -61,7 +60,10 @@ export const PREDICTION_VERSION = "2026-09-19-d";
  *                 moment their values were most pronounced. Away from the floor the two rules give
  *                 identical probabilities, because a softmax is unchanged by adding a constant to
  *                 every input, so only floored cases differ. `separation` moved onto the same
- *                 uncensored quantity for the same reason.
+ *                 uncensored quantity for the same reason. This bump was missed when the change
+ *                 was made, which is the failure the constant exists to prevent: for one commit,
+ *                 two different rules were stamped with the same version and could not be told
+ *                 apart in the data. No participant data was collected under either.
  *   2026-09-18-c  Nothing in this file changed. Its VCI INPUT did: a final choice reached through the
  *                 APA clarification is now judged on the profile the participant brought into that
  *                 scenario, as the keep path always was, and ties in the label ranking are broken by
@@ -72,10 +74,12 @@ export const PREDICTION_VERSION = "2026-09-19-d";
  *                 carries the weight given by its place in line (1.00 / 0.80 / 0.50 / 0.10 on six
  *                 options; see the VCI section of block5CVR.ts), so the same run of choices gives a
  *                 different VCI, and so a different confidence and temperature here.
- *
- * This bump was missed when the change was made, which is the failure the constant exists to
- * prevent: for one commit, two different rules were stamped with the same version and could not be
- * told apart in the data. No participant data was collected under either.
+ *   2026-09-19-e  Two changes. (1) An exact tie in fit is ranked the way labelOptions ranks it (what
+ *                 the option delivers, then id) rather than by card position, so "most likely"
+ *                 is always the Aligned option; probabilities are unchanged, only the rank of
+ *                 tied options. (2) Its Stability INPUT changed: Stability now counts swaps in the
+ *                 order of the four policy values at the conflict steps (block5CVR.ts), so the
+ *                 same run gives a different Stability, confidence and temperature.
  */
 
 /* ------------------------------------------------------------------ the confidence dial */
@@ -110,8 +114,9 @@ const TEMPERATURE_FLAT = 60;
  *
  *   VCI       did this person's past choices match their profile? A high VCI means the profile has
  *             been predicting them correctly all block, so it has earned confidence here.
- *   Stability did the profile itself hold still? A profile that moved a long way during Block 5 is
- *             a snapshot of someone who is changing, and is a weaker basis for a forecast.
+ *   Stability did the order of their priorities hold when they went against their best fit? A
+ *             profile whose priorities were reordered during Block 5 is a snapshot of someone who
+ *             is changing, and is a weaker basis for a forecast.
  *
  * EQUAL WEIGHTS ARE A DECLARED CHOICE, not neutrality. Nothing in the study measures whether
  * consistency or steadiness is the better predictor of a sixth choice, so any other weighting would
@@ -238,12 +243,20 @@ export function predictChoice(
     rank: 0,
   }));
 
-  /* Rank by probability, ties broken by original position so the same profile and the same
-     scenario always produce the same ordering — a prediction that reshuffled between renders
-     would be untestable. */
+  /* Rank by probability. An exact tie - two options that fit identically, so the softmax gives them
+     the same probability - is broken EXACTLY AS labelOptions breaks it: by what the option gives of
+     the values the participant holds (policyDelivery), then by id. So the option the MPF calls
+     "most likely" is always the option labeled Aligned. Broken by card position instead, as it
+     was until 19 September 2026, the two disagreed in 5-9% of scenario-profile pairs in scenarios
+     1-5 and 1.8% in scenario 6, purely over which card was written first. The same profile and
+     scenario still always produce the same ordering - a prediction that reshuffled between
+     renders would be untestable. */
+  const delivered = new Map(options.map((o) => [o.id, policyDelivery(o, profile)]));
   const order = withProb
     .map((o, i) => ({ o, i }))
-    .sort((a, b) => (b.o.probability - a.o.probability) || (a.i - b.i));
+    .sort((a, b) => (b.o.probability - a.o.probability)
+      || ((delivered.get(b.o.optionId) ?? 0) - (delivered.get(a.o.optionId) ?? 0))
+      || a.o.optionId.localeCompare(b.o.optionId));
   order.forEach((entry, idx) => { entry.o.rank = idx + 1; });
 
   return {

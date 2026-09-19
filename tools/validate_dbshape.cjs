@@ -56,7 +56,7 @@ const B = (f) => require(path.join(BUILD, f));
 
 const db = B("dbShape.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
-const { labelOptions, computeVCI, computeStability } = B("block5CVR.js");
+const { labelOptions, computeVCI, computeStability, computeSensitivityStability } = B("block5CVR.js");
 const { predictChoice, predictionConfidence, PREDICTION_VERSION } = B("block5Prediction.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
@@ -137,6 +137,14 @@ function makeParticipant(startScores, pick) {
       policySnapshotAfter: Object.fromEntries(
         POLICY.map((k) => [k, current.dimensions.find((d) => d.key === k).score]),
       ),
+      /* The three sensitivities after this scenario, which their stabilities read. The fixture's
+         profile does not move them, so all three should come out "Held steady" (D22d). */
+      framingSnapshotAfter: {
+        directnessSensitivity: current.dimensions.find((d) => d.key === "directnessSensitivity")?.score ?? 50,
+        contextSensitivity: current.dimensions.find((d) => d.key === "contextSensitivity")?.score ?? 50,
+      },
+      stakeholderSnapshotAfter:
+        current.dimensions.find((d) => d.key === "stakeholderPerspectiveShiftSensitivity")?.score ?? 50,
     };
 
     /* Scenario 6 stores the prediction that was actually shown. Built with the real predictor from
@@ -202,6 +210,7 @@ function makeParticipant(startScores, pick) {
     scenarioResults: results,
     vci: vci.value, vciLevel: vci.level,
     stability: stab.value, stabilityLevel: stab.level,
+    sensitivityStability: computeSensitivityStability(results, original),
   };
 }
 
@@ -384,6 +393,32 @@ for (const [who, block5] of PEOPLE) {
   gate("D21", position.between_scenarios.pairs.every((p) =>
     p.distance_between_the_two_choices >= 0 && p.distance_between_the_two_choices <= 100),
     "every choice-to-choice distance is on the 0-100 scale");
+  /* D22d — the three sensitivity stabilities reach the headline, each its own score and words,
+     copied from the stored results rather than recomputed. */
+  {
+    const head = db.buildHeadline(block5, {});
+    const ss = block5.sensitivityStability;
+    const ok = ["directness", "context", "stakeholder"].every((w) =>
+      ss[w] && head[`${w}_stability_score`] === ss[w].value && head[`${w}_stability_label`] === ss[w].level);
+    gate("D22d", ok, `directness, context and stakeholder stability are in the headline  (${
+      ["directness", "context", "stakeholder"].map((w) => `${w} ${head[`${w}_stability_score`]}`).join(", ")})`);
+  }
+  /* D21b — the decision and the wish, side by side. Each "was aligned" flag must follow the label
+     stored on that scenario's own result, and each VCI must be that result's stored weight × 100:
+     the section reads the record, it does not re-judge it. */
+  {
+    const dw = position.decided_versus_wished;
+    const res = (id) => results.find((r) => r.scenarioId === id);
+    const ok = !!dw
+      && dw.acted_choice_was_aligned === (res(dw.acted_scenario_id)?.alignmentLevel === "aligned")
+      && dw.wished_choice_was_aligned === (res(dw.wished_scenario_id)?.alignmentLevel === "aligned")
+      && dw.vci_acted === Math.round(100 * res(dw.acted_scenario_id)?.vciScore)
+      && dw.vci_wished === Math.round(100 * res(dw.wished_scenario_id)?.vciScore)
+      && dw.responsibility_gap === dw.vci_wished - dw.vci_acted;
+    gate("D21b", ok, dw
+      ? `decision vs wish stored with its alignment flags  (acted ${dw.vci_acted} ${dw.acted_alignment_label}, wished ${dw.vci_wished} ${dw.wished_alignment_label})`
+      : "decision vs wish stored with its alignment flags  (section missing)");
+  }
   {
     const p = position.between_scenarios.pairs[0];
     const a = position.by_scenario.find((r) => r.scenario_id === p.from_scenario_id);

@@ -1059,6 +1059,10 @@ fail on purpose** — `simulate_vci` (V5), `simulate_stability` (S3, S4) and `si
 G1–G7, lenses, stakeholder stories, the scenario 4/5 twin, the APA checks, the planner, the
 database and all of the researcher's rules. **Do not undo an option to make a simulation pass.**
 
+**Update, 19 September 2026.** The calculation pass has rebuilt VCI (`docs/BLOCK5_VCI_METHOD.md`) and
+Stability (`docs/BLOCK5_STABILITY_METHOD.md`) on these options, and both simulations now pass. Only
+`simulate_position` (the 3x ratio) still fails, until its own pass.
+
 | Changed | What it is now | Why |
 |---|---|---|
 | S1 walking out | **Carry the respirator to the patient it was kept for, and walk them out** (96 · 60 · 20 · 45) | it and sealing in both "took nothing"; now it DOES something for the most vulnerable person |

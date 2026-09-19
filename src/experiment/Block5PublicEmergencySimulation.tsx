@@ -35,7 +35,7 @@ import {
   optionMetrics, applyEndorsementUpdates, applyKeepUpdates, applyApaUpdates, scenarioVciScore,
   scenarioShowsPerformance,
   scenarioIsScored, isPredictionTest,
-  performanceScore, computeVCI, computeStability, averagePerformance,
+  performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall, policyShortfallByValue,
 } from "./block5CVR";
@@ -962,7 +962,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
      * the participant and meaningless as data.
      *
      * This one guard is what keeps the whole reflection path out: no vignette, therefore no
-     * endorsement question, therefore no APA update, therefore no churn.
+     * endorsement question, therefore no APA update, therefore no profile movement.
      */
     const misaligned = !!(scenario && opt && scenarioIsScored(scenario) && isMisaligned(opt.level));
     if (misaligned && t) {
@@ -1083,19 +1083,19 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       }
     }
 
-    // Snapshot the 4 policy values + the two reflection lenses AFTER this scenario's update,
-    // so the results view can chart how each evolved across the journey.
+    // Snapshot the 4 policy values + the two reflection lenses AFTER this scenario's update. The
+    // policy snapshot is what Stability counts swaps on; the lens snapshot is what the directness
+    // and context stabilities measure distance on; both feed the results charts.
     result.policySnapshotAfter = policyScoresOf(nextProfile);
     result.framingSnapshotAfter = framingScoresOf(nextProfile);
-    // Stakeholder too: Stability measures movement across all five scored values, and this is
-    // the largest single mover in the block.
+    // Stakeholder too, for the stakeholder stability: it moves ±25 on every reflection.
     result.stakeholderSnapshotAfter = nextProfile.dimensions
       .find((d) => d.key === "stakeholderPerspectiveShiftSensitivity")?.score ?? 50;
     const nextResults = [...progress.scenarioResults, result];
     const nextIndex = progress.currentScenarioIndex + 1;
     if (nextIndex >= BLOCK5_SCENARIOS.length) {
       const vci = computeVCI(nextResults);
-      // Measured against the profile as it entered Block 5 — the Blocks 1-4 baseline.
+      // Both measured against the profile as it entered Block 5 — the Blocks 1-4 baseline.
       const stab = computeStability(nextResults, userProfile);
       const finalResults: Block5Results = {
         completed: true,
@@ -1106,10 +1106,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         vci: vci.value, vciLevel: vci.level,
         stability: stab.value, stabilityLevel: stab.level,
         stabilityDetail: {
-          orderPart: stab.orderPart, movementPart: stab.movementPart,
-          pairsSwapped: stab.pairsSwapped, churn: stab.churn,
+          swaps: stab.swaps, conflictSteps: stab.conflictSteps, swapsByScenario: stab.swapsByScenario,
           topValueBefore: stab.topValueBefore, topValueAfter: stab.topValueAfter,
         },
+        sensitivityStability: computeSensitivityStability(nextResults, userProfile),
         performance: averagePerformance(nextResults),
         // Share of the performance actually on the table, averaged over the scenarios that ran.
         // Kept beside the raw mean rather than replacing it — see block5Performance.ts.
@@ -1352,12 +1352,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     // Everyday scenarios teach the profile less than a life-and-death one (scenario.stakesWeight).
     /*
      * A WISH TEACHES THE PROFILE NOTHING. In a recipient scenario the profile is carried through
-     * untouched, so Stability measures only the movement that actual decisions produced.
-     *
-     * This is also why the null model behind STABILITY_CHURN_CEILING had to be re-measured after
-     * these scenarios landed: a deck where one scenario cannot move the profile produces less
-     * accumulated churn than a deck where every scenario can, and the ceiling is a measurement of
-     * the deck rather than a threshold anyone chose.
+     * untouched, so the profile - and Stability, which reads it - moves only on actual decisions.
      */
     const nextProfile = scenario && !scenarioIsScored(scenario)
       ? profile

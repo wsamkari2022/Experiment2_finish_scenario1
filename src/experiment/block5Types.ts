@@ -558,13 +558,13 @@ export type Block5DecisionRole =
    * SCENARIO 6 ONLY. A test OF the model rather than input TO it.
    *
    * Behaves like `recipient` everywhere that matters — `scenarioIsScored()` returns false for any
-   * role that is not `decider`, so this is excluded from profile updates, churn, VCI and Stability
+   * role that is not `decider`, so this is excluded from profile updates, VCI and Stability
    * without a single call site needing to know it exists.
    *
-   * Two reasons it must stay excluded. `STABILITY_CHURN_CEILING` is a measurement OF THE SCENARIO
-   * DECK, so a sixth scenario producing churn would invalidate it and every gate resting on it.
-   * And a scenario whose purpose is to check whether the model predicted correctly cannot also be
-   * evidence for the model without arguing in a circle.
+   * Two reasons it must stay excluded. A sixth scenario that moved the profile would add swaps to
+   * Stability that no decision of the participant's produced, and would shift the levels and the
+   * prediction's confidence built on it. And a scenario whose purpose is to check whether the model
+   * predicted correctly cannot also be evidence for the model without arguing in a circle.
    */
   | "predicted";
 
@@ -942,9 +942,8 @@ export interface Block5ScenarioResult {
    */
   policySnapshotAfter?: Record<Block5PolicyDimKey, number>;
   /**
-   * Stakeholder sensitivity AFTER this scenario's update. Snapshotted alongside the four policy
-   * values because Stability measures movement across all five, and stakeholder is the largest
-   * single mover in the block (+-25 on every CVR).
+   * Stakeholder sensitivity AFTER this scenario's update - what the stakeholder stability measures
+   * distance on (computeSensitivityStability). It moves ±25 on every reflection.
    */
   stakeholderSnapshotAfter?: number;
 
@@ -1019,8 +1018,9 @@ export interface Block5ScenarioResult {
   choiceUsedTradeOff?: boolean;
 
   /**
-   * Snapshot of the two reflection-lens sensitivities (0–100) AFTER this scenario's update,
-   * so the results view can chart how Directness vs Context evolved across the scenarios.
+   * Snapshot of the two reflection-lens sensitivities (0–100) AFTER this scenario's update, so the
+   * results view can chart how Directness vs Context evolved across the scenarios, and what the
+   * directness and context stabilities measure distance on (computeSensitivityStability).
    */
   framingSnapshotAfter?: { directnessSensitivity: number; contextSensitivity: number };
 
@@ -1150,6 +1150,22 @@ export interface PredictionTestRecord {
   }[];
 }
 
+/** One sensitivity's stability: how far it traveled along its own 0-100 scale during Block 5. */
+export interface SensitivityStability {
+  /** 0-100: round(100 × (1 − min(1, distance / 100))) */
+  value: number;
+  level: string;
+  /** total points traveled along the 0-100 scale, to one decimal */
+  distance: number;
+}
+
+/** The three sensitivity stabilities. Null when a snapshot the score needs is missing. */
+export interface SensitivityStabilities {
+  directness: SensitivityStability | null;
+  context: SensitivityStability | null;
+  stakeholder: SensitivityStability | null;
+}
+
 export interface Block5Results {
   completed: boolean;
   completedAt: string;
@@ -1158,20 +1174,28 @@ export interface Block5Results {
   scenarioResults: Block5ScenarioResult[];
   vci?: number;
   vciLevel?: string;
+  /** Stability, 0-100: how far the ORDER of the four policy values changed at the conflict steps.
+   *  See the Stability section of block5CVR.ts. */
   stability?: number;
   stabilityLevel?: string;
   /**
-   * The two halves behind the Stability headline plus the raw churn, kept so the results page can
-   * explain the number and so analysis is not left with a single opaque score.
+   * What the Stability headline is made of, so analysis is not left with a single opaque score:
+   * total swaps (in halves), how many decider scenarios were conflict steps, the swaps at each one,
+   * and the top policy value at the start and end of the block.
    */
   stabilityDetail?: {
-    orderPart: number;
-    movementPart: number;
-    pairsSwapped: number;
-    churn: number;
+    swaps: number;
+    conflictSteps: number;
+    swapsByScenario: Array<{ scenarioId: string; swaps: number }>;
     topValueBefore: string;
     topValueAfter: string;
   };
+  /**
+   * Directness, context and stakeholder, each with its own stability: the distance it traveled
+   * along its 0-100 scale, as a 0-100 score. Kept apart from Stability, which is the four policy
+   * values only. See computeSensitivityStability.
+   */
+  sensitivityStability?: SensitivityStabilities;
   performance?: number;
   /** Session performance as a share of what was available: mean of the per-scenario captured scores. */
   performanceCaptured?: number;

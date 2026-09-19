@@ -27,6 +27,8 @@ import type {
   CVRFraming,
   FramingAdjust,
   SalienceWho,
+  SensitivityStability,
+  SensitivityStabilities,
 } from "./block5Types";
 
 const clamp = (v: number, lo = 0, hi = 100): number => Math.max(lo, Math.min(hi, v));
@@ -431,14 +433,14 @@ function cloneProfile(p: Block5UserProfile): Block5UserProfile {
  *
  * WHAT IT COSTS, STATED RATHER THAN HIDDEN. Flat deltas do pile up on the ends: about 13% of
  * values finish a five-scenario run sitting exactly on 0 or 100, and roughly 17 bumps per 20 runs
- * are swallowed by `clamp`. A value pinned at 100 stops contributing movement for the rest of the
- * run, so a participant who keeps drifting after saturating one value will look slightly steadier
- * than they were. That is a real limitation and belongs in the write-up; it is not large enough to
- * outweigh being able to state the rule truthfully in one line.
+ * are swallowed by `clamp`. Two values pinned at the same end are TIED, which is why Stability
+ * counts a tie opening or closing as half a swap (rankSwaps). That is a real limitation and belongs
+ * in the write-up; it is not large enough to outweigh being able to state the rule truthfully in
+ * one line.
  *
- * CHANGING THIS FUNCTION CHANGES `STABILITY_CHURN_CEILING`. The ceiling is the p99 of the null
- * model, and the null churn distribution scales with the deltas — it moved 42 -> 65 with this
- * edit. Gate S7 in tools/simulate_stability.cjs enforces the pairing.
+ * CHANGING THIS FUNCTION CHANGES WHAT EVERY SCORE READS. Re-run `npm run validate:block5`, then
+ * `npm run report:vci` and `npm run report:stability`, and update the figures their documentation
+ * quotes.
  */
 function bump(p: Block5UserProfile, key: string, delta: number): void {
   const dim = p.dimensions.find((d) => d.key === key);
@@ -589,9 +591,9 @@ export function confidenceWeight(confidence: number): number {
  *
  * Q1 and Q2 can name the SAME value. The cap at the end of this function is what keeps the
  * published constant honest when they do — see the block above it for the measurement. Anything
- * that changes these magnitudes must re-run `npm run verify:apa` and then the full
- * `npm run validate:block5`: STABILITY_CHURN_CEILING is the p99 of a null model run against this
- * behavior, so it moves when this does.
+ * that changes these magnitudes must re-run `npm run verify:apa`, then the full
+ * `npm run validate:block5`, then `npm run report:stability`: how often a clarification reorders
+ * two values - and so what Stability reads - moves when these do.
  *
  * WHERE THE MECHANISM IS STILL WEAK, and it is worth knowing before touching anything:
  *
@@ -1147,231 +1149,308 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
   return { value, level: consistencyLevel(value) };
 }
 
-/* ================================================================================
-   STABILITY — how much the participant's value profile itself moved during Block 5
-   ================================================================================
+/* ================================================================================================
+   STABILITY - DID THE PARTICIPANT'S PRIORITIES CHANGE DURING BLOCK 5?
+   ================================================================================================
 
-   WHAT IT ASKS
-   ------------
-   Not "did you keep choosing what the old you would have chosen" — that is a question about
-   CHOICES, and it is very close to what VCI already asks. Stability asks about the PROFILE:
-   the block updates the participant's values as they go, and this measures how far that model
-   of them traveled.
+   THE QUESTION IT ANSWERS
+   -----------------------
+   When the participant went against their best fit, did the ORDER of their four policy values -
+   which comes first, second, third and fourth - change? 100 means no two of their priorities ever
+   traded places.
 
-   That makes the pair genuinely different questions instead of two views of one:
-     VCI       — did your choices fit your values, judged as they stood at the time?
-     Stability — did your values themselves change?
+   It is a question about VALUES, not choices. VCI asks whether the choices fit the values as they
+   stood; Stability asks whether the values themselves were reordered. A participant can choose
+   against their values in every scenario and keep the same priorities (low VCI, high Stability),
+   or change their priorities once and then choose in line with the new ones (VCI recovers,
+   Stability records the change). Stability is DESCRIPTIVE: a high score is not better than a low
+   one, and a genuine change of heart is supposed to lower it.
 
-   TWO HALVES, AND WHY BOTH ARE NEEDED
-   -----------------------------------
-   1. ORDER — of the six possible pairs among the four policy values, how many swapped places
-      between the start of Block 5 and the end? This is the qualitative event: your priorities
-      reordered.
+   THE EQUATIONS
+   -------------
+   A CONFLICT STEP is a decider scenario in which the reflection ran (`cvrFired` on the result): the
+   final choice was Misaligned or Strongly misaligned, and the participant either kept it (the
+   endorsement update) or clarified through APA (the APA update). Nothing else counts. Keeping an
+   Aligned or Weakly aligned option is not a conflict, and neither is the wish (scenario 5) or the
+   prediction test (scenario 6).
 
-   2. MOVEMENT — the total distance the five scored values traveled, summed scenario by
-      scenario ("churn"), not just start-versus-end ("net drift").
+     (1) Swaps in one conflict step, over the six pairs (i, j) of the four policy values:
+             s_ij = 1     the pair's order REVERSED            i above j before, j above i after
+             s_ij = 1/2   a tie OPENED or CLOSED               equal before and ordered after, or
+                                                               the other way round
+             s_ij = 0     otherwise
+             swaps_t = Σ s_ij                                  0 to 6 in one step
+         This is the Kendall tau distance between the ranking before the step and the ranking
+         after it, with a tie counted as half a disagreement.                          -> rankSwaps
 
-   Order alone is blind: two participants can finish with an identical ranking while one moved
-   six points further on a value. Net drift alone is worse than blind, it inverts. A participant
-   who picks the option furthest from their values in EVERY scenario thrashes back and forth and
-   ends up near where they began — measured start-to-end they score 10.2, while a participant who
-   changed their mind once and held it scores 13.6. Net drift would call the thrasher the more
-   stable of the two. Churn separates them: 33.2 against 13.6.
+     (2) Total swaps      S = Σ swaps_t over the conflict steps
 
-   WHY STAKEHOLDER IS IN THE MOVEMENT HALF BUT NOT THE ORDER HALF
-   --------------------------------------------------------------
-   It moves +-25 on every CVR, the biggest bump in the system, so leaving it out would hide the
-   most-moved value. But a list of one has no order, so it can only contribute magnitude.
+     (3) Stability        Stability = round( 100 × (1 − min(1, S / 6)) )         -> computeStability
+                          6 is the number of pairs among four values: six swaps is as much
+                          reordering as turning the four priorities completely upside down.
 
-   WHY CONTEXT AND DIRECTNESS ARE IN NEITHER
-   -----------------------------------------
-   They only move when a participant clicks the optional "Generate the other view" control AND
-   answers which lens moved them. Simulation across six behavior types found them completely
-   unmoved in every case. Scoring a variable that is frozen for most participants would dilute
-   the number without measuring anything. They are reported separately instead, as how often the
-   participant compared both lenses — which does vary, and is a fact about them rather than about
-   the button.
-   ================================================================================ */
+   Each swap costs 100 / 6 = 16.7 points and a half swap 8.3.
 
-/** The four policy values, whose ORDER is tracked. */
-const STABILITY_ORDER_KEYS = POLICY_DIM_KEYS;
-/** The values whose MOVEMENT is tracked — the four policies plus stakeholder. */
-const STABILITY_MOVE_KEYS: string[] = [...POLICY_DIM_KEYS, "stakeholderPerspectiveShiftSensitivity"];
+   WORKED EXAMPLE. Before a conflict the participant's order is vulnerable > harm > helped > gained.
+   They keep an option built on "gained", and the endorsement update lifts it to second place:
+   vulnerable > gained > harm > helped. Two pairs reversed (gained/harm and gained/helped), so this
+   step is 2 swaps. With no other conflict, Stability = round(100 × (1 − 2/6)) = 67, "Shifted a
+   little".
+
+   THE LEVELS (stabilityLevel), set by the researcher by total swaps:
+       Held steady             100      no two priorities traded places
+       Mostly steady           83-99    more than none, at most one swap
+       Shifted a little        50-82    more than one, at most three (one value climbing from last
+                                        place to first is three)
+       Shifted a lot           17-49    more than three, at most five
+       Changed substantially    0-16    more than five - about as much as a complete reversal
+   On the stored, rounded value the edges are 100 / 83 / 50 / 17: exactly one, three and five swaps
+   put through equation (3). They are computed that way in the code, never written in.
+
+   WHY SWAPS AND NOT DISTANCE TRAVELED - THE CASE FOR THE METHODS CHAPTER
+   ----------------------------------------------------------------------
+   The obvious alternative adds up how far the values traveled, step by step ("churn"), usually with
+   a start-versus-end order check beside it. That is what Stability measured until 19 September
+   2026, and it was replaced for five reasons. Every figure is reproduced by `npm run
+   report:stability`, which still computes the distance measure for this comparison.
+   1. THE ORDER IS WHAT THE STUDY USES. Alignment ranks options against the participant's values,
+      the CVR aims at the value on top, and the planner orders the cards by the order of the values.
+      A move that reorders two values changes every one of those; a move of the same size that
+      leaves the order alone changes none of them. Swaps count exactly the moves that matter to the
+      instrument.
+   2. DISTANCE MOSTLY MEASURES THE STUDY'S OWN CONSTANTS. Every profile update is a fixed step the
+      study chose (+30 / −20 for an endorsement, +30 / −10 for a clarification, +15 / −10 for keeping
+      a fit, ±25 for the stakeholder). The distance a profile travels is largely those constants
+      counted up, so it reports how often an update fired as much as how much the participant
+      changed. Whether a step reorders two values depends on how close the participant's own scores
+      were - which is information about the participant.
+   3. DISTANCE NEEDS A CEILING THAT HAS TO BE SIMULATED. To become a 0-100 score, distance needs a
+      "this much movement counts as maximal" constant. It could only be taken from simulated random
+      responders, and it went stale - and had to be re-measured - every time a scenario, an option
+      or an update constant changed. Swaps have a natural maximum, a complete reversal, which needs
+      no simulation and cannot go stale.
+   4. DISTANCE COULD NOT TELL THE PARTICIPANTS APART. A participant who takes up a new value in every
+      scenario scored above a one-time convert in 34% of pairings under distance, and above a random
+      responder in 36%. Under swaps: 10% and 12%.
+   5. DISTANCE COUNTED AGREEMENT AS CHANGE. Keeping an option that already fits still nudges the
+      profile, so a participant who chose their best fit in every scenario averaged 86, and 38% of
+      them fell below "Held steady". Swaps count only conflict steps, so that participant scores 100.
+   What swaps give up: they are blind to how far a value moved when it moved without overtaking
+   another, and they come in steps of a half swap. The first is the point - Stability asks whether
+   the priorities changed, not how hard the model was pushed - and the second is the price of
+   measuring an order.
+
+   WHY ONLY CONFLICT STEPS
+   -----------------------
+   Outside a conflict the profile still moves: keeping a fitting option lifts the value it is built
+   on (applyKeepUpdates), so that a value the participant keeps choosing can climb. That is the
+   MODEL correcting its estimate of someone who has just confirmed their values, not the participant
+   changing them. Counted, it made "always my best fit" average 86 and "always my second best" 69.
+   Only a conflict - choosing against the current best fit and then standing by it or clarifying -
+   is the participant doing something to their own priorities.
+
+   WHY ONLY THE FOUR POLICY VALUES
+   -------------------------------
+   Stability is about priorities, and the four policy values are the only ones ranked against each
+   other to decide what fits. Stakeholder sensitivity (±25 on every reflection), directness and
+   context (±20 when the second lens is compared) describe HOW a participant is moved, not WHAT they
+   put first, and each has a stability score of its own (computeSensitivityStability, below).
+   Mixed in, the stakeholder step - the largest fixed step in the block - supplied much of the old
+   movement on its own, whatever the participant's priorities did.
+
+   KNOWN LIMITS, TO STATE IN THE WRITE-UP
+   --------------------------------------
+   Every "measured" figure is printed by `npm run report:stability` (2,000 seeded random starting
+   profiles, the real scoring code); the rules are asserted by `npm run validate:stability`.
+   1. COARSE. Thirteen values are possible, 100 down to 0 in steps of a half swap (8.3 points).
+   2. THE ROUTE MATTERS A LITTLE. A clarification moves the named value +30 and each other value
+      −10; an endorsement moves the served value +30 and the sacrificed one −20. So the same change
+      of heart reorders less when it goes through APA: a participant who takes up a new value in
+      every scenario averages 27 through APA and 11 by keeping.
+   3. A CHANGE OF HEART IS A LARGE REORDERING. A one-time convert averages 57, the same as a random
+      responder. Stability measures change, not quality.
+   4. TIES ARE COMMON. After 11% of conflict steps two of the four values are exactly equal - the
+      updates are round numbers and stop at 0 and 100 - which is why a tie opening or closing counts
+      half rather than being ignored or counted whole.
+   ================================================================================================ */
+
+/** Six: the number of pairs among the four policy values, and so a complete reversal of them. */
+export const STABILITY_FULL_REVERSAL = (POLICY_DIM_KEYS.length * (POLICY_DIM_KEYS.length - 1)) / 2;
+
+/** Two scores closer than this are a tie, so that floating-point noise cannot open or close one. */
+const TIE_TOLERANCE = 1e-6;
+const signOf = (x: number): number => (Math.abs(x) < TIE_TOLERANCE ? 0 : Math.sign(x));
 
 /**
- * Churn at or above this counts as maximum instability.
- *
- * DERIVED, NOT CHOSEN. 4,000 seeded random responders were run through the real five scenarios;
- * their churn distribution came out p50 = 28.0, p90 = 35.3, p99 = 41.7. The ceiling is the p99 of
- * that null model: movement beyond what 99% of random answering produces is as unstable as this
- * instrument can register. This is the same null-model calibration the Blocks 1-4 sensitivities
- * use (see sensitivityCalibration.ts), so the whole instrument is anchored the same way.
- *
- * WAS 35, against a null of p50 22.0 / p90 29.2 / p99 34.9. That null was measured on the previous
- * option payoffs. The Stage 3 rewrite replaced the two everyday scenarios and retuned the other
- * three, which widened the payoff spread and therefore widened the churn a random responder
- * produces. Leaving the ceiling at 35 would have saturated the movement half of Stability early:
- * a chance responder would have scored 0 movement far more often than the calibration intends,
- * and genuinely unstable participants would have been indistinguishable from merely noisy ones.
- * The constant is a property of the scenario set, so it moves when the scenario set moves.
- *
- * Regenerate with tools/simulate_stability.cjs if the bump magnitudes or the scenario set change.
- *
- * MOVED 42 -> 65 on 2026-08-31, when `bump` stopped scaling deltas by the remaining headroom. Flat
- * deltas are larger in absolute terms, so a chance responder now churns further: the null p99 went
- * from 41.7 to 65.4. Leaving it at 42 would have driven the movement half of Stability to zero for
- * most real participants.
- *
- * MOVED 65 -> 43 on 2026-09-04, when the flood and water scenarios were removed. Churn ACCUMULATES
- * across the deck, so it is a function of how many scenarios there are as well as how large each
- * bump is: three scenarios give a chance responder two fewer chances to move, and the measured
- * null p99 fell from 65.4 to 42.8. This constant is not a threshold anyone chose — it is a
- * measurement OF THE SCENARIO SET, so it must be regenerated whenever that set changes. Leaving it
- * at 65 would have made every real participant look stable, because nobody could reach the ceiling.
- *
- * MOVED 43 -> 55 on 2026-09-04, when the two workplace scenarios landed. The deck is five again,
- * but it is NOT the five it was before: `care_rota_receiving` asks for a wish rather than a choice,
- * so it runs no profile update and contributes no churn at all. A chance responder therefore has
- * four opportunities to move rather than five, and the null p99 came in at 55.0 — between the
- * three-scenario 42.8 and the old five-scenario 65.4, which is exactly where four scoring
- * scenarios should put it.
- *
- * THE ORDER OF OPERATIONS MATTERS HERE and is worth recording, because getting it wrong is silent.
- * The ceiling was measured only AFTER the recipient skip was wired through `scenarioIsScored`. Run
- * before that, the null model still moved the profile in all five scenarios and reported 65.4 — a
- * ceiling calibrated against behavior the app was about to stop producing, which would have made
- * every real participant look more stable than they were.
- *
- * MOVED 55 -> 56 on 5 September 2026, when the endorsement rule changed to lower the value the
- * option actually sacrifices rather than the highest-scoring one it merely under-serves. Aiming the
- * decrement at a different value changes how far a chance responder drifts, so the null model had
- * to be re-run: p99 came back at 55.8.
- *
- * MOVED 56 -> 57 on 7 September 2026, when Q1's "just this situation" answer stopped raising the
- * sacrificed value. Removing a bump changes how far a chance responder drifts, so the null model
- * was re-run: p99 came back at 57.0.
- *
- * CORRECTION (2026-09-13): that entry records a measurement, not the constant. The exported value
- * below is and has stayed 56, and gate S7 confirms it against a freshly measured null p99 of 56.3
- * on the current deck. Read the entries above as a log of what was measured on each date; the one
- * number that is authoritative is the export itself, which the gate checks on every run.
- *
- * Gate S7 enforces the pair: the suite fails if this number and the freshly measured p99 drift
- * apart. Regenerate with `npm run validate:stability` whenever the deck, the roles, or the bump
- * magnitudes change.
+ * Equation (1): how many pairs of values traded places between two rankings, a tie opening or
+ * closing counted as half. The Kendall tau distance, with ties at one half.
  */
-export const STABILITY_CHURN_CEILING = 56;
-
-/** Plain words for Stability. Deliberately NOT the VCI wording — this measures drift, not fit. */
-export function stabilityLevel(value0to100: number): string {
-  if (value0to100 >= 85) return "Held steady";
-  if (value0to100 >= 70) return "Mostly steady";
-  if (value0to100 >= 50) return "Shifted a little";
-  if (value0to100 >= 30) return "Shifted a lot";
-  return "Changed substantially";
-}
-
-/** How many of the 6 pairs among four ranked values changed relative order. */
-function pairInversions(a: string[], b: string[]): number {
-  let n = 0;
-  for (let i = 0; i < a.length; i++) {
-    for (let j = i + 1; j < a.length; j++) {
-      if (b.indexOf(a[i]) > b.indexOf(a[j])) n++;
+export function rankSwaps(
+  before: Record<string, number>,
+  after: Record<string, number>,
+  keys: readonly string[] = POLICY_DIM_KEYS,
+): number {
+  let swaps = 0;
+  for (let i = 0; i < keys.length; i++) {
+    for (let j = i + 1; j < keys.length; j++) {
+      const b = signOf(before[keys[i]] - before[keys[j]]);
+      const a = signOf(after[keys[i]] - after[keys[j]]);
+      if (b * a < 0) swaps += 1;        // the pair reversed
+      else if (b !== a) swaps += 0.5;   // exactly one side is a tie: a tie opened or closed
     }
   }
-  return n;
+  return swaps;
 }
-const orderByScore = (get: (k: string) => number, keys: readonly string[]) =>
-  [...keys].sort((x, y) => get(y) - get(x));
+
+/** Equation (3) for a number of swaps. Also the level edges: one, three and five swaps. */
+function stabilityFromSwaps(swaps: number): number {
+  return Math.round(100 * (1 - Math.min(1, swaps / STABILITY_FULL_REVERSAL)));
+}
+
+/** The five levels, highest first, each with the most swaps it allows. Set by the researcher. */
+const STABILITY_LEVELS: ReadonlyArray<{ label: string; mostSwaps: number }> = [
+  { label: "Held steady", mostSwaps: 0 },
+  { label: "Mostly steady", mostSwaps: 1 },
+  { label: "Shifted a little", mostSwaps: 3 },
+  { label: "Shifted a lot", mostSwaps: 5 },
+  { label: "Changed substantially", mostSwaps: Infinity },
+];
+
+/**
+ * Plain words for a stability value, 0-100 - Stability itself, or any of the three sensitivity
+ * stabilities. The edges are the swap bands put through equation (3): 100 / 83 / 50 / 17.
+ *
+ * Deliberately NOT the VCI wording: this reports change, not fit. Presentation only - never fed
+ * back into any calculation.
+ */
+export function stabilityLevel(value0to100: number): string {
+  for (const l of STABILITY_LEVELS) {
+    if (value0to100 >= stabilityFromSwaps(l.mostSwaps)) return l.label;
+  }
+  return STABILITY_LEVELS[STABILITY_LEVELS.length - 1].label;
+}
 
 export interface StabilityResult {
+  /** 0-100, equation (3) */
   value: number;
   level: string;
-  /** 0-100 — how much of the original ordering survived. */
-  orderPart: number;
-  /** 0-100 — how little the values moved. */
-  movementPart: number;
-  /** of 6 — how many pairs of policy values swapped places. */
-  pairsSwapped: number;
-  /** the raw summed movement, kept for analysis. */
-  churn: number;
-  /** did the top policy value change, and to what. */
+  /** S: total swaps across the conflict steps, in halves */
+  swaps: number;
+  /** how many decider scenarios were conflict steps */
+  conflictSteps: number;
+  /** the swaps at each conflict step, in the order the scenarios ran */
+  swapsByScenario: Array<{ scenarioId: string; swaps: number }>;
+  /** the top policy value when Block 5 began, and when it ended */
   topValueBefore: string;
   topValueAfter: string;
 }
 
-/*
- * THE SCALE THIS RETURNS, for anyone about to analyze or report it.
+/**
+ * Stability: equations (1) to (3) over the stored results, against the profile the participant
+ * brought into Block 5.
  *
- *   order half    = 100 x (6 - pairs swapped) / 6     only 7 values: 0 17 33 50 67 83 100
- *   movement half = 100 x (1 - min(1, churn / 56))    exactly 0 for any churn at or above 56
- *   value         = the mean of the two
- *
- * THE FULL 0-100 RANGE IS REACHABLE. Measured over 1,200 runs (300 random starting profiles x 4
- * behaviors) the lowest score was 0 and the highest 100. STABILITY_CHURN_CEILING is a CHURN value
- * and not a cap on the score - a participant can and does reach 100.
- *
- * THREE THINGS THAT ARE EASY TO REPORT WRONGLY:
- *   1. It is descriptive, not evaluative. High means the values did not move. It says nothing
- *      about whether the participant chose well - that is VCI, a different number.
- *   2. The order half is coarse. Seven possible values, so it is not continuous.
- *   3. The movement half is censored from below: everyone past the ceiling scores 0 on it and
- *      cannot be told apart on that half alone. Report the composite.
- *
- * A PARTICIPANT WHO PICKS THEIR BEST FIT EVERY TIME still lands below 70 about one time in ten,
- * and in every such case it is the ORDER half that dropped. That is the measure working as
- * designed, and it is the most likely thing to be misread.
- *
- * Regenerate every figure above with `npm run report:stability`. Full reporting and visualization
- * guidance: docs/MEASUREMENT_MODEL.md, "The Stability scale, for reporting".
+ * Reads `policySnapshotAfter` on every result (the four values after that scenario's update) and
+ * `cvrFired` to know which steps were conflicts. A record written before the snapshots existed
+ * cannot be scored and returns the empty result rather than a guess.
  */
 export function computeStability(
   results: Block5ScenarioResult[],
   originalProfile: Block5UserProfile | null | undefined,
 ): StabilityResult {
   const empty: StabilityResult = {
-    value: 0, level: "—", orderPart: 0, movementPart: 0, pairsSwapped: 0,
-    churn: 0, topValueBefore: "", topValueAfter: "",
+    value: 0, level: "—", swaps: 0, conflictSteps: 0, swapsByScenario: [],
+    topValueBefore: "", topValueAfter: "",
   };
   if (!originalProfile || results.length === 0) return empty;
 
-  /* The sequence of profile snapshots: where they started, then after each scenario. */
-  const startAt = (k: string) => scoreOf(originalProfile, k);
-  const snapshots: Array<(k: string) => number> = [startAt];
+  const start: Record<string, number> =
+    Object.fromEntries(POLICY_DIM_KEYS.map((k) => [k, scoreOf(originalProfile, k)]));
+  let before = start;
+  let swaps = 0;
+  const swapsByScenario: StabilityResult["swapsByScenario"] = [];
   for (const r of results) {
-    const policy = r.policySnapshotAfter;
-    const stake = r.stakeholderSnapshotAfter;
-    if (!policy) return empty; // pre-snapshot data; cannot be scored
-    snapshots.push((k) => (k in policy
-      ? (policy as Record<string, number>)[k]
-      : (stake ?? startAt(k))));
+    const after = r.policySnapshotAfter as Record<string, number> | undefined;
+    if (!after) return empty;
+    if (resultIsScored(r) && r.cvrFired) {
+      const s = rankSwaps(before, after);
+      swaps += s;
+      swapsByScenario.push({ scenarioId: r.scenarioId, swaps: s });
+    }
+    before = after;
   }
 
-  /* MOVEMENT — summed step by step, so going away and coming back still counts as movement. */
-  let churn = 0;
-  for (let i = 1; i < snapshots.length; i++) {
-    const step = STABILITY_MOVE_KEYS.reduce(
-      (a, k) => a + Math.abs(snapshots[i](k) - snapshots[i - 1](k)), 0) / STABILITY_MOVE_KEYS.length;
-    churn += step;
-  }
-  const movementPart = Math.round(100 * (1 - Math.min(1, churn / STABILITY_CHURN_CEILING)));
-
-  /* ORDER — start versus end. */
-  const last = snapshots[snapshots.length - 1];
-  const before = orderByScore(startAt, STABILITY_ORDER_KEYS);
-  const after = orderByScore(last, STABILITY_ORDER_KEYS);
-  const pairsSwapped = pairInversions(before, after);
-  const maxPairs = (STABILITY_ORDER_KEYS.length * (STABILITY_ORDER_KEYS.length - 1)) / 2;
-  const orderPart = Math.round(100 * ((maxPairs - pairsSwapped) / maxPairs));
-
-  /* Half each. Order is the more meaningful event but is coarse — only seven possible values, and
-     insensitive when one value starts far ahead. Movement is fine-grained but less meaningful.
-     They compensate, so neither is given precedence. */
-  const value = Math.round((orderPart + movementPart) / 2);
+  const value = stabilityFromSwaps(swaps);
+  const top = (p: Record<string, number>) => [...POLICY_DIM_KEYS].sort((a, b) => p[b] - p[a])[0];
   return {
-    value, level: stabilityLevel(value), orderPart, movementPart, pairsSwapped,
-    churn: Math.round(churn * 10) / 10,
-    topValueBefore: before[0], topValueAfter: after[0],
+    value, level: stabilityLevel(value), swaps, conflictSteps: swapsByScenario.length, swapsByScenario,
+    topValueBefore: top(start), topValueAfter: top(before),
+  };
+}
+
+/* ------------------------------------------------------------------------------------------------
+   THE THREE SENSITIVITY STABILITIES - directness, context and stakeholder, one score each
+   ------------------------------------------------------------------------------------------------
+   Each is ONE value, so it has no order to swap. Its stability is how far it traveled along its own
+   0-100 scale during Block 5, with the whole width of the scale as the maximum:
+
+       distance_x    = Σ | x after scenario k − x before scenario k |      over the scenarios in order
+       Stability_x   = round( 100 × (1 − min(1, distance_x / 100)) )
+
+   Distance is the right measure HERE and not for the policy values, because the argument against
+   it does not apply: a single value is not ranked against anything, so the only way it can change
+   is by moving along its scale, and the width of that scale is a natural maximum that needs no
+   simulation. The step sizes are still the study's constants, which is limit 2 below.
+
+   They move only at a conflict step: the stakeholder by ±25 whenever the reflection runs (up if the
+   person's story moved them, down if not), directness or context by 20 × weight when the
+   participant compared both lenses and said which one moved them. Keeping a fitting option, the
+   wish and the prediction test never touch them, so summing over every scenario and summing over
+   the conflict steps give the same number.
+
+   Same words as Stability, on the same edges of the 0-100 value (100 / 83 / 50 / 17): "Held
+   steady" if it never moved, "Mostly steady" if it traveled at most a sixth of its scale, and so on.
+
+   KNOWN LIMITS
+   1. Directness and context move only when the optional second lens is generated and answered, so
+      most participants hold both at 100. That is a fact about the button, and the stored
+      `cvrAltViewGenerated` says who used it.
+   2. The stakeholder moves 25 points on every reflection, so its stability mostly counts
+      reflections and whether the person's story moved the participant each time. Four reflections
+      that each move it, unclamped, reach the full 100 points of distance.
+   ------------------------------------------------------------------------------------------------ */
+
+/**
+ * The three sensitivity stabilities over the stored results. Each reads its own snapshot on every
+ * result (`framingSnapshotAfter` for directness and context, `stakeholderSnapshotAfter` for the
+ * stakeholder) and is null when any snapshot it needs is missing, rather than a guess.
+ */
+export function computeSensitivityStability(
+  results: Block5ScenarioResult[],
+  originalProfile: Block5UserProfile | null | undefined,
+): SensitivityStabilities {
+  const none: SensitivityStabilities = { directness: null, context: null, stakeholder: null };
+  if (!originalProfile || results.length === 0) return none;
+
+  const one = (
+    key: "directnessSensitivity" | "contextSensitivity" | "stakeholderPerspectiveShiftSensitivity",
+    after: (r: Block5ScenarioResult) => number | undefined,
+  ): SensitivityStability | null => {
+    let prev = scoreOf(originalProfile, key);
+    let distance = 0;
+    for (const r of results) {
+      const now = after(r);
+      if (typeof now !== "number" || !Number.isFinite(now)) return null;
+      distance += Math.abs(now - prev);
+      prev = now;
+    }
+    const value = Math.round(100 * (1 - Math.min(1, distance / 100)));
+    return { value, level: stabilityLevel(value), distance: Math.round(distance * 10) / 10 };
+  };
+
+  return {
+    directness: one("directnessSensitivity", (r) => r.framingSnapshotAfter?.directnessSensitivity),
+    context: one("contextSensitivity", (r) => r.framingSnapshotAfter?.contextSensitivity),
+    stakeholder: one("stakeholderPerspectiveShiftSensitivity", (r) => r.stakeholderSnapshotAfter),
   };
 }
 

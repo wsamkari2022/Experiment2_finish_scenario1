@@ -1,9 +1,21 @@
 /**
- * simulate_stability.cjs — walks synthetic participants through the REAL Block-5 code and
- * asserts that Stability behaves the way the design says it should.
+ * simulate_stability.cjs — walks synthetic participants through the REAL Block-5 code and asserts
+ * that Stability, and the three sensitivity stabilities, behave the way the Stability section of
+ * src/experiment/block5CVR.ts says they do.
  *
- * It also regenerates the null distribution that STABILITY_CHURN_CEILING is derived from, so the
- * constant in block5CVR.ts can be re-checked whenever bump magnitudes or scenarios change.
+ * WHAT IT CHECKS
+ * --------------
+ *   S1-S7   each kind of participant lands where the method says: best fit every time and second
+ *           best every time hold steady, a flip-flopper does not, a thrasher scores below someone
+ *           who changed once, a round trip is counted as the path it took
+ *   S8      rankSwaps is the Kendall tau distance with a tie at one half
+ *   S9      the five levels sit at 100 / 83 / 50 / 17 - one, three and five swaps
+ *   S10     only a decider scenario in which the reflection ran can add swaps
+ *   S11     each sensitivity's stability is the distance it traveled on its 0-100 scale
+ *   A1-A6   the APA clarification moves the profile the way applyApaUpdates promises
+ *
+ * Imports the compiled modules rather than re-implementing the formulas: a simulator that carries
+ * its own copy of the math drifts from the code and then lies.
  *
  * Run: npm run validate:stability   (chained into npm run validate:block5)
  */
@@ -19,7 +31,7 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 const B = (f) => require(path.join(BUILD, f));
 
 const { labelOptions, applyKeepUpdates, applyEndorsementUpdates, applyApaUpdates, optionMainValue, scenarioIsScored,
-        computeStability, STABILITY_CHURN_CEILING } = B("block5CVR.js");
+        computeStability, computeSensitivityStability, rankSwaps, stabilityLevel, STABILITY_FULL_REVERSAL } = B("block5CVR.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
@@ -27,8 +39,6 @@ const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
 const STAKE = "stakeholderPerspectiveShiftSensitivity";
 const FRAMING = ["directnessSensitivity", "contextSensitivity"];
 const ALL = [...POLICY, ...FRAMING, STAKE];
-const SHORT = { vulnerabilityProtectionSensitivity: "Vuln", groupSizeSensitivity: "Group",
-                gainResponsivenessSensitivity: "Gain", outcomeAggregationSensitivity: "Outcome" };
 
 const mk = (o) => ({
   generatedAt: "", topThreeKeys: [], topSensitivityKey: "x",
@@ -41,43 +51,36 @@ const START = () => mk({
 });
 const sc = (p, k) => p.dimensions.find((d) => d.key === k).score;
 const isFit = (l) => l === "aligned" || l === "weakly_aligned";
+const policyOf = (p) => Object.fromEntries(POLICY.map((k) => [k, sc(p, k)]));
+
+/* The same convert as simulate_vci.cjs: a change of heart adopts a VALUE, so scenario 1's pick is
+   the first option outside the top two that stands for one value (its strongest value 85 or more),
+   not a middle-of-the-road option whose largest number happens to be one value. */
+const convertsFirstPick = (r) =>
+  r.find((x) => !isFit(x.level) && x.fingerprint[optionMainValue(x)] >= 85)
+  ?? r.find((x) => !isFit(x.level)) ?? r[2];
 
 const PICKERS = {
-  /* stays on whatever value is currently top — the profile should barely move */
+  /* stays on whatever value is currently top */
   Anchored: (r, p) => {
     const top = [...POLICY].sort((x, y) => sc(p, y) - sc(p, x))[0];
     return r.find((o) => optionMainValue(o) === top) ?? r[0];
   },
   Loyal: (r) => r[0],
+  /* always the second-best option: every step is a keep step, so Stability must not move */
+  "Near-loyal": (r) => r[1],
   /* one honest change of heart in scenario 1, then true to the new value */
   Convert: (r, _p, i, st) => {
-    if (i === 0) { const o = r.find((x) => !isFit(x.level)) ?? r[2]; st.v = optionMainValue(o); return o; }
+    if (i === 0) { const o = convertsFirstPick(r); st.v = optionMainValue(o); return o; }
     return r.find((x) => optionMainValue(x) === st.v) ?? r[0];
   },
-  /* away for two scenarios, then back home — the case that net drift alone cannot see */
+  /* away for two scenarios, then back home — the round trip a start-versus-end check cannot see */
   Swinger: (r, p, i, st) => {
     if (i === 0) st.home = [...POLICY].sort((x, y) => sc(p, y) - sc(p, x))[0];
     if (i < 2) return r.find((x) => !isFit(x.level) && optionMainValue(x) !== st.home) ?? r[2];
     return r.find((x) => optionMainValue(x) === st.home) ?? r[0];
   },
-  /*
-   * FLIP-FLOPPER — takes up a value they have NOT held before, every scenario.
-   *
-   * This used to exclude only the value taken in the PREVIOUS scenario, which let it oscillate
-   * between two values and, on a four-scoring-scenario deck, walk straight back to the ordering it
-   * started from. Its order half then scored 100 — correctly, because the order half is a
-   * start-versus-end comparison — and Stability came out at exactly 50 however violently the
-   * profile had thrashed in between.
-   *
-   * That is not a fault in Stability, and the gate below was not wrong to expect better: it was
-   * being asked of the wrong subject. A participant who ends where they began is the ROUND TRIP
-   * case, and the round trip is already covered by S5, which catches it in churn (48.6 vs 18.2)
-   * precisely because the order half cannot. Testing S3 against a returning participant asked the
-   * composite for something no start-versus-end measure can deliver.
-   *
-   * "Changing what you value every scenario" now means what it says — a new value each time — so
-   * S3 tests drift and S5 tests the round trip, instead of both landing on the same person.
-   */
+  /* takes up a value they have not held before, in every scenario */
   "Flip-flopper": (r, p, _i, st) => {
     st.used = st.used ?? new Set();
     const top = [...POLICY].sort((x, y) => sc(p, y) - sc(p, x))[0];
@@ -85,12 +88,13 @@ const PICKERS = {
     const fresh = notTop.filter((x) => !st.used.has(optionMainValue(x)));
     const o = fresh[0] ?? notTop[0] ?? r[r.length - 1];
     st.used.add(optionMainValue(o));
-    st.last = optionMainValue(o);
     return o;
   },
+  /* always the worst fit, endorsed every time */
   Contrarian: (r) => r[r.length - 1],
 };
 
+/** Runs one participant and returns stored-result rows shaped exactly as the app stores them. */
 function run(name) {
   const pick = PICKERS[name];
   const original = START();
@@ -101,21 +105,28 @@ function run(name) {
     const ranked = labelOptions(scenario.options, p);
     const opt = pick(ranked, p, i, st);
     const w = scenario.stakesWeight ?? 1;
-    /* A recipient scenario asks for a WISH, and a wish teaches the profile nothing. The app
-       skips the update here (block5CVR.scenarioIsScored is the single shared rule), so the
-       simulator must skip it too — a simulator that moves the profile where the app does not
-       is not validating the app, it is validating something that will never run. */
-    if (scenarioIsScored(scenario)) {
+    const scored = scenarioIsScored(scenario);
+    /* MIRRORS commitChoice: the reflection runs only in a decider scenario, on a misaligned choice,
+       and a wish or the prediction test never moves the profile. */
+    const cvrFired = scored && !isFit(opt.level);
+    if (scored) {
       p = isFit(opt.level) ? applyKeepUpdates(p, opt, opt.level, w)
                            : applyEndorsementUpdates(p, opt, true, i % 2 === 0, null, w);
     }
     results.push({
-      policySnapshotAfter: Object.fromEntries(POLICY.map((k) => [k, sc(p, k)])),
+      scenarioId: scenario.id,
+      decisionRole: scenario.decisionRole ?? "decider",
+      cvrFired,
+      policySnapshotAfter: policyOf(p),
+      framingSnapshotAfter: { directnessSensitivity: sc(p, "directnessSensitivity"), contextSensitivity: sc(p, "contextSensitivity") },
       stakeholderSnapshotAfter: sc(p, STAKE),
     });
   });
-  const framingMoved = FRAMING.some((k) => Math.abs(sc(p, k) - sc(original, k)) > 0.01);
-  return { s: computeStability(results, original), framingMoved };
+  return {
+    s: computeStability(results, original),
+    sens: computeSensitivityStability(results, original),
+    netSwaps: rankSwaps(policyOf(original), results[results.length - 1].policySnapshotAfter),
+  };
 }
 
 let fails = 0;
@@ -125,35 +136,91 @@ const gate = (id, ok, msg) => {
 };
 
 console.log("\n=== STABILITY SIMULATION — synthetic participants through the real scoring code ===\n");
-console.log("  participant        stability  level                 order  movement  pairs  churn  framing");
-console.log("  " + "-".repeat(98));
+console.log("  participant    stability  level                   swaps  conflicts  net swaps | directness  context  stakeholder");
+console.log("  " + "-".repeat(112));
 const out = {};
 Object.keys(PICKERS).forEach((n) => {
-  const { s, framingMoved } = run(n);
-  out[n] = s;
-  console.log(
-    "  " + n.padEnd(18) +
-    String(s.value).padStart(6) + "     " + s.level.padEnd(22) +
-    String(s.orderPart).padStart(4) + String(s.movementPart).padStart(9) +
-    String(s.pairsSwapped).padStart(7) + String(s.churn).padStart(8) +
-    (framingMoved ? "  moved" : "  none"));
+  const r = run(n);
+  out[n] = r;
+  const v = (x) => (x ? String(x.value) : "—").padStart(6);
+  console.log("  " + n.padEnd(14) + String(r.s.value).padStart(8) + "   " + r.s.level.padEnd(22) +
+    String(r.s.swaps).padStart(6) + String(r.s.conflictSteps).padStart(10) + String(r.netSwaps).padStart(11) +
+    " |" + v(r.sens.directness) + "     " + v(r.sens.context) + "      " + v(r.sens.stakeholder));
 });
 
 console.log("\n--- gates ---");
-gate("S1", out["Loyal"].value >= 80,
-  `a participant who always picks their best fit holds steady  (got ${out["Loyal"].value})`);
-gate("S2", out["Anchored"].value >= 80,
-  `a participant who always serves their top value holds steady  (got ${out["Anchored"].value})`);
-gate("S3", out["Flip-flopper"].value < 50,
-  `changing what you value every scenario is not stable  (got ${out["Flip-flopper"].value})`);
-gate("S4", out["Contrarian"].value < out["Convert"].value,
-  `THE KEY GATE: a thrasher must score BELOW someone who changed once and held. Net drift alone `
-  + `would invert this (10.2 vs 13.6).  (${out["Contrarian"].value} vs ${out["Convert"].value})`);
-gate("S5", out["Swinger"].churn > out["Convert"].churn,
-  `going away and coming back registers as more movement than one lasting change  `
-  + `(churn ${out["Swinger"].churn} vs ${out["Convert"].churn})`);
-gate("S6", out["Convert"].pairsSwapped > 0 && out["Loyal"].pairsSwapped === 0,
-  `the order half responds: Convert reordered ${out["Convert"].pairsSwapped}/6 pairs, Loyal ${out["Loyal"].pairsSwapped}/6`);
+gate("S1", out["Loyal"].s.value === 100 && out["Loyal"].s.level === "Held steady",
+  `always the best fit holds steady: no conflict, so no swaps  (got ${out["Loyal"].s.value}, "${out["Loyal"].s.level}")`);
+gate("S2", out["Anchored"].s.value >= 83,
+  `always serving your top value is at least "Mostly steady"  (got ${out["Anchored"].s.value})`);
+gate("S3", out["Flip-flopper"].s.value < 50,
+  `changing what you value every scenario is not stable  (got ${out["Flip-flopper"].s.value})`);
+gate("S4", out["Contrarian"].s.value < out["Convert"].s.value,
+  `a thrasher scores below someone who changed once and held  (${out["Contrarian"].s.value} vs ${out["Convert"].s.value})`);
+/* S5 — Stability counts the PATH. Going away and coming back swaps priorities on the way out and
+   again on the way home, so the round trip must register more swaps than its start and end differ. */
+gate("S5", out["Swinger"].s.swaps > out["Swinger"].netSwaps,
+  `a round trip counts every swap on the way, not only where it ended  (${out["Swinger"].s.swaps} swaps against ${out["Swinger"].netSwaps} start-to-end)`);
+gate("S6", out["Convert"].s.swaps > 0 && out["Loyal"].s.swaps === 0,
+  `swaps respond: Convert ${out["Convert"].s.swaps}, Loyal ${out["Loyal"].s.swaps}`);
+/* S7 — keeping a fitting option is the model refining its estimate, not the participant changing:
+   always choosing the SECOND best moves the profile at every step, and must still score 100. */
+gate("S7", out["Near-loyal"].s.value === 100 && out["Near-loyal"].s.conflictSteps === 0,
+  `keep steps never count: always the second best scores 100  (got ${out["Near-loyal"].s.value})`);
+
+/* S8 — the swap count itself. */
+{
+  const k = POLICY;
+  const r = (a, b, c, d) => ({ [k[0]]: a, [k[1]]: b, [k[2]]: c, [k[3]]: d });
+  const cases = [
+    ["identical", r(90, 70, 50, 30), r(90, 70, 50, 30), 0],
+    ["one neighboring pair swaps", r(90, 70, 50, 30), r(70, 90, 50, 30), 1],
+    ["one value climbs last to first", r(90, 70, 50, 30), r(80, 60, 40, 95), 3],
+    ["a complete reversal", r(90, 70, 50, 30), r(30, 50, 70, 90), STABILITY_FULL_REVERSAL],
+    ["a tie opens", r(90, 90, 50, 30), r(95, 85, 50, 30), 0.5],
+    ["a tie closes", r(90, 70, 50, 30), r(80, 80, 50, 30), 0.5],
+    ["float noise is not a tie", r(90, 70, 50, 30), r(90 + 1e-9, 70, 50, 30), 0],
+  ];
+  const wrong = cases.filter(([, a, b, want]) => rankSwaps(a, b) !== want);
+  gate("S8", wrong.length === 0,
+    `rankSwaps is the Kendall tau distance, a tie at one half  (${wrong.length ? "wrong: " + wrong.map((c) => c[0]).join("; ") : `${cases.length} of ${cases.length} cases`})`);
+}
+
+/* S9 — the levels, at one, three and five swaps. */
+{
+  const cases = [[100, "Held steady"], [92, "Mostly steady"], [83, "Mostly steady"], [82, "Shifted a little"],
+    [50, "Shifted a little"], [49, "Shifted a lot"], [17, "Shifted a lot"], [16, "Changed substantially"],
+    [0, "Changed substantially"]];
+  const wrong = cases.filter(([v, l]) => stabilityLevel(v) !== l);
+  gate("S9", wrong.length === 0,
+    `levels at 100 / 83 / 50 / 17  (${wrong.length ? "misplaced: " + wrong.map((c) => c[0]).join(", ") : `${cases.length} of ${cases.length} scores land correctly`})`);
+}
+
+/* S10 — only a decider scenario in which the reflection ran can add swaps. A wish that moved (it
+   cannot, but a corrupted record might say so) and a keep step that reordered must both be ignored. */
+{
+  const original = START();
+  const reversed = Object.fromEntries(POLICY.map((k, i) => [k, 10 + 20 * i]));
+  const rows = [
+    { scenarioId: "a", decisionRole: "decider", cvrFired: false, policySnapshotAfter: reversed },
+    { scenarioId: "b", decisionRole: "recipient", cvrFired: true, policySnapshotAfter: policyOf(original) },
+  ];
+  const s = computeStability(rows, original);
+  gate("S10", s.swaps === 0 && s.value === 100,
+    `a keep step or a wish cannot add swaps, even when the profile moved  (${s.swaps} swaps)`);
+}
+
+/* S11 — a sensitivity's stability is the distance it traveled on its own scale. */
+{
+  const original = START(); // stakeholder 45, directness 50, context 55
+  const row = (stake) => ({ scenarioId: "x", decisionRole: "decider", cvrFired: true,
+    policySnapshotAfter: policyOf(original),
+    framingSnapshotAfter: { directnessSensitivity: 50, contextSensitivity: 55 }, stakeholderSnapshotAfter: stake });
+  const sens = computeSensitivityStability([row(70), row(45), row(20)], original); // 25 + 25 + 25 = 75 points
+  gate("S11", sens.stakeholder.distance === 75 && sens.stakeholder.value === 25
+    && sens.stakeholder.level === "Shifted a lot" && sens.directness.value === 100 && sens.context.value === 100,
+    `stakeholder 45 -> 70 -> 45 -> 20 travels 75 points and scores 25; directness and context hold at 100  (${sens.stakeholder.distance}, ${sens.stakeholder.value}, ${sens.directness.value}, ${sens.context.value})`);
+}
 
 /* ------------------------------------------------------------------------------------------
    APA — the clarification step. These gates exist because it did NOT work: measured over 5,056
@@ -168,8 +235,6 @@ console.log("\n--- APA clarification ---");
     groupSizeSensitivity: 0, vulnerabilityProtectionSensitivity: 0,
     directnessSensitivity: 50, contextSensitivity: 50, [STAKE]: 50,
   });
-  const scen = BLOCK5_SCENARIOS[0];
-  const opt = labelOptions(scen.options, apaBase).find((o) => !isFit(o.level));
   const PRI = "groupSizeSensitivity";
   const run1 = (conf, pri = PRI) =>
     applyApaUpdates(apaBase, false, pri, null, 1, conf);
@@ -207,21 +272,12 @@ console.log("\n--- APA clarification ---");
    * THE GATE THAT MATTERS: the clarification has to be able to change how the NEXT scenario judges
    * you. If naming your priority leaves every later label untouched, the step is decoration.
    *
-   * MEASURED OVER MANY PROFILES, NOT ONE. It used to run a single fixture — gain 100, outcome 99,
-   * group 0, vulnerable 0, naming `groupSize` — and require that at least one label moved. That is
-   * a knife-edge: whether one profile crosses a rank boundary depends on where its four scores
-   * happen to sit relative to six option fingerprints, so the gate was really measuring the fixture.
-   *
-   * It caught a real thing on 17 September 2026, and it caught it wrongly. The rule changed to
-   * "+30 to the named value, -10 to each of the other three", and this fixture went to 0 labels
-   * moved while the rule's actual power was unchanged: swept over 3,000 random profiles x 4
-   * priorities, the old rule moved a label 80.3% of the time and the new rule 78.1%. A gate that
-   * reports a 2-point difference as a total failure is a gate that will be silenced rather than
-   * believed.
-   *
-   * So it now sweeps, and asks for a clear majority. The floor is far below the measured 78% on
-   * purpose: this gate exists to catch a clarification that has stopped mattering, not to pin the
-   * rule to the exact shape it has today.
+   * MEASURED OVER MANY PROFILES, NOT ONE. A single fixture is a knife-edge: whether one profile
+   * crosses a rank boundary depends on where its four scores happen to sit relative to six option
+   * fingerprints, so a one-profile gate measures the fixture. Swept over 3,000 random profiles x 4
+   * priorities, the current rule moves a label about 78% of the time; the floor is far below that
+   * on purpose, to catch a clarification that has stopped mattering rather than to pin the rule to
+   * the exact shape it has today.
    */
   const next = BLOCK5_SCENARIOS[1];
   let aSeed = 20260917;
@@ -246,61 +302,6 @@ console.log("\n--- APA clarification ---");
   gate("A6", sc(s1, STAKE) === sc(s5, STAKE),
     `the stakeholder move is not scaled by confidence  (both ${Math.round(sc(s1, STAKE))})`);
 }
-
-/* --- the null model the ceiling is derived from --- */
-let seed = 12345;
-const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-const churns = [];
-for (let n = 0; n < 4000; n++) {
-  const o = {};
-  ALL.forEach((k) => { o[k] = Math.round(rnd() * 100); });
-  const original = mk(o);
-  let p = mk(o);
-  const results = [];
-  BLOCK5_SCENARIOS.forEach((scenario) => {
-    const ranked = labelOptions(scenario.options, p);
-    const opt = ranked[Math.floor(rnd() * ranked.length)];
-    const w = scenario.stakesWeight ?? 1;
-    if (scenarioIsScored(scenario)) {
-      /*
-       * THE NULL MODEL MUST WALK EVERY PATH A REAL PARTICIPANT CAN WALK.
-       *
-       * It used to run only the two "keep" paths and never the APA clarification, even though a
-       * real participant reaches APA whenever the vignette changes their mind. The ceiling was
-       * therefore the 99th percentile of a journey nobody actually takes — and it mattered more
-       * once APA started moving values by 30 instead of 10.
-       *
-       * A misaligned pick sends a chance responder to APA about half the time (they answer the
-       * vignette at random, and the flow routes on whether the person moved them), so that is the
-       * split modeled here. Every APA answer is random too: the value they prioritize, their
-       * confidence, and whether the stakeholder swayed them.
-       */
-      if (isFit(opt.level)) {
-        p = applyKeepUpdates(p, opt, opt.level, w);
-      } else if (rnd() < 0.5) {
-        p = applyEndorsementUpdates(p, opt, rnd() < 0.5, rnd() < 0.5, null, w);
-      } else {
-        /* No q1 draw here any more — the APA page's first question was removed on 17 September 2026
-           and applyApaUpdates no longer reads one. The draw was still being made and thrown away,
-           which silently shifted every later rnd() in the sequence. */
-        const prioritized = POLICY[Math.floor(rnd() * POLICY.length)];
-        const confidence = 1 + Math.floor(rnd() * 5);
-        p = applyApaUpdates(p, rnd() < 0.5, prioritized, null, w, confidence);
-      }
-    }
-    results.push({
-      policySnapshotAfter: Object.fromEntries(POLICY.map((k) => [k, sc(p, k)])),
-      stakeholderSnapshotAfter: sc(p, STAKE),
-    });
-  });
-  churns.push(computeStability(results, original).churn);
-}
-churns.sort((a, b) => a - b);
-const q = (t) => churns[Math.floor(t * (churns.length - 1))];
-console.log(`\n--- null model (${churns.length} seeded random responders) ---`);
-console.log(`  churn  p50 ${q(0.5).toFixed(1)}   p90 ${q(0.9).toFixed(1)}   p99 ${q(0.99).toFixed(1)}   max ${churns[churns.length - 1].toFixed(1)}`);
-gate("S7", Math.abs(q(0.99) - STABILITY_CHURN_CEILING) <= 3,
-  `STABILITY_CHURN_CEILING (${STABILITY_CHURN_CEILING}) still matches the null p99 (${q(0.99).toFixed(1)})`);
 
 console.log("\n" + "=".repeat(72));
 console.log(fails === 0 ? "### ALL STABILITY GATES PASSED ###" : `### ${fails} STABILITY GATE FAILURE(S) ###`);

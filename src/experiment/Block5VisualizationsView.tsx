@@ -145,10 +145,8 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   /*
    * THE WORDS COME FROM stabilityLevel(), NOT FROM CUTOFFS WRITTEN HERE.
    *
-   * This used to test `>= 80` and `>= 60` of its own, while the stored `stabilityLevel` field uses
-   * 85 / 70 / 50 / 30. A participant scoring 82 therefore read "your values stayed very steady" on
-   * screen while the database recorded "Mostly steady" - two different answers to one question,
-   * and only one of them is in the data an analysis would later use.
+   * Cut-offs written here would drift from the stored `stabilityLevel` the first time either
+   * changed, and a participant would read one answer on screen while the database recorded another.
    *
    * The STORED level is preferred over recomputing, so the screen and the record cannot disagree
    * even if the bands are ever retuned; the function is the fallback for a record written before
@@ -160,14 +158,14 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   /*
    * WHY THE SENTENCE ABOUT WHAT THIS MEASURES IS NOT DECORATION.
    *
-   * Stability is DESCRIPTIVE, not an achievement. It reports whether the participant's values
-   * moved, and a bare number out of 100 is read as a grade by everyone who sees one.
+   * Stability is DESCRIPTIVE, not an achievement. It reports whether the ORDER of the participant's
+   * priorities changed at the moments they chose against their best fit, and a bare number out of
+   * 100 is read as a grade by everyone who sees one. A participant who changed their mind once, for
+   * good reasons, scores lower than one who never did - and must not read that as failing.
    *
-   * The misreading is not hypothetical. Measured over 2,000 simulated participants who chose their
-   * BEST-FITTING option in every scenario, about one in ten still scores below 70 - in every one of
-   * those cases because their four values changed rank order, never because of movement alone.
-   * Without this sentence, a participant who picked exactly what fitted them reads "your values
-   * shifted" and concludes they failed at something nobody was scoring.
+   * It also does not promise that the two shapes on the radar match. Keeping a fitting option
+   * nudges the profile, so the shapes can differ while no two values traded places, and Stability
+   * is then 100. The caption says what the number counts instead.
    *
    * The question they think is being asked - "did I choose well?" - is answered on the card titled
    * "How consistent your choices were", so the caption sends them there rather than leaving the
@@ -177,12 +175,13 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     <>
       Stability {stability}/100 — {stabilityWords?.toLowerCase()}.{" "}
       <b>
-        This is about whether your values themselves moved during the scenarios, not about whether
-        you chose well.
+        This is about whether the order of your priorities changed during the scenarios, not about
+        whether you chose well.
       </b>{" "}
-      A high number means the two shapes above nearly match and a low number means they do not.
-      Neither is better than the other. How well your choices matched your values is a separate
-      score, on the card titled “How consistent your choices were”.
+      It counts how often two of your four values traded places at the moments you chose against the
+      option that fit you best: 100 means none did. Neither a high nor a low number is better than the
+      other. How well your choices matched your values is a separate score, on the card titled “How
+      consistent your choices were”.
     </>
   );
 
@@ -209,7 +208,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
      NAMED DESCRIPTIVELY HERE, NOT "Main" AND "Alternative". Inside a scenario those two words are
      exact — one view is shown first and the other is generated. Across scenarios they are not:
      `chooseFraming` reads the CURRENT profile, and the APA moves both sensitivities, so the view
-     that comes first can flip partway through. A series labelled "Main view" would therefore be
+     that comes first can flip partway through. A series labeled "Main view" would therefore be
      two different lenses joined by one line. */
   const lensX = ["Before", ...scenarios.map((_, i) => `After S${i + 1}`)];
   const lensSeries: LineSeries[] = [
@@ -513,7 +512,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
         <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: "5", md: "6" }}>
           {/* 1 · Radar */}
           <ChartCard index={1} title="Your values: before vs after Block 5"
-            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from Blocks 1–4); the <b>dashed</b> shape is where you ended after the scenarios. The closer the two shapes match, the more <b>stable</b> your values stayed.</>}
+            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from Blocks 1–4); the <b>dashed</b> shape is where you ended after the scenarios. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> number below counts how often that happened when you chose against your best fit.</>}
             caption={stabilityCaption}>
             <RadarChart axes={radarAxes} series={radarSeries} max={100} />
             <ChartLegend items={radarSeries.map((s) => ({ label: s.name, color: s.color, dashed: s.dashed }))} />

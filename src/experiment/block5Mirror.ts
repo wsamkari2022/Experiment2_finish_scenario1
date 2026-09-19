@@ -122,6 +122,10 @@ export interface MirrorReading {
   vciActed: number;
   /** the WISHING half of the pair, scored the same way */
   vciWished: number;
+  /** Was the decision (scenario 4) the option labeled Aligned - the participant's best fit? */
+  decisionWasAligned: boolean;
+  /** Was the wish (scenario 5) the option labeled Aligned - the participant's best fit? */
+  wishWasAligned: boolean;
   /** vciWished − vciActed. Positive = truer to their values when not responsible. */
   responsibilityGap: number;
   /**
@@ -359,7 +363,15 @@ export function analyseMirror(
         : `You chose “${decided.optionTitle}” and wished for “${wished.optionTitle}” — different options, but the same distance from your own values.`;
 
   const hurried = wished.seconds > 0 && wished.seconds < HURRIED_WISH_SECONDS;
-  return { decided, wished, sameOption, mirrorGap, vciActed, vciWished, responsibilityGap, labelSteps, hurried, sentence };
+  /* "Aligned" means exactly the Aligned label - the best fit on that menu, judged on the profile
+     brought into that scenario. A Weakly aligned choice is NOT counted here; its label is stored
+     beside this in the database so the two can still be told apart. */
+  const decisionWasAligned = decided.level === "aligned";
+  const wishWasAligned = wished.level === "aligned";
+  return {
+    decided, wished, sameOption, mirrorGap, vciActed, vciWished, decisionWasAligned, wishWasAligned,
+    responsibilityGap, labelSteps, hurried, sentence,
+  };
 }
 
 /**

@@ -30,7 +30,7 @@ the scenarios that ship, not estimated.
 > six options* — only the chair changes. Nothing else in the study holds content constant like that,
 > so the contrast between them isolates position and nothing else.
 >
-> **What was recalibrated.** `STABILITY_CHURN_CEILING` 65 → 43 → **55**; the cancer performance
+> **What was recalibrated.** The cancer performance
 > ladder (minimum gap 1 → 19); three `speed` values, to keep G3 satisfied. Menu confound re-measured
 > at 12.8× worst (gate ≥ 3×).
 >
@@ -69,8 +69,8 @@ Everything in the software exists to answer one of those two.
 
 ### The everyday version
 
-You are careful with money. Then you find £50 on the pavement outside a homeless shelter, and you
-find £50 outside a bank. Same £50, same act of keeping it. Do you behave the same way?
+You are careful with money. Then you find $50 on the sidewalk outside a homeless shelter, and you
+find $50 outside a bank. Same $50, same act of keeping it. Do you behave the same way?
 
 Most people do not. That difference is not hypocrisy — it is **context sensitivity**, and it is
 measurable. The study measures it, then asks whether it also appears when the stakes are lives
@@ -147,7 +147,7 @@ This distinction is load-bearing. Confusing them produces numbers that look righ
 |---|---|---|
 | Alignment label on the card | CURRENT | A running judgment of who you are now |
 | Card order (the planner) | **PRE** | A moving ruler cannot measure movement |
-| Stability | PRE vs POST | The point is the distance traveled |
+| Stability | PRE, then the profile after each scenario | Counts the swaps in the order of the four values at each conflict step |
 | Position Effect | **PRE** vs each chosen option | Same reason as the planner |
 
 ---
@@ -442,8 +442,8 @@ what they said.
 The division of labor is therefore clean: **Q1 records what they did, Q2 records what they want.**
 The sacrificed value is carried by Q2, where naming it is worth +30.
 
-`STABILITY_CHURN_CEILING` is **57** — the p99 of the null model under this rule. Gate S7 enforces
-the pair.
+How often a clarification reorders two values — and so what Stability reads — moves with these
+amounts; re-run `npm run report:stability` whenever they change.
 
 ---
 
@@ -472,22 +472,27 @@ limits: `docs/BLOCK5_VCI_METHOD.md`.
 
 ### 9.2 Stability
 
-*Did your values themselves change?* Two halves:
-
-- **Order** — of the six pairs among four values, how many swapped between start and end
-- **Movement** — total distance traveled, summed **scenario by scenario** (churn), not start-to-end
-
-**Why churn and not net drift.** A participant who picks the option furthest from their values in
-*every* scenario thrashes and ends up near where they began. Net drift would call that person
-*stable*. Churn separates them: 33.2 against 13.6.
+*Did the order of your priorities change when you went against your best fit?*
 
 ```
-movementPart = 100 × (1 − min(1, churn / STABILITY_CHURN_CEILING))
+swaps at one conflict step = Σ over the 6 pairs of the four policy values of
+                             1 (the pair reversed), 1/2 (a tie opened or closed), 0 (otherwise)
+Stability = round( 100 × (1 − min(1, total swaps / 6)) )
 ```
 
-`STABILITY_CHURN_CEILING = 55`, the p99 of a 4,000-responder null model. It went 65 → 43 when the deck shrank to three scenarios, then 43 → **55** when the workplace pair landed — five scenarios again, but only **four** of them can move the profile, because a wish teaches it nothing. **It moves whenever the
-bump sizes or the scenario set move** — it went 42 → 65 when deltas became flat. Gate S7 enforces
-the pairing.
+A **conflict step** is a decider scenario in which the CVR ran; keeping a fitting option, the wish
+and the prediction test never add swaps. 6 swaps is a complete reversal of the four priorities.
+Levels by total swaps: Held steady (0), Mostly steady (≤ 1), Shifted a little (≤ 3), Shifted a lot
+(≤ 5), Changed substantially (more) — on the stored value, edges at 100 / 83 / 50 / 17.
+
+Swaps replaced distance traveled on 19 September 2026: distance mostly counted the study's own
+update constants, needed a simulated ceiling, counted agreement as change, and could not tell a
+flip-flopper from a one-time convert (34% against 10% under swaps).
+
+**Directness, context and stakeholder** each have their own stability: the distance traveled on
+their 0–100 scale, `round(100 × (1 − min(1, distance / 100)))`.
+
+Full method, reasons and limits: `docs/BLOCK5_STABILITY_METHOD.md`.
 
 ### 9.3 Performance
 
@@ -714,7 +719,7 @@ chair (positive = truer when the decision was not theirs). `responsibilityGapLab
 | VCI | **No** | VCI asks whether your *choices* fit your values. A wish is not a choice. |
 | CVR reflection | **No** | Nobody is answerable for a wish. |
 | Profile update (APA) | **No** | The profile is taught by decisions. |
-| Stability / churn | **No** | Follows APA — this is why the ceiling is 55 and not 65. |
+| Stability | **No** | Follows APA: a wish runs no reflection, so it can add no swaps. |
 | Position Effect distance | **Yes** | Same arithmetic; labeled as a wish everywhere it is shown. |
 
 #### Two design decisions worth defending
@@ -879,7 +884,7 @@ and responsibility gap are all derived from these rows on demand (`block5Company
 | `validate_block5.cjs` | Scenario content: every option wins somewhere, none dominated, numbers live in `factBase` |
 | `validate_block5_metrics.mjs` | Every metric spreads ≥ 30 points across a scenario |
 | `simulate_vci.cjs` | VCI discriminates |
-| `simulate_stability.cjs` | Stability + **S7: the churn ceiling still matches the null p99** |
+| `simulate_stability.cjs` | Stability (swaps) and the three sensitivity stabilities, S1–S11; APA A1–A6 |
 | `validate_cvr_lenses.cjs` | Both lenses carry equal weight; the context lens never says "you" |
 | `simulate_position.cjs` | Menu confound; drift vs random responder separation |
 | `test_planner.cjs` | 22 behavioral assertions on the trade-off tree |
@@ -896,14 +901,15 @@ Say these before an examiner finds them.
    partial control, not a fix. **Report it beside every position claim.**
 2. **n = 1 for two positions.** One scenario each for "alone" and "with dependents", three for
    "others".
-3. **Ceiling pile-up.** ~13% of values finish pinned at 0 or 100 and stop contributing movement.
+3. **Ceiling pile-up.** ~13% of values finish pinned at 0 or 100; two values pinned together are
+   tied, which is why Stability counts a tie opening or closing as half a swap.
 4. **Six invented constants in the profile update** (+30, +15, −20, −10, ±25, and the keeps).
    Nothing in Blocks 1–4 derives them. The planner refuses to invent constants; **the profile
    update does not, and that is an inconsistency in the project's own standard.**
    → The defensible framing: APA's update is the **intervention** (identical constants for
    everyone, so it cannot bias a between-participant comparison). Position Effect is the
-   **constant-free** measure. Report Stability as *"how far the system's model of this participant
-   moved"*, not as a fact about their morality.
+   **constant-free** measure. Report Stability as *"how often the system's model of this
+   participant reordered their priorities at a conflict"*, not as a fact about their morality.
 5. **The stakeholder ±25 has no measurement behind it.** It is large enough that two non-switches
    pin a participant at the floor, and it is the one constant in the profile update that was never
    sized against anything. Being unscaled by confidence is deliberate — it is behavioral, not
@@ -913,8 +919,8 @@ Say these before an examiner finds them.
    [`docs/BLOCK5_APA_AUDIT.md`](BLOCK5_APA_AUDIT.md) §7.
 7. **Within-ladder coherence is unmeasurable.** The interface enforces monotonicity, so any such
    score would read 100% for everybody.
-8. **Stability and behavioral distance are not redundant** (r = −0.17 across 600 simulated
-   participants) — they answer different questions, so report both.
+8. **Stability and behavioral distance are not redundant** — one asks whether the priorities were
+   reordered, the other how far each choice sat from the profile — so report both.
 9. **The explanation panel is itself an intervention.** Shown identically to everyone, so it cannot
    differ by condition, but it adds information before the choice and may lengthen deliberation (your H4).
 
@@ -930,8 +936,8 @@ Ordered by value. None are implemented.
 at least a shape argument behind it; this one is judgment alone, and it is large enough that two
 non-switches pin a participant at the floor. Either derive it from Block 4's observed switch rate or
 state plainly in the write-up that it is set by hand. **Anything that changes it must re-run
-`npm run verify:apa` then `npm run validate:block5` — the churn ceiling (56) is calibrated
-against current APA behavior.**
+`npm run verify:apa` then `npm run validate:block5` and `npm run report:stability` — the
+stakeholder stability is made of these steps.**
 
 **1 · Delete the dev restart button before launch.**
 `src/components/dev/` and two lines in `src/App.tsx`. It cannot ship (`import.meta.env.DEV` folds

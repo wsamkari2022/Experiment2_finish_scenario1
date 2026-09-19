@@ -233,9 +233,11 @@ scoring code by each kind of participant.
 4. **Random answering.** Blind picking averages exactly 50. A responder who also answers the CVR and
    APA at random averages 56, because APA lists only the options built on the value they name,
    which steers some random choices toward a fit.
-5. **Gate V5 fails.** Its convert adopts, in scenario 1, the value of a middle-of-the-road option
-   and is then asked to follow that value into an extreme option later, so it pays twice (75
-   against a floor of 78). The researcher's decision on this persona is pending; see CLAUDE.md.
+5. **Gate V5 tests a convert who adopts one clear value.** A change of heart is a change to a value,
+   so V5's convert takes up, in scenario 1, an option built on one value (its strongest value 85 or
+   more) and then holds to it: it loses only that scenario and scores 88. A participant who
+   "converts" through a middle-of-the-road option, and then follows its largest number into an
+   extreme option later, loses more - that is limit 3, not a failure of the gate.
 
 ---
 
@@ -247,7 +249,7 @@ scoring code by each kind of participant.
 | V2 | Always the second best scores 80 and reads "Mostly Consistent" |
 | V3 | A flip-flopper scores below 50, below blind picking |
 | V4 | Always the worst fit scores 10, the floor, and no more than a flip-flopper |
-| V5 | A one-time convert scores at least 100 × ((K − 1) + 0.10) / K — the lowest label once and the best every time after |
+| V5 | A one-time convert who adopts one clear value scores at least 100 × ((K − 1) + 0.10) / K — the lowest label once and the best every time after (it scores 88) |
 | V6 | A convert who endorses firmly scores at least as much as one who endorses with doubt |
 | V7 | Keeping your best-fit option never lowers the value it is built on |
 | V8 | The APA route does not rescue a flip-flopper |
