@@ -1397,6 +1397,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             optionId: selectedOption.id }],
         changedAfterSeeing: selectedOption.id !== firstChoice,
         finalChoiceOptionId: selectedOption.id,
+        probabilityOfFinalChoice:
+          prediction.options.find((o) => o.optionId === selectedOption.id)?.probability ?? 0,
+        /* Read from the log rather than from the final rule: a participant who pressed "Change my
+           answer" and then chose their first rule again still reacted to the guess. */
+        pressedChangeAnswer: predLogRef.current.events.some((e) => e.what === "changed_answer"),
         secondsViewingPrediction: predShownAtRef.current
           ? Math.round((Date.now() - predShownAtRef.current) / 1000)
           : 0,

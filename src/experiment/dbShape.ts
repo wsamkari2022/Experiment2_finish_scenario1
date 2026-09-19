@@ -204,7 +204,7 @@ function summariseActiveTime(value: unknown): unknown {
  * THE PROBLEM THIS SOLVES
  * The consent page promises that a participant may stop and come back. On the SAME browser that
  * works, because their answers are still in it. On a different computer it did not work at all:
- * the start screen recognised them and put them back on the stage they left, but nothing had put
+ * the start screen recognized them and put them back on the stage they left, but nothing had put
  * their answers there, so Block 5 found no profile and the flow sent them to Block 1 to start
  * again. The promise was real; the software could not keep it.
  *
@@ -1321,6 +1321,14 @@ export function buildScenario6Section(block5: unknown): Record<string, unknown> 
   const veilOption = optionOf(scenarioOf(row.scenarioId), row.selectedOptionId);
   const veilDistance = frozen && veilOption ? profileDistance(frozen, veilOption) : null;
 
+  /* The rule titles, so a reader of the record sees what was chosen without looking ids up. */
+  const titleOfRule = (id: unknown): string | null =>
+    (typeof id === "string" ? optionOf(scenarioOf(row.scenarioId), id)?.title : undefined) ?? null;
+  const pressedChange = typeof p.pressedChangeAnswer === "boolean"
+    ? p.pressedChangeAnswer
+    : (Array.isArray(p.interactions) ? p.interactions : [])
+        .some((e) => (e as Record<string, unknown>)?.what === "changed_answer");
+
   return {
     what_this_is:
       "Scenario 6 asks which principle the participant acts on when they do not know who they will "
@@ -1360,8 +1368,22 @@ export function buildScenario6Section(block5: unknown): Record<string, unknown> 
     /* ---- what the participant did ---- */
     participant: {
       rule_chosen_before_seeing_the_guess: p.firstChoiceOptionId ?? null,
+      rule_chosen_before_seeing_the_guess_title: titleOfRule(p.firstChoiceOptionId),
       rule_chosen_in_the_end: p.finalChoiceOptionId ?? null,
+      rule_chosen_in_the_end_title: titleOfRule(p.finalChoiceOptionId),
       changed_after_seeing_the_guess: p.changedAfterSeeing ?? null,
+      /* Pressing "Change my answer" is its own fact: a participant can press it and come back to the
+         rule they first chose. Records made before 19 September 2026 carry no flag, so the log's
+         "changed_answer" entry is read for those. */
+      pressed_change_my_answer: pressedChange,
+      what_happened_after_the_guess: p.changedAfterSeeing === true
+        ? "changed to a different rule"
+        : pressedChange
+          ? "reconsidered, then came back to their first rule"
+          : "kept their first rule",
+      mpf_chance_of_their_final_choice_percent: pct(p.probabilityOfFinalChoice
+        ?? (shown.find((o) => (o as Record<string, unknown>).optionId === p.finalChoiceOptionId) as
+             Record<string, unknown> | undefined)?.probability),
       /* Same name as the identical quantity in analysis.mpf_predictions_every_scenario. It used to
          read `..._first_pick_percent` here and `..._first_choice_percent` there — one number under
          two names in adjacent sections, which is how a reader ends up believing they are two

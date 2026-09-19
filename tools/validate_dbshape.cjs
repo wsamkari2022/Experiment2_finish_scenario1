@@ -325,6 +325,42 @@ console.log("  THINGS THAT WERE WRONG ONCE");
     "the same quantity has the same name in both sections, and the same value");
 }
 
+/* D37 — what happened after the scenario-6 guess, in all three shapes: kept, changed to a different
+   rule, and pressed "Change my answer" but came back to the same rule. The third is built as a
+   record from before 19 September 2026 (no `pressedChangeAnswer`), so the fallback that reads the
+   log is tested too. */
+{
+  const withS6 = (edit) => {
+    const b = JSON.parse(JSON.stringify(PEOPLE[0][1]));
+    const row = b.scenarioResults.find((r) => r.predictionTest);
+    edit(row.predictionTest, row);
+    return db.buildScenario6Section(b).participant;
+  };
+  const kept = withS6(() => {});
+  const changed = withS6((pt, row) => {
+    const other = pt.shownProbabilities.find((o) => o.optionId !== pt.firstChoiceOptionId);
+    pt.changedAfterSeeing = true;
+    pt.finalChoiceOptionId = other.optionId;
+    pt.probabilityOfFinalChoice = other.probability;
+    pt.pressedChangeAnswer = true;
+    row.selectedOptionId = other.optionId;
+  });
+  const cameBack = withS6((pt) => {
+    delete pt.pressedChangeAnswer;
+    pt.interactions = [...pt.interactions, { atMs: 1, what: "changed_answer" }];
+  });
+  const s6scn = BLOCK5_SCENARIOS.find((s) => s.decisionRole === "predicted");
+  const titleOf = (id) => s6scn.options.find((o) => o.id === id).title;
+  const ok = kept.what_happened_after_the_guess === "kept their first rule" && kept.pressed_change_my_answer === false
+    && changed.what_happened_after_the_guess === "changed to a different rule" && changed.pressed_change_my_answer === true
+    && changed.rule_chosen_in_the_end_title === titleOf(changed.rule_chosen_in_the_end)
+    && changed.rule_chosen_before_seeing_the_guess_title === titleOf(changed.rule_chosen_before_seeing_the_guess)
+    && typeof changed.mpf_chance_of_their_final_choice_percent === "number"
+    && cameBack.what_happened_after_the_guess === "reconsidered, then came back to their first rule"
+    && cameBack.pressed_change_my_answer === true && cameBack.changed_after_seeing_the_guess === false;
+  gate("D37", ok, `after the guess: "${kept.what_happened_after_the_guess}" / "${changed.what_happened_after_the_guess}" / "${cameBack.what_happened_after_the_guess}"`);
+}
+
 /* ---- the Block 5 sections, over three very different participants ---- */
 for (const [who, block5] of PEOPLE) {
   console.log("");

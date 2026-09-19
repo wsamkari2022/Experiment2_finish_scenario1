@@ -1087,6 +1087,23 @@ export interface PredictionTestRecord {
    */
   changedAfterSeeing: boolean;
   finalChoiceOptionId: string;
+  /** The probability the model had given to the rule they ENDED on. The same as
+   *  `probabilityOfFirstChoice` when they kept their first rule. */
+  probabilityOfFinalChoice?: number;
+  /**
+   * Whether they pressed "Change my answer" on the guess screen.
+   *
+   * NOT THE SAME AS `changedAfterSeeing`. A participant can press it, go back through the rules, and
+   * choose the rule they first picked. Their final rule is unchanged, but they did react to the
+   * guess, and this is the only record of that. Together the two give three outcomes:
+   *     pressed = false                            kept their first rule
+   *     pressed = true,  changedAfterSeeing = true    changed to a different rule
+   *     pressed = true,  changedAfterSeeing = false   reconsidered, then came back to the same rule
+   *
+   * Optional because records made before 19 September 2026 do not carry it; for those it can be
+   * read from `interactions` (a "changed_answer" entry), which is what dbShape does.
+   */
+  pressedChangeAnswer?: boolean;
   /** Seconds spent on the prediction screen before answering. A two-second answer is not a judgment. */
   secondsViewingPrediction: number;
 

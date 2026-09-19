@@ -11,7 +11,7 @@ import { useState } from "react";
 import {
   Badge, Box, Button, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuArrowRight, LuChartColumn, LuTrendingUp, LuScale, LuTarget } from "react-icons/lu";
+import { LuCheck, LuArrowRight, LuChartColumn, LuTrendingUp, LuScale, LuTarget, LuRotateCcw } from "react-icons/lu";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL } from "./block5CVR";
 import { POLICY_DIM_KEYS } from "./block5Types";
@@ -32,6 +32,28 @@ const LEVEL_PALETTE: Record<AlignmentLevel, string> = {
   strongly_misaligned: "red",
 };
 
+/**
+ * WHAT THE PARTICIPANT DID AFTER SEEING THE SCENARIO-6 GUESS - one of three things:
+ *   "kept"          never pressed "Change my answer"
+ *   "changed"       pressed it and ended on a DIFFERENT rule
+ *   "reconsidered"  pressed it, went back through the rules, and chose the SAME rule again
+ * A record made before 19 September 2026 has no `pressedChangeAnswer`; its log still shows the
+ * press as a "changed_answer" entry, so that is read instead.
+ */
+type AfterTheGuess = "kept" | "changed" | "reconsidered";
+function afterTheGuess(pt: NonNullable<Block5ScenarioResult["predictionTest"]>): AfterTheGuess {
+  if (pt.changedAfterSeeing) return "changed";
+  const pressed = pt.pressedChangeAnswer
+    ?? (pt.interactions ?? []).some((e) => e.what === "changed_answer");
+  return pressed ? "reconsidered" : "kept";
+}
+
+/** A scenario-6 rule's title from its id, falling back to the id so the page never prints "undefined". */
+function ruleTitle(scenarioId: string, optionId: string): string {
+  return BLOCK5_SCENARIOS.find((s) => s.id === scenarioId)?.options.find((o) => o.id === optionId)?.title
+    ?? optionId;
+}
+
 /** Plain-English note for a scenario, based on alignment + CVR outcome. */
 function scenarioNote(sr: Block5ScenarioResult): string {
   /*
@@ -46,8 +68,13 @@ function scenarioNote(sr: Block5ScenarioResult): string {
    */
   const pt = sr.predictionTest;
   if (pt) {
-    if (pt.changedAfterSeeing) {
-      return "You chose one rule, saw what the MPF expected, and then chose a different one.";
+    const after = afterTheGuess(pt);
+    if (after === "changed") {
+      return `You first chose “${ruleTitle(sr.scenarioId, pt.firstChoiceOptionId)}”, saw what the MPF `
+        + `expected, and then changed to “${ruleTitle(sr.scenarioId, pt.finalChoiceOptionId)}”.`;
+    }
+    if (after === "reconsidered") {
+      return "You saw what the MPF expected, went back to reconsider, and chose the same rule again.";
     }
     return "You saw what the MPF expected of you, and kept the rule you had already chosen.";
   }
@@ -238,15 +265,54 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
           if (!scenario) return null;
           const selectedOption = scenario.options.find((o) => o.id === sr.selectedOptionId);
           const level = sr.alignmentLevel;
+          const pt = sr.predictionTest;
+          /*
+           * SCENARIO 6, WHEN THE PARTICIPANT CHANGED THEIR RULE AFTER THE GUESS, SHOWS BOTH PICKS.
+           *
+           * The guess is judged on the FIRST pick - the one made before anything was suggested - so
+           * "MPF expected this" and "guessed right / wrong" belong under that pick. Printed under the
+           * final rule instead, as they were, a participant who switched read their first pick's
+           * percentage beside a rule it was never about. The final rule gets its own percentage.
+           *
+           * When they kept their first rule - or pressed "Change my answer" and came back to it - the
+           * two picks are the same rule and the panel is the single row it always was.
+           */
+          const changedRule = !!pt && afterTheGuess(pt) === "changed";
+          const pctOf = (p: number | undefined) => Math.round((p ?? 0) * 100);
+          const finalPct = pt
+            ? pctOf(pt.probabilityOfFinalChoice
+                ?? pt.shownProbabilities.find((o) => o.optionId === pt.finalChoiceOptionId)?.probability)
+            : 0;
 
           return (
             <Box key={sr.scenarioId} bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "6", md: "8" }} shadow="lg">
               <Heading size="md" color="fg" mb="4">{scenario.title}</Heading>
               <Stack gap="3">
+                {changedRule && pt && (
+                  <HStack gap="2" align="start">
+                    <Icon color="fg.subtle" mt="0.5"><LuRotateCcw /></Icon>
+                    <VStack align="start" gap="1.5">
+                      <Text fontSize="sm" color="fg.muted">Your first choice, before you saw the guess</Text>
+                      <Text fontSize="md" color="fg.muted" fontWeight="medium">
+                        {ruleTitle(sr.scenarioId, pt.firstChoiceOptionId)}
+                      </Text>
+                      <HStack gap="3" wrap="wrap">
+                        <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
+                          MPF expected this {pctOf(pt.probabilityOfFirstChoice)}%
+                        </Badge>
+                        <Badge variant="subtle" colorPalette={pt.predictionWasRight ? "green" : "orange"}
+                          rounded="md" px="2" fontSize="xs">
+                          {pt.predictionWasRight ? "The MPF guessed right" : "The MPF guessed wrong"}
+                        </Badge>
+                      </HStack>
+                    </VStack>
+                  </HStack>
+                )}
+
                 <HStack gap="2" align="start">
                   <Icon color="green.400" mt="0.5"><LuCheck /></Icon>
                   <VStack align="start" gap="0.5">
-                    <Text fontSize="sm" color="fg.muted">Your choice</Text>
+                    <Text fontSize="sm" color="fg.muted">{changedRule ? "Your final choice" : "Your choice"}</Text>
                     <Text fontSize="md" color="fg" fontWeight="medium">{selectedOption?.title ?? sr.selectedOptionId}</Text>
                   </VStack>
                 </HStack>
@@ -262,21 +328,27 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
                   The row stays, because the choice they made there is real and belongs in a summary
                   of their choices. What it reports is what the GUESS did.
                 */}
-                {sr.predictionTest ? (
-                  <HStack gap="3" wrap="wrap">
-                    <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
-                      MPF expected this {Math.round(sr.predictionTest.probabilityOfFirstChoice * 100)}%
-                    </Badge>
-                    <Badge variant="subtle" colorPalette={sr.predictionTest.predictionWasRight ? "green" : "orange"}
-                      rounded="md" px="2" fontSize="xs">
-                      {sr.predictionTest.predictionWasRight ? "The MPF guessed right" : "The MPF guessed wrong"}
-                    </Badge>
-                    {sr.predictionTest.changedAfterSeeing && (
-                      <Badge variant="subtle" colorPalette="blue" rounded="md" px="2" fontSize="xs">
-                        You changed after seeing it
+                {pt ? (
+                  changedRule ? (
+                    <HStack gap="3" wrap="wrap">
+                      <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
+                        MPF expected this {finalPct}%
                       </Badge>
-                    )}
-                  </HStack>
+                      <Badge variant="subtle" colorPalette="blue" rounded="md" px="2" fontSize="xs">
+                        You changed after seeing the guess
+                      </Badge>
+                    </HStack>
+                  ) : (
+                    <HStack gap="3" wrap="wrap">
+                      <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
+                        MPF expected this {pctOf(pt.probabilityOfFirstChoice)}%
+                      </Badge>
+                      <Badge variant="subtle" colorPalette={pt.predictionWasRight ? "green" : "orange"}
+                        rounded="md" px="2" fontSize="xs">
+                        {pt.predictionWasRight ? "The MPF guessed right" : "The MPF guessed wrong"}
+                      </Badge>
+                    </HStack>
+                  )
                 ) : (
                 <HStack gap="3" wrap="wrap">
                   {level && (
