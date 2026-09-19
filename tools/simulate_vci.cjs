@@ -27,8 +27,8 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 
 const B = (f) => require(path.join(BUILD, f));
 
-const { labelOptions, scenarioVciScore, applyKeepUpdates, applyEndorsementUpdates,
-        optionMainValue, computeVCI, scenarioIsScored } = B("block5CVR.js");
+const { labelOptions, scenarioVciScore, applyKeepUpdates, applyEndorsementUpdates, applyApaUpdates,
+        optionMainValue, computeVCI, scenarioIsScored, policyDelivery } = B("block5CVR.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 
 /* Deck size, read from the scenarios that ship, counting only the ones VCI is computed over.
@@ -105,6 +105,19 @@ const PARTICIPANTS = {
       return chosen;
     },
   },
+  /* The same flip-flopper, but every change goes through the APA clarification instead of the keep
+     path: they refuse, name the value the option stands for, and pick it. V8 exists for this one. */
+  "Flip-flopper (APA)": {
+    apa: true,
+    pick(r, p, _i, st) {
+      const top = [...POLICY].sort((a, b) => scoreOf(p, b) - scoreOf(p, a))[0];
+      const cand = r.filter((x) => !isFit(x.level) && optionMainValue(x) !== top
+                                && optionMainValue(x) !== st.last);
+      const chosen = cand[0] ?? r.find((x) => !isFit(x.level)) ?? r[r.length - 1];
+      st.last = optionMainValue(chosen);
+      return chosen;
+    },
+  },
   "Contrarian": { strong: true, pick: (r) => r[r.length - 1] },
 };
 
@@ -123,16 +136,31 @@ function run(name) {
     // The role travels with the row, exactly as it does on a stored result, so computeVCI
     // filters here for the same reason and by the same field that it filters in the app.
     const decisionRole = scenario.decisionRole ?? "decider";
-    perScenario.push({ level: opt.level, credit, title: opt.title, decisionRole });
     const w = scenario.stakesWeight ?? 1;
+    /* What the RETIRED rule would have credited: before 18 September 2026 an APA choice was
+       re-labelled on the profile the clarification had just moved. Kept only so the output shows
+       the size of the hole V8 guards; nothing is scored with it. */
+    let oldRuleCredit = credit;
     if (scenarioIsScored(scenario)) {
-      profile = isFit(opt.level)
-        ? applyKeepUpdates(profile, opt, opt.level, w)
-        : applyEndorsementUpdates(profile, opt, !!spec.strong, true, null, w);
+      if (isFit(opt.level)) {
+        profile = applyKeepUpdates(profile, opt, opt.level, w);
+      } else if (spec.apa) {
+        /* MIRRORS handleApaCommit (Block5PublicEmergencySimulation.tsx). The participant names the
+           value this option stands for, at full confidence; the profile moves by applyApaUpdates;
+           and the final choice KEEPS the label it had when the scenario opened - `credit` above is
+           not recomputed. If handleApaCommit ever goes back to re-labelling on the moved profile,
+           this mirror no longer describes the app and must change with it. */
+        profile = applyApaUpdates(profile, true, optionMainValue(opt), null, w, 5);
+        oldRuleCredit = scenarioVciScore(labelOptions(scenario.options, profile).find((o) => o.id === opt.id).level);
+      } else {
+        profile = applyEndorsementUpdates(profile, opt, !!spec.strong, true, null, w);
+      }
     }
+    perScenario.push({ level: opt.level, credit, oldRuleCredit, title: opt.title, decisionRole });
   });
   const vci = computeVCI(perScenario.map((s) => ({ vciScore: s.credit, decisionRole: s.decisionRole }))).value;
-  return { vci, perScenario };
+  const oldRuleVci = computeVCI(perScenario.map((s) => ({ vciScore: s.oldRuleCredit, decisionRole: s.decisionRole }))).value;
+  return { vci, oldRuleVci, perScenario };
 }
 
 /* ------------------------------------------------------------------ */
@@ -151,6 +179,7 @@ Object.keys(PARTICIPANTS).forEach((name) => {
   console.log(`  ${name.padEnd(18)} VCI ${String(r.vci).padStart(3)}    per scenario: ${shape}`);
   if (N_WISH > 0) console.log(`  ${"".padEnd(18)}            (last ${N_WISH} shown for reference only — a wish is not averaged into VCI)`);
   console.log(`  ${"".padEnd(18)}            ${r.perScenario.map((s) => s.level.replace("_", " ")).join(", ")}`);
+  if (PARTICIPANTS[name].apa) console.log(`  ${"".padEnd(18)}            (the retired rule, re-labelling after APA, would have given ${r.oldRuleVci})`);
 });
 
 console.log("\n--- gates ---");
@@ -180,6 +209,33 @@ gate("V6", out["Convert"] >= out["Hesitant convert"], `Convert >= Hesitant conve
   const before = scoreOf(p, kept), now = scoreOf(after, kept);
   gate("V7", now >= before,
     `keeping your best-fit option never lowers the value it is built on  (${kept.replace("Sensitivity", "")}: ${before.toFixed(1)} -> ${now.toFixed(1)})`);
+}
+
+/* V8 — the ROUTE does not rescue a flip-flopper. Changing value every scenario through APA must be
+   caught exactly as it is on the keep path; before 18 September 2026 it was not (see the retired-rule
+   figure printed above). */
+gate("V8", out["Flip-flopper (APA)"] < 50,
+  `Flip-flopper through APA < 50 — clarifying instead of keeping does not hide a change of value  (got ${out["Flip-flopper (APA)"]}, keep path ${out["Flip-flopper"]})`);
+
+/* V9 — a tie in fit is broken by what the option delivers, never by the alphabet. Checked on seeded
+   random profiles, and required to meet real ties, so the gate cannot pass by finding none. */
+{
+  let seed = 20260918;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  let ties = 0, wrong = 0;
+  for (let n = 0; n < 2000; n++) {
+    const p = makeProfile(Object.fromEntries(ALL.map((k) => [k, Math.round(rnd() * 100)])));
+    for (const scenario of BLOCK5_SCENARIOS.filter(scenarioIsScored)) {
+      const r = labelOptions(scenario.options, p);
+      for (let i = 1; i < r.length; i++) {
+        if (r[i].matchShortfall !== r[i - 1].matchShortfall) continue;
+        ties++;
+        if (policyDelivery(r[i], p) > policyDelivery(r[i - 1], p)) wrong++;
+      }
+    }
+  }
+  gate("V9", ties > 0 && wrong === 0,
+    `tied options are ordered by what they deliver, not by name  (${ties} ties met, ${wrong} out of order)`);
 }
 
 console.log("\n" + "=".repeat(72));

@@ -136,6 +136,17 @@ export function policyShortfallByValue(
 }
 
 /**
+ * How much an option gives of what this participant holds: Σ (score / 100) × what the option
+ * delivers, over the four policy values. The same weights the shortfall uses.
+ *
+ * USED ONLY TO BREAK A TIE in `labelOptions`. It never changes a score, a shortfall or a CVR
+ * trigger on its own - it only decides the order of options whose shortfall is identical.
+ */
+export function policyDelivery(option: Block5ScenarioOption, profile: Block5UserProfile): number {
+  return POLICY_DIM_KEYS.reduce((sum, k) => sum + (scoreOf(profile, k) / 100) * option.fingerprint[k], 0);
+}
+
+/**
  * Rank-based label (v3.3): an option's position in the scenario ranking decides its level,
  * which guarantees a spread for any profile. For 6 options with the default rule this gives
  * 1 Aligned / 1 Weakly / 2 Misaligned / 2 Strongly.
@@ -219,10 +230,28 @@ export function labelOptions(
    * tie-break and the ranking became alphabetical by id. `rankLabel` then handed "Aligned" to
    * whichever option was named earliest.
    *
-   * Ascending, because a shortfall is a cost. The id tie-break stays, for options that genuinely
-   * fit identically, so the same profile always produces the same order.
+   * Ascending, because a shortfall is a cost.
+   *
+   * TIES ARE BROKEN BY WHAT THE OPTION DELIVERS, NOT BY ITS NAME (18 September 2026).
+   *
+   * The same fault as above, at the other end of the scale. A shortfall only counts falling BELOW a
+   * floor, so two options that both clear every floor tie at exactly 0, and the tie used to go to
+   * the id - alphabetical order. Measured over 2,000 random profiles on scenarios 1-4, the top two
+   * options tied in 10.9% of cases, and an option that met every floor was labelled misaligned in
+   * 5.1%, purely because its id sorted later. The CVR then fired on it.
+   *
+   * Among options with the same shortfall, the one that gives more of what the participant holds
+   * (`policyDelivery`) now goes first. When three or more options clear every floor, the rank rule
+   * still calls the rest misaligned - on purpose, see `rankLabel` - but now it is the ones that give
+   * LESS of what the participant cares about, not the ones whose names come later in the alphabet.
+   *
+   * The id stays as the very last resort, so the same profile always produces the same order.
+   * Nothing else reads this order: the planner and the scenario-6 prediction compute their own.
    */
-  labeled.sort((a, b) => (a.matchShortfall - b.matchShortfall) || a.id.localeCompare(b.id));
+  const delivered = new Map(labeled.map((o) => [o.id, policyDelivery(o, profile)]));
+  labeled.sort((a, b) => (a.matchShortfall - b.matchShortfall)
+    || ((delivered.get(b.id) ?? 0) - (delivered.get(a.id) ?? 0))
+    || a.id.localeCompare(b.id));
   labeled.forEach((o, i) => { o.rank = i + 1; o.level = rankLabel(i, labeled.length); });
   return labeled;
 }
@@ -825,9 +854,16 @@ const BASE_CREDIT: Record<AlignmentLevel, number> = {
 /**
  * One scenario's contribution to VCI, 0-1, from the alignment tier of the FINAL choice.
  *
- * Judged against the profile as it stood at that moment, not the frozen one - a value the
- * participant took on during Block 5 counts from then on. That is what separates VCI (did your
- * choices fit your values as they stood?) from Stability (did your values themselves move?).
+ * Judged against the profile as it stood WHEN THE SCENARIO OPENED, not the frozen one - a value the
+ * participant took on during Block 5 counts from the next scenario on. That is what separates VCI
+ * (did your choices fit your values as they stood?) from Stability (did your values themselves move?).
+ *
+ * THE SAME ON EVERY PATH (since 18 September 2026). Keeping the option after the CVR, and reaching a
+ * final choice through the APA clarification, are both judged on that entry profile. Neither route
+ * re-labels the choice inside the scenario it was made in; each one moves the profile for the NEXT
+ * scenario. APA used to re-label on the profile it had just moved, which let a participant who took
+ * up a new value in every scenario score 49 by clarifying against 21 by keeping. See the note in
+ * handleApaCommit (Block5PublicEmergencySimulation.tsx) and tools/simulate_vci.cjs, gate V8.
  */
 export function scenarioVciScore(level: AlignmentLevel): number {
   return BASE_CREDIT[level];

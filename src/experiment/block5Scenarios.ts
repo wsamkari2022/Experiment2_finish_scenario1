@@ -351,8 +351,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* VALUE AUDIT, 18 September 2026: How much is gained 82 -> 70.
            A sure way out "well within the six hours", but slower than the service road, which is "the fastest clear route out".
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 67 -> 55. Its card only says it takes nothing set aside; it does nothing for the least able. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 67, groupSizeSensitivity: 61,
+          vulnerabilityProtectionSensitivity: 55, groupSizeSensitivity: 61,
           gainResponsivenessSensitivity: 70, outcomeAggregationSensitivity: 56,
           directnessSensitivity: 44, contextSensitivity: 61, stakeholderPerspectiveShiftSensitivity: 56,
         },
@@ -398,9 +399,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* VALUE AUDIT, 18 September 2026: Reducing harm 24 -> 45.
            It harms ONE person, the patient the mask was tagged for; the service road sends four streets past the leak.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, second pass, 18 September 2026: How many are helped 41 -> 25. It helps only you, and takes the one mask from the patient it was kept for. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 15, groupSizeSensitivity: 45,
-          gainResponsivenessSensitivity: 94, outcomeAggregationSensitivity: 41,
+          gainResponsivenessSensitivity: 94, outcomeAggregationSensitivity: 25,
           directnessSensitivity: 81, contextSensitivity: 31, stakeholderPerspectiveShiftSensitivity: 23,
         },
         metrics: {
@@ -414,50 +416,64 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "chem_walk_out_on_foot",
         cvrSeed: {
-          rule: "leaves every reserved seat and every tagged mask untouched and goes the long way around",
-          parallelRule: "leaves every held bed and every reserved dose untouched and waits for the next round",
-          act: "You leave the seat and the mask where they are, and you walk out the long way by the river path. Nobody is told that your street is now empty.",
-          parallelAct: "{w|A traveler leaves the seat and the hood untouched and walks out the long way, around the outside of the terminal. Nobody is told that their gate is now clear.}",
+          rule: "gives the one mask to the person it was kept for, and walks them out at their pace",
+          parallelRule: "gives the one hood to the passenger it was labeled for, and walks them out at their pace",
+          act: "You take the respirator from the clinic cabinet to the man on home oxygen it was tagged for. The two of you walk out by the river path, at his pace, and only he has a mask.",
+          parallelAct: "{w|A traveler carries the escape hood to the passenger on oxygen it was labeled for. The two of them walk out the long way around the terminal, at that passenger's pace.}",
           identifiedCase: "were waiting to see the medic at the center when you arrived last, after four hours at the edge of the plume",
           harm: "The medic spent the next hour on your lungs instead of theirs, because you chose the long way out",
-          benefitCase: "are on home oxygen, and were the patient the clinic's mask was tagged for",
-          benefitLost: "It was still in the cabinet when the clinic nurse came to fetch it for them",
+          benefitCase: "are the patient on home oxygen the clinic's respirator was tagged for, and cannot walk out without it",
+          benefitLost: "With the mask on and you beside them, they would have walked out breathing clean air",
           consequences: {
-            soon: "You breathe the edge of the plume for four hours. A sweep team searches a street you walked out of hours ago.",
-            later: "Your chest may not feel right by morning. The two hours that team spent on your street could be the two hours another street was waiting for.",
+            soon: "He breathes clean air the whole way. You breathe the edge of the plume for four hours.",
+            later: "Your chest may not feel right by morning. If he tires on the path, the two of you could still be out there at dusk.",
           },
           parallelConsequences: {
-            soon: "They breathe the thin edge of the fumes for hours. A crew searches a gate that is already empty.",
-            later: "Their chest may not feel right by morning, and the crew could lose time that another gate was counting on.",
+            soon: "The passenger breathes clean air the whole way. The one walking beside them breathes the thin edge of the fumes for hours.",
+            later: "That chest may not feel right by morning. If the passenger tires, the two of them could still be outside at nightfall.",
           },
         },
-        title: "Walk out the long way and leave the seats and the mask for others",
+        title: "Carry the respirator to the patient it was kept for, and walk them out",
         method: {
           kind: "foot",
-          by: "On foot, with nothing",
-          detail: "by the river path, upwind and slow. No seat, no mask, and your car left behind.",
+          by: "On foot, with the patient on oxygen",
+          detail: "by the river path, upwind and at their pace. They wear the respirator; you go without.",
         },
-        summary: "You take neither a shuttle seat nor the clinic's respirator. You go on foot by the river path, upwind and slow, and everything set aside for someone else stays set aside.",
-        gains: "Every seat and every mask stays available for the people who cannot manage without them.",
-        consequence: "Nothing set aside for someone who needs it is touched. But the river path takes four hours on foot. You breathe the edge of the plume the whole way, and you arrive last.",
-        givesUp: "Four hours, and a great deal of your own safety. You are the most exposed person on any of these routes.",
-        moralTension: "How much of your own lungs is a stranger's oxygen mask worth?",
-        /* VALUE AUDIT, 18 September 2026: Reducing harm 56 -> 65.
-           It takes nothing from anyone. It stays well below sealing in (93) because you spend four hours at the
-           edge of the plume and arrive last. Raising it further made walking and sealing near-twins, and the
-           stability and VCI simulations failed: the two options differ in emphasis more than in substance.
+        summary: "The clinic's one respirator is tagged for a patient on home oxygen who cannot walk out without it. You take it to them, and the two of you go out on foot by the river path, upwind and at their pace. Your car is no help here. The only road it may use runs past the split tanker, and even with the respirator on, their lungs could not take that air.",
+        gains: "The one person least able to get out alone gets out, wearing the mask that was kept for them.",
+        consequence: "The patient the mask was kept for is out, breathing clean air the whole way. But the river path takes four hours at their pace, you breathe the edge of the plume the whole way, and the two of you arrive last.",
+        givesUp: "Four hours, and a great deal of your own safety. You are the most exposed person on any of these routes, and the two of you are only as fast as the slower one.",
+        moralTension: "How much of your own lungs is a stranger's way out worth?",
+        /* REDESIGNED, 18 September 2026, on the researcher's instruction. This option used to be "walk out
+           the long way and leave the seats and the mask for others", and sealing in also took nothing from
+           anyone, so the two were near-twins whose numbers their words could not tell apart. It now DOES
+           something for the most vulnerable person in the district: it carries the tagged respirator to the
+           patient it was kept for and walks them out. The id is unchanged because the database stores it.
+           WHY ON FOOT, NOT BY CAR (researcher, 18 September 2026): the card says so, from facts the scenario
+           already has - the district is closed to private cars except the service road, and that road runs
+           past the split tanker, where even with the respirator on the patient's lungs could not take the
+           air. A reader who knows "your own car is outside" would otherwise ask why you walk. The reason
+           sits in the summary only; the method box, the lenses and the stories did not need it.
+             Protecting the vulnerable 96: the one person least able to get out alone gets out.
+             Reducing harm 60: nobody else is put at risk, but two people spend four hours at the plume's edge.
+             How much is gained 20: the lowest payoff here for you - four hours at their pace, most exposed.
+             How many are helped 45: one more person out than going alone; far fewer than the minibus.
+           Metrics: speed 22 (four hours at their pace), resources spared 88 (the mask goes to the person it
+           was kept for; no seat, road or crew), reliability 42 (two people, one frail, a long path),
+           durability 80 (no road is used), reversibility 78 (on foot the two of you can turn back or
+           change path at any point, if slowly).
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 96, groupSizeSensitivity: 65,
-          gainResponsivenessSensitivity: 26, outcomeAggregationSensitivity: 39,
+          vulnerabilityProtectionSensitivity: 96, groupSizeSensitivity: 60,
+          gainResponsivenessSensitivity: 20, outcomeAggregationSensitivity: 45,
           directnessSensitivity: 64, contextSensitivity: 72, stakeholderPerspectiveShiftSensitivity: 68,
         },
         metrics: {
-          speed: 30,
-          resourceUse: 92,
-          reliability: 48,
-          durability: 78,
-          reversibility: 81,
+          speed: 22,
+          resourceUse: 88,
+          reliability: 42,
+          durability: 80,
+          reversibility: 78,
         },
       },
       {
@@ -491,8 +507,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "You get more people out than any other option here manages. But you are still inside the district when the plume arrives, and the third loop is the one you are on.",
         givesUp: "Your own margin of safety. Every person you carry out is another loop you spend breathing the district's air.",
         moralTension: "How many strangers is one more hour of your own exposure worth?",
+        /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 51 -> 62. It carries out two streets with no car between them - more than options that only take nothing. */
+        /* VALUE AUDIT, second pass, 18 September 2026: Reducing harm 45 -> 62. Nobody else is put at risk: the danger on the card is your own, loop after loop. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 51, groupSizeSensitivity: 45,
+          vulnerabilityProtectionSensitivity: 62, groupSizeSensitivity: 62,
           gainResponsivenessSensitivity: 36, outcomeAggregationSensitivity: 94,
           directnessSensitivity: 53, contextSensitivity: 40, stakeholderPerspectiveShiftSensitivity: 66,
         },
@@ -507,49 +525,56 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "chem_seal_and_shelter",
         cvrSeed: {
-          rule: "uses none of the shared supply and absorbs the whole of the risk itself",
-          parallelRule: "uses none of the ward's shared supply and absorbs the whole of the risk itself",
-          act: "You tape the doors, lay wet towels along the gaps, and stay in your apartment. You ask nobody for anything, and you tell nobody you are in there.",
-          parallelAct: "{w|A traveler tapes the door of a quiet room, lays wet cloths along the gaps, and stays inside. They ask for nothing, and nobody is told where they are.}",
-          identifiedCase: "were on the sweep team that had to search your building",
-          harm: "They spent forty minutes in the worst air of the night looking for you, because you stayed behind when the district was cleared",
+          rule: "takes nothing from anyone, tells the office it is staying, and carries the whole risk itself",
+          parallelRule: "takes nothing, tells the desk it is staying, and carries the whole risk itself",
+          act: "You tape the doors, lay wet towels along the gaps, and call the district office to say you are staying. You take nothing, and nobody has to come looking.",
+          parallelAct: "{w|A traveler seals a quiet room with tape and wet cloths, and tells the gate desk they are staying. Nothing is taken, and nobody has to come looking.}",
+          identifiedCase: "lived on a street with no car of its own, waiting hours for the convoy while the minibus stood with no driver",
+          harm: "You could have driven it, and you chose to seal yourself in instead",
           benefitCase: "were waiting on your street for a convoy seat, and there was one more because you stayed in",
           benefitLost: "The seat you never asked for went to them, and they were out of the district within the hour",
           consequences: {
-            soon: "A sweep team breaks into your building to find out whether anyone is still alive inside it.",
-            later: "Two of them may spend forty minutes in the worst air of the night looking for you. One could be off work tomorrow, and nobody would connect it to a door that stayed shut.",
+            soon: "The office marks your building as sheltering, so no team is sent in. The minibus stays parked with no driver.",
+            later: "The plume may sit over the district all night. If the seal gives way, help could not reach you until it lifts.",
           },
           parallelConsequences: {
-            soon: "A crew forces that door open to find out whether anybody is still inside.",
-            later: "Two of them may spend a long stretch in the worst of the fumes searching. One could be sent home sick before morning.",
+            soon: "The desk marks that room as occupied, so no crew is sent. The shuttle stays parked with nobody at the wheel.",
+            later: "The fumes may sit over the terminal all night. If the seal gives way, help could not reach that room until they clear.",
           },
         },
-        title: "Seal your apartment and shelter until the plume passes",
+        title: "Seal your apartment, tell the district office you are staying, and shelter",
         method: {
           kind: "stay",
           by: "You do not travel at all",
-          detail: "you stay in your own apartment and let the plume pass over you.",
+          detail: "you stay in your own apartment, and the district office knows you are there.",
         },
-        summary: "Tape the doors, wet towels along the gaps, and stay put. Nothing is taken from anyone, nobody is moved out of their place, and no seat, road or mask is used.",
-        gains: "You take no seat, no mask and no road from anybody, and nobody is moved down a list to make room for you.",
-        consequence: "Not one other person is worse off for what you chose, and you can still leave later if the wind turns. But you spend the night inside a plume with tape on the doors.",
-        givesUp: "Any margin for error. If the seal does not hold you are inside the worst air in the district with no way out of it, and a sweep team comes into your block to find out whether you are.",
+        summary: "Tape the doors, wet towels along the gaps, and call the district office so they know you are staying. You take no seat, no road and no mask, and nobody has to come looking for you.",
+        gains: "You take nothing from anybody, and nobody is put at risk on your account.",
+        consequence: "Nobody loses a seat, a mask or a place in line to you, and nobody has to come looking. But you spend the night inside the plume with tape on the doors, and if the seal fails there is no way out.",
+        givesUp: "Any margin for error. If the seal does not hold, you are inside the worst air in the district, and help cannot reach you until the plume has passed.",
         moralTension: "Is taking nothing from anybody the same thing as doing right by them?",
-        /* VALUE AUDIT, 18 September 2026: Protecting the vulnerable 53 -> 60.
-           "No seat, road or mask is used", so the clinic's mask stays for the patient it was tagged for. Kept well
-           below walking out (96) for the same reason walking out stays below this option on Reducing harm.
+        /* REDESIGNED, 18 September 2026, on the researcher's instruction. The card used to say "Not one other
+           person is worse off" while its own cost line sent a sweep team into the plume to look for you - a
+           contradiction on one card - and it overlapped walking out, which also took nothing. Now you tell the
+           district office you are staying, so nobody has to come looking: the option harms nobody but you.
+             Protecting the vulnerable 50: it takes nothing reserved, and does nothing for anyone either.
+             Reducing harm 93: nobody else is put at risk on your account - the clearest in the scenario.
+             How much is gained 30: a night inside the plume, only as safe as the tape.
+             How many are helped 30: nobody is carried out; the minibus stays parked with no driver.
+           Metrics: resources spared 98 (no seat, road, mask or crew), reversibility 25 (if the seal fails
+           there is no way out); the rest unchanged.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 93,
-          gainResponsivenessSensitivity: 32, outcomeAggregationSensitivity: 33,
+          vulnerabilityProtectionSensitivity: 50, groupSizeSensitivity: 93,
+          gainResponsivenessSensitivity: 30, outcomeAggregationSensitivity: 30,
           directnessSensitivity: 48, contextSensitivity: 67, stakeholderPerspectiveShiftSensitivity: 54,
         },
         metrics: {
           speed: 18,
-          resourceUse: 97,
+          resourceUse: 98,
           reliability: 40,
           durability: 82,
-          reversibility: 30,
+          reversibility: 25,
         },
       },
       {
@@ -767,9 +792,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept clear for crews coming the other way. A car on it turns a fire engine back.",
         givesUp: "The road the fire crews need. An engine that reverses is one that does not reach the nursing home on the far side.",
         moralTension: "Would you take a road kept clear for rescuers, if it were your own children in the back?",
+        /* VALUE AUDIT, second pass, 18 September 2026: How many are helped 48 -> 25. It helps only your household, and turns back the engine the nursing home is waiting for. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 18, groupSizeSensitivity: 23,
-          gainResponsivenessSensitivity: 92, outcomeAggregationSensitivity: 48,
+          gainResponsivenessSensitivity: 92, outcomeAggregationSensitivity: 25,
           directnessSensitivity: 80, contextSensitivity: 30, stakeholderPerspectiveShiftSensitivity: 37,
         },
         metrics: {
@@ -865,8 +891,9 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Three people who had no way out at all are in your car, and a fourth is still on the street. Seven in a seven-seat car also means the walker goes on the roof. The drive is slow and very hot.",
         givesUp: "Room and speed. The car is full, the walker is strapped above it, and you cannot take the curves fast.",
         moralTension: "How much of your own family's room do you owe the neighbors who have no car?",
+        /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 54 -> 62. It takes three neighbors who have no vehicle at all. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 54, groupSizeSensitivity: 50,
+          vulnerabilityProtectionSensitivity: 62, groupSizeSensitivity: 50,
           gainResponsivenessSensitivity: 40, outcomeAggregationSensitivity: 94,
           directnessSensitivity: 43, contextSensitivity: 62, stakeholderPerspectiveShiftSensitivity: 58,
         },
@@ -973,9 +1000,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            Its own preview leaves "the blocks furthest from the junction" in the jam "when the fire comes down": it
            helps the first few and harms whole blocks. And it is "the quickest, cleanest run out of the valley".
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, second pass, 18 September 2026: How many are helped 45 -> 30. The first few get a clear road; the blocks furthest from the junction sit in the jam. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 44, groupSizeSensitivity: 20,
-          gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 45,
+          gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 30,
           directnessSensitivity: 59, contextSensitivity: 51, stakeholderPerspectiveShiftSensitivity: 39,
         },
         metrics: {
@@ -1149,9 +1177,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            Its preview: "fewer of the 120 are alive at the end of the year than under any other rule here" - so it
            must be the lowest on How many are helped, and the draw sat below it.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, second pass, 18 September 2026: Reducing harm 57 -> 42. Its card: fewer of the 120 are alive at the end of the year than under any other rule here. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 96,
-          groupSizeSensitivity: 57,
+          groupSizeSensitivity: 42,
           gainResponsivenessSensitivity: 20,
           outcomeAggregationSensitivity: 35,
           directnessSensitivity: 58,
@@ -1495,53 +1524,63 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "care_equal_share",
         cvrSeed: {
-          rule: "takes one visit in four off every client",
-          parallelRule: "takes one night in four off every name on the list",
-          identifiedCase: "need help every morning, and now go without it one morning in four",
-          harm: "An equal share is not an equal loss when the need it comes off was never equal",
-          benefitCase: "need a full hour at every visit to be bathed and dressed properly",
-          benefitLost: "This is the only even cut that keeps every remaining visit full length",
-          act: "You take one visit in four away from every client, and leave the visits they keep at full length. Nobody is singled out.",
-          parallelAct: "{w|A shelter manager takes one night in four away from every person on the list, and leaves the nights they keep untouched.}",
+          rule: "keeps every care visit and cuts the check-in visits",
+          parallelRule: "keeps every bed and meal and cuts the night checks",
+          identifiedCase: "live alone and need no help with bathing or meals, so their visits were check-ins",
+          harm: "The rule you chose cut them, and the fall they had on a Tuesday was not found until Thursday",
+          benefitCase: "need help with bathing and medication every single day",
+          benefitLost: "Under this rule not one of those visits is cut, however short the hours get",
+          act: "You keep every visit that bathes, feeds or gives medication, and cut the check-in visits and the drives to them.",
+          parallelAct: "{w|A shelter manager keeps every bed and every meal, and cuts the night staff who walk the rooms checking that people are all right.}",
           consequences: {
-            soon: "All 240 clients lose one visit in four.",
-            later: "The clients who needed the most help may lose the most of it. Some could go two days without being washed.",
+            soon: "Every client keeps their care visits, and about 400 hours of check-ins and driving stop.",
+            later: "A fall may go unnoticed until the next care visit. Some clients who live alone could go days without anyone just looking in.",
           },
           parallelConsequences: {
-            soon: "All 240 people lose one night in four.",
-            later: "The people who needed the most nights may lose the most of them. Some could spend two nights outside.",
+            soon: "Every bed and meal stays, and the night checks stop.",
+            later: "Someone taken ill in the night may not be found until morning. Some could lie unnoticed for hours.",
           },
         },
         method: {
-          kind: "even",
-          by: "An equal cut for every client",
+          kind: "task",
+          by: "Visits sorted by what they are for",
         },
-        title: "Give every client a quarter fewer visits",
-        summary: "Every client is still visited, but loses one visit in four. The visits that are left stay full length.",
-        gains: "Nobody is singled out. Every client loses one visit in four, and every caregiver's schedule shrinks by the same amount.",
-        consequence: "The cut is spread thin enough that no client loses everything. But one visit in four off a larger need is a larger loss, so the clients who needed the most help lose the most of it.",
-        givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
-        moralTension: "Is treating everyone alike the same as treating everyone fairly?",
-        /* VALUE AUDIT, 18 September 2026: How much is gained 74 -> 50, Reducing harm 60 -> 44.
-           It earns nothing: it saves only the driving to the visits it drops (more than shortening, less than
-           redrawing). And every one of the 240 clients loses a visit in four. How much is gained was its top
-           value, which sent a participant who picked that value on the APA page to an even cut.
+        title: "Keep every care visit, and cut the check-in visits",
+        summary: "Every visit that bathes, feeds or gives medication stays. The cut comes from the check-in visits — short visits where a caregiver comes only to see that the client is all right, with no bathing, meals or medication — and from the drives to them. Together they add up to the 400 hours.",
+        gains: "Nobody loses a bath, a meal or a dose of medication, and the drives to the dropped visits are saved too.",
+        consequence: "Every client keeps the care they are assessed for. But a check-in is often when a caregiver notices a fall, a missed meal or a fever, and the clients who live alone lose the only visitor who comes just to see how they are.",
+        givesUp: "The eyes on the client. Trouble a check-in would have caught early is found later, and the clients who live alone lose the most.",
+        moralTension: "Is care the tasks a caregiver does, or the person who comes to the door?",
+        /* REDESIGNED, 18 September 2026, on the researcher's instruction. This was "give every client a quarter
+           fewer visits": an even cut that sat in the middle of every value (48, 44, 50, 55) and of every metric
+           (70, 70, 70, 66, 72), so it read as the choice with no consequence. It is now a cut with a character
+           and a price: care visits are kept, check-in visits (and the drives to them) go. The card defines a
+           check-in, because the term is new to the participant. The id is unchanged because the database
+           stores it; scenario 5's twin changes with it.
+             Protecting the vulnerable 35: the clients who live alone lose their only visitor.
+             Reducing harm 70: nobody loses bathing, meals or medication; the harm is trouble found later.
+             How much is gained 62: the drives to the dropped visits are saved too.
+             How many are helped 80: every client keeps every care visit.
+           Metrics: speed 75 (the service already knows which visits are check-ins), resources left in place 72
+           (the drives are saved), reliability 60 (missed early warnings can turn into emergencies), durability
+           50 (loneliness and missed falls build up over three months), reversibility 82 (check-ins can come
+           back any week).
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 48,
-          groupSizeSensitivity: 44,
-          gainResponsivenessSensitivity: 50,
-          outcomeAggregationSensitivity: 55,
+          vulnerabilityProtectionSensitivity: 35,
+          groupSizeSensitivity: 70,
+          gainResponsivenessSensitivity: 62,
+          outcomeAggregationSensitivity: 80,
           directnessSensitivity: 52,
           contextSensitivity: 58,
           stakeholderPerspectiveShiftSensitivity: 55,
         },
         metrics: {
-          speed: 70,
-          resourceUse: 70,
-          reliability: 70,
-          durability: 66,
-          reversibility: 72,
+          speed: 75,
+          resourceUse: 72,
+          reliability: 60,
+          durability: 50,
+          reversibility: 82,
         },
       },
       {
@@ -1813,34 +1852,32 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
       {
         id: "wish_equal_share",
         method: {
-          kind: "even",
-          by: "An equal cut for every client",
-          detail: "each client loses one visit in four, and the visits they keep stay full length.",
+          kind: "task",
+          by: "Visits sorted by what they are for",
+          detail: "every visit that bathes, feeds or gives medication is kept; only the check-in visits, and the drives to them, are cut.",
         },
-        title: "Give every client a quarter fewer visits",
-        summary: "Every client is still visited, but loses one visit in four. The visits that are left stay full length.",
-        gains: "Nobody is singled out. Every client loses one visit in four, and every caregiver's schedule shrinks by the same amount.",
-        consequence: "The cut is spread thin enough that no client loses everything. But one visit in four off a larger need is a larger loss, so the clients who needed the most help lose the most of it.",
-        givesUp: "Targeting. The people in the worst position get no more protection than anyone else.",
-        moralTension: "Is treating everyone alike the same as treating everyone fairly?",
-        /* VALUE AUDIT, 18 September 2026: How much is gained 74 -> 50, Reducing harm 60 -> 44.
-           Scenario 4's twin - see care_equal_share.
-           See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        title: "Keep every care visit, and cut the check-in visits",
+        summary: "Every visit that bathes, feeds or gives medication stays. The cut comes from the check-in visits — short visits where a caregiver comes only to see that the client is all right, with no bathing, meals or medication — and from the drives to them. Together they add up to the 400 hours.",
+        gains: "Nobody loses a bath, a meal or a dose of medication, and the drives to the dropped visits are saved too.",
+        consequence: "Every client keeps the care they are assessed for. But a check-in is often when a caregiver notices a fall, a missed meal or a fever, and the clients who live alone lose the only visitor who comes just to see how they are.",
+        givesUp: "The eyes on the client. Trouble a check-in would have caught early is found later, and the clients who live alone lose the most.",
+        moralTension: "Is care the tasks a caregiver does, or the person who comes to the door?",
+        /* REDESIGNED, 18 September 2026 - scenario 4's twin; see care_equal_share. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 48,
-          groupSizeSensitivity: 44,
-          gainResponsivenessSensitivity: 50,
-          outcomeAggregationSensitivity: 55,
+          vulnerabilityProtectionSensitivity: 35,
+          groupSizeSensitivity: 70,
+          gainResponsivenessSensitivity: 62,
+          outcomeAggregationSensitivity: 80,
           directnessSensitivity: 52,
           contextSensitivity: 58,
           stakeholderPerspectiveShiftSensitivity: 55,
         },
         metrics: {
-          speed: 70,
-          resourceUse: 70,
-          reliability: 70,
-          durability: 66,
-          reversibility: 72,
+          speed: 75,
+          resourceUse: 72,
+          reliability: 60,
+          durability: 50,
+          reversibility: 82,
         },
       },
       {

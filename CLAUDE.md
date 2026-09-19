@@ -59,6 +59,20 @@ to write a paper.
 
 ## Things that are deliberate, not oversights
 
+- **Three simulations fail on purpose until the calculation pass (since 18 September 2026).** The
+  researcher had the options redesigned to make sense first; `simulate_vci` (V5),
+  `simulate_stability` (S3, S4) and `simulate_position` (the 3x ratio) are to be re-tuned to them
+  afterwards. Every check on the options themselves passes. Do not revert an option's content or
+  numbers to make one of these pass — see `docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md`, section 2g.
+- **A final choice reached through APA is judged on the profile the participant brought into the
+  scenario**, exactly like a choice kept after the CVR (since 18 September 2026). Neither path
+  re-labels the choice inside its own scenario; both move the profile for the next one. Re-labelling
+  on the clarified profile let a participant who changes value every scenario score 49 instead of 21.
+  Gate V8 in `simulate_vci.cjs` guards it; ties in fit are broken by `policyDelivery`, never by id (V9).
+- The "How to read the four values in this scenario" section is absent from scenario 6 on purpose:
+  its four options are the four values, and naming them would turn the prediction test into "pick
+  your value".
+
 - Participants are never shown an alignment verdict ("Misaligned with your values") or the scoring
   arithmetic. Both were removed on purpose: telling someone how they scored, or how the scoring
   works, changes how they answer the remaining scenarios. The last place the verdict survived was a

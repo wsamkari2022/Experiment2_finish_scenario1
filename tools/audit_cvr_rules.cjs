@@ -125,7 +125,8 @@ for (const SCEN of WITH_LENSES) {
       hold: /\bhold|\bheld\b|\bkept\b|\breserv|\bprotect/i,
       /* Scenario 4: cutting HOURS. */
       route: /\bround|\bmap\b|\bdriv|\broute/i,
-      even: /\bevery client|\bone visit in four|\bequal/i,
+      /* "task" replaced "even" on 18 September 2026: care visits kept, check-in visits cut. */
+      task: /\bcheck-in|\bcare visit|\bwhat they are for/i,
       trim: /\bshort|\btrim|\bcut every visit/i,
     }[kind];
     if (!words) { noMethod.push(o.id + " (no method on the card)"); continue; }

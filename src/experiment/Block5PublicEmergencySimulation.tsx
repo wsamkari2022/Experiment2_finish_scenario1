@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock, LuRoute, LuEqual, LuClock } from "react-icons/lu";
+import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock, LuRoute, LuClipboardList, LuClock } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
@@ -51,6 +51,7 @@ import { MethodLogo } from "./MethodLogo";
 import { Tooltip } from "@/components/ui/tooltip";
 import { getBlock5Palette, onAccentText, type Block5Palette } from "./block5Palette";
 import { Block5ScenarioIntro } from "./Block5ScenarioIntro";
+import { Block5ValueGuide } from "./Block5ValueGuide";
 import { runMorph } from "./block5Morph";
 import { deriveCompanyValues, type DerivedCompanyValues } from "./block5Company";
 import {
@@ -266,7 +267,7 @@ const METHOD_ICON: Record<Block5MethodKind, ReactNode> = {
   hold: <LuLock />,
   /* Scenario 4: how the 400 cut hours are found. */
   route: <LuRoute />,
-  even: <LuEqual />,
+  task: <LuClipboardList />,
   trim: <LuClock />,
 };
 
@@ -1240,7 +1241,24 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   const handleApaCommit = useCallback((payload: ApaCommitPayload) => {
     if (!scenario) return;
     const nextProfile = payload.pendingProfile;
-    const finalLabeled = labelOptions(scenario.options, nextProfile);
+    /*
+     * THE FINAL CHOICE IS JUDGED ON THE PROFILE THE PARTICIPANT BROUGHT INTO THIS SCENARIO - the same
+     * `labeled` the options were shown with, and the same one the keep path uses in commitChoice.
+     * Changed on 18 September 2026; it used to re-label on `nextProfile`, the profile AFTER this
+     * clarification had moved it.
+     *
+     * WHY. The keep path never re-labels: an endorsement moves the profile for the NEXT scenario and
+     * the choice itself keeps the label it had. Re-labelling here meant the same choice, for the same
+     * reason, earned more credit when the participant walked through APA instead - naming a value
+     * lifts that value by 30 and lowers the rest by 10, and the option they then pick is scored on the
+     * profile they just moved. Measured over 2,000 random profiles: a participant who takes up a new
+     * value in every scenario scored VCI 21 by keeping and 49 by clarifying - the one behavior VCI
+     * exists to catch, hidden by the route taken. Judged at entry on both paths it scores 20.
+     *
+     * NOTHING IS LOST. What the participant said is stored in `apa`, and the moved profile in
+     * `policySnapshotAfter`, so the post-clarification label can be recomputed whenever it is wanted.
+     */
+    const finalLabeled = labeled;
     const opt = finalLabeled.find((o) => o.id === payload.finalOption.id);
     if (!opt) return;
     const origLabeled = labelOptions(scenario.options, userProfile);
@@ -1308,7 +1326,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         : undefined,
     };
     finalizeScenario(result, nextProfile);
-  }, [scenario, userProfile, expandedOptions, progress, cvrWho, finalizeScenario]);
+  }, [scenario, userProfile, labeled, expandedOptions, progress, cvrWho, finalizeScenario]);
 
   /*
    * THE PICK MADE BEFORE THE GUESS APPEARED.
@@ -1536,6 +1554,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} scenarioId={scenario.id} />
         </Box>
       )}
+
+      {/* What the four values mean in THIS scenario (researcher, 18 September 2026). Scenarios 1-5;
+          renders nothing in scenario 6, on purpose. See Block5ValueGuide. */}
+      <Block5ValueGuide scenario={scenario} pal={pal} />
 
       <Grid ref={gridRef} templateColumns={{ base: "1fr", lg: "352px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
         {/*
@@ -4652,11 +4674,12 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
                   <HStack justify="space-between" align="start" gap="3" wrap="wrap">
                     <VStack align="start" gap="1" flex="1" minW="0">
                       {/* No alignment tier here. This list is filtered by the value the participant
-                          JUST prioritized, while the tier scores against their ORIGINAL profile —
-                          so the badge could read "Strongly misaligned" directly under a heading
-                          saying these options best fit them. The participant has no way to tell
-                          the two are measured against different things; it just reads as the
-                          software recommending and condemning the same option at once. */}
+                          JUST prioritized, while the tier scores against the profile they brought
+                          INTO this scenario (see handleApaCommit) — so the badge could read
+                          "Strongly misaligned" directly under a heading saying these options best
+                          fit them. The participant has no way to tell the two are measured against
+                          different things; it just reads as the software recommending and
+                          condemning the same option at once. */}
                       <Text color="fg" fontWeight="semibold" fontSize="sm" lineHeight="short">{o.title}</Text>
                     </VStack>
                     <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" fontSize="xs" flexShrink={0}

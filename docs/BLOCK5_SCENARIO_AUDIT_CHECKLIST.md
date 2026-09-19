@@ -1049,6 +1049,37 @@ measures equal treatment. Each had been given a high score on some value to give
 honest numbers such an option is rarely anyone's best fit (the even cut: 29% of random profiles
 before, 2.0% after), which is TRUE of this instrument and belongs in the methods section.
 
+### The redesign pass — options first, calculations later (18 September 2026)
+
+The researcher's decision, in his words: *what is the benefit of the current calculation if the
+options don't make sense?* So the options were made to make sense FIRST, and the stability, VCI and
+position simulations are to be re-tuned to them afterwards. **Until that pass, three simulations
+fail on purpose** — `simulate_vci` (V5), `simulate_stability` (S3, S4) and `simulate_position` (the
+3x ratio). Every check on the OPTIONS themselves passes: structure and champions, the metric gates
+G1–G7, lenses, stakeholder stories, the scenario 4/5 twin, the APA checks, the planner, the
+database and all of the researcher's rules. **Do not undo an option to make a simulation pass.**
+
+| Changed | What it is now | Why |
+|---|---|---|
+| S1 walking out | **Carry the respirator to the patient it was kept for, and walk them out** (96 · 60 · 20 · 45) | it and sealing in both "took nothing"; now it DOES something for the most vulnerable person |
+| S1 sealing in | **Seal your apartment, tell the district office you are staying, and shelter** (50 · 93 · 30 · 30) | its card said nobody is worse off while its cost line sent a sweep team in; now nobody has to come looking |
+| S4 even cut (+ S5 twin) | **Keep every care visit, and cut the check-in visits** (35 · 70 · 62 · 80); the card defines a check-in | it sat in the middle of every value and every metric — the choice with no consequence |
+| eight numbers | minibus 51→62 vulnerable, 45→62 harm; respirator 41→25 helped; convoy 67→55 vulnerable (S1); ridge road 48→25 and early highway 45→30 helped, fill every seat 54→62 vulnerable (S2); sickest 57→42 harm (S3) | each rank order now matches its card |
+
+Numbers are vulnerable · harm · gained · helped. Each redesigned option carries a `REDESIGNED`
+comment with every number and metric justified from its card; the eight numbers carry `VALUE AUDIT,
+second pass` comments. The ids did not change, because the database stores them. The method kind
+"even" became "task" (and `audit_cvr_rules.cjs` R3 learned its words).
+
+**A new section, "How to read the four values in this scenario"** (`Block5ValueGuide.tsx`), sits
+under the cumulative performance bar in scenarios 1–5 and prints each value's meaning in that
+scenario from `valueHere` — the same lines the APA page uses. Scenario 5 borrows scenario 4's.
+**Scenario 6 has none on purpose**: its four options ARE the four values, and naming them would turn
+the prediction test into "pick your value".
+
+After the pass, card-to-number rank correlation (by the method of audit A11): scenarios 1 and 2
+0.99 (the only gaps are pairs the cards treat as equal), scenarios 3, 4 and 6 1.00.
+
 ### ⚠ Changing numbers moves who is aligned — check the best-fit shares
 
 `value_audit.cjs` prints how often each option is the best fit. After this audit, for example,

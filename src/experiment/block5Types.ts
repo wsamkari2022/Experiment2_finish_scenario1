@@ -426,9 +426,10 @@ export interface OptionCVRSeed {
 export type Block5MethodKind =
   | "car" | "bus" | "van" | "foot" | "stay"
   | "score" | "list" | "draw" | "hold"
-  /* Scenario 4 cuts HOURS rather than handing out a supply: a round redrawn on the map, one even
-     cut for everybody, and every visit trimmed. Added 17 September 2026. */
-  | "route" | "even" | "trim";
+  /* Scenario 4 cuts HOURS rather than handing out a supply: a route redrawn on the map, visits sorted
+     by what they are for (care kept, check-ins cut), and every visit trimmed. Added 17 September 2026;
+     "task" replaced "even" on 18 September, when the even cut was redesigned. */
+  | "route" | "task" | "trim";
 
 /**
  * HOW THIS OPTION IS ACTUALLY CARRIED OUT.

@@ -49,7 +49,7 @@ import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall } from 
  * or formula below changes, so a stored prediction can always be traced to the rule that produced
  * it. Predictions made under different versions must not be pooled.
  */
-export const PREDICTION_VERSION = "2026-09-14-b";
+export const PREDICTION_VERSION = "2026-09-18-c";
 
 /*
  * VERSION HISTORY. Predictions made under different versions must not be pooled.
@@ -62,6 +62,12 @@ export const PREDICTION_VERSION = "2026-09-14-b";
  *                 identical probabilities, because a softmax is unchanged by adding a constant to
  *                 every input, so only floored cases differ. `separation` moved onto the same
  *                 uncensored quantity for the same reason.
+ *   2026-09-18-c  Nothing in this file changed. Its VCI INPUT did: a final choice reached through the
+ *                 APA clarification is now judged on the profile the participant brought into that
+ *                 scenario, as the keep path always was, and ties in the label ranking are broken by
+ *                 what an option delivers rather than by its id (see block5CVR.ts). The same run of
+ *                 choices can therefore give a different VCI, so a different confidence and
+ *                 temperature here. Moved so that the two can never be pooled by mistake.
  *
  * This bump was missed when the change was made, which is the failure the constant exists to
  * prevent: for one commit, two different rules were stamped with the same version and could not be

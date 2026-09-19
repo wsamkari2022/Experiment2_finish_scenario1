@@ -545,7 +545,7 @@ const CARE: ScenarioCVRContent = {
     vulnerabilityProtectionSensitivity: "protecting the clients who have nobody else at home",
     groupSizeSensitivity: "making the cut land where someone else can step in, so it hurts least",
     gainResponsivenessSensitivity: "keeping the service paid for and open next year",
-    outcomeAggregationSensitivity: "keeping as many clients as possible visited, as often as possible",
+    outcomeAggregationSensitivity: "keeping every client's care going, for as many clients as possible",
   },
   framingClause: {
     context:
@@ -809,9 +809,23 @@ export function getCVRMirror(scenario: Block5Scenario): { here: string; there: s
   return (CONTENT[scenario.id] ?? GENERIC).parallel?.mirror ?? [];
 }
 
-/** The "In this scenario" line for each value on the APA page, or null for a scenario with none. */
+/**
+ * A scenario that runs no reflection but shows ANOTHER scenario's six options borrows that
+ * scenario's value lines. Scenario 5 is scenario 4's options again, from a caregiver's chair.
+ */
+const VALUE_HERE_FROM: Record<string, ScenarioCVRContent> = {
+  care_rota_receiving: CARE,
+};
+
+/**
+ * The "In this scenario" line for each value, or null for a scenario with none.
+ *
+ * Read in two places: the APA page, and the "How to read the four values" section under the
+ * cumulative bar (Block5ValueGuide). Scenario 6 has none ON PURPOSE — its four options are the
+ * four values, and naming them would turn the prediction test into "pick your value".
+ */
 export function getCVRValueHere(scenario: Block5Scenario): Record<Block5PolicyDimKey, string> | null {
-  return CONTENT[scenario.id]?.valueHere ?? null;
+  return (CONTENT[scenario.id] ?? VALUE_HERE_FROM[scenario.id])?.valueHere ?? null;
 }
 
 /**

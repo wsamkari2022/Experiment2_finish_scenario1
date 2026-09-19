@@ -107,6 +107,9 @@ Rules the checks enforce and the audit found the hard way (checklist §2g):
   contradicted by the twenty-year voice. The roles stay as written.
 - The three voice levels and their wording are settled (including "Imagine" and "is hurt by").
 - The hurt stories blame the participant plainly, on purpose.
+- The "How to read the four values" section is absent from scenario 6 on purpose.
+- Three simulations (VCI V5, stability S3/S4, position ratio) fail on purpose until the calculation
+  pass; the options were made to make sense first. Never propose undoing an option to pass them.
 - The option ordering (the planner) is settled. Never propose reordering.
 - Scenario 5 is a wish, scenario 6 tests the model; both are deliberately light (no lens, no
   stories, no reflection). Scenario 5's method boxes are longer than scenario 4's on purpose; the
