@@ -739,7 +739,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         /* PASS D: IS SET TO LEAVE, not IS LEAVING. The old present tense said the staging had begun,
            which is the half of the contradiction that option 6 could not live with. */
-        summary: "The valley is set to leave in timed blocks so the highway does not seize up. You four (you and your household) go together in your block's slot, with a guide ahead of you and behind you.",
+        summary: "The valley is set to leave in timed blocks so the highway does not seize up. You four — you, your two children and your mother — go together in your block's slot, with a guide ahead of you and behind you.",
         gains: "All four of you leave together, in a guided group, on a road that is kept moving.",
         consequence: "Nobody in your household is separated and nobody else is pushed down the list to make room for you. But your slot is the fifth of nine, and the smoke is well into the valley by the time you roll.",
         givesUp: "Three hours of waiting, with a child who needs an inhaler, while the air gets steadily worse.",
@@ -787,10 +787,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "Your own car, on the closed ridge road",
           detail: "over the ridge in forty minutes, up the lane held clear for fire crews coming down.",
         },
-        summary: "The ridge road was cut for the big houses on the shelf, and today it is closed off and kept clear for fire crews coming down it. It is empty, it is fast, and you four (you and your household) could be over the ridge and out of the valley in forty minutes.",
-        gains: "Your household is out of the valley in forty minutes — hours ahead of anything else here.",
-        consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept clear for crews coming the other way. A car on it turns a fire engine back.",
-        givesUp: "The road the fire crews need. An engine that reverses is one that does not reach the nursing home on the far side.",
+        summary: "The ridge road was cut for the big houses on the shelf, and today it is closed off and kept clear for fire crews coming down it. It is the only road those crews have. It is empty, it is fast, and you four — you, your two children and your mother — could be over the ridge and out of the valley in forty minutes.",
+        gains: "Your household is out of the valley in forty minutes — hours ahead of the convoy your block is waiting for.",
+        consequence: "Your children are out of the smoke before the fire reaches the valley floor. But the ridge road is kept clear for the crews coming down it, and a car coming up turns an engine back. Those crews are what stands between the fire and the people who cannot move themselves, like the nursing home on the far side. Every minute an engine spends backing up the hill is a minute it is not spending on the fire or on that nursing home.",
+        givesUp: "The road the fire crews need, and time nobody can give back. An engine that reverses is an engine not reaching the nursing home on the far side.",
         moralTension: "Would you take a road kept clear for rescuers, if it were your own children in the back?",
         /* VALUE AUDIT, second pass, 18 September 2026: How many are helped 48 -> 25. It helps only your household, and turns back the engine the nursing home is waiting for. */
         fingerprint: {
@@ -815,7 +815,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "Everyone else in that hall went without a nurse while they searched, because you gave your seats away",
           benefitCase: "use a walker, and cannot climb the steps onto any of the regular buses",
           benefitLost: "Your car took them out in your slot, hours before the last bus",
-          act: "You hand your car keys to the {a|two} neighbors with walkers, and they drive out in your slot. You four take the neighbors' places on the lift bus, last out of the valley.",
+          act: "You hand your car keys to the {a|two} residents with walkers, and they drive out in your slot. You four take the residents' places on the lift bus, last out of the valley.",
           parallelAct: "{w|A passenger gives their boat place to two people who cannot climb down, and waits for the hoist boat instead. That boat is the last one lowered.}",
           consequences: {
             soon: "You four wait six hours in a shelter hall while the smoke thickens outside.",
@@ -826,7 +826,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
             later: "The hoist boat may come late. A child in that group could be very cold before it is lowered.",
           },
         },
-        title: "Give your car seats to the two neighbors with walkers and wait for the lift bus",
+        title: "Give your car seats to the two residents with walkers and wait for the lift bus",
         /* PASS D: WHO DRIVES? The card gave your car away without ever saying who was at the wheel,
            and the reader's only candidates were two people using walkers. A walker is no bar
            to driving, and saying so costs the scenario nothing - no crew time, no second vehicle,
@@ -834,18 +834,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         method: {
           kind: "bus",
           by: "The lift-equipped bus, last out of the valley",
-          detail: "your car goes at your slot with the two neighbors and their walkers in it, one of them driving. You take their places on the bus.",
+          detail: "your car goes at your slot with the two residents and their walkers in it, one of them driving. You take their places on the bus.",
         },
-        summary: "Two neighbors use walkers and cannot board the regular buses. The lift bus can take them, but it is the last vehicle scheduled to leave the valley. Your car can take them out in your block's slot instead, with one of them driving - though folding the rear row flat for the two walkers leaves five seats, and two of those five are the neighbors'. Three is not four, and you are not splitting your household. So you four (you and your household) take the neighbors' places on the lift bus.",
+        summary: "Two residents of the ninth block use walkers and cannot board the regular buses. Their block is the farthest from the junction, and the only vehicle that can carry them is the lift bus, which leaves last of all. Your car can get them out hours sooner. You drive up to them before your slot is called, and one of the two residents drives the car back down, drops you at the shelter hall, and goes out in your place in the line, fifth of nine. Your household cannot ride out with them. Folding the rear row flat for the two walkers leaves five seats, two of those five are the residents', and six people do not fit in five seats. The three seats left over cannot take your mother either: the car is already carrying the only two walkers that fit. So you four — you, your two children and your mother — take the residents' places on the lift bus.",
         /* WHAT IS GIVEN AWAY IS THE PLACE, not only the seats. The car goes out in the household's
-           own slot, so the neighbors inherit a position in the line as well as four seats - and the
+           own slot, so the two residents inherit a position in the line as well as four seats - and the
            household drops from fifth of nine to last. The card was naming half the gift. */
-        gains: "The two people least able to get themselves out leave in your seats, and in your place in the line.",
-        consequence: "Nobody who needs the lift is left behind. But you four are then on the last vehicle out. Your mother waits six hours in a shelter hall for that bus.",
+        gains: "The two people least able to get themselves out go fifth of nine instead of last out of the valley, in your seats and in your place in the line.",
+        consequence: "Nobody who needs the lift is left behind, and the two people who would have gone last out of the valley go fifth. The three seats left in that car are no use to your household. Your mother's walker would have to ride on the roof, and neither resident could lift it down at the other end. And you are not putting your children and your mother in a car you are not in. Both residents use walkers, and if that car stops in the smoke, nobody aboard can carry a child who cannot breathe. So the four of you wait for a bus that comes only once everything else has gone.",
         /* PASS D: NOT NEAR THE FRONT. The household's slot is the fifth of nine - option 1 says so
            twice - which is the middle of the line, and this card was selling a place it never had.
            The sacrifice is real without the exaggeration: middle of the line to last out. */
-        givesUp: "Your slot in the middle of the line. Your household leaves last, with a child on an inhaler and six hours to wait.",
+        givesUp: "Your car, your slot in the middle of the line, and any way out of the valley before the last vehicle leaves. You four wait six hours in a shelter hall with a child on an inhaler, while the smoke thickens outside.",
         moralTension: "Do your own dependents come first, or the dependents who have nobody at all?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 56,
@@ -886,11 +886,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "Your own car, all seven seats full",
           detail: "in your block's slot, with the walker strapped to the roof and no taking the curves fast.",
         },
-        summary: "Your car holds seven and your household is four. Four people on your street have no vehicle at all, so you have room for three of them, and taking them costs you nothing but the space.",
+        summary: "Your car holds seven and your household is four. Four people on your street have no vehicle at all, so you have room for three of them. What it costs you is room and speed, not anybody else's place in the line.",
         gains: "Seven people leave the valley instead of four, in one vehicle, on one tank of fuel.",
-        consequence: "Three people who had no way out at all are in your car, and a fourth is still on the street. Seven in a seven-seat car also means the walker goes on the roof. The drive is slow and very hot.",
-        givesUp: "Room and speed. The car is full, your mother's walker is strapped to the roof, and you cannot take the curves fast.",
-        moralTension: "How much of your own family's room do you owe the neighbors who have no car?",
+        consequence: "Three people who had no way out at all are in your car, and a fourth is still on the street. Seven in a seven-seat car also means the walker goes on the roof, so the drive is slow and very hot. It also settles which road you take. Loading three neighbors and roping a walker to the roof takes exactly the time an early run needs, and a car this heavy has no business on the one-lane ridge road where the engines come down. So you go when your block is called, fifth of nine, and you keep to the staged line the whole way out.",
+        givesUp: "Room, speed, and any choice of road. The car is full, your mother's walker is strapped to the roof, and a car in that state leaves in its slot or not at all.",
+        moralTension: "How much of your own family's room, and your own way out, do you owe the neighbors who have no car?",
         /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 54 -> 62. It takes three neighbors who have no vehicle at all. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 62, groupSizeSensitivity: 50,
@@ -944,7 +944,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "On foot, up the hill path",
           detail: "twenty minutes of narrow path past the big houses, slow with the walker. Your car stays at the house.",
         },
-        summary: "The school is concrete, stands on the cleared shelf at the top of the valley, and is the designated refuge. The ridge road runs up to that shelf and is closed today, and the footpath beside it is too narrow for a vehicle. So your car stays at the house and the four of you walk. Going there uses no road capacity and displaces nobody at all.",
+        summary: "The school is concrete, stands on the cleared shelf at the top of the valley, and is the designated refuge. The ridge road runs up to that shelf and is closed today, and the footpath beside it is too narrow for a vehicle. So your car stays at the house and the four of you walk. Going there uses no road capacity and takes nobody's place in the line.",
         gains: "You take no seat, no lane and no fuel from anybody, and you can still walk back down if the fire front turns.",
         consequence: "Nobody loses a place on the road to you, and the way back down stays open all night. But the climb is twenty minutes of narrow path, slow with your mother's walker, and it takes you up past the big houses where the ridge road begins. You are then inside the fire's path in a building rather than outside it, and your children watch the front arrive.",
         givesUp: "Distance from the fire, and your car. You trust a building to hold, and a crew comes back into the valley to find out whether anybody stayed in the blocks.",
@@ -991,14 +991,17 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           by: "Your own car, on the main highway",
           detail: "away before the first slot is called, while the road is still empty.",
         },
-        summary: "The highway is still empty and the first slot has not been called. Going now, before the timed convoy starts, is the fastest and cheapest way out. That is true for you, and for everyone who leaves when you do.",
-        gains: "The quickest, cleanest run out of the valley, and the first few who follow you get a clear road as well.",
-        consequence: "Your household is out early on an open highway. But your neighbors see you go and follow, so nine blocks that were meant to leave in turn are all on the road at once. Staging cannot be re-formed once it breaks, and the blocks furthest from the junction are the ones still sitting in the jam when the fire comes down.",
-        givesUp: "The staging system itself, and any way back in. Nine blocks moving at once is the one thing the staging was built to prevent.",
-        moralTension: "If everyone leaving early is what causes the jam, does it matter that you left before the jam started?",
+        summary: "The highway is still empty and the first slot has not been called. The staging only works while every block waits its turn, and yours is fifth of nine. Leaving now is the fastest, cheapest way out — for you, and for every neighbor who sees your car go and does the same.",
+        gains: "An empty road and an immediate start, and the first few who follow you get the same.",
+        consequence: "Your household is out early on an open highway. But your neighbors see you go, and once one car has broken the order the rest stop waiting too. Nine blocks that were meant to leave one at a time end up on the road together, and the junction seizes. Nothing can put that back: there is no call that re-forms nine blocks once they are all moving. The blocks furthest from the junction waited their turn, and they are the ones still stuck in the jam when the fire comes down.",
+        givesUp: "The staging system itself, and any way to put it back. Nine blocks moving at once is the one thing the staging was built to prevent. Every neighbor who stops waiting after you does it because you went first.",
+        moralTension: "Does being gone before the jam clear you of it, when the jam starts because you went first?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 85 -> 45, How much is gained 68 -> 80, Reducing harm 43 -> 20.
            Its own preview leaves "the blocks furthest from the junction" in the jam "when the fire comes down": it
-           helps the first few and harms whole blocks. And it is "the quickest, cleanest run out of the valley".
+           helps the first few and harms whole blocks. And it is still the fastest start anybody here gets: "an empty
+           road and an immediate start". (That line read "the quickest, cleanest run out of the valley" until the
+           advisor audit of 19 September 2026: two cards were claiming to be the fastest, and "cleanest" read as
+           morally clean on the one option that ends the staging. The number is unaffected either way.)
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         /* VALUE AUDIT, second pass, 18 September 2026: How many are helped 45 -> 30. The first few get a clear road; the blocks furthest from the junction sit in the jam. */
         fingerprint: {
@@ -1501,7 +1504,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Redraw the routes to cut the driving",
         summary: "Redraw every route so caregivers spend less time driving and more time at doors.",
         gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.",
-        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
+        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met. Redrawing the map takes the office weeks, and every client has to be told again, so it is done once. The stranger who comes to the door on Monday is that client's caregiver for the whole three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
         fingerprint: {
@@ -1761,7 +1764,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Protect full visits for the clients with nobody else",
         summary: "Protect full visits for the 50 clients who live alone. The other 190 absorb the cut between them.",
         gains: "Complete protection for the 50 people who have nobody else at home.",
-        consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them, and the schedule breaks and has to be rewritten in the middle of the week.",
+        consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them. The 50 protected visits are fixed points in the week, and the other 190 have to fit in the hours around them. One visit that overruns pushes every visit behind it, so the schedule is being rewritten by the middle of the week.",
         givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them.",
         moralTension: "Is it better to protect a few people completely, or many people a little?",
         fingerprint: {
@@ -1829,7 +1832,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Redraw the routes to cut the driving",
         summary: "Redraw every route so caregivers spend less time driving and more time at doors.",
         gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.",
-        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met, and the routes cannot be redrawn again for three months.",
+        consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met. Redrawing the map takes the office weeks, and every client has to be told again, so it is done once. The stranger who comes to the door on Monday is that client's caregiver for the whole three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
         fingerprint: {
@@ -1986,7 +1989,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         title: "Protect full visits for the clients with nobody else",
         summary: "Protect full visits for the 50 clients who live alone. The other 190 absorb the cut between them.",
         gains: "Complete protection for the 50 people who have nobody else at home.",
-        consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them, and the schedule breaks and has to be rewritten in the middle of the week.",
+        consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them. The 50 protected visits are fixed points in the week, and the other 190 have to fit in the hours around them. One visit that overruns pushes every visit behind it, so the schedule is being rewritten by the middle of the week.",
         givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them.",
         moralTension: "Is it better to protect a few people completely, or many people a little?",
         fingerprint: {

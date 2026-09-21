@@ -282,6 +282,18 @@ now scenery in the scene paragraph and sequence lives only in the facts.
 
 ### Pass E — the two CVR lenses
 
+#### ⚠ A lens is ALLOWED to say something the card never said (19 September 2026)
+
+The advisor audit of scenario 2 flagged the hill school for never explaining why a crew would
+search a valley for a household sitting in the designated refuge - the reason, "Nobody is told you
+are up there", appears only in the directness view. **The researcher kept it as it is.** The two
+views are where the participant meets the consequence they did not foresee; a card that already
+contained every consequence would leave the CVR nothing to reveal. This is the same reason gate R4
+requires every later consequence to hedge with *may* or *could*. A lens fact missing from its card
+is therefore not a defect. A STORY is still held to card facts (§2f): the hill school's hurt story
+is safe because the search itself is on the card, in `givesUp`.
+
+
 Done for scenario 1 on 16–17 September 2026. **Scenarios 2–6 still have the old vignettes.**
 
 **What was deleted outright:**

@@ -117,6 +117,12 @@ Rules the checks enforce and the audit found the hard way (checklist §2g):
   twin gate exempts `method.detail` only.
 - Participants never see an alignment verdict or the scoring arithmetic. Flag any place that shows
   one — that IS a defect.
+- **A CVR view may introduce a consequence the card never mentioned, and the card does not have
+  to explain it.** The two views exist to show the participant what the option did not advertise -
+  which is why every later consequence hedges with *may* (gate R4). Kept on purpose: the hill
+  school's card says a crew comes back into the valley, and only the directness view says why
+  ("Nobody is told you are up there"). Do not flag a lens fact as missing from its card
+  (researcher's decision, 19 September 2026).
 - Two options in one scenario may help the same kind of person (e.g. the ridge road and the hill
   school both leave one car fewer in the line). A participant only ever hears one of them.
 
