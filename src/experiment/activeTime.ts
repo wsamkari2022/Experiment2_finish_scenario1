@@ -146,6 +146,9 @@ export const isPaused = (): boolean => paused;
 
 const noteInput = (): void => {
   lastInputAt = Date.now();
+  /* Clear the notice on the spot. Leaving it to the next heartbeat meant up to five seconds of a
+     participant moving the mouse at a screen that still said the study was waiting for them. */
+  if (paused && currentStage) setPaused(false);
 };
 
 /* Throttled: a mouse move fires continuously and only the fact of it matters. */
@@ -165,21 +168,25 @@ function tick(): void {
   const visible = typeof document === "undefined" || document.visibilityState === "visible";
   const recentlyActive = now - lastInputAt < IDLE_MS;
 
-  if (!visible || !recentlyActive) {
-    setPaused(true);
-    /* Move the marker forward while paused, so the gap is never counted when they return. */
-    lastCountedAt = now;
-    return;
-  }
-
   /*
    * No stage means the entry screen, where they are typing an email. That is not participation,
    * and counting it would also break something an analyst will assume without checking: that the
    * total equals the sum of the per-stage times. A total that is larger than its own parts is the
    * kind of discrepancy that makes somebody distrust every other number in the record.
+   *
+   * CHECKED BEFORE THE IDLE RULE SINCE 20 SEPTEMBER 2026. It used to come second, so somebody
+   * reading the start screen for ninety seconds was shown a notice telling them the study was
+   * waiting for them - over a form that was not being timed and had nothing to pause.
    */
   if (!currentStage) {
     setPaused(false);
+    lastCountedAt = now;
+    return;
+  }
+
+  if (!visible || !recentlyActive) {
+    setPaused(true);
+    /* Move the marker forward while paused, so the gap is never counted when they return. */
     lastCountedAt = now;
     return;
   }
@@ -264,8 +271,34 @@ export function startActiveClock(): void {
     window.addEventListener(name, noteInputThrottled, { passive: true });
   }
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") flush();
-    else noteInput();
+    if (document.visibilityState === "hidden") {
+      /*
+       * PAUSE AT ONCE, RATHER THAN AT THE NEXT HEARTBEAT.
+       *
+       * A hidden tab has its timers throttled to roughly once a minute, and a browser is free to
+       * freeze them altogether. Waiting for a tick to notice meant the pause frequently never
+       * happened at all, and the participant came back to a study that looked as though it had
+       * been counting the whole time they were gone.
+       *
+       * Nothing about what is COUNTED changes here: tick has always refused to add time while the
+       * tab is hidden. This is the notice, and only the notice.
+       */
+      if (currentStage) setPaused(true);
+      flush();
+      return;
+    }
+    /*
+     * COMING BACK IS NOT ACTIVITY.
+     *
+     * This used to call noteInput(), which restarted the idle clock and cleared the notice before
+     * anybody could read it: they returned, the notice vanished, and nothing ever told them that
+     * the minutes they spent away had not been counted. It now stays up until they do something,
+     * which is precisely what it asks them to do, and the first move, key or scroll clears it
+     * through the ordinary input path.
+     *
+     * The marker is moved forward so the first tick after their return cannot add the gap.
+     */
+    lastCountedAt = Date.now();
   });
   window.addEventListener("beforeunload", flush);
 

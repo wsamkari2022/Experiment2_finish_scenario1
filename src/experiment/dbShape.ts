@@ -47,6 +47,7 @@ import {
   analysePosition, positionEffectLabel, optionDistance, profileDistance, POSITION_LABEL,
 } from "./block5Position";
 import { ACTIVE_TIME_KEY } from "./activeTime";
+import { SESSION_LOG_KEY } from "./sessionLog";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
 import { ALIGNMENT_LABEL } from "./block5CVR";
@@ -75,7 +76,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-17-apa-single-question";
+export const SHAPE_VERSION = "2026-09-20-sessions-and-prediction-percentages";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -114,6 +115,9 @@ export const SOURCE_MAP: SourceMapping[] = [
   /* Its own room, not inside `timings`: the whole `timings` object is written as one value, so a
      nested path would be wiped the next time the ledger above was sent. */
   { key: ACTIVE_TIME_KEY, path: "active_time", transform: summariseActiveTime },
+  /* Who sat down, how often, and on how many machines. Its own room for the same reason as
+     active_time: the whole object is written as one value, so a nested path would be wiped. */
+  { key: SESSION_LOG_KEY, path: "sessions", transform: summariseSessions },
 ];
 
 /**
@@ -148,6 +152,89 @@ function dropUntimedStages(value: unknown): unknown {
       "The insights page (after Block 3) and the final analysis page (after Block 4) are read, not "
       + "answered, so their durations are not measured and not stored. Time spent on them is still "
       + "inside the run's total span and still inside active_time.total_active_minutes.",
+  };
+}
+
+/**
+ * EVERY TIME THIS PARTICIPANT SAT DOWN, AND ON HOW MANY MACHINES.
+ *
+ * WHY IT IS NOT `active_time.sittings`. That counts gaps of more than thirty minutes between
+ * activity, which a tab left open over lunch produces on its own. This counts the study being
+ * OPENED with a participant identified — a login. The two answer different questions and a run can
+ * easily have two logins and five sittings, or five logins and five sittings.
+ *
+ * WHAT A BROWSER IS HERE. A random id made once per browser and nothing else: no user agent, no
+ * platform, no screen size, no address. It can say "the same browser as before" or "a different
+ * one", which is the whole question, and it cannot identify a device. The ids are also numbered in
+ * order of first appearance so a reader can follow a run across machines without handling UUIDs.
+ *
+ * WHY `total_logins` IS NOT `list.length`. The browser keeps the most recent 60 rows. Anything
+ * older is counted and dropped, so the total stays true while the document stays small. The two
+ * fields are separate rather than one number that quietly means different things.
+ *
+ * See sessionLog.ts for what is written and why the browser id never travels between machines.
+ */
+function summariseSessions(value: unknown): unknown {
+  const log = (value ?? {}) as { sessions?: unknown; dropped?: unknown };
+  const rows = Array.isArray(log.sessions)
+    ? (log.sessions as Record<string, unknown>[])
+    : [];
+  const dropped = typeof log.dropped === "number" ? log.dropped : 0;
+
+  const iso = (ms: unknown) =>
+    typeof ms === "number" && Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+
+  /* Numbered in the order each browser first appears, so "browser 2" means the second machine
+     this participant used rather than an id somebody has to compare character by character. */
+  const order: string[] = [];
+  for (const row of rows) {
+    const id = typeof row.browserId === "string" ? row.browserId : "unknown";
+    if (!order.includes(id)) order.push(id);
+  }
+
+  const list = rows.map((row, i) => {
+    const id = typeof row.browserId === "string" ? row.browserId : "unknown";
+    const started = typeof row.startedAt === "number" ? row.startedAt : null;
+    const last = typeof row.lastSeenAt === "number" ? row.lastSeenAt : null;
+    return {
+      number: dropped + i + 1,
+      started_at: iso(started),
+      last_seen_at: iso(last),
+      /* Wall-clock minutes between opening the study and the last screen change in that sitting.
+         NOT working time — a tab left open inflates it. active_time is the honest effort ledger. */
+      minutes_open: started !== null && last !== null ? Math.round((last - started) / 60000) : null,
+      how_it_started: row.how ?? null,
+      stage_at_start: row.stageAtStart ?? null,
+      stage_at_last_seen: row.stageAtLastSeen ?? null,
+      browser_number: order.indexOf(id) + 1,
+      browser_id: id,
+    };
+  });
+
+  const firstStart = rows.length ? rows[0].startedAt : null;
+  const lastStart = rows.length ? rows[rows.length - 1].startedAt : null;
+
+  return {
+    what_this_is:
+      "One row per login: every time the study was opened with this participant identified. Not the "
+      + "same as active_time.sittings, which counts gaps in activity inside a session.",
+    total_logins: rows.length + dropped,
+    logins_listed_here: rows.length,
+    older_logins_counted_but_not_listed: dropped,
+    browsers_used: order.length,
+    used_more_than_one_browser: order.length > 1,
+    ever_restored_from_another_device: rows.some((r) => r.how === "restored_from_another_device"),
+    first_login_at: iso(firstStart),
+    last_login_at: iso(lastStart),
+    days_between_first_and_last_login:
+      typeof firstStart === "number" && typeof lastStart === "number"
+        ? Math.round(((lastStart - firstStart) / 86_400_000) * 10) / 10
+        : null,
+    privacy_note:
+      "A browser is a random id generated in that browser. No user agent, platform, screen size or "
+      + "address is collected, and the id cannot identify a device — only whether two logins came "
+      + "from the same one.",
+    list,
   };
 }
 
@@ -242,6 +329,10 @@ export const RESUME_FILES: string[] = [
   /* so time already spent is not lost by moving machine */
   TELEMETRY_KEY,
   "vrds_active_time",
+  /* The login history travels too, so a participant who moves machine keeps one true count.
+     vrds_browser_id is deliberately NOT here: it names the machine it was made on, and copying
+     it across would make two computers look like one. See sessionLog.ts. */
+  SESSION_LOG_KEY,
 ];
 
 /** Reads every resume file present in this browser. Missing ones are simply left out. */
@@ -665,6 +756,9 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
     stakeholder_stability_label: sensitivityStabilityOf(b5, "stakeholder")?.level ?? null,
     performance_score: b5.performance ?? null,
     performance_captured: b5.performanceCaptured ?? null,
+    /* Every other score in this headline carries its label beside it; this one did not, so the
+       one number here that needs a scale to read was the one without words. */
+    performance_captured_label: b5.performanceCapturedLevel ?? null,
     position_effect: position?.effect ?? null,
     position_effect_label: position?.label ?? null,
     scenarios_completed: Array.isArray(b5.scenarioResults) ? b5.scenarioResults.length : null,
@@ -1078,6 +1172,18 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
  * tenth of a percentage point. If they ever stop matching, the recomputation has drifted from the
  * live path and every number in this section for every other scenario is suspect.
  */
+/**
+ * How far behind the model's favourite a chosen option sat, in percentage points.
+ *
+ * Null when either side is missing, which is honest: a missing percentage is not a gap of zero.
+ * Never negative - the favourite is the highest by construction - but clamped anyway, because a
+ * negative would be read as a real finding rather than as the rounding artefact it would be.
+ */
+function pointsBehind(topPercent: number | null, chosenPercent: number | null): number | null {
+  if (typeof topPercent !== "number" || typeof chosenPercent !== "number") return null;
+  return Math.max(0, Math.round((topPercent - chosenPercent) * 10) / 10);
+}
+
 export function buildMpfPredictions(block5: unknown): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
   const b5 = block5 as Record<string, unknown>;
@@ -1192,9 +1298,18 @@ export function buildMpfPredictions(block5: unknown): Record<string, unknown> | 
         rank_the_mpf_gave_their_first_choice:
           prediction.options.find((o) => o.optionId === firstChoice)?.rank ?? null,
         mpf_named_their_first_choice: top ? top.optionId === firstChoice : null,
+        /* THE DISTANCE, STORED RATHER THAN LEFT TO BE SUBTRACTED. How many percentage points
+           behind the model's favourite their choice sat. 0 means the model named it; a large
+           number means the model expected something else entirely. Both halves of the
+           subtraction are above, which is precisely why this is here: a number an analyst has
+           to work out by hand is a number that eventually gets worked out wrongly. */
+        points_behind_the_most_expected_option_at_first_choice:
+          pointsBehind(pct1(top?.probability), chanceOf(firstChoice)),
         final_choice_option_id: finalChoice,
         mpf_chance_of_their_final_choice_percent: chanceOf(finalChoice),
         mpf_named_their_final_choice: top ? top.optionId === finalChoice : null,
+        points_behind_the_most_expected_option_at_final_choice:
+          pointsBehind(pct1(top?.probability), chanceOf(finalChoice)),
       },
 
       using_profile_before_block5: frozenPrediction
@@ -1278,6 +1393,129 @@ export function buildMpfPredictions(block5: unknown): Record<string, unknown> | 
       largest_difference_in_percentage_points:
         worstSelfCheckGap === null ? null : Math.round(worstSelfCheckGap * 100) / 100,
       passed: worstSelfCheckGap === null ? null : worstSelfCheckGap <= 0.1,
+    },
+  };
+}
+
+/**
+ * THE THREE PREDICTION NUMBERS FOR EVERY SCENARIO, ON ONE SCREEN, IN ORDER.
+ *
+ * WHAT IT ANSWERS. "What did the model expect, what did they take, and how far apart were those
+ * two?" — per scenario, for all six. Every number here is already in
+ * `analysis.mpf_predictions_every_scenario`, but it is spread across a `by_option` array of six
+ * entries and a `participant` object inside each of six rows. Answering the question from there
+ * means opening about fifty fields. This is those fifty reduced to the three that get asked for,
+ * plus the labels needed to read them.
+ *
+ * WHY IT IS BUILT FROM THE OTHER SECTION AND NOT RECOMPUTED. It takes the finished section as its
+ * input rather than running the predictor a second time. Two computations of the same thing drift
+ * apart the moment one of them is edited; a copy cannot. `npm run validate:dbshape` checks that
+ * the two agree anyway (gate D39), because "cannot drift" is worth testing rather than asserting.
+ *
+ * THE ONE WARNING IT REPEATS. Only scenario 6's percentages were ever on screen. Every other row
+ * was computed after the fact, and each row says so in its own `was_shown_to_the_participant`
+ * field rather than relying on the reader to remember it.
+ *
+ * Null when the detailed section could not be built — a participant who never reached Block 5.
+ */
+export function buildMpfPercentages(mpfSection: unknown): Record<string, unknown> | null {
+  if (!mpfSection || typeof mpfSection !== "object") return null;
+  const source = mpfSection as Record<string, unknown>;
+  const rows = source.by_scenario;
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+
+  const byScenario = rows.map((raw) => {
+    const row = raw as Record<string, unknown>;
+    const person = (row.participant ?? {}) as Record<string, unknown>;
+    const options = Array.isArray(row.by_option) ? (row.by_option as Record<string, unknown>[]) : [];
+    const titleOf = (id: unknown) => options.find((o) => o.option_id === id)?.option_title ?? null;
+
+    return {
+      order_shown: row.order_shown ?? null,
+      scenario_id: row.scenario_id ?? null,
+      title: row.title ?? null,
+      position: row.position ?? null,
+      position_label: row.position_label ?? null,
+      decision_role: row.decision_role ?? null,
+      was_shown_to_the_participant: row.was_shown_to_the_participant ?? null,
+      this_was_a_wish_not_a_decision: row.this_was_a_wish_not_a_decision ?? null,
+
+      options_on_the_table: row.options_on_the_table ?? null,
+      chance_if_guessing_percent: row.chance_if_guessing_percent ?? null,
+
+      /* 1. what the model expected */
+      most_expected_option_id: row.most_expected_option_id ?? null,
+      most_expected_option_title: titleOf(row.most_expected_option_id),
+      most_expected_option_chance_percent: row.most_expected_option_chance_percent ?? null,
+
+      /* 2. what they took, and 3. how far behind the favourite that was */
+      their_first_choice_option_id: person.first_choice_option_id ?? null,
+      their_first_choice_title: titleOf(person.first_choice_option_id),
+      their_first_choice_chance_percent: person.mpf_chance_of_their_first_choice_percent ?? null,
+      points_behind_the_most_expected_option_at_first_choice:
+        person.points_behind_the_most_expected_option_at_first_choice ?? null,
+      rank_the_mpf_gave_their_first_choice: person.rank_the_mpf_gave_their_first_choice ?? null,
+      mpf_named_their_first_choice: person.mpf_named_their_first_choice ?? null,
+
+      their_final_choice_option_id: person.final_choice_option_id ?? null,
+      their_final_choice_title: titleOf(person.final_choice_option_id),
+      their_final_choice_chance_percent: person.mpf_chance_of_their_final_choice_percent ?? null,
+      points_behind_the_most_expected_option_at_final_choice:
+        person.points_behind_the_most_expected_option_at_final_choice ?? null,
+      mpf_named_their_final_choice: person.mpf_named_their_final_choice ?? null,
+
+      /* True when reflection or clarification moved them off their first answer. The two sets of
+         percentages above are then a before and an after, rather than one number written twice. */
+      they_changed_their_choice:
+        person.first_choice_option_id && person.final_choice_option_id
+          ? person.first_choice_option_id !== person.final_choice_option_id
+          : null,
+
+      /* A row that could not be predicted carries the same flag the detailed section set. */
+      could_not_be_computed: row.could_not_be_computed ?? null,
+    };
+  });
+
+  const decisions = byScenario.filter(
+    (r) => r.decision_role === "decider" && !r.could_not_be_computed,
+  );
+  const gaps = decisions
+    .map((r) => r.points_behind_the_most_expected_option_at_final_choice)
+    .filter((n): n is number => typeof n === "number");
+  const named = decisions.filter((r) => r.mpf_named_their_final_choice === true).length;
+
+  return {
+    what_this_is:
+      "For every Block 5 scenario, in the order they were shown: the highest chance the prediction "
+      + "function gave any option, the chance it gave the option the participant actually took, and "
+      + "the distance between those two in percentage points.",
+    read_this_first:
+      "ONLY SCENARIO 6's PERCENTAGES WERE EVER SHOWN TO A PARTICIPANT. Every other row was computed "
+      + "afterward from stored answers and was never on screen while anybody was deciding. Each row "
+      + "carries was_shown_to_the_participant; check it before calling any of this a prediction the "
+      + "study made in advance.",
+    where_the_detail_is:
+      "analysis.mpf_predictions_every_scenario holds the same predictions in full — every option's "
+      + "chance, the profile each row was predicted from, the confidence dial and the self-check. "
+      + "This section is a shorter copy of the three numbers most often wanted, not a second "
+      + "measurement.",
+    how_to_read_the_distance:
+      "points_behind_the_most_expected_option is in PERCENTAGE POINTS, not a percentage. 0 means "
+      + "the model named their choice. Read it against chance_if_guessing_percent, which is 16.7 on "
+      + "a six-option scenario and 25 on scenario 6: the same gap of 5 points means quite different "
+      + "things in the two.",
+    rule_version: source.rule_version ?? null,
+    by_scenario: byScenario,
+    totals: {
+      counted_over:
+        "The scenarios that asked for a decision. The wish (scenario 5) and the prediction test "
+        + "(scenario 6) appear in by_scenario and are excluded from these totals.",
+      scenarios_counted: decisions.length,
+      times_the_mpf_named_their_final_choice: named,
+      mean_points_behind_the_most_expected_option: gaps.length
+        ? Math.round((gaps.reduce((a, b) => a + b, 0) / gaps.length) * 10) / 10
+        : null,
+      largest_points_behind_the_most_expected_option: gaps.length ? Math.max(...gaps) : null,
     },
   };
 }

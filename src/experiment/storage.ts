@@ -50,6 +50,7 @@ import {
   buildLiftedScenarios,
   buildAlignmentRecords,
   buildMpfPredictions,
+  buildMpfPercentages,
   buildProfileChange,
   buildQuality,
   collectResumeFiles,
@@ -457,6 +458,15 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
          row says which it was. */
       const mpf = buildMpfPredictions(translated);
       if (mpf) sendOrQueue({ op: "saveSection", path: "analysis.mpf_predictions_every_scenario", data: mpf });
+
+      /* The same predictions cut down to the three numbers an analyst actually asks for - what the
+         model expected, what they took, and the distance between the two - one row per scenario in
+         the order they were shown. Built FROM the section above rather than predicted again, so the
+         short table and the long one cannot drift apart. */
+      const mpfPercentages = mpf ? buildMpfPercentages(mpf) : null;
+      if (mpfPercentages) {
+        sendOrQueue({ op: "saveSection", path: "analysis.mpf_prediction_percentages", data: mpfPercentages });
+      }
 
       /* The value profile before and after Block 5, and the movement between them. */
       const profiles = buildProfileChange(translated);

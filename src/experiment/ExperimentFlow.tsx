@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StartScreen } from "./StartScreen";
 import { ConsentPage } from "./ConsentPage";
 import { DemographicPage } from "./DemographicPage";
@@ -40,6 +40,7 @@ import { extractBlock5Profile } from "./block5Profile";
 import { buildThresholdTree } from "./thresholdTree";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import { STAGE_STORAGE_KEY, announceStage } from "./stageSignal";
+import { consumeLoginKind, markNextLoginAs, noteLogin, touchSession } from "./sessionLog";
 import type { Block5Results } from "./block5Types";
 import type { TrolleyBlockResults } from "./trolleyTypes";
 import type { MoneyBlockResults } from "./types";
@@ -224,6 +225,32 @@ export function ExperimentFlow() {
     }
   });
 
+  /**
+   * WAS THIS PARTICIPANT ALREADY KNOWN WHEN THE PAGE LOADED?
+   *
+   * It is the difference between somebody typing their address into the start screen and somebody
+   * opening the study again on a machine that already has their run. Both end with an email in
+   * hand a moment later, so by the time the login is recorded the two are indistinguishable —
+   * unless the answer is captured at load, which is what this does. Read once, never updated.
+   */
+  const knownAtPageLoad = useRef(pendingEmail !== null);
+
+  /*
+   * ONE LOGIN ROW PER PAGE LOAD, WRITTEN THE MOMENT A PARTICIPANT IS IDENTIFIED.
+   *
+   * Not on mount: at mount a first-time visitor has no email, and a row written then would belong
+   * to nobody. Not per stage either — noteLogin ignores every call after the first in a load, so
+   * this effect can run as often as React likes and still record one sitting. See sessionLog.ts.
+   */
+  useEffect(() => {
+    if (!pendingEmail) return;
+    noteLogin(
+      consumeLoginKind()
+        ?? (knownAtPageLoad.current ? "continued_in_this_browser" : "typed_their_email"),
+      stage,
+    );
+  }, [pendingEmail, stage]);
+
   /** Profile + seed case data produced by the Insights page; needed by Block 4. */
   const [insights, setInsights] = useState<InsightsPayload | null>(() =>
     readJson<InsightsPayload>(STORAGE_KEY_INSIGHTS),
@@ -251,6 +278,9 @@ export function ExperimentFlow() {
        this state - today, the light/dark toggle, which stops asking for attention once the
        participant reaches Block 5. See stageSignal.ts. */
     announceStage(stage);
+    /* Keep this login's row current, so a run abandoned mid-study still records where it got
+       to and how long the sitting lasted. See sessionLog.ts. */
+    touchSession(stage);
     /*
      * Mirror the stopping point into the participant directory as well.
      *
@@ -544,6 +574,10 @@ export function ExperimentFlow() {
               /* ignore */
             }
             if (restored > 0) {
+              /* Their answers came down from the server, so this browser did not have them: they
+                 are arriving from somewhere else. Said now, because the reload below makes the
+                 next load look like any other. See sessionLog.ts. */
+              markNextLoginAs("restored_from_another_device");
               window.location.reload();
               return;
             }

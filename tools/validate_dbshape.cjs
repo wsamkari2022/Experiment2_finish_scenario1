@@ -361,6 +361,114 @@ console.log("  THINGS THAT WERE WRONG ONCE");
   gate("D37", ok, `after the guess: "${kept.what_happened_after_the_guess}" / "${changed.what_happened_after_the_guess}" / "${cameBack.what_happened_after_the_guess}"`);
 }
 
+/* ---- the headline carries the performance pair AND its label ---- */
+{
+  const head = db.buildHeadline(
+    { scenarioResults: [], performance: 62, performanceCaptured: 71,
+      performanceCapturedLevel: "Took most of what was available" },
+    {},
+  );
+  gate("D40",
+    head.performance_score === 62
+    && head.performance_captured === 71
+    && head.performance_captured_label === "Took most of what was available",
+    `overall performance reaches the headline with its label  (${head.performance_score} / `
+    + `${head.performance_captured} "${head.performance_captured_label}")`);
+}
+
+/* ---- every login, and the machines they came from ---- */
+{
+  const sessionsRow = db.SOURCE_MAP.find((s) => s.path === "sessions");
+  const sessions = sessionsRow.transform({
+    dropped: 2,
+    sessions: [
+      { browserId: "aaa", startedAt: 1_000_000, lastSeenAt: 1_600_000,
+        stageAtStart: "money", stageAtLastSeen: "trolley", how: "typed_their_email" },
+      { browserId: "aaa", startedAt: 90_000_000, lastSeenAt: 90_300_000,
+        stageAtStart: "trolley", stageAtLastSeen: "block4", how: "continued_in_this_browser" },
+      { browserId: "bbb", startedAt: 200_000_000, lastSeenAt: 200_900_000,
+        stageAtStart: "block4", stageAtLastSeen: "block5", how: "restored_from_another_device" },
+    ],
+  });
+  gate("D41",
+    sessions.total_logins === 5
+    && sessions.logins_listed_here === 3
+    && sessions.older_logins_counted_but_not_listed === 2
+    && sessions.browsers_used === 2
+    && sessions.used_more_than_one_browser === true
+    && sessions.ever_restored_from_another_device === true
+    && sessions.list[0].number === 3
+    && sessions.list[0].browser_number === 1
+    && sessions.list[2].browser_number === 2
+    && sessions.list[0].minutes_open === 10,
+    `logins are counted, numbered and traced to machines  (${sessions.total_logins} logins over `
+    + `${sessions.browsers_used} browsers, ${sessions.older_logins_counted_but_not_listed} older not listed)`);
+
+  /* The history has to travel with a participant; the browser id must not, or two machines read
+     as one and the whole section stops meaning anything. */
+  gate("D42",
+    db.RESUME_FILES.includes("vrds_session_log") && !db.RESUME_FILES.includes("vrds_browser_id"),
+    "the login history is on the resume list and the browser id is not");
+}
+
+/* ---- the prediction percentages: the distance, and the short table that carries it ---- */
+{
+  const [, block5] = PEOPLE[0];
+  const full = db.buildMpfPredictions(block5);
+  const short = db.buildMpfPercentages(full);
+
+  /* The distance is stored rather than left to be subtracted, and it IS the subtraction.
+     Checked over all three simulated participants, and at least one of them must come out
+     non-zero: a fixture where everybody takes the model's favourite would pass a broken
+     subtraction that always returned 0. */
+  let distanceIsRight = true;
+  let zeroWhenNamed = true;
+  let sawARealGap = 0;
+  for (const [, person] of PEOPLE) {
+    for (const r of db.buildMpfPredictions(person).by_scenario) {
+      if (r.could_not_be_computed) continue;
+      const top = r.most_expected_option_chance_percent;
+      const mine = r.participant.mpf_chance_of_their_final_choice_percent;
+      const stored = r.participant.points_behind_the_most_expected_option_at_final_choice;
+      if (typeof top !== "number" || typeof mine !== "number") {
+        if (stored !== null) distanceIsRight = false;
+        continue;
+      }
+      if (!near(stored, Math.max(0, top - mine), 0.11)) distanceIsRight = false;
+      if (r.participant.mpf_named_their_final_choice === true && stored !== 0) zeroWhenNamed = false;
+      sawARealGap = Math.max(sawARealGap, stored);
+    }
+  }
+  gate("D38", distanceIsRight && zeroWhenNamed && sawARealGap > 0,
+    "how far behind the model's favourite their choice sat is stored, 0 when it WAS the "
+    + "favourite  (widest gap seen " + sawARealGap + " points)");
+
+  /* The short table is a copy, so it must agree with the long one row for row. */
+  const agrees = short.by_scenario.length === full.by_scenario.length
+    && short.by_scenario.every((s, i) => {
+      const f = full.by_scenario[i];
+      return s.scenario_id === f.scenario_id
+        && s.order_shown === f.order_shown
+        && s.most_expected_option_id === f.most_expected_option_id
+        && s.most_expected_option_chance_percent === f.most_expected_option_chance_percent
+        && s.their_final_choice_option_id === f.participant.final_choice_option_id
+        && s.their_final_choice_chance_percent === f.participant.mpf_chance_of_their_final_choice_percent
+        && s.points_behind_the_most_expected_option_at_final_choice
+             === f.participant.points_behind_the_most_expected_option_at_final_choice;
+    });
+  gate("D39", agrees && short.rule_version === full.rule_version,
+    `the short percentage table agrees with the full section, row for row  (${short.by_scenario.length} rows)`);
+
+  /* It must also be readable on its own: a title beside every id, and the guessing baseline. */
+  const readable = short.by_scenario.every((r) =>
+    (r.most_expected_option_id === null || typeof r.most_expected_option_title === "string")
+    && typeof r.chance_if_guessing_percent === "number"
+    && typeof r.was_shown_to_the_participant === "boolean");
+  const onlySix = short.by_scenario.filter((r) => r.was_shown_to_the_participant === true).length === 1;
+  gate("D43", readable && onlySix,
+    "each row names its options, carries the guessing baseline, and only scenario 6 was shown");
+}
+
 /* ---- the Block 5 sections, over three very different participants ---- */
 for (const [who, block5] of PEOPLE) {
   console.log("");
@@ -527,6 +635,45 @@ if (fails) {
   console.log("");
   process.exit(1);
 }
+/*
+ * `--dump` prints the document these gates were just run over, so anybody can see the real shape
+ * of a participant record without a MongoDB to open. It runs after the gates, so a dump is only
+ * ever of a document that passed them. `--dump=<path>` writes the JSON to a file instead.
+ */
+if (process.argv.some((a) => a.startsWith("--dump"))) {
+  const [, block5] = PEOPLE[0];
+  const doc = {
+    headline: db.buildHeadline(block5, ledger),
+    timings: timings,
+    active_time: active,
+    quality: quality,
+    sessions: db.SOURCE_MAP.find((s) => s.path === "sessions").transform({
+      dropped: 0,
+      sessions: [
+        { browserId: "aaa", startedAt: 1_000_000, lastSeenAt: 1_600_000,
+          stageAtStart: "money", stageAtLastSeen: "trolley", how: "typed_their_email" },
+        { browserId: "bbb", startedAt: 200_000_000, lastSeenAt: 200_900_000,
+          stageAtStart: "trolley", stageAtLastSeen: "block5", how: "restored_from_another_device" },
+      ],
+    }),
+    analysis: {
+      position_effect: db.buildPositionSection(block5),
+      alignment_records: db.buildAlignmentRecords(block5),
+      mpf_predictions_every_scenario: db.buildMpfPredictions(block5),
+      mpf_prediction_percentages: db.buildMpfPercentages(db.buildMpfPredictions(block5)),
+      scenario6_mpf_test: db.buildScenario6Section(block5),
+    },
+  };
+  const arg = process.argv.find((a) => a.startsWith("--dump="));
+  if (arg) {
+    fs.writeFileSync(arg.slice("--dump=".length), JSON.stringify(doc, null, 2));
+    console.log(`  document written to ${arg.slice("--dump=".length)}`);
+  } else {
+    console.log(JSON.stringify(doc, null, 2));
+  }
+  console.log("");
+}
+
 console.log("### ALL DATABASE GATES PASSED ###");
 console.log("========================================================================");
 console.log("");
