@@ -37,7 +37,7 @@
  */
 
 import { Badge, Box, Button, Grid, HStack, Heading, Icon, Stack, Text, VStack } from "@chakra-ui/react";
-import { LuArrowRight, LuChartColumn, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
+import { LuArrowRight, LuChartColumn, LuChevronDown, LuChevronUp, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
 
 import { ChartLegend, HBarChart, RadarChart } from "./block5Charts";
 import { REFERENCE_SERIES_COLOR, SERIES_COLORS } from "./block5ChartColors";
@@ -169,7 +169,10 @@ const HOW_IT_WORKS = [
        a participant could reasonably read it as the study having ranked them somehow. This says
        WHAT was taken from those answers - the preferences - and the second clause still says what
        the order is not. */
-    body: "Every one of the six can be chosen. They are ordered using the preferences shown by your earlier answers, not by which one we think is best.",
+    /* THE FOLD IS NAMED IN THE STEP ITSELF, not only in the panel below it. A participant who
+       skims the five steps and starts reading has met six closed lines by then, and "click one to
+       open it" has to have been said before that moment, not merely shown somewhere on the page. */
+    body: "They arrive as a list of six titles. Click one to open it and read what it does, what it costs, and the question it raises. Every one can be chosen, and they are ordered using the preferences shown by your earlier answers, not by which one we think is best.",
   },
   {
     title: "Choose one",
@@ -325,6 +328,120 @@ function ReadingColumn({
         ))}
       </VStack>
     </VStack>
+  );
+}
+
+
+/**
+ * WHAT AN OPTION LOOKS LIKE — the fold, shown rather than described.
+ *
+ * Every option card in a scenario now opens folded: one line carrying its place in the list and
+ * its title. That is a good way to meet six options and a bad thing to discover by accident, so
+ * the page that already shows the charts and the meters shows this too, in the shape the
+ * participant is about to see.
+ *
+ * THE EXAMPLE IS INVENTED, and the caption says so. It has to be: an option lifted from a real
+ * scenario would put a decision in front of somebody before their first situation, and the whole
+ * page is built on showing the INSTRUMENTS without showing the content they will be used on. A
+ * flood and a sandbag truck appear nowhere in the block.
+ */
+function FoldedCardDemo() {
+  const line = (n: number, title: string) => (
+    <HStack
+      key={n} gap="3" align="center" bg="bg.panel" borderWidth="1px" borderColor="border"
+      rounded="xl" px="3.5" py="2.5"
+    >
+      <Box
+        minW="7" h="7" rounded="lg" borderWidth="1px" borderColor="border" bg="bg.subtle"
+        display="flex" alignItems="center" justifyContent="center"
+      >
+        <Text fontSize="sm" fontWeight="bold" color="fg" fontFamily="mono" lineHeight="1">{n}</Text>
+      </Box>
+      <Text fontSize="sm" color="fg" fontWeight="semibold" lineHeight="short" flex="1" minW="0">
+        {title}
+      </Text>
+      <Icon boxSize="4" color="fg.muted"><LuChevronDown /></Icon>
+    </HStack>
+  );
+
+  return (
+    <Box
+      bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="2xl"
+      px={{ base: "4", md: "5" }} py={{ base: "4", md: "5" }} mt="4"
+    >
+      <HStack gap="2" mb="1">
+        <Icon boxSize="4" color="teal.fg"><LuLayers /></Icon>
+        <Text fontSize="xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
+          color="fg.muted">
+          What an option looks like
+        </Text>
+      </HStack>
+      <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="4">
+        Each option arrives folded — its place in the list and its title, nothing more. Click the
+        line, or the arrow, and it opens. Click again and it folds away, so the ones you have
+        finished with stop taking up the page.
+      </Text>
+
+      <Stack gap="2.5">
+        {line(1, "Send the second truck by the river road")}
+        {line(2, "Wait for the bridge to be cleared")}
+      </Stack>
+
+      <HStack gap="2" justify="center" my="3">
+        <Icon boxSize="4" color="teal.fg"><LuChevronsRight /></Icon>
+        <Text fontSize="xs" fontStyle="italic" color="fg.muted">
+          clicking the first one opens it
+        </Text>
+      </HStack>
+
+      {/* The same option, open. Deliberately the same three lines a real card carries — what it
+          achieves, what it costs, and the question underneath — so the shape is already familiar
+          when the first real scenario arrives. */}
+      <Box bg="bg.panel" borderWidth="2px" borderColor="teal.muted" rounded="xl"
+        px="3.5" py="3.5" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
+        <HStack gap="3" align="center" mb="2.5">
+          <Box minW="7" h="7" rounded="lg" borderWidth="1px" borderColor="border" bg="bg.subtle"
+            display="flex" alignItems="center" justifyContent="center">
+            <Text fontSize="sm" fontWeight="bold" color="fg" fontFamily="mono" lineHeight="1">1</Text>
+          </Box>
+          <Text fontSize="sm" color="fg" fontWeight="semibold" lineHeight="short" flex="1" minW="0">
+            Send the second truck by the river road
+          </Text>
+          <Icon boxSize="4" color="fg.muted"><LuChevronUp /></Icon>
+        </HStack>
+
+        <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="3">
+          The river road is twice as long and it is the only way still open. Everything on the truck
+          arrives late, and it arrives.
+        </Text>
+
+        <Stack gap="1.5">
+          <HStack gap="2" align="start">
+            <Text fontSize="xs" fontWeight="bold" color="green.fg" minW="20">You gain</Text>
+            <Text fontSize="xs" color="fg.muted" lineHeight="tall" flex="1">
+              Every sandbag reaches the village, even if it is after dark.
+            </Text>
+          </HStack>
+          <HStack gap="2" align="start">
+            <Text fontSize="xs" fontWeight="bold" color="red.fg" minW="20">You give up</Text>
+            <Text fontSize="xs" color="fg.muted" lineHeight="tall" flex="1">
+              Two hours, and the light. The crew unloads in the dark.
+            </Text>
+          </HStack>
+          <HStack gap="2" align="start">
+            <Text fontSize="xs" fontWeight="bold" color="fg" minW="20">The question</Text>
+            <Text fontSize="xs" color="fg.muted" lineHeight="tall" flex="1" fontStyle="italic">
+              Is late help still help, when the water is already rising?
+            </Text>
+          </HStack>
+        </Stack>
+      </Box>
+
+      <Text fontSize="xs" color="fg.subtle" lineHeight="tall" mt="3">
+        A made-up example. There is no flood and no truck in this study — it is here only to show
+        the shape of a card.
+      </Text>
+    </Box>
   );
 }
 
@@ -523,6 +640,9 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
               <StepCard key={s.title} n={i + 1} title={s.title} body={s.body} />
             ))}
           </Grid>
+          {/* Step 2 says the options arrive as a list; this shows what that list looks like and
+              what opening one gives back. See FoldedCardDemo. */}
+          <FoldedCardDemo />
         </Box>
 
         {/*
