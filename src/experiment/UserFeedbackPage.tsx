@@ -22,6 +22,8 @@ import {
 import { LuArrowLeft, LuCheck, LuClock, LuMessageSquare, LuRotateCcw, LuSparkles } from "react-icons/lu";
 import type { Block5Results } from "./block5Types";
 import { markStage } from "./telemetry";
+// DEV ONLY — delete this import and the <DevFillFeedbackButton /> below before the study is live.
+import { DevFillFeedbackButton } from "@/components/dev/DevFillFeedbackButton";
 import {
   APA_QUESTIONS, CVR_QUESTIONS, DUAL_VIEW_QUESTIONS, TOOL_CLOSERS, TOOL_RATINGS,
   WELLBEING_ITEMS, WELLBEING_OPEN_ENDED, WELLBEING_LIKERT_LOW, WELLBEING_LIKERT_HIGH,
@@ -194,6 +196,33 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
     return codes;
   }, [showCvr, showApa, showDual]);
 
+  /*
+   * DEV ONLY — answers every question the page is currently asking, so a tester does not refill
+   * this form on every run. Delete this with the button that calls it; nothing else uses it.
+   *
+   * It fills from `requiredCodes`, the page's own list, so it can never drift out of step with
+   * what is on screen: a question added tomorrow is filled tomorrow, and a section that is hidden
+   * for this participant is left alone. The open-ended boxes are filled too, even though they are
+   * optional, because a tester checking what reaches the database wants them to carry something.
+   */
+  const devFillEveryAnswer = useCallback(() => {
+    const filled: Record<string, FeedbackAnswer> = {};
+    const isYesNo = new Set(
+      [...CVR_QUESTIONS, ...DUAL_VIEW_QUESTIONS, ...APA_QUESTIONS, ...TOOL_RATINGS, ...TOOL_CLOSERS]
+        .filter((q) => q.type === "yesno").map((q) => q.code),
+    );
+    requiredCodes.forEach((code, i) => {
+      /* A spread of Likert answers rather than the same number everywhere: a form filled with
+         nothing but 4s hides a straightlining check that is supposed to notice exactly that. */
+      filled[code] = isYesNo.has(code) ? (i % 2 === 0 ? "yes" : "no") : ((i % 7) + 1);
+    });
+    for (const q of [...CVR_QUESTIONS, ...DUAL_VIEW_QUESTIONS, ...APA_QUESTIONS, ...TOOL_CLOSERS]) {
+      if (q.type === "open") filled[q.code] = "Dev fill — written by the development button.";
+    }
+    setAnswers((prev) => ({ ...prev, ...filled }));
+    setShowValidation(false);
+  }, [requiredCodes]);
+
   const missingCount = requiredCodes.filter((c) => !isAnswered(c)).length;
   const answeredCount = requiredCodes.length - missingCount;
   const allRequiredAnswered = missingCount === 0;
@@ -341,6 +370,9 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
 
   return (
     <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} py={{ base: "8", md: "12" }} display="flex" alignItems="flex-start" justifyContent="center">
+      {/* DEV ONLY — renders nothing in a production build. See DevFillFeedbackButton for how to
+          remove it, and why it cannot ship even if that is forgotten. */}
+      <DevFillFeedbackButton onFill={devFillEveryAnswer} />
       <VStack gap="6" align="stretch" maxW="3xl" w="full" animationName="fade-in" animationDuration="moderate">
         {/* Header */}
         <VStack gap="3" textAlign="center">

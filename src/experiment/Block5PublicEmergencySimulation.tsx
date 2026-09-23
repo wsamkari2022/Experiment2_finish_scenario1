@@ -708,6 +708,45 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       return { ...here, index: progress.currentScenarioIndex, [key]: !here[key] };
     });
   }, [progress.currentScenarioIndex]);
+
+  /**
+   * WHICH OPTION CARDS THE PARTICIPANT HAS OPENED. Everything else is folded to its title.
+   *
+   * EVERY CARD STARTS FOLDED (researcher's instruction, 23 September 2026). Six open cards make a
+   * page most of which is scrolled past, so the scenario now opens as a list of six titles in
+   * planner order and the participant opens the ones they want to read.
+   *
+   * THIS IS A REAL CHANGE TO WHAT THE STUDY SHOWS PEOPLE, not a cosmetic one, and it is stated
+   * here so nobody has to rediscover it. Reading an option is now an act the participant chooses,
+   * so a card they never opened is a card they never read - which is a different thing from an
+   * open card they scrolled past. Any comparison with data collected before this date has to
+   * account for it.
+   *
+   * WHY THE STATE IS "OPENED" RATHER THAN "FOLDED": with folded stored, every new scenario would
+   * need its six ids folding before the first paint. Storing what has been OPENED makes folded
+   * the natural default everywhere, including a scenario nobody has touched yet.
+   *
+   * It carries the scenario index for the same reason the scene boxes above do: nothing has to
+   * fire for the next scenario to be correct, and no frame can render with the last page's state.
+   */
+  const [openedCards, setOpenedCards] = useState<{ index: number; ids: Set<string> }>(
+    { index: progress.currentScenarioIndex, ids: new Set() },
+  );
+  const openedHere = openedCards.index === progress.currentScenarioIndex
+    ? openedCards.ids
+    : EMPTY_FOLDS;
+  /* Not logged, deliberately. `optionExpands` counts information-seeking - opening the DETAILS
+     panel of a card is evidence somebody wanted to know more. Unfolding a card is now simply how
+     it is read at all, so counting it would fill a clean measure with the act of reading. */
+  const toggleFolded = useCallback((id: string) => {
+    setOpenedCards((prev) => {
+      const here = prev.index === progress.currentScenarioIndex ? prev.ids : new Set<string>();
+      const next = new Set(here);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return { index: progress.currentScenarioIndex, ids: next };
+    });
+  }, [progress.currentScenarioIndex]);
+
   const [openOrdering, setOpenOrdering] = useState(false);
 
   /*
@@ -1854,6 +1893,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   methodLabel={scenario.methodLabel}
                   copy={decisionCopy}
                   expanded={openOptionId === opt.id} onToggle={() => toggleExpand(opt.id)}
+                  folded={!openedHere.has(opt.id)} onFoldToggle={() => toggleFolded(opt.id)}
                   /* Every card stops hinting the moment ANY of them has been opened. */
                   hintDetails={expandedOptions.size === 0}
                   onSelect={() => handleSelect(opt.id)}
@@ -2728,9 +2768,12 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
   );
 }
 
+/** One shared empty set for "nothing has been opened in this scenario yet". Never mutated. */
+const EMPTY_FOLDS: ReadonlySet<string> = new Set();
+
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, methodLabel, copy, expanded, onToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance }: {
+function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, methodLabel, copy, expanded, onToggle, folded, onFoldToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance }: {
   option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
   /** The scenario's own heading for the method box ("How you travel"). Absent hides the box. */
   methodLabel?: string;
@@ -2743,6 +2786,9 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   /** Deciding-versus-wishing wording for this scenario. See DECISION_COPY. */
   copy: (typeof DECISION_COPY)[keyof typeof DECISION_COPY];
   expanded: boolean; onToggle: () => void; onSelect: () => void;
+  /** True while this card is folded to its title. Every card starts folded (23 September 2026). */
+  folded: boolean;
+  onFoldToggle: () => void;
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
   /** False in scenario 6: no performance exists there, so there is nothing to preview. */
   showPerformance: boolean;
@@ -2786,6 +2832,65 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
     A shadow LIST containing "none" is invalid CSS and the browser drops the entire declaration, so
     the ring is filtered before it is joined — `pal.cardShadow` is "none" in dark mode.
   */
+  /**
+   * THE FOLD CONTROL, rendered in both states so it never moves.
+   *
+   * A chevron with no label: the card's title is beside it and says what it belongs to, and a
+   * worded button here would compete with "Choose this option" further down, which is the one
+   * action on this card that matters.
+   */
+  const foldButton = (
+    <Button size="2xs" variant="ghost" rounded="md" px="1.5" minW="auto" flexShrink={0}
+      color={pal.textMuted} _hover={{ bg: pal.surfaceSubtle, color: pal.text }}
+      onClick={(e) => { e.stopPropagation(); onFoldToggle(); }}
+      aria-expanded={!folded}
+      aria-label={folded ? "Open this option" : "Fold this option down to its title"}
+      title={folded ? "Open this option" : "Fold this option down to its title"}>
+      <Icon boxSize="4">{folded ? <LuChevronDown /> : <LuChevronUp />}</Icon>
+    </Button>
+  );
+
+  /*
+   * FOLDED - THE STATE EVERY CARD STARTS IN: the title, its place in the order, and the way in.
+   *
+   * The rank square stays because the order is the one thing a folded card still has to carry -
+   * without it a folded card is a title in a list with no position, and the planner's ordering is
+   * part of what a participant is reading. The preview border stays too, so a card being previewed
+   * is still recognisable when folded.
+   */
+  if (folded) {
+    return (
+      <Box data-card-open="0" data-option-id={option.id}
+        backdropFilter={pal.backdropBlur}
+        rounded="2xl" px={{ base: "4", md: "5" }} py="3"
+        style={{
+          background: pal.cardBg,
+          borderStyle: "solid",
+          borderWidth: isPreviewing ? "2px" : "1px",
+          borderColor: isPreviewing ? accent : pal.cardBorder,
+          boxShadow: pal.cardShadow,
+        }}
+        opacity={disabled ? 0.5 : recessed ? 0.82 : 1} transition="all 0.2s ease"
+        _hover={disabled ? {} : { opacity: 1 }}>
+        <Flex align="center" gap="3">
+          {explanation && showPerformance && (
+            <Flex flexShrink={0} align="center" justify="center" w="7" h="7" rounded="lg"
+              borderWidth="1px" borderColor={pal.cardBorder} bg={pal.panelDeep}>
+              <Text fontSize="sm" fontWeight="bold" color={pal.text} fontFamily="mono" lineHeight="1">
+                {explanation.rank}
+              </Text>
+            </Flex>
+          )}
+          <Text color={pal.text} fontWeight="semibold" fontSize="md" lineHeight="short"
+            minW="0" flex="1" lineClamp={2}>
+            {option.title}
+          </Text>
+          {foldButton}
+        </Flex>
+      </Box>
+    );
+  }
+
   return (
     <Box data-card-open={expanded ? "1" : "0"}
       /* The preview watcher in the parent finds this card by its option id. See the effect that
@@ -2865,6 +2970,8 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
             )}
           </VStack>
         </HStack>
+        {/* The way to fold this card away, in the corner the tag cluster used to occupy. */}
+        {foldButton}
         {/*
           NO TAG CLUSTER IN THIS CORNER.
 
