@@ -12,6 +12,7 @@
   },
   "files": [
     "../src/experiment/block5CVR.ts",
+    "../src/experiment/block5MCF.ts",
     "../src/experiment/block5Prediction.ts",
     "../src/experiment/block5Planner.ts",
     "../src/experiment/block5PlannerText.ts",
