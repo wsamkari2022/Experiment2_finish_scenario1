@@ -2691,18 +2691,18 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
                 <Box key={k} position="relative" cursor="default">
                   <HStack justify="space-between" mb="1">
                     <Text fontSize="xs" fontWeight="semibold" color={pal.text} lineClamp={1}>{METRIC_LABELS[k]}</Text>
-                    {/* The reading itself is part of what minimizing puts away: the bar keeps the
-                        shape, which is what a glance at a sticky strip is for. */}
-                    {!minimized && (
-                      <HStack gap="1">
-                        {isPreview && delta !== 0 && (
-                          <Text fontSize="2xs" fontWeight="bold" color={delta > 0 ? pos : neg}>
-                            {delta > 0 ? `+${delta}` : delta}
-                          </Text>
-                        )}
-                        <Text fontSize="2xs" color={pal.text} fontFamily="mono">{val}</Text>
-                      </HStack>
-                    )}
+                    {/* THE NUMBER STAYS WHEN MINIMIZED (researcher, 23 September 2026). A bar
+                        without its reading makes the strip something to squint at rather than
+                        something to glance at, and the number is the measurement itself — the
+                        explanation of it is what minimizing puts away. */}
+                    <HStack gap="1">
+                      {isPreview && delta !== 0 && (
+                        <Text fontSize="2xs" fontWeight="bold" color={delta > 0 ? pos : neg}>
+                          {delta > 0 ? `+${delta}` : delta}
+                        </Text>
+                      )}
+                      <Text fontSize="2xs" color={pal.text} fontFamily="mono">{val}</Text>
+                    </HStack>
                   </HStack>
                   <Box h="2" bg={pal.metricTrack} rounded="full" overflow="visible" position="relative">
                     <Box h="full" w={`${val}%`} bg={accent} rounded="full" transition="width 0.4s ease" />
