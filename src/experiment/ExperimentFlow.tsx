@@ -42,7 +42,9 @@ import { extractBlock5Profile } from "./block5Profile";
 import { buildThresholdTree } from "./thresholdTree";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import { STAGE_STORAGE_KEY, announceStage } from "./stageSignal";
-import { consumeLoginKind, markNextLoginAs, noteLogin, touchSession } from "./sessionLog";
+import {
+  consumeLoginKind, markNextLoginAs, noteLogin, recordVisitOutcome, touchSession,
+} from "./sessionLog";
 import type { Block5Results } from "./block5Types";
 import type { TrolleyBlockResults } from "./trolleyTypes";
 import type { MoneyBlockResults } from "./types";
@@ -260,8 +262,12 @@ export function ExperimentFlow() {
       stage,
     );
     /* Opening the study on a different machine is a new visit by the study's own rule, and the
-       clock cannot see machines. sessionLog can, so it says so. */
-    if (login.recorded && login.browserChanged) noteNewVisit();
+       clock cannot see machines. sessionLog can, so it says so. The answer is written back into the
+       login row, so a record whose visit count looks wrong says which login produced it. */
+    if (login.recorded) {
+      const counted = login.browserChanged ? noteNewVisit() : false;
+      recordVisitOutcome(counted);
+    }
   }, [pendingEmail, stage]);
 
   /** Profile + seed case data produced by the Insights page; needed by Block 4. */

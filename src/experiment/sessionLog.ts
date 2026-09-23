@@ -60,6 +60,17 @@ export interface SessionEntry {
   stageAtStart: string;
   stageAtLastSeen: string;
   how: SessionStart;
+  /**
+   * WHAT THIS LOGIN DID TO THE VISIT COUNT, recorded at the moment it was decided.
+   *
+   * The count and the login history are produced by different files, and when they disagreed there
+   * was no way to tell which login had failed to add its visit - three logins from three browsers
+   * once produced two visits, and the record held nothing that said which one. Every login now
+   * carries its own answer: whether the previous login was on a different browser, and whether a
+   * visit was counted for it. Two of these fields, and the disagreement explains itself.
+   */
+  browserChanged?: boolean;
+  countedAVisit?: boolean;
 }
 
 export interface SessionLog {
@@ -155,6 +166,8 @@ export function noteLogin(how: SessionStart, stage: string): LoginResult {
     stageAtStart: stage || "start",
     stageAtLastSeen: stage || "start",
     how,
+    browserChanged,
+    countedAVisit: false,   // set by recordVisitOutcome once the clock has answered
   });
   while (log.sessions.length > MAX_SESSIONS) {
     log.sessions.shift();
@@ -162,6 +175,21 @@ export function noteLogin(how: SessionStart, stage: string): LoginResult {
   }
   write(log);
   return { recorded: true, browserChanged };
+}
+
+/**
+ * Writes down whether this login actually added a visit.
+ *
+ * Called straight after the clock has been asked, so the login history and the visit count can be
+ * compared later without re-running anything. Silent when no login has been recorded in this load.
+ */
+export function recordVisitOutcome(counted: boolean): void {
+  if (!openedThisLoad) return;
+  const log = read();
+  const current = log.sessions[log.sessions.length - 1];
+  if (!current) return;
+  current.countedAVisit = counted;
+  write(log);
 }
 
 /**

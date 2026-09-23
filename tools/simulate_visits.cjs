@@ -78,6 +78,36 @@ function reload() {
   return require(path.join(BUILD, "activeTime.js"));
 }
 
+/** The same page load, but handing back BOTH modules the flow uses. */
+function reloadApp() {
+  const clock = reload();
+  const sessions = require(path.join(BUILD, "sessionLog.js"));
+  return { clock, sessions };
+}
+
+/**
+ * Exactly what ExperimentFlow does when a participant is identified, in the same order.
+ * Hand-calling noteNewVisit proves the clock; this proves the WIRING, which is where the
+ * three-browser run lost its third visit.
+ */
+function identify(app, email, stage) {
+  app.clock.claimActiveClockFor(email);
+  const login = app.sessions.noteLogin(
+    app.sessions.consumeLoginKind() || "typed_their_email", stage,
+  );
+  if (login.recorded && login.browserChanged) app.clock.noteNewVisit();
+  return login;
+}
+
+/** Downloading this participant's run onto the machine in front of them. */
+function restoreOnto(files) {
+  for (const [k, v] of files) store.set(k, v);
+}
+const carryFiles = () => new Map([
+  ["vrds_active_time", store.get("vrds_active_time")],
+  ["vrds_session_log", store.get("vrds_session_log")],
+]);
+
 const tick = () => { for (const h of heartbeats) if (h.ms === TICK) h.fn(); };
 /* The ledger is written by its own slower heartbeat, not by the tick. Without running it, every
    reading below would come from stale storage - which is what this file first reported. */
@@ -344,6 +374,118 @@ console.log("");
   const l = ledger();
   gate("V16", l.sittings === 2,
     `one return that is both late and on another machine counts once  (${l.sittings} visits)`);
+}
+
+/* ---- V17: three machines, one after another, is three visits ---- */
+{
+  store = new Map();
+  let A = reload();
+  A.claimActiveClockFor("three@example.com");
+  A.startActiveClock();
+  A.setActiveStage("money");
+  advance(4 * MINUTE, true);
+  let carried = store.get("vrds_active_time");
+
+  /* Second machine: its own leftovers, then the run is downloaded and the page reloads. */
+  NOW += 2 * MINUTE;
+  store = new Map();
+  let B = reload();
+  B.claimActiveClockFor("three@example.com");   // before the download
+  store.set("vrds_active_time", carried);       // the download
+  B = reload();                                 // the reload it triggers
+  B.claimActiveClockFor("three@example.com");
+  B.startActiveClock();
+  B.setActiveStage("block4");
+  B.noteNewVisit();
+  advance(3 * MINUTE, true);
+  carried = store.get("vrds_active_time");
+
+  /* Third machine, exactly the same way. */
+  NOW += 2 * MINUTE;
+  store = new Map();
+  let C = reload();
+  C.claimActiveClockFor("three@example.com");
+  store.set("vrds_active_time", carried);
+  C = reload();
+  C.claimActiveClockFor("three@example.com");
+  C.startActiveClock();
+  C.setActiveStage("block5");
+  C.noteNewVisit();
+  advance(3 * MINUTE, true);
+
+  const l = ledger();
+  gate("V17", l.sittings === 3,
+    `three machines in a row is THREE visits  (${l.sittings} visits, ${minutes(l)} min)`);
+}
+
+/* ---- V18: three machines, driven through the REAL login path ---- */
+{
+  store = new Map();
+  let app = reloadApp();
+  identify(app, "wired@example.com", "consent");
+  app.clock.startActiveClock();
+  app.clock.setActiveStage("money");
+  advance(4 * MINUTE, true);
+  let carried = carryFiles();
+
+  for (const [machine, stage] of [[2, "block4"], [3, "block5"]]) {
+    NOW += 2 * MINUTE;
+    store = new Map();                 // a machine that has never seen this study
+    app = reloadApp();
+    identify(app, "wired@example.com", "start");   // they type their address
+    restoreOnto(carried);              // their run is downloaded
+    app.sessions.markNextLoginAs("restored_from_another_device");
+    /* A real reload fires beforeunload first, and the study flushes on it. Until 23 September
+       2026 that flush wrote this machine's empty ledger over the run just downloaded. */
+    for (const h of listeners.beforeunload || []) h();
+    app = reloadApp();                 // and the page reloads
+    identify(app, "wired@example.com", stage);
+    app.clock.startActiveClock();
+    app.clock.setActiveStage(stage);
+    advance(3 * MINUTE, true);
+    carried = carryFiles();
+    void machine;
+  }
+
+  const l = ledger();
+  const log = JSON.parse(store.get("vrds_session_log") || "{}");
+  const browsers = new Set((log.sessions || []).map((s) => s.browserId)).size;
+  gate("V18", l.sittings === 3 && minutes(l) >= 10,
+    `three machines through the real login path  (${l.sittings} visits, ${minutes(l)} min kept, `
+    + `${browsers} browsers, ${(log.sessions || []).length} logins)`);
+}
+
+/* ---- V19: the outgoing page must not overwrite the run it just downloaded ---- */
+{
+  store = new Map();
+  let app = reloadApp();
+  identify(app, "carry@example.com", "consent");
+  app.clock.startActiveClock();
+  app.clock.setActiveStage("money");
+  advance(9 * MINUTE, true);
+  const carried = carryFiles();          // what the server holds for them
+
+  NOW += 2 * MINUTE;
+  store = new Map();                     // a second machine
+  app = reloadApp();
+  identify(app, "carry@example.com", "start");
+  app.clock.startActiveClock();
+  app.clock.setActiveStage("");
+  advance(1 * MINUTE, true);
+  restoreOnto(carried);                  // their run is downloaded onto this machine
+  /* THE RELOAD. A real one fires beforeunload first, and the study listens to it. */
+  for (const h of listeners.beforeunload || []) h();
+  app.sessions.markNextLoginAs("restored_from_another_device");
+  app = reloadApp();
+  identify(app, "carry@example.com", "block4");
+  app.clock.startActiveClock();
+  app.clock.setActiveStage("block4");
+  advance(2 * MINUTE, true);
+
+  const l = ledger();
+  gate("V19", l.sittings === 2 && minutes(l) >= 11,
+    `the downloaded run survives the reload that follows it  (${minutes(l)} min, ${l.sittings} visits `
+    + "— 9 from the first machine must still be there)");
 }
 
 console.log("");

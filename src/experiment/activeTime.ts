@@ -274,8 +274,46 @@ function tick(): void {
   ledger.lastActiveAt = now;
 }
 
+/**
+ * Combines what this page holds with what is in storage, keeping the larger of every total.
+ *
+ * WHY WRITING BLINDLY LOST WHOLE MACHINES OF WORK. Restoring a run onto a new computer writes the
+ * downloaded ledger into storage and then reloads the page — and a reload fires `beforeunload`,
+ * which flushes. The flush wrote the ledger this page happened to be holding, which was the new
+ * machine's nearly empty one, straight over the run that had just been downloaded. Three machines
+ * in a row therefore reported the last machine's few minutes and two visits, because each hand-off
+ * threw away everything before it. Found by gate V19 on 23 September 2026.
+ *
+ * Taking the larger of each total is the right rule for more than that one race: two tabs of the
+ * same study also write this file, and neither of them should be able to undo the other's minutes.
+ *
+ * A ledger belonging to somebody else is never merged — claimActiveClockFor has already decided
+ * that question, and merging would put two participants' work in one record.
+ */
+function mergeWithStored(mine: ActiveLedger): ActiveLedger {
+  const stored = read();
+  if (stored.owner !== mine.owner) return mine;
+
+  const byStage: Record<string, number> = { ...stored.byStage };
+  for (const [stage, ms] of Object.entries(mine.byStage)) {
+    byStage[stage] = Math.max(ms, stored.byStage[stage] ?? 0);
+  }
+  return {
+    totalMs: Math.max(mine.totalMs, stored.totalMs),
+    byStage,
+    sittings: Math.max(mine.sittings, stored.sittings),
+    firstSeenAt: Math.min(mine.firstSeenAt, stored.firstSeenAt),
+    lastActiveAt: Math.max(mine.lastActiveAt, stored.lastActiveAt),
+    lastInputAt: Math.max(mine.lastInputAt, stored.lastInputAt),
+    longestIdleMs: Math.max(mine.longestIdleMs, stored.longestIdleMs),
+    stopped: mine.stopped || stored.stopped,
+    owner: mine.owner,
+  };
+}
+
 function flush(): void {
   if (!started) return;
+  ledger = mergeWithStored(ledger);
   write(ledger);
 }
 
@@ -438,15 +476,16 @@ export function claimActiveClockFor(email: string | null | undefined): void {
  * and by the study's own rule that is a new visit too. sessionLog notices the change of browser
  * and says so here, which keeps one definition of a visit rather than two.
  */
-export function noteNewVisit(): void {
-  if (ledger.stopped) return;
+export function noteNewVisit(): boolean {
+  if (ledger.stopped) return false;
   /* The load has already begun a visit — because the ledger was fresh, or because the gap since
      the last activity was long enough. Arriving on a new machine as well does not make it two. */
-  if (visitCountedThisLoad) return;
+  if (visitCountedThisLoad) return false;
   visitCountedThisLoad = true;
   ledger.sittings += 1;
   ledger.lastActiveAt = Date.now();
   write(ledger);
+  return true;
 }
 
 /**

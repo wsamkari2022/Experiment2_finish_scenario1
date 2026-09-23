@@ -208,6 +208,11 @@ function summariseSessions(value: unknown): unknown {
       stage_at_last_seen: row.stageAtLastSeen ?? null,
       browser_number: order.indexOf(id) + 1,
       browser_id: id,
+      /* What this login did to the visit count, decided at the time. The count and this history
+         are produced by different files; when they disagree, these two say which login is the
+         reason. Absent on logins recorded before 23 September 2026. */
+      previous_login_was_another_browser: row.browserChanged ?? null,
+      counted_a_visit: row.countedAVisit ?? null,
     };
   });
 
