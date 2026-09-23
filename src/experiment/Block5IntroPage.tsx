@@ -37,7 +37,7 @@
  */
 
 import { Badge, Box, Button, Grid, HStack, Heading, Icon, Stack, Text, VStack } from "@chakra-ui/react";
-import { LuArrowRight, LuChartColumn, LuChevronDown, LuChevronUp, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
+import { LuArrowRight, LuChartColumn, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
 
 import { ChartLegend, HBarChart, RadarChart } from "./block5Charts";
 import { REFERENCE_SERIES_COLOR, SERIES_COLORS } from "./block5ChartColors";
@@ -191,15 +191,16 @@ const HOW_IT_WORKS = [
 /**
  * THE HEADING EVERY SECTION OF THIS PAGE WEARS, AND WHY IT IS NUMBERED.
  *
- * The page is five things a participant has to hold at once: how a scenario runs, two charts, two
+ * The page is six things a participant has to hold at once: how a scenario runs, how the option
+ * cards open, two charts, two
  * different performance readings, three habits, and the four values. Unnumbered, they read as five
  * separate notices and a reader who looks away has no way back to their place. Numbered, the page
- * becomes a list with a length - and a participant who can see there are five can pace themselves
+ * becomes a list with a length - and a participant who can see there are six can pace themselves
  * through them.
  *
  * IT LOOKS DELIBERATELY UNLIKE THE STEP CHIPS INSIDE THE SECTIONS. Two of these sections contain
  * their own numbered items - the five steps of a scenario, the two performance readings - so the
- * page carries two counting systems at once, and if they looked alike, section 3 containing an item
+ * page carries two counting systems at once, and if they looked alike, section 4 containing an item
  * numbered 1 would read as a contradiction.
  *
  * So a section marker is OUTLINED, tinted and set in mono: a chapter number. A step chip is a
@@ -365,23 +366,7 @@ function FoldedCardDemo() {
   );
 
   return (
-    <Box
-      bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="2xl"
-      px={{ base: "4", md: "5" }} py={{ base: "4", md: "5" }} mt="4"
-    >
-      <HStack gap="2" mb="1">
-        <Icon boxSize="4" color="teal.fg"><LuLayers /></Icon>
-        <Text fontSize="xs" fontWeight="bold" letterSpacing="wider" textTransform="uppercase"
-          color="fg.muted">
-          What an option looks like
-        </Text>
-      </HStack>
-      <Text fontSize="sm" color="fg.muted" lineHeight="tall" mb="4">
-        Each option arrives folded — its place in the list and its title, nothing more. Click the
-        line, or the arrow, and it opens. Click again and it folds away, so the ones you have
-        finished with stop taking up the page.
-      </Text>
-
+    <Box>
       <Stack gap="2.5">
         {line(1, "Send the second truck by the river road")}
         {line(2, "Wait for the bridge to be cleared")}
@@ -640,8 +625,23 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
               <StepCard key={s.title} n={i + 1} title={s.title} body={s.body} />
             ))}
           </Grid>
-          {/* Step 2 says the options arrive as a list; this shows what that list looks like and
-              what opening one gives back. See FoldedCardDemo. */}
+        </Box>
+
+        {/*
+          THE FOLD — shown, for the same reason the charts are. Step 2 above says the options
+          arrive as a list of titles; this section shows what that list looks like and what opening
+          one gives back, so the shape is familiar before the first real scenario.
+
+          IT IS A NUMBERED SECTION LIKE THE REST. It arrived as an unnumbered panel inside section
+          1 and read as an aside, which is the wrong weight for the first thing a participant will
+          have to do in every scenario.
+        */}
+        <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
+          <SectionHeading n={2} icon={<LuChevronsDownUp />} title="How the option cards open">
+            Each option arrives folded — its place in the list and its title, nothing more. Click
+            the line, or the arrow, and it opens. Click again and it folds away, so the ones you
+            have finished with stop taking up the page.
+          </SectionHeading>
           <FoldedCardDemo />
         </Box>
 
@@ -650,7 +650,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           a radar chart on a calm page recognizes it on a page where a decision is waiting.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
-          <SectionHeading n={2} icon={<LuChartColumn />} title="The two charts, and how to open them">
+          <SectionHeading n={3} icon={<LuChartColumn />} title="The two charts, and how to open them">
             On every scenario page there is a button marked{" "}
             <Text as="span" color="fg" fontWeight="semibold">“Compare all options”</Text>.
             It draws all six options on these two shapes at once.
@@ -774,7 +774,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           appear on every option card.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
-          <SectionHeading n={3} icon={<LuGauge />} title="Performance shows up in three places, and they mean different things">
+          <SectionHeading n={4} icon={<LuGauge />} title="Performance shows up in three places, and they mean different things">
             The same five measure names appear three times on a scenario page. One is{" "}
             <Text as="span" color="fg" fontWeight="semibold">your running total</Text>, one is{" "}
             <Text as="span" color="fg" fontWeight="semibold">the option you are looking at</Text>, and
@@ -929,7 +929,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           a silent fourth item is worse than no list.
         */}
         <Box>
-          <SectionHeading n={4} icon={<LuEye />} title="Three things that help">
+          <SectionHeading n={5} icon={<LuEye />} title="Three things that help">
             None of this is required. They are the habits that make the options easier to tell
             apart.
           </SectionHeading>
@@ -958,7 +958,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           they are about to meet on every option card.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
-          <SectionHeading n={5} icon={<LuLayers />} title="What we already know about you">
+          <SectionHeading n={6} icon={<LuLayers />} title="What we already know about you">
             Your earlier answers measured four values. Each option will show you how closely it
             matches them.
           </SectionHeading>
