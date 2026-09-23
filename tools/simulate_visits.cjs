@@ -249,6 +249,103 @@ console.log("");
     `after submitting, neither the minutes nor the visits move  (${minutes(l)} min, ${l.sittings} visit)`);
 }
 
+/* ---- V13: a ledger left behind by an earlier run is not adopted ---- */
+{
+  store = new Map();
+  /* Six days old, three visits, somebody else's work — and no owner, because it was written
+     before owners existed. This is what a testing machine actually had on it. */
+  store.set("vrds_active_time", JSON.stringify({
+    totalMs: 4 * MINUTE, byStage: { feedback: 4 * MINUTE }, sittings: 3,
+    firstSeenAt: NOW - 6 * 24 * 60 * MINUTE, lastActiveAt: NOW - 6 * 24 * 60 * MINUTE,
+    lastInputAt: NOW - 6 * 24 * 60 * MINUTE, longestIdleMs: 0, stopped: true,
+  }));
+  const A = reload();
+  A.claimActiveClockFor("fresh@example.com");
+  A.startActiveClock();
+  A.setActiveStage("money");
+  advance(9 * MINUTE, true);
+  const l = ledger();
+  gate("V13", l.sittings === 1 && near(minutes(l), 9, 0.3) && l.owner === "fresh@example.com",
+    `an abandoned six-day-old ledger is not adopted  (${minutes(l)} min, ${l.sittings} visit, `
+    + "not 4 min and 3 visits)");
+}
+
+/* ---- V14: the minutes before the email was typed still belong to them ---- */
+{
+  store = new Map();
+  const A = reload();
+  A.startActiveClock();
+  A.setActiveStage("consent");      // reading the consent page, nobody identified yet
+  advance(3 * MINUTE, true);
+  A.claimActiveClockFor("reader@example.com");
+  A.setActiveStage("demographics");
+  advance(2 * MINUTE, true);
+  const l = ledger();
+  gate("V14", l.sittings === 1 && near(minutes(l), 5, 0.3) && l.owner === "reader@example.com",
+    `time spent before the email was known is kept  (${minutes(l)} min, ${l.sittings} visit)`);
+}
+
+/* ---- V15: the researcher's own run — browser A, a short pause, then browser B ---- */
+{
+  store = new Map();
+  /* Browser A: work up to Block 3. */
+  let A = reload();
+  A.claimActiveClockFor("both@example.com");
+  A.startActiveClock();
+  A.setActiveStage("money");
+  advance(6 * MINUTE, true);
+  A.setActiveStage("product");
+  advance(4 * MINUTE, true);
+  const carried = store.get("vrds_active_time");   // what the server would hold for them
+
+  NOW += 3 * MINUTE;                               // a short pause, then they open browser B
+
+  /* Browser B has its own leftovers from an earlier test, and no idea who this is. */
+  store = new Map();
+  store.set("vrds_active_time", JSON.stringify({
+    totalMs: 9 * MINUTE, byStage: {}, sittings: 5,
+    firstSeenAt: NOW - 5 * 24 * 60 * MINUTE, lastActiveAt: NOW - 5 * 24 * 60 * MINUTE,
+    lastInputAt: NOW - 5 * 24 * 60 * MINUTE, longestIdleMs: 0, stopped: true,
+  }));
+  let B = reload();
+  B.claimActiveClockFor("both@example.com");       // typed their address
+  /* The run is downloaded from the server and the page reloads — exactly what restoring does. */
+  store.set("vrds_active_time", carried);
+  B = reload();
+  B.claimActiveClockFor("both@example.com");
+  B.startActiveClock();
+  B.setActiveStage("product");
+  B.noteNewVisit();                                // sessionLog: this is a different browser
+  advance(8 * MINUTE, true);
+
+  const l = ledger();
+  gate("V15", l.sittings === 2 && near(minutes(l), 18, 0.4),
+    `browser A, a pause, then browser B to the end is TWO visits  (${minutes(l)} min, `
+    + `${l.sittings} visits — the run that reported seven)`);
+}
+
+/* ---- V16: coming back late AND on another machine is one return, not two ---- */
+{
+  store = new Map();
+  let A = reload();
+  A.claimActiveClockFor("late@example.com");
+  A.startActiveClock();
+  A.setActiveStage("money");
+  advance(10 * MINUTE, true);
+
+  NOW += 90 * MINUTE;                              // an hour and a half away, and a new laptop
+  A = reload();
+  A.claimActiveClockFor("late@example.com");
+  A.startActiveClock();
+  A.setActiveStage("trolley");
+  A.noteNewVisit();
+  advance(5 * MINUTE, true);
+
+  const l = ledger();
+  gate("V16", l.sittings === 2,
+    `one return that is both late and on another machine counts once  (${l.sittings} visits)`);
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {

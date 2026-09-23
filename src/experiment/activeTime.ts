@@ -322,9 +322,10 @@ export function startActiveClock(): void {
    */
   const now = Date.now();
   const awayFor = now - ledger.lastInputAt;
-  if (ledger.totalMs > 0 && awayFor > SITTING_GAP_MS) {
+  if (ledger.totalMs > 0 && awayFor > SITTING_GAP_MS && !visitCountedThisLoad) {
     ledger.sittings += 1;
     ledger.lastActiveAt = now;
+    visitCountedThisLoad = true;
     if (awayFor > ledger.longestIdleMs) ledger.longestIdleMs = awayFor;
   }
   ledger.lastInputAt = now;
@@ -375,6 +376,15 @@ export function setActiveStage(stage: string): void {
 }
 
 /**
+ * True when a visit has already been counted during this page load.
+ *
+ * ONE PAGE LOAD BEGINS AT MOST ONE VISIT. Coming back after an hour, on a different laptop, is one
+ * return — but two separate rules see it: the load-time gap and the change of machine. Counted
+ * separately they made a single return worth two visits.
+ */
+let visitCountedThisLoad = false;
+
+/**
  * Hands this browser's clock to the participant who has just been identified.
  *
  * If the ledger already belongs to somebody else, it is REPLACED rather than continued: a new
@@ -382,10 +392,16 @@ export function setActiveStage(stage: string): void {
  * one person's effort is recorded against another's name, and — because `stopped` survives in
  * storage once a run has finished — that the newcomer's whole study counts as no work at all.
  *
- * An unowned ledger (written before 23 September 2026, or by the start screen) is claimed rather
- * than thrown away, so nobody loses the minutes they have already put in.
+ * AN UNOWNED LEDGER IS ADOPTED ONLY IF IT BELONGS TO THIS SITTING. The case worth keeping is the
+ * few minutes somebody spends on the consent page before their email is known, which is this same
+ * page load. A ledger nobody has touched for more than half an hour is from a run that ended
+ * without being claimed — an earlier participant at a shared machine, or an earlier test — and
+ * adopting it hands its minutes, its visits and its idle gaps to the wrong person. A real run on
+ * 23 September inherited one that was six days old, and its 4.6-day gap was then counted as a
+ * fresh visit. Ledgers written before that date carry no owner, so this is the rule that decides
+ * them.
  *
- * Safe to call on every render: it writes only when the owner actually changes.
+ * Safe to call on every render: it writes only when something actually changes.
  */
 export function claimActiveClockFor(email: string | null | undefined): void {
   if (!email) return;
@@ -394,16 +410,22 @@ export function claimActiveClockFor(email: string | null | undefined): void {
 
   if (ledger.owner === who) return;
 
+  const now = Date.now();
+
   if (ledger.owner === undefined) {
-    ledger.owner = who;
-    write(ledger);
-    return;
+    const stale = ledger.stopped || now - ledger.lastInputAt > SITTING_GAP_MS;
+    if (!stale) {
+      ledger.owner = who;
+      write(ledger);
+      return;
+    }
+    /* Left behind by somebody else, or by an earlier run. Not this participant's. */
   }
 
   /* A different person is now using this browser. Their study starts now. */
-  const now = Date.now();
   ledger = emptyLedger(now, who);
   lastCountedAt = now;
+  visitCountedThisLoad = true;   // the fresh ledger already stands at one visit
   setPaused(false);
   write(ledger);
 }
@@ -418,6 +440,10 @@ export function claimActiveClockFor(email: string | null | undefined): void {
  */
 export function noteNewVisit(): void {
   if (ledger.stopped) return;
+  /* The load has already begun a visit — because the ledger was fresh, or because the gap since
+     the last activity was long enough. Arriving on a new machine as well does not make it two. */
+  if (visitCountedThisLoad) return;
+  visitCountedThisLoad = true;
   ledger.sittings += 1;
   ledger.lastActiveAt = Date.now();
   write(ledger);
