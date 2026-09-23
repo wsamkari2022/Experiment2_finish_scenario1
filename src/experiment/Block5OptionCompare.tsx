@@ -90,10 +90,12 @@ interface Props {
   completedCount: number;
   pal: Block5Palette;
   onClose: () => void;
+  /** Told which MCF reading is open, and told null when one closes. See Block5MCFPanel. */
+  onMcfReading?: (optionId: string | null) => void;
 }
 
 export function Block5OptionCompare({
-  scenario, options, yourPolicyScores, cumulative, completedCount, pal, onClose,
+  scenario, options, yourPolicyScores, cumulative, completedCount, pal, onClose, onMcfReading,
 }: Props) {
   // Every option is visible on first open, so the participant sees the whole field at once
   // and narrows down from there rather than having to build the comparison up themselves.
@@ -313,26 +315,6 @@ export function Block5OptionCompare({
             </Grid>
           )}
 
-          {/*
-            ---------------- The same chart, in words ----------------
-
-            THE MORAL COMMITMENT FUNCTION. The values chart above says, in shape, what each option
-            gives and what it asks of this participant; the caption under it already says that a
-            corner inside their dashed shape is something they said mattered and the option gives
-            up. This panel says the same thing in sentences, so the disclosure does not depend on
-            being able to read a radar.
-
-            IT SITS UNDER THE CHART IT EXPLAINS, and only here. On an option card it would become
-            something a participant is told while choosing rather than something they opened.
-          */}
-          <Box mt="6">
-            <Block5MCFPanel
-              scenario={scenario}
-              yourPolicyScores={yourPolicyScores}
-              pal={pal}
-            />
-          </Box>
-
           {/* ---------------- How to read this ---------------- */}
           <Box mt="6" bg={pal.panelDeep} borderWidth="1px" borderColor={pal.cardBorder}
             borderLeftWidth="4px" borderLeftColor={pal.accent} rounded="lg" px="4" py="3.5">
@@ -384,6 +366,28 @@ export function Block5OptionCompare({
             </VStack>
           </Box>
         </Box>
+
+          {/*
+            ---------------- The same chart, in words ----------------
+
+            THE MORAL COMMITMENT FUNCTION. The values chart above says, in shape, what each option
+            gives and what it asks of this participant; the caption under it already says that a
+            corner inside their dashed shape is something they said mattered and the option gives
+            up. This panel says the same thing in sentences, so the disclosure does not depend on
+            being able to read a radar.
+
+            IT SITS UNDER THE CHART IT EXPLAINS, and only here. On an option card it would become
+            something a participant is told while choosing rather than something they opened.
+          */}
+          <Box mt="6">
+            <Block5MCFPanel
+              scenario={scenario}
+              yourPolicyScores={yourPolicyScores}
+              pal={pal}
+              onOpenOption={onMcfReading}
+            />
+          </Box>
+
 
         {/* ---------------- Footer ---------------- */}
         <Box px={{ base: "5", md: "7" }} py="4" borderTopWidth="1px" borderColor={pal.separator}

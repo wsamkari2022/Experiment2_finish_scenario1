@@ -49,8 +49,14 @@ export function Block5MCFPanel({
   /** The participant's four values as they stand now — the same numbers the dashed shape uses. */
   yourPolicyScores: Record<Block5PolicyDimKey, number>;
   pal: Block5Palette;
-  /** Stage 3 hook: called with the option id each time a reading is opened. */
-  onOpenOption?: (optionId: string) => void;
+  /**
+   * Told which reading is open, and told null the moment one closes.
+   *
+   * Both halves matter: the open says which option was weighed, and the close is what stops the
+   * dwell clock. A hook that only fired on open would report every reading as lasting until the
+   * scenario ended.
+   */
+  onOpenOption?: (optionId: string | null) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const reading = mcfFromScores(scenario, yourPolicyScores);
@@ -59,7 +65,7 @@ export function Block5MCFPanel({
   const toggle = useCallback((id: string) => {
     setOpenId((current) => {
       const next = current === id ? null : id;
-      if (next && onOpenOption) onOpenOption(next);
+      onOpenOption?.(next);
       return next;
     });
   }, [onOpenOption]);

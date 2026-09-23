@@ -853,6 +853,42 @@ original and this is the one that is wrong.
 
 ---
 
+## 6g. `analysis.mcf` — the Moral Commitment Function
+
+Added **24 September 2026**. For every option in every scenario: what it gives beyond what the
+participant asked for on each of their four values, what it asks of them instead, which option on
+that table serves each value most, and what taking that one would ask in exchange.
+
+> ### ⚠️ MOST OF THIS WAS NEVER ON SCREEN
+>
+> MCF lives inside the **Compare all options** overlay, under the values chart, and every option's
+> reading starts closed. Seeing any of it takes two deliberate acts: open the overlay, then open a
+> reading. Check **`was_read`** on the scenario row and on the option before treating a single
+> number here as something the participant was told.
+
+| Field | What it holds |
+|---|---|
+| `was_read`, `options_read`, `readings_opened`, `seconds_reading` | The exposure. `read_the_option_they_chose` says whether one of the readings was for the option they took |
+| `compare_overlay_opens` | How many times the overlay itself was opened in that scenario |
+| `profile_used`, `profile_used_values` | The four values the reading was built on — the profile that scenario opened on, which is the profile the reading used |
+| `by_option[].values[]` | Per value: `you_hold`, `this_option_delivers`, `gap`, `direction`, `cost_of_falling_short`, `more_than_you_asked_for`, `served_most_here_by`, `how_much_more_that_one_delivers` |
+| `by_option[].in_exchange[]` | For each value the option falls short on: which option to take instead, whether it meets what they hold, and what it asks instead |
+| `rule_version` | The MCF arithmetic that produced the row. **Never pool rows made under two versions** |
+
+**It cannot disagree with the alignment label.** `cost_of_falling_short` is the study's own
+per-value shortfall, taken from the function that produces the alignment score rather than
+recomputed, and the four parts sum to that score's shortfall. `npm run validate:mcf` checks it
+(gate M1), and `npm run validate:dbshape` checks the stored copy (gate D50).
+
+> ⚠️ **`it_asks_less_or_more_overall` is stored and was never shown.** It compares two options'
+> total shortfall for this participant — a fit comparison — and the study never shows a fit verdict
+> to somebody who is still choosing. It is here for analysis only.
+
+**No sentence is stored.** The wording a participant read is derived from these numbers by
+`block5MCFWords`, so a stored copy would only be a second thing to keep in step.
+
+---
+
 ## 7. `feedback_answers` — and why it is readable
 
 Every closed question is stored with **the question text next to the answer**:

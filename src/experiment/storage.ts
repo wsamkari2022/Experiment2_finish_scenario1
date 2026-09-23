@@ -52,6 +52,7 @@ import {
   buildMpfPredictions,
   buildMpfPercentages,
   buildMajorScores,
+  buildMcfSection,
   buildProfileChange,
   buildQuality,
   collectResumeFiles,
@@ -535,6 +536,11 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
       if (mpfPercentages) {
         sendOrQueue({ op: "saveSection", path: "analysis.mpf_prediction_percentages", data: mpfPercentages });
       }
+
+      /* What each option asked of this participant's own values, and which readings they opened.
+         Exposure first: most of this section was never on screen. See buildMcfSection. */
+      const mcfSection = buildMcfSection(translated);
+      if (mcfSection) sendOrQueue({ op: "saveSection", path: "analysis.mcf", data: mcfSection });
 
       /*
        * EVERY MAJOR SCORE IN ONE ROOM.

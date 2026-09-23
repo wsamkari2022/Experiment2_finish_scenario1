@@ -327,6 +327,11 @@ interface TelemetryAccum {
   timeToFirstSelectionMs: number | null;
   cvrDwellMs: number;
   apaDwellMs: number;
+  /** MCF exposure: how often a reading was opened, which options, and how long one stayed open. */
+  mcfReadingsOpened: number;
+  mcfRead: Set<string>;
+  mcfDwellMs: number;
+  mcfOpenedAt: number | null;
   distinct: Set<string>;     // distinct options opened into the decision view
   lastSelectedId: string | null;
   cvrShownAt: number | null; // timestamp the CVR vignette became visible (null when not showing)
@@ -340,6 +345,9 @@ function newTelemetryAccum(): TelemetryAccum {
     personVisits: 0, personBackouts: 0,
     finalDecisionChanges: 0, previewImpactOpens: 0, optionExpands: 0, compareChartsOpens: 0,
     timeToFirstSelectionMs: null, cvrDwellMs: 0, apaDwellMs: 0,
+    /* MCF exposure. See Block5ScenarioTelemetry: a display that can change how somebody chooses
+       is either measured or it is an uncontrolled variable. */
+    mcfReadingsOpened: 0, mcfRead: new Set(), mcfDwellMs: 0, mcfOpenedAt: null,
     distinct: new Set(), lastSelectedId: null, cvrShownAt: null, apaShownAt: null,
   };
 }
@@ -427,6 +435,12 @@ function buildScenarioTelemetry(
     timeToFirstSelectionMs: t.timeToFirstSelectionMs,
     previewImpactOpens: t.previewImpactOpens,
     optionExpands: t.optionExpands,
+    /* MCF exposure. The dwell clock is closed here as well as on every toggle, so a participant
+       who leaves the overlay open and commits their choice still has their reading time counted
+       rather than silently dropped. */
+    mcfReadingsOpened: t.mcfReadingsOpened,
+    mcfOptionsRead: [...t.mcfRead],
+    mcfDwellMs: t.mcfDwellMs + (t.mcfOpenedAt === null ? 0 : Date.now() - t.mcfOpenedAt),
     compareChartsOpens: t.compareChartsOpens,
     cvrDwellMs,
     apaDwellMs,
@@ -873,6 +887,27 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * So `openOptionId` says what is on screen, `expandedOptions` keeps everything ever opened, and
    * the two never overwrite each other.
    */
+  /**
+   * A participant opened one option's MCF reading inside the compare overlay, or closed one.
+   *
+   * RECORDED BECAUSE IT IS EXPOSURE, NOT BECAUSE IT IS A SCORE. MCF is the first thing in this
+   * block that puts a participant's own four values into words while they are still deciding.
+   * Whether they read it, and for which options, has to be answerable afterwards, or the display
+   * is an uncontrolled variable sitting on top of every choice in this scenario.
+   *
+   * `null` means a reading closed, which is what stops the dwell clock.
+   */
+  const noteMcfReading = useCallback((optionId: string | null) => {
+    const tel = telRef.current;
+    if (!tel) return;
+    const now = Date.now();
+    if (tel.mcfOpenedAt !== null) tel.mcfDwellMs += now - tel.mcfOpenedAt;
+    if (!optionId) { tel.mcfOpenedAt = null; return; }
+    tel.mcfReadingsOpened += 1;
+    tel.mcfRead.add(optionId);
+    tel.mcfOpenedAt = now;
+  }, []);
+
   const toggleExpand = useCallback((id: string) => {
     setOpenOptionId((cur) => (cur === id ? null : id));
     setExpandedOptions((prev) => {
@@ -1929,6 +1964,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         // from scratch for each scenario's option set rather than carried across.
         <Block5OptionCompare
           key={scenario.id}
+          onMcfReading={noteMcfReading}
           scenario={scenario}
           options={labeled}
           yourPolicyScores={policyScoresOf(profile)}

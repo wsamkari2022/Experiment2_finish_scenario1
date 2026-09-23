@@ -51,6 +51,7 @@ import { SESSION_LOG_KEY } from "./sessionLog";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
 import { ALIGNMENT_LABEL } from "./block5CVR";
+import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
 import type {
@@ -76,7 +77,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-24-major-info-and-scores";
+export const SHAPE_VERSION = "2026-09-24-mcf";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1522,6 +1523,138 @@ export function buildMpfPercentages(mpfSection: unknown): Record<string, unknown
         : null,
       largest_points_behind_the_most_expected_option: gaps.length ? Math.max(...gaps) : null,
     },
+  };
+}
+
+/**
+ * THE MORAL COMMITMENT FUNCTION, PER SCENARIO AND PER OPTION — AND WHO ACTUALLY READ IT.
+ *
+ * WHAT MCF IS. For one option it says what that option gives beyond what the participant asked
+ * for on each of their four values, what it asks of them instead, which option on that table
+ * serves each of those values most, and what taking that one would ask instead. It lives inside
+ * the compare overlay, in sentences, under the chart that shows the same thing as a shape.
+ *
+ * WHY EXPOSURE IS THE FIRST THING IN EVERY ROW. MCF is the only place in Block 5 where a
+ * participant's own values are put into words while they are still choosing. Seeing it takes two
+ * deliberate acts - open the overlay, open an option's reading - so most participants will see
+ * none of it and some will read several. `was_read` and `options_read` are therefore not
+ * bookkeeping: they are the variable that has to be controlled for before any choice in this
+ * scenario is compared with anybody else's.
+ *
+ * RECOMPUTED, NOT REPLAYED, AND THAT IS SAFE HERE. The numbers below are worked out again from the
+ * profile the scenario OPENED on, which is the profile the reading used: the four values move only
+ * at the reflection and the clarification, both of which happen after the choice. So a row
+ * reproduces what was on screen. `rule_version` says which arithmetic produced it, and records
+ * made under two versions must never be pooled.
+ *
+ * WHAT IS DELIBERATELY ABSENT. No sentence is stored. The wording is derived from these numbers by
+ * block5MCFWords, so keeping a copy would only create a second thing to keep in step. What IS
+ * stored is everything the sentences are built from.
+ */
+export function buildMcfSection(block5: unknown): Record<string, unknown> | null {
+  if (!block5 || typeof block5 !== "object") return null;
+  const results = resultsOf(block5);
+  if (!results.length) return null;
+
+  const rows = results.map((r, index) => {
+    const scenario = scenarioOf(r.scenarioId);
+    if (!scenario) return null;
+
+    const opened = profileWhenScenarioOpened(
+      index, results, (block5 as Record<string, unknown>).originalProfile,
+    );
+    if (!opened.profile) {
+      return {
+        order_shown: index + 1,
+        scenario_id: r.scenarioId ?? null,
+        could_not_be_computed: "no value profile was stored for this scenario",
+      };
+    }
+
+    const tel = (r.telemetry ?? {}) as Record<string, unknown>;
+    const read = Array.isArray(tel.mcfOptionsRead) ? (tel.mcfOptionsRead as string[]) : [];
+    const reading = mcfForScenario(scenario, opened.profile);
+
+    return {
+      order_shown: index + 1,
+      scenario_id: r.scenarioId ?? null,
+      title: scenario.title,
+      rule_version: reading.version,
+
+      /* ---- what this participant actually saw ---- */
+      compare_overlay_opens: tel.compareChartsOpens ?? 0,
+      was_read: read.length > 0,
+      readings_opened: tel.mcfReadingsOpened ?? 0,
+      options_read: read,
+      seconds_reading: typeof tel.mcfDwellMs === "number"
+        ? Math.round(tel.mcfDwellMs / 100) / 10
+        : null,
+      read_the_option_they_chose: read.includes(String(r.selectedOptionId ?? "")),
+
+      /* ---- the profile the reading was built on ---- */
+      profile_used: opened.snapshotWasMissing
+        ? "the profile the participant entered Block 5 with — the snapshot for this scenario is "
+          + "missing from this record"
+        : index === 0
+          ? "the participant's four values as they entered Block 5"
+          : `the participant's four values after scenario ${index}`,
+      profile_used_values: policyScoresOfProfile(opened.profile),
+
+      /* ---- one row per option ---- */
+      by_option: reading.options.map((row) => ({
+        option_id: row.optionId,
+        option_title: optionOf(scenario, row.optionId)?.title ?? null,
+        was_read: read.includes(row.optionId),
+        /* The same total the alignment label is built from, decomposed below. Stored so the parts
+           can be checked against the whole without recomputing either. */
+        total_cost_of_falling_short: row.totalCostOfFallingShort,
+        asks_most_of: row.costliestValue ? POLICY_DIM_SHORT[row.costliestValue] : null,
+        gives_most_on: row.mostGenerousValue ? POLICY_DIM_SHORT[row.mostGenerousValue] : null,
+        values: row.lines.map((line) => ({
+          value: POLICY_DIM_SHORT[line.value],
+          you_hold: line.youHold,
+          this_option_delivers: line.thisOptionDelivers,
+          gap: line.gap,
+          direction: line.direction,
+          cost_of_falling_short: line.costOfFallingShort,
+          more_than_you_asked_for: line.surplus,
+          served_most_here_by: line.servedMostHere,
+          how_much_more_that_one_delivers: line.headroomHere,
+        })),
+        in_exchange: row.swaps.map((swap) => ({
+          value: POLICY_DIM_SHORT[swap.value],
+          take_this_instead: swap.optionId,
+          it_meets_what_you_hold: swap.clearsWhatYouHold,
+          it_asks_less_or_more_overall: swap.costsMoreElsewhere,
+          it_asks_instead_on: swap.givesUpInstead.map((v) => POLICY_DIM_SHORT[v]),
+        })),
+      })),
+    };
+  }).filter(Boolean);
+
+  const readRows = rows.filter((row) => (row as Record<string, unknown>)?.was_read === true);
+
+  return {
+    what_this_is:
+      "For every option in every scenario: what it gives beyond what the participant asked for on "
+      + "each of their four values, what it asks instead, which option on that table serves each "
+      + "value most, and what taking that one would ask in exchange.",
+    read_this_first:
+      "MOST OF THIS WAS NEVER ON SCREEN. MCF lives inside the compare overlay and every option's "
+      + "reading starts closed, so a participant sees it only by opening the overlay and then "
+      + "opening a reading. Check was_read on the row and on the option before treating any of it "
+      + "as something they were told.",
+    it_cannot_disagree_with_the_alignment_label:
+      "cost_of_falling_short is the study's own per-value shortfall, taken from the function that "
+      + "produces the alignment score rather than recomputed. The four parts sum to that score's "
+      + "shortfall; npm run validate:mcf checks it (gate M1).",
+    what_the_participant_never_sees:
+      "it_asks_less_or_more_overall compares two options' total shortfall for this participant. It "
+      + "is stored for analysis and is deliberately never shown: it is a fit comparison, and the "
+      + "study never shows a fit verdict while somebody is still choosing.",
+    rule_version: MCF_VERSION,
+    scenarios_where_it_was_read: readRows.length,
+    by_scenario: rows,
   };
 }
 

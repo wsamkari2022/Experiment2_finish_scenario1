@@ -868,6 +868,41 @@ for (const [who, block5] of PEOPLE) {
       : `the gathered copy disagrees with its source: ${gaps.join(" | ")}`);
 }
 
+/* ---- what MCF stores, and the exposure that has to come with it ---- */
+{
+  let shapeRight = true, sumsRight = true, exposureRight = true, worst = 0, optionRows = 0;
+  for (const [, block5] of PEOPLE) {
+    const mcf = db.buildMcfSection(block5);
+    if (!mcf || mcf.by_scenario.length !== block5.scenarioResults.length) shapeRight = false;
+
+    for (const row of mcf.by_scenario) {
+      if (row.could_not_be_computed) continue;
+      /* Exposure is the first thing an analyst must be able to read: without it, a number here
+         looks like something the participant was told. */
+      if (typeof row.was_read !== "boolean" || !Array.isArray(row.options_read)) exposureRight = false;
+      if (row.was_read !== (row.options_read.length > 0)) exposureRight = false;
+
+      for (const opt of row.by_option) {
+        optionRows += 1;
+        const parts = opt.values.reduce((a, v) => a + v.cost_of_falling_short, 0);
+        worst = Math.max(worst, Math.abs(parts - opt.total_cost_of_falling_short));
+        if (Math.abs(parts - opt.total_cost_of_falling_short) > 0.25) sumsRight = false;
+        /* A value is short or over, never both, and "served most here" always names somebody. */
+        for (const v of opt.values) {
+          if (v.cost_of_falling_short > 0 && v.more_than_you_asked_for > 0) sumsRight = false;
+          if (!v.served_most_here_by) shapeRight = false;
+        }
+        if (typeof opt.was_read !== "boolean") exposureRight = false;
+      }
+    }
+  }
+  gate("D50", shapeRight && sumsRight && exposureRight,
+    shapeRight && sumsRight && exposureRight
+      ? `analysis.mcf carries a row per scenario, a reading per option and its exposure  (`
+        + `${optionRows} option readings, parts within ${worst.toFixed(2)} of the stored total)`
+      : "analysis.mcf is missing exposure, or its parts do not sum to the stored total");
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {

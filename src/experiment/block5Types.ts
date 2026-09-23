@@ -854,6 +854,23 @@ export interface Block5ScenarioTelemetry {
   optionExpands: number;     // expanded an option card to read details
   cvrDwellMs: number;        // time reflecting inside the CVR vignette
   apaDwellMs: number;        // time reflecting inside the APA flow
+
+  /**
+   * THE MORAL COMMITMENT FUNCTION, AS EXPOSURE RATHER THAN AS A SCORE.
+   *
+   * MCF tells a participant what an option asks of their own four values. It lives inside the
+   * compare overlay, so seeing it is a choice they make twice: open the overlay, then open an
+   * option's reading. Both are recorded, because a display that changes how somebody chooses is
+   * either measured or it is an uncontrolled variable — and MCF is the first thing in this block
+   * that puts their own values into words while they are still deciding.
+   *
+   * `mcfOptionsRead` holds the option ids, not a count, because WHICH options somebody weighed is
+   * the more interesting fact and the count can be derived from it. Repeats are not stored twice:
+   * reopening the same reading says nothing new.
+   */
+  mcfReadingsOpened: number;   // times any option's MCF reading was opened, including reopens
+  mcfOptionsRead: string[];    // the distinct options whose reading was opened, in order
+  mcfDwellMs: number;          // time with an MCF reading open
 }
 
 /** ---- Results ---- */
