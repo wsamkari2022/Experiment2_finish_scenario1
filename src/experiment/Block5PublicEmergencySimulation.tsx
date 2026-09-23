@@ -1648,8 +1648,17 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
               </Text>
             </HStack>
             <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-              The complete scenario, not a summary. Every option is built on exactly these facts —
-              open any section to read it again.
+              The complete scenario, not a summary. Every option is built on exactly these facts.
+              {" "}
+              {/* SAYING IT BOTH WAYS, on the researcher's instruction. "Open any section" told a
+                  participant how to get the facts back and left them to discover that the same
+                  header closes it again - so somebody who opened all three to check something was
+                  left with a column they could not shorten. */}
+              <Text as="span" color={pal.text} fontWeight="semibold">
+                Open and close these three sections as often as you like
+              </Text>{" "}
+              — closing one only hides it from view; nothing is lost, and it opens again on the
+              same heading.
             </Text>
           </Box>
 
@@ -1823,15 +1832,6 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
         {/* Options */}
         <VStack align="stretch" gap="4">
-          <Box>
-            <Text fontSize="2xs" fontWeight="bold" color={pal.accent} textTransform="uppercase" letterSpacing="widest">
-              The options — choose one policy
-            </Text>
-            <Text fontSize="xs" color={pal.textFaint} mt="1">
-              All {displayOptions.length} options are available, and every one of them can be chosen.
-            </Text>
-          </Box>
-
           {/*
             THE PLANNER PANEL. Shown identically in every SCORED scenario, for every participant,
             whether or not anything is actually blocked. It must NOT appear only when a limit is
@@ -1841,9 +1841,17 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             ABSENT IN SCENARIO 6, because there is no order to explain. Those four rules are
             shuffled, and a panel headed "why these are in this order" above a random list would be
             telling the participant something untrue.
+
+            IT SITS ABOVE THE HEADING, AND IT NO LONGER LOOKS LIKE A CARD (researcher, 23 September
+            2026). Between the heading and the six cards, in a panel surface with card-like
+            corners, it read as a seventh option - the one thing it must never look like on a page
+            whose whole task is choosing one of six. It now carries the accent spine this file
+            already uses for "an explanation you can open", sits before the heading that introduces
+            the list, and is separated from it by the same gap as everything else.
           */}
           {scenarioShowsPerformance(scenario) && (
-          <Box bg={pal.panelDeep} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl"
+          <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder}
+            borderLeftWidth="4px" rounded="lg" style={{ borderLeftColor: pal.accent }}
             px={{ base: "3.5", md: "4" }} py="3">
             {/* NO GLOW ON THIS ONE, on the advisor's instruction. Every other foldable section
                 holds something the participant needs — the scene, the numbers, their role. This one
@@ -1865,6 +1873,15 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             </Stack>
           </Box>
           )}
+
+          <Box>
+            <Text fontSize="2xs" fontWeight="bold" color={pal.accent} textTransform="uppercase" letterSpacing="widest">
+              The options — choose one policy
+            </Text>
+            <Text fontSize="xs" color={pal.textFaint} mt="1">
+              All {displayOptions.length} options are available, and every one of them can be chosen.
+            </Text>
+          </Box>
 
           {displayOptions.map((opt, i) => {
             const ex = explanations[opt.id];
