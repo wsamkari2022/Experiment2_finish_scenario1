@@ -37,7 +37,7 @@
  */
 
 import { Badge, Box, Button, Grid, HStack, Heading, Icon, Stack, Text, VStack } from "@chakra-ui/react";
-import { LuArrowRight, LuChartColumn, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
+import { LuArrowRight, LuBookOpen, LuChartColumn, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
 
 import { ChartLegend, HBarChart, RadarChart } from "./block5Charts";
 import { REFERENCE_SERIES_COLOR, SERIES_COLORS } from "./block5ChartColors";
@@ -605,6 +605,51 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
             situation yourself.
           </Text>
         </VStack>
+
+        {/*
+          THE LINE THAT SAYS THE REST OF THE PAGE IS INSTRUCTIONS.
+
+          Everything above this point is welcome and reassurance - there are no right answers, we
+          are not testing you - and everything below it is how the study is operated. Without a
+          line between the two, the six sections read as more reassurance and get skimmed, and a
+          participant meets the folded cards, the compare button and the two performance readings
+          without having been told what any of them are.
+
+          IT IS SET APART RATHER THAN SHOUTED. A serif italic among a page of sans-serif is a
+          change of voice, which is what a reader notices; a red box with an exclamation mark is an
+          alarm, and nothing here is an emergency. The two rules and the small caps do the work of
+          a chapter break, and the colored words carry the three facts worth keeping: that these
+          are instructions, that there are six of them, and that reading them now means nothing
+          later is a surprise.
+        */}
+        <Box textAlign="center" py={{ base: "1", md: "2" }}>
+          <HStack justify="center" align="center" gap="3" mb="3.5">
+            <Box h="1px" w={{ base: "8", md: "16" }} bg="border" />
+            <HStack gap="2">
+              <Icon boxSize="4" color="teal.fg"><LuBookOpen /></Icon>
+              <Text fontSize="xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase"
+                color="teal.fg">
+                Read this first
+              </Text>
+            </HStack>
+            <Box h="1px" w={{ base: "8", md: "16" }} bg="border" />
+          </HStack>
+
+          <Text fontFamily="serif" fontStyle="italic" fontSize={{ base: "lg", md: "xl" }}
+            lineHeight="tall" color="fg.muted" maxW="3xl" mx="auto">
+            What follows are the{" "}
+            <Text as="span" fontStyle="normal" fontWeight="bold" color="teal.fg">
+              important instructions
+            </Text>{" "}
+            for how the main study works —{" "}
+            <Text as="span" fontStyle="normal" fontWeight="semibold" color="fg">
+              six short sections
+            </Text>{" "}
+            covering what happens in each situation, how the option cards open, how to read the two
+            charts, and what we already know about you. Read them once now, and nothing in the
+            study will take you by surprise.
+          </Text>
+        </Box>
 
         {/*
           HOW IT WORKS — the shape of the next few minutes, before any of it starts.
