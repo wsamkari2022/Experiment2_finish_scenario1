@@ -6,7 +6,12 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  /*
+     `.claude` holds agent scratch space, including worktree copies of this project. Linting those
+     reported 236 errors in files that are not part of the study and cannot be edited here, which
+     buried the handful that are real.
+  */
+  globalIgnores(['dist', '.claude']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

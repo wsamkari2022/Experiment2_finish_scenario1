@@ -141,34 +141,99 @@ function queue(item: OutboxItem): void {
   writeOutbox([...readOutbox(), item]);
 }
 
-async function send(item: OutboxItem): Promise<boolean> {
-  if (!remote) return false;
+/**
+ * What happened to one queued write.
+ *
+ *   sent      it is in the database; drop it from the queue
+ *   retry     the server could not be reached; keep it and stop, so order is preserved
+ *   refused   the server read it and said no. Retrying cannot help, so it is parked rather than
+ *             left at the head of the queue blocking everything behind it
+ */
+type SendResult = "sent" | "retry" | "refused";
+
+/**
+ * A 4xx means the server understood the request and rejected it: a section this server does not
+ * accept, a malformed path, a body it will not take. Those never succeed on a retry.
+ *
+ * Two are excluded on purpose. 408 is a timeout and 429 is "slow down" — both mean try again,
+ * and both are answers about the moment rather than about the write itself.
+ */
+function isRefusal(error: unknown): boolean {
+  const status = (error as { httpStatus?: number } | null)?.httpStatus;
+  return typeof status === "number" && status >= 400 && status < 500
+    && status !== 408 && status !== 429;
+}
+
+async function send(item: OutboxItem): Promise<SendResult> {
+  if (!remote) return "retry";
   try {
     switch (item.op) {
       case "upsertParticipant":
         await remote.upsertParticipant(item.entry);
-        return true;
+        return "sent";
       case "updateStage":
         await remote.updateStage(item.email, item.stage);
-        return true;
+        return "sent";
       case "markCompleted":
         await remote.markCompleted(item.email);
-        return true;
+        return "sent";
       case "saveSection":
         await remote.saveSection(item.path, item.data);
-        return true;
+        return "sent";
     }
-  } catch {
-    return false;
+  } catch (error) {
+    if (isRefusal(error)) {
+      park(item, error);
+      return "refused";
+    }
+    return "retry";
   }
 }
 
 /**
- * Retries everything waiting, oldest first, and stops at the first failure.
+ * Where refused writes go, so that dropping one from the queue is not the same as losing it
+ * quietly.
+ *
+ * A refusal is a BUG somewhere — a section the server was never taught to accept, most often —
+ * and the evidence has to survive long enough for somebody to see it. It stays in this browser,
+ * is never sent anywhere, and is capped so it cannot grow without limit.
+ */
+const REJECTED_KEY = "vrds_outbox_refused";
+const MAX_REJECTED = 20;
+
+function park(item: OutboxItem, error: unknown): void {
+  const reason = error instanceof Error ? error.message : String(error);
+  /* Loud on purpose. A refused write is not a network hiccup; somebody has to fix it. */
+  console.error(`[storage] the server REFUSED this write and it will not be retried: ${reason}`, item);
+  try {
+    const raw = localStorage.getItem(REJECTED_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    const list = Array.isArray(parsed) ? parsed : [];
+    list.push({ at: new Date().toISOString(), reason, item });
+    localStorage.setItem(REJECTED_KEY, JSON.stringify(list.slice(-MAX_REJECTED)));
+  } catch {
+    /* Storage unavailable: the console line above is then the only record, which is still
+       better than a queue that never drains. */
+  }
+}
+
+/**
+ * Retries everything waiting, oldest first.
  *
  * Order is preserved deliberately: "reached block 5" must not overtake "was created", or the
- * server would be asked to update a participant it has never been told about. One failure means
- * the server is unreachable, so there is nothing to gain by trying the rest.
+ * server would be asked to update a participant it has never been told about. An unreachable
+ * server therefore stops the flush — there is nothing to gain by trying the rest, and passing over
+ * one write would break that order.
+ *
+ * A REFUSED WRITE IS DIFFERENT, AND TREATING IT THE SAME COST A WHOLE QUEUE. Until 23 September
+ * 2026 any failure stopped the flush. When the server refused one section it did not recognise,
+ * that write went back to the head of the queue and was retried forever, and every write behind it
+ * — every block, every section, the completion flag — waited behind a write that could never
+ * succeed. One unknown section name was enough to stop a participant's data reaching MongoDB
+ * entirely, on the server and in local development alike.
+ *
+ * A refusal is now parked (see park) and the queue moves on. The order guarantee is unaffected:
+ * a write the server will never accept is not a write anything can be ordered against.
  */
 export async function flushOutbox(): Promise<void> {
   if (!remote) return;
@@ -177,8 +242,9 @@ export async function flushOutbox(): Promise<void> {
 
   const remaining = [...items];
   while (remaining.length > 0) {
-    const ok = await send(remaining[0]);
-    if (!ok) break;
+    const result = await send(remaining[0]);
+    if (result === "retry") break;
+    /* "sent" and "refused" both leave the queue; only one of them reached the database. */
     remaining.shift();
   }
   writeOutbox(remaining);

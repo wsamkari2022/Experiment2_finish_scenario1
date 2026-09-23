@@ -24,10 +24,26 @@
 
 import express from "express";
 import cors from "cors";
-import { connect, participants, DB_NAME, MONGO_URL } from "./db.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { connect, participants, DB_NAME, SAFE_MONGO_URL } from "./db.js";
 
 const PORT = Number(process.env.PORT ?? 4000);
+const HOST = process.env.HOST ?? "0.0.0.0";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const app = express();
+
+/* On the public server, the same hardening headers Experiment 1 sends, on every response. */
+if (IS_PRODUCTION) {
+  app.disable("x-powered-by");
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    next();
+  });
+}
 
 app.use(cors());
 app.use(express.json({ limit: "5mb" })); // a finished participant document is a few hundred KB
@@ -48,7 +64,7 @@ app.get(
   "/api/health",
   route(async (_req, res) => {
     const count = await participants().estimatedDocumentCount();
-    res.json({ ok: true, database: DB_NAME, url: MONGO_URL, participants: count });
+    res.json({ ok: true, database: DB_NAME, url: SAFE_MONGO_URL, participants: count });
   }),
 );
 
@@ -162,6 +178,10 @@ app.patch(
  */
 const WRITABLE_ROOTS = new Set([
   "blocks", "analysis", "headline", "timings", "resume_state", "active_time", "quality",
+  /* The login history written by src/experiment/sessionLog.ts (dbShape path "sessions"). Without
+     it here, every save of it was refused, and because the outbox stops at its first failure,
+     the refused write sat at the head of the queue and held back everything behind it. */
+  "sessions",
 ]);
 const SAFE_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)?$/;
 
@@ -186,12 +206,51 @@ app.patch(
   }),
 );
 
+/* ------------------------------------------------------------------ production site */
+
+/*
+ * In development Vite serves the pages and proxies /api here. On the server there is no Vite, so
+ * in production this same process also serves the built study from dist/. One process, one port,
+ * one origin, exactly as the Vite proxy arranges it locally. Development is unaffected, because
+ * this block only runs when NODE_ENV is "production".
+ */
+if (IS_PRODUCTION) {
+  const DIST_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
+  const INDEX_HTML = path.join(DIST_DIR, "index.html");
+
+  if (!fs.existsSync(INDEX_HTML)) {
+    console.error(`[site] production build not found: ${INDEX_HTML}`);
+    console.error("[site] run ./build-and-run.sh (or npm run build) first.");
+    process.exit(1);
+  }
+
+  /* An unknown /api path must answer with JSON, never with the web page. */
+  app.use("/api", (_req, res) => res.status(404).json({ error: "Not found" }));
+
+  app.use(
+    express.static(DIST_DIR, {
+      index: false,
+      maxAge: "1h",
+      setHeaders(res, filePath) {
+        if (filePath.endsWith("index.html")) res.setHeader("Cache-Control", "no-store");
+      },
+    }),
+  );
+
+  /* Any other GET returns the page, so a refresh or a direct link does not 404. */
+  app.use((req, res, next) => {
+    if (req.method !== "GET" && req.method !== "HEAD") return next();
+    res.setHeader("Cache-Control", "no-store");
+    res.sendFile(INDEX_HTML);
+  });
+}
+
 /* ----------------------------------------------------------------------------- start */
 
 connect()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`[api] listening on http://localhost:${PORT}`);
+    app.listen(PORT, HOST, () => {
+      console.log(`[api] listening on http://${HOST}:${PORT}${IS_PRODUCTION ? " (production: serving dist/)" : ""}`);
       console.log(`[api] try http://localhost:${PORT}/api/health`);
     });
   })

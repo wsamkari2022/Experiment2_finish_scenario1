@@ -25,3 +25,6 @@ dist-ssr
 .sim-build/
 .cvr-backup/
 .cvr2-backup/
+
+# Server secrets (MongoDB password) - never commit or upload
+.env

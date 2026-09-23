@@ -32,7 +32,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
     });
     if (!response.ok) {
-      throw new Error(`${init?.method ?? "GET"} ${path} → ${response.status}`);
+      /*
+       * THE STATUS TRAVELS WITH THE ERROR, because the caller has to tell two very different
+       * failures apart. A 503 or a dropped connection means "try again later". A 400 means the
+       * server has looked at this exact write and refused it, and it will refuse it every time.
+       * Without the number, storage.ts treated both as "retry", and a single refused write sat at
+       * the head of the outbox forever, holding back every write queued behind it.
+       */
+      const error = new Error(`${init?.method ?? "GET"} ${path} → ${response.status}`);
+      (error as Error & { httpStatus?: number }).httpStatus = response.status;
+      throw error;
     }
     return (await response.json()) as T;
   } finally {

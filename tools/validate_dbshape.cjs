@@ -361,6 +361,48 @@ console.log("  THINGS THAT WERE WRONG ONCE");
   gate("D37", ok, `after the guess: "${kept.what_happened_after_the_guess}" / "${changed.what_happened_after_the_guess}" / "${cameBack.what_happened_after_the_guess}"`);
 }
 
+/* ---- every path the browser writes is a path the server accepts ----
+ *
+ * THE BUG THIS EXISTS FOR. `sessions` was registered in dbShape and was not in the server's
+ * WRITABLE_ROOTS, so the API answered 400 to every save of it. Nothing in this suite looked at the
+ * server, so the mismatch was invisible here while it lost data in production — and because the
+ * outbox stopped at its first failure, the refused write held back every write queued behind it.
+ *
+ * It reads the server's own source rather than a copy of the list, because a copy is the thing
+ * that drifts. Two rules are checked: the first segment must be an allowed root, and the whole
+ * path must satisfy the server's SAFE_PATH, which permits at most two segments.
+ */
+{
+  const serverSource = fs.readFileSync(path.join(ROOT, "server", "index.js"), "utf8");
+  const rootsBlock = /const WRITABLE_ROOTS = new Set\(\[([\s\S]*?)\]\)/.exec(serverSource);
+  /* Comments are stripped first. The allowlist explains itself in a comment that names the very
+     section it allows, and reading THAT as an entry would let the gate pass while the real entry
+     was missing — which is exactly what it did the first time it was tested. */
+  const withoutComments = rootsBlock
+    ? rootsBlock[1].replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " ")
+    : "";
+  const roots = new Set((withoutComments.match(/"([a-z0-9_]+)"/g) || []).map((s) => s.replace(/"/g, "")));
+
+  /* Paths come from two places: the source map, and the sections storage.ts sends by hand after
+     Block 5 changes. Both reach the same endpoint, so both are checked. */
+  const storageSource = fs.readFileSync(path.join(ROOT, "src", "experiment", "storage.ts"), "utf8");
+  const handWritten = (storageSource.match(/path:\s*"([a-z0-9_.]+)"/g) || [])
+    .map((s) => s.replace(/path:\s*"/, "").replace(/"$/, ""));
+  const everyPath = [...new Set([...db.SOURCE_MAP.map((s) => s.path), ...handWritten])];
+
+  const SAFE_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)?$/;
+  const refused = everyPath.filter((p) => !roots.has(p.split(".")[0]));
+  const malformed = everyPath.filter((p) => !SAFE_PATH.test(p));
+
+  gate("D44", roots.size > 0 && refused.length === 0 && malformed.length === 0,
+    roots.size === 0
+      ? "could not read WRITABLE_ROOTS from server/index.js — this gate is not running"
+      : refused.length || malformed.length
+        ? "the server would REFUSE these writes: " + [...refused, ...malformed].join(", ")
+        : "every section the browser writes is one the server accepts  ("
+          + everyPath.length + " paths, " + roots.size + " allowed roots)");
+}
+
 /* ---- the headline carries the performance pair AND its label ---- */
 {
   const head = db.buildHeadline(

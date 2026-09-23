@@ -21,6 +21,37 @@ Two of those traps matter enough to repeat here:
 - **`headline` and `analysis` are derived from `blocks`.** Correlating a derived field with the raw
   field it came from is not a finding.
 
+## One folder, two environments (since 23 September 2026)
+
+**This folder is both the development copy and the production copy.** Work here. There is no second
+folder to convert afterwards, and nothing needs to be "made ready to deploy" — the deployment agent's
+only job is to copy this folder to the server and run it.
+
+| | How it runs | What it talks to |
+|---|---|---|
+| Development | `npm run dev` (Vite, port 5173) + `npm run server` (API, port 4000) | local MongoDB at `127.0.0.1:27017`, database `vrds_experiment2` |
+| Production | `NODE_ENV=production node server/index.js` after `npm run build` | the server's MongoDB from `MONGO_URL` in `.env`, database `VRDS2` |
+
+`server/index.js` serves the built site from `dist/` **only** when `NODE_ENV=production`. In
+development that block never runs, Vite serves the pages and proxies `/api` to the same API server,
+and nothing about the local workflow changes. `./build-and-run.sh`, `stop-project.sh`,
+`ecosystem.config.cjs`, `.env.example` and `DEPLOYMENT.md` are the server's side of it. `.env` holds
+the database password and is git-ignored — never commit it and never print it (`server/db.js` masks
+it in logs and on `/api/health`).
+
+### A new database section has to be allowed in two places
+
+`dbShape.ts` decides where a section lands; `WRITABLE_ROOTS` in `server/index.js` decides whether the
+API will accept it. A path in one and not the other is refused with a 400, and until 23 September
+2026 that was worse than losing the section: the outbox stopped at its first failure, so a refused
+write sat at the head of the queue and held back **every** write behind it, in production and in
+local development alike. `sessions` shipped that way.
+
+Two things now stand over it. **Gate D44** in `npm run validate:dbshape` reads the server's own
+source and fails if any path the browser writes is not a root the server accepts. And `storage.ts`
+now separates "the server is down" (keep, retry, preserve order) from "the server refused this"
+(park it in `vrds_outbox_refused`, log loudly, and let the queue drain).
+
 ## Running it
 
 ```
@@ -39,7 +70,9 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
 `validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS` and `ALL DATABASE GATES
-PASSED`. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
+PASSED`. Since 23 September 2026 `validate:position` runs LAST in that chain: it fails on purpose
+(see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
+above were never printed and four suites never ran. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
 a blocker, not a warning.
 
 The last of those three comes from `npm run validate:dbshape`, which runs the real `dbShape.ts`

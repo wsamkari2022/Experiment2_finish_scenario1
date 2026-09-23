@@ -19,6 +19,13 @@ import { MongoClient } from "mongodb";
 const MONGO_URL = process.env.MONGO_URL ?? "mongodb://127.0.0.1:27017";
 const DB_NAME = process.env.MONGO_DB ?? "vrds_experiment2";
 
+/*
+ * On the server MONGO_URL carries a username and password. Anything that prints the URL — a log
+ * line, /api/health — uses this copy, with the password masked. A local URL has no credentials
+ * and comes out unchanged.
+ */
+const SAFE_MONGO_URL = MONGO_URL.replace(/\/\/([^:@/]+):[^@/]*@/, "//$1:***@");
+
 /** One client for the life of the process; the driver pools connections internally. */
 const client = new MongoClient(MONGO_URL, { serverSelectionTimeoutMS: 5000 });
 
@@ -44,7 +51,7 @@ export async function connect() {
     { key: { status: 1 }, name: "status" },
   ]);
 
-  console.log(`[db] connected to ${MONGO_URL} · database "${DB_NAME}"`);
+  console.log(`[db] connected to ${SAFE_MONGO_URL} · database "${DB_NAME}"`);
   return db;
 }
 
@@ -54,4 +61,4 @@ export function participants() {
   return db.collection("participants");
 }
 
-export { DB_NAME, MONGO_URL };
+export { DB_NAME, MONGO_URL, SAFE_MONGO_URL };

@@ -175,7 +175,13 @@ export function Block5ScenarioIntro({ rootRef, scenario, frozenProfile, index, t
             </Box>
           )}
 
-          <Box data-morph="scene" flex="1 1 0" minW="0"
+          {/*
+            THE SCENE CARD NEEDS THE SAME SPLIT AS THE PICTURE. Stacked below `lg`, a zero flex basis
+            with overflow hidden collapsed this card to its border (2px on a phone): the whole scene
+            text and "The situation right now" were invisible. `0 0 auto` lets it take its content's
+            height; from `lg` up it shares the row exactly as before.
+          */}
+          <Box data-morph="scene" flex={{ base: "0 0 auto", lg: "1 1 0" }} minW="0"
             bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
             borderWidth="1px" borderColor={pal.accent} rounded="2xl" overflow="hidden"
             style={{ boxShadow: pal.sidebarShadow }}>
