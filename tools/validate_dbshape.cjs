@@ -511,6 +511,147 @@ console.log("  THINGS THAT WERE WRONG ONCE");
     "each row names its options, carries the guessing baseline, and only scenario 6 was shown");
 }
 
+/* ---- the position rows, recomputed from the raw deck rather than trusted ----
+ *
+ * WHY ARITHMETIC IS REDONE HERE INSTEAD OF CALLING THE SAME FUNCTION. Every other gate in this
+ * file checks that dbShape COPIED a number correctly. These two check that the number is RIGHT:
+ * the distance and the departure share are worked out again from the option fingerprints and the
+ * frozen profile, by hand, and compared with what reached the document. A gate that called
+ * analysePosition would agree with a wrong analysePosition.
+ */
+{
+  /* All three fixtures, not one: they choose very differently, and a distance formula can be
+     right for somebody who always takes the nearest option and wrong for somebody who does not. */
+  let rowsRightAll = true, meansRightAll = true, rowsSeen = 0;
+  const problems = [];
+  for (const [, block5] of PEOPLE) {
+  const position = db.buildPositionSection(block5);
+  const frozen = {};
+  for (const d of block5.originalProfile.dimensions) frozen[d.key] = d.score;
+
+  /* distance = mean |profile − option| over the four policy values. */
+  const distanceOf = (option) =>
+    POLICY.reduce((a, k) => a + Math.abs((frozen[k] ?? 0) - (option.fingerprint[k] ?? 0)), 0)
+    / POLICY.length;
+
+  let rowsRight = true;
+  let worstDistance = 0;
+  let worstShare = 0;
+  const detail = [];
+
+  for (const row of position.by_scenario) {
+    const scenario = BLOCK5_SCENARIOS.find((s) => s.id === row.scenario_id);
+    const result = block5.scenarioResults.find((r) => r.scenarioId === row.scenario_id);
+    const chosen = scenario.options.find((o) => o.id === result.selectedOptionId);
+
+    const mine = distanceOf(chosen);
+    const all = scenario.options.map(distanceOf);
+    const nearest = Math.min(...all);
+    const farthest = Math.max(...all);
+    const span = farthest - nearest;
+    const share = span <= 0 ? 50 : Math.round(((mine - nearest) / span) * 100);
+
+    worstDistance = Math.max(worstDistance, Math.abs(row.distance_from_profile_before_block5 - mine));
+    worstShare = Math.max(worstShare, Math.abs(row.departure_share - share));
+    if (Math.abs(row.distance_from_profile_before_block5 - mine) > 0.06
+      || Math.abs(row.departure_share - share) > 0.6
+      || row.position !== scenario.stakePosition) {
+      rowsRight = false;
+      detail.push(`${row.scenario_id}: stored ${row.distance_from_profile_before_block5}/`
+        + `${row.departure_share}%, recomputed ${Math.round(mine * 10) / 10}/${share}%`);
+    }
+  }
+
+  rowsSeen += position.by_scenario.length;
+  if (!rowsRight) { rowsRightAll = false; problems.push(...detail); }
+
+  /* The veil scenario has no position by construction, and the means must be the means. */
+  const hasVeil = position.by_scenario.some((r) => r.position === "behind_the_veil");
+  let meansRight = true;
+  for (const summary of position.by_position) {
+    const mine = position.by_scenario.filter((r) => r.position === summary.position);
+    const mean = mine.reduce((a, r) => a + r.departure_share, 0) / mine.length;
+    if (Math.abs(mean - summary.mean_departure_share) > 0.6) meansRight = false;
+    if (mine.length !== summary.scenarios_at_this_position) meansRight = false;
+  }
+  const spread = position.by_position.map((s) => s.mean_departure_share);
+  const effect = spread.length > 1 ? Math.max(...spread) - Math.min(...spread) : null;
+  const effectRight = effect === null
+    ? position.overall_effect === null
+    : Math.abs(effect - position.overall_effect) <= 0.6;
+
+  if (hasVeil || !meansRight || !effectRight) meansRightAll = false;
+  }
+
+  gate("D45", rowsRightAll,
+    rowsRightAll
+      ? `every position row recomputes from the deck, by hand  (${rowsSeen} rows across `
+        + `${PEOPLE.length} very different participants)`
+      : `position rows disagree with the deck: ${problems.join(" | ")}`);
+  gate("D46", meansRightAll,
+    "each chair averages its own rows, the effect is their spread, and the veil is never a row");
+}
+
+/* ---- the per-scenario predictions, checked as probabilities rather than as copied fields ---- */
+{
+  let sumsRight = true;
+  let ranksRight = true;
+  let topRight = true;
+  let theirsRight = true;
+  let profileRight = true;
+  let worstSum = 0;
+  let rowsChecked = 0;
+
+  for (const [, block5] of PEOPLE) {
+  const mpf = db.buildMpfPredictions(block5);
+  mpf.by_scenario.forEach((row, i) => {
+    rowsChecked += 1;
+    if (row.could_not_be_computed) return;
+
+    const total = row.by_option.reduce((a, o) => a + o.mpf_chance_percent, 0);
+    worstSum = Math.max(worstSum, Math.abs(100 - total));
+    if (Math.abs(100 - total) > 0.35) sumsRight = false;   // one decimal per option, six options
+
+    const ranks = row.by_option.map((o) => o.rank).sort((a, b) => a - b);
+    const expected = row.by_option.map((_, n) => n + 1);
+    if (JSON.stringify(ranks) !== JSON.stringify(expected)) ranksRight = false;
+
+    const best = row.by_option.reduce((a, b) => (b.mpf_chance_percent > a.mpf_chance_percent ? b : a));
+    if (best.rank !== 1 || best.option_id !== row.most_expected_option_id
+      || Math.abs(best.mpf_chance_percent - row.most_expected_option_chance_percent) > 0.001) {
+      topRight = false;
+    }
+
+    const theirs = row.by_option.find((o) => o.option_id === row.participant.final_choice_option_id);
+    if (theirs && Math.abs(theirs.mpf_chance_percent
+      - row.participant.mpf_chance_of_their_final_choice_percent) > 0.001) {
+      theirsRight = false;
+    }
+
+    /* The profile a row was predicted from must be the one that scenario OPENED on: the frozen
+       profile for the first, and the snapshot the previous scenario left behind for the rest. */
+    const expectedProfile = i === 0
+      ? Object.fromEntries(block5.originalProfile.dimensions
+          .filter((d) => POLICY.includes(d.key)).map((d) => [d.key, d.score]))
+      : block5.scenarioResults[i - 1].policySnapshotAfter;
+    if (!row.profile_snapshot_was_missing && expectedProfile) {
+      for (const k of POLICY) {
+        if (Math.abs((row.profile_used_values?.[k] ?? -1) - (expectedProfile[k] ?? -2)) > 0.001) {
+          profileRight = false;
+        }
+      }
+    }
+  });
+  }
+
+  gate("D47", sumsRight && ranksRight && topRight && theirsRight,
+    `every prediction row is a real probability distribution  (${rowsChecked} rows across `
+    + `${PEOPLE.length} participants, worst sum off by ${Math.round(worstSum * 100) / 100} points)`);
+
+  gate("D48", profileRight,
+    "each row was predicted from the profile its scenario opened on, not from a later one");
+}
+
 /* ---- the Block 5 sections, over three very different participants ---- */
 for (const [who, block5] of PEOPLE) {
   console.log("");
@@ -669,6 +810,64 @@ for (const [who, block5] of PEOPLE) {
   })(), "scenario 6 moved no value — it is still a test OF the model, not input to it");
 }
 
+/* ---- the one room that gathers the major scores must agree with the rooms it copies ---- */
+{
+  let agrees = true;
+  let listsRight = true;
+  const gaps = [];
+  for (const [who, block5] of PEOPLE) {
+    const head = db.buildHeadline(block5, ledger);
+    const position = db.buildPositionSection(block5);
+    const alignment = db.buildAlignmentRecords(block5);
+    const mpf = db.buildMpfPredictions(block5);
+    const major = db.buildMajorScores(block5, ledger, {
+      totalMs: 600000, byStage: { block5: 600000 }, sittings: 2, longestIdleMs: 0,
+      firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: false, owner: "x@y.z",
+    }, { dropped: 0, sessions: [] }, null);
+
+    const same = (a, b, what) => {
+      if (a !== b) { agrees = false; gaps.push(`${who}: ${what} ${a} vs ${b}`); }
+    };
+    same(major.vci.overall_score, head.consistency_score, "vci");
+    same(major.vci.overall_label, head.consistency_label, "vci label");
+    same(major.vci.when_deciding_scenario_4, position.decided_versus_wished?.vci_acted, "vci acted");
+    same(major.vci.when_wishing_scenario_5, position.decided_versus_wished?.vci_wished, "vci wished");
+    same(major.stability.score, head.stability_score, "stability");
+    same(major.stability.stakeholder_score, head.stakeholder_stability_score, "stakeholder stability");
+    same(major.performance.score, head.performance_score, "performance");
+    same(major.position_effect.overall, position.overall_effect, "position effect");
+    same(major.visits.number_of_visits, 2, "visits");
+
+    /* The five lists have to be lists, of the right length, in the order the participant met them. */
+    if (major.position_effect.by_scenario.length !== position.by_scenario.length) listsRight = false;
+    if (major.predictions_by_scenario.length !== mpf.by_scenario.length) listsRight = false;
+    if (major.alignment_by_scenario.length !== alignment.by_scenario.length) listsRight = false;
+    const order = major.predictions_by_scenario.map((r) => r.order_shown);
+    if (JSON.stringify(order) !== JSON.stringify(order.slice().sort((a, b) => a - b))) listsRight = false;
+    for (const row of major.predictions_by_scenario) {
+      const source = mpf.by_scenario.find((r) => r.scenario_id === row.scenario_id);
+      if (row.most_expected_option_chance_percent !== source.most_expected_option_chance_percent
+        || row.their_choice_chance_percent
+          !== source.participant.mpf_chance_of_their_final_choice_percent) {
+        agrees = false;
+        gaps.push(`${who}: prediction row ${row.scenario_id}`);
+      }
+    }
+    /* The three profiles are three different things, and the frozen one must never move. */
+    const before = db.buildProfileChange(block5)?.before;
+    if (JSON.stringify(major.profile_before_block5) !== JSON.stringify(before)) {
+      agrees = false;
+      gaps.push(`${who}: frozen profile`);
+    }
+  }
+
+  gate("D49", agrees && listsRight,
+    agrees && listsRight
+      ? `major_info_and_scores matches every section it copies  (${PEOPLE.length} participants, `
+        + "five lists, twelve fields)"
+      : `the gathered copy disagrees with its source: ${gaps.join(" | ")}`);
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {
@@ -703,6 +902,13 @@ if (process.argv.some((a) => a.startsWith("--dump"))) {
       alignment_records: db.buildAlignmentRecords(block5),
       mpf_predictions_every_scenario: db.buildMpfPredictions(block5),
       mpf_prediction_percentages: db.buildMpfPercentages(db.buildMpfPredictions(block5)),
+    },
+    major_info_and_scores: db.buildMajorScores(block5, ledger, {
+      totalMs: 2_400_000, byStage: { block5: 1_500_000, money: 400_000 }, sittings: 2,
+      longestIdleMs: 45_000, firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: true,
+      owner: "x@y.z",
+    }, { dropped: 0, sessions: [] }, null),
+    _end: {
       scenario6_mpf_test: db.buildScenario6Section(block5),
     },
   };

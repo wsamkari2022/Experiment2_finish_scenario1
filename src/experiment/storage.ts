@@ -51,12 +51,14 @@ import {
   buildAlignmentRecords,
   buildMpfPredictions,
   buildMpfPercentages,
+  buildMajorScores,
   buildProfileChange,
   buildQuality,
   collectResumeFiles,
   restoreResumeFiles,
 } from "./dbShape";
 import { ACTIVE_TIME_KEY } from "./activeTime";
+import { SESSION_LOG_KEY } from "./sessionLog";
 import { FEEDBACK_KEY } from "./feedbackTypes";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 
@@ -533,6 +535,31 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
       if (mpfPercentages) {
         sendOrQueue({ op: "saveSection", path: "analysis.mpf_prediction_percentages", data: mpfPercentages });
       }
+
+      /*
+       * EVERY MAJOR SCORE IN ONE ROOM.
+       *
+       * The numbers that matter are spread across eight rooms of the document, each there for a
+       * good reason and none of them where somebody looks when the question is "how did this
+       * participant score?". This assembles them from the sections that own them - the same
+       * builders, not a second calculation - and it is sent last, so every section it copies has
+       * been built in this same pass.
+       *
+       * It reads four sources this branch does not otherwise touch: the stage timings, the
+       * working-time ledger, the login history and the feedback answers. A participant who has
+       * not reached the feedback yet simply has no feedback in it.
+       */
+      const readRaw = (key: string): unknown => {
+        try { return JSON.parse(localStorage.getItem(key) ?? "null"); } catch { return null; }
+      };
+      const major = buildMajorScores(
+        translated,
+        timings,
+        readRaw(ACTIVE_TIME_KEY),
+        readRaw(SESSION_LOG_KEY),
+        readRaw(FEEDBACK_KEY),
+      );
+      if (major) sendOrQueue({ op: "saveSection", path: "major_info_and_scores", data: major });
 
       /* The value profile before and after Block 5, and the movement between them. */
       const profiles = buildProfileChange(translated);

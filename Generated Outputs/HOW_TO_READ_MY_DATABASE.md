@@ -153,6 +153,37 @@ run can be followed across machines without reading UUIDs.
 
 ---
 
+## 3c. `major_info_and_scores` — every major score in one room
+
+Added **24 September 2026**, on request: the numbers that matter, gathered where somebody looking
+for them will find them. **Everything in it is a copy.** Each line is lifted from the section that
+owns it, by calling the same builder that writes that section, and `where_each_number_lives` inside
+the field names the original for every line. If a number here ever disagrees with its source, the
+source is right and this is wrong — gate D49 checks they agree on every build.
+
+| Field | What it holds |
+|---|---|
+| `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them |
+| `stability` | The score and label, plus the directness, context and stakeholder stabilities |
+| `performance` | `score`, `captured`, `captured_label` |
+| `position_effect` | `overall`, a `by_scenario` list (role, distance, departure share) and a `by_role` list |
+| `predictions_by_scenario` | One row per scenario: the model's favourite and its chance, their choice and its chance, and how many points behind it sat |
+| `total_time` | Active minutes, timed-stage minutes, per-stage minutes, longest idle |
+| `visits` | Number of visits, logins, browsers used, whether they ever restored from another device |
+| `alignment_by_scenario` | One row per scenario: what they chose and its alignment label · `alignment_counts` totals the four labels |
+| `profile_before_block5`, `profile_now`, `profile_after_block5`, `profile_change_during_block5` | The three profiles and the movement between the first and last |
+| `feedback` | The feedback answers, grouped as they were asked, each with its question text |
+
+> ⚠️ **`profile_now` is shorter than the other two.** It carries the four policy values only,
+> because only those are snapshotted after each scenario. Directness, context and stakeholder are
+> in `profile_before_block5` and `profile_after_block5`, and their movement is in
+> `profile_change_during_block5`. The field says this itself, in `why_profile_now_is_shorter`.
+
+> ⚠️ **It is a copy, so it duplicates data.** That was the request, and it is stated here so
+> nobody counts the same answer twice: never average across this field and its sources together.
+
+---
+
 ## 4. `headline` — the numbers most analyses start from
 
 These are copies, lifted to the top so you do not have to dig. The originals stay in `blocks`.

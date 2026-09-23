@@ -76,7 +76,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-20-sessions-and-prediction-percentages";
+export const SHAPE_VERSION = "2026-09-24-major-info-and-scores";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1521,6 +1521,251 @@ export function buildMpfPercentages(mpfSection: unknown): Record<string, unknown
         ? Math.round((gaps.reduce((a, b) => a + b, 0) / gaps.length) * 10) / 10
         : null,
       largest_points_behind_the_most_expected_option: gaps.length ? Math.max(...gaps) : null,
+    },
+  };
+}
+
+/**
+ * EVERY MAJOR SCORE AND EVERY MAJOR FACT, IN ONE PLACE.
+ *
+ * WHAT THIS IS FOR. The numbers that matter are spread across eight rooms of the document -
+ * `headline`, four `analysis` sections, `timings`, `active_time`, `sessions` and `blocks` - each
+ * of which exists for a good reason and none of which is where somebody looks when the question
+ * is simply "how did this participant score?". This is that one place: the twelve things asked
+ * for, in the order they were asked for.
+ *
+ * IT IS A COPY, AND IT SAYS SO IN THE RECORD. Nothing here is computed a second time. Every
+ * number is lifted from the section that owns it, by calling the same builder that writes that
+ * section, so the two cannot drift apart - and `npm run validate:dbshape` checks that they agree
+ * anyway (gate D49), because "cannot drift" is worth testing rather than asserting.
+ *
+ * WHERE EACH NUMBER CAME FROM is written into the field itself, under `where_each_number_lives`.
+ * A reader who wants the detail behind any line here can follow it without asking anybody.
+ *
+ * Null when Block 5 has not produced a record yet: there is nothing major to report before that.
+ */
+export function buildMajorScores(
+  block5: unknown,
+  timings: unknown,
+  activeTime: unknown,
+  sessionLog: unknown,
+  feedback: unknown,
+): Record<string, unknown> | null {
+  if (!block5 || typeof block5 !== "object") return null;
+
+  const headline = buildHeadline(block5, timings);
+  const position = buildPositionSection(block5);
+  const alignment = buildAlignmentRecords(block5);
+  const mpf = buildMpfPredictions(block5);
+  const profiles = buildProfileChange(block5);
+  const decided = (position?.decided_versus_wished ?? null) as Record<string, unknown> | null;
+
+  const activeRow = SOURCE_MAP.find((s) => s.path === "active_time");
+  const sessionRow = SOURCE_MAP.find((s) => s.path === "sessions");
+  const feedbackRow = SOURCE_MAP.find((s) => s.path === "blocks.feedback_answers");
+
+  const active = activeTime && activeRow?.transform
+    ? activeRow.transform(activeTime) as Record<string, unknown>
+    : null;
+  const sessions = sessionLog && sessionRow?.transform
+    ? sessionRow.transform(sessionLog) as Record<string, unknown>
+    : null;
+  const feedbackRecord = feedback && feedbackRow?.transform
+    ? feedbackRow.transform(feedback) as Record<string, unknown>
+    : null;
+
+  /* The four values as they stand right now. During Block 5 this is the latest snapshot; once the
+     block is finished it is the same as the profile after it, and the two are kept apart anyway
+     because during a run they are genuinely different things. */
+  const results = resultsOf(block5);
+  const last = results.length ? results[results.length - 1] : null;
+  const profileNow = last?.policySnapshotAfter
+    ? policyScoresOfProfile({ dimensions: Object.entries(last.policySnapshotAfter)
+        .map(([key, score]) => ({ key, score })) })
+    : (profiles?.before ?? null);
+
+  const alignmentRows = Array.isArray(alignment?.by_scenario)
+    ? (alignment.by_scenario as Record<string, unknown>[])
+    : [];
+  const predictionRows = Array.isArray(mpf?.by_scenario)
+    ? (mpf.by_scenario as Record<string, unknown>[])
+    : [];
+
+  return {
+    what_this_is:
+      "The major scores and facts for this participant, gathered from the sections that own them. "
+      + "Every number here is a copy; none of it is computed twice.",
+    read_this_first:
+      "A copy can only be as right as its source, and its source is named for every line in "
+      + "where_each_number_lives below. If a number here ever disagrees with the section it came "
+      + "from, the section is the original and this is the one that is wrong.",
+
+    /* 1 ------------------------------------------------------------------ the three VCIs */
+    vci: {
+      what_it_is:
+        "How well the choices fit the participant's own values. 50 is what blind picking gives.",
+      overall_score: headline?.consistency_score ?? null,
+      overall_label: headline?.consistency_label ?? null,
+      when_deciding_scenario_4: decided?.vci_acted ?? null,
+      when_wishing_scenario_5: decided?.vci_wished ?? null,
+      wishing_minus_deciding: decided?.responsibility_gap ?? null,
+      what_the_gap_means:
+        "Positive means they were truer to their own values when the decision was NOT theirs to "
+        + "make. Both sides are judged on the profile they brought into that scenario.",
+    },
+
+    /* 2 ------------------------------------------------------------------ stability */
+    stability: {
+      what_it_is:
+        "Whether the ORDER of the four policy values changed when the participant went against "
+        + "their best fit. Counted as swaps at the conflict steps, never as distance travelled.",
+      score: headline?.stability_score ?? null,
+      label: headline?.stability_label ?? null,
+      directness_score: headline?.directness_stability_score ?? null,
+      directness_label: headline?.directness_stability_label ?? null,
+      context_score: headline?.context_stability_score ?? null,
+      context_label: headline?.context_stability_label ?? null,
+      stakeholder_score: headline?.stakeholder_stability_score ?? null,
+      stakeholder_label: headline?.stakeholder_stability_label ?? null,
+    },
+
+    /* 3 ------------------------------------------------------------------ performance */
+    performance: {
+      what_it_is: "Outcome quality of the options they chose, and how much of what was on the "
+        + "table they captured.",
+      score: headline?.performance_score ?? null,
+      captured: headline?.performance_captured ?? null,
+      captured_label: headline?.performance_captured_label ?? null,
+    },
+
+    /* 4 ------------------------------------------------------------------ position, per chair */
+    position_effect: {
+      what_it_is:
+        "How differently they chose depending on whose cost it was. departure_share is 0 when "
+        + "they took the option closest to their own values and 100 when they took the farthest.",
+      overall: position?.overall_effect ?? null,
+      overall_label: position?.overall_effect_label ?? null,
+      by_scenario: Array.isArray(position?.by_scenario)
+        ? (position.by_scenario as Record<string, unknown>[]).map((r) => ({
+            order_shown: r.order_shown,
+            scenario_id: r.scenario_id,
+            title: r.title,
+            role: r.position,
+            role_label: r.position_label,
+            distance_from_profile_before_block5: r.distance_from_profile_before_block5,
+            departure_share: r.departure_share,
+          }))
+        : [],
+      by_role: Array.isArray(position?.by_position)
+        ? (position.by_position as Record<string, unknown>[]).map((s) => ({
+            role: s.position,
+            role_label: s.position_label,
+            scenarios_at_this_role: s.scenarios_at_this_position,
+            mean_departure_share: s.mean_departure_share,
+            mean_distance: s.mean_distance_from_profile_before_block5,
+          }))
+        : [],
+      scenario_6_is_absent_on_purpose:
+        "Behind the veil the participant is not told whose cost it is, so there is no chair to "
+        + "compare and no row here.",
+    },
+
+    /* 5 ------------------------------------------------------------------ predictions, per scenario */
+    predictions_by_scenario: predictionRows.map((r) => {
+      const person = (r.participant ?? {}) as Record<string, unknown>;
+      return {
+        order_shown: r.order_shown,
+        scenario_id: r.scenario_id,
+        was_shown_to_the_participant: r.was_shown_to_the_participant,
+        options_on_the_table: r.options_on_the_table,
+        chance_if_guessing_percent: r.chance_if_guessing_percent,
+        most_expected_option_id: r.most_expected_option_id,
+        most_expected_option_chance_percent: r.most_expected_option_chance_percent,
+        their_choice_option_id: person.final_choice_option_id ?? null,
+        their_choice_chance_percent: person.mpf_chance_of_their_final_choice_percent ?? null,
+        points_behind_the_most_expected_option:
+          person.points_behind_the_most_expected_option_at_final_choice ?? null,
+        the_model_named_their_choice: person.mpf_named_their_final_choice ?? null,
+      };
+    }),
+    only_scenario_6_was_shown:
+      "Every other prediction row was computed after the fact from stored answers and was never "
+      + "on screen while anybody was deciding.",
+
+    /* 6 ------------------------------------------------------------------ time */
+    total_time: {
+      active_minutes: active?.total_active_minutes ?? null,
+      active_minutes_note:
+        "Real working time: counted only while the tab was visible and something was moved, typed "
+        + "or scrolled within the previous 90 seconds. This is the number compensation is judged on.",
+      timed_stage_minutes: headline?.total_time_minutes ?? null,
+      timed_stage_minutes_note: headline?.total_time_minutes_covers ?? null,
+      by_stage_minutes: active?.by_stage_minutes ?? null,
+      longest_idle_minutes: active?.longest_idle_minutes ?? null,
+    },
+
+    /* 7 ------------------------------------------------------------------ visits */
+    visits: {
+      number_of_visits: active?.sittings ?? null,
+      what_a_visit_is:
+        "A visit ends when the participant is away for more than 30 minutes, and begins when they "
+        + "come back. Opening the study on a different machine is also a visit.",
+      logins: sessions?.total_logins ?? null,
+      browsers_used: sessions?.browsers_used ?? null,
+      ever_restored_from_another_device: sessions?.ever_restored_from_another_device ?? null,
+      first_login_at: sessions?.first_login_at ?? null,
+      last_login_at: sessions?.last_login_at ?? null,
+    },
+
+    /* 8 ------------------------------------------------------------------ what they picked, per scenario */
+    alignment_by_scenario: alignmentRows.map((r) => ({
+      order_shown: r.order_shown,
+      scenario_id: r.scenario_id,
+      role: r.position,
+      chosen_option_title: r.chosen_option_title,
+      alignment_label: r.alignment_label,
+      alignment_level: r.alignment_level,
+      counts_towards_the_scores: r.counts_towards_consistency_and_stability,
+    })),
+    alignment_counts: (alignment?.totals as Record<string, unknown> | undefined)
+      ?.alignment_level_counts ?? null,
+    alignment_counts_note:
+      "Counted over the decision scenarios only. The wish and the prediction test appear in the "
+      + "list above and are excluded from these counts.",
+
+    /* 9, 10, 11 --------------------------------------------------------- the three profiles */
+    profile_before_block5: profiles?.before ?? null,
+    profile_now: profileNow,
+    profile_after_block5: profiles?.after ?? null,
+    profile_change_during_block5: profiles?.change ?? null,
+    what_the_three_profiles_mean:
+      "before_block5 is the frozen profile built from Blocks 1 to 4. It never moves, and it is the "
+      + "only one alignment is ever judged against. profile_now is where things stand at the "
+      + "moment this record was written: during Block 5 that is the latest snapshot, and once the "
+      + "block is finished it says the same as after_block5. after_block5 is where they finished.",
+    why_profile_now_is_shorter:
+      "profile_now carries the FOUR policy values only, while the other two carry all seven. Only "
+      + "the four are snapshotted after each scenario, because only they are what a scenario can "
+      + "move a step at a time. Directness, context and stakeholder are in before_block5 and "
+      + "after_block5, and their movement is in profile_change_during_block5.",
+
+    /* 12 ----------------------------------------------------------------- feedback */
+    feedback: (feedbackRecord?.feedback ?? null),
+    feedback_note:
+      "Grouped as the participant answered it, with each question's own text beside its answer. "
+      + "The well-being battery keeps its own structure: items, subscales and a composite.",
+
+    where_each_number_lives: {
+      vci: "headline.consistency_score · analysis.position_effect.decided_versus_wished",
+      stability: "headline.stability_score and the three sensitivity scores beside it",
+      performance: "headline.performance_score, headline.performance_captured",
+      position_effect: "analysis.position_effect",
+      predictions_by_scenario: "analysis.mpf_predictions_every_scenario",
+      alignment_by_scenario: "analysis.alignment_records",
+      total_time: "active_time and timings",
+      visits: "active_time.sittings and sessions",
+      profiles: "analysis.value_profile_before_block5 / _after_block5 / _change",
+      feedback: "blocks.feedback_answers",
     },
   };
 }

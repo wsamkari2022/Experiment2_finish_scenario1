@@ -183,6 +183,10 @@ const WRITABLE_ROOTS = new Set([
      it here, every save of it was refused, and because the outbox stops at its first failure,
      the refused write sat at the head of the queue and held back everything behind it. */
   "sessions",
+  /* Every major score gathered in one room, written by dbShape.buildMajorScores. A copy of
+     numbers that already live elsewhere, kept because the question "how did this participant
+     score?" should not require opening eight sections. */
+  "major_info_and_scores",
 ]);
 const SAFE_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)?$/;
 
