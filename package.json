@@ -31,6 +31,7 @@
     "server": "node server/index.js",
     "validate:dbshape": "node tools/validate_dbshape.cjs",
     "validate:visits": "node tools/simulate_visits.cjs",
+    "report:planner": "node tools/planner_vs_weighting.cjs",
     "audit:rules": "tsc -p tools/tsconfig.sim.json && node tools/audit_cvr_rules.cjs",
     "validate:twins": "tsc -p tools/tsconfig.sim.json && node tools/validate_twins.cjs"
   },
