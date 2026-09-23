@@ -13,6 +13,25 @@
  * Compensation depends on this number, so the number has to mean something.
  *
  * ============================================================================
+ * THE LEDGER BELONGS TO A PARTICIPANT, NOT TO A BROWSER (23 September 2026)
+ * ============================================================================
+ * It did not, and the local database showed what that costs: seven participants carrying the same
+ * 3.8 minutes, the same longest idle and the same first-seen date from twelve days earlier, with
+ * visit counts of 26, 28, 31, 77, 90, 96 and 99. One localStorage key, never reset when a
+ * different person began, so every run inherited the last one's totals — and once ANY run had
+ * finished, `stopped` stayed true and the next participant's whole study counted as no work at
+ * all. Two people sharing a lab computer is all it takes.
+ *
+ * `claimActiveClockFor` now hands the clock to whoever has been identified and replaces the ledger
+ * when that is somebody new. An unowned ledger is adopted only if it was touched within the last
+ * half hour, so the minutes somebody spends on the consent page are kept and a run abandoned in
+ * that browser last week is not.
+ *
+ * `npm run validate:visits` holds all of it: one sitting, a 31-minute break, a reload after lunch,
+ * a second participant at the same machine, the same participant on a second machine, and a
+ * finished study that must earn nothing more.
+ *
+ * ============================================================================
  * HOW IT WORKS
  * ============================================================================
  * A heartbeat every 5 seconds adds 5 seconds — but only if BOTH are true:

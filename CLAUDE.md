@@ -124,6 +124,99 @@ builders over three simulated participants. It is the only check on `analysis` �
 ever displayed, so a wrong number would otherwise sit unnoticed until somebody opened the collection
 to write a paper.
 
+## The Moral Commitment Function (MCF), since 24 September 2026
+
+For one option in one scenario, MCF says what it gives beyond what the participant asked for on
+each of their four values, what it asks of them instead, which option on that table serves each of
+those values most, and what taking that one would ask in exchange. It lives inside the **Compare
+all options** overlay, under the values chart, and every option's reading starts closed.
+
+**It is a decomposition, not a second opinion.** The study already scores an option as one
+shortfall, and `policyShortfallByValue` in `block5CVR.ts` already breaks that sum into its four
+parts. `block5MCF.ts` CALLS that function rather than repeating the formula, so MCF cannot
+disagree with the alignment label — it is the same number read one value at a time.
+
+**Two rules govern every word of it, and both are enforced by a gate, not by good intentions:**
+
+- **No verdict.** Never "aligned", "misaligned", "best fit", "recommended", "should".
+- **No arithmetic.** Never a value number, a shortfall, a percentage or a rank.
+
+That is why the sentences live in `block5MCFWords.ts` rather than inside the panel: a rule that
+lives in JSX can only be checked by reading JSX. Built as plain strings, every sentence the study
+can produce is inspectable, and `npm run validate:mcf` generates all of them — 61,945 across every
+option in every scenario against 403 profiles — and fails on a verdict word or a digit. Quoted
+option titles are exempt from the digit rule: "Draw the 20 names from the patients who cannot wait"
+is content the participant is already reading.
+
+**One thing is computed and deliberately never shown:** whether the swap option costs this
+participant more or less overall. That is exactly a fit comparison between two options, so it is
+stored for analysis and never becomes a sentence.
+
+**Exposure is recorded because MCF can change a choice.** It is the only place in Block 5 where a
+participant's own values are put into words while they are still deciding, and seeing it takes two
+deliberate acts — open the overlay, open a reading. `analysis.mcf` therefore leads with `was_read`,
+`options_read`, `readings_opened` and `seconds_reading`, and most of what that section stores was
+never on screen. `MCF_VERSION` is stamped on every row; rows made under two versions must not be
+pooled.
+
+## Option cards start folded, since 23 September 2026
+
+A scenario opens as a list of six titles in planner order, each with its rank, and the participant
+opens the ones they want to read. **This is a real change to what the study shows people.** A card
+never opened is a card never read, which is a different thing from an open card scrolled past, and
+any comparison with data collected before that date has to account for it.
+
+Unfolding is deliberately **not** logged: `optionExpands` counts opening a card's DETAILS, which is
+information-seeking, and unfolding is now simply how a card is read at all. The state stores which
+cards have been OPENED rather than which are folded, so folded is the natural default in every
+scenario. Section 2 of the pre-Block-5 page teaches it, with an invented example — a sandbag truck
+on a flooded road appears nowhere in the block, because an option from a real scenario would put a
+decision in front of somebody before their first situation.
+
+## `major_info_and_scores`, since 24 September 2026
+
+One room holding the twelve things most often asked of a participant record: the three VCIs,
+stability with its three sensitivities, performance, the position effect per scenario and per role,
+a prediction row per scenario, total time, visits, what was chosen in each scenario with its
+alignment label and the counts, the three profiles, and the feedback.
+
+**Everything in it is a copy.** Each line is lifted from the section that owns it by calling that
+section's own builder, `where_each_number_lives` names the original for every line, and gate D49
+checks the copy against its sources on every build. The name is snake_case because the server
+refuses any path that is not — a field with spaces would be rejected with a 400.
+
+## The two development-only controls
+
+Both live in `src/components/dev/` and both disappear from a production build because
+`import.meta.env.DEV` becomes the literal `false`, which makes the whole control unreachable and
+drops it from the bundle:
+
+- **DevResetButton** — wipes every answer and restarts at Block 1.
+- **DevFillFeedbackButton** — answers every feedback question the page is currently asking, so a
+  run can be finished without refilling the form. It fills from the page's own `requiredCodes`, so
+  it cannot drift from what is on screen, and it does not submit.
+
+To remove both before launch: delete `src/components/dev/`, the two imports and the two lines that
+render them (`src/App.tsx` and `src/experiment/UserFeedbackPage.tsx`). Checked after every build:
+"Fill feedback" appears zero times in `dist/`.
+
+## Every check, and what each one stands over
+
+```
+npm run typecheck && npm run lint && npm run validate:block5 && npm run build
+```
+
+| Command | What it guards |
+|---|---|
+| `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS` and `ALL DATABASE GATES PASSED` |
+| `validate:dbshape` | What reaches MongoDB. 50 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49) and the stored MCF (D50). `--dump` writes a full simulated document |
+| `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
+| `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
+| `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |
+| `validate:position` | The position effect. **Fails on purpose** (2.8× against a 3× gate) until the position calculation pass, which is why it runs LAST in the chain |
+| `report:planner` | How often the first card is also the best-fitting option — 48% now, 69% under a weighting planner, 16.7% by chance |
+| `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
+
 ## Two files that carry rules rather than code
 
 - **`src/experiment/storage.ts`** — the only module allowed to talk to the server. Everything is

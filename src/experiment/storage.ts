@@ -21,6 +21,13 @@
  * somebody their session.
  *
  * So: the browser is the source of truth during a run, and the server is a copy that catches up.
+ * A write the server REFUSES is a different thing from a write it cannot receive, and the outbox
+ * has told them apart since 23 September 2026. Before that it could not: a section the API did not
+ * recognise came back 400, went to the head of the queue, and was retried forever — holding back
+ * every write behind it, so one unknown section name stopped a participant's whole run reaching
+ * MongoDB. A 4xx is now parked in `vrds_outbox_refused` with a loud console line and the queue
+ * moves on; an unreachable server still stops the flush, because order has to be preserved.
+ *
  * A write that cannot be sent is queued in the outbox and retried later, and none of that is
  * visible to the participant.
  *
