@@ -65,20 +65,46 @@ export interface ActiveLedger {
   sittings: number;
   firstSeenAt: number;
   lastActiveAt: number;
+  /**
+   * The last time the participant actually touched something — moved, typed, clicked, scrolled.
+   *
+   * SEPARATE FROM `lastActiveAt`, WHICH IS THE LAST MOMENT TIME WAS COUNTED, and the two differ by
+   * up to the ninety-second idle grace. "Away for more than half an hour" is a fact about the
+   * PERSON, so it has to be measured from the person: measured from the clock instead, a
+   * thirty-one minute absence came out as twenty-nine and a half and counted as no visit at all.
+   *
+   * Persisted, so a browser that is closed and reopened still knows when they were last here.
+   */
+  lastInputAt: number;
   /** The longest single gap between activity, in ms. A large value is worth a look. */
   longestIdleMs: number;
   /** Set when the study finishes. Once true the clock never advances again. */
   stopped: boolean;
+  /**
+   * WHOSE TIME THIS IS — the participant's email, lower-cased.
+   *
+   * Added 23 September 2026, because without it this ledger belonged to the BROWSER. A second
+   * participant on the same computer inherited the first one's minutes, their visit count, and -
+   * worst of all - their `stopped` flag, so the newcomer's entire run counted as zero working
+   * minutes. Seven test records in the local database all carried the same 3.8 minutes and the
+   * same first-seen date from twelve days earlier; only the visit count moved, upward, forever.
+   *
+   * Undefined on a ledger written before that date. Such a ledger is claimed by the first
+   * participant who is identified, which is the safe reading: it is theirs unless proven otherwise.
+   */
+  owner?: string;
 }
 
-const emptyLedger = (now: number): ActiveLedger => ({
+const emptyLedger = (now: number, owner?: string): ActiveLedger => ({
   totalMs: 0,
   byStage: {},
   sittings: 1,
   firstSeenAt: now,
   lastActiveAt: now,
+  lastInputAt: now,
   longestIdleMs: 0,
   stopped: false,
+  owner,
 });
 
 function read(): ActiveLedger {
@@ -98,8 +124,14 @@ function read(): ActiveLedger {
       sittings: typeof parsed.sittings === "number" ? parsed.sittings : 1,
       firstSeenAt: typeof parsed.firstSeenAt === "number" ? parsed.firstSeenAt : now,
       lastActiveAt: typeof parsed.lastActiveAt === "number" ? parsed.lastActiveAt : now,
+      /* A ledger written before 23 September 2026 has no such field; the last counted moment is
+         the closest honest answer, and it is never in the future. */
+      lastInputAt: typeof parsed.lastInputAt === "number"
+        ? parsed.lastInputAt
+        : (typeof parsed.lastActiveAt === "number" ? parsed.lastActiveAt : now),
       longestIdleMs: typeof parsed.longestIdleMs === "number" ? parsed.longestIdleMs : 0,
       stopped: parsed.stopped === true,
+      owner: typeof parsed.owner === "string" ? parsed.owner : undefined,
     };
   } catch {
     return emptyLedger(now);
@@ -117,7 +149,6 @@ function write(ledger: ActiveLedger): void {
 /* ------------------------------------------------------------------------ live state */
 
 let ledger: ActiveLedger = read();
-let lastInputAt = Date.now();
 /** When time was last added. The gap to now is what gets counted, capped at one tick. */
 let lastCountedAt = Date.now();
 let currentStage = "";
@@ -145,7 +176,26 @@ export function onPauseChange(listener: PauseListener): () => void {
 export const isPaused = (): boolean => paused;
 
 const noteInput = (): void => {
-  lastInputAt = Date.now();
+  const now = Date.now();
+
+  /*
+   * A VISIT ENDS BY BEING AWAY AND BEGINS BY COMING BACK, so it is counted here, at the first
+   * touch after the absence, rather than on the next heartbeat. Two things follow from that.
+   *
+   * The gap is the real one — input to input — instead of "since the clock last counted", which
+   * is up to ninety seconds shorter and turned a thirty-one minute absence into no visit at all.
+   *
+   * And `lastActiveAt` is moved forward as the gap is counted, so the heartbeat cannot find the
+   * same gap still open and count the visit a second time.
+   */
+  const awayFor = now - ledger.lastInputAt;
+  if (awayFor > SITTING_GAP_MS && currentStage && !ledger.stopped) {
+    ledger.sittings += 1;
+    ledger.lastActiveAt = now;
+    if (awayFor > ledger.longestIdleMs) ledger.longestIdleMs = awayFor;
+  }
+  ledger.lastInputAt = now;
+
   /* Clear the notice on the spot. Leaving it to the next heartbeat meant up to five seconds of a
      participant moving the mouse at a screen that still said the study was waiting for them. */
   if (paused && currentStage) setPaused(false);
@@ -166,7 +216,7 @@ function tick(): void {
   if (ledger.stopped) return;
   const now = Date.now();
   const visible = typeof document === "undefined" || document.visibilityState === "visible";
-  const recentlyActive = now - lastInputAt < IDLE_MS;
+  const recentlyActive = now - ledger.lastInputAt < IDLE_MS;
 
   /*
    * No stage means the entry screen, where they are typing an email. That is not participation,
@@ -191,11 +241,13 @@ function tick(): void {
     return;
   }
 
-  /* Coming back after a long absence starts a new sitting, and the gap itself is recorded —
-     it is the difference between "stepped out for coffee" and "came back a week later". */
-  const gap = now - ledger.lastActiveAt;
-  if (gap > SITTING_GAP_MS) ledger.sittings += 1;
-  if (gap > ledger.longestIdleMs) ledger.longestIdleMs = gap;
+  /*
+   * THE VISIT COUNT IS NOT DECIDED HERE, and used to be. Measuring the absence from the last
+   * counted moment is wrong in both directions: it is short by the idle grace when somebody walks
+   * away, and it is long by however many minutes they spent on the start screen, where nothing is
+   * counted — which meant a participant who read the consent page slowly was recorded as having
+   * left and come back. noteInput owns it now, measured from the participant.
+   */
 
   /*
    * ADD THE TIME THAT ACTUALLY PASSED, NOT A FIXED FIVE SECONDS.
@@ -258,13 +310,24 @@ export function startActiveClock(): void {
   started = true;
   ledger = read();
 
-  /* A page load after a long gap is a new visit. Counted here rather than in the tick, because
-     the participant may load the page and read for a while before touching anything. */
+  /*
+   * A page load after a long gap is a new visit. Counted here rather than in the tick, because
+   * the participant may load the page and read for a while before touching anything.
+   *
+   * AND THE GAP IS CLOSED IMMEDIATELY, which it was not until 23 September 2026. This counted the
+   * visit and left `lastActiveAt` where it was, so the first tick that counted any time saw the
+   * very same gap still open and counted the visit a SECOND time. Every return after half an hour
+   * away was worth two visits, which is most of why a tester who never left their chair finished
+   * the study with ninety-nine of them.
+   */
   const now = Date.now();
-  if (ledger.totalMs > 0 && now - ledger.lastActiveAt > SITTING_GAP_MS) {
+  const awayFor = now - ledger.lastInputAt;
+  if (ledger.totalMs > 0 && awayFor > SITTING_GAP_MS) {
     ledger.sittings += 1;
+    ledger.lastActiveAt = now;
+    if (awayFor > ledger.longestIdleMs) ledger.longestIdleMs = awayFor;
   }
-  lastInputAt = now;
+  ledger.lastInputAt = now;
   lastCountedAt = now;
 
   for (const name of INPUT_EVENTS) {
@@ -309,6 +372,55 @@ export function startActiveClock(): void {
 /** Tells the clock which screen is showing, so per-block time can be attributed. */
 export function setActiveStage(stage: string): void {
   currentStage = stage;
+}
+
+/**
+ * Hands this browser's clock to the participant who has just been identified.
+ *
+ * If the ledger already belongs to somebody else, it is REPLACED rather than continued: a new
+ * participant starts at zero minutes, one visit, and a clock that is running. Anything else means
+ * one person's effort is recorded against another's name, and — because `stopped` survives in
+ * storage once a run has finished — that the newcomer's whole study counts as no work at all.
+ *
+ * An unowned ledger (written before 23 September 2026, or by the start screen) is claimed rather
+ * than thrown away, so nobody loses the minutes they have already put in.
+ *
+ * Safe to call on every render: it writes only when the owner actually changes.
+ */
+export function claimActiveClockFor(email: string | null | undefined): void {
+  if (!email) return;
+  const who = email.trim().toLowerCase();
+  if (!who) return;
+
+  if (ledger.owner === who) return;
+
+  if (ledger.owner === undefined) {
+    ledger.owner = who;
+    write(ledger);
+    return;
+  }
+
+  /* A different person is now using this browser. Their study starts now. */
+  const now = Date.now();
+  ledger = emptyLedger(now, who);
+  lastCountedAt = now;
+  setPaused(false);
+  write(ledger);
+}
+
+/**
+ * Counts one more visit, for a reason the clock itself cannot see.
+ *
+ * The clock knows about time: a gap of more than thirty minutes ends a visit and the next activity
+ * begins another. It cannot know that the participant has opened the study on a different machine,
+ * and by the study's own rule that is a new visit too. sessionLog notices the change of browser
+ * and says so here, which keeps one definition of a visit rather than two.
+ */
+export function noteNewVisit(): void {
+  if (ledger.stopped) return;
+  ledger.sittings += 1;
+  ledger.lastActiveAt = Date.now();
+  write(ledger);
 }
 
 /**

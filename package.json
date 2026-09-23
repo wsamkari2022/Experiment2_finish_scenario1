@@ -30,6 +30,7 @@
     "validate:planner": "tsc -p tools/tsconfig.sim.json && node tools/simulate_planner.cjs",
     "server": "node server/index.js",
     "validate:dbshape": "node tools/validate_dbshape.cjs",
+    "validate:visits": "node tools/simulate_visits.cjs",
     "audit:rules": "tsc -p tools/tsconfig.sim.json && node tools/audit_cvr_rules.cjs",
     "validate:twins": "tsc -p tools/tsconfig.sim.json && node tools/validate_twins.cjs"
   },

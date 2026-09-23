@@ -121,6 +121,18 @@ export function browserId(): string {
  *  append a second row for the same sitting. */
 let openedThisLoad = false;
 
+/** What one call to noteLogin did, for the caller that needs to know. */
+export interface LoginResult {
+  /** False when a login had already been recorded in this page load. */
+  recorded: boolean;
+  /**
+   * True when the previous login came from a DIFFERENT browser — the participant has moved
+   * machine. The study counts that as a new visit, and only this file can see it, so it is
+   * reported rather than inferred. See noteNewVisit in activeTime.ts.
+   */
+  browserChanged: boolean;
+}
+
 /**
  * Records that the study was opened with a participant identified.
  *
@@ -128,12 +140,14 @@ let openedThisLoad = false;
  * flow identifies a participant from several places — a typed address, a resumed run, a restored
  * download — and more than one of them can fire in a single load.
  */
-export function noteLogin(how: SessionStart, stage: string): void {
-  if (openedThisLoad) return;
+export function noteLogin(how: SessionStart, stage: string): LoginResult {
+  if (openedThisLoad) return { recorded: false, browserChanged: false };
   openedThisLoad = true;
 
   const log = read();
   const now = Date.now();
+  const previous = log.sessions[log.sessions.length - 1];
+  const browserChanged = previous !== undefined && previous.browserId !== browserId();
   log.sessions.push({
     browserId: browserId(),
     startedAt: now,
@@ -147,6 +161,7 @@ export function noteLogin(how: SessionStart, stage: string): void {
     log.dropped += 1;
   }
   write(log);
+  return { recorded: true, browserChanged };
 }
 
 /**

@@ -52,6 +52,32 @@ source and fails if any path the browser writes is not a root the server accepts
 now separates "the server is down" (keep, retry, preserve order) from "the server refused this"
 (park it in `vrds_outbox_refused`, log loudly, and let the queue drain).
 
+## What counts as a visit, and what counts as working time
+
+Both numbers are reported to the participant on the thank-you page, stored in `active_time`, and
+used to judge compensation, so the rules are written here rather than left in the code.
+
+**Working time** advances only while the tab is visible AND something was moved, typed, clicked or
+scrolled within the last 90 seconds. The 90 seconds are counted as work on purpose: somebody
+reading a long scenario without touching anything is still working.
+
+**A visit** ends when the participant is away for more than 30 minutes and begins when they come
+back. It is measured input to input — from the participant, never from the heartbeat — and counted
+at the moment they return, or at the page load that follows. Opening the study on a different
+browser is also a visit; `sessionLog.ts` sees the change of machine and calls `noteNewVisit`.
+
+**The ledger belongs to the participant, not the browser.** `claimActiveClockFor(email)` replaces it
+when a different person is identified in the same browser. Until 23 September 2026 it did not, and
+the local database showed what that costs: seven participants with identical time (3.8 minutes,
+first seen twelve days earlier) and visit counts of 26, 28, 31, 77, 90, 96 and 99. Two people
+sharing a computer would have had the second one's entire run recorded as no work at all, because
+`stopped` survived in storage from the first one's finished study.
+
+`npm run validate:visits` holds all of this: it runs the real `activeTime.ts` against a faked
+browser with a clock it moves by hand, over ten scenarios — one sitting, a 31-minute break, a
+reload after lunch, a second participant at the same machine, the same participant on a second
+machine, and a finished study that must earn nothing more.
+
 ## Running it
 
 ```

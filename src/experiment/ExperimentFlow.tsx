@@ -17,7 +17,9 @@ import {
   syncResumeState,
 } from "./storage";
 import { apiClient, isApiAvailable } from "./apiClient";
-import { setActiveStage, startActiveClock, stopActiveClock } from "./activeTime";
+import {
+  claimActiveClockFor, noteNewVisit, setActiveStage, startActiveClock, stopActiveClock,
+} from "./activeTime";
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
@@ -244,11 +246,22 @@ export function ExperimentFlow() {
    */
   useEffect(() => {
     if (!pendingEmail) return;
-    noteLogin(
+    /*
+     * THE CLOCK IS CLAIMED BEFORE ANYTHING IS COUNTED. Until 23 September 2026 the active-time
+     * ledger belonged to the browser, so a second participant on the same computer inherited the
+     * first one's minutes and their finished-study flag, and counted no working time at all. See
+     * claimActiveClockFor.
+     */
+    claimActiveClockFor(pendingEmail);
+
+    const login = noteLogin(
       consumeLoginKind()
         ?? (knownAtPageLoad.current ? "continued_in_this_browser" : "typed_their_email"),
       stage,
     );
+    /* Opening the study on a different machine is a new visit by the study's own rule, and the
+       clock cannot see machines. sessionLog can, so it says so. */
+    if (login.recorded && login.browserChanged) noteNewVisit();
   }, [pendingEmail, stage]);
 
   /** Profile + seed case data produced by the Insights page; needed by Block 4. */
