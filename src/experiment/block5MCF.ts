@@ -285,6 +285,27 @@ export function mcfForScenario(
   return { scenarioId: scenario.id, version: MCF_VERSION, options: built };
 }
 
+/**
+ * The same reading, for a caller that holds only the four value scores.
+ *
+ * The compare overlay has exactly that and no full profile - it is handed the four numbers for the
+ * dashed reference shape. Wrapping them here rather than in the component keeps the one place that
+ * knows what MCF needs inside the file that computes it.
+ */
+export function mcfFromScores(
+  scenario: Block5Scenario,
+  scores: Record<Block5PolicyDimKey, number>,
+): McfScenario {
+  return mcfForScenario(scenario, {
+    generatedAt: "",
+    topThreeKeys: [],
+    topSensitivityKey: POLICY_DIM_KEYS[0],
+    dimensions: POLICY_DIM_KEYS.map((key, i) => ({
+      key, label: key, score: scores[key] ?? 50, rank: i + 1, weight: 0, sourceBlocks: [],
+    })),
+  } as unknown as Block5UserProfile);
+}
+
 /** One option, for a caller that has no use for the other five. */
 export function mcfForOption(
   scenario: Block5Scenario,

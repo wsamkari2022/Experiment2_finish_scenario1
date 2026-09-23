@@ -29,6 +29,7 @@ const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 const { POLICY_DIM_KEYS } = B("block5Types.js");
 const { policyAlignmentShortfall } = B("block5CVR.js");
 const { mcfForScenario, mcfForOption, MCF_VERSION } = B("block5MCF.js");
+const { mcfSentences } = B("block5MCFWords.js");
 
 const ALL_KEYS = [...POLICY_DIM_KEYS, "directnessSensitivity", "contextSensitivity",
   "stakeholderPerspectiveShiftSensitivity"];
@@ -158,6 +159,42 @@ for (const scenario of BLOCK5_SCENARIOS) {
   }
 }
 
+/* M7 — THE SENTENCES A PARTICIPANT ACTUALLY READS.
+ *
+ * Every reading, for every option, in every scenario, against every profile in the sample: no
+ * verdict word, and no digit. The digit rule is the strict one - a value number, a shortfall or a
+ * percentage reaching the page would be the scoring arithmetic, which this study never shows. */
+let m7 = true;
+let sentencesChecked = 0;
+const sample = [];
+for (const scenario of BLOCK5_SCENARIOS) {
+  const titleOf = (id) => scenario.options.find((o) => o.id === id).title;
+  for (const profile of everyProfile) {
+    for (const row of mcfForScenario(scenario, profile).options) {
+      const said = mcfSentences(row, titleOf);
+      const all = [said.gives, said.asks, said.servedMost, ...said.inExchange].filter(Boolean);
+      sentencesChecked += all.length;
+      for (const sentence of all) {
+        const lower = sentence.toLowerCase();
+        if (WORDS.some((w) => lower.includes(w))) {
+          m7 = false; problems.push(`verdict word in: ${sentence.slice(0, 60)}`);
+        }
+        /* An option's own title is quoted content the participant is already reading elsewhere -
+           "Draw the 20 names from the patients who cannot wait" has a number in it and always
+           did. The rule is that MCF never prints ARITHMETIC of its own, so the quoted titles come
+           out before the digits are counted. */
+        const withoutTitles = sentence.replace(/“[^”]*”/g, "");
+        if (/[0-9]/.test(withoutTitles)) {
+          m7 = false; problems.push(`a digit reached the page: ${sentence.slice(0, 60)}`);
+        }
+      }
+      if (sample.length < 1 && scenario.id.includes("wildfire") && row.optionId.includes("ridge")) {
+        sample.push({ scenario: scenario.title, option: titleOf(row.optionId), said });
+      }
+    }
+  }
+}
+
 /* M6 — same inputs, same output, every time. */
 {
   const s = BLOCK5_SCENARIOS[0];
@@ -179,6 +216,22 @@ gate("M4", m4, "a value is short or surplus, never both, and the gap is delivers
 gate("M5", m5, m5 ? "no verdict words: nothing MCF emits says aligned, best fit, recommend or score"
                   : `a verdict word reached MCF: ${problems.slice(-1)[0]}`);
 gate("M6", m6, "the same scenario and profile give a byte-identical reading, every time");
+gate("M7", m7,
+  m7 ? `no verdict word and no digit in any sentence a participant can read  (${sentencesChecked} sentences)`
+     : `a forbidden word or number reached the page: ${problems.slice(-1)[0]}`);
+
+if (process.argv.includes("--show") && sample.length) {
+  const s = sample[0];
+  console.log("");
+  console.log("  ----------------------------------------------------------------------------");
+  console.log(`  A READING AS A PARTICIPANT SEES IT — ${s.scenario}`);
+  console.log(`  Option: ${s.option}`);
+  console.log("  ----------------------------------------------------------------------------");
+  console.log(`    IT GIVES         ${s.said.gives}`);
+  console.log(`    IT ASKS          ${s.said.asks}`);
+  if (s.said.servedMost) console.log(`    SERVED MOST HERE ${s.said.servedMost}`);
+  for (const line of s.said.inExchange) console.log(`    IN EXCHANGE      ${line}`);
+}
 
 console.log("");
 console.log("==============================================================================");

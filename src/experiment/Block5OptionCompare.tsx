@@ -41,6 +41,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Box, Button, Grid, HStack, Heading, Icon, Separator, Text, VStack } from "@chakra-ui/react";
 import { LuChartSpline, LuX, LuInfo } from "react-icons/lu";
 import { RadarChart, ChartLegend, type RadarSeries } from "./block5Charts";
+import { Block5MCFPanel } from "./Block5MCFPanel";
 import { OPTION_SERIES_COLORS, REFERENCE_SERIES_COLOR } from "./block5ChartColors";
 import type { Block5Palette } from "./block5Palette";
 import type { LabeledOption } from "./block5CVR";
@@ -311,6 +312,26 @@ export function Block5OptionCompare({
               />
             </Grid>
           )}
+
+          {/*
+            ---------------- The same chart, in words ----------------
+
+            THE MORAL COMMITMENT FUNCTION. The values chart above says, in shape, what each option
+            gives and what it asks of this participant; the caption under it already says that a
+            corner inside their dashed shape is something they said mattered and the option gives
+            up. This panel says the same thing in sentences, so the disclosure does not depend on
+            being able to read a radar.
+
+            IT SITS UNDER THE CHART IT EXPLAINS, and only here. On an option card it would become
+            something a participant is told while choosing rather than something they opened.
+          */}
+          <Box mt="6">
+            <Block5MCFPanel
+              scenario={scenario}
+              yourPolicyScores={yourPolicyScores}
+              pal={pal}
+            />
+          </Box>
 
           {/* ---------------- How to read this ---------------- */}
           <Box mt="6" bg={pal.panelDeep} borderWidth="1px" borderColor={pal.cardBorder}
