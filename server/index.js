@@ -28,6 +28,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connect, participants, DB_NAME, SAFE_MONGO_URL } from "./db.js";
+import { mergeResumeState } from "./resumeMerge.js";
 
 const PORT = Number(process.env.PORT ?? 4000);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -196,6 +197,37 @@ app.patch(
     }
     if (!WRITABLE_ROOTS.has(path.split(".")[0])) {
       return res.status(400).json({ error: `"${path}" is not a writable section` });
+    }
+
+    /*
+     * RESUME STATE IS MERGED, NOT REPLACED, AND NOT ACCEPTED AT ALL ONCE THE STUDY IS DONE.
+     *
+     * Every browser this participant has open syncs its own copy here. Written with $set, the
+     * last one to sync won — so a tab left open on an earlier machine, holding the run as it
+     * stood an hour before, silently replaced the complete snapshot with its own. A participant
+     * who had finished all four blocks signed in on a third browser, received a Block-3 snapshot,
+     * and was sent back to Block 1 because Block 5 found no profile. See server/resumeMerge.js.
+     *
+     * And after completion there is nothing to carry: the completion route unsets this field on
+     * purpose, and a stale tab syncing afterwards must not put it back.
+     */
+    if (path === "resume_state") {
+      const doc = await participants().findOne(
+        { email }, { projection: { resume_state: 1, status: 1 } },
+      );
+      if (doc?.status === "Study Completed") {
+        return res.json({ ok: true, ignored: "the study is finished; resume state is not kept" });
+      }
+      const { state, added, replaced, kept } = mergeResumeState(doc?.resume_state, req.body?.data);
+      await participants().updateOne(
+        { email },
+        { $set: { resume_state: state, updated_at: new Date().toISOString() } },
+      );
+      if (kept.length) {
+        console.log(`[api] resume merge for ${email}: ${added} added, ${replaced} replaced, `
+          + `${kept.length} kept that this browser did not have (${kept.join(", ")})`);
+      }
+      return res.json({ ok: true, added, replaced, kept: kept.length });
     }
 
     await participants().updateOne(

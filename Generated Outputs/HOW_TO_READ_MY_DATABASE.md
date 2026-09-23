@@ -967,6 +967,13 @@ computer. It is **deleted the moment they finish**, so a completed document neve
 If you see it, that participant is unfinished. Never analyze it: it is an untranslated duplicate
 of data that appears properly in `blocks`.
 
+> Since **23 September 2026** the server MERGES this field per file instead of replacing it, and
+> refuses it altogether once the study is completed. Before that, whichever browser synced last
+> overwrote the whole thing, so a tab left open on an earlier machine could replace a complete
+> snapshot with a half-finished one — and a participant resuming on a third machine was sent back
+> to Block 1. A completed document should therefore never carry `resume_state`; one collected
+> before that date might.
+
 ---
 
 ## 9. Example queries

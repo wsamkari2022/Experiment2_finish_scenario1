@@ -39,6 +39,24 @@ and nothing about the local workflow changes. `./build-and-run.sh`, `stop-projec
 the database password and is git-ignored — never commit it and never print it (`server/db.js` masks
 it in logs and on `/api/health`).
 
+### Resume state is MERGED by the server, never replaced
+
+Every browser a participant has open syncs its own copy of `resume_state`. Written with `$set` that
+was a whole-object replace, so the last browser to sync won - and a tab left open on an earlier
+machine, holding the run as it stood an hour before, silently replaced the complete snapshot with
+its own. On 23 September 2026 a participant who had finished all four blocks signed in on a third
+browser, received a Block-3 snapshot, and was sent back to Block 1 because Block 5 found no
+profile.
+
+`server/resumeMerge.js` now merges by file: a browser may update the files it holds and may not
+delete the ones it has never heard of. One named exception - `vrds_active_time` keeps the larger
+`totalMs`, because a running total of working minutes must never go backwards. Resume writes are
+refused outright once `status` is `Study Completed`, since the completion route unsets the field on
+purpose and a stale tab must not put it back.
+
+`npm run validate:resume` stands over it, replaying that exact run: a Block-3 browser syncing over
+a finished one must keep every file.
+
 ### A new database section has to be allowed in two places
 
 `dbShape.ts` decides where a section lands; `WRITABLE_ROOTS` in `server/index.js` decides whether the
