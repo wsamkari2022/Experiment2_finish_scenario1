@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock, LuRoute, LuClipboardList, LuClock } from "react-icons/lu";
+import { LuCheck, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsUpDown, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock, LuRoute, LuClipboardList, LuClock } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
@@ -1928,6 +1928,14 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 const METRIC_MEANINGS_KEY = "block5_show_metric_meanings";
 
 /**
+ * LocalStorage key remembering whether the participant minimized the dashboard to its bars.
+ *
+ * Remembered for the same reason the definitions are: this panel reappears on every scenario, and
+ * a participant who has decided they want the room back should not have to say so six times.
+ */
+const METRICS_MINIMIZED_KEY = "block5_metrics_minimized";
+
+/**
  * EVERY PIECE OF COPY THAT DIFFERS BETWEEN DECIDING AND WISHING, in one table.
  *
  * A recipient scenario asks a genuinely different question — not "what will you do?" but "what do
@@ -2386,6 +2394,29 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
    */
   const [showHighLow, setShowHighLow] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  /**
+   * MINIMIZED KEEPS THE MEASUREMENT AND DROPS THE EXPLANATION OF IT.
+   *
+   * A plain collapsible would hide the five bars as well, which is the one thing on this panel a
+   * participant might want in view while they read six option cards — it is the running record of
+   * their own choices, and it is why the panel is sticky in the first place. What costs them room
+   * is everything around it: the heading, the overall badge, the two explanation panels and a line
+   * of meaning under every bar. So minimizing removes exactly that and leaves the labels and the
+   * bars, and the panel comes back whole on the next press.
+   *
+   * The dashboard's height is watched by a ResizeObserver in the simulation (see dashRef), so the
+   * scenario panel below re-parks itself against the shorter dashboard with nothing to do here.
+   */
+  const [minimized, setMinimized] = useState<boolean>(() => {
+    try { return localStorage.getItem(METRICS_MINIMIZED_KEY) === "1"; } catch { return false; }
+  });
+  const toggleMinimized = useCallback(() => {
+    setMinimized((v) => {
+      const next = !v;
+      try { localStorage.setItem(METRICS_MINIMIZED_KEY, next ? "1" : "0"); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
   const isPreview = !!projected;
   const display = projected ?? current;
   const overall = metricProfileScore(display);
@@ -2407,6 +2438,24 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
    * The word is the cheapest possible fix and it has to match the pre-Block-5 page, which now
    * teaches the same three things under the same names.
    */
+  /*
+     ONE CONTROL, RENDERED IN WHICHEVER PLACE IS ON SCREEN. Open, it sits with the other controls in
+     the title row. Minimized, that row is gone, so it moves beside the bars — the same icon in the
+     same corner of the panel either way, which is what keeps it findable. An icon rather than a
+     label, so it cannot be confused with "Hide definitions", which is text and does something
+     smaller.
+  */
+  const minimizeButton = (
+    <Button size="2xs" variant="ghost" rounded="md" px="1.5" minW="auto"
+      color={pal.textMuted} _hover={{ bg: pal.surfaceSubtle, color: pal.text }}
+      onClick={toggleMinimized}
+      aria-expanded={!minimized}
+      aria-label={minimized ? "Show the whole performance panel" : "Minimize to the bars only"}
+      title={minimized ? "Show the whole performance panel" : "Minimize to the bars only"}>
+      <Icon boxSize="3.5">{minimized ? <LuChevronsUpDown /> : <LuChevronsDownUp />}</Icon>
+    </Button>
+  );
+
   const label = isPreview
     ? `Projected if you choose: ${previewTitle}`
     : completedCount === 0
@@ -2421,7 +2470,9 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
     <Box bg={pal.dashBg} backdropFilter={pal.backdropBlur} borderWidth="1px"
       borderColor={isPreview ? accent : pal.dashBorder}
       borderTopWidth="3px" borderTopColor={isPreview ? accent : pal.dashTopBorder}
-      rounded="2xl" p={{ base: "4", md: "5" }} style={{ boxShadow: pal.dashShadow }} transition="border-color 0.2s ease">
+      rounded="2xl" p={minimized ? { base: "3", md: "3.5" } : { base: "4", md: "5" }}
+      style={{ boxShadow: pal.dashShadow }} transition="border-color 0.2s ease, padding 0.2s ease">
+      {!minimized && (
       <HStack justify="space-between" mb="2" wrap="wrap" gap="2">
         <HStack gap="2" minW="0" flex="1">
           <Icon color={accent} flexShrink={0}>{isPreview ? <LuEye /> : <LuGauge />}</Icon>
@@ -2466,8 +2517,10 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
             {showMeanings ? "Hide definitions" : "Show definitions"}
           </Button>
           <Badge bg={accent} color={onAccentText(accent)} rounded="md" px="2.5" py="1" fontSize="xs" fontWeight="bold">Overall {overall}/100</Badge>
+          {minimizeButton}
         </HStack>
       </HStack>
+      )}
 
       {/*
         ═══════════════════════════════════════════════════════════════════════════════════════
@@ -2494,7 +2547,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
         participant learned is still the control - it has just moved onto the thing it opens.
         ═══════════════════════════════════════════════════════════════════════════════════════
       */}
-      {isPreview ? (
+      {!minimized && (isPreview ? (
         /* The second sentence exists so the automatic clear reads as a rule rather than a glitch.
            A number that disappears on its own, unexplained, is the kind of thing a participant
            quietly stops trusting. */
@@ -2625,42 +2678,52 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
             )}
           </Box>
         </VStack>
-      )}
+      ))}
 
-      <Grid templateColumns={{ base: "repeat(2, 1fr)", md: "repeat(5, 1fr)" }} gap={{ base: "3", md: "4" }}>
-        {METRIC_KEYS.map((k) => {
-          const val = display[k];
-          const delta = val - current[k];
-          return (
-            <Box key={k} position="relative" cursor="default">
-              <HStack justify="space-between" mb="1">
-                <Text fontSize="xs" fontWeight="semibold" color={pal.text} lineClamp={1}>{METRIC_LABELS[k]}</Text>
-                <HStack gap="1">
-                  {isPreview && delta !== 0 && (
-                    <Text fontSize="2xs" fontWeight="bold" color={delta > 0 ? pos : neg}>
-                      {delta > 0 ? `+${delta}` : delta}
+      {/* The bars, and — when the panel is minimized — the one control that brings it back. */}
+      <HStack align="start" gap="3">
+        <Box flex="1" minW="0">
+          <Grid templateColumns={{ base: "repeat(2, 1fr)", md: "repeat(5, 1fr)" }} gap={{ base: "3", md: "4" }}>
+            {METRIC_KEYS.map((k) => {
+              const val = display[k];
+              const delta = val - current[k];
+              return (
+                <Box key={k} position="relative" cursor="default">
+                  <HStack justify="space-between" mb="1">
+                    <Text fontSize="xs" fontWeight="semibold" color={pal.text} lineClamp={1}>{METRIC_LABELS[k]}</Text>
+                    {/* The reading itself is part of what minimizing puts away: the bar keeps the
+                        shape, which is what a glance at a sticky strip is for. */}
+                    {!minimized && (
+                      <HStack gap="1">
+                        {isPreview && delta !== 0 && (
+                          <Text fontSize="2xs" fontWeight="bold" color={delta > 0 ? pos : neg}>
+                            {delta > 0 ? `+${delta}` : delta}
+                          </Text>
+                        )}
+                        <Text fontSize="2xs" color={pal.text} fontFamily="mono">{val}</Text>
+                      </HStack>
+                    )}
+                  </HStack>
+                  <Box h="2" bg={pal.metricTrack} rounded="full" overflow="visible" position="relative">
+                    <Box h="full" w={`${val}%`} bg={accent} rounded="full" transition="width 0.4s ease" />
+                    {isPreview && (
+                      <Box position="absolute" top="-1px" h="calc(100% + 2px)" w="2px" bg={pal.textMuted} rounded="full" style={{ left: `${current[k]}%` }} title={`Now: ${current[k]}`} />
+                    )}
+                  </Box>
+                  {showMeanings && !minimized && (
+                    /* The reading for THIS scenario — "how soon safe water is back", not a generic
+                       gloss. The label above stays constant so the dashboard remains comparable. */
+                    <Text fontSize="2xs" color={pal.textFaint} lineHeight="tall" mt="1.5">
+                      {metricMeaning(k, scenarioId)}
                     </Text>
                   )}
-                  <Text fontSize="2xs" color={pal.text} fontFamily="mono">{val}</Text>
-                </HStack>
-              </HStack>
-              <Box h="2" bg={pal.metricTrack} rounded="full" overflow="visible" position="relative">
-                <Box h="full" w={`${val}%`} bg={accent} rounded="full" transition="width 0.4s ease" />
-                {isPreview && (
-                  <Box position="absolute" top="-1px" h="calc(100% + 2px)" w="2px" bg={pal.textMuted} rounded="full" style={{ left: `${current[k]}%` }} title={`Now: ${current[k]}`} />
-                )}
-              </Box>
-              {showMeanings && (
-                /* The reading for THIS scenario — "how soon safe water is back", not a generic
-                   gloss. The label above stays constant so the dashboard remains comparable. */
-                <Text fontSize="2xs" color={pal.textFaint} lineHeight="tall" mt="1.5">
-                  {metricMeaning(k, scenarioId)}
-                </Text>
-              )}
-            </Box>
-          );
-        })}
-      </Grid>
+                </Box>
+              );
+            })}
+          </Grid>
+        </Box>
+        {minimized && minimizeButton}
+      </HStack>
     </Box>
   );
 }
