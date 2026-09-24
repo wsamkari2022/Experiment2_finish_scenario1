@@ -889,6 +889,28 @@ recomputed, and the four parts sum to that score's shortfall. `npm run validate:
 
 ---
 
+## 6h. How the value scores are made, and the versions that must never be pooled
+
+Added **24 September 2026**. The seven value scores (and so the four policy values Block 5 uses)
+come from one file, `thresholdTree.ts`. They appear in three places:
+
+- `analysis.participant_record.derived.thresholdTree`
+- `blocks.block5_emergency_scenarios.originalProfile`
+- `analysis.value_profile_before_block5`
+
+The rules that make them have changed, so **`analysis.participant_record.calibrationVersion` says
+which rules made a record.**
+
+| `calibrationVersion` | What changed |
+|---|---|
+| `null-cdf-2026-08-23` | The original common ruler |
+| `null-cdf-2026-08-23-top100` | **Every value can reach 100.** Helped, directness, context and stakeholder are divided by their ceiling (98.8, 97.4, 93.1, 97.3), so each can be up to 7% higher than under the original ruler. Vulnerable, harm and gain are unchanged |
+
+> ⚠️ **Never pool value scores made under two versions.** The same answers give different numbers,
+> and on a tie at the top, a different #1 value.
+
+---
+
 ## 7. `feedback_answers` — and why it is readable
 
 Every closed question is stored with **the question text next to the answer**:
@@ -1169,6 +1191,8 @@ db.participants.aggregate([
 19. **`participant_id` is the only id.** Older exports also had `session_id`, `sessionId` and
    `participantId` for the same value. They are gone from the top level; you may still meet
    `sessionId` deep inside `analysis.participant_record`, where it means the same thing.
+20. **Value scores carry a version.** Read `analysis.participant_record.calibrationVersion` and
+    never pool records made under two versions. Section 6h lists what each one changed.
 
 ---
 

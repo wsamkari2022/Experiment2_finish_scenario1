@@ -77,7 +77,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
 | E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | Proposed (calc idea 1) |
 | E2 | One wobble of one step can make a value #1 | High | Proposed (calc idea 2) |
-| E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | Proposed (calc idea 3) |
+| E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | **Fixed** (Idea 3, approved 24 Sept) |
 | E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | Proposed (calc idea 4) |
 | E5 | No response-style flag, though every click is timestamped | Medium | Proposed (calc idea 5) |
 | E6 | Block 3's prices could give a real vulnerable-vs-harm exchange rate | Low, idea | Proposed (calc idea 6) |
@@ -740,3 +740,11 @@ waits until just before real participants.
 - **2026-09-24.** Read the planner's design record (LEAP trade-off tree). Re-tested C1 on three
   populations (it holds), reclassified C3, added C7, C8 and C9. Simulated candidate parameter
   changes before planning Fix P (numbers are in the Fix P plan).
+- **2026-09-24.** Waseem approved Ideas 1, 3, 4 and 5 ("do it"); Idea 2 needs a simpler explanation
+  first. Order: 3, 4, 1, 5, one commit each. **Idea 3 done:** `calibrateSensitivity` divides by each
+  value's own ceiling (`calibrationTop`); version `null-cdf-2026-08-23-top100`. New
+  `npm run validate:profile` (gates C1-C4) chained into `validate:block5`; `tools/tsconfig.sim.json`
+  now also compiles `thresholdTree`, `sensitivityCalibration`, `profileAnalysis` and `block5Profile`.
+  Effect on random responders (n=20,000): top value changes 6.4%, stakeholder voice 4.1%, reflection
+  lens 1.0%. Rank-first shares moved toward 14.3%: context 8.1 → 11.8, stakeholder 10.5 → 11.5,
+  vulnerable 24.4 → 21.4 (the remaining excess is the tie bias Idea 4 removes).

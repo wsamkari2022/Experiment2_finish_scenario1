@@ -338,6 +338,14 @@ raw zero maps to zero on every dimension. Three of the seven are clamped at zero
 runs the wrong way, and "this factor did not move me" must not be rewarded. Mid-rank would map a
 raw zero on group size to 28/100 purely because many patterns tie there.
 
+**Every value can reach 100 (24 September 2026).** "Strictly exceeds" never counts the patterns that
+tie at the very top, so four values could not reach 100: helped 98.8, directness 97.4, stakeholder
+97.3, context 93.1. That decided real rankings. A participant with the strongest possible answer on
+both gain and helped scored 100 against 99, so gain always came first. Each value's share is now
+divided by its own ceiling, so the strongest possible answer is exactly 100 on all seven. This is
+monotone: no participant is reordered within a value. Vulnerable, group size and gain are
+byte-identical. `calibrationVersion` is `null-cdf-2026-08-23-top100`.
+
 **Result** — each dimension's chance of ranking top for a random responder, ideal 14.3%:
 
 | | before | after |

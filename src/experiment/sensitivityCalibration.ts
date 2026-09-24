@@ -55,7 +55,8 @@
  * must not be rewarded. The standard mid-rank convention would map a raw zero on group size to
  * 28/100 purely because many response patterns tie there. The cost of this choice is that the
  * highest attainable raw value maps near, rather than exactly to, 100 on some dimensions,
- * because the patterns tying at the top are not counted as exceeded. That is the honest number.
+ * because the patterns tying at the top are not counted as exceeded. Since 24 September 2026
+ * that cost is removed by dividing by each value's own ceiling - see calibrateSensitivity.
  *
  * ============================================================================
  * REGENERATING THE TABLES
@@ -92,7 +93,7 @@ export type SensitivityKey =
  *
  * Bump this whenever the tables below are regenerated.
  */
-export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23";
+export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23-top100";
 
 /** `[rawScore, percentOfTheResponseSpaceStrictlyBelowThatScore]`, ascending by rawScore. */
 type NullCdf = ReadonlyArray<readonly [number, number]>;
@@ -112,29 +113,69 @@ export const SENSITIVITY_NULL_CDF: Record<SensitivityKey, NullCdf> = {
 };
 
 /**
- * Converts one raw sensitivity score (0-100) into its position on the common ruler (0-100).
+ * The share of the response space one raw score strictly exceeds, before any rounding.
  *
  * Values that fall between two tabulated points are interpolated linearly, so the mapping is
  * continuous and strictly order-preserving. Anything at or below the lowest attainable raw
  * score maps to 0; anything at or above the highest maps to that entry's percentage.
  */
-export function calibrateSensitivity(key: string, rawScore: number): number {
-  const cdf = SENSITIVITY_NULL_CDF[key as SensitivityKey];
-  if (!cdf || cdf.length === 0) return Math.round(rawScore);
-
+function percentExceeded(cdf: NullCdf, rawScore: number): number {
   if (rawScore <= cdf[0][0]) return 0;
   const last = cdf[cdf.length - 1];
-  if (rawScore >= last[0]) return Math.round(last[1]);
+  if (rawScore >= last[0]) return last[1];
 
   for (let i = 1; i < cdf.length; i++) {
     const [hiRaw, hiPct] = cdf[i];
-    if (rawScore === hiRaw) return Math.round(hiPct);
+    if (rawScore === hiRaw) return hiPct;
     if (rawScore < hiRaw) {
       const [loRaw, loPct] = cdf[i - 1];
       const span = hiRaw - loRaw;
       const t = span === 0 ? 0 : (rawScore - loRaw) / span;
-      return Math.round(loPct + t * (hiPct - loPct));
+      return loPct + t * (hiPct - loPct);
     }
   }
-  return Math.round(last[1]);
+  return last[1];
+}
+
+/**
+ * The most of the response space anybody can exceed on this value: the percentage the strongest
+ * attainable answer reaches. 100 on vulnerability, group size and gain; below 100 on the other four,
+ * because the answer patterns that tie at the very top are never counted as exceeded.
+ */
+export function calibrationTop(key: string): number {
+  const cdf = SENSITIVITY_NULL_CDF[key as SensitivityKey];
+  return cdf && cdf.length ? cdf[cdf.length - 1][1] : 100;
+}
+
+/**
+ * Converts one raw sensitivity score (0-100) into its position on the common ruler (0-100).
+ *
+ * EVERY VALUE CAN REACH 100 (24 September 2026, researcher's approval).
+ *
+ * The share exceeded is divided by the most that anybody CAN exceed on that value, so the strongest
+ * possible answer is exactly 100 on all seven. Before this, the ceiling differed by value, because
+ * "strictly exceeds" never counts the patterns that tie at the top:
+ *
+ *     helped (outcome) 98.8 · directness 97.4 · stakeholder 97.3 · context 93.1 · the other three 100
+ *
+ * That gap decided real rankings. A participant who gave the strongest possible answer on BOTH gain
+ * and helped scored 100 against 99, so gain always came first - a property of the table, not of
+ * anything they said. It also meant context could never beat directness at the very top when the
+ * CVR lens is chosen.
+ *
+ * WHAT DOES NOT CHANGE. Zero still maps to zero. The order of two participants on the same value
+ * never changes (dividing by a constant is monotone). Vulnerability, group size and gain already
+ * reached 100, so their numbers are byte-identical to before; only the other four move, and only
+ * by their ceiling - at most 7% for context.
+ *
+ * WHAT THE NUMBER NOW MEANS: the share of the reachable range this participant exceeds on this
+ * value, where "reachable" is set by the instrument itself.
+ */
+export function calibrateSensitivity(key: string, rawScore: number): number {
+  const cdf = SENSITIVITY_NULL_CDF[key as SensitivityKey];
+  if (!cdf || cdf.length === 0) return Math.round(rawScore);
+
+  const top = calibrationTop(key);
+  const pct = percentExceeded(cdf, rawScore);
+  return top > 0 ? Math.round((pct * 100) / top) : Math.round(pct);
 }

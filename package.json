@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "validate:block5": "node tools/validate_block5.cjs && node tools/validate_block5_metrics.mjs && npm run validate:vci && npm run validate:stability && npm run validate:lenses && npm run validate:people && npm run validate:twins && npm run verify:apa && npm run test:planner && npm run validate:dbshape && npm run validate:position",
+    "validate:block5": "node tools/validate_block5.cjs && node tools/validate_block5_metrics.mjs && npm run validate:vci && npm run validate:stability && npm run validate:lenses && npm run validate:people && npm run validate:twins && npm run verify:apa && npm run test:planner && npm run validate:profile && npm run validate:dbshape && npm run validate:position",
     "check:images": "node tools/check_scenario_images.mjs",
     "validate:metrics": "node tools/validate_block5_metrics.mjs",
     "validate:vci": "tsc -p tools/tsconfig.sim.json && node tools/simulate_vci.cjs",
@@ -35,7 +35,8 @@
     "validate:mcf": "tsc -p tools/tsconfig.sim.json && node tools/validate_mcf.cjs",
     "report:planner": "node tools/planner_vs_weighting.cjs",
     "audit:rules": "tsc -p tools/tsconfig.sim.json && node tools/audit_cvr_rules.cjs",
-    "validate:twins": "tsc -p tools/tsconfig.sim.json && node tools/validate_twins.cjs"
+    "validate:twins": "tsc -p tools/tsconfig.sim.json && node tools/validate_twins.cjs",
+    "validate:profile": "tsc -p tools/tsconfig.sim.json && node tools/validate_profile.cjs"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.34.0",

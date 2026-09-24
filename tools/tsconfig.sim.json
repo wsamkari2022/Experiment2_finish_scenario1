@@ -25,6 +25,10 @@
     "../src/experiment/block5Mirror.ts",
     "../src/experiment/block5Types.ts",
     "../src/experiment/block5CVRContent.ts",
-    "../src/experiment/blocksLegacyMethodology.ts"
+    "../src/experiment/blocksLegacyMethodology.ts",
+    "../src/experiment/thresholdTree.ts",
+    "../src/experiment/sensitivityCalibration.ts",
+    "../src/experiment/profileAnalysis.ts",
+    "../src/experiment/block5Profile.ts"
   ]
 }

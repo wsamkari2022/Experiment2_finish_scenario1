@@ -113,8 +113,8 @@ or that session stays local-only.
 npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
-`validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS` and `ALL DATABASE GATES
-PASSED`. Since 23 September 2026 `validate:position` runs LAST in that chain: it fails on purpose
+`validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED`
+(since 24 September 2026) and `ALL DATABASE GATES PASSED`. Since 23 September 2026 `validate:position` runs LAST in that chain: it fails on purpose
 (see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
 above were never printed and four suites never ran. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
 a blocker, not a warning.
@@ -185,6 +185,18 @@ section's own builder, `where_each_number_lives` names the original for every li
 checks the copy against its sources on every build. The name is snake_case because the server
 refuses any path that is not — a field with spaces would be rejected with a 400.
 
+## Blocks 1-4 scoring, revised 24 September 2026
+
+The questions and the screens of Blocks 1-4 are unchanged; only the arithmetic that turns the
+answers into the seven value scores has changed, one rule at a time, each approved by the
+researcher and each stamped with a new `calibrationVersion`
+(`analysis.participant_record.calibrationVersion`). Never pool records made under two versions.
+Full list: `Generated Outputs/HOW_TO_READ_MY_DATABASE.md` section 6h. `npm run validate:profile`
+stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, group E.
+
+- **Every value can reach 100** (`null-cdf-2026-08-23-top100`). Each calibrated value is divided by
+  its own ceiling, so helped, directness, context and stakeholder are no longer capped at 93-99.
+
 ## The two development-only controls
 
 Both live in `src/components/dev/` and both disappear from a production build because
@@ -208,11 +220,12 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 
 | Command | What it guards |
 |---|---|
-| `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS` and `ALL DATABASE GATES PASSED` |
+| `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
 | `validate:dbshape` | What reaches MongoDB. 50 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49) and the stored MCF (D50). `--dump` writes a full simulated document |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |
+| `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
 | `validate:position` | The position effect. **Fails on purpose** (2.8× against a 3× gate) until the position calculation pass, which is why it runs LAST in the chain |
 | `report:planner` | How often the first card is also the best-fitting option — 48% now, 69% under a weighting planner, 16.7% by chance |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
