@@ -905,9 +905,15 @@ which rules made a record.**
 |---|---|
 | `null-cdf-2026-08-23` | The original common ruler |
 | `null-cdf-2026-08-23-top100` | **Every value can reach 100.** Helped, directness, context and stakeholder are divided by their ceiling (98.8, 97.4, 93.1, 97.3), so each can be up to 7% higher than under the original ruler. Vulnerable, harm and gain are unchanged |
+| `null-cdf-2026-08-23-top100-fair-ties` | **Ties are decided by a coin, not by list order.** Before, a tie always went vulnerable > group size > gain > outcome > …; now a coin made from the participant's own answers decides, and every tie is recorded in the tree as `tiedValues` (groups) and `tiedWith` (per value), with the rule in `tieRule`. Scores are unchanged; only the rank of tied values can differ |
 
 > ⚠️ **Never pool value scores made under two versions.** The same answers give different numbers,
 > and on a tie at the top, a different #1 value.
+
+**Which rankings a coin decided.** `analysis.participant_record.derived.thresholdTree.tiedValues`
+lists every group of values that shared a score. A #1 value that sits in a tied group was chosen by
+the coin, not by the answers; an analysis that leans on "their top value" can check it, or drop
+those participants as a robustness test.
 
 ---
 

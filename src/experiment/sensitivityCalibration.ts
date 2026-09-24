@@ -93,7 +93,13 @@ export type SensitivityKey =
  *
  * Bump this whenever the tables below are regenerated.
  */
-export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23-top100";
+/*
+ * SINCE 24 SEPTEMBER 2026 THIS NAMES THE WHOLE SCORING RULE SET, not only the tables: the tables, the
+ * ceiling division, the tie rule in thresholdTree.ts, and the refusal rule. It is the one stamp an
+ * analyst has to check, so any change to any of those moves it. History: Generated
+ * Outputs/HOW_TO_READ_MY_DATABASE.md section 6h.
+ */
+export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23-top100-fair-ties";
 
 /** `[rawScore, percentOfTheResponseSpaceStrictlyBelowThatScore]`, ascending by rawScore. */
 type NullCdf = ReadonlyArray<readonly [number, number]>;

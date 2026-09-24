@@ -196,6 +196,11 @@ stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, grou
 
 - **Every value can reach 100** (`null-cdf-2026-08-23-top100`). Each calibrated value is divided by
   its own ceiling, so helped, directness, context and stakeholder are no longer capped at 93-99.
+- **Ties are decided by a coin** (`…-fair-ties`). Before, a stable sort always put vulnerability first.
+  The coin is a hash of the participant's own answers — deliberately NOT the session id, which can
+  differ between computers and would change the card order mid-study. Every tie is recorded on the
+  tree (`tiedValues`, `tiedWith`). During Block 5, `recompute()` in `block5CVR.ts` still breaks new
+  ties by array order, which is now the participant's own pre-Block-5 rank order, not code order.
 
 ## The two development-only controls
 

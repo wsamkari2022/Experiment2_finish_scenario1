@@ -152,6 +152,8 @@ export interface ThresholdTreeDimension {
   derivation: string; // formula with the participant's real values substituted
   /** The signals that fed this score, for transparency/CVR-cube display. */
   contributions: { block: string; label: string; value: number; weight: number }[];
+  /** The other values that share this exact score. Absent when there is no tie. See TIE_RULE. */
+  tiedWith?: string[];
 }
 
 /** The complete ranked User Value Profile. */
@@ -160,6 +162,10 @@ export interface ThresholdTree {
   overallSensitivityIndex: number;
   primaryDriver: ThresholdTreeDimension | null;
   secondaryDriver: ThresholdTreeDimension | null;
+  /** Every group of values that shared a score, in rank order. Empty when nothing tied. */
+  tiedValues?: string[][];
+  /** How those ties were ordered. Optional only so that trees stored before 24 September parse. */
+  tieRule?: string;
 }
 
 /**
@@ -181,9 +187,9 @@ export interface ThresholdTree {
  * weighting with that property, needs no tuning parameter, and always normalizes to 1 for any
  * number of dimensions — so adding an eighth sensitivity later requires no change here.
  *
- * KNOWN LIMITATION: about 10% of participants tie for their top dimension, and the tie is broken
- * by list order rather than by their answers. topSensitivityKey is therefore decided by accident
- * for roughly one participant in ten.
+ * TIES: about 10% of participants tie for their top dimension. Until 24 September 2026 the tie was
+ * broken by list order, which always favored vulnerability; it is now broken by a coin made from
+ * the participant's own answers and recorded on the tree. See TIE_RULE and buildThresholdTree.
  */
 export function rankWeight(rank: number, dimensionCount: number): number {
   const triangular = (dimensionCount * (dimensionCount + 1)) / 2;
@@ -620,9 +626,37 @@ export function buildThresholdTree(
     };
   });
 
+  /*
+   * TIES ARE BROKEN BY A COIN, NOT BY THE ORDER THIS FILE LISTS THE VALUES IN (24 September 2026,
+   * researcher's approval).
+   *
+   * A stable sort keeps tied values in the order of the `raw` array above: vulnerability, group
+   * size, gain, outcome, directness, context, stakeholder. So every tie went the same way - always
+   * to "protecting the vulnerable" first, the value the thesis is about - and about one participant
+   * in ten ties for their top value. A reviewer could fairly call that a thumb on the scale.
+   *
+   * THE COIN. Each tied value is given a number from a hash of this participant's own answers and
+   * the value's name, and the lower number goes first. It is:
+   *   - fair: across participants each value wins a tie about half the time (validate:profile, T1);
+   *   - fixed: the same answers give the same order every time, on every computer, in all three
+   *     places the profile is built (ExperimentFlow, participantRecord, the final analysis page);
+   *   - checkable: anybody can recompute it from the stored answers.
+   * It uses no session id on purpose: a participant who moves to another computer keeps the same id
+   * only if the resume copy says so, and a coin that changed mid-study would change the card order.
+   *
+   * Every tie is recorded, on the dimension (`tiedWith`) and on the tree (`tiedValues`), so an
+   * analysis can see which rankings a coin decided.
+   */
+  const coin = tieCoinFor(profile, block4);
   const sorted = [...calibrated]
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => b.score - a.score || coin(a.key) - coin(b.key))
     .map((d, i) => ({ ...d, rank: i + 1 }));
+
+  const tiedValues = tieGroups(sorted);
+  for (const d of sorted) {
+    const group = tiedValues.find((g) => g.includes(d.key));
+    if (group) d.tiedWith = group.filter((k) => k !== d.key);
+  }
 
   const n = sorted.length;
   const overall = sorted.reduce((sum, d) => sum + rankWeight(d.rank, n) * d.score, 0);
@@ -632,5 +666,62 @@ export function buildThresholdTree(
     overallSensitivityIndex: Math.round(overall),
     primaryDriver: sorted[0] ?? null,
     secondaryDriver: sorted[1] ?? null,
+    tiedValues,
+    tieRule: TIE_RULE,
   };
+}
+
+/** Stored beside every tree, so a reader of the database knows how its ties were decided. */
+export const TIE_RULE =
+  "Tied values are ordered by a coin made from this participant's own Blocks 1-4 answers "
+  + "(FNV-1a hash of the answers and the value's name, lower first). Fair across participants, "
+  + "the same on every computer, and recomputable from the stored answers.";
+
+/** FNV-1a, 32-bit. Small, fast and identical on every machine, which is all a coin needs. */
+function fnv1a(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Everything the participant answered in Blocks 1-4, as one string with a fixed order.
+ *
+ * Built from the comparable indices rather than from raw records, because those are what all three
+ * callers share exactly. Missing optional Block 4 fields are written as empty, so `undefined` in one
+ * caller and `null` in another still give the same coin.
+ */
+function answerFingerprint(profile: MoralProfile, block4: Block4DecisionRecord): string {
+  const sortedPairs = (o: Partial<Record<string, number>> | undefined) =>
+    Object.keys(o ?? {}).sort().map((k) => `${k}=${o?.[k] ?? ""}`).join(",");
+  const t = profile.trolleyIndices ?? { lever: "", bridge: "" };
+  const b4 = [
+    block4.initialDecision, block4.midDecision, block4.finalDecision, block4.confidence,
+    block4.initialConfidence, block4.reportedInfluence, block4.influentialValence,
+  ].map((v) => (v === undefined || v === null ? "" : String(v))).join("/");
+  return [
+    `money:${sortedPairs(profile.moneyIndices)}`,
+    `trolley:lever=${t.lever},bridge=${t.bridge}`,
+    `workforce:${sortedPairs(profile.aiWorkforceIndices)}`,
+    `donation:${profile.block1DonationSignal ?? ""}`,
+    `block4:${b4}`,
+  ].join("|");
+}
+
+function tieCoinFor(profile: MoralProfile, block4: Block4DecisionRecord): (key: string) => number {
+  const fingerprint = answerFingerprint(profile, block4);
+  return (key: string) => fnv1a(`${fingerprint}#${key}`);
+}
+
+/** Groups of two or more values that share a score, in rank order. */
+function tieGroups(sorted: { key: string; score: number }[]): string[][] {
+  const groups: string[][] = [];
+  sorted.forEach((d, i) => {
+    if (i > 0 && sorted[i - 1].score === d.score) groups[groups.length - 1].push(d.key);
+    else groups.push([d.key]);
+  });
+  return groups.filter((g) => g.length > 1);
 }

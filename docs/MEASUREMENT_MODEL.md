@@ -373,9 +373,12 @@ rankWeight(rank, n) = (n + 1 − rank) / (n(n+1)/2)      // thresholdTree.ts
 A triangular weighting: with 7 dimensions the ranks get 7/28, 6/28 … 1/28, summing to exactly 1.
 Used for the composite score and carried into the Block 5 profile.
 
-*Known limitation:* about 10% of participants tie for their top dimension, and the tie is broken
-by list order rather than by their answers. `topSensitivityKey` is therefore decided by accident
-for roughly one participant in ten.
+*Ties (revised 24 September 2026):* about 10% of participants tie for their top dimension. Until
+24 September the tie was broken by list order, which always put vulnerability protection first.
+It is now broken by a coin made from the participant's own answers (an FNV-1a hash of the answers
+and the value's name). The coin is fair across participants, the same on every computer, and
+recomputable from the stored answers. Every tie is recorded on the tree (`tiedValues`,
+`tiedWith`, `tieRule`). `npm run validate:profile` gates T1-T4.
 
 ---
 

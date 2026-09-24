@@ -177,6 +177,60 @@ for (const k of unchanged) {
 gate("C4", sameAsBefore && unchanged.length === 3,
   `the three values that already reached 100 (${unchanged.join(", ")}) score exactly as before`);
 
+/* ======================================================================= T. ties are fair */
+
+console.log("\n  T. Tied values are ordered by a coin from the participant's own answers");
+
+{
+  seed = 424242;
+  let twoWayTopTies = 0, wonByListOrder = 0, recordedRight = true, strictlyOrdered = true, anyTies = 0;
+  for (let i = 0; i < 20000; i++) {
+    const tree = treeOf(randomPattern());
+    const dims = tree.dimensions;
+
+    /* T3: what is recorded matches what happened. */
+    const groups = [];
+    dims.forEach((d, j) => {
+      if (j > 0 && dims[j - 1].score === d.score) groups[groups.length - 1].push(d.key);
+      else groups.push([d.key]);
+    });
+    const expected = groups.filter((g) => g.length > 1);
+    if (JSON.stringify(expected) !== JSON.stringify(tree.tiedValues ?? [])) recordedRight = false;
+    for (const d of dims) {
+      const g = expected.find((x) => x.includes(d.key));
+      const want = g ? g.filter((k) => k !== d.key) : undefined;
+      if (JSON.stringify(want) !== JSON.stringify(d.tiedWith)) recordedRight = false;
+    }
+    if (expected.length) anyTies++;
+
+    /* T4: scores never go up as the rank goes down. */
+    for (let j = 1; j < dims.length; j++) if (dims[j].score > dims[j - 1].score) strictlyOrdered = false;
+
+    /* T1: in a two-way tie for first place, how often does the value the file lists first win? */
+    if (dims[0].score === dims[1].score && (dims.length < 3 || dims[2].score !== dims[0].score)) {
+      twoWayTopTies++;
+      if (KEYS.indexOf(dims[0].key) < KEYS.indexOf(dims[1].key)) wonByListOrder++;
+    }
+  }
+  const share = twoWayTopTies ? wonByListOrder / twoWayTopTies : 0.5;
+  gate("T1", twoWayTopTies > 200 && share > 0.4 && share < 0.6,
+    `in ${twoWayTopTies} two-way ties for first place, the value listed first in the code won `
+    + `${(100 * share).toFixed(1)}% (list order would give 100%; a fair coin about 50%)`);
+
+  const p = randomPattern();
+  const a = treeOf(p).dimensions.map((d) => d.key).join(">");
+  const b = treeOf(p).dimensions.map((d) => d.key).join(">");
+  const nulled = { ...p, block4: { ...p.block4, initialConfidence: null, reportedInfluence: undefined } };
+  const blank = { ...p, block4: { ...p.block4, initialConfidence: undefined, reportedInfluence: null } };
+  const c = treeOf(nulled).dimensions.map((d) => d.key).join(">");
+  const d = treeOf(blank).dimensions.map((d) => d.key).join(">");
+  gate("T2", a === b && c === d,
+    "the same answers give the same order every time, and a missing Block 4 field gives the same coin whether it is null or undefined");
+
+  gate("T3", recordedRight, `every tie is recorded in tiedValues and tiedWith (${anyTies} of 20000 trees had at least one)`);
+  gate("T4", strictlyOrdered, "no value is ever ranked above a value with a higher score");
+}
+
 /* ------------------------------------------------------------ report: who comes out on top */
 
 /**

@@ -78,7 +78,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | Proposed (calc idea 1) |
 | E2 | One wobble of one step can make a value #1 | High | Proposed (calc idea 2) |
 | E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | **Fixed** (Idea 3, approved 24 Sept) |
-| E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | Proposed (calc idea 4) |
+| E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | **Fixed** (Idea 4, approved 24 Sept) |
 | E5 | No response-style flag, though every click is timestamped | Medium | Proposed (calc idea 5) |
 | E6 | Block 3's prices could give a real vulnerable-vs-harm exchange rate | Low, idea | Proposed (calc idea 6) |
 | E7 | Participant values are differences; option values are levels | Critical, design | For discussion |
@@ -747,4 +747,14 @@ waits until just before real participants.
   now also compiles `thresholdTree`, `sensitivityCalibration`, `profileAnalysis` and `block5Profile`.
   Effect on random responders (n=20,000): top value changes 6.4%, stakeholder voice 4.1%, reflection
   lens 1.0%. Rank-first shares moved toward 14.3%: context 8.1 → 11.8, stakeholder 10.5 → 11.5,
-  vulnerable 24.4 → 21.4 (the remaining excess is the tie bias Idea 4 removes).
+  vulnerable 24.4 → 21.4.
+- **2026-09-24. Idea 4 done:** ties ordered by an FNV-1a coin over the participant's own answers
+  (not the session id, which can differ between computers), recorded as `tiedValues` / `tiedWith` /
+  `tieRule` on the tree; version `null-cdf-2026-08-23-top100-fair-ties`. Gates T1-T4: in 691
+  two-way ties for first, the value listed first in the code won 46.9%. Effect on random responders:
+  planner #1 value changes 0.8%, full four-value order 3.3%.
+  **Correction to my own note above:** I had written that the leftover excess for "vulnerable" at
+  rank 1 was the tie bias. It was not; removing it moved vulnerable only 21.4 → 20.8%. The excess
+  is most likely how my random-responder generator models Block 1 (a donate action a third of the
+  time lifts the donation signal); the original documented figure was 16.6% with a different
+  generator. Not investigated further yet.
