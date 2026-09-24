@@ -159,6 +159,19 @@ deliberate acts — open the overlay, open a reading. `analysis.mcf` therefore l
 never on screen. `MCF_VERSION` is stamped on every row; rows made under two versions must not be
 pooled.
 
+## The planner, revised 24 September 2026
+
+The tree, its three steps and the win counting are unchanged; no card order moved (24,000 orders
+compared before and after, 0 different). What changed:
+
+- **Two bands, two names.** `floor` (the bottom of a value's range: costed/blocked groups and Step 1)
+  and the notice band `tolerance` (the smallest gap that counts: Step 2) are separate fields in
+  `block5Thresholds.ts`. Today they carry the same number; they may now be read and changed apart.
+- **One card sentence reworded (participants see this).** The trade line no longer says the gap was
+  "too small for you to have separated it in the earlier questions" — a claim about the person the
+  code cannot make. It now says "the gap there is small, while the gap on X is about N times larger."
+  Records before 24 September 2026 were made with the old sentence.
+
 ## Option cards start folded, since 23 September 2026
 
 A scenario opens as a list of six titles in planner order, each with its rank, and the participant

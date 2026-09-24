@@ -183,10 +183,14 @@ export function explainOption(
       const dTop = Math.abs(p.normalized[top] - other.normalized[top]);
       const dSecond = Math.abs(p.normalized[second] - other.normalized[second]);
       const times = dTop > 0 ? Math.round(dSecond / dTop) : 0;
+      /* REWORDED 24 September 2026 (researcher's approval). It used to say the gap was "too small
+         for you to have separated it in the earlier questions" - a claim about the participant that
+         the code cannot make: the smallest gap that counts is the same for everyone, and it is a
+         share of this scenario's options, not a step of any ladder they answered. It now says only
+         what the planner actually compared. */
       tradeLine =
         `This ranks above “${titleOf(scenario, otherId)}” even though that option is slightly better ` +
-        `on ${POLICY_DIM_SHORT[top]} — the gap there is too small for you to have separated it in the ` +
-        `earlier questions, while the gap on ${POLICY_DIM_SHORT[second]}` +
+        `on ${POLICY_DIM_SHORT[top]} — the gap there is small, while the gap on ${POLICY_DIM_SHORT[second]}` +
         (times >= 2 ? ` is about ${times} times larger.` : " is the larger of the two.");
     }
   }
