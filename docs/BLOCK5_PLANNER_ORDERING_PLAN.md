@@ -1,5 +1,18 @@
 # Block 5 — Planner Ordering + New Scenario Content
 
+> **REVISED 24 SEPTEMBER 2026 — read this first.** The tree below is unchanged, but three claims in
+> this plan no longer describe what ships:
+> - Tolerance is not per-participant. Block 3 now restarts every cell at $1, so every interval is one
+>   rung: the band is one step of each value's own ladder (1/6, or 1/8 for helped) for everyone.
+> - The "planner #1 = alignment #1" figures here (31-49%) came from synthetic profiles. With pretend
+>   participants answering Blocks 1-4 and scored by the real code, the first card is the best-fit
+>   card for 57-68 people in 100 who answer steadily (`npm run report:planner-overlap`).
+> - In practice, card 1 is the option best on the participant's #1 value for 90-100 people in 100.
+>
+> What changed that day: the bottom-of-range band and the smallest-gap band got separate names (no
+> order moved), every order is saved with its inputs and a version, and one card sentence was
+> reworded. See CLAUDE.md, "The planner, revised 24 September 2026", and docs/FRESH_EYE_AUDIT.md.
+
 > **SUPERSEDED IN PART — 4 September 2026.** This document describes the five-scenario deck.
 > `flood_evacuation_priority` and `water_contamination_response` have since been removed; Block 5
 > now runs chemical, wildfire and cancer. The reasoning below is kept as the design record of the

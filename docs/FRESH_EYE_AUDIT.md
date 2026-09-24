@@ -54,6 +54,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | A4 | Reflection pages show the participant's value numbers | Medium, decision | Open |
 | A5 | Compare chart draws the participant's values over the options | Low, note | Open |
 | A6 | CLAUDE.md says no verdict or arithmetic is shown; not true | High (docs) | **Deferred to before launch** (Fix 1) |
+| A8 | Scenario 5's wish page says how close the wish is to "what you said matters most" | Medium | Open (Fix 1 territory) |
 | A7 | The "Has a cost" removal (24 Sept) is not yet dated in CLAUDE.md / HOW_TO_ANALYZE | Medium (docs) | Open |
 | B1 | Keep rule lowers the wrong value, or nothing | Critical | Open |
 | B2 | Picking your best fit can lower your #1 value | Critical | Open |
@@ -63,15 +64,15 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | B6 | Difference scores put consistent people at 0 | Critical, upstream | Open, decision |
 | B7 | Only four scenarios can move the profile | Medium (framing) | Open |
 | B8 | The audit-request document describes Route 3 wrongly | Medium (docs) | Open |
-| C1 | The first card is almost always "champion of your #1 value" | High (honesty) | Open |
+| C1 | The first card is almost always "champion of your #1 value" | High (honesty) | **Documented** (item 5; measured by `report:planner-overlap`) |
 | C2 | "Every threshold comes from the participant" is false | High | Open |
-| C3 | Step 1's floor and Step 2's noise band are one number with two meanings | Medium | Open (was "contradiction"; reclassified) |
-| C4 | Appendix B numbers depend on invented people | Medium | Open |
+| C3 | Step 1's floor and Step 2's noise band are one number with two meanings | Medium | **Fixed** (item 2: `floor` named apart; 0 of 24,000 orders moved) |
+| C4 | Appendix B numbers depend on invented people | Medium | **Fixed** (item 7: `report:planner-overlap` on real-pipeline pretend people) |
 | C5 | "No tuning constants" claim | Low (docs) | Open |
 | C6 | Win counting is Copeland; loops almost never happen | Low (docs) | Open |
 | C7 | Ties and near-ties in the participant's own ranking decide the whole order | Medium | Open |
 | C8 | The noise band cannot be personal; `strictness` is computed and never used | High | Open |
-| C9 | The planner's inputs are not stored, and there is no planner version | High | Open |
+| C9 | The planner's inputs are not stored, and there is no planner version | High | **Fixed** (item 4: `plannerInputs`, `PLANNER_VERSION`, `analysis.card_order_by_scenario`, gate D53) |
 | D1 | Option numbers disagree with the option's own words | Critical | Open |
 | D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | Open |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
@@ -861,3 +862,4 @@ design change (for example a randomly ordered control group).
 - **2026-09-24. Tables rebuilt with a committed recipe:** `tools/regenerate_sensitivity_calibration.cjs` → `src/experiment/sensitivityCalibrationTables.ts` (generated). 200,000 pretend participants, seed 20260924, every answer and every refusal button equally likely (Waseem's decision). thresholdTree split into `rawDimensionsOf` + `rankedTree`, with `rawSensitivityScores` exported for the recipe; the split changed nothing (R3 still passes). Gate K1 rebuilds the tables in 3.2 s and must match exactly. Version `null-cdf-2026-09-24-recipe`. The rank-first shares for random responders are now 12.8-15.2% (ideal 14.3); vulnerable was 24.4% on the original rules. Effect on 5,000 "consistent" people: planner #1 value changes 13.1%, full four-value order 31.8%, first lens 0%.  **New finding E8 (donation signal):** with equal buttons, two thirds of pretend participants donate at the shelter at least once, and one click earns Block 1's full donation signal, so donating no longer stands out. A donor who never keeps money went from vulnerable 68 to 51, and their #1 value changed from vulnerable to gain. The root is the "any donate click = full signal" formula in profileAnalysis (`block1DonationSignal`). Correction, checked by grep: the signal is read ONLY by thresholdTree.ts (vulB1, its availability, and the tie-coin fingerprint), not by Block 4, so a fix is contained. Plan it next, with Waseem.
 - **2026-09-24. Donation signal fixed (E8):** `block1DonationSignal` = max(shelter share of refusals that were donate, 0.5 × the other places' share), instead of 1 or 0.5 for any single click. Waseem had ALREADY delegated this ("fix the donation button however you feel is right") and I asked him again; he told me to read his whole prompt (memory: feedback-read-whole-prompt). K1 caught the formula change before regeneration, as designed; tables regenerated. Rank-first shares 12.8-15.1%. Donor example 51 → 59; one small wobble 1 → 9; consistent people: #1 value changes 4.3%. Version `null-cdf-2026-09-24-recipe-donation-share`. Gates D1-D2; R3's reference updated to the share rule so it still tests only the refusal rule.
 - **2026-09-24. Planner re-tested (Fix P plan v2 above)**; created the project skill `.claude/skills/simple-english` at Waseem's request (every reply in very simple words with informative examples).
+- **2026-09-24. Fix P v2, Waseem's answers:** item 1 (band wording) NOT NOW, keep as is; item 3 (Step 3 rate) unchanged, and he asked what it is, so explain it simply; items 2, 4, 5, 6, 7 yes; big question = A (accept, state, analyse both). Done: item 2 `393e401` (floor named apart, 0/24,000 orders moved); item 6 `aa13ecf` (card sentence); item 4 `5730fa5` (inputs + version + readable `analysis.card_order_by_scenario` + self-check, gate D53); item 7 `tools/report_planner_overlap.cjs` (steady 57-68, random 46-55, first card = #1-value champion 90-100; these supersede the 56-68 / 88-100 in the plan v2 above); item 5 honest words in the planner header, CLAUDE.md, HOW_TO_ANALYZE 4.7 (the overlap in full and how to analyse it), HOW_TO_READ 6j, and a dated banner on the planner plan doc. Left untouched on purpose (item 1): the header's "NO CONSTANTS / every threshold derived" wording about the band. Noticed and NOT changed (Fix 1 territory): scenario 5's wish page tells participants how close their wish is to what they said matters most (Block5PublicEmergencySimulation.tsx ~line 2100) — another A-group disclosure, now A8.

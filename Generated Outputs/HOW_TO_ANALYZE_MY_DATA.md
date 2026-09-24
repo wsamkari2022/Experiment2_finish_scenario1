@@ -170,6 +170,42 @@ time*, not *the options suited them*. If you want the second claim, use
 `alignment_score_0_to_100` — and remember it floors at 0, so for anything that ranks or subtracts,
 use `matchShortfall` on the raw row instead.
 
+### 4.7 Reading "chose card 1" as "chose by their values" (or the other way round)
+
+The planner orders the cards so that the first card is **not simply the best fit**. It is, in
+practice, almost always **the option that is best on the participant's #1 value**. Often that is also
+their best fit. Measured on 24 September 2026 (`npm run report:planner-overlap`, 4,000 pretend
+participants of each kind, real scoring from Blocks 1-4 to the card order), out of 100 people:
+
+| Scenario | First card = best fit (steady answerers) | They differ | First card = best fit (random answerers) |
+|---|---|---|---|
+| Six Hours to Clear the District | 62 | 38 | 50 |
+| Eight Hours Ahead of the Fire | 68 | 32 | 55 |
+| Limited Cancer Treatment Allocation | 57 | 43 | 46 |
+| The Care Visits You Have to Cut | 62 | 38 | 50 |
+| The Same Cut, Decided Without You | 62 | 38 | 50 |
+
+Chance would be about 17 (one card in six). "Steady" pretend participants answer like a real person:
+one base answer, a small real preference, and sometimes one answer one step off. Their profiles are
+clearer, so the #1-value champion is more often also their best fit. Real participants are expected
+to sit nearer the steady numbers.
+
+**What this means for analysis** (the researcher's decision, 24 September 2026: accept, state and
+analyse both):
+
+- A choice of card 1 is **ambiguous in 57-68 cases out of 100**: first place and best fit are the same
+  card, so either could explain it.
+- The **32-43 cases out of 100 where they differ** are the ones that can separate a position effect
+  from a values effect. Say so, and report how many such cases the sample actually had
+  (`analysis.card_order_by_scenario.by_scenario[].the_first_card_was_also_the_best_fit_card`).
+- Put **both** in the same model: the chosen card's position on screen (`choiceRank`, or
+  `position_of_the_card_chosen`) and its fit place (`selectedRank`, or `is_the_best_fit_card`). Never
+  use one as a stand-in for the other.
+- Do not claim the order is independent of fit. It is not, by design, and the numbers above are the
+  size of the dependence.
+- A cleaner separation would need a design change (for example a randomly ordered control group).
+  It was considered and not adopted; name it as a limitation.
+
 ---
 
 ## 5. Scenario 6: the veil, and the MPF

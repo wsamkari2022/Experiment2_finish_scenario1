@@ -38,6 +38,25 @@
  * is the behavior the whole design depends on, and a plain sort by the top value can never
  * produce it.
  *
+ * WHAT IT DOES IN PRACTICE — MEASURED, NOT ASSUMED (24 September 2026, `npm run
+ * report:planner-overlap`, 4,000 pretend participants answering Blocks 1-4, real code end to end):
+ *
+ *   - The FIRST card is the option best on the participant's #1 value for 90-100 people in 100.
+ *     The P-against-Q case above almost never happens at the top of a real list, because every
+ *     scenario was authored with one clear champion per value, far ahead of the rest, so Step 2
+ *     nearly always says "the gap is real". Step 3 mostly reorders the LOWER cards (it decides
+ *     roughly 1 pair in 7 to 1 pair in 9).
+ *   - The first card is ALSO the participant's best-fit card for 57-68 people in 100 who answer
+ *     steadily, and 46-55 who answer at random (chance would be about 17). So first place and best
+ *     fit are separated in 32-43 cases in 100, not in most of them. Analyse choice position and fit
+ *     together: Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md, section 4.7.
+ *
+ * NAMES TO CITE. The pairwise tree is LEAP's trade-off tree (see the plan, §4d); a "look at the most
+ * important value, move on when the gap is too small to count" rule is Tversky's (1969) lexicographic
+ * semiorder; counting pairwise wins to turn pairs into a list is the Copeland method from voting
+ * theory. Loops (A beats B beats C beats A) are rare on these option sets, so Copeland and a plain
+ * sort agree almost always.
+ *
  * NO CONSTANTS. THIS FILE HAS NO TUNING PARAMETERS.
  * -------------------------------------------------
  * Every threshold the tree uses — red lines, exchange rates, tolerance bands — is derived from the

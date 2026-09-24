@@ -176,6 +176,10 @@ compared before and after, 0 different). What changed:
   change) and `plannerInputs` (the value order and, per value, red line, both bands and trade
   rate). `analysis.card_order_by_scenario` is the readable version, with a self-check that
   rebuilds the order from the saved inputs. Gate D53.
+- **The overlap is reported, and written into the analysis guide.** `npm run report:planner-overlap`
+  measures, per scenario, how often the first card is also the best-fit card, with pretend
+  participants who answer Blocks 1-4 steadily and at random (real code end to end). It replaces the
+  made-up-score figures of `report:planner` for this question, which understated the overlap.
 
 ## Option cards start folded, since 23 September 2026
 
@@ -283,7 +287,8 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect. **Fails on purpose** (2.8× against a 3× gate) until the position calculation pass, which is why it runs LAST in the chain |
-| `report:planner` | How often the first card is also the best-fitting option — 48% now, 69% under a weighting planner, 16.7% by chance |
+| `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
+| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 57-68 in 100 steady, 46-55 random, chance about 17 |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
 
 ## Two files that carry rules rather than code
@@ -334,7 +339,12 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   never shown while the participant is still choosing.
 - Scenario 5 is a wish rather than a decision. It is excluded from consistency, stability and the
   reflection measures, but included in the position effect.
-- The option ordering (the planner) is settled. It has been reviewed and is not to be "fixed".
+- The planner's tree is settled (LEAP's trade-off tree, reviewed with the advisor) and its card order
+  is not to be "fixed" without the researcher. What it does in practice is MEASURED
+  (`npm run report:planner-overlap`): card 1 is the option best on the participant's #1 value for
+  90-100 people in 100, and is ALSO their best-fit card for 57-68 in 100 who answer steadily (46-55
+  at random; chance about 17). The researcher's decision (24 September 2026): accept it, state it,
+  and analyse position and fit together (HOW_TO_ANALYZE_MY_DATA.md 4.7).
 - **Scenario 6 is a test of the model, not of the participant.** It runs four options rather than
   six, shows no performance numbers, runs no reflection, and must never update the profile. If it
   ever did, it would add swaps to Stability that no decision of the participant's produced.
