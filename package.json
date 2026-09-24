@@ -36,7 +36,9 @@
     "report:planner": "node tools/planner_vs_weighting.cjs",
     "audit:rules": "tsc -p tools/tsconfig.sim.json && node tools/audit_cvr_rules.cjs",
     "validate:twins": "tsc -p tools/tsconfig.sim.json && node tools/validate_twins.cjs",
-    "validate:profile": "tsc -p tools/tsconfig.sim.json && node tools/validate_profile.cjs"
+    "validate:profile": "tsc -p tools/tsconfig.sim.json && node tools/validate_profile.cjs",
+    "calibration:regenerate": "tsc -p tools/tsconfig.sim.json && node tools/regenerate_sensitivity_calibration.cjs",
+    "calibration:check": "tsc -p tools/tsconfig.sim.json && node tools/regenerate_sensitivity_calibration.cjs --check"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.34.0",

@@ -82,6 +82,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | E5 | No response-style flag, though every click is timestamped | Medium | **Fixed** (Idea 5): `analysis.blocks_1_to_4_checks` + `major_info_and_scores.blocks_1_to_4` |
 | E6 | Block 3's prices could give a real vulnerable-vs-harm exchange rate | Low, idea | Proposed (calc idea 6) |
 | E7 | Participant values are differences; option values are levels | Critical, design | For discussion |
+| E8 | One "donate" click earns the full donation signal, so donating hardly stands out | High | Open (found by the rebuild) |
 
 ---
 
@@ -823,3 +824,4 @@ waits until just before real participants.
   Note: with unmeasured = 0, Part B simplifies to "higher wins, a tie goes to the coin". That also
   covers measured-0 against unmeasured-0, where the "use the measured one" wording would have
   picked the lens we know does NOT move the person.
+- **2026-09-24. Tables rebuilt with a committed recipe:** `tools/regenerate_sensitivity_calibration.cjs` → `src/experiment/sensitivityCalibrationTables.ts` (generated). 200,000 pretend participants, seed 20260924, every answer and every refusal button equally likely (Waseem's decision). thresholdTree split into `rawDimensionsOf` + `rankedTree`, with `rawSensitivityScores` exported for the recipe; the split changed nothing (R3 still passes). Gate K1 rebuilds the tables in 3.2 s and must match exactly. Version `null-cdf-2026-09-24-recipe`. The rank-first shares for random responders are now 12.8-15.2% (ideal 14.3); vulnerable was 24.4% on the original rules. Effect on 5,000 "consistent" people: planner #1 value changes 13.1%, full four-value order 31.8%, first lens 0%.  **New finding E8 (donation signal):** with equal buttons, two thirds of pretend participants donate at the shelter at least once, and one click earns Block 1's full donation signal, so donating no longer stands out. A donor who never keeps money went from vulnerable 68 to 51, and their #1 value changed from vulnerable to gain. The root is the "any donate click = full signal" formula in profileAnalysis (`block1DonationSignal`), which also feeds Block 4 personalisation, so fixing it needs care. Plan it next, with Waseem.

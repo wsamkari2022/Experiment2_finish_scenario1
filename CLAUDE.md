@@ -220,6 +220,12 @@ stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, grou
   (researcher's choice, for analysis clarity; `notMeasuredScore` in thresholdTree.ts). `chooseFraming`
   now breaks a context/directness tie by the participant's own rank order (the coin) instead of
   `context >=`. Gates L1-L5.
+- **Tables rebuilt by a committed recipe** (`null-cdf-2026-09-24-recipe`). The 23 August recipe was
+  never saved. `tools/regenerate_sensitivity_calibration.cjs` (`npm run calibration:regenerate`) now
+  writes `src/experiment/sensitivityCalibrationTables.ts` — GENERATED, never edit by hand — from
+  200,000 pretend participants with every answer and button equally likely. `npm run
+  calibration:check` (gate K1) fails if a formula changes without its ruler: after ANY change to a
+  raw formula in `thresholdTree.ts`, run `calibration:regenerate` and commit both files together.
 - **Response-style flags** (no score change): `analysis.blocks_1_to_4_checks`, copied into
   `major_info_and_scores.blocks_1_to_4`. `FAST_ANSWER_SECONDS` (2) in `dbShape.ts` is a stated
   default; the medians are stored so another line can be drawn later.
@@ -253,6 +259,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |
 | `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
+| `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect. **Fails on purpose** (2.8× against a 3× gate) until the position calculation pass, which is why it runs LAST in the chain |
 | `report:planner` | How often the first card is also the best-fitting option — 48% now, 69% under a weighting planner, 16.7% by chance |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |

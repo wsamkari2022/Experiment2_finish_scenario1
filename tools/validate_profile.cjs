@@ -11,6 +11,11 @@
  *
  * The rules it stands over, each approved by the researcher on 24 September 2026:
  *   C  every value can reach 100                     sensitivityCalibration.ts, calibrateSensitivity
+ *   K  the tables are exactly what the recipe makes  tools/regenerate_sensitivity_calibration.cjs
+ *   T  ties are decided by a fair coin               thresholdTree.ts, TIE_RULE
+ *   R  a comparison between two refusals is not 0    thresholdTree.ts, NOT_MEASURED_SCORE
+ *   H  half a step gets half the credit              thresholdTree.ts, group size
+ *   L  directness / context: flagged, fair lens      thresholdTree.ts + block5CVR.ts chooseFraming
  *
  * Run: npm run validate:profile
  */
@@ -174,8 +179,27 @@ let sameAsBefore = true;
 for (const k of unchanged) {
   for (let raw = 0; raw <= 100; raw++) if (calibrateSensitivity(k, raw) !== calibrateBefore(k, raw)) sameAsBefore = false;
 }
-gate("C4", sameAsBefore && unchanged.length === 3,
-  `the three values that already reached 100 (${unchanged.join(", ")}) score exactly as before`);
+gate("C4", sameAsBefore,
+  `a value whose table already reaches 100 is not stretched at all (${unchanged.length ? unchanged.join(", ") : "none today"})`);
+
+/* ================================================== K. the tables are what the recipe produces */
+
+console.log("\n  K. The calibration tables are exactly what the committed recipe produces");
+
+const recipe = require("./regenerate_sensitivity_calibration.cjs");
+{
+  const { GENERATED_NULL_CDF } = B("sensitivityCalibrationTables.js");
+  const started = Date.now();
+  const rebuilt = recipe.buildTables({
+    rawSensitivityScores: B("thresholdTree.js").rawSensitivityScores,
+    deriveMoralProfile,
+  });
+  const diff = recipe.firstDifference(rebuilt, GENERATED_NULL_CDF);
+  gate("K1", diff === null,
+    diff === null
+      ? `rebuilt from ${recipe.DRAWS} pretend participants in ${((Date.now() - started) / 1000).toFixed(1)}s: identical`
+      : `the committed tables differ from the recipe (first: ${diff}) - a formula changed without its ruler; run npm run calibration:regenerate`);
+}
 
 /* ======================================================================= T. ties are fair */
 
@@ -362,7 +386,9 @@ console.log("\n  L. Directness and context: 'never' is flagged (score 0), and a 
 
   seed = 31415;
   let ties = 0, contextWon = 0, differs = 0, higherWon = true;
-  for (let i = 0; i < 20000; i++) {
+  /* 100,000 rather than 20,000: a context/directness tie is rare on the rebuilt tables (about 1 in
+     350 random patterns), and a fairness check needs a few hundred of them. */
+  for (let i = 0; i < 100000; i++) {
     const up = extractBlock5Profile(treeOf(randomPattern()));
     const c = up.dimensions.find((x) => x.key === "contextSensitivity").score;
     const d = up.dimensions.find((x) => x.key === "directnessSensitivity").score;
@@ -384,9 +410,15 @@ console.log("\n  L. Directness and context: 'never' is flagged (score 0), and a 
  * it is a property of the instrument to be watched, not a rule with a pass mark.
  */
 {
+  /* The SAME pretend participants the tables are built on (the recipe's own answer model), with a
+     different seed so the report is not simply reading back the draws the tables came from. */
   const N = 20000;
+  const rand = recipe.seededRandom(777);
   const top = Object.fromEntries(KEYS.map((k) => [k, 0]));
-  for (let i = 0; i < N; i++) top[treeOf(randomPattern()).dimensions[0].key]++;
+  for (let i = 0; i < N; i++) {
+    const a = recipe.randomAnswers(rand);
+    top[buildThresholdTree(deriveMoralProfile(a.money, a.trolley, a.ai), a.ai, a.block4).dimensions[0].key]++;
+  }
   console.log(`\n  Report: how often each value ranks first for a random responder (ideal 14.3%, n=${N})`);
   for (const k of KEYS) console.log(`      ${k.padEnd(26)} ${(100 * top[k] / N).toFixed(1).padStart(5)}%`);
 }

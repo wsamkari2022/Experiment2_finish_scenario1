@@ -259,6 +259,35 @@ export function buildThresholdTree(
   aiResults: AIWorkforceBlockResults | null,
   block4: Block4DecisionRecord,
 ): ThresholdTree {
+  const { raw, sizeSlope } = rawDimensionsOf(profile, aiResults, block4);
+  return rankedTree(raw, sizeSlope, profile, block4);
+}
+
+/** One sensitivity before the common ruler is applied: its natural statistic, 0-100. */
+type RawDimension = Omit<ThresholdTreeDimension, "rank">;
+
+/**
+ * The seven sensitivities BEFORE calibration, each as its natural statistic on 0-100, with whether
+ * it could be measured at all.
+ *
+ * Exported for one reason: the calibration tables are built by running exactly this over every way
+ * a person could answer (tools/regenerate_sensitivity_calibration.cjs). A table built from a copy of
+ * these formulas would drift from them; built from this function, it cannot.
+ */
+export function rawSensitivityScores(
+  profile: MoralProfile,
+  aiResults: AIWorkforceBlockResults | null,
+  block4: Block4DecisionRecord,
+): { key: string; raw: number; measured: boolean }[] {
+  return rawDimensionsOf(profile, aiResults, block4).raw
+    .map((d) => ({ key: d.key, raw: d.score, measured: d.measured !== false }));
+}
+
+function rawDimensionsOf(
+  profile: MoralProfile,
+  aiResults: AIWorkforceBlockResults | null,
+  block4: Block4DecisionRecord,
+): { raw: RawDimension[]; sizeSlope: number } {
   // ── BLOCK 1 (Money) signals ───────────────────────────────────────────────
   // Source: 3 places (neutral sidewalk / wealthy financial district / outside a homeless
   // shelter) x 8 amounts ($0.25 … $10,000). Each place restarts the ladder at $0.25, so the
@@ -638,7 +667,7 @@ export function buildThresholdTree(
   ];
 
   // ── Build the seven dimensions (key matches block5Profile KEY_MAP) ────────
-  const raw: Omit<ThresholdTreeDimension, "rank">[] = [
+  const raw: RawDimension[] = [
     {
       key: "vulnerability_protection",
       label: "Protecting the vulnerable",
@@ -731,6 +760,16 @@ export function buildThresholdTree(
     },
   ];
 
+  return { raw, sizeSlope };
+}
+
+/** The seven raw sensitivities, put on one ruler, then ranked. See buildThresholdTree. */
+function rankedTree(
+  raw: RawDimension[],
+  sizeSlope: number,
+  profile: MoralProfile,
+  block4: Block4DecisionRecord,
+): ThresholdTree {
   // ── Put all seven on one ruler, then sort and rank ────────────────────────
   //
   // Up to this point each dimension carries its RAW score: the natural statistic for that
