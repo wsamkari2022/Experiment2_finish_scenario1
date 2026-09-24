@@ -77,6 +77,22 @@ import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
  */
 const TIE_EPSILON = 1e-9;
 
+/**
+ * THE TWO BANDS, NAMED APART (24 September 2026, researcher's approval). One number used to do two
+ * different jobs, and the code read as if it contradicted itself:
+ *
+ *   floor       the BOTTOM OF THE RANGE on a value. An option inside it is bad on that value: it
+ *               can land in the costed or blocked group, and Step 1 lets the #1 value decide
+ *               between two such options instead of letting the #2 value rescue one of them.
+ *   notice band the SMALLEST GAP THAT COUNTS (`tolerance`). A gap on the #1 value below it is "too
+ *               small to count", and only then may Step 3 look at the #2 value.
+ *
+ * Today both carry the same number for every value; nothing about the card order changed when they
+ * were separated. `floor` falls back to `tolerance` for profiles built before it existed.
+ */
+const floorOf = (t: ValueThreshold): number => t.floor ?? t.tolerance;
+const noticeBandOf = (t: ValueThreshold): number => t.tolerance;
+
 /* ------------------------------------------------------------------------- *
  * Bins
  * ------------------------------------------------------------------------- */
@@ -245,7 +261,7 @@ function breachesOf(
   const out: BinBreach[] = [];
   for (const key of POLICY_DIM_KEYS) {
     const t = thresholds[key];
-    const band = t.tolerance;
+    const band = floorOf(t);
     if (norm[key] >= band) continue;
 
     if (t.hasRedLine) {
@@ -343,9 +359,9 @@ function comparePair(
   let useOrder = order;
   let ignoredTop = false;
 
-  if (bestTop < tTop.tolerance) {
-    useOrder = order;                                   // node 1 -> honor the ranking
-  } else if (diffTop >= tTop.tolerance) {
+  if (bestTop < floorOf(tTop)) {
+    useOrder = order;                                   // node 1 -> both are at the bottom: honor the ranking
+  } else if (diffTop >= noticeBandOf(tTop)) {
     useOrder = order;                                   // node 2 -> the gap is real
   } else if (second && diffSecond > tTop.exchange * diffTop) {
     useOrder = order.slice(1);                          // node 3 -> set the top value aside

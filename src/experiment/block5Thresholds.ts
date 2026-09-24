@@ -117,8 +117,18 @@ export interface ValueThreshold {
   /**
    * The width of the ladder interval their threshold sits in, as a fraction of the ladder.
    * READING: treated as the smallest difference on this value they demonstrably discriminated.
+   * In the planner this is the NOTICE BAND: the smallest gap between two options that counts
+   * (Step 2 of the tree). A gap below it lets Step 3 consider the #2 value.
    */
   tolerance: number;
+  /**
+   * The BOTTOM OF THE RANGE, as a share of this scenario's spread on the value. An option inside it
+   * counts as bad on that value: it can fall into the costed or blocked group, and Step 1 of the tree
+   * lets the #1 value decide between two such options. Its own name since 24 September 2026 (the
+   * researcher's approval), because it is a different idea from the notice band even though today
+   * both carry the same number. Absent on older synthetic profiles, where `tolerance` stands in.
+   */
+  floor?: number;
   /**
    * How many extra rungs they demanded when the target got harder (more vulnerable / larger /
    * more direct). READING: mapped to a multiplier as `1 + rungGap`, so a gap of 0 means "no extra
@@ -391,10 +401,10 @@ export function deriveDecisionProfile(
       order,
       degraded: true,
       thresholds: {
-        vulnerabilityProtectionSensitivity: neutralThreshold(reason),
-        groupSizeSensitivity: neutralThreshold(reason),
-        gainResponsivenessSensitivity: neutralThreshold(reason),
-        outcomeAggregationSensitivity: neutralThreshold(reason),
+        vulnerabilityProtectionSensitivity: withFloor(neutralThreshold(reason)),
+        groupSizeSensitivity: withFloor(neutralThreshold(reason)),
+        gainResponsivenessSensitivity: withFloor(neutralThreshold(reason)),
+        outcomeAggregationSensitivity: withFloor(neutralThreshold(reason)),
       },
     };
   }
@@ -403,10 +413,19 @@ export function deriveDecisionProfile(
     order,
     degraded: false,
     thresholds: {
-      vulnerabilityProtectionSensitivity: deriveVulnerable(moralProfile),
-      groupSizeSensitivity: deriveHarm(moralProfile),
-      gainResponsivenessSensitivity: deriveGain(moralProfile),
-      outcomeAggregationSensitivity: deriveHelp(moralProfile),
+      vulnerabilityProtectionSensitivity: withFloor(deriveVulnerable(moralProfile)),
+      groupSizeSensitivity: withFloor(deriveHarm(moralProfile)),
+      gainResponsivenessSensitivity: withFloor(deriveGain(moralProfile)),
+      outcomeAggregationSensitivity: withFloor(deriveHelp(moralProfile)),
     },
   };
+}
+
+/**
+ * Gives a threshold its bottom-of-range band. Today it is the same number as the notice band - the
+ * researcher kept the numbers (24 September 2026) - but it is written down as its own field, so the
+ * two ideas can be read, stored and, one day, changed separately.
+ */
+function withFloor(t: ValueThreshold): ValueThreshold {
+  return { ...t, floor: t.floor ?? t.tolerance };
 }
