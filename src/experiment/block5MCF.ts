@@ -70,7 +70,7 @@ import { policyShortfallByValue } from "./block5CVR";
  * records made under two different rules must never be pooled, and the only way to know which
  * rule produced a row is for the row to say so.
  */
-export const MCF_VERSION = "2026-09-24-a";
+export const MCF_VERSION = "2026-09-23-a";
 
 /**
  * How far the option sits from the participant on one value, in words a later display can use

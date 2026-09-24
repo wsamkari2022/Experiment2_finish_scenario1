@@ -104,9 +104,25 @@ export interface CardExplanation {
   chips: string[];
 }
 
+/*
+ * REMOVED ON 24 SEPTEMBER 2026: the "Has a cost" tag.
+ *
+ * It told a participant that an option was worse than the ones above it, in three words, before
+ * they had read a line of the option. That is a nudge, not information - the card already says
+ * what the option gives and what it gives up, in the participant's own terms, in the trade-off
+ * panel. A short label that summarizes all of it as a penalty invites the reader to skip the
+ * reasoning and take the verdict, which is the one thing this block must not let them do.
+ *
+ * `blocked` keeps its label deliberately. A limit is something the participant SET, in Blocks 1
+ * to 4, and choosing an option that crosses one only records a willingness to cross it if they
+ * could see that it did. That is a fact about their own earlier answer, not a ranking of options.
+ *
+ * The bin itself is untouched: the planner still sorts clear before costed before blocked, and
+ * `bin` is still stored on every card in the database. Only the word on screen is gone.
+ */
 const BIN_LABEL: Record<PlannerBin, string | null> = {
   clear: null,
-  costed: "Has a cost",
+  costed: null,
   blocked: "Crosses a limit you set",
 };
 
@@ -257,13 +273,27 @@ export function plannerPanelText(_profile: DecisionProfile): PlannerPanelText {
   return { noteLine };
 }
 
-/** Heading shown on the divider before the first costed / blocked option. */
-export const BIN_DIVIDER: Record<Exclude<PlannerBin, "clear">, string> = {
-  costed: "These cost you something on the value you ranked first",
+/**
+ * Heading shown on the divider before the first option of a bin.
+ *
+ * COSTED HAS NO DIVIDER ANY MORE (24 September 2026). "These cost you something on the value you
+ * ranked first" drew a line across the list and told the participant that everything below it was
+ * the losing half. Removed for the same reason as the tag above: it is a verdict delivered before
+ * the reading, and the cards below it are fully available choices.
+ *
+ * Partial on purpose - a bin with no entry here simply draws no divider, so removing one is a
+ * one-line change rather than a change to every call site.
+ */
+export const BIN_DIVIDER: Partial<Record<Exclude<PlannerBin, "clear">, string>> = {
   blocked: "These cross a limit you set earlier — still fully available",
 };
 
-/** Short participant-facing name for a bin, used on the chosen-option summary. */
+/**
+ * Short name for a bin. NOTHING RENDERS THIS TODAY - it was written for a chosen-option
+ * summary that no longer shows one, and it is kept only so a future summary has a single
+ * place to take its wording from. If you are looking for what a participant actually reads,
+ * it is BIN_LABEL above, where `costed` is deliberately null.
+ */
 export const BIN_SHORT: Record<PlannerBin, string> = {
   clear: "inside your limits",
   costed: "has a cost",

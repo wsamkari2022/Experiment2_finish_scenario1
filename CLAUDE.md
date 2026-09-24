@@ -124,7 +124,7 @@ builders over three simulated participants. It is the only check on `analysis` â
 ever displayed, so a wrong number would otherwise sit unnoticed until somebody opened the collection
 to write a paper.
 
-## The Moral Commitment Function (MCF), since 24 September 2026
+## The Moral Commitment Function (MCF), since 23 September 2026
 
 For one option in one scenario, MCF says what it gives beyond what the participant asked for on
 each of their four values, what it asks of them instead, which option on that table serves each of
@@ -173,7 +173,7 @@ scenario. Section 2 of the pre-Block-5 page teaches it, with an invented example
 on a flooded road appears nowhere in the block, because an option from a real scenario would put a
 decision in front of somebody before their first situation.
 
-## `major_info_and_scores`, since 24 September 2026
+## `major_info_and_scores`, since 23 September 2026
 
 One room holding the twelve things most often asked of a participant record: the three VCIs,
 stability with its three sensitivities, performance, the position effect per scenario and per role,

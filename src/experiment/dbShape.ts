@@ -77,7 +77,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-24-mcf";
+export const SHAPE_VERSION = "2026-09-23-mcf";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -901,6 +901,77 @@ function profileWhenScenarioOpened(
   const previous = policyProfile(results[index - 1]?.policySnapshotAfter as Record<string, number> | undefined);
   if (previous) return { profile: previous, usedFrozen: false, snapshotWasMissing: false };
   return { profile: frozen, usedFrozen: true, snapshotWasMissing: true };
+}
+
+/**
+ * THE FOUR POLICY VALUES AT EVERY STEP OF BLOCK 5, NOT ONLY AT THE END.
+ *
+ * WHY A LIST AND NOT ONE NUMBER. `profile_now` says where the four values finished. That is the
+ * least interesting thing about them. The whole claim of Block 5 is that a person's values MOVE
+ * while they decide, and a single closing figure cannot show movement: a participant who never
+ * shifted and a participant who swung twice and came back end on the same row.
+ *
+ * WHAT EACH ROW HOLDS. The profile the scenario OPENED on - which is the profile that scenario's
+ * alignment, MCF reading and prediction were all built from - the profile it CLOSED on, and the
+ * difference between the two, value by value. Reading down the list is the participant's Block 5
+ * in four numbers per step.
+ *
+ * WHY "OPENED ON" IS NOT SIMPLY THE PREVIOUS ROW'S CLOSING PROFILE. Usually it is, and
+ * `profileWhenScenarioOpened` returns exactly that. It falls back to the frozen pre-Block-5
+ * profile for the first scenario, and also for any scenario whose predecessor never stored a
+ * snapshot - a partial record, rather than a participant who did not move. `opened_on_the_frozen_
+ * profile` says which of the two happened, so a missing snapshot is never read as "no movement".
+ *
+ * SCENARIO 6 MUST SHOW ZERO MOVEMENT. It is a test of the model, not of the participant, and
+ * `decisionRole: "predicted"` is what keeps it from updating the profile. A non-zero row there
+ * is a defect, not a finding, and gate D51 fails on it. The wish (scenario 5) is a different
+ * case: it is not SCORED, which does not by itself mean it moves nothing, so its row simply
+ * reports what happened rather than asserting a rule.
+ *
+ * THESE ARE THE FOUR POLICY VALUES ONLY. Directness, context and stakeholder are not snapshotted
+ * per scenario, because a scenario cannot move them a step at a time. They live in
+ * `profile_before_block5` and `profile_after_block5`.
+ */
+function buildProfileByScenario(block5: unknown): Record<string, unknown>[] | null {
+  const results = resultsOf(block5);
+  if (!results.length) return null;
+  const original = (block5 as Record<string, unknown> | null)?.originalProfile;
+
+  return results.map((r, index) => {
+    const scenario = scenarioOf(r.scenarioId);
+    const opened = profileWhenScenarioOpened(index, results, original);
+    const before = opened.profile ? policyScoresOfProfile(opened.profile) : null;
+
+    const raw = (r.policySnapshotAfter ?? null) as Record<string, number> | null;
+    const after = raw
+      ? Object.fromEntries(POLICY_DIM_KEYS.map((k) => [k, round1(raw[k]) ?? 0]))
+      : null;
+
+    const moved = before && after
+      ? Object.fromEntries(POLICY_DIM_KEYS.map((k) => [k, round1(after[k] - before[k]) ?? 0]))
+      : null;
+
+    /* Only the prediction test is BARRED from moving the profile. The wish is not scored,
+       which is a different thing, so its row reports whatever actually happened. */
+    const role = r.decisionRole ?? "decider";
+    const canMove = role !== "predicted";
+
+    return {
+      order_shown: index + 1,
+      scenario_id: r.scenarioId ?? null,
+      title: scenario?.title ?? null,
+      decision_role: role,
+      this_scenario_can_move_the_profile: canMove,
+      profile_when_the_scenario_opened: before,
+      opened_on_the_frozen_profile: opened.usedFrozen,
+      the_snapshot_before_it_was_missing: opened.snapshotWasMissing,
+      profile_after_the_scenario: after,
+      how_much_each_value_moved: moved,
+      total_movement: moved
+        ? round1(POLICY_DIM_KEYS.reduce((sum, k) => sum + Math.abs(moved[k]), 0))
+        : null,
+    };
+  });
 }
 
 /** The seven kinds of scenario-6 moment that survive into the database. See `what_they_did`. */
@@ -1869,6 +1940,16 @@ export function buildMajorScores(
     /* 9, 10, 11 --------------------------------------------------------- the three profiles */
     profile_before_block5: profiles?.before ?? null,
     profile_now: profileNow,
+    /* The same four values at EVERY step, which is the only form that shows movement. See
+       buildProfileByScenario: one row per scenario, opened-on and closed-on, and the difference. */
+    profile_by_scenario: buildProfileByScenario(block5),
+    what_profile_by_scenario_is_for:
+      "profile_now is one closing figure, and a closing figure cannot show movement: somebody who "
+      + "never shifted and somebody who swung twice and came back finish on the same numbers. Each "
+      + "row here holds the four values the scenario OPENED on - the ones its alignment, MCF "
+      + "reading and prediction were all built from - the four it CLOSED on, and the difference. "
+      + "Rows where this_scenario_can_move_the_profile is false must show no movement: the wish "
+      + "and the prediction test never update the profile.",
     profile_after_block5: profiles?.after ?? null,
     profile_change_during_block5: profiles?.change ?? null,
     what_the_three_profiles_mean:
@@ -1898,6 +1979,8 @@ export function buildMajorScores(
       total_time: "active_time and timings",
       visits: "active_time.sittings and sessions",
       profiles: "analysis.value_profile_before_block5 / _after_block5 / _change",
+      profile_by_scenario:
+        "blocks.block5_emergency_scenarios.scenarioResults[].policySnapshotAfter, read against the snapshot before it",
       feedback: "blocks.feedback_answers",
     },
   };

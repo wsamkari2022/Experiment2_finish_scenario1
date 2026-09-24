@@ -2,7 +2,7 @@
  * Block5OptionCompare.tsx — the "Compare all options" overlay for a Block 5 scenario.
  *
  * WHAT IT SHOWS
- * Two radar charts, the note that explains how to read them, and — since 24 September 2026 — the
+ * Two radar charts, the note that explains how to read them, and — since 23 September 2026 — the
  * Moral Commitment Function underneath both: the second chart in sentences, one option at a time.
  * See Block5MCFPanel. The order on the page is deliberate and was corrected on the same day: the
  * charts, then the note that explains the charts, then MCF. An explanation separated from the

@@ -155,7 +155,7 @@ run can be followed across machines without reading UUIDs.
 
 ## 3c. `major_info_and_scores` — every major score in one room
 
-Added **24 September 2026**, on request: the numbers that matter, gathered where somebody looking
+Added **23 September 2026**, on request: the numbers that matter, gathered where somebody looking
 for them will find them. **Everything in it is a copy.** Each line is lifted from the section that
 owns it, by calling the same builder that writes that section, and `where_each_number_lives` inside
 the field names the original for every line. If a number here ever disagrees with its source, the
@@ -855,7 +855,7 @@ original and this is the one that is wrong.
 
 ## 6g. `analysis.mcf` — the Moral Commitment Function
 
-Added **24 September 2026**. For every option in every scenario: what it gives beyond what the
+Added **23 September 2026**. For every option in every scenario: what it gives beyond what the
 participant asked for on each of their four values, what it asks of them instead, which option on
 that table serves each value most, and what taking that one would ask in exchange.
 

@@ -903,6 +903,79 @@ for (const [who, block5] of PEOPLE) {
       : "analysis.mcf is missing exposure, or its parts do not sum to the stored total");
 }
 
+/* ---- the four policy values at every step, and the two rows that must never move ---- */
+{
+  let shapeRight = true, mathRight = true, frozenRight = true, stillRight = true;
+  let rows = 0, worst = 0;
+  const KEYS = ["vulnerabilityProtectionSensitivity", "outcomeAggregationSensitivity",
+    "gainResponsivenessSensitivity", "groupSizeSensitivity"];
+  const why = [];
+
+  for (const [, block5] of PEOPLE) {
+    const major = db.buildMajorScores(block5, timings, ledger, { dropped: 0, sessions: [] }, null);
+    const list = major.profile_by_scenario;
+    if (!Array.isArray(list) || list.length !== block5.scenarioResults.length) { shapeRight = false; continue; }
+
+    list.forEach((row, i) => {
+      rows += 1;
+      if (row.order_shown !== i + 1) shapeRight = false;
+
+      /* The first scenario opens on the frozen profile; no later one should claim to, unless the
+         snapshot before it is genuinely missing. A silent fallback would read as "did not move". */
+      if (i === 0 && row.opened_on_the_frozen_profile !== true) frozenRight = false;
+      if (i > 0 && row.opened_on_the_frozen_profile && !row.the_snapshot_before_it_was_missing) {
+        frozenRight = false;
+      }
+
+      const before = row.profile_when_the_scenario_opened;
+      const after = row.profile_after_the_scenario;
+      const moved = row.how_much_each_value_moved;
+      if (!before || !after || !moved) return;
+
+      /* D51a - moved is closed minus opened, value by value. If these ever disagree, the list is
+         telling two different stories about the same step. */
+      for (const k of KEYS) {
+        const gap = Math.abs((after[k] - before[k]) - moved[k]);
+        worst = Math.max(worst, gap);
+        if (gap > 0.11) { mathRight = false; why.push(`${row.scenario_id}/${k}`); }
+      }
+      const total = KEYS.reduce((a, k) => a + Math.abs(moved[k]), 0);
+      if (Math.abs(total - row.total_movement) > 0.11) mathRight = false;
+
+      /* D51b - THE ONE THAT MATTERS. Scenario 6 is a test of the model and must never update the
+         profile. If it did, it would add swaps to Stability that no decision of the participant's
+         produced, and nobody would see it: nothing in scenario 6 is displayed as a score. */
+      if (row.this_scenario_can_move_the_profile === false) {
+        for (const k of KEYS) if (Math.abs(moved[k]) > 0.11) {
+          stillRight = false;
+          why.push(`${row.scenario_id} moved ${k} by ${moved[k]}`);
+        }
+      }
+
+      /* And the flag itself has to follow the role, not the other way round. */
+      if ((row.decision_role === "predicted") === row.this_scenario_can_move_the_profile) {
+        shapeRight = false;
+      }
+    });
+
+    /* Each row must open where the one before it closed. That chain is the whole point of the
+       list: a break in it means a step was computed against a profile no scenario ever had. */
+    for (let i = 1; i < list.length; i++) {
+      const prev = list[i - 1].profile_after_the_scenario;
+      const here = list[i].profile_when_the_scenario_opened;
+      if (!prev || !here || list[i].the_snapshot_before_it_was_missing) continue;
+      for (const k of KEYS) if (Math.abs(prev[k] - here[k]) > 0.11) mathRight = false;
+    }
+  }
+
+  const ok = shapeRight && mathRight && frozenRight && stillRight;
+  gate("D51", ok,
+    ok ? `profile_by_scenario chains step to step, and the prediction test moves nothing  (`
+         + `${rows} rows, worst arithmetic gap ${worst.toFixed(2)})`
+       : `the per-scenario profile list is wrong: ${why.slice(0, 3).join(" | ")
+          }${stillRight ? "" : "  <- a scenario that must not move the profile moved it"}`);
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {

@@ -3040,11 +3040,15 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
           card already states in words, and a number at the top of a card reads as a mark out of
           100 before anything explains it.
 
-          NOTHING WAS DELETED, ONLY MOVED. The bin ("Has a cost" / "Crosses a limit you set") and
-          the performance placing now sit inside the "Ranked N — why" panel below, each under a
-          heading that says which of the two things it belongs to. The bin still has to be visible
-          somewhere: choosing an option that crosses a limit only records a willingness to cross
-          it if the participant could see that it did.
+          NOTHING WAS DELETED, ONLY MOVED. The performance placing now sits inside the
+          "Ranked N — why" panel below, under a heading that says what it belongs to.
+
+          THE BIN IS A SEPARATE STORY. "Crosses a limit you set" is in that panel too, and has to
+          be visible somewhere: choosing an option that crosses a limit only records a willingness
+          to cross it if the participant could see that it did. Its partner, "Has a cost", was
+          removed entirely on 24 September 2026 — along with the divider that used to head the
+          costed group — because it passed a verdict on an option before the participant had read
+          it. See BIN_LABEL in block5PlannerText.ts for the full reasoning.
         */}
       </Flex>
 
