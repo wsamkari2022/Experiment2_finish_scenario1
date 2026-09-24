@@ -23,12 +23,10 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 `validate:position` fails on purpose (2.8x against a 3x gate) and runs last.
 
 **Uncommitted work found on 24 September 2026, not mine.** When this audit started, eight files had
-changes from an earlier session: `CLAUDE.md`, `Generated Outputs/HOW_TO_READ_MY_DATABASE.md`,
-`Block5OptionCompare.tsx`, `Block5PublicEmergencySimulation.tsx`, `block5MCF.ts`,
-`block5PlannerText.ts`, `dbShape.ts`, `tools/validate_dbshape.cjs` (dates 24 → 23 September, the
-"Has a cost" tag removed, `profile_by_scenario` + gate D51 added), plus the untracked
-`Generated Outputs/PLANNER_AND_VALUE_MOVEMENT_AUDIT_REQUEST.md`. Do not fold them into an audit
-commit without asking Waseem.
+changes from an earlier session (dates 24 → 23 September, the "Has a cost" tag removed,
+`profile_by_scenario` + gate D51 added), plus the untracked audit request. At Waseem's request I
+reviewed it, ran the full chain (all green except the intentional position gate), and committed it
+as found in `60db800`. Findings from that review: A7, and the note on `MCF_VERSION` in the log.
 
 ## How the evidence was measured
 
@@ -50,12 +48,13 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 
 | ID | Problem (short) | Severity | Status |
 |---|---|---|---|
-| A1 | Open cards print the fit score out of 100 | Critical | Open, plan written (Fix 1) |
-| A2 | Card text reveals the participant's #1 value | High | Open, in Fix 1 |
+| A1 | Open cards print the fit score out of 100 | Critical | **Deferred to before launch** (Fix 1) |
+| A2 | Card text reveals the participant's #1 value | High | **Deferred to before launch** (Fix 1) |
 | A3 | The order is presented as a judgment, so "position" is really "recommendation" | High | Open |
 | A4 | Reflection pages show the participant's value numbers | Medium, decision | Open |
 | A5 | Compare chart draws the participant's values over the options | Low, note | Open |
-| A6 | CLAUDE.md says no verdict or arithmetic is shown; not true | High (docs) | Open, in Fix 1 |
+| A6 | CLAUDE.md says no verdict or arithmetic is shown; not true | High (docs) | **Deferred to before launch** (Fix 1) |
+| A7 | The "Has a cost" removal (24 Sept) is not yet dated in CLAUDE.md / HOW_TO_ANALYZE | Medium (docs) | Open |
 | B1 | Keep rule lowers the wrong value, or nothing | Critical | Open |
 | B2 | Picking your best fit can lower your #1 value | Critical | Open |
 | B3 | Step sizes (30/15/20/10/25) are hand-picked | High | Open |
@@ -66,10 +65,13 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | B8 | The audit-request document describes Route 3 wrongly | Medium (docs) | Open |
 | C1 | The first card is almost always "champion of your #1 value" | High (honesty) | Open |
 | C2 | "Every threshold comes from the participant" is false | High | Open |
-| C3 | Planner Step 1 contradicts Step 2 | Medium | Open |
+| C3 | Step 1's floor and Step 2's noise band are one number with two meanings | Medium | Open (was "contradiction"; reclassified) |
 | C4 | Appendix B numbers depend on invented people | Medium | Open |
 | C5 | "No tuning constants" claim | Low (docs) | Open |
 | C6 | Win counting is Copeland; loops almost never happen | Low (docs) | Open |
+| C7 | Ties and near-ties in the participant's own ranking decide the whole order | Medium | Open |
+| C8 | The noise band cannot be personal; `strictness` is computed and never used | High | Open |
+| C9 | The planner's inputs are not stored, and there is no planner version | High | Open |
 | D1 | Option numbers disagree with the option's own words | Critical | Open |
 | D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | Open |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
@@ -107,6 +109,14 @@ find that inside an open card, on the line that reads 'Matches your earlier answ
 **Suggestion.** Remove the line and the pointer sentence. Keep computing and storing `matchScore`.
 Stamp a screen version on every scenario result, so records made before and after the change are
 never pooled (records with no stamp = saw the number).
+
+**DEFERRED (Waseem, 24 September 2026).** He uses this information himself while developing, and
+will ask for Fix 1 before the study goes to real participants. The full Fix 1 plan (keep/remove
+table per panel line, screen-version stamp, source + `dist/` guard, docs) was written on 24
+September and is summarized under "Fix 1 plan" below. **Idea to offer then:** keep every developer
+line, but render it only when `import.meta.env.DEV` is true, exactly like `DevResetButton`. The
+developer keeps the information, participants never see it, and `dist/` can be checked for the
+strings after every build.
 
 ### A2. The card text reveals the participant's #1 value. HIGH.
 
@@ -171,6 +181,25 @@ analyzed. **Analyses of VCI must split by compare-overlay use.** Put that in HOW
 
 CLAUDE.md ("Participants are never shown an alignment verdict ... or the scoring arithmetic") and
 the feedback schema note ("labels are no longer shown") are not true while A1 stands. Fix with A1.
+
+### A7. The "Has a cost" removal is not dated where analysts look. MEDIUM (docs).
+
+Commit `60db800` (work found uncommitted, 24 September) removed the "Has a cost" tag and the
+divider "These cost you something on the value you ranked first" from costed cards. That is a
+change to what participants see, of the same kind CLAUDE.md dates ("Option cards start folded,
+since 23 September"). Records before 24 September saw both. Add a dated line to CLAUDE.md and
+HOW_TO_ANALYZE so no one pools across it for costed-card choices.
+
+### Fix 1 plan (written 24 September, deferred)
+
+Remove from the open-card panel in scenarios 1-5: the fit line, `decidedLine`, `tradeLine`, and the
+costed `breachLine`. Keep `winsLine`, `referenceLine`, the blocked `breachLine` and its label, and
+the performance section. Replace the scenario-page pointer sentence with "All of this is outcome
+quality — how well an option works. It does not tell you how well an option fits your values."
+Keep `explainOption` producing every line, and change only what renders. Stamp
+`screen_version = "…-no-fit-on-cards"` on every scenario result, add a dbshape gate, a source guard
+in `test:planner`, and a `dist/` string check. Document in CLAUDE.md and HOW_TO_READ. Consider
+the DEV-only variant above.
 
 ---
 
@@ -337,6 +366,15 @@ keeper records nothing") is not real. Correct the document.
 The whole order was identical in 42-58% of cases, so Step 3 does reorder the lower cards. It
 almost never changes card 1.
 
+**Re-tested 24 September on three populations**, because Step 3's exchange rate depends on how
+consistently a person answered Block 3. The result holds: the first card matched the plain sort
+91.7-100% of the time with random ladder answers, with "consistent people" (base rung ± small
+noise, small LB and size offsets), and with the Appendix B archetypes.
+
+One knife-edge worth knowing. In the wildfire scenario, the highway option against the ridge road
+on gain is 0.1644 of the range, just under the 1/6 band. With exchange 2 and vulnerable second,
+Step 3 fires by a margin of 0.0003. A one-point edit to either option would flip it.
+
 **Why.** Each scenario was authored with one champion per value, far ahead of the rest (for example
 vulnerable 97 against 62), so Step 2 always says "the gap is real". The P-against-Q example
 (100 vs 92) never occurs at the top.
@@ -367,13 +405,20 @@ exchange), or (b) drop Step 3 and ship the plain lexicographic order, which is w
 is. My lean is (a) plus C1's honest description, because CLAUDE.md says the planner is settled and
 its lower-card behavior is part of the position data. Waseem decides.
 
-### C3. Step 1 contradicts Step 2. MEDIUM.
+### C3. Step 1's floor and Step 2's noise band are one number with two meanings. MEDIUM.
 
-Step 1 says: if both options sit below the floor on the #1 value, let the #1 value decide even on a
-tiny gap. Step 2's own logic says a gap under tolerance is one the person cannot see. Both options
-below the floor means the gap is under tolerance, so Step 1 trusts a difference the model calls
-invisible. It mostly affects the order inside the costed group. Document the reason or remove the
-step.
+**First reading (24 September, morning).** Step 1 trusts a gap that Step 2 calls invisible: both
+options below the floor means their gap is under the tolerance, yet the #1 value still decides.
+
+**Corrected reading, after reading LEAP §3.1 in docs/BLOCK5_PLANNER_ORDERING_PLAN.md §4d.** Step 1
+is LEAP's `A(+)` node, an aspiration level: the swap in Step 3 is meant for two options that are
+both good enough on the #1 value, and an option in the bottom band of the #1 value is exactly the
+one the costed bin already demotes. So Step 1 says "options that fail your #1 floor cannot be
+rescued by your #2 value", which is coherent and consistent with the bins.
+
+**What is really wrong** is that the floor (an aspiration level) and the notice band (a
+discrimination limit) are the same variable, `tolerance`, so the code reads as a contradiction.
+Fix: two named constants, explained separately, even if both are 1/6.
 
 ### C4. Appendix B numbers depend on invented people. MEDIUM.
 
@@ -398,6 +443,59 @@ semiorder; the Kemeny ranking if loops ever matter.
 
 **The frozen ruler itself is defensible** (one seating chart for the whole exam). The confusion
 comes from A1-A3 putting both rulers on screen in the language of "your values".
+
+### C7. Ties and near-ties in the participant's own ranking decide the whole order. MEDIUM.
+
+**What.** The planner's value order is the rank from `thresholdTree.ts`: a stable sort on the
+calibrated score. So:
+- **Exact ties** are broken by the order the dimensions happen to be listed in the source
+  (vulnerability, group size, gain, outcome, …). A participant with vulnerable 0 and harm 0 is
+  treated as "vulnerable #3, harm #4" for no reason about them.
+- **Near-ties** count fully. Waseem's test run had gain 100 and helped 99. That one point made gain
+  #1, and card 1 is the gain champion. Worse, the one point comes from the calibration tables: the
+  highest attainable helped score maps to 98.8 (the "strictly exceeds" convention in
+  `sensitivityCalibration.ts`), while gain's maps to 100. A yes-clicker is gain-first because of a
+  table convention.
+
+**Why it matters.** The planner applies a noise band to option differences but none to the
+person's own ranking, which drives everything else.
+
+**Suggestion.** Minimum: record the gap between the planner's #1 and #2 values on every result
+(`plannerTopTwoGap`) and say in the methods how ties are broken. Better, later: when #1 and #2 are
+within a stated margin, count wins under both orders and add them. That changes the upstream
+ranking's meaning, so it needs its own decision.
+
+### C8. The noise band cannot be personal; `strictness` is computed and never used. HIGH.
+
+**What.**
+- The original plan (§4b) made tolerance personal through Block 3's carry-forward start rung
+  (`startedAtGainIndex`). Block 3 was later changed so **every cell restarts at the lowest rung**
+  (`AIWorkforceThresholdBlock.tsx` ~line 445, "CURRENT — restart the gain ladder at the lowest
+  option"). Every interval is now one rung, so tolerance is 1/6 (or 1/8 for helped) for everyone,
+  and it can never be personal with the current instruments.
+- `ValueThreshold.strictness` is computed for all four values, and its comment says "Used for the
+  soft Bin-B floor". **Nothing reads it.** The soft floor uses `tolerance`.
+- The comments in `block5Thresholds.ts` (`toleranceFromInterval`: "Block 3 carries a start index
+  forward … genuinely per-participant") and plan §4b describe a mechanism that no longer exists.
+- The helped band is 1/8 only because the trolley ladder has 8 rungs. In option space, that is an
+  accident of the instrument, not a property of the options.
+
+**Suggestion.** Make it one named design constant for all four values, say so, and test
+sensitivity (1/8, 1/6, 1/4). Remove `strictness`, or mark it unused. Fix the comments and the plan.
+
+### C9. The planner's inputs are not stored, and there is no planner version. HIGH.
+
+**What.** Each scenario result stores `plannerOrder`, `plannerBins`, `plannerWins`,
+`plannerValueOrder` and `plannerDegradedProfile`. Nothing stores the red lines, tolerance or
+exchange rates the tree used, and there is no `PLANNER_VERSION`. `PREDICTION_VERSION` and
+`MCF_VERSION` exist for exactly this reason.
+
+**Why.** Any change to the planner (including the one now planned) silently mixes two orderings in
+the data, and no reviewer can check why a card landed where it did.
+
+**Suggestion.** Add `PLANNER_VERSION` and a compact `plannerInputs` record (value order, top-two gap,
+red lines, notice band, floor band, trade rate) to every scenario result. Surface both in the
+database via dbShape with a gate. Records without a version = the original planner.
 
 ---
 
@@ -454,17 +552,61 @@ Report those participants separately; consider an attention check in Blocks 1-3.
 
 ## Proposed fix order
 
-1. **Fix 1: A1 + A2 + A6.** Stop the open card from showing the fit score and the #1 value; stamp a
-   screen version. Small, contained, highest damage to VCI.
+Revised 24 September: Waseem wants the technical problems first, starting with the planner. Fix 1
+waits until just before real participants.
+
+1. **Fix P: the planner.** C2, C3, C8, C9, with C7 recorded, and C1, C4, C5, C6 made honest in the
+   docs and the gates. Plan sent 24 September.
 2. **Fix 2: B1 + B2.** Redesign the keep rule (Route 3).
 3. **Fix 3: B5.** Record requested against applied moves.
-4. **Fix 4: docs honesty.** B8, C1, C2, C3, C5, C6, B4, B7, C4.
+4. **Fix 4: docs honesty.** B8, B4, B7, A7.
 5. **Fix 5: A3.** Decide pure position effect or recommendation effect.
 6. **Fix 6: D1 + D2.** Value definitions, blind rating sheet, re-author options.
 7. **Fix 7: B6 + D3.** Upstream scoring and data-quality flags (touches the frozen Blocks 1-4).
 8. **Fix 8: B3.** Sensitivity-analysis tool and pre-registration of the constants.
-9. **A4, A5.** Revisit.
+9. **Before launch: Fix 1 (A1 + A2 + A6)**, then A4 and A5.
+
+## Fix P plan (sent 24 September, waiting for approval)
+
+**What stays exactly the same:**
+- LEAP's three-step tree and win counting.
+- The clear/costed/blocked groups, the red lines, and the frozen ruler.
+- The fit score, VCI and Stability.
+- Blocks 1-4, and the scenario 6 shuffle.
+
+**The changes:**
+- **P1.** One `NOTICE_BAND` = 1/6 for all four values (helped was 1/8), declared a design
+  constant.
+- **P2.** A separate `FLOOR_BAND` (1/6) for Step 1 and the costed bin. No behavior change.
+- **P3.** Step 3's trade rate. Recommended: the ratio of the participant's own #1 and #2 scores.
+  Alternatives: keep the Block 3 premium and document it, or use 1 for everyone.
+- **P4.** `PLANNER_VERSION` plus `plannerInputs` (value order, top-two gap, red lines, the two
+  bands, trade rate) on every result; dbshape gate D52 re-runs the planner from the stored inputs
+  and must reproduce the stored order.
+- **P5.** Honest comments and docs, including the CLAUDE.md "settled" line.
+- **P6** (participant-visible, yes/no). Reword the trade line's "too small for you to have separated
+  it in the earlier questions".
+- **P7.** Reports and gates on realistic simulated people, with a band sensitivity check.
+
+**Simulated effect** (3,000 "consistent people" per scenario, real `deriveDecisionProfile`):
+
+| Scenario | Order changes, P1 only | Order changes, P1 + P3 | First card changes, P1 + P3 | First = best fit, today → P1 + P3 |
+|---|---|---|---|---|
+| Six Hours | 7.6% | 13.3% | 0.3% | 39.1 → 39.2% |
+| Eight Hours | 0.0% | 5.1% | 4.6% | 44.8 → 45.2% |
+| Cancer | 7.0% | 18.7% | 11.2% | 40.7 → 51.0% |
+| Care Visits | 6.6% | 8.5% | 7.2% | 39.7 → 44.5% |
 
 ## Log
 
-- **2026-09-24.** Audit written. Nothing fixed yet. Fix 1 plan sent to Waseem for approval.
+- **2026-09-24.** Audit written (`a2ecc01`). Nothing fixed yet. Fix 1 plan sent to Waseem.
+- **2026-09-24.** Waseem deferred Fix 1 to before launch. At his request I reviewed the other
+  session's uncommitted work and ran the full chain on it: typecheck, lint and build clean; ALL
+  TESTS PASS, ALL APA CHECKS PASS, ALL DATABASE GATES PASSED (D51 new, 18 rows, gap 0.00); only the
+  intentional position gate fails (2.8x). "Fill feedback" appears 0 times in `dist/`, and so do
+  "Has a cost" and "These cost you something". Committed as found: `60db800`.
+  Note for analysts: `MCF_VERSION` "2026-09-24-a" and "2026-09-23-a" are the same rule; only the
+  date label was corrected (the running code carried "24-a" from 18:16 to 21:29 on 23 September).
+- **2026-09-24.** Read the planner's design record (LEAP trade-off tree). Re-tested C1 on three
+  populations (it holds), reclassified C3, added C7, C8 and C9. Simulated candidate parameter
+  changes before planning Fix P (numbers are in the Fix P plan).
