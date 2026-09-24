@@ -680,6 +680,36 @@ LB and size offsets, related money and trolley answers):
 
 **Sequencing.** Fix the inputs (Group E) before Fix P, because Fix P's P3-A uses these scores.
 
+## Plans waiting for approval (24 September, evening)
+
+**P-DC. Directness and context: "never" is not zero, and a fair lens choice.**
+- *Scoring:* directness is not measured when lever AND bridge were both "never"; context is not
+  measured when all three money places were "never kept". Score 50, flag `measured: false`, the
+  same rule as Idea 1.
+- *Lens choice* (`chooseFraming` in block5CVR.ts, Block 5): if only one of the two was measured, use
+  the measured one. If both are unmeasured or they tie, use the participant's own coin order (their
+  rank), not the current "context wins every tie" (`>=`).
+- *Practical effect:* the lens changes only for ties (both unmeasured, or equal), because today an
+  unmeasured 0 always loses to any measured positive score. The stored scores become honest.
+
+**P-CAL. Commit the recipe, and rebuild all seven tables once.**
+- The recipe behind the 23 August tables is missing (`tools/regenerate_sensitivity_calibration.md`
+  does not exist). The problem is a missing file, not the questions or the ladders.
+- Plan: commit a generator tool, decide the random model for Block 1's donate action and for
+  Block 4 (to be decided by Waseem), and rebuild all seven tables in one go after the formula
+  changes (Idea 2, P-DC). Every score shifts a little, so do it before real data, with a new
+  version stamp.
+
+**Idea 2, revised after Waseem's point.** He is right that one extra step means something.
+- Today the half-step case is not "zero or something" but far too much: harm 55, and it becomes the
+  #1 value.
+- New proposal: a straight line from 0 to the one-full-step score, so half a step gets half the
+  one-step score, 0.5 × 64 = 32. One step or more is unchanged.
+- Only the half-step case can fall between 0 and 1, because Block 3 slopes come in half steps.
+- Vulnerable stays as it is. Its table is already smooth (B gets 17 for the same click, which is
+  where "more care for entry-level" belongs).
+- Person B: 0 / 55 / 40 / 44 → 17 / 32 / 40 / 44, #1 value helped.
+
 ## Proposed fix order
 
 Revised 24 September: Waseem wants the technical problems first, starting with the planner. Fix 1
