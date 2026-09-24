@@ -59,6 +59,8 @@ import {
   buildMpfPredictions,
   buildMpfPercentages,
   buildMajorScores,
+  buildBlocks1to4Checks,
+  BLOCKS_1_TO_4_KEYS,
   buildMcfSection,
   buildProfileChange,
   buildQuality,
@@ -571,6 +573,12 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
         readRaw(ACTIVE_TIME_KEY),
         readRaw(SESSION_LOG_KEY),
         readRaw(FEEDBACK_KEY),
+        {
+          money: readRaw(BLOCKS_1_TO_4_KEYS.money),
+          trolley: readRaw(BLOCKS_1_TO_4_KEYS.trolley),
+          aiWorkforce: readRaw(BLOCKS_1_TO_4_KEYS.aiWorkforce),
+          participantRecord: readRaw(BLOCKS_1_TO_4_KEYS.participantRecord),
+        },
       );
       if (major) sendOrQueue({ op: "saveSection", path: "major_info_and_scores", data: major });
 
@@ -605,6 +613,18 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
       localStorage.getItem("vrds_status") ?? "",
     );
     if (quality) sendOrQueue({ op: "saveSection", path: "quality", data: quality });
+
+    /* How Blocks 1-4 were answered (first-step yes, speed, values not measured, ties). Built here,
+       not inside the Block 5 branch, because it exists as soon as Block 3 is done - long before
+       Block 5 - and a participant who stops early should still carry it. `major_info_and_scores`
+       holds a copy made by the same builder. */
+    const blocks1to4 = buildBlocks1to4Checks({
+      money: readKey(BLOCKS_1_TO_4_KEYS.money),
+      trolley: readKey(BLOCKS_1_TO_4_KEYS.trolley),
+      aiWorkforce: readKey(BLOCKS_1_TO_4_KEYS.aiWorkforce),
+      participantRecord: readKey(BLOCKS_1_TO_4_KEYS.participantRecord),
+    });
+    if (blocks1to4) sendOrQueue({ op: "saveSection", path: "analysis.blocks_1_to_4_checks", data: blocks1to4 });
   }
 
   if (changed) {

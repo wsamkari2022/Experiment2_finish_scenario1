@@ -79,7 +79,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | E2 | One wobble of one step can make a value #1 | High | Proposed (calc idea 2) |
 | E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | **Fixed** (Idea 3, approved 24 Sept) |
 | E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | **Fixed** (Idea 4, approved 24 Sept) |
-| E5 | No response-style flag, though every click is timestamped | Medium | Proposed (calc idea 5) |
+| E5 | No response-style flag, though every click is timestamped | Medium | **Fixed** (Idea 5): `analysis.blocks_1_to_4_checks` + `major_info_and_scores.blocks_1_to_4` |
 | E6 | Block 3's prices could give a real vulnerable-vs-harm exchange rate | Low, idea | Proposed (calc idea 6) |
 | E7 | Participant values are differences; option values are levels | Critical, design | For discussion |
 
@@ -771,3 +771,12 @@ waits until just before real participants.
   (the original Block 1 donate / Block 4 model is unknown). Click-level random recipes are far worse
   (up to 84 points). Example people: the refuser goes 0/0/0/0 → 50*/50*/0/0 with best fit "Carry the
   respirator"; #7 (refuses entry-level, prices seniors) goes harm 64 → 80.
+- **2026-09-24. Idea 5 done:** `buildBlocks1to4Checks` in dbShape → `analysis.blocks_1_to_4_checks`
+  (sent in the sync tail, so it exists from Block 3 on) and a copy in `major_info_and_scores.blocks_1_to_4`
+  (same builder; optional 6th argument, so older callers get null). Holds the two flags Waseem asked
+  for (`said_yes_at_the_first_step_everywhere` over 11 ladders; `answered_very_fast` = median gap
+  between answers under `FAST_ANSWER_SECONDS` = 2, **a default I chose — tell him it is his to
+  change**) with their raw numbers, plus `values_not_measured`, `tied_values`,
+  `top_value_was_decided_by_a_coin`, `scoring_version`. Missing blocks make a flag null, never false.
+  `SHAPE_VERSION` → `2026-09-24-blocks-1-to-4` so existing records get the section on their next
+  sync. Gate D52; D44 now sees 28 paths. validate:resume also green.

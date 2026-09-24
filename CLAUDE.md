@@ -178,7 +178,11 @@ decision in front of somebody before their first situation.
 One room holding the twelve things most often asked of a participant record: the three VCIs,
 stability with its three sensitivities, performance, the position effect per scenario and per role,
 a prediction row per scenario, total time, visits, what was chosen in each scenario with its
-alignment label and the counts, the three profiles, and the feedback.
+alignment label and the counts, the three profiles, and the feedback. Since 24 September 2026 a
+thirteenth, `blocks_1_to_4`: how Blocks 1-4 were answered (`said_yes_at_the_first_step_everywhere`,
+`answered_very_fast` at a stated 2-second median, the values not measured, the ties a coin decided),
+copied from `analysis.blocks_1_to_4_checks` by the same builder and checked by gate D52. It changes
+no score.
 
 **Everything in it is a copy.** Each line is lifted from the section that owns it by calling that
 section's own builder, `where_each_number_lives` names the original for every line, and gate D49
@@ -208,6 +212,9 @@ stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, grou
   differences; gain and helped are levels, where a refusal is a real 0. Directness and context have
   the same issue and were NOT changed (not approved yet). The calibration tables were deliberately
   kept; the evidence is in the note under `SENSITIVITY_CALIBRATION_VERSION`.
+- **Response-style flags** (no score change): `analysis.blocks_1_to_4_checks`, copied into
+  `major_info_and_scores.blocks_1_to_4`. `FAST_ANSWER_SECONDS` (2) in `dbShape.ts` is a stated
+  default; the medians are stored so another line can be drawn later.
 
 ## The two development-only controls
 
@@ -233,7 +240,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 50 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49) and the stored MCF (D50). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 52 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51) and the Blocks 1-4 checks (D52). `--dump` writes a full simulated document |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |

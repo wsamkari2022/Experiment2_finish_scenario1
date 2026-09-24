@@ -173,6 +173,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 | `alignment_by_scenario` | One row per scenario: what they chose and its alignment label · `alignment_counts` totals the four labels |
 | `profile_before_block5`, `profile_now`, `profile_after_block5`, `profile_change_during_block5` | The three profiles and the movement between the first and last |
 | `feedback` | The feedback answers, grouped as they were asked, each with its question text |
+| `blocks_1_to_4` | **Since 24 September 2026.** How Blocks 1-4 were answered: `said_yes_at_the_first_step_everywhere`, `answered_very_fast`, the values the scoring could not measure, and the ties a coin decided. A copy of `analysis.blocks_1_to_4_checks` (section 6i), checked by gate D52 |
 
 > ⚠️ **`profile_now` is shorter than the other two.** It carries the four policy values only,
 > because only those are snapshotted after each scenario. Directness, context and stakeholder are
@@ -923,6 +924,29 @@ which rules made a record.**
 lists every group of values that shared a score. A #1 value that sits in a tied group was chosen by
 the coin, not by the answers; an analysis that leans on "their top value" can check it, or drop
 those participants as a robustness test.
+
+---
+
+## 6i. `analysis.blocks_1_to_4_checks` — how Blocks 1-4 were answered
+
+Added **24 September 2026**, on request. **Nothing here changes a score.** It lets an analysis tell
+a response style from a value. Somebody who says "yes" at the very first step of every ladder, fast,
+gets a strong and specific profile (gain first, helped second) out of a clicking habit, not out of
+their values. Copied into `major_info_and_scores.blocks_1_to_4`.
+
+| Field | What it holds |
+|---|---|
+| `said_yes_at_the_first_step_everywhere` | true when all **11** ladders were accepted at their first rung: kept $0.25 in all three places, acted to save 1 life on the lever and on the bridge, approved all six workforce rollouts for $1. **null** (not false) when a block is missing |
+| `first_step_yes_count`, `ladders_answered`, `first_step_yes_by_block` | The raw counts behind it |
+| `answered_very_fast` | true when the median time between two consecutive answers in Blocks 1-3 is under **2 seconds**. null when no answers were timed |
+| `median_seconds_between_answers`, `…_by_block`, `answers_timed` | The raw times behind it. **2 seconds is a stated default**, so apply another line to these medians if needed |
+| `values_not_measured` | Values whose every comparison was two refusals, so they scored the neutral 50 (see 6h) |
+| `tied_values`, `top_value_was_decided_by_a_coin`, `tie_rule` | Which values shared a score, and whether the #1 value was one of them |
+| `scoring_version` | The same as `analysis.participant_record.calibrationVersion` |
+
+> ⚠️ **A flag is a reason to look, not a verdict.** Somebody can genuinely accept at the first rung
+> everywhere. Report results with and without flagged participants rather than silently dropping
+> them. For payment decisions, `quality` (section 8c) is the section to use; this one is for analysis.
 
 ---
 

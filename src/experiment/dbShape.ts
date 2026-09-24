@@ -77,7 +77,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-23-mcf";
+export const SHAPE_VERSION = "2026-09-24-blocks-1-to-4";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -604,6 +604,147 @@ export function buildQuality(
     ],
     rule:
       "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, and fewer than 3 blocks were finished in under 30 seconds. Raw numbers above allow a different rule to be applied later.",
+  };
+}
+
+/* ------------------------------------------------------------ blocks 1 to 4, the checks */
+
+/**
+ * Below this median time between two answers in Blocks 1-3, the participant was answering faster
+ * than a ladder step can be read. A STATED DEFAULT, not a finding: the medians themselves are stored,
+ * so a different line can be drawn later over data already collected. Researcher's approval of the
+ * flag, 24 September 2026; the 2-second line is Claude's proposal and is his to change.
+ */
+export const FAST_ANSWER_SECONDS = 2;
+
+/** Where the four Blocks 1-4 sources live in the browser, so storage.ts need not know the keys. */
+export const BLOCKS_1_TO_4_KEYS = {
+  money: SESSION_KEY_RESULTS,
+  trolley: TROLLEY_RESULTS_STORAGE_KEY,
+  aiWorkforce: AI_WORKFORCE_RESULTS_KEY,
+  participantRecord: PARTICIPANT_RECORD_KEY,
+} as const;
+
+export interface Blocks1to4Sources {
+  money: unknown;
+  trolley: unknown;
+  aiWorkforce: unknown;
+  participantRecord: unknown;
+}
+
+/** The median of a list of numbers, or null when there is nothing to take one of. */
+function medianOf(values: number[]): number | null {
+  if (!values.length) return null;
+  const s = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+/** Seconds between consecutive answers in one block's click history. The first answer has none. */
+function secondsBetweenAnswers(block: unknown): number[] {
+  const history = (block as { history?: { timestamp?: unknown }[] } | null)?.history;
+  if (!Array.isArray(history)) return [];
+  const times = history
+    .map((h) => (typeof h?.timestamp === "string" ? Date.parse(h.timestamp) : NaN))
+    .filter((t) => Number.isFinite(t))
+    .sort((a, b) => a - b);
+  const gaps: number[] = [];
+  for (let i = 1; i < times.length; i++) gaps.push((times[i] - times[i - 1]) / 1000);
+  return gaps;
+}
+
+/**
+ * THE IMPORTANT FACTS ABOUT HOW BLOCKS 1-4 WERE ANSWERED, in one place (24 September 2026).
+ *
+ * WHY IT EXISTS. A participant who says "yes" at the very first step of every ladder, quickly,
+ * produces a strong and specific profile - gain first, helped second - out of a response style.
+ * Nothing in the database said so. These checks change NO score; they let an analysis tell a
+ * response style from a value, and set such participants aside if it chooses.
+ *
+ *   said_yes_at_the_first_step_everywhere  accepted at the first rung of all 11 ladders: the three
+ *                                          money places, pull and push, and the six workforce cells
+ *   answered_very_fast                     the median time between two answers in Blocks 1-3 is
+ *                                          under FAST_ANSWER_SECONDS
+ *
+ * It also carries the two facts the scoring itself now records (both approved on 24 September):
+ * which values could NOT be measured because every comparison behind them was two refusals, and
+ * which values TIED, so that a coin made from the answers decided their order.
+ *
+ * Every raw number is kept beside each verdict, as in `quality`, so a different line can be drawn
+ * later. Blocks that are missing make the flag null, never false: an unfinished run has not answered
+ * everything quickly, it has not answered everything.
+ */
+export function buildBlocks1to4Checks(sources: Blocks1to4Sources | null | undefined): Record<string, unknown> | null {
+  if (!sources) return null;
+  const { money, trolley, aiWorkforce, participantRecord } = sources;
+  if (!money && !trolley && !aiWorkforce) return null;
+
+  type Accepting = { accepted?: boolean; thresholdAmountIndex?: number | null; thresholdIndex?: number | null; thresholdGainIndex?: number | null };
+  const moneyCells = Object.values(((money as { thresholds?: Record<string, Accepting | null> } | null)?.thresholds) ?? {})
+    .filter((t): t is Accepting => !!t);
+  const t2 = trolley as { leverThreshold?: Accepting | null; bridgeThreshold?: Accepting | null } | null;
+  const trolleyCells = [t2?.leverThreshold, t2?.bridgeThreshold].filter((t): t is Accepting => !!t);
+  const aiCells = Object.values(((aiWorkforce as { thresholds?: Record<string, Accepting | null> } | null)?.thresholds) ?? {})
+    .filter((t): t is Accepting => !!t);
+
+  const firstStep = {
+    block1_money: moneyCells.filter((t) => t.accepted === true && t.thresholdAmountIndex === 0).length,
+    block2_trolley: trolleyCells.filter((t) => t.accepted === true && t.thresholdIndex === 0).length,
+    block3_ai_workforce: aiCells.filter((t) => t.accepted === true && t.thresholdGainIndex === 0).length,
+  };
+  const ladders = { block1_money: moneyCells.length, block2_trolley: trolleyCells.length, block3_ai_workforce: aiCells.length };
+  const allAnswered = ladders.block1_money === 3 && ladders.block2_trolley === 2 && ladders.block3_ai_workforce === 6;
+  const firstStepTotal = firstStep.block1_money + firstStep.block2_trolley + firstStep.block3_ai_workforce;
+
+  const gaps = {
+    block1_money: secondsBetweenAnswers(money),
+    block2_trolley: secondsBetweenAnswers(trolley),
+    block3_ai_workforce: secondsBetweenAnswers(aiWorkforce),
+  };
+  const allGaps = [...gaps.block1_money, ...gaps.block2_trolley, ...gaps.block3_ai_workforce];
+  const overallMedian = medianOf(allGaps);
+
+  type TreeDim = { key?: string; measured?: boolean; tiedWith?: string[] };
+  const record = participantRecord as {
+    calibrationVersion?: string;
+    derived?: { thresholdTree?: { dimensions?: TreeDim[]; tiedValues?: string[][]; tieRule?: string } | null };
+  } | null;
+  const tree = record?.derived?.thresholdTree ?? null;
+  const dims = Array.isArray(tree?.dimensions) ? tree.dimensions : null;
+
+  return {
+    what_this_is:
+      "How Blocks 1-4 were answered, and what their scoring could not decide from the answers. "
+      + "Nothing here changes a score. It lets an analysis tell a response style from a value.",
+
+    said_yes_at_the_first_step_everywhere: allAnswered ? firstStepTotal === 11 : null,
+    first_step_yes_count: firstStepTotal,
+    ladders_answered: ladders.block1_money + ladders.block2_trolley + ladders.block3_ai_workforce,
+    first_step_yes_by_block: firstStep,
+    first_step_means:
+      "Accepted at the very first rung: kept $0.25, acted to save 1 life, approved the rollout for $1. "
+      + "Eleven ladders in all: three places, pull and push, six workforce cells.",
+
+    answered_very_fast: overallMedian === null ? null : overallMedian < FAST_ANSWER_SECONDS,
+    median_seconds_between_answers: round1(overallMedian),
+    median_seconds_between_answers_by_block: {
+      block1_money: round1(medianOf(gaps.block1_money)),
+      block2_trolley: round1(medianOf(gaps.block2_trolley)),
+      block3_ai_workforce: round1(medianOf(gaps.block3_ai_workforce)),
+    },
+    answers_timed: allGaps.length,
+    very_fast_means:
+      `The median time between two consecutive answers in Blocks 1-3 is under ${FAST_ANSWER_SECONDS} seconds. `
+      + "A stated default; the medians are stored so another line can be applied later.",
+
+    values_not_measured: dims ? dims.filter((d) => d.measured === false).map((d) => d.key ?? "") : null,
+    values_not_measured_means:
+      "Every comparison behind the value was two refusals, so it scored the neutral 50 instead of a "
+      + "measured score. Typically somebody who refused to harm anyone at any price.",
+    tied_values: tree ? (tree.tiedValues ?? []) : null,
+    top_value_was_decided_by_a_coin: dims && dims.length ? (dims[0].tiedWith?.length ?? 0) > 0 : null,
+    tie_rule: tree?.tieRule ?? null,
+    scoring_version: record?.calibrationVersion ?? null,
   };
 }
 
@@ -1754,6 +1895,8 @@ export function buildMajorScores(
   activeTime: unknown,
   sessionLog: unknown,
   feedback: unknown,
+  /* Optional so every older caller still works; without it the Blocks 1-4 room is simply null. */
+  blocks1to4?: Blocks1to4Sources | null,
 ): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
 
@@ -1969,6 +2112,12 @@ export function buildMajorScores(
       "Grouped as the participant answered it, with each question's own text beside its answer. "
       + "The well-being battery keeps its own structure: items, subscales and a composite.",
 
+    /* 13 ----------------------------------------------------------------- blocks 1 to 4 */
+    /* The important facts about how Blocks 1-4 were answered, in a room of their own (researcher's
+       request, 24 September 2026). The same builder as analysis.blocks_1_to_4_checks, so the two
+       cannot disagree; gate D52 checks it. */
+    blocks_1_to_4: buildBlocks1to4Checks(blocks1to4),
+
     where_each_number_lives: {
       vci: "headline.consistency_score · analysis.position_effect.decided_versus_wished",
       stability: "headline.stability_score and the three sensitivity scores beside it",
@@ -1981,6 +2130,7 @@ export function buildMajorScores(
       profiles: "analysis.value_profile_before_block5 / _after_block5 / _change",
       profile_by_scenario:
         "blocks.block5_emergency_scenarios.scenarioResults[].policySnapshotAfter, read against the snapshot before it",
+      blocks_1_to_4: "analysis.blocks_1_to_4_checks",
       feedback: "blocks.feedback_answers",
     },
   };

@@ -976,6 +976,78 @@ for (const [who, block5] of PEOPLE) {
           }${stillRight ? "" : "  <- a scenario that must not move the profile moved it"}`);
 }
 
+/* ---- how Blocks 1-4 were answered: first-step yes, speed, not measured, ties ----
+ *
+ * Four hand-built participants whose right answers are obvious on paper: one who says yes at the
+ * first rung of all eleven ladders one second apart, one who takes their time and varies, one who
+ * has not done Block 2 yet, and one whose scoring left two values unmeasured and a tie at the top.
+ * Then the copy in major_info_and_scores must be exactly the section that owns it.
+ */
+{
+  const at = (start, i, gapSeconds) => new Date(start + i * gapSeconds * 1000).toISOString();
+  const T0 = Date.parse("2026-09-24T10:00:00Z");
+  const moneyOf = (idx, gap) => ({
+    thresholds: Object.fromEntries(["sidewalk", "wealthy", "shelter"].map((c, i) => [`threshold_${c}`,
+      { contextKey: c, accepted: idx[i] < 8, thresholdAmountIndex: idx[i] < 8 ? idx[i] : null }])),
+    history: Array.from({ length: idx.reduce((a, b) => a + Math.min(b, 7) + 1, 0) }, (_, i) => ({ timestamp: at(T0, i, gap) })),
+  });
+  const trolleyOf = (idx, gap) => ({
+    leverThreshold: { accepted: idx[0] < 8, thresholdIndex: idx[0] < 8 ? idx[0] : null },
+    bridgeThreshold: { accepted: idx[1] < 8, thresholdIndex: idx[1] < 8 ? idx[1] : null },
+    history: Array.from({ length: 6 }, (_, i) => ({ timestamp: at(T0 + 600000, i, gap) })),
+  });
+  const aiOf = (idx, gap) => ({
+    thresholds: Object.fromEntries(idx.map((v, i) => [`cell_${i}`, { accepted: v < 6, thresholdGainIndex: v < 6 ? v : null }])),
+    history: Array.from({ length: 12 }, (_, i) => ({ timestamp: at(T0 + 1200000, i, gap) })),
+  });
+
+  const yesClicker = { money: moneyOf([0, 0, 0], 1), trolley: trolleyOf([0, 0], 1), aiWorkforce: aiOf([0, 0, 0, 0, 0, 0], 1), participantRecord: null };
+  const careful = { money: moneyOf([3, 1, 6], 7), trolley: trolleyOf([2, 5], 9), aiWorkforce: aiOf([4, 4, 5, 1, 1, 2], 8), participantRecord: null };
+  const unfinished = { money: moneyOf([0, 0, 0], 1), trolley: null, aiWorkforce: null, participantRecord: null };
+  const refuser = {
+    money: moneyOf([8, 8, 8], 5), trolley: trolleyOf([8, 8], 5), aiWorkforce: aiOf([6, 6, 6, 6, 6, 6], 5),
+    participantRecord: {
+      calibrationVersion: "null-cdf-2026-08-23-top100-fair-ties-refusals",
+      derived: { thresholdTree: {
+        tieRule: "coin",
+        tiedValues: [["group_size", "vulnerability_protection"], ["gain_responsiveness", "outcome_aggregation"]],
+        dimensions: [
+          { key: "group_size", measured: false, tiedWith: ["vulnerability_protection"] },
+          { key: "vulnerability_protection", measured: false, tiedWith: ["group_size"] },
+          { key: "gain_responsiveness", measured: true, tiedWith: ["outcome_aggregation"] },
+          { key: "outcome_aggregation", measured: true, tiedWith: ["gain_responsiveness"] },
+        ],
+      } },
+    },
+  };
+
+  const y = db.buildBlocks1to4Checks(yesClicker);
+  const c = db.buildBlocks1to4Checks(careful);
+  const u = db.buildBlocks1to4Checks(unfinished);
+  const r = db.buildBlocks1to4Checks(refuser);
+  const why = [];
+  if (!(y.said_yes_at_the_first_step_everywhere === true && y.first_step_yes_count === 11 && y.answered_very_fast === true)) why.push("yes-clicker");
+  if (!(c.said_yes_at_the_first_step_everywhere === false && c.answered_very_fast === false && c.ladders_answered === 11)) why.push("careful");
+  if (!(u.said_yes_at_the_first_step_everywhere === null && u.ladders_answered === 3)) why.push("unfinished must be null, not false");
+  if (!(JSON.stringify(r.values_not_measured) === JSON.stringify(["group_size", "vulnerability_protection"])
+    && r.top_value_was_decided_by_a_coin === true && r.tied_values.length === 2 && r.first_step_yes_count === 0)) why.push("refuser");
+  if (db.buildBlocks1to4Checks(null) !== null) why.push("no sources must give null");
+
+  const [, block5] = PEOPLE[0];
+  const major = db.buildMajorScores(block5, timings, ledger, { dropped: 0, sessions: [] }, null, careful);
+  const copyRight = JSON.stringify(major.blocks_1_to_4) === JSON.stringify(c)
+    && major.where_each_number_lives.blocks_1_to_4 === "analysis.blocks_1_to_4_checks";
+  const olderCaller = db.buildMajorScores(block5, timings, ledger, { dropped: 0, sessions: [] }, null);
+  if (!copyRight) why.push("the copy in major_info_and_scores differs from its source");
+  if (olderCaller.blocks_1_to_4 !== null) why.push("a caller that passes no Blocks 1-4 sources must get null");
+
+  gate("D52", why.length === 0,
+    why.length === 0
+      ? `blocks_1_to_4: first-step yes (${y.first_step_yes_count}/11), very fast (median ${y.median_seconds_between_answers}s against `
+        + `${c.median_seconds_between_answers}s), unfinished = null, not-measured and ties carried; the copy matches its source`
+      : `the Blocks 1-4 checks are wrong: ${why.join(" | ")}`);
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {
