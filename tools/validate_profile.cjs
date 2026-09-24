@@ -231,6 +231,87 @@ console.log("\n  T. Tied values are ordered by a coin from the participant's own
   gate("T4", strictlyOrdered, "no value is ever ranked above a value with a higher score");
 }
 
+/* ================================================================ R. a refusal is not a zero */
+
+console.log("\n  R. A comparison between two refusals is 'not measured', never 0");
+
+const { NOT_MEASURED_SCORE } = B("thresholdTree.js");
+const { extractBlock5Profile } = B("block5Profile.js");
+const { deriveDecisionProfile } = B("block5Thresholds.js");
+const dim = (tree, key) => tree.dimensions.find((d) => d.key === key);
+const rawOf = (d) => Number(/\(raw (\d+)\)/.exec(d.derivation)?.[1]);
+
+/* The formulas as they were before 24 September, for the patterns the rule must leave alone. */
+const to100 = (v) => Math.round(Math.max(0, Math.min(1, v)) * 100);
+const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+function vulnBefore(p) {
+  const b3 = Math.max(0, avg(p.lb) - avg(p.hb)) / 6;
+  const don = p.actions.map((a, i) => (a === "donate" && p.money[i] > 0 ? i : -1)).filter((i) => i >= 0);
+  const donation = don.includes(2) ? 1 : don.length ? 0.5 : 0;
+  const [sw, we, sh] = p.money;
+  const b1 = Math.max(0, Math.min(1, Math.max(0, sh - sw) / 8 + 0.2 * Math.max(0, sw - we) / 8 + 0.2 * donation));
+  const s = [[b3, 0.55], [b1, 0.30]];
+  if (p.block4.reportedInfluence === true && p.block4.influentialValence === "harmed") {
+    s.push([p.block4.finalDecision === "do_not_proceed" ? 1 : 0.3, 0.15]);
+  }
+  return to100(s.reduce((a, [v, w]) => a + v * w, 0) / s.reduce((a, [, w]) => a + w, 0));
+}
+const harmBefore = (p) => to100(Math.max(0, ((p.lb[2] - p.lb[0]) + (p.hb[2] - p.hb[0])) / 2) / 6);
+const doubleRefusal = (p) =>
+  p.lb.some((v, i) => v >= 6 && p.hb[i] >= 6)
+  || (p.lb[0] >= 6 && p.lb[2] >= 6) || (p.hb[0] >= 6 && p.hb[2] >= 6)
+  || (p.money[0] >= 8 && p.money[2] >= 8) || (p.money[0] >= 8 && p.money[1] >= 8);
+
+{
+  const refuser = {
+    money: [8, 8, 8], actions: ["return", "return", "return"], trolley: [8, 8],
+    lb: [6, 6, 6], hb: [6, 6, 6],
+  };
+  const t = treeOf(refuser);
+  const v = dim(t, "vulnerability_protection"), h = dim(t, "group_size");
+  gate("R1", v.measured === false && h.measured === false
+      && v.score === NOT_MEASURED_SCORE && h.score === NOT_MEASURED_SCORE
+      && dim(t, "gain_responsiveness").score === 0 && dim(t, "outcome_aggregation").score === 0,
+    `the never-harm refuser scores vulnerable ${v.score} and harm ${h.score} (not measured), `
+    + `gain ${dim(t, "gain_responsiveness").score}, helped ${dim(t, "outcome_aggregation").score}; it used to be 0 / 0 / 0 / 0`);
+
+  const r = resultsFrom(refuser);
+  const mp = deriveMoralProfile(r.money, r.trolley, r.ai);
+  const up = extractBlock5Profile(t);
+  const flagged = up.dimensions.filter((d) => d.notMeasured).map((d) => d.key).sort();
+  const dp = deriveDecisionProfile(up, mp);
+  gate("R2", JSON.stringify(flagged) === JSON.stringify(["groupSizeSensitivity", "vulnerabilityProtectionSensitivity"])
+      && dp.thresholds.vulnerabilityProtectionSensitivity.hasRedLine && dp.thresholds.groupSizeSensitivity.hasRedLine,
+    "Block 5 receives the flag (notMeasured on both), and the planner still sees both red lines");
+
+  seed = 777;
+  let checked = 0, same = true, firstDiff = "";
+  for (let i = 0; i < 20000; i++) {
+    const p = randomPattern();
+    if (doubleRefusal(p)) continue;
+    checked++;
+    const tree = treeOf(p);
+    const nv = rawOf(dim(tree, "vulnerability_protection")), nh = rawOf(dim(tree, "group_size"));
+    if (nv !== vulnBefore(p) || nh !== harmBefore(p)) {
+      same = false;
+      if (!firstDiff) firstDiff = `  first difference: ${JSON.stringify(p)}`;
+    }
+  }
+  gate("R3", same && checked > 10000,
+    `when nothing was refused twice the two formulas give exactly what they always gave (${checked} random patterns)${firstDiff}`);
+
+  const oneSided = treeOf({ money: [3, 3, 3], actions: ["return", "return", "return"], trolley: [4, 4], lb: [6, 6, 6], hb: [2, 3, 4] });
+  gate("R4", /buffer-gap 50% over 3 of 3 sizes/.test(dim(oneSided, "vulnerability_protection").derivation)
+      && rawOf(dim(oneSided, "group_size")) === 33,
+    "a one-sided refusal counts as the lower bound it is: entry-level never, seniors 2/3/4 gives a gap "
+    + "of 3 rungs (50%); the size slope uses the seniors only (2 rungs, raw 33)");
+
+  const partial = treeOf({ money: [3, 3, 3], actions: ["return", "return", "return"], trolley: [4, 4], lb: [2, 6, 6], hb: [1, 6, 6] });
+  gate("R5", /over 1 of 3 sizes/.test(dim(partial, "vulnerability_protection").derivation)
+      && /over 2 of 2 worker groups/.test(dim(partial, "group_size").derivation),
+    "a double refusal drops only its own comparison: sizes medium and large drop out of the gap, both groups keep their slope");
+}
+
 /* ------------------------------------------------------------ report: who comes out on top */
 
 /**

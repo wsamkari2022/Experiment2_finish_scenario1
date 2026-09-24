@@ -310,6 +310,12 @@ export interface Block5UserProfileDimension {
   rank: number;
   weight: number;
   sourceBlocks: string[];
+  /**
+   * true when Blocks 1-4 could not measure this value (every comparison was two refusals), so it
+   * entered Block 5 at the neutral 50 rather than at a measured score. Since 24 September 2026.
+   * Block 5 may still move it; the flag records where it STARTED.
+   */
+  notMeasured?: boolean;
 }
 
 export interface Block5UserProfile {

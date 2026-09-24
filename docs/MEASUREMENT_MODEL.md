@@ -235,6 +235,31 @@ downward. It was reading noise as signal. The slope scores that same random resp
 The slope is also a proper main effect, which is what makes it orthogonal to the worker-type
 contrast: their correlation fell from −0.16 to −0.04 when this changed.
 
+### A refusal is not a zero (24 September 2026)
+
+Both Block 3 contrasts, and Block 1's shelter and wealthy contrasts, subtract two answers. When
+**both** answers are "never" (the sentinel), the subtraction used to give 0, read as "no
+difference". But the difference between two off-scale answers is unknown, not zero. A participant
+who refused every rollout at every price scored 0 on vulnerability protection and 0 on group size,
+the same as somebody the numbers made no difference to.
+
+Each contrast now uses only the comparisons that were measured:
+
+```ts
+vulnB3      = max(0, mean(LB over measured sizes) − mean(HB over measured sizes)) / GAIN_STEPS
+              // a size is measured unless BOTH groups were refused at it
+sizeSlope   = mean over measured groups of (index(largest) − index(smallest))
+              // a group is measured unless it was refused at BOTH the smallest and largest size
+shelterContrast, wealthyPermissiveness: not measured when both of their answers are "never kept"
+```
+
+A signal with no measured comparison is dropped from the blend, as a missing Block 4 signal already
+was. A value with no measured signal at all scores the neutral **50** (`NOT_MEASURED_SCORE`) and is
+flagged `measured: false`. A one-sided refusal still counts, as the lower bound it is. When nothing
+was refused twice, every score is byte-identical to before (`validate:profile`, gate R3). Gain and
+helped are levels, where "never" is a real measurement (money never moved you; you never acted), so
+they are unchanged. Directness and context have the same issue and are not yet changed.
+
 ---
 
 ## 5. BLOCK 4 — Stakeholder reflection

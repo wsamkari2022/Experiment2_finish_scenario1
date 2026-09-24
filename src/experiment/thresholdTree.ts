@@ -73,7 +73,12 @@
  */
 
 import { computeAIWorkforceAnalysis, GAIN_STEPS as AI_GAIN_STEPS } from "./aiWorkforceAnalysis";
-import type { AIWorkforceBlockResults } from "./aiWorkforceTypes";
+import {
+  WORKER_GROUP_SIZES,
+  type AIWorkforceBlockResults,
+  type WorkerGroupKey,
+  type WorkerGroupSizeKey,
+} from "./aiWorkforceTypes";
 import { MONEY_STEPS, TROLLEY_STEPS, type MoralProfile } from "./profileAnalysis";
 import type { Block4DecisionRecord } from "./finalAnalysis";
 import { BLOCK2_LEGACY_PAIRED_BRIDGE } from "./blocksLegacyMethodology";
@@ -154,7 +159,20 @@ export interface ThresholdTreeDimension {
   contributions: { block: string; label: string; value: number; weight: number }[];
   /** The other values that share this exact score. Absent when there is no tie. See TIE_RULE. */
   tiedWith?: string[];
+  /**
+   * false when none of the comparisons behind this value could be measured, because every one of
+   * them was two refusals. Its score is then NOT_MEASURED_SCORE. Absent on trees stored before
+   * 24 September 2026, which never marked it.
+   */
+  measured?: boolean;
 }
+
+/**
+ * The score a value gets when Blocks 1-4 could not measure it: the middle of the common ruler.
+ * "We do not know" must not read as "cares not at all". Block 5's own `scoreOf` uses the same 50
+ * for a value it cannot find.
+ */
+export const NOT_MEASURED_SCORE = 50;
 
 /** The complete ranked User Value Profile. */
 export interface ThresholdTree {
@@ -280,8 +298,28 @@ export function buildThresholdTree(
    * not inflate context sensitivity as well — which would double-count it and unbalance the
    * context↔directness comparison that picks the CVR framing lens.
    */
-  const shelterContrast = Math.max(0, shelter - sidewalk) / MONEY_STEPS;
-  const wealthyPermissiveness = Math.max(0, sidewalk - wealthy) / MONEY_STEPS; // Idea A
+  /*
+   * A REFUSAL IS NOT A ZERO (24 September 2026, researcher's approval) — Block 1's part of it.
+   *
+   * "Never kept it" is stored as the rung after the top. Two nevers subtract to 0, which used to be
+   * read as "the place made no difference to you". It says nothing of the kind: somebody who would
+   * keep money at NO amount, on the sidewalk and outside the shelter alike, has shown no contrast
+   * because both answers are off the top of the scale. The contrast was never measured.
+   *
+   * So a contrast whose two answers are both "never" is MEASURED: FALSE. Its value is still 0, so
+   * nothing is added, but it no longer counts as evidence; if none of Block 1's three parts was
+   * measured, the Block 1 signal is dropped from the blend below, exactly as a missing Block 4
+   * signal already is. A donation is a real act and always counts as measured.
+   */
+  const neverKept = (i: number) => i >= MONEY_STEPS;
+  const shelterContrastMeasured = !(neverKept(shelter) && neverKept(sidewalk));
+  const wealthyContrastMeasured = !(neverKept(sidewalk) && neverKept(wealthy));
+  const shelterContrast = shelterContrastMeasured ? Math.max(0, shelter - sidewalk) / MONEY_STEPS : 0;
+  const wealthyPermissiveness = wealthyContrastMeasured // Idea A
+    ? Math.max(0, sidewalk - wealthy) / MONEY_STEPS
+    : 0;
+  const vulnB1Measured =
+    shelterContrastMeasured || wealthyContrastMeasured || profile.block1DonationSignal > 0;
   const vulnB1 = clamp01(
     shelterContrast + 0.2 * wealthyPermissiveness + 0.2 * profile.block1DonationSignal, // + Idea B
   );
@@ -344,8 +382,59 @@ export function buildThresholdTree(
   const aiAvailable = ai !== null;
   const avgLB = ai ? ai.avgLowBufferIndex : GAIN_STEPS / 2;
   const avgHB = ai ? ai.avgHighBufferIndex : GAIN_STEPS / 2;
-  const sizeSlope = ai ? ai.sizeSlope : 0;
   const overallGain = (avgLB + avgHB) / 2;
+
+  /*
+   * A REFUSAL IS NOT A ZERO — Block 3's part (24 September 2026, researcher's approval).
+   *
+   * Both Block 3 contrasts subtract two answers. When BOTH answers are "never approved", the
+   * subtraction gives 0, and that 0 used to be read as "no difference". It is not a difference of
+   * zero; it is two answers off the top of the scale, and the difference between them is unknown.
+   * A participant who refuses every rollout at every price used to score 0 on both of these values,
+   * exactly like somebody the numbers made no difference to.
+   *
+   * So each contrast now uses only the comparisons that were actually measured:
+   *   vulnerability — the entry-level minus senior gap, averaged over the group SIZES where at least
+   *                   one of the two groups was approved at some price;
+   *   group size    — the largest-minus-smallest slope, averaged over the worker GROUPS where at
+   *                   least one of the two sizes was approved at some price.
+   * When nothing was refused twice, both are exactly the numbers they always were (the mean of the
+   * per-size gaps IS the gap of the means). A value with no measured comparison at all is not
+   * measured, and scores the neutral NOT_MEASURED_SCORE instead of 0 — see the calibration step.
+   *
+   * A one-sided refusal still counts, as the lower bound it is: entry-level refused, senior approved
+   * at rung 2, is a gap of at least 6 − 2 = 4 rungs, and 4 is what is used.
+   */
+  const neverApproved = (i: number) => i >= GAIN_STEPS;
+  const cellOf = (group: WorkerGroupKey, size: WorkerGroupSizeKey): number =>
+    ai?.indexByKey[group]?.[size] ?? GAIN_STEPS;
+  const sizeKeys: WorkerGroupSizeKey[] = WORKER_GROUP_SIZES.map((s) => s.key);
+  const smallest = sizeKeys[0];
+  const largest = sizeKeys[sizeKeys.length - 1];
+  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+
+  const vulnSizesMeasured = ai
+    ? sizeKeys.filter((s) => !(neverApproved(cellOf("low_buffer", s)) && neverApproved(cellOf("high_buffer", s))))
+    : [];
+  const vulnB3Measured = vulnSizesMeasured.length > 0;
+  /* The gap of the two MEANS, not the mean of the gaps. They are equal on paper, but floating point
+     can differ in the last digit, and a blend landing on x.5 then rounds the other way. This order
+     is the arithmetic the formula always used, so a participant with no double refusal gets
+     byte-identical scores (validate:profile, gate R3). */
+  const bufferGapRungs = vulnB3Measured
+    ? mean(vulnSizesMeasured.map((s) => cellOf("low_buffer", s)))
+      - mean(vulnSizesMeasured.map((s) => cellOf("high_buffer", s)))
+    : 0;
+
+  const sizeGroupsMeasured = ai
+    ? (["low_buffer", "high_buffer"] as WorkerGroupKey[]).filter(
+        (g) => !(neverApproved(cellOf(g, smallest)) && neverApproved(cellOf(g, largest))),
+      )
+    : [];
+  const groupSizeMeasured = sizeGroupsMeasured.length > 0;
+  const sizeSlope = groupSizeMeasured
+    ? mean(sizeGroupsMeasured.map((g) => cellOf(g, largest) - cellOf(g, smallest)))
+    : 0;
   // Block 3 is a BALANCED 2x3 FACTORIAL: 2 worker groups x 3 group sizes, every cell presented,
   // every cell restarting at $1. That balance is what lets one block feed three different
   // sensitivities without them being three copies of the same number: the three signals below
@@ -376,7 +465,7 @@ export function buildThresholdTree(
    * WHY max(0, …): one-way construct, exactly as in Block 1. Demanding more before harming the
    * more replaceable group is protection; demanding less is its absence, not its opposite.
    */
-  const vulnB3 = Math.max(0, avgLB - avgHB) / GAIN_STEPS;
+  const vulnB3 = Math.max(0, bufferGapRungs) / GAIN_STEPS;
   // Group size = how much MORE gain was demanded as the harmed group grew, as a fraction of
   // the ladder. Uses the signed slope (largest minus smallest), clamped at zero.
   //
@@ -491,8 +580,9 @@ export function buildThresholdTree(
   // a soft reflective signal. The tiers (≈0.55 / 0.30 / 0.15) are documented.
 
   const vulnSignals: Signal[] = [
-    { block: "Block 3", label: "Entry- vs senior-level gain gap", value: vulnB3, weight: 0.55, available: true },
-    { block: "Block 1", label: "Need-sensitivity (shelter, wealthy-leniency, donations)", value: vulnB1, weight: 0.30, available: true },
+    /* Available only when measured: a contrast between two refusals is not evidence. See above. */
+    { block: "Block 3", label: "Entry- vs senior-level gain gap", value: vulnB3, weight: 0.55, available: vulnB3Measured },
+    { block: "Block 1", label: "Need-sensitivity (shelter, wealthy-leniency, donations)", value: vulnB1, weight: 0.30, available: vulnB1Measured },
     { block: "Block 4", label: "Moved by the harmed stakeholder", value: b4Vuln, weight: 0.15, available: b4VulnAvailable },
   ];
   const gainSignals: Signal[] = [
@@ -506,6 +596,7 @@ export function buildThresholdTree(
   ];
 
   const vulnerability = blend(vulnSignals);
+  const vulnerabilityMeasured = vulnSignals.some((s) => s.available);
   const groupSize = clamp01(groupSizeB3);
   const gain = blend(gainSignals);
   const outcome = clamp01(aggregationB2);
@@ -525,10 +616,13 @@ export function buildThresholdTree(
       score: to100(vulnerability),
       rationale:
         "How strongly you protect the worse-off — drawn mainly from demanding more gain before harming entry-level workers (Block 3), reinforced by your Block-1 need-sensitivity (shelter reluctance, plus light support from leniency toward a wealthy owner and any donations).",
-      derivation:
-        `blend(  B3 buffer-gap ${pct(vulnB3)} ×0.55,  B1 need-signal ${pct(vulnB1)} ×0.30` +
-        (b4VulnAvailable ? `,  B4 moved-by-harmed ${pct(b4Vuln)} ×0.15 ) = ${to100(vulnerability)}/100` : ` ) = ${to100(vulnerability)}/100  (B4 signal absent → excluded)`),
+      derivation: vulnerabilityMeasured
+        ? `blend(  B3 buffer-gap ${vulnB3Measured ? `${pct(vulnB3)} over ${vulnSizesMeasured.length} of ${sizeKeys.length} sizes` : "not measured"} ×0.55,`
+          + `  B1 need-signal ${vulnB1Measured ? pct(vulnB1) : "not measured"} ×0.30` +
+          (b4VulnAvailable ? `,  B4 moved-by-harmed ${pct(b4Vuln)} ×0.15 ) = ${to100(vulnerability)}/100` : ` ) = ${to100(vulnerability)}/100  (B4 signal absent → excluded)`)
+        : "not measured: every Block 1 and Block 3 comparison behind this value was two refusals, and no Block 4 signal",
       contributions: vulnSignals.filter((s) => s.available).map((s) => ({ block: s.block, label: s.label, value: s.value, weight: s.weight })),
+      measured: vulnerabilityMeasured,
     },
     {
       key: "group_size",
@@ -536,8 +630,15 @@ export function buildThresholdTree(
       score: to100(groupSize),
       rationale:
         "How much your approval threshold moved as the harmed group grew from ~10 to ~100,000 workers (Block 3). The one-directional (carry-forward) design means this captures how much MORE gain you demanded for larger groups.",
-      derivation: `max(0, size slope ${sizeSlope.toFixed(2)}) / ${GAIN_STEPS} steps = ${to100(groupSize)}/100` + (aiAvailable ? "" : "  (Block 3 data missing → neutral)"),
-      contributions: single("Block 3", "Threshold spread across group sizes", groupSizeB3).map((s) => ({ block: s.block, label: s.label, value: s.value, weight: s.weight })),
+      derivation: groupSizeMeasured
+        ? `max(0, size slope ${sizeSlope.toFixed(2)} over ${sizeGroupsMeasured.length} of 2 worker groups) / ${GAIN_STEPS} steps = ${to100(groupSize)}/100`
+        : aiAvailable
+          ? "not measured: both worker groups were refused at the smallest AND the largest size"
+          : "not measured: Block 3 data missing",
+      contributions: groupSizeMeasured
+        ? single("Block 3", "Threshold spread across group sizes", groupSizeB3).map((s) => ({ block: s.block, label: s.label, value: s.value, weight: s.weight }))
+        : [],
+      measured: groupSizeMeasured,
     },
     {
       key: "gain_responsiveness",
@@ -618,9 +719,21 @@ export function buildThresholdTree(
   // be traced back to the answers that produced it.
   const calibrated = raw.map((d) => {
     const rawScore = d.score;
+    /* NOT MEASURED -> the neutral middle, never 0. A value whose every comparison was two refusals
+       carries no evidence either way, and 0 would claim "cares not at all". It is the same rule
+       Block 5 already applies to a value it cannot find (`scoreOf` in block5CVR.ts). */
+    if (d.measured === false) {
+      return {
+        ...d,
+        measured: false,
+        score: NOT_MEASURED_SCORE,
+        derivation: `${d.derivation}   →  neutral ${NOT_MEASURED_SCORE}/100 (not measured)`,
+      };
+    }
     const score = calibrateSensitivity(d.key, rawScore);
     return {
       ...d,
+      measured: true,
       score,
       derivation: `${d.derivation}   →  calibrated ${score}/100 (raw ${rawScore})`,
     };

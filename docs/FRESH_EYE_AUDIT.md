@@ -75,7 +75,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | D1 | Option numbers disagree with the option's own words | Critical | Open |
 | D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | Open |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
-| E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | Proposed (calc idea 1) |
+| E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | **Fixed** for vulnerable + harm (Idea 1); directness + context still open |
 | E2 | One wobble of one step can make a value #1 | High | Proposed (calc idea 2) |
 | E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | **Fixed** (Idea 3, approved 24 Sept) |
 | E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | **Fixed** (Idea 4, approved 24 Sept) |
@@ -758,3 +758,16 @@ waits until just before real participants.
   is most likely how my random-responder generator models Block 1 (a donate action a third of the
   time lifts the donation signal); the original documented figure was 16.6% with a different
   generator. Not investigated further yet.
+- **2026-09-24. Idea 1 done:** a comparison whose two answers are both "never" is dropped (Block 3
+  worker-type gap per size, Block 3 size slope per group, Block 1 shelter and wealthy contrasts); a
+  value with nothing measured scores `NOT_MEASURED_SCORE` = 50, flagged `measured: false` (tree) and
+  `notMeasured: true` (Block 5 profile). Vulnerable and harm only; directness and context have the
+  same flaw and were NOT changed (not approved). Version `…-fair-ties-refusals`. Gates R1-R5; R3 caught
+  a floating-point difference (mean of gaps 3 against gap of means 2.9999999999999996 flipped a
+  36.5), fixed by keeping the original arithmetic order, so no-double-refusal patterns are
+  byte-identical. **Tables kept, on evidence:** with one recipe before and after, the reference
+  distribution moved at most 0.5 points (vulnerable) and 0.8 (group size). A reconstructed recipe
+  reproduces the original group-size table within 1.2 points but vulnerable only within 6.8-17.4
+  (the original Block 1 donate / Block 4 model is unknown). Click-level random recipes are far worse
+  (up to 84 points). Example people: the refuser goes 0/0/0/0 → 50*/50*/0/0 with best fit "Carry the
+  respirator"; #7 (refuses entry-level, prices seniors) goes harm 64 → 80.

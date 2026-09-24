@@ -201,6 +201,13 @@ stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, grou
   differ between computers and would change the card order mid-study. Every tie is recorded on the
   tree (`tiedValues`, `tiedWith`). During Block 5, `recompute()` in `block5CVR.ts` still breaks new
   ties by array order, which is now the participant's own pre-Block-5 rank order, not code order.
+- **A refusal is not a zero** (`…-refusals`). A comparison whose two answers are both "never" is
+  dropped instead of scoring a difference of 0; a value with nothing measured scores the neutral 50
+  (`NOT_MEASURED_SCORE`) and is flagged `measured: false` on the tree and `notMeasured: true` on the
+  Block 5 profile. Applies to vulnerability and group size, the two policy values built from
+  differences; gain and helped are levels, where a refusal is a real 0. Directness and context have
+  the same issue and were NOT changed (not approved yet). The calibration tables were deliberately
+  kept; the evidence is in the note under `SENSITIVITY_CALIBRATION_VERSION`.
 
 ## The two development-only controls
 

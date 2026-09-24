@@ -99,7 +99,28 @@ export type SensitivityKey =
  * analyst has to check, so any change to any of those moves it. History: Generated
  * Outputs/HOW_TO_READ_MY_DATABASE.md section 6h.
  */
-export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23-top100-fair-ties";
+export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23-top100-fair-ties-refusals";
+
+/*
+ * WHY THE TABLES WERE NOT REGENERATED FOR THE REFUSAL RULE (24 September 2026).
+ *
+ * The refusal rule in thresholdTree.ts changed two formulas - vulnerability protection and group
+ * size - so the rule above says their tables should be regenerated. They were not, on evidence:
+ *
+ *   1. The rule changes a raw score ONLY for answer patterns that refuse the same comparison twice.
+ *      Everywhere else it is byte-identical (validate:profile, gate R3).
+ *   2. Measured with one recipe before and after (200,000 uniformly random answer patterns, every
+ *      "never" answer included), the reference distribution moved by at most 0.5 points on
+ *      vulnerability and 0.8 points on group size, and 0.00% / 0.04% of random patterns became
+ *      "not measured".
+ *   3. The original recipe is not in the repository (the procedure file named above is missing).
+ *      A reconstructed recipe reproduces the original group-size table to within 1.2 points, and
+ *      cannot reproduce the vulnerability table closer than 6.8 points, because the original's
+ *      model of Block 1's donate action and of Block 4 is unknown.
+ * Regenerating would therefore have replaced a sub-1-point formula effect with a 1-7 point recipe
+ * change. The tables stay; regenerate all seven, with a recipe committed beside them, at the next
+ * change to a ladder. Full working: docs/FRESH_EYE_AUDIT.md, log for 24 September.
+ */
 
 /** `[rawScore, percentOfTheResponseSpaceStrictlyBelowThatScore]`, ascending by rawScore. */
 type NullCdf = ReadonlyArray<readonly [number, number]>;

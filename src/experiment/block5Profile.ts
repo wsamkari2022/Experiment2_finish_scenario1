@@ -143,6 +143,9 @@ export function extractBlock5Profile(tree: ThresholdTree): Block5UserProfile {
       rank: d.rank,
       weight: rankWeight(d.rank, dimensionCount),
       sourceBlocks: SOURCE_MAP[key],
+      /* Carried across the boundary so Block 5's records say which values started at the neutral
+         50 because Blocks 1-4 could not measure them. See NOT_MEASURED_SCORE in thresholdTree.ts. */
+      ...(d.measured === false ? { notMeasured: true } : {}),
     };
   });
 
