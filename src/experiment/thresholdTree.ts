@@ -730,6 +730,30 @@ export function buildThresholdTree(
         derivation: `${d.derivation}   →  neutral ${NOT_MEASURED_SCORE}/100 (not measured)`,
       };
     }
+    /*
+     * HALF A STEP GETS HALF THE CREDIT OF ONE STEP (24 September 2026, researcher's approval).
+     *
+     * Group size is a slope in rungs, averaged over the two worker groups, so it comes in half
+     * steps: 0, 0.5, 1, 1.5 ... Half of all random answer patterns sit at exactly 0, and the
+     * calibration counts every one of them as "exceeded" by the smallest positive answer - so ONE
+     * click, one rung higher in one cell, jumped from 0 straight to 55 and often became the
+     * participant's #1 value, reordering every card in Block 5.
+     *
+     * The researcher's point was that the click still means something, so it is not set to 0. It
+     * gets the credit it earns on a straight line from 0 to one full step: half a step is half of
+     * the one-step score. One step or more is untouched. Half a step is the only value that can
+     * fall between 0 and 1, so this is the whole of the rule.
+     */
+    if (d.key === "group_size" && sizeSlope > 0 && sizeSlope < 1) {
+      const oneStep = calibrateSensitivity(d.key, to100(1 / GAIN_STEPS));
+      const score = Math.round(sizeSlope * oneStep);
+      return {
+        ...d,
+        measured: true,
+        score,
+        derivation: `${d.derivation}   →  ${sizeSlope} of a step = ${sizeSlope} × the one-step score ${oneStep} = ${score}/100 (raw ${rawScore})`,
+      };
+    }
     const score = calibrateSensitivity(d.key, rawScore);
     return {
       ...d,

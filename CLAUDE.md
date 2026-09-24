@@ -212,6 +212,9 @@ stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, grou
   differences; gain and helped are levels, where a refusal is a real 0. Directness and context have
   the same issue and were NOT changed (not approved yet). The calibration tables were deliberately
   kept; the evidence is in the note under `SENSITIVITY_CALIBRATION_VERSION`.
+- **Half a step gets half the credit** (`…-halfstep`). On group size, a half-step slope scores half of
+  the one-step score (32, not 55); one step or more is unchanged. Before, one click in one cell made
+  "reducing harm" jump to 55 and often become the #1 value. Gates H1-H2.
 - **Response-style flags** (no score change): `analysis.blocks_1_to_4_checks`, copied into
   `major_info_and_scores.blocks_1_to_4`. `FAST_ANSWER_SECONDS` (2) in `dbShape.ts` is a stated
   default; the medians are stored so another line can be drawn later.

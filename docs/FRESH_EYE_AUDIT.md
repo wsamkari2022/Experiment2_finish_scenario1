@@ -76,7 +76,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | Open |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
 | E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | **Fixed** for vulnerable + harm (Idea 1); directness + context still open |
-| E2 | One wobble of one step can make a value #1 | High | Proposed (calc idea 2) |
+| E2 | One wobble of one step can make a value #1 | High | **Fixed** (Idea 2, half credit, approved 24 Sept) |
 | E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | **Fixed** (Idea 3, approved 24 Sept) |
 | E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | **Fixed** (Idea 4, approved 24 Sept) |
 | E5 | No response-style flag, though every click is timestamped | Medium | **Fixed** (Idea 5): `analysis.blocks_1_to_4_checks` + `major_info_and_scores.blocks_1_to_4` |
@@ -810,3 +810,9 @@ waits until just before real participants.
   `top_value_was_decided_by_a_coin`, `scoring_version`. Missing blocks make a flag null, never false.
   `SHAPE_VERSION` → `2026-09-24-blocks-1-to-4` so existing records get the section on their next
   sync. Gate D52; D44 now sees 28 paths. validate:resume also green.
+- **2026-09-24. Idea 2 done (half credit):** a half-step group-size slope scores 0.5 × the one-step
+  score (32 against 64; it used to be 55). Gates H1-H2. Waseem also approved: directness/context
+  "never" = flag with score **0** (his choice, not 50, for analysis clarity) plus a fair lens tie-break;
+  and a committed calibration recipe with ALL buttons equally likely, then rebuilding all seven tables.
+  He has no real pilot data yet, so versioning is for hygiene only. Vulnerable and harm keep the
+  neutral 50, because 0 there would re-create the "every option fits 100" problem in the fit score.

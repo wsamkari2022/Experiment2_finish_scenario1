@@ -260,6 +260,14 @@ was refused twice, every score is byte-identical to before (`validate:profile`, 
 helped are levels, where "never" is a real measurement (money never moved you; you never acted), so
 they are unchanged. Directness and context have the same issue and are not yet changed.
 
+### Half a step gets half the credit (24 September 2026)
+
+The group-size slope is averaged over two worker groups, so it moves in half steps. Half of all random
+answer patterns score exactly 0, and the calibration counts all of them as "exceeded" by the smallest
+positive answer, so a single click (one rung, one cell) jumped from 0 to 55. A half-step slope now
+scores `0.5 × calibrate(one full step)`, a straight line from 0 to the one-step score. One step or
+more is unchanged. It is the only value between 0 and 1 a slope can take. Gates H1-H2.
+
 ---
 
 ## 5. BLOCK 4 — Stakeholder reflection

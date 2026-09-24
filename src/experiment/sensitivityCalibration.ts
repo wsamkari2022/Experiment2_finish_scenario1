@@ -99,7 +99,7 @@ export type SensitivityKey =
  * analyst has to check, so any change to any of those moves it. History: Generated
  * Outputs/HOW_TO_READ_MY_DATABASE.md section 6h.
  */
-export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23-top100-fair-ties-refusals";
+export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-08-23-top100-fair-ties-refusals-halfstep";
 
 /*
  * WHY THE TABLES WERE NOT REGENERATED FOR THE REFUSAL RULE (24 September 2026).

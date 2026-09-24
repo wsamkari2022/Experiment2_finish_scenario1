@@ -312,6 +312,25 @@ const doubleRefusal = (p) =>
     "a double refusal drops only its own comparison: sizes medium and large drop out of the gap, both groups keep their slope");
 }
 
+/* ============================================ H. half a step gets half the credit of one step */
+
+console.log("\n  H. Reducing harm: half a step gets half the credit of one full step");
+
+{
+  const base = { money: [4, 4, 4], actions: ["return", "return", "return"], trolley: [4, 4] };
+  const harm = (lb, hb) => dim(treeOf({ ...base, lb, hb }), "group_size").score;
+  const a = harm([3, 3, 3], [3, 3, 3]);          // no change anywhere
+  const b = harm([3, 3, 4], [3, 3, 3]);          // one click, one step: half a step on average
+  const c = harm([3, 3, 4], [3, 3, 4]);          // one full step
+  const d = harm([1, 3, 5], [3, 3, 3]);          // two steps
+  const oneStep = calibrateSensitivity("group_size", Math.round((1 / 6) * 100));
+  const twoSteps = calibrateSensitivity("group_size", Math.round((2 / 6) * 100));
+  gate("H1", a === 0 && b === Math.round(0.5 * oneStep) && c === oneStep && d === twoSteps,
+    `same answers ${a}, one click (half a step) ${b} = half of one step ${oneStep}, one full step ${c}, two steps ${d}`);
+  gate("H2", b > 0 && b < c,
+    "the one click still counts, and counts for less than a full step");
+}
+
 /* ------------------------------------------------------------ report: who comes out on top */
 
 /**
