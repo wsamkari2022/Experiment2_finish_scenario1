@@ -226,6 +226,10 @@ stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, grou
   200,000 pretend participants with every answer and button equally likely. `npm run
   calibration:check` (gate K1) fails if a formula changes without its ruler: after ANY change to a
   raw formula in `thresholdTree.ts`, run `calibration:regenerate` and commit both files together.
+- **Donation signal is a share, not one click** (`null-cdf-2026-09-24-recipe-donation-share`). Block 1's
+  `block1DonationSignal` (profileAnalysis.ts; read only by thresholdTree.ts) is the share of refusals
+  that were donations — shelter in full, elsewhere at half — instead of 1 for any single click. With
+  equal buttons, random pressing had earned the full signal two times in three. Gates D1-D2.
 - **Response-style flags** (no score change): `analysis.blocks_1_to_4_checks`, copied into
   `major_info_and_scores.blocks_1_to_4`. `FAST_ANSWER_SECONDS` (2) in `dbShape.ts` is a stated
   default; the medians are stored so another line can be drawn later.

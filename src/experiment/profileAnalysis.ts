@@ -134,7 +134,9 @@ export interface MoralProfile {
   aiWorkforceIndices: Partial<Record<string, number>>;
   /**
    * Idea B (light secondary): prosocial-donation signal from Block 1's exact non-keep action.
-   * 1 = chose "donate" in the shelter context · 0.5 = donated in any context · 0 = never donated.
+   * Since 24 September 2026, the SHARE of refusals that were donations: the shelter's share in full,
+   * the other two places' share at half, whichever is larger. 0-1. (It used to be 1 for any one
+   * donate click at the shelter and 0.5 for any one elsewhere.)
    * Used ONLY as a small boost to Vulnerability protection (not Context). Return/Leave map to no
    * sensitivity (no honesty/passivity dimension exists) and are kept for descriptive analysis only.
    */
@@ -155,14 +157,27 @@ export function deriveMoralProfile(
   const shelterIdx = toMoneyComparableIndex(money.thresholds.threshold_shelter);
 
   // ── Idea B: prosocial-donation signal from Block 1's exact non-keep action ──
-  // "donate near the shelter" = prosocial toward the vulnerable (strong); any donation = mild.
+  // "donate near the shelter" = prosocial toward the vulnerable (strong); donating elsewhere = mild.
   // Return/Leave carry no sensitivity (no honesty/passivity dimension) — recorded for analysis only.
-  const donations = money.history.filter((h) => h.action === "donate");
-  const block1DonationSignal = donations.some((h) => h.contextKey === "shelter")
-    ? 1
-    : donations.length > 0
-      ? 0.5
-      : 0;
+  //
+  // THE SHARE OF REFUSALS, NOT "ANY ONE CLICK" (24 September 2026, researcher's approval).
+  // It used to be 1 as soon as ONE refusal outside the shelter was a donate click, and 0.5 for one
+  // donate click anywhere else. Somebody refusing six times at the shelter and pressing donate once
+  // got the same full signal as somebody who donated all six times - and so did two thirds of the
+  // pretend participants who build the calibration tables, pressing buttons at random, so a real
+  // donor no longer stood out at all. The signal is now the SHARE of the participant's refusals that
+  // were donations: at the shelter it counts in full, elsewhere at half, exactly the weights it had.
+  //   donated at all 6 shelter refusals -> 1      donated at 1 of 6 -> 0.17      never -> 0
+  //   donated at every refusal on the sidewalk and in the wealthy district, never at the shelter -> 0.5
+  const refusals = money.history.filter((h) => h.action !== "keep");
+  const donationShare = (inPlace: (place: string) => boolean): number => {
+    const here = refusals.filter((h) => inPlace(h.contextKey));
+    return here.length ? here.filter((h) => h.action === "donate").length / here.length : 0;
+  };
+  const block1DonationSignal = Math.max(
+    donationShare((place) => place === "shelter"),
+    0.5 * donationShare((place) => place !== "shelter"),
+  );
 
   const leverIdx = toTrolleyComparableIndex(trolley.leverThreshold);
   const bridgeIdx = toBridgeComparableIndex(trolley.bridgeThreshold);

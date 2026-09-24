@@ -270,8 +270,13 @@ const to100 = (v) => Math.round(Math.max(0, Math.min(1, v)) * 100);
 const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 function vulnBefore(p) {
   const b3 = Math.max(0, avg(p.lb) - avg(p.hb)) / 6;
-  const don = p.actions.map((a, i) => (a === "donate" && p.money[i] > 0 ? i : -1)).filter((i) => i >= 0);
-  const donation = don.includes(2) ? 1 : don.length ? 0.5 : 0;
+  /* The donation signal as it is now (a share of refusals, section D), so R3 keeps testing the
+     refusal rule and nothing else. In these patterns each place repeats one refusal button. */
+  const refused = p.money.map((m) => Math.min(m, 8));
+  const shelterShare = refused[2] > 0 && p.actions[2] === "donate" ? 1 : 0;
+  const elsewhere = refused[0] + refused[1];
+  const elsewhereDonated = (p.actions[0] === "donate" ? refused[0] : 0) + (p.actions[1] === "donate" ? refused[1] : 0);
+  const donation = Math.max(shelterShare, 0.5 * (elsewhere ? elsewhereDonated / elsewhere : 0));
   const [sw, we, sh] = p.money;
   const b1 = Math.max(0, Math.min(1, Math.max(0, sh - sw) / 8 + 0.2 * Math.max(0, sw - we) / 8 + 0.2 * donation));
   const s = [[b3, 0.55], [b1, 0.30]];
@@ -400,6 +405,41 @@ console.log("\n  L. Directness and context: 'never' is flagged (score 0), and a 
   gate("L4", higherWon, `when the two differ, the higher one still chooses the lens (${differs} profiles)`);
   gate("L5", ties > 200 && share > 0.4 && share < 0.6,
     `in ${ties} ties the context lens was chosen ${(100 * share).toFixed(1)}% of the time (the old rule gave 100%; a fair coin about 50%)`);
+}
+
+/* ========================================= D. the donation signal is a share, not one click */
+
+console.log("\n  D. Block 1's donation signal is the share of refusals that were donations");
+
+{
+  /* Money results with an explicit click history: `clicks[place]` lists that place's refusal
+     buttons in order, and the place is kept at the rung after them. */
+  const moneyWith = (clicks) => {
+    const places = ["sidewalk", "wealthy", "shelter"];
+    const history = [];
+    const thresholds = {};
+    for (const place of places) {
+      const list = clicks[place] ?? [];
+      list.forEach((action) => history.push({ contextKey: place, action, timestamp: "x" }));
+      history.push({ contextKey: place, action: "keep", timestamp: "x" });
+      thresholds[`threshold_${place}`] = { contextKey: place, accepted: true, thresholdAmount: 1, thresholdLabel: "x", thresholdAmountIndex: list.length, thresholdBeyondRange: false };
+    }
+    return { completed: true, completedAt: "x", thresholds, history };
+  };
+  const base = resultsFrom({ money: [3, 3, 3], actions: ["return", "return", "return"], trolley: [4, 4], lb: [3, 3, 3], hb: [2, 2, 2] });
+  const signal = (clicks) => deriveMoralProfile(moneyWith(clicks), base.trolley, base.ai).block1DonationSignal;
+  const r = (n) => Array(n).fill("return"), dn = (n) => Array(n).fill("donate");
+
+  const allDonate = signal({ shelter: dn(6) });
+  const twoOfSix = signal({ shelter: [...dn(2), ...r(4)] });
+  const oneOfSix = signal({ shelter: [...dn(1), ...r(5)] });
+  const elsewhereOnly = signal({ sidewalk: dn(4), wealthy: dn(4), shelter: r(6) });
+  const never = signal({ sidewalk: r(3), wealthy: r(3), shelter: r(3) });
+  const keptAtOnce = signal({});
+  gate("D1", allDonate === 1 && Math.abs(twoOfSix - 1 / 3) < 1e-9 && Math.abs(oneOfSix - 1 / 6) < 1e-9,
+    `donated at 6 of 6 shelter refusals -> ${allDonate}; at 2 of 6 -> ${twoOfSix.toFixed(2)}; at 1 of 6 -> ${oneOfSix.toFixed(2)} (one click used to count in full)`);
+  gate("D2", elsewhereOnly === 0.5 && never === 0 && keptAtOnce === 0,
+    `donated at every refusal elsewhere but never at the shelter -> ${elsewhereOnly} (half weight, as before); never donated -> ${never}; kept at the first rung everywhere -> ${keptAtOnce}`);
 }
 
 /* ------------------------------------------------------------ report: who comes out on top */

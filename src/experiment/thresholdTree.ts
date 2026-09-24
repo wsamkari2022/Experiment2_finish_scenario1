@@ -332,7 +332,8 @@ function rawDimensionsOf(
    *   LIGHT A  wealthyPermissiveness (x0.20) — keeps money more readily when the likely owner
    *            is wealthy than when neutral. A supporting facet, from data already collected.
    *   LIGHT B  donationSignal (x0.20) — chose to DONATE rather than keep, especially near the
-   *            shelter. A prosocial-toward-the-vulnerable signal. "Return" and "Leave" map to no
+   *            shelter: since 24 September 2026 the SHARE of refusals that were donations (see
+   *            deriveMoralProfile), not one click. A prosocial-toward-the-vulnerable signal. "Return" and "Leave" map to no
    *            sensitivity: they are honest or passive, not protective, and there is no honesty
    *            dimension in this model. They are retained for descriptive analysis only.
    *

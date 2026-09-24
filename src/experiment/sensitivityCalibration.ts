@@ -107,13 +107,14 @@ export type SensitivityKey =
  * analyst has to check, so any change to any of those moves it. History: Generated
  * Outputs/HOW_TO_READ_MY_DATABASE.md section 6h.
  */
-export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-09-24-recipe";
+export const SENSITIVITY_CALIBRATION_VERSION = "null-cdf-2026-09-24-recipe-donation-share";
 
 /*
  * HISTORY. "null-cdf-2026-08-23" was the original ruler; four rule changes on 24 September 2026 each
  * got their own label ("…-top100", "…-fair-ties", "…-refusals", "…-halfstep", "…-dc") while the
  * original tables were kept; "null-cdf-2026-09-24-recipe" is all of those rules PLUS tables rebuilt
- * by the committed recipe. Details: Generated Outputs/HOW_TO_READ_MY_DATABASE.md section 6h.
+ * by the committed recipe; "…-recipe-donation-share" also makes Block 1's donation signal a share of
+ * refusals instead of one click. Details: Generated Outputs/HOW_TO_READ_MY_DATABASE.md section 6h.
  */
 
 /** `[rawScore, percentOfTheResponseSpaceStrictlyBelowThatScore]`, ascending by rawScore. */
