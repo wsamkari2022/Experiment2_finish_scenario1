@@ -758,6 +758,40 @@ waits until just before real participants.
 | Cancer | 7.0% | 18.7% | 11.2% | 40.7 → 51.0% |
 | Care Visits | 6.6% | 8.5% | 7.2% | 39.7 → 44.5% |
 
+## Fix P plan v2 (re-tested on the new Blocks 1-4 scoring, 24 September, evening)
+
+**How the re-test worked.** 4,000 "consistent" pretend people (a base answer, small real preferences,
+a little noise) answered Blocks 1-4. They were scored by the REAL current code end to end (answers →
+profile → planner), not given made-up scores. Random answerers (the recipe's model) were run for
+comparison.
+
+**Findings.**
+
+- First card = the plain sort by the #1 value: 88-100% (unchanged; C1 holds).
+- **First card = best-fit card: 56-68% for consistent people** (Six Hours 62.7, Wildfire 67.8,
+  Cancer 56.2, Care 61.3) and 46-55% for random answerers. The earlier 37-55% came from made-up
+  scores (20-100) and understated it. Clearer profiles make the #1-value champion also the best fit.
+- The planner's #1 value was decided by the coin for 2.7% of people; the #2 value is 0 for 1.3%.
+- P1 (helped band 1/8 → 1/6) changes the first card for up to 7.4% and raises the overlap (Cancer
+  56.2 → 60.5).
+- P3-A (ratio of the person's own two scores) or P3-C (rate 1) change the order for 5-26% and also
+  raise the overlap (Wildfire 67.8 → 71.5 / 69.5).
+
+**Revised plan.** Make the planner honest and recorded, and do not change what it does.
+
+- **P1'.** Keep the bands (1/6 for Block 3 values, 1/8 for helped = one step of the ladder each value
+  is measured with, the same for everyone) and describe them honestly.
+- **P2.** Name the floor and the notice band separately. No behavior change.
+- **P3'.** Keep today's Step 3 rate and describe it honestly as a reading.
+- **P4.** Store `PLANNER_VERSION` plus the inputs, with a check that rebuilds the order from them.
+- **P5.** Honest words everywhere, including the CLAUDE.md "settled" line.
+- **P6.** Reword the card sentence (participant-visible; yes/no).
+- **P7.** A permanent report on these realistic pretend people.
+
+**Open for the advisor.** Is a 56-68% overlap acceptable? In 32-44% of cases the first card differs
+from the best fit, enough for an analysis that uses both ranks. A cleaner separation would need a
+design change (for example a randomly ordered control group).
+
 ## Log
 
 - **2026-09-24.** Audit written (`a2ecc01`). Nothing fixed yet. Fix 1 plan sent to Waseem.
@@ -826,3 +860,4 @@ waits until just before real participants.
   picked the lens we know does NOT move the person.
 - **2026-09-24. Tables rebuilt with a committed recipe:** `tools/regenerate_sensitivity_calibration.cjs` → `src/experiment/sensitivityCalibrationTables.ts` (generated). 200,000 pretend participants, seed 20260924, every answer and every refusal button equally likely (Waseem's decision). thresholdTree split into `rawDimensionsOf` + `rankedTree`, with `rawSensitivityScores` exported for the recipe; the split changed nothing (R3 still passes). Gate K1 rebuilds the tables in 3.2 s and must match exactly. Version `null-cdf-2026-09-24-recipe`. The rank-first shares for random responders are now 12.8-15.2% (ideal 14.3); vulnerable was 24.4% on the original rules. Effect on 5,000 "consistent" people: planner #1 value changes 13.1%, full four-value order 31.8%, first lens 0%.  **New finding E8 (donation signal):** with equal buttons, two thirds of pretend participants donate at the shelter at least once, and one click earns Block 1's full donation signal, so donating no longer stands out. A donor who never keeps money went from vulnerable 68 to 51, and their #1 value changed from vulnerable to gain. The root is the "any donate click = full signal" formula in profileAnalysis (`block1DonationSignal`). Correction, checked by grep: the signal is read ONLY by thresholdTree.ts (vulB1, its availability, and the tie-coin fingerprint), not by Block 4, so a fix is contained. Plan it next, with Waseem.
 - **2026-09-24. Donation signal fixed (E8):** `block1DonationSignal` = max(shelter share of refusals that were donate, 0.5 × the other places' share), instead of 1 or 0.5 for any single click. Waseem had ALREADY delegated this ("fix the donation button however you feel is right") and I asked him again; he told me to read his whole prompt (memory: feedback-read-whole-prompt). K1 caught the formula change before regeneration, as designed; tables regenerated. Rank-first shares 12.8-15.1%. Donor example 51 → 59; one small wobble 1 → 9; consistent people: #1 value changes 4.3%. Version `null-cdf-2026-09-24-recipe-donation-share`. Gates D1-D2; R3's reference updated to the share rule so it still tests only the refusal rule.
+- **2026-09-24. Planner re-tested (Fix P plan v2 above)**; created the project skill `.claude/skills/simple-english` at Waseem's request (every reply in very simple words with informative examples).
