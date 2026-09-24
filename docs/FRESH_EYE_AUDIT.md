@@ -75,7 +75,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | D1 | Option numbers disagree with the option's own words | Critical | Open |
 | D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | Open |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
-| E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | **Fixed** for vulnerable + harm (Idea 1); directness + context still open |
+| E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | **Fixed**: vulnerable + harm (Idea 1, score 50); directness + context (flag, score 0, fair lens tie) |
 | E2 | One wobble of one step can make a value #1 | High | **Fixed** (Idea 2, half credit, approved 24 Sept) |
 | E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | **Fixed** (Idea 3, approved 24 Sept) |
 | E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | **Fixed** (Idea 4, approved 24 Sept) |
@@ -816,3 +816,10 @@ waits until just before real participants.
   and a committed calibration recipe with ALL buttons equally likely, then rebuilding all seven tables.
   He has no real pilot data yet, so versioning is for hygiene only. Vulnerable and harm keep the
   neutral 50, because 0 there would re-create the "every option fits 100" problem in the fit score.
+- **2026-09-24. Directness/context done:** never pulled AND never pushed → directness `measured: false`;
+  never kept in all three places → context `measured: false`; both keep score 0 (Waseem's decision,
+  `notMeasuredScore`). `chooseFraming` breaks ties by rank (the coin) instead of `context >=`: in 218
+  random ties, context was chosen 51.8%. Gates L1-L5; R2 updated (the refuser now flags all four).
+  Note: with unmeasured = 0, Part B simplifies to "higher wins, a tie goes to the coin". That also
+  covers measured-0 against unmeasured-0, where the "use the measured one" wording would have
+  picked the lens we know does NOT move the person.

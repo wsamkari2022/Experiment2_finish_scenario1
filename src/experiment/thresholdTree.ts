@@ -168,11 +168,28 @@ export interface ThresholdTreeDimension {
 }
 
 /**
- * The score a value gets when Blocks 1-4 could not measure it: the middle of the common ruler.
- * "We do not know" must not read as "cares not at all". Block 5's own `scoreOf` uses the same 50
- * for a value it cannot find.
+ * The score a POLICY value gets when Blocks 1-4 could not measure it: the middle of the common
+ * ruler. "We do not know" must not read as "cares not at all". Block 5's own `scoreOf` uses the same
+ * 50 for a value it cannot find.
  */
 export const NOT_MEASURED_SCORE = 50;
+
+/**
+ * What a value scores when it was not measured. Two different answers, on purpose (24 September
+ * 2026, researcher's decision):
+ *
+ *   vulnerability protection and group size -> NOT_MEASURED_SCORE (50). They are POLICY values: the
+ *     fit score weights every shortfall by the participant's own score, so at 0 the value would
+ *     vanish from the fit altogether, and somebody who refused to harm anyone at any price would
+ *     again find that every option "fits" them perfectly.
+ *   directness and context -> 0. They only choose which CVR lens is shown first, where a tie now
+ *     goes to the participant's own fair coin (chooseFraming in block5CVR.ts), so 0 does no harm;
+ *     and in an analysis a 50 would read as a real middle answer. The flag `measured: false` is
+ *     what says the 0 was not measured.
+ */
+export function notMeasuredScore(key: string): number {
+  return key === "directness" || key === "context" ? 0 : NOT_MEASURED_SCORE;
+}
 
 /** The complete ranked User Value Profile. */
 export interface ThresholdTree {
@@ -269,6 +286,12 @@ export function buildThresholdTree(
    * ladder the statistic has only 9 possible values. A fourth place would help most.
    */
   const contextSpread = (Math.max(...ctxIdx) - Math.min(...ctxIdx)) / MONEY_STEPS;
+  /* A REFUSAL IS NOT A ZERO, for context too (24 September 2026, researcher's approval). Somebody who
+     would keep found money at NO amount in all three places has a spread of 0 only because all three
+     answers are off the top of the scale - whether the place matters to them was never observed. The
+     value is marked not measured. Its score stays 0 by the researcher's decision; see
+     notMeasuredScore. Two "never" answers and one real one still measure a spread, as a lower bound. */
+  const contextMeasured = !ctxIdx.every((i) => i >= MONEY_STEPS);
   /**
    * VULNERABILITY PROTECTION — Block 1 facet, weight 0.30 of that sensitivity.
    *
@@ -352,6 +375,12 @@ export function buildThresholdTree(
   //
   // See blocksLegacyMethodology.ts for the full rationale and the one-line revert.
   const directnessGapRungs = bridgeIdx - leverIdx;
+  /* A REFUSAL IS NOT A ZERO, for directness too (24 September 2026). Never pulling AND never pushing,
+     at any number of lives, gives a gap of 0 only because both answers are off the top of the scale:
+     whether pushing feels different from pulling was never observed. Not measured; the score stays 0
+     by the researcher's decision (see notMeasuredScore). One "never" and one real answer still
+     measure a gap, as a lower bound. */
+  const directnessMeasured = !(leverIdx >= TROLLEY_STEPS && bridgeIdx >= TROLLEY_STEPS);
   const directnessB2 = BLOCK2_LEGACY_PAIRED_BRIDGE
     ? Math.max(0, directnessGapRungs) / TROLLEY_STEPS
     : Math.abs(directnessGapRungs) / TROLLEY_STEPS;
@@ -675,6 +704,7 @@ export function buildThresholdTree(
             directnessGapRungs > 0 ? "needed MORE to push" : directnessGapRungs < 0 ? "needed FEWER to push" : "none"
           })`,
       contributions: single("Block 2", "Bridge-vs-lever gap", directnessB2).map((s) => ({ block: s.block, label: s.label, value: s.value, weight: s.weight })),
+      measured: directnessMeasured,
     },
     {
       key: "context",
@@ -684,6 +714,7 @@ export function buildThresholdTree(
         "How much surrounding circumstances reshape your choice — measured by how far your keep-threshold moved across the neutral, wealthy, and shelter contexts in Block 1.",
       derivation: `(max−min of [sidewalk ${sidewalk}, wealthy ${wealthy}, shelter ${shelter}]) / ${MONEY_STEPS} = ${to100(context)}/100`,
       contributions: single("Block 1", "Spread across the three contexts", contextSpread).map((s) => ({ block: s.block, label: s.label, value: s.value, weight: s.weight })),
+      measured: contextMeasured,
     },
     {
       key: "stakeholder_shift",
@@ -719,15 +750,15 @@ export function buildThresholdTree(
   // be traced back to the answers that produced it.
   const calibrated = raw.map((d) => {
     const rawScore = d.score;
-    /* NOT MEASURED -> the neutral middle, never 0. A value whose every comparison was two refusals
-       carries no evidence either way, and 0 would claim "cares not at all". It is the same rule
-       Block 5 already applies to a value it cannot find (`scoreOf` in block5CVR.ts). */
+    /* NOT MEASURED. Every comparison behind the value was two refusals. What it then scores
+       depends on the value - see notMeasuredScore - and the flag says which it was either way. */
     if (d.measured === false) {
+      const score = notMeasuredScore(d.key);
       return {
         ...d,
         measured: false,
-        score: NOT_MEASURED_SCORE,
-        derivation: `${d.derivation}   →  neutral ${NOT_MEASURED_SCORE}/100 (not measured)`,
+        score,
+        derivation: `${d.derivation}   →  ${score}/100 (not measured)`,
       };
     }
     /*

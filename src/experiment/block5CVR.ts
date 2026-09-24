@@ -302,11 +302,21 @@ export function violatedValue(option: Block5ScenarioOption, profile: Block5UserP
  * This is a direct numeric comparison between two dimensions, which is only meaningful because
  * both are on the common ruler (see sensitivityCalibration.ts). Before calibration this
  * comparison was decided largely by which formula produced bigger numbers.
+ *
+ * A TIE GOES TO THE PARTICIPANT'S OWN COIN, NOT ALWAYS TO CONTEXT (24 September 2026, researcher's
+ * approval). This used to be `context >= directness`, so every tie - including the common 0 against
+ * 0 of somebody who answered "never" in both Block 1 and Block 2 - showed the context lens first.
+ * A tie now goes to whichever of the two ranks higher in the profile, and that rank order is set by
+ * the fair coin in thresholdTree.ts (TIE_RULE), made from the participant's own answers. During
+ * Block 5, `recompute` keeps tied values in that same order, so the coin holds for the whole block.
  */
 export function chooseFraming(profile: Block5UserProfile): CVRFraming {
-  return scoreOf(profile, "contextSensitivity") >= scoreOf(profile, "directnessSensitivity")
-    ? "context"
-    : "directness";
+  const context = scoreOf(profile, "contextSensitivity");
+  const directness = scoreOf(profile, "directnessSensitivity");
+  if (context !== directness) return context > directness ? "context" : "directness";
+  const rankOf = (key: string) =>
+    profile.dimensions.find((d) => d.key === key)?.rank ?? Number.MAX_SAFE_INTEGER;
+  return rankOf("contextSensitivity") <= rankOf("directnessSensitivity") ? "context" : "directness";
 }
 
 /** The opposite reflection lens (used to generate the alternate CVR view). */

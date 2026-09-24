@@ -906,12 +906,17 @@ which rules made a record.**
 |---|---|
 | `null-cdf-2026-08-23` | The original common ruler |
 | `null-cdf-2026-08-23-top100` | **Every value can reach 100.** Helped, directness, context and stakeholder are divided by their ceiling (98.8, 97.4, 93.1, 97.3), so each can be up to 7% higher than under the original ruler. Vulnerable, harm and gain are unchanged |
+| `null-cdf-2026-08-23-top100-fair-ties-refusals-halfstep-dc` | **Directness and context: "never" is flagged.** Never pulling and never pushing makes directness `measured: false`; never keeping the money in any of the three places makes context `measured: false`. **Both still score 0** (researcher's choice: a 50 here would read as a real middle answer), so **always check the flag before reading a 0 as "did not move them"**. The CVR lens now breaks a context/directness tie with the participant's own coin instead of always showing context first |
 | `null-cdf-2026-08-23-top100-fair-ties-refusals-halfstep` | **Half a step gets half the credit.** On reducing harm (group size), an average of half a step (one click, one rung, in one group) scores half of the one-full-step score (32 against 64) instead of jumping to 55. One step or more is unchanged |
 | `null-cdf-2026-08-23-top100-fair-ties-refusals` | **A refusal is not a zero.** When both answers in a comparison are "never" (never kept the money in both places; never approved the rollout for both worker groups at a size; never approved it at both the smallest and the largest size), that comparison is dropped instead of counting as a difference of 0. A value with no measured comparison is marked `measured: false` in the tree and `notMeasured: true` in the Block 5 profile, and scores the neutral **50**. Everyone without a double refusal scores exactly as before |
 | `null-cdf-2026-08-23-top100-fair-ties` | **Ties are decided by a coin, not by list order.** Before, a tie always went vulnerable > group size > gain > outcome > …; now a coin made from the participant's own answers decides, and every tie is recorded in the tree as `tiedValues` (groups) and `tiedWith` (per value), with the rule in `tieRule`. Scores are unchanged; only the rank of tied values can differ |
 
 > ⚠️ **Never pool value scores made under two versions.** The same answers give different numbers,
 > and on a tie at the top, a different #1 value.
+
+> ⚠️ **A 0 on directness or context may be "not measured", not "did not move them".** Check
+> `measured` (tree) or `notMeasured` (Block 5 profile) first. Unlike the two policy values, these two
+> keep a score of 0 when not measured, by the researcher's choice.
 
 > ⚠️ **A 50 marked not measured is not a measured 50.** Find these values in
 > `derived.thresholdTree.dimensions[].measured` (false) or in
@@ -941,7 +946,7 @@ their values. Copied into `major_info_and_scores.blocks_1_to_4`.
 | `first_step_yes_count`, `ladders_answered`, `first_step_yes_by_block` | The raw counts behind it |
 | `answered_very_fast` | true when the median time between two consecutive answers in Blocks 1-3 is under **2 seconds**. null when no answers were timed |
 | `median_seconds_between_answers`, `…_by_block`, `answers_timed` | The raw times behind it. **2 seconds is a stated default**, so apply another line to these medians if needed |
-| `values_not_measured` | Values whose every comparison was two refusals, so they scored the neutral 50 (see 6h) |
+| `values_not_measured` | Values whose every comparison was two refusals (see 6h). Vulnerability and group size then score 50; directness and context keep 0 |
 | `tied_values`, `top_value_was_decided_by_a_coin`, `tie_rule` | Which values shared a score, and whether the #1 value was one of them |
 | `scoring_version` | The same as `analysis.participant_record.calibrationVersion` |
 

@@ -260,6 +260,15 @@ was refused twice, every score is byte-identical to before (`validate:profile`, 
 helped are levels, where "never" is a real measurement (money never moved you; you never acted), so
 they are unchanged. Directness and context have the same issue and are not yet changed.
 
+### Directness and context: "never" is flagged (24 September 2026)
+
+Directness (`|bridge − lever|`) is not measured when both trolley answers are "never"; context (the
+spread of the three money answers) is not measured when all three are "never kept". Both are
+flagged `measured: false` but **keep a score of 0**, by the researcher's decision (a 50 would read
+as a real middle answer). The two policy values take 50 instead, because at 0 they would vanish
+from the fit score. The CVR lens (`chooseFraming`) used to show context first on every tie; a tie
+now goes to whichever of the two ranks higher, which is the participant's own coin. Gates L1-L5.
+
 ### Half a step gets half the credit (24 September 2026)
 
 The group-size slope is averaged over two worker groups, so it moves in half steps. Half of all random

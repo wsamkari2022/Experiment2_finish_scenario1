@@ -280,9 +280,12 @@ const doubleRefusal = (p) =>
   const up = extractBlock5Profile(t);
   const flagged = up.dimensions.filter((d) => d.notMeasured).map((d) => d.key).sort();
   const dp = deriveDecisionProfile(up, mp);
-  gate("R2", JSON.stringify(flagged) === JSON.stringify(["groupSizeSensitivity", "vulnerabilityProtectionSensitivity"])
+  /* This refuser also never kept the money and never pulled or pushed, so directness and context are
+     flagged as well (section L); they score 0, the two policy values 50. */
+  gate("R2", JSON.stringify(flagged) === JSON.stringify(["contextSensitivity", "directnessSensitivity",
+      "groupSizeSensitivity", "vulnerabilityProtectionSensitivity"])
       && dp.thresholds.vulnerabilityProtectionSensitivity.hasRedLine && dp.thresholds.groupSizeSensitivity.hasRedLine,
-    "Block 5 receives the flag (notMeasured on both), and the planner still sees both red lines");
+    "Block 5 receives the flag on all four unmeasured values, and the planner still sees both red lines");
 
   seed = 777;
   let checked = 0, same = true, firstDiff = "";
@@ -329,6 +332,48 @@ console.log("\n  H. Reducing harm: half a step gets half the credit of one full 
     `same answers ${a}, one click (half a step) ${b} = half of one step ${oneStep}, one full step ${c}, two steps ${d}`);
   gate("H2", b > 0 && b < c,
     "the one click still counts, and counts for less than a full step");
+}
+
+/* ===================================== L. directness and context: flagged, 0, and a fair lens */
+
+console.log("\n  L. Directness and context: 'never' is flagged (score 0), and a lens tie goes to the coin");
+
+{
+  const { chooseFraming } = B("block5CVR.js");
+  const neverKeeps = treeOf({ money: [8, 8, 8], actions: ["return", "return", "return"], trolley: [2, 5], lb: [3, 3, 3], hb: [2, 2, 2] });
+  const neverActs = treeOf({ money: [2, 4, 7], actions: ["return", "return", "return"], trolley: [8, 8], lb: [3, 3, 3], hb: [2, 2, 2] });
+  const partly = treeOf({ money: [8, 8, 3], actions: ["return", "return", "return"], trolley: [8, 3], lb: [3, 3, 3], hb: [2, 2, 2] });
+  const c1 = dim(neverKeeps, "context"), d1 = dim(neverKeeps, "directness");
+  const d2 = dim(neverActs, "directness"), c2 = dim(neverActs, "context");
+  gate("L1", c1.measured === false && c1.score === 0 && d1.measured === true
+      && d2.measured === false && d2.score === 0 && c2.measured === true,
+    `never kept the money anywhere -> context not measured, score ${c1.score}; never pulled or pushed -> directness not measured, score ${d2.score}`);
+  gate("L2", dim(partly, "context").measured === true && rawOf(dim(partly, "context")) === 63
+      && dim(partly, "directness").measured === true && rawOf(dim(partly, "directness")) === 63,
+    "one real answer among the nevers still measures a spread or a gap, as a lower bound (raw 63 = 5 of 8 rungs)");
+
+  const sara = extractBlock5Profile(treeOf({
+    money: [8, 8, 8], actions: ["return", "return", "return"], trolley: [8, 8], lb: [3, 3, 3], hb: [2, 2, 2],
+  }));
+  const saraScores = ["contextSensitivity", "directnessSensitivity"].map((k) => sara.dimensions.find((x) => x.key === k).score);
+  gate("L3", saraScores[0] === 0 && saraScores[1] === 0
+      && sara.dimensions.filter((x) => x.notMeasured).map((x) => x.key).sort().join() === "contextSensitivity,directnessSensitivity",
+    "'never' in both blocks: context 0 against directness 0, both flagged notMeasured in Block 5");
+
+  seed = 31415;
+  let ties = 0, contextWon = 0, differs = 0, higherWon = true;
+  for (let i = 0; i < 20000; i++) {
+    const up = extractBlock5Profile(treeOf(randomPattern()));
+    const c = up.dimensions.find((x) => x.key === "contextSensitivity").score;
+    const d = up.dimensions.find((x) => x.key === "directnessSensitivity").score;
+    const lens = chooseFraming(up);
+    if (c === d) { ties++; if (lens === "context") contextWon++; }
+    else { differs++; if (lens !== (c > d ? "context" : "directness")) higherWon = false; }
+  }
+  const share = ties ? contextWon / ties : 0.5;
+  gate("L4", higherWon, `when the two differ, the higher one still chooses the lens (${differs} profiles)`);
+  gate("L5", ties > 200 && share > 0.4 && share < 0.6,
+    `in ${ties} ties the context lens was chosen ${(100 * share).toFixed(1)}% of the time (the old rule gave 100%; a fair coin about 50%)`);
 }
 
 /* ------------------------------------------------------------ report: who comes out on top */

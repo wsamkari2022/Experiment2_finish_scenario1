@@ -739,8 +739,9 @@ export function buildBlocks1to4Checks(sources: Blocks1to4Sources | null | undefi
 
     values_not_measured: dims ? dims.filter((d) => d.measured === false).map((d) => d.key ?? "") : null,
     values_not_measured_means:
-      "Every comparison behind the value was two refusals, so it scored the neutral 50 instead of a "
-      + "measured score. Typically somebody who refused to harm anyone at any price.",
+      "Every comparison behind the value was two refusals, so it was not measured. Vulnerability and "
+      + "group size then score the neutral 50; directness and context keep 0. Typically somebody who "
+      + "refused to harm anyone at any price, or never kept found money anywhere.",
     tied_values: tree ? (tree.tiedValues ?? []) : null,
     top_value_was_decided_by_a_coin: dims && dims.length ? (dims[0].tiedWith?.length ?? 0) > 0 : null,
     tie_rule: tree?.tieRule ?? null,
