@@ -75,6 +75,13 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | D1 | Option numbers disagree with the option's own words | Critical | Open |
 | D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | Open |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
+| E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | Proposed (calc idea 1) |
+| E2 | One wobble of one step can make a value #1 | High | Proposed (calc idea 2) |
+| E3 | Some values can never reach 100 (helped 99, directness 97, context 93) | Medium | Proposed (calc idea 3) |
+| E4 | Tied values are broken by source-code order, which always favors "vulnerable" | High | Proposed (calc idea 4) |
+| E5 | No response-style flag, though every click is timestamped | Medium | Proposed (calc idea 5) |
+| E6 | Block 3's prices could give a real vulnerable-vs-harm exchange rate | Low, idea | Proposed (calc idea 6) |
+| E7 | Participant values are differences; option values are levels | Critical, design | For discussion |
 
 ---
 
@@ -549,6 +556,129 @@ moral position: gain first, helped second.
 Report those participants separately; consider an attention check in Blocks 1-3.
 
 ---
+
+## Group E: the Blocks 1-4 calculations that feed the planner (added 24 September)
+
+Waseem's constraint: **keep every Blocks 1-4 question and screen exactly as it is.** Only the
+calculations may change. The inter-block pages that show the profile are hidden
+(`SHOW_INTER_BLOCK_PAGES = false`), so changing the calculations changes nothing a participant sees.
+
+**Method.** The real chain (`deriveMoralProfile` → `buildThresholdTree` → `extractBlock5Profile` →
+`deriveDecisionProfile` / `labelOptions`) was compiled into the scratchpad with
+`npx tsc --outDir <scratch>/tree --module commonjs … src/experiment/thresholdTree.ts
+block5Profile.ts block5Thresholds.ts block5CVR.ts block5Planner.ts block5Scenarios.ts`, then fed
+hand-built answer patterns. The prototypes of the proposals were written as separate scratch
+formulas, with fresh null tables (100,000 uniform random answer patterns). They are prototypes,
+not the code.
+
+**Today, through the real code:**
+
+| Person (answer pattern) | vulnerable / harm / gain / helped | Planner order | Scenario 1 fit |
+|---|---|---|---|
+| 1 Fast yes-clicker (first rung everywhere) | 0 / 0 / 100 / 99 | gain > helped | 68 / 31 / 27 … |
+| 2 Never-harm refuser (never keeps, never acts, never approves) | **0 / 0 / 0 / 0** | vulnerable > harm > gain > helped (**code order**) | **100 on all six**; "Aligned" = first in the list |
+| 3 Protects entry-level (LB 4,4,5 / HB 1,1,2) | 98 / 64 / 56 / 43 | vulnerable > harm | Carry the respirator |
+| 4 Counts heads (both groups 1,3,5) | 0 / 97 / 48 / 65 | harm > helped | Seal your apartment |
+| 5 Same middle answer (rung 3 everywhere) | 0 / 0 / 48 / 43 | gain > helped | 100 / 100 / 94 … |
+| 6 Like 5, one answer one step higher (LB large 4) | 17 / **55** / 40 / 43 | **harm** > helped | 100 / 98 / 92 … |
+| 7 Refuses entry-level, prices seniors (HB 2,3,4) | 98 / 64 / 2 / 25 | vulnerable > harm | — |
+
+### E1. A refusal becomes a zero. CRITICAL.
+
+"Never, at any price" is stored as the rung after the top. Two refusals subtract to 0, so person 2
+scores 0 on everything. With every score 0, every shortfall is 0 and every option fits 100, so the
+labels come from the tie-breaks (`policyDelivery` is 0 too), which means id order. The planner
+order is the source-code order. The most principled pattern in the study gets the least meaningful
+profile.
+
+**Idea 1.** When both answers in a comparison are refusals, the comparison is "not measured"
+(dropped), not 0. `blend()` already drops unavailable signals. A value with no measured signal gets
+the neutral 50 and a flag. That matches the codebase's own rule in `block5CVR.ts` `scoreOf`: missing
+= 50, because "cares not at all" would invent a position.
+
+**Prototype.** Person 2 becomes 50 (not measured) / 50 (not measured) / 0 / 0, and their scenario 1
+best fit becomes "Carry the respirator to the patient".
+
+### E2. One wobble can make a value #1. HIGH.
+
+Person 6 differs from person 5 by one click, one step. Harm goes 0 → 55 (the smallest positive
+slope maps to 55, because 55% of random patterns sit at exactly 0) and becomes the #1 value, which
+flips the planner order.
+
+**Idea 2.** Count an effect only when it repeats:
+- **Harm:** the smaller of the two worker groups' slopes, so both groups must show it.
+- **Vulnerable (Block 3):** the median of the three sizes' LB − HB, so two of three must show it.
+
+**Prototype.** Person 6 → harm 0 (same order as person 5). Person 3 → harm 80. Person 4 is
+unchanged (98).
+
+**Side effect.** With a stricter formula, 79.9% of random patterns score 0, so the first positive
+step maps near 80. That is the "strictly exceeds" convention and is honest, but state it.
+
+### E3. Some values can never reach 100. MEDIUM.
+
+The calibration tables cap the best possible answer below 100 on some values:
+
+| Value | Highest possible score |
+|---|---|
+| helped | 98.8 |
+| directness | 97.4 |
+| stakeholder | 97.3 |
+| context | 93.1 |
+
+The yes-clicker is therefore gain-first (100 against 99) because of a table convention, not an
+answer. It also affects the CVR lens: context can never beat directness at the very top.
+
+**Idea 3.** Divide each calibrated value by its own highest attainable value, so the strongest
+possible answer is 100 everywhere. Prototype: person 1 → gain 100, helped 100 (a tie → idea 4).
+
+### E4. Tied values are broken by source-code order. HIGH.
+
+`thresholdTree.ts` sorts with a stable sort over the order the dimensions are written in, so ties
+always go vulnerable > group size > gain > outcome. That systematically favors "protecting the
+vulnerable", the value the thesis is about, and a reviewer can call that a thumb on the scale.
+
+**Idea 4.** Break ties by a coin flip seeded from the participant id (reproducible and unbiased
+across people), and record `tied_values`. Alternative: let the planner count wins under each tied
+order (a Block 5 change).
+
+### E5. There is no response-style flag, although every click is timestamped. MEDIUM.
+
+`timestamp` exists on every Blocks 1-3 history record, and per-block durations exist in
+telemetry. **Idea 5.** Store flags such as `answered_first_step_everywhere`,
+`refused_every_step_everywhere` and `faster_than_X_per_question`. They change no score; they let
+analysis separate a response style from a value.
+
+### E6. Block 3 prices as a real exchange rate. LOW, an idea for Fix P P3.
+
+All six Block 3 answers are priced in one currency, so LB − HB (in rungs) against the size slope (in
+rungs) is a unitless, genuinely elicited rate between "vulnerable" and "harm". Person 3: 3 rungs
+against 1 → a rate of 3. It only works for that pair; helped (trolley) shares no currency.
+
+### E7. Participant values are differences; option values are levels. CRITICAL, a design question.
+
+"Protecting the vulnerable" for a participant is EXTRA care for entry-level over senior workers,
+and "reducing harm" is EXTRA demand as groups grow. For an option, the same names mean how much
+the option delivers. The fit score compares the two as one scale. Person 2 shows maximal care for
+everyone and 0 extra care. This is the root of B6 and D2. It is not a calculation fix; discuss it
+with the advisor.
+
+**Size of ideas 1-4 together** (4,000 simulated "consistent" people: base rung ± small noise, small
+LB and size offsets, related money and trolley answers):
+- 58% have at least one of the four values at exactly 0 today.
+- The #1 value changes for 18%.
+- #1 and #2 are tied for 1.3% today and 1.6% after.
+- 11.8% get a "not measured" value.
+
+**Costs.**
+- Blocks 1-4 scoring is marked FROZEN (planner plan, decision 4, 30 August), so this needs Waseem's
+  and probably the advisor's OK.
+- The calibration tables must be regenerated, with a new `SENSITIVITY_CALIBRATION_VERSION`; records
+  on the old and new tables cannot be pooled.
+- Every Block 5 number moves for some people.
+- The validators' persona expectations will need re-checking.
+
+**Sequencing.** Fix the inputs (Group E) before Fix P, because Fix P's P3-A uses these scores.
 
 ## Proposed fix order
 
