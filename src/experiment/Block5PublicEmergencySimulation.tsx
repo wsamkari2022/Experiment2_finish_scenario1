@@ -67,7 +67,7 @@ import {
   BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
   type Block5MethodKind,
 } from "./block5Types";
-import { plannerRank, type PlannerResult } from "./block5Planner";
+import { plannerRank, PLANNER_VERSION, type PlannerResult } from "./block5Planner";
 import { deriveDecisionProfile, type DecisionProfile } from "./block5Thresholds";
 import { explainOption, plannerPanelText, BIN_DIVIDER, type CardExplanation } from "./block5PlannerText";
 import type { MoralProfile } from "./profileAnalysis";
@@ -1154,6 +1154,16 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       result.plannerCleanReferenceId = plan.cleanReferenceId ?? undefined;
       result.plannerValueOrder = plan.order;
       result.plannerDegradedProfile = decisionProfile.degraded;
+      /* What the planner read, so the order can be rebuilt from this record alone. See
+         `plannerInputs` in block5Types.ts and analysis.card_order_by_scenario in dbShape.ts. */
+      result.plannerVersion = PLANNER_VERSION;
+      result.plannerInputs = {
+        valueOrder: decisionProfile.order,
+        thresholds: Object.fromEntries(Object.entries(decisionProfile.thresholds).map(([key, t]) => [key, {
+          hasRedLine: t.hasRedLine, floor: t.floor ?? t.tolerance, tolerance: t.tolerance, exchange: t.exchange,
+        }])) as NonNullable<Block5ScenarioResult["plannerInputs"]>["thresholds"],
+        degraded: decisionProfile.degraded,
+      };
       if (p) {
         result.choiceRank = p.rank;
         result.choiceBin = p.bin;

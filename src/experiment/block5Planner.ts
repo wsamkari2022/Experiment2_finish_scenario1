@@ -69,6 +69,15 @@ import type {
 import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
 
 /**
+ * Which version of the card-ordering rule is in force. Stored on every scenario result, so orders
+ * made under two different rules are never pooled (the same reason PREDICTION_VERSION and
+ * MCF_VERSION exist). "2026-09-24-a" is the rule as it has run since it went live - only the names
+ * of its two bands were separated that day, which moved no card - so the version starts here, and
+ * any future change to the tree, its inputs or its tie-breaks must move it.
+ */
+export const PLANNER_VERSION = "2026-09-24-a";
+
+/**
  * Below this, two normalized values are treated as the same number.
  *
  * NOT a preference and NOT tunable: min–max normalization over six integer payoffs produces exact

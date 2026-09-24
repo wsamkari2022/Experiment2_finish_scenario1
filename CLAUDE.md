@@ -171,6 +171,11 @@ compared before and after, 0 different). What changed:
   "too small for you to have separated it in the earlier questions" — a claim about the person the
   code cannot make. It now says "the gap there is small, while the gap on X is about N times larger."
   Records before 24 September 2026 were made with the old sentence.
+- **Every order is saved with what made it.** Each scenario result carries `plannerVersion`
+  (`PLANNER_VERSION` in block5Planner.ts — move it whenever the tree, its inputs or its tie-breaks
+  change) and `plannerInputs` (the value order and, per value, red line, both bands and trade
+  rate). `analysis.card_order_by_scenario` is the readable version, with a self-check that
+  rebuilds the order from the saved inputs. Gate D53.
 
 ## Option cards start folded, since 23 September 2026
 
@@ -271,7 +276,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 52 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51) and the Blocks 1-4 checks (D52). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 53 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52) and the readable card order (D53). `--dump` writes a full simulated document |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |

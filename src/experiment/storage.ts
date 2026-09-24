@@ -56,6 +56,7 @@ import {
   buildScenario6Section,
   buildLiftedScenarios,
   buildAlignmentRecords,
+  buildCardOrderSection,
   buildMpfPredictions,
   buildMpfPercentages,
   buildMajorScores,
@@ -531,6 +532,11 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
          scattered optional fields per row. */
       const alignment = buildAlignmentRecords(translated);
       if (alignment) sendOrQueue({ op: "saveSection", path: "analysis.alignment_records", data: alignment });
+
+      /* The card order in every scenario, what decided it, and a check that the saved inputs rebuild
+         it - in words anybody can read. See buildCardOrderSection. */
+      const cardOrder = buildCardOrderSection(translated);
+      if (cardOrder) sendOrQueue({ op: "saveSection", path: "analysis.card_order_by_scenario", data: cardOrder });
 
       /* The prediction function run over every scenario, not only the one where it was shown. Every
          row says which it was. */

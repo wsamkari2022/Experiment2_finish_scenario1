@@ -1041,6 +1041,27 @@ export interface Block5ScenarioResult {
   choiceUsedTradeOff?: boolean;
 
   /**
+   * Which version of the card-ordering rule produced `plannerOrder` (PLANNER_VERSION in
+   * block5Planner.ts). Absent on records made before 24 September 2026.
+   */
+  plannerVersion?: string;
+  /**
+   * EVERYTHING THE PLANNER READ, so the card order can be rebuilt and checked from this record
+   * alone (24 September 2026, researcher's approval). Before this, an order could not be explained
+   * afterwards: "why was this card third?" had no stored answer.
+   *
+   * `valueOrder` is the participant's four values, #1 first, from the profile they brought INTO
+   * Block 5. `thresholds` holds, per value: whether they refused it outright in Blocks 1-3 (a red
+   * line), the bottom-of-range band (`floor`), the smallest gap that counts (`tolerance`) and the
+   * Step 3 trade rate (`exchange`). The readable version is analysis.card_order_by_scenario.
+   */
+  plannerInputs?: {
+    valueOrder: Block5PolicyDimKey[];
+    thresholds: Record<Block5PolicyDimKey, { hasRedLine: boolean; floor: number; tolerance: number; exchange: number }>;
+    degraded: boolean;
+  };
+
+  /**
    * Snapshot of the two reflection-lens sensitivities (0–100) AFTER this scenario's update, so the
    * results view can chart how Directness vs Context evolved across the scenarios, and what the
    * directness and context stabilities measure distance on (computeSensitivityStability).

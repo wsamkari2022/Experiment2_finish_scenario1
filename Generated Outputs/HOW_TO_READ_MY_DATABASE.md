@@ -958,6 +958,32 @@ their values. Copied into `major_info_and_scores.blocks_1_to_4`.
 
 ---
 
+## 6j. `analysis.card_order_by_scenario` — the card order, and what decided it
+
+Added **24 September 2026**, on request ("informative and readable, no ambiguous names"). For every
+scenario, one row:
+
+| Field | What it holds |
+|---|---|
+| `were_the_cards_shown_in_this_order`, `why_not` | false only for scenario 6, which shuffles its cards; `why_not` says where the shown order is |
+| `card_order_rule_version` | Which version of the planner made the order (`PLANNER_VERSION`). "not recorded" = made before 24 September 2026 |
+| `cards_from_first_to_last[]` | For each card: `position` (1 = top), `option_title`, `group` in words, `head_to_head_wins_out_of_the_other_cards`, `is_the_best_fit_card`, `is_the_card_chosen` |
+| `position_of_the_card_chosen`, `the_chosen_card_was_the_first_card` | Where the chosen card sat |
+| `the_first_card_was_also_the_best_fit_card` | Whether first place and best fit were the same card in this scenario |
+| `what_the_planner_used.values_from_1st_to_4th[]` | For each of the participant's four values, #1 first: `refused_outright_in_blocks_1_to_3`, the two bands as a share of the scenario's spread, and the `step_3_trade_rate` (only the #1 value's is used) |
+| `order_rebuilt_from_these_inputs_matches_the_order_stored` | The self-check: the planner run again from the saved inputs. **false = do not trust this row** until it is explained; null = too old to have inputs |
+
+The three groups, in words: "inside every limit the participant set", "at the bottom of this
+scenario's range on the participant's #1 value", and "crosses a limit the participant refused
+outright in Blocks 1-3". The raw fields behind it (`plannerOrder`, `plannerBins`, `plannerWins`,
+`plannerInputs`, `plannerVersion`) stay in `blocks.block5_emergency_scenarios.scenarioResults[]`.
+
+> ⚠️ **First place and best fit are often the same card.** In a test with 4,000 pretend participants
+> answering Blocks 1-4 consistently, they were the same card for 56-68 out of 100, depending on the
+> scenario. Analyse choice position and fit together; see HOW_TO_ANALYZE_MY_DATA.md.
+
+---
+
 ## 7. `feedback_answers` — and why it is readable
 
 Every closed question is stored with **the question text next to the answer**:

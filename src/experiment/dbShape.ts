@@ -54,6 +54,8 @@ import { ALIGNMENT_LABEL } from "./block5CVR";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
+import { plannerRank } from "./block5Planner";
+import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
 import type {
   Block5PolicyDimKey,
   Block5Scenario,
@@ -77,7 +79,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-24-blocks-1-to-4";
+export const SHAPE_VERSION = "2026-09-24-card-order";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1214,6 +1216,150 @@ export function buildLiftedScenarios(block5: unknown): {
  * options that missed by 104 and by 154 both read 0. Use it for reporting; for anything that
  * ranks or subtracts, the uncensored quantity is `matchShortfall` on the raw row.
  */
+/* ------------------------------------------------------------------- the card order, readable */
+
+/** The three planner groups in words a reader of the database will not misread. */
+const CARD_GROUP_WORDS: Record<string, string> = {
+  clear: "inside every limit the participant set",
+  costed: "at the bottom of this scenario's range on the participant's #1 value",
+  blocked: "crosses a limit the participant refused outright in Blocks 1-3",
+};
+
+/**
+ * THE CARD ORDER IN EVERY SCENARIO, AND EVERYTHING THAT DECIDED IT (24 September 2026, researcher's
+ * request: "make the data and the labels informative and readable. No ambiguous names").
+ *
+ * WHY. The planner's order was stored only as bare option ids deep inside `blocks`, and the inputs
+ * that produced it were not stored at all, so "why was this card third for this participant?" had no
+ * answer. Each row now says which cards were shown in which position, which group each was in, which
+ * card was chosen and which card fitted best, and - in words - every number the planner read.
+ *
+ * THE SELF-CHECK. When the inputs were saved, the row runs the planner again from them and says
+ * whether it reproduces the stored order. A false there means the record and the rule disagree,
+ * and the row should not be trusted until that is explained.
+ *
+ * SCENARIO 6 IS THE EXCEPTION. Its cards are shuffled once per participant, not planner-ordered;
+ * its row says so, and the order the participant actually saw is in analysis.scenario6_mpf_test.
+ */
+export function buildCardOrderSection(block5: unknown): Record<string, unknown> | null {
+  const results = resultsOf(block5);
+  if (!results.length) return null;
+
+  const title = (scenario: Block5Scenario | undefined, id: string | undefined) =>
+    optionOf(scenario, id)?.title ?? id ?? null;
+
+  let plannerOrdered = 0, choseFirst = 0, firstWasBest = 0;
+  const rows = results.map((r, index) => {
+    const scenario = scenarioOf(r.scenarioId);
+    const order = Array.isArray(r.plannerOrder) ? r.plannerOrder : null;
+    const shuffled = r.decisionRole === "predicted";
+    const bestFitId = Array.isArray(r.rankedOptionIds) ? r.rankedOptionIds[0] : undefined;
+
+    const cards = order
+      ? order.map((id, i) => ({
+          position: i + 1,
+          option_id: id,
+          option_title: title(scenario, id),
+          group: CARD_GROUP_WORDS[r.plannerBins?.[id] ?? ""] ?? null,
+          head_to_head_wins_out_of_the_other_cards: r.plannerWins?.[id] ?? null,
+          is_the_best_fit_card: id === bestFitId,
+          is_the_card_chosen: id === r.selectedOptionId,
+        }))
+      : null;
+
+    /* The inputs, in words. Only the #1 value's trade rate is ever used by Step 3. */
+    const inputs = r.plannerInputs ?? null;
+    const perValue = inputs
+      ? inputs.valueOrder.map((key, i) => {
+          const t = inputs.thresholds[key];
+          return {
+            rank_in_the_participant_profile: i + 1,
+            value: POLICY_DIM_SHORT[key] ?? key,
+            value_key: key,
+            refused_outright_in_blocks_1_to_3: t?.hasRedLine ?? null,
+            bottom_of_the_range_band_as_share_of_this_scenarios_spread: t?.floor ?? null,
+            smallest_gap_that_counts_as_share_of_this_scenarios_spread: t?.tolerance ?? null,
+            step_3_trade_rate: t?.exchange ?? null,
+            step_3_trade_rate_is_used: i === 0,
+          };
+        })
+      : null;
+
+    /* Rebuild the order from the saved inputs and compare. */
+    let rebuiltMatches: boolean | null = null;
+    if (inputs && scenario && order) {
+      const thresholds = Object.fromEntries(POLICY_DIM_KEYS.map((k) => {
+        const t = inputs.thresholds[k];
+        const rebuilt: ValueThreshold = {
+          hasRedLine: !!t?.hasRedLine, strictness: 0, tolerance: t?.tolerance ?? 0,
+          floor: t?.floor ?? t?.tolerance ?? 0, exchange: t?.exchange ?? 1, source: "rebuilt from the stored record",
+        };
+        return [k, rebuilt];
+      })) as Record<Block5PolicyDimKey, ValueThreshold>;
+      const profile: DecisionProfile = { order: inputs.valueOrder, thresholds, degraded: inputs.degraded };
+      try {
+        rebuiltMatches = plannerRank(scenario, profile).orderedIds.join("|") === order.join("|");
+      } catch {
+        rebuiltMatches = false;
+      }
+    }
+
+    const chosenPosition = order ? order.indexOf(r.selectedOptionId) + 1 : null;
+    if (order && !shuffled) {
+      plannerOrdered++;
+      if (chosenPosition === 1) choseFirst++;
+      if (order[0] === bestFitId) firstWasBest++;
+    }
+
+    return {
+      scenario_number_in_the_order_shown: index + 1,
+      scenario_id: r.scenarioId ?? null,
+      scenario_title: scenario?.title ?? null,
+      were_the_cards_shown_in_this_order: order ? !shuffled : null,
+      why_not: shuffled
+        ? "Scenario 6 shuffles its cards once per participant instead of using the planner. This is "
+          + "the order the planner WOULD have used; the order actually seen is in analysis.scenario6_mpf_test."
+        : null,
+      card_order_rule_version: r.plannerVersion ?? "not recorded (made before 24 September 2026)",
+      cards_from_first_to_last: cards,
+      position_of_the_card_chosen: chosenPosition && chosenPosition > 0 ? chosenPosition : null,
+      the_chosen_card_was_the_first_card: chosenPosition === 1,
+      the_first_card_was_also_the_best_fit_card: order && bestFitId ? order[0] === bestFitId : null,
+      what_the_planner_used: inputs
+        ? {
+            profile_it_came_from:
+              "The profile the participant brought INTO Block 5. It does not change during Block 5, "
+              + "so every scenario is ordered with the same ruler.",
+            values_from_1st_to_4th: perValue,
+            the_planner_fell_back_to_a_neutral_profile: inputs.degraded,
+          }
+        : "not recorded (made before 24 September 2026)",
+      order_rebuilt_from_these_inputs_matches_the_order_stored: rebuiltMatches,
+    };
+  });
+
+  return {
+    what_this_is:
+      "The order the six option cards were shown in, in every scenario, and everything the "
+      + "card-ordering rule (the planner) used to decide it, in words.",
+    how_to_read_it:
+      "Position 1 is the card at the top of the list. 'Best fit' is the card that matched the "
+      + "participant's values best (alignment place 1). The planner does NOT put the best fit first on "
+      + "purpose, so that choosing the first card and choosing the best fit can be told apart.",
+    how_often_the_first_card_is_also_the_best_fit:
+      "In a test on 24 September 2026 with 4,000 pretend participants answering Blocks 1-4 "
+      + "consistently, the first card was also the best-fit card for 56-68 out of 100 depending on "
+      + "the scenario (46-55 for pretend participants answering at random). So first place and best fit "
+      + "coincide more often than not; analyse the two together, never one as a stand-in for the other.",
+    by_scenario: rows,
+    totals: {
+      scenarios_with_cards_in_planner_order: plannerOrdered,
+      times_the_first_card_was_chosen: choseFirst,
+      times_the_first_card_was_also_the_best_fit_card: firstWasBest,
+    },
+  };
+}
+
 export function buildAlignmentRecords(block5: unknown): Record<string, unknown> | null {
   const results = resultsOf(block5);
   if (results.length === 0) return null;

@@ -1048,6 +1048,80 @@ for (const [who, block5] of PEOPLE) {
       : `the Blocks 1-4 checks are wrong: ${why.join(" | ")}`);
 }
 
+/* ---- the card order, readable, and rebuilt from the inputs that were saved with it ----
+ *
+ * One participant's six scenarios are given real planner orders (the real plannerRank, a made-up
+ * but complete set of planner inputs), then the readable section is built from them. It must
+ * rebuild every order from the saved inputs, notice an order that was changed afterwards, say
+ * plainly when a record is too old to carry inputs, and say that scenario 6 was shuffled.
+ */
+{
+  const { plannerRank, PLANNER_VERSION } = B("block5Planner.js");
+  const [, base] = PEOPLE[0];
+  const valueOrder = ["vulnerabilityProtectionSensitivity", "gainResponsivenessSensitivity",
+    "outcomeAggregationSensitivity", "groupSizeSensitivity"];
+  const saved = Object.fromEntries(POLICY.map((k) => [k,
+    { hasRedLine: k === "groupSizeSensitivity", floor: 1 / 6, tolerance: 1 / 6, exchange: 2 }]));
+  const profile = {
+    order: valueOrder, degraded: false,
+    thresholds: Object.fromEntries(POLICY.map((k) => [k, { ...saved[k], strictness: 0, source: "test" }])),
+  };
+  const withPlanner = base.scenarioResults.map((r) => {
+    const scenario = BLOCK5_SCENARIOS.find((s) => s.id === r.scenarioId);
+    const plan = plannerRank(scenario, profile);
+    return {
+      ...r,
+      rankedOptionIds: r.rankedOptionIds ?? labelOptions(scenario.options, base.originalProfile).map((o) => o.id),
+      plannerOrder: plan.orderedIds,
+      plannerBins: Object.fromEntries(plan.orderedIds.map((id) => [id, plan.byId[id].bin])),
+      plannerWins: Object.fromEntries(plan.orderedIds.map((id) => [id, plan.byId[id].wins])),
+      plannerVersion: PLANNER_VERSION,
+      plannerInputs: { valueOrder, thresholds: saved, degraded: false },
+    };
+  });
+
+  const section = db.buildCardOrderSection({ ...base, scenarioResults: withPlanner });
+  const why = [];
+  if (!section || section.by_scenario.length !== withPlanner.length) why.push("one row per scenario");
+  const rows = section?.by_scenario ?? [];
+  if (!rows.every((r) => r.order_rebuilt_from_these_inputs_matches_the_order_stored === true)) {
+    why.push("the saved inputs did not rebuild every stored order");
+  }
+  const s6 = rows.find((r, i) => withPlanner[i].decisionRole === "predicted");
+  if (!s6 || s6.were_the_cards_shown_in_this_order !== false || !s6.why_not) why.push("scenario 6 must say it was shuffled");
+  const first = rows[0];
+  if (first?.what_the_planner_used?.values_from_1st_to_4th?.[0]?.value !== "protecting the vulnerable") {
+    why.push("values must be named in words");
+  }
+  const allowedGroups = new Set([
+    "inside every limit the participant set",
+    "at the bottom of this scenario's range on the participant's #1 value",
+    "crosses a limit the participant refused outright in Blocks 1-3",
+  ]);
+  if (!rows.every((r) => (r.cards_from_first_to_last ?? []).every((c) => allowedGroups.has(c.group)))) {
+    why.push("every card's group must be one of the three worded groups");
+  }
+  const counted = rows.filter((r, i) => withPlanner[i].decisionRole !== "predicted" && r.the_first_card_was_also_the_best_fit_card).length;
+  if (section?.totals.times_the_first_card_was_also_the_best_fit_card !== counted) why.push("totals disagree with the rows");
+
+  /* A changed order is caught; an old record says so in words. */
+  const tampered = withPlanner.map((r, i) => (i === 0
+    ? { ...r, plannerOrder: [r.plannerOrder[1], r.plannerOrder[0], ...r.plannerOrder.slice(2)] } : r));
+  const caught = db.buildCardOrderSection({ ...base, scenarioResults: tampered }).by_scenario[0]
+    .order_rebuilt_from_these_inputs_matches_the_order_stored === false;
+  if (!caught) why.push("a changed order was not caught");
+  const old = withPlanner.map(({ plannerInputs, plannerVersion, ...rest }) => rest);
+  const oldRow = db.buildCardOrderSection({ ...base, scenarioResults: old }).by_scenario[0];
+  if (oldRow.order_rebuilt_from_these_inputs_matches_the_order_stored !== null
+    || !/not recorded/.test(oldRow.card_order_rule_version)) why.push("an old record must say its inputs were not recorded");
+
+  gate("D53", why.length === 0,
+    why.length === 0
+      ? `card_order_by_scenario: ${rows.length} rows rebuilt from their saved inputs, a changed order caught, `
+        + "old records and the shuffled scenario 6 labelled in words"
+      : `the card-order section is wrong: ${why.join(" | ")}`);
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {
