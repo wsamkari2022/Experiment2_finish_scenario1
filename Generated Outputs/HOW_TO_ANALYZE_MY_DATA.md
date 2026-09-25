@@ -86,7 +86,9 @@ dropped.
 | **Reactivity** | Did being shown a prediction change what you did? | same |
 
 **Read VCI against 50, not against 0.** Each scenario scores the chosen option's place in line on
-its own menu, so choosing blindly averages exactly 50 and the lowest possible score is 10. A VCI of
+its own menu, so choosing blindly averages exactly 50 and the lowest possible score is 10. (A
+responder who ALSO answers the reflection pages at random averages 56-57, not 50: the APA page lists
+only the options built on the value they name, which steers some random choices toward a fit.) A VCI of
 56 is "a little better than chance", not "56% consistent". Levels: Highly Consistent 90+, Mostly
 Consistent 80–89, Moderate 65–79, Low 50–64, Very Low 30–49, Highly Inconsistent below 30. It is
 ordinal and built on four scenarios, so it has only 30 possible values; treat small differences
@@ -227,6 +229,48 @@ analyse both):
   size of the dependence.
 - A cleaner separation would need a design change (for example a randomly ordered control group).
   It was considered and not adopted; name it as a limitation.
+
+### 4.8 Reading one person's score as a verdict about them
+
+VCI, Stability and Performance are **good for comparing groups and rough for one person**. Checked
+on 24-25 September 2026 with pretend participants scored by the real code (Blocks 1-4 answers, then
+all six scenarios): the same pretend person run through Block 5 twice gets scores that agree only
+this much (1 = identical every time, 0 = no relation; research usually wants 0.70 or more before
+judging one person):
+
+| Score | Same person twice |
+|---|---|
+| VCI (overall) | 0.45-0.48 |
+| Stability | 0.34-0.38 |
+| VCI acted (scenario 4, one choice) | 0.27-0.28 |
+| Performance | 0.15-0.21 |
+
+The reason is simple: only four choices count, and one person's four choices carry a lot of luck. The
+same scores separate KINDS of people well: someone who follows their own top value scores above a
+random chooser on VCI 97 times in 100, and on Stability 90 times in 100. So report means and spreads
+for groups, and never write "participant 12 is inconsistent" from one VCI.
+
+**Following your own values costs performance in this deck.** Pretend participants who always take
+the option that serves their top value average 40 on performance; random choosers 51; best-fit
+pickers 52-60; a performance chaser 100. That is the trade-off the study is built on (each option
+champions a value, and the champions are rarely the strongest performers), not a flaw in the score.
+Say it whenever performance is reported beside VCI.
+
+### 4.9 Screens that changed while the study was running - do not pool across them
+
+Each line changed what participants saw, so records made before the date are not directly comparable
+on that point. Check each record's own dates (for example `completedAt` in
+`blocks.block5_emergency_scenarios`) before pooling.
+
+| Since | What changed on screen |
+|---|---|
+| 23 September 2026 | Option cards start folded; a card never opened is a card never read |
+| 24 September 2026 | The "Has a cost" tag and the divider "These cost you something on the value you ranked first" came off costed cards (the bin is still computed, sorted and stored) |
+| 24 September 2026 | The "confirm keeping" question no longer shows "which you rated N out of 100" |
+| 24 September 2026 | One planner card sentence reworded (the trade line) |
+| 24 September 2026 | The fit number on cards became a share of what the participant asked for (the order of options did not change) |
+| 24 September 2026 | The side-panel sentence no longer says each option "is labeled by how well it fits" |
+| 25 September 2026 | Scenario 5: no "Preview impact", the wish line on the performance bars, and fit numbers shown on the values scenario 4 opened with |
 
 ---
 

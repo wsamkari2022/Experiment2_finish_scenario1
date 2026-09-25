@@ -177,6 +177,15 @@ to **1.0** at the highest.
 | Misaligned | **0** | **0** |
 | Strongly misaligned | **0** | **0** |
 
+> **Correction, 25 September 2026 (from the audit, B8).** Route 3 is not "they keep their answer after
+> seeing a different view". It runs only when the pick is one of the participant's two best fits, and
+> then **no reflection runs at all**. A Misaligned or Strongly misaligned pick in scenarios 1-4 always
+> opens the reflection, and if they keep it, it goes through Route 1. The two 0 / 0 rows are reached
+> only in scenarios 5 and 6, where nothing moves anyway. The rule itself was also changed on 24
+> September (audit B1 + B2): an Aligned pick now moves nothing, and a Weakly aligned pick is compared
+> with the best fit it was chosen over (+20 where it beats the best fit most, −15 where the best fit
+> beat it most). See CLAUDE.md, "The keep rule, revised 24 September 2026".
+
 All five decision scenarios run at the same weight. An earlier version varied the stakes between
 scenarios, and I removed that because stakes and the participant's position in the scenario were
 changing together, so neither could be read on its own.
@@ -190,14 +199,20 @@ changing together, so neither could be read on its own.
    contradicts their stated values, sees a different view, and keeps their answer anyway has told me
    something quite strong — and the model records nothing. That looks backwards to me now. I would
    like a second opinion before I change it.
+   *Answered 25 September 2026 (audit B8): this does not happen. That participant goes through the
+   reflection and Route 1, which moves their values. See the correction under the Route 3 table.*
 3. **The +30 / −10 asymmetry in Route 2.** One value goes up 30 while three go down 10 each, so the
    total is flat by construction. Is a zero-sum move the right model, or should confirming a value
    be able to raise the overall intensity?
+   *Note, 25 September 2026 (audit B4): it is flat except at the edges. A value at 0 cannot come
+   down, so the total can rise; every such cut is now recorded.*
 4. **The ceiling and the floor.** A participant whose value is already at 0 cannot go lower, and one
    at 100 cannot go higher, so their row shows "no movement" for a reason that has nothing to do
    with them. In my own test run two of the four values sat at 0 the entire way through and never
    moved once. I do not currently distinguish "did not move" from "could not move," and I think
    that is a real problem for any analysis of stability.
+   *Fixed 24 September 2026 (audit B5): every move is now saved as asked for and as made, in
+   analysis.value_moves_asked_for_and_made.*
 5. **Is six scenarios enough to see movement at all?** In my last test run two of the six scenarios
    moved nothing whatsoever, and the total movement across the whole block was 41 points spread
    over two values.

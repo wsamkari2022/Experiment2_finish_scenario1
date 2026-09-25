@@ -20,6 +20,8 @@ the three sensitivity stabilities: section 4. The decision against the wish: sec
 > reading of what the wish changed, value by value AND performance metric by metric (section 6b).
 > (4) The value the company card put first in scenarios 4 and 5 is saved: `analysis.position_effect.
 > company_value_shown`, and in one line as `major_info_and_scores.company_value_shown_in_scenarios_4_and_5`.
+> (5) What they did with it in scenario 4 (the results page's verdict) is saved too:
+> `analysis.position_effect.company_stance`, and in one line as `major_info_and_scores.company_stance_in_scenario_4`.
 
 > **What changed on 24 September 2026: the fit score.** It used to be 100 minus the weighted
 > shortfall, stopped at 0, so a demanding participant saw several options at 0 at once. It is now
@@ -199,6 +201,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 | `alignment_by_scenario` | One row per scenario: what they chose and its alignment label · `alignment_counts` totals the four labels |
 | `profile_before_block5`, `profile_now`, `profile_after_block5`, `profile_change_during_block5` | The three profiles and the movement between the first and last |
 | `feedback` | The feedback answers, grouped as they were asked, each with its question text |
+| `company_stance_in_scenario_4` | **Since 25 September 2026.** What they did with it: "Took the company's values", "Split the difference" or "Held your own values". A copy of `analysis.position_effect.company_stance` |
 | `company_value_shown_in_scenarios_4_and_5` | **Since 25 September 2026.** The value the company card put first, in the card's words (for example "reducing harm"). A copy of `analysis.position_effect.company_value_shown` |
 | `blocks_1_to_4` | **Since 24 September 2026.** How Blocks 1-4 were answered: `said_yes_at_the_first_step_everywhere`, `answered_very_fast`, the values the scoring could not measure, and the ties a coin decided. A copy of `analysis.blocks_1_to_4_checks` (section 6i), checked by gate D52 |
 
@@ -553,6 +556,21 @@ under an employer that prizes what they care about least. Saved since 25 Septemb
 | `saved_when_shown` | `true` when it was saved on the scenario rows as it was shown; `false` on an older record, where it was worked out again from the frozen profile by the same function the card used |
 
 The raw copy is `companyValueShown` on the scenario 4 and 5 rows in `blocks`.
+
+### `company_stance` — what they did with the company's value in scenario 4
+
+The verdict the results page shows the participant, saved since 25 September 2026 and built by the same
+function the page calls (`analyseStance`), so the two cannot disagree. Only scenario 4 has one: a wish
+is not a stance.
+
+| Field | Meaning |
+|---|---|
+| `stance`, `stance_label` | `adopted` "Took the company's values" / `compromised` "Split the difference" / `resisted` "Held your own values" |
+| `distance_to_own_values_before_block5` | How far the chosen option sits from the values the participant brought into Block 5 (0-100, the position effect's scale) |
+| `distance_to_the_company_values` | How far it sits from the company's values (its value at 88, the other three at 34) |
+| `pull_toward_the_company` | The first minus the second. **Positive = nearer the company.** Above +8 reads as adopted, below −8 as resisted, in between as compromised (`split_the_difference_band`) |
+| `sentence_shown_on_the_results_page` | The participant's own sentence |
+| `every_option` | All six options with both distances, and which was chosen, so the choice can be read against what was possible |
 
 ### The rest
 

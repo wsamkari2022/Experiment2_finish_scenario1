@@ -54,8 +54,9 @@
  * NAMES TO CITE. The pairwise tree is LEAP's trade-off tree (see the plan, §4d); a "look at the most
  * important value, move on when the gap is too small to count" rule is Tversky's (1969) lexicographic
  * semiorder; counting pairwise wins to turn pairs into a list is the Copeland method from voting
- * theory. Loops (A beats B beats C beats A) are rare on these option sets, so Copeland and a plain
- * sort agree almost always.
+ * theory. Loops (A beats B beats C beats A) are rare on these option sets - 0 to 0.6 in 100 simulated
+ * participants, and tied win counts just as rare (audit C6) - so Copeland and a plain sort agree
+ * almost always. If loops ever matter, the Kemeny ranking is the standard next step.
  *
  * NO CONSTANTS. THIS FILE HAS NO TUNING PARAMETERS.
  * -------------------------------------------------

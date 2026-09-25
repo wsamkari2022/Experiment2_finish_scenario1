@@ -181,7 +181,7 @@ export interface StanceReading {
  * value's worth of disagreement (the four values are averaged, so one value differing by ~32
  * moves the distance by 8) without swallowing genuine sidings.
  */
-const STANCE_BAND = 8;
+export const STANCE_BAND = 8;
 
 /**
  * Which way the participant went, given the option they actually chose.

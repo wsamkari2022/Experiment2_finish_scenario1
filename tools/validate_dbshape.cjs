@@ -861,6 +861,7 @@ for (const [who, block5] of PEOPLE) {
     same(major.performance.what_the_wish_changed_in_performance_in_words,
       position.decided_versus_wished?.what_the_wish_changed_in_performance_in_words, "what the wish changed in performance, in words");
     same(major.company_value_shown_in_scenarios_4_and_5, position.company_value_shown?.value_name, "company value shown");
+    same(major.company_stance_in_scenario_4, position.company_stance?.stance_label, "company stance");
     same(major.stability.score, head.stability_score, "stability");
     same(major.stability.stakeholder_score, head.stakeholder_stability_score, "stakeholder stability");
     same(major.performance.score, head.performance_score, "performance");
@@ -1386,6 +1387,39 @@ for (const [who, block5] of PEOPLE) {
       ? `company_value_shown: "${saved.value_name}" (the participant's lowest value), shown in scenarios `
         + `${saved.shown_in_scenarios.join(" and ")}; old records worked out again and marked; one line in major_info_and_scores`
       : `the company value record is wrong: ${why.join(" | ")}`);
+}
+
+/* D61 - THE COMPANY STANCE REACHES THE DATABASE (25 September 2026, audit H1). For every pretend
+   participant it is exactly what the results page computes (analyseStance on the frozen profile),
+   the label follows the published band (+8 / -8), the table lists all six options with the chosen
+   one once, and major_info_and_scores holds the label in one line. */
+{
+  const CO = B("block5Company.js");
+  const why = [];
+  const seen = new Set();
+  for (const [who, block5] of PEOPLE) {
+    const row = db.buildPositionSection(block5).company_stance;
+    const page = CO.analyseStance(block5.scenarioResults, block5.originalProfile, BLOCK5_SCENARIOS);
+    if (!row || !page) { why.push(`${who}: no stance`); continue; }
+    seen.add(row.stance);
+    if (row.stance !== page.stance || row.distance_to_own_values_before_block5 !== page.ownDistance
+      || row.distance_to_the_company_values !== page.companyDistance || row.pull_toward_the_company !== page.pull) {
+      why.push(`${who}: differs from the results page`);
+    }
+    const expected = row.pull_toward_the_company > CO.STANCE_BAND ? "adopted"
+      : row.pull_toward_the_company < -CO.STANCE_BAND ? "resisted" : "compromised";
+    if (row.stance !== expected || row.stance_label !== CO.STANCE_LABEL[row.stance]) why.push(`${who}: label does not follow the band`);
+    if (row.every_option.length !== 6 || row.every_option.filter((o) => o.chosen).length !== 1) why.push(`${who}: option table wrong`);
+    const major = db.buildMajorScores(block5, ledger, {
+      totalMs: 600000, byStage: { block5: 600000 }, sittings: 2, longestIdleMs: 0,
+      firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: false, owner: "x@y.z",
+    }, { dropped: 0, sessions: [] }, null);
+    if (major.company_stance_in_scenario_4 !== row.stance_label) why.push(`${who}: major_info_and_scores does not hold it`);
+  }
+  gate("D61", why.length === 0,
+    why.length === 0
+      ? `company_stance matches the results page for all ${PEOPLE.length} pretend participants (${[...seen].join(", ")}); one line in major_info_and_scores`
+      : `the company stance is wrong: ${why.join(" | ")}`);
 }
 
 console.log("");

@@ -255,9 +255,12 @@ more, and the study reads, value by value, which value rose.
 **The company's value, as shown, is saved** (the researcher's request): each scenario-4 and -5 row
 carries `companyValueShown` (set in `finalizeScenario`, from the same `deriveCompanyValues` call the
 card makes), read into `analysis.position_effect.company_value_shown` and, in one line,
-`major_info_and_scores.company_value_shown_in_scenarios_4_and_5`.
+`major_info_and_scores.company_value_shown_in_scenarios_4_and_5`. **So is what they did with it**
+in scenario 4 - "Took the company's values" / "Split the difference" / "Held your own values",
+the verdict the results page shows - in `analysis.position_effect.company_stance` (built by the same
+`analyseStance` the page calls) and `major_info_and_scores.company_stance_in_scenario_4`.
 
-Gates W1-W5 (`validate:twins`) and D57-D60 (`validate:dbshape`).
+Gates W1-W5 (`validate:twins`) and D57-D61 (`validate:dbshape`).
 
 ## The planner, revised 24 September 2026
 
@@ -280,6 +283,14 @@ compared before and after, 0 different). What changed:
   measures, per scenario, how often the first card is also the best-fit card, with pretend
   participants who answer Blocks 1-4 steadily and at random (real code end to end). It replaces the
   made-up-score figures of `report:planner` for this question, which understated the overlap.
+
+## No "Has a cost" tag on costed cards, since 24 September 2026
+
+The "Has a cost" tag and the divider "These cost you something on the value you ranked first" no
+longer show on costed cards (commit 60db800). The bin is still computed, still sorts the cards and is
+still stored. **Participants see this change**: records before 24 September 2026 saw both, so do not
+pool costed-card choices across that date. All the dated screen changes are listed in
+HOW_TO_ANALYZE_MY_DATA.md, section 4.9.
 
 ## Option cards start folded, since 23 September 2026
 
@@ -380,7 +391,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 60 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), and the company value shown (D60). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 61 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60) and the company stance (D61). `--dump` writes a full simulated document |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
@@ -417,7 +428,9 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   by id (V9).
 - **VCI's label weights are derived, not chosen (since 19 September 2026).** Each label carries the
   average place score of the places it covers, `b(r) = (n − r) / (n − 1)`: on six options 1.00 /
-  0.80 / 0.50 / 0.10, so blind picking is exactly 50. The six levels (Highly Consistent, Mostly
+  0.80 / 0.50 / 0.10, so blind picking is exactly 50 (a responder who also answers the reflection
+  pages at random averages 56-57, because the APA page lists only options built on the value they
+  name). The six levels (Highly Consistent, Mostly
   Consistent, Moderate, Low, Very Low, Highly Inconsistent) sit at 90 / 80 / 65 / 50 / 30, computed
   from the same weights. Do not hand-tune either; gates V10–V12 check both. Method:
   `docs/BLOCK5_VCI_METHOD.md`; figures: `npm run report:vci`.

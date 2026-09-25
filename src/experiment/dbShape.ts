@@ -56,7 +56,7 @@ import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
-import { deriveCompanyValues } from "./block5Company";
+import { deriveCompanyValues, analyseStance, STANCE_LABEL, STANCE_BAND } from "./block5Company";
 import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
 import type {
   Block5PolicyDimKey,
@@ -81,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-25-company-value";
+export const SHAPE_VERSION = "2026-09-25-company-stance";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1311,6 +1311,59 @@ export function buildCompanyValueShown(block5: unknown): Record<string, unknown>
   };
 }
 
+/**
+ * WHAT THE PARTICIPANT DID WITH THE COMPANY'S VALUE, IN SCENARIO 4 (25 September 2026, audit H1).
+ *
+ * The results page tells the participant one of three things - "Took the company's values",
+ * "Split the difference" or "Held your own values" - with the two distances behind it, and until
+ * this date none of it was saved. It is built here by the SAME function the page calls
+ * (analyseStance in block5Company.ts), on the same frozen profile, so the record and the page
+ * cannot disagree.
+ *
+ * Only scenario 4 has a stance. Scenario 5 shows the same company, but a wish is not a stance:
+ * nobody adopts or resists values they were given no power over.
+ */
+export function buildCompanyStance(block5: unknown): Record<string, unknown> | null {
+  const results = resultsOf(block5);
+  const original = (block5 as Record<string, unknown> | null)?.originalProfile as Block5UserProfile | undefined;
+  if (!results.length || !original?.dimensions) return null;
+  const s = analyseStance(results, original, BLOCK5_SCENARIOS);
+  if (!s) return null;
+  return {
+    what_this_is:
+      "What the participant did with the company's value in scenario 4, the one decision made under "
+      + "it: took the company's values, split the difference, or held their own. The same reading the "
+      + "results page shows them.",
+    scenario_id: s.scenarioId,
+    order_shown: results.findIndex((r) => r.scenarioId === s.scenarioId) + 1,
+    company: s.company.name,
+    company_value_name: POLICY_DIM_SHORT[s.company.statedKey],
+    chosen_option_title: s.optionTitle,
+    stance: s.stance,
+    stance_label: STANCE_LABEL[s.stance],
+    distance_to_own_values_before_block5: s.ownDistance,
+    distance_to_the_company_values: s.companyDistance,
+    pull_toward_the_company: s.pull,
+    split_the_difference_band: STANCE_BAND,
+    sentence_shown_on_the_results_page: s.sentence,
+    every_option: s.field.map((f) => ({
+      option_id: f.optionId,
+      title: f.title,
+      distance_to_own_values: f.own,
+      distance_to_the_company_values: f.theirs,
+      chosen: f.chosen,
+    })),
+    how_to_read:
+      "Both distances are 0-100 on the position effect's scale (the average gap over the four "
+      + "values). pull_toward_the_company = distance to own values minus distance to the company's: "
+      + "positive means the choice sat nearer the company. Above +8 reads as took the company's values, "
+      + "below -8 as held their own, in between as split the difference.",
+    only_the_decision:
+      "Scenario 5 shows the same company but has no stance: nobody adopts or resists values they "
+      + "were given no power over.",
+  };
+}
+
 /* ------------------------------------------------------------------- every value move (B5) */
 
 /** Every value a move can touch, in words a reader of the database will not misread. */
@@ -2509,6 +2562,9 @@ export function buildMajorScores(
        researcher's request, 25 September 2026). Chosen per participant, so it must be read here. */
     company_value_shown_in_scenarios_4_and_5:
       (buildCompanyValueShown(block5) as { value_name?: string } | null)?.value_name ?? null,
+    /* ...and what they did with it in scenario 4, in the results page's words. */
+    company_stance_in_scenario_4:
+      (buildCompanyStance(block5) as { stance_label?: string } | null)?.stance_label ?? null,
 
     where_each_number_lives: {
       vci: "headline.consistency_score · analysis.position_effect.decided_versus_wished",
@@ -2524,6 +2580,7 @@ export function buildMajorScores(
         "blocks.block5_emergency_scenarios.scenarioResults[].policySnapshotAfter, read against the snapshot before it",
       blocks_1_to_4: "analysis.blocks_1_to_4_checks",
       company_value_shown_in_scenarios_4_and_5: "analysis.position_effect.company_value_shown",
+      company_stance_in_scenario_4: "analysis.position_effect.company_stance",
       feedback: "blocks.feedback_answers",
     },
   };
@@ -2743,6 +2800,8 @@ export function buildPositionSection(block5: unknown): Record<string, unknown> |
     decided_versus_wished: decidedVersusWished(block5 as Record<string, unknown>),
     /* Which value the company card put first in scenarios 4 and 5 (25 September 2026). */
     company_value_shown: buildCompanyValueShown(block5),
+    /* What they did with it in scenario 4 - the results page's verdict, saved (audit H1). */
+    company_stance: buildCompanyStance(block5),
     source: "Computed from blocks.block5_emergency_scenarios. Saved because the results page works these out live and would otherwise discard them.",
   };
 }

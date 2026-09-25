@@ -465,7 +465,8 @@ nothing until their Pass E is done, and gain the table the moment their rows are
 
 **Also changed, and not per-scenario:** the profile rule behind the one remaining question is now
 **+30 to the value named, −10 to each of the other three** — zero-sum, where the old rule pushed down
-only whichever value happened to be on top. `docs/BLOCK5_APA_AUDIT.md` measures the OLD rule and says
+only whichever value happened to be on top. (Zero-sum except at the edges: a value at 0 cannot come
+down and one at 100 cannot go up. Since 25 September 2026 every such cut is recorded; see audit B4.) `docs/BLOCK5_APA_AUDIT.md` measures the OLD rule and says
 so at the top; `tools/verify_apa.cjs` is the live specification.
 
 #### The second per-scenario part: `valueHere` (18 September 2026)

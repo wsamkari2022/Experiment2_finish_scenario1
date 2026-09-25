@@ -781,7 +781,13 @@ export function applyApaUpdatesWithMoves(
    *
    * IT IS ZERO-SUM BY CONSTRUCTION: +30 in, 3 x -10 out. The four scores cannot drift upward
    * together however many clarifications a participant runs, which is what eventually stops a
-   * ranking from discriminating at all. The old rule only pushed down the incumbent, so a
+   * ranking from discriminating at all.
+   *
+   * EXCEPT AT THE EDGES (audit B4, written down 25 September 2026). A value already at 0 cannot come
+   * down 10, and the named value cannot rise past 100, so there the move is not zero-sum. Example:
+   * vulnerable 0, harm 0, gain 100, helped 80, naming "reducing harm": harm +30, vulnerable stays 0,
+   * gain -10, helped -10 - the four total 190 instead of 180. Every such cut is now recorded in
+   * `valueMoves` (analysis.value_moves_asked_for_and_made), so it can be counted rather than assumed. The old rule only pushed down the incumbent, so a
    * participant who named the SAME value twice raised it twice and lowered nothing the second time.
    *
    * IT ALSO TREATS THE THREE UNNAMED VALUES ALIKE. Under the old rule the value in second place was
