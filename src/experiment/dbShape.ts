@@ -54,7 +54,7 @@ import { ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, resultCountsTowar
 import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
-import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
+import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
 import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
 import type {
@@ -80,7 +80,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-25-scenario5-is-a-wish";
+export const SHAPE_VERSION = "2026-09-25-wish-performance";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -2313,6 +2313,10 @@ export function buildMajorScores(
       score: headline?.performance_score ?? null,
       captured: headline?.performance_captured ?? null,
       captured_label: headline?.performance_captured_label ?? null,
+      /* The wish (scenario 5) against the decision (scenario 4), metric by metric - copied from
+         analysis.position_effect.decided_versus_wished. The wish itself is never averaged in. */
+      what_the_wish_changed_in_performance_by_metric: decided?.wish_minus_decision_by_performance_metric ?? null,
+      what_the_wish_changed_in_performance_in_words: decided?.what_the_wish_changed_in_performance_in_words ?? null,
     },
 
     /* 4 ------------------------------------------------------------------ position, per chair */
@@ -2734,6 +2738,21 @@ function whatTheWishChanged(m: NonNullable<ReturnType<typeof analyseMirror>>): s
     + `option giving ${[more, less].filter(Boolean).join(" and ")} than the one they had decided.`;
 }
 
+/** The wish's change from the decision in PERFORMANCE, in one plain sentence. */
+function whatTheWishChangedInPerformance(m: NonNullable<ReturnType<typeof analyseMirror>>): string {
+  if (m.sameOption) return "They wished for exactly the option they had decided: no performance metric changed.";
+  const up = m.metricWishRaisedMost;
+  const down = m.metricWishLoweredMost;
+  const better = up ? `${up.points} points higher on ${METRIC_LABELS[up.metric].toLowerCase()}` : null;
+  const worse = down ? `${-down.points} points lower on ${METRIC_LABELS[down.metric].toLowerCase()}` : null;
+  const overall = m.wishMinusDecisionCaptured === null || m.wishMinusDecisionCaptured === 0
+    ? "the same overall performance"
+    : `overall performance ${Math.abs(m.wishMinusDecisionCaptured)} points ${m.wishMinusDecisionCaptured > 0 ? "higher" : "lower"}`;
+  if (!better && !worse) return `The option they wished for has the same five performance numbers as the one they decided (${overall}).`;
+  return "Compared with the option they had decided, the option they wished for scores "
+    + `${[better, worse].filter(Boolean).join(" and ")} (${overall}).`;
+}
+
 function decidedVersusWished(b5: Record<string, unknown>): Record<string, unknown> | null {
   try {
     const results = b5.scenarioResults;
@@ -2778,6 +2797,22 @@ function decidedVersusWished(b5: Record<string, unknown>): Record<string, unknow
         positionRows(results as never, before as never).find((r) => r.scenarioId === m.decided.scenarioId)?.valueDrift ?? null,
       wish_minus_profile_before_block5_by_value:
         positionRows(results as never, before as never).find((r) => r.scenarioId === m.wished.scenarioId)?.valueDrift ?? null,
+      /* ---- and in performance, metric by metric (25 September 2026, researcher's request) ---- */
+      wish_minus_decision_by_performance_metric: m.wishMinusDecisionMetrics,
+      performance_metric_the_wish_raised_most: m.metricWishRaisedMost
+        ? { metric: m.metricWishRaisedMost.metric, metric_name: METRIC_LABELS[m.metricWishRaisedMost.metric], points: m.metricWishRaisedMost.points }
+        : null,
+      performance_metric_the_wish_lowered_most: m.metricWishLoweredMost
+        ? { metric: m.metricWishLoweredMost.metric, metric_name: METRIC_LABELS[m.metricWishLoweredMost.metric], points: m.metricWishLoweredMost.points }
+        : null,
+      overall_performance_wish_minus_decision: m.wishMinusDecisionCaptured,
+      what_the_wish_changed_in_performance_in_words: whatTheWishChangedInPerformance(m),
+      how_to_read_the_wish_performance:
+        "wish_minus_decision_by_performance_metric: the wished option's number minus the decided "
+        + "option's, on each of the five metrics. Higher is better on all five (Resources spared is "
+        + "higher when less is used), so positive means the wish performs BETTER there. All five are 0 "
+        + "when they wished for the same option. overall_performance_wish_minus_decision is the same "
+        + "for the share of the table's best performance each option captures (0-100 points).",
       how_to_read_the_wish:
         "wish_minus_decision_by_value: positive means the option wished for gives MORE of that value "
         + "than the option decided. All four are 0 when they wished for the same option. The two "

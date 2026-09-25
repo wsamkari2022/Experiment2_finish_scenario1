@@ -247,9 +247,12 @@ more, and the study reads, value by value, which value rose.
   and MCF rows on the same values.
 - **What the wish changed, value by value:** `analysis.position_effect.decided_versus_wished.
   wish_minus_decision_by_value`, with the biggest rise and drop in words, copied into
-  `major_info_and_scores.vci`.
+  `major_info_and_scores.vci`. **And in performance, metric by metric** (the researcher's request):
+  `wish_minus_decision_by_performance_metric` over the five metrics, plus
+  `overall_performance_wish_minus_decision`, copied into `major_info_and_scores.performance`.
+  Positive = the wish performs better there; all 0 for the same option.
 
-Gates W1-W4 (`validate:twins`) and D57-D58 (`validate:dbshape`).
+Gates W1-W5 (`validate:twins`) and D57-D59 (`validate:dbshape`).
 
 ## The planner, revised 24 September 2026
 
@@ -372,8 +375,8 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 58 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57) and what the wish changed (D58). `--dump` writes a full simulated document |
-| `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference (W1-W4) |
+| `validate:dbshape` | What reaches MongoDB. 59 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59). `--dump` writes a full simulated document |
+| `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |

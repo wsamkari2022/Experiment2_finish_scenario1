@@ -87,10 +87,12 @@
 
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { positionRows } from "./block5Position";
+import { capturedOf } from "./block5Performance";
 import { scenarioVciScore, profileWithScores } from "./block5CVR";
-import { POLICY_DIM_KEYS } from "./block5Types";
+import { POLICY_DIM_KEYS, METRIC_KEYS } from "./block5Types";
 import type {
   AlignmentLevel,
+  Block5MetricKey,
   Block5PolicyDimKey,
   Block5ScenarioResult,
   Block5UserProfile,
@@ -169,6 +171,23 @@ export interface MirrorReading {
    * had moved them - so vciWished and responsibilityGap there are not comparable with newer ones.
    */
   wishScoredOnTheDecisionsValues: boolean;
+  /**
+   * THE SAME READING FOR PERFORMANCE, METRIC BY METRIC (25 September 2026, the researcher's
+   * request): the wished option's number minus the decided option's, on each of the five
+   * performance metrics. Higher is better on all five ("Resources spared" is higher when less is
+   * used), so positive = the wish performs BETTER there. All five are 0 when they wished for the
+   * same option: scenarios 4 and 5 carry the same numbers for the same option (validate:twins).
+   */
+  wishMinusDecisionMetrics: Record<Block5MetricKey, number>;
+  /** The metric the wish raised most, or null when nothing rose. Ties go to the order of METRIC_KEYS. */
+  metricWishRaisedMost: { metric: Block5MetricKey; points: number } | null;
+  /** The metric the wish lowered most, or null when nothing fell. */
+  metricWishLoweredMost: { metric: Block5MetricKey; points: number } | null;
+  /**
+   * Overall performance, the same way: the wish's captured share of what its table offered minus
+   * the decision's, in points of 0-100. 0 for the same option.
+   */
+  wishMinusDecisionCaptured: number | null;
 }
 
 /**
@@ -455,6 +474,21 @@ export function analyseMirror(
   const raised = byChange.filter((x) => x.points > 0).sort((a, b) => b.points - a.points)[0] ?? null;
   const lowered = byChange.filter((x) => x.points < 0).sort((a, b) => a.points - b.points)[0] ?? null;
 
+  /* AND IN PERFORMANCE, metric by metric - the two options' own numbers, compared directly. */
+  const wishMinusDecisionMetrics = Object.fromEntries(METRIC_KEYS.map((k) => [
+    k,
+    decidedOption && wishedOption ? (wishedOption.metrics[k] ?? 0) - (decidedOption.metrics[k] ?? 0) : 0,
+  ])) as Record<Block5MetricKey, number>;
+  const byMetric = METRIC_KEYS.map((k) => ({ metric: k, points: wishMinusDecisionMetrics[k] }));
+  const metricUp = byMetric.filter((x) => x.points > 0).sort((a, b) => b.points - a.points)[0] ?? null;
+  const metricDown = byMetric.filter((x) => x.points < 0).sort((a, b) => a.points - b.points)[0] ?? null;
+  const scenarioOf = (id: string) => BLOCK5_SCENARIOS.find((s) => s.id === id);
+  const decidedScenario = scenarioOf(decided.scenarioId);
+  const wishedScenario = scenarioOf(wished.scenarioId);
+  const wishMinusDecisionCaptured = decidedOption && wishedOption && decidedScenario && wishedScenario
+    ? capturedOf(wishedScenario, wishedOption) - capturedOf(decidedScenario, decidedOption)
+    : null;
+
   return {
     decided, wished, sameOption, mirrorGap, vciActed, vciWished, decisionWasAligned, wishWasAligned,
     responsibilityGap, labelSteps, hurried, sentence,
@@ -462,6 +496,10 @@ export function analyseMirror(
     valueWishRaisedMost: raised,
     valueWishLoweredMost: lowered,
     wishScoredOnTheDecisionsValues: wRes.scoredOnProfileOf === pair.decider,
+    wishMinusDecisionMetrics,
+    metricWishRaisedMost: metricUp,
+    metricWishLoweredMost: metricDown,
+    wishMinusDecisionCaptured,
   };
 }
 

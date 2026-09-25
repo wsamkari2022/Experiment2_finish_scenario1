@@ -856,6 +856,10 @@ for (const [who, block5] of PEOPLE) {
       JSON.stringify(position.decided_versus_wished?.wish_minus_decision_by_value), "what the wish changed");
     same(major.vci.what_the_wish_changed_in_words,
       position.decided_versus_wished?.what_the_wish_changed_in_words, "what the wish changed, in words");
+    same(JSON.stringify(major.performance.what_the_wish_changed_in_performance_by_metric),
+      JSON.stringify(position.decided_versus_wished?.wish_minus_decision_by_performance_metric), "what the wish changed in performance");
+    same(major.performance.what_the_wish_changed_in_performance_in_words,
+      position.decided_versus_wished?.what_the_wish_changed_in_performance_in_words, "what the wish changed in performance, in words");
     same(major.stability.score, head.stability_score, "stability");
     same(major.stability.stakeholder_score, head.stakeholder_stability_score, "stakeholder stability");
     same(major.performance.score, head.performance_score, "performance");
@@ -1303,6 +1307,50 @@ for (const [who, block5] of PEOPLE) {
     why.length === 0
       ? `decided_versus_wished: the same wish reads 0 on every value, a different one reads the options' difference (${Object.entries(dvD.wish_minus_decision_by_value).map(([k, v]) => `${k.slice(0, 5)} ${v}`).join(", ")}), and the wish is shown on scenario 4's values`
       : `the wish section is wrong: ${why.join(" | ")}`);
+}
+
+/* D59 - WHAT THE WISH CHANGED IN PERFORMANCE REACHES THE DATABASE (25 September 2026, the
+   researcher's request). The same wish reads 0 on all five metrics and on overall performance, with
+   no metric named; a different wish reads exactly the two options' own metric numbers, the overall
+   share difference, and the metric that fell most; major_info_and_scores.performance copies it. */
+{
+  const PF = B("block5Performance.js");
+  const METRICS = ["speed", "resourceUse", "reliability", "durability", "reversibility"];
+  const why = [];
+  const [, same] = PEOPLE[0];
+  const [, differ] = PEOPLE[2];
+  const dvS = db.buildPositionSection(same).decided_versus_wished;
+  const dvD = db.buildPositionSection(differ).decided_versus_wished;
+  if (!METRICS.every((k) => dvS.wish_minus_decision_by_performance_metric[k] === 0)
+    || dvS.overall_performance_wish_minus_decision !== 0
+    || dvS.performance_metric_the_wish_raised_most !== null || dvS.performance_metric_the_wish_lowered_most !== null) {
+    why.push("the same wish must read 0 on every metric, with no metric named");
+  }
+  if (!/no performance metric changed/.test(dvS.what_the_wish_changed_in_performance_in_words)) why.push("the sentence for the same wish is wrong");
+  const pickOf = (id) => {
+    const r = differ.scenarioResults.find((x) => x.scenarioId === id);
+    const s = BLOCK5_SCENARIOS.find((x) => x.id === id);
+    return { s, o: s.options.find((o) => o.id === r.selectedOptionId) };
+  };
+  const a = pickOf(dvD.acted_scenario_id);
+  const b = pickOf(dvD.wished_scenario_id);
+  if (!METRICS.every((k) => dvD.wish_minus_decision_by_performance_metric[k] === b.o.metrics[k] - a.o.metrics[k])) {
+    why.push("the per-metric difference is not the two options' own numbers");
+  }
+  if (dvD.overall_performance_wish_minus_decision !== PF.capturedOf(b.s, b.o) - PF.capturedOf(a.s, a.o)) why.push("the overall difference is wrong");
+  const downs = METRICS.map((k) => dvD.wish_minus_decision_by_performance_metric[k]).filter((x) => x < 0);
+  if (downs.length && dvD.performance_metric_the_wish_lowered_most?.points !== Math.min(...downs)) why.push("the metric that fell most is not named");
+  const major = db.buildMajorScores(differ, ledger, {
+    totalMs: 600000, byStage: { block5: 600000 }, sittings: 2, longestIdleMs: 0,
+    firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: false, owner: "x@y.z",
+  }, { dropped: 0, sessions: [] }, null);
+  if (JSON.stringify(major.performance.what_the_wish_changed_in_performance_by_metric)
+    !== JSON.stringify(dvD.wish_minus_decision_by_performance_metric)) why.push("major_info_and_scores.performance does not copy it");
+  gate("D59", why.length === 0,
+    why.length === 0
+      ? `wish minus decision in performance: the same wish reads 0 on all five metrics; a different one reads `
+        + `${METRICS.map((k) => `${k} ${dvD.wish_minus_decision_by_performance_metric[k]}`).join(", ")}, overall ${dvD.overall_performance_wish_minus_decision}`
+      : `the wish's performance reading is wrong: ${why.join(" | ")}`);
 }
 
 console.log("");

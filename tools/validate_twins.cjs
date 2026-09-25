@@ -166,6 +166,8 @@ console.log("\n  SCENARIO 5 IS ONLY A WISH");
   const pick = (a) => a[Math.floor(rnd() * a.length)];
   const isFit = (l) => l === "aligned" || l === "weakly_aligned";
   let runs = 0, shownRight = 0, sameRuns = 0, sameZero = 0, diffRuns = 0, diffRight = 0;
+  let perfSame = 0, perfDiff = 0, perfDiffNonZero = 0;
+  const METRICS = ["speed", "resourceUse", "reliability", "durability", "reversibility"];
   for (let i = 0; i < 2000; i++) {
     const original = mk(Object.fromEntries(ALL.map((k) => [k, Math.round(rnd() * 100)])));
     let live = original;
@@ -213,6 +215,9 @@ console.log("\n  SCENARIO 5 IS ONLY A WISH");
       sameRuns++;
       if (m.sameOption && m.responsibilityGap === 0 && m.labelSteps === 0 && zeros
         && m.valueWishRaisedMost === null && m.valueWishLoweredMost === null && m.wishScoredOnTheDecisionsValues) sameZero++;
+      /* W5, the same wish: 0 on every performance metric and on overall performance. */
+      if (METRICS.every((k) => m.wishMinusDecisionMetrics[k] === 0) && m.wishMinusDecisionCaptured === 0
+        && m.metricWishRaisedMost === null && m.metricWishLoweredMost === null) perfSame++;
     } else {
       diffRuns++;
       const a = decider4.options.find((o) => o.id === m.decided.optionId);
@@ -221,6 +226,14 @@ console.log("\n  SCENARIO 5 IS ONLY A WISH");
       const ups = POLICY.map((k) => m.wishMinusDecision[k]).filter((x) => x > 0);
       const upOk = ups.length ? m.valueWishRaisedMost?.points === Math.max(...ups) : m.valueWishRaisedMost === null;
       if (!m.sameOption && exact && upOk) diffRight++;
+      /* W5, a different wish: exactly the two options' own metric numbers, and the overall share. */
+      const PF5 = B("block5Performance.js");
+      const metricExact = METRICS.every((k) => m.wishMinusDecisionMetrics[k] === b.metrics[k] - a.metrics[k]);
+      const capturedExact = m.wishMinusDecisionCaptured === PF5.capturedOf(recipient5, b) - PF5.capturedOf(decider4, a);
+      const downs = METRICS.map((k) => m.wishMinusDecisionMetrics[k]).filter((x) => x < 0);
+      const downOk = downs.length ? m.metricWishLoweredMost?.points === Math.min(...downs) : m.metricWishLoweredMost === null;
+      if (metricExact && capturedExact && downOk) perfDiff++;
+      if (METRICS.some((k) => m.wishMinusDecisionMetrics[k] !== 0)) perfDiffNonZero++;
     }
   }
   ok("W2 scenario 5 is shown on the values scenario 4 opened with",
@@ -229,6 +242,9 @@ console.log("\n  SCENARIO 5 IS ONLY A WISH");
     sameZero === sameRuns && sameRuns > 0, `${sameZero} of ${sameRuns} runs: VCI gap 0, labels 0 apart, all four values 0`);
   ok("W4 a different wish reads as the two options' difference",
     diffRight === diffRuns && diffRuns > 0, `${diffRight} of ${diffRuns} runs, value by value, biggest rise named`);
+  ok("W5 wish minus decision in performance, metric by metric",
+    perfSame === sameRuns && perfDiff === diffRuns && perfDiffNonZero === diffRuns && diffRuns > 0,
+    `same wish: ${perfSame} of ${sameRuns} all 0; different wish: ${perfDiff} of ${diffRuns} exact (five metrics and overall)`);
 }
 
 console.log("\n" + "=".repeat(78));

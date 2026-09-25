@@ -17,7 +17,7 @@ the three sensitivity stabilities: section 4. The decision against the wish: sec
 > old records follow the new rule too. (2) Scenario 5 is shown and scored on the values the
 > participant had when they OPENED scenario 4, so wishing for the option they decided gives a gap
 > of exactly 0. The row says so in `scoredOnProfileOf`. (3) `decided_versus_wished` has a new
-> per-value reading of what the wish changed (section 6b).
+> reading of what the wish changed, value by value AND performance metric by metric (section 6b).
 
 > **What changed on 24 September 2026: the fit score.** It used to be 100 minus the weighted
 > shortfall, stopped at 0, so a demanding participant saw several options at 0 at once. It is now
@@ -189,7 +189,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 |---|---|
 | `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them, and (since 25 September 2026) `what_the_wish_changed_by_value` and `what_the_wish_changed_in_words`, copied from `decided_versus_wished` |
 | `stability` | The score and label, plus the directness, context and stakeholder stabilities |
-| `performance` | `score`, `captured`, `captured_label` |
+| `performance` | `score`, `captured`, `captured_label`, and (since 25 September 2026) `what_the_wish_changed_in_performance_by_metric` and `..._in_words`, copied from `decided_versus_wished` |
 | `position_effect` | `overall`, a `by_scenario` list (role, distance, departure share) and a `by_role` list |
 | `predictions_by_scenario` | One row per scenario: the model's favourite and its chance, their choice and its chance, and how many points behind it sat |
 | `total_time` | Active minutes, timed-stage minutes, per-stage minutes, longest idle |
@@ -529,6 +529,10 @@ scenario 4's information and reflection, so the wish is compared with their FINA
 | `value_the_wish_raised_most`, `value_the_wish_lowered_most` | The biggest rise and the biggest drop, with the value's name and points; `null` when nothing rose (or fell) |
 | `what_the_wish_changed_in_words` | The same in one sentence |
 | `decision_minus_profile_before_block5_by_value`, `wish_minus_profile_before_block5_by_value` | How far each choice sat from the values the participant brought into Block 5, per value (the position effect's own reading, side by side) |
+| `wish_minus_decision_by_performance_metric` | **The same reading for performance**: the wished option's number minus the decided option's, on each of the five metrics (`speed`, `resourceUse`, `reliability`, `durability`, `reversibility`). Higher is better on all five (Resources spared is higher when less is used), so **positive = the wish performs better there**. All 0 when they wished for the same option |
+| `performance_metric_the_wish_raised_most`, `performance_metric_the_wish_lowered_most` | The metric with the biggest rise and the biggest drop, with its name and points; `null` when nothing rose (or fell) |
+| `overall_performance_wish_minus_decision` | The same for overall performance: the wish's share of the best performance on its table minus the decision's, in points of 0-100 |
+| `what_the_wish_changed_in_performance_in_words` | The same in one sentence |
 
 ### The rest
 

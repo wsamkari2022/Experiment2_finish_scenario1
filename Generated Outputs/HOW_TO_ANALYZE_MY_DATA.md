@@ -153,7 +153,10 @@ has just decided scenario 4, including its reflection; scenario 5 shows the same
 only their role changed, so no reflection runs there on purpose. Either they wish for what they
 decided (every gap is 0), or they wish for something else because it helps or hurts them more. The
 reading is `analysis.position_effect.decided_versus_wished.wish_minus_decision_by_value`: which value
-rose and which fell when the decision landed on them. Both choices are judged on the same values
+rose and which fell when the decision landed on them. Beside it,
+`wish_minus_decision_by_performance_metric` says the same for the five performance metrics: whether
+the option they wished for performs better or worse than the one they decided, and where (positive
+= better on every metric). Both choices are judged on the same values
 (those they opened scenario 4 with), so a difference is the person, not a moved ruler. The wish is
 never averaged into VCI, Stability or performance. One person's wish is one choice: report the
 per-value shifts for groups (for example the mean shift in "protecting the vulnerable" across
