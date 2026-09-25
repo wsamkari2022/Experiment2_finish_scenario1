@@ -38,6 +38,7 @@ import {
   performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall, policyShortfallByValue,
+  FIT_SCORE_SCALE,
 } from "./block5CVR";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
@@ -1295,6 +1296,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       timeMs: Date.now() - progress.scenarioStartTime,
       alignmentLevel: opt.level,
       matchScore: opt.matchScore,
+      fitScoreScale: FIT_SCORE_SCALE,
       firstChoiceOptionId: progress.firstChoiceId ?? opt.id,
       postCVRChoiceOptionId: opt.id,
       cvrFired: cvrRan,
@@ -1388,6 +1390,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       timeMs: Date.now() - progress.scenarioStartTime,
       alignmentLevel: opt.level,
       matchScore: opt.matchScore,
+      fitScoreScale: FIT_SCORE_SCALE,
       firstChoiceOptionId: progress.firstChoiceId ?? payload.originalOptionId,
       postCVRChoiceOptionId: opt.id,
       cvrFired: true,
@@ -1847,10 +1850,13 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                 </VStack>
               </Box>
               <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl" px="4" py="3">
+                {/* 24 September 2026 (researcher's approval): no longer says "Each is labeled by how well it
+                    fits your earlier responses". The alignment labels came off the cards on 15
+                    September, so the sentence sent participants looking for labels that are not
+                    there - and pointed them at their own fit, which the study must not do. */}
                 <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                  Every option stays available. Each is labeled by how well it fits your earlier
-                  responses — but you can choose any of them. Use “Preview impact” to see how an
-                  option would change your performance above.
+                  Every option stays available, and you can choose any of them. Use “Preview impact”
+                  to see how an option would change your performance above.
                 </Text>
               </Box>
             </VStack>

@@ -896,6 +896,12 @@ export interface Block5ScenarioResult {
   // v3 additions:
   alignmentLevel?: AlignmentLevel;
   matchScore?: number;
+  /**
+   * Which scale `matchScore` and `fitScoresByOptionId` are on (FIT_SCORE_SCALE in block5CVR.ts).
+   * Absent on rows saved before 24 September 2026, which hold the old scale: 100 minus the
+   * shortfall, stopped at 0.
+   */
+  fitScoreScale?: string;
   firstChoiceOptionId?: string;
   postCVRChoiceOptionId?: string;
   cvrFired?: boolean;

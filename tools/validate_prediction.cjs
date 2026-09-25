@@ -97,10 +97,12 @@ console.log("--- gates ---");
   gate("P2", monoOk, "a better-fitting option never gets a lower probability  (800 cases)");
 
   {
-    /* THE BUG THIS FILE EXISTS TO CATCH AGAIN. A participant who asks a lot of every value pushes
-       every option past the floor, so all of them display 0. Before the fix the predictor fed
-       those identical zeros to the softmax and returned an even split, which is a confident claim
-       that the model knows nothing - made precisely when the participant's values are strongest. */
+    /* THE BUG THIS FILE EXISTS TO CATCH AGAIN. A participant who asks a lot of every value used to
+       push every option past the floor, so all of them displayed 0, and the predictor once fed those
+       identical zeros to the softmax and returned an even split. Since 24 September 2026 the score
+       is a share of what the participant asked for and cannot all sit at 0; the gate now checks
+       both halves: the four displayed scores are no longer all equal, and the prediction separates
+       the options. */
     const demanding = mk({ vulnerabilityProtectionSensitivity: 94, groupSizeSensitivity: 0,
                            gainResponsivenessSensitivity: 100, outcomeAggregationSensitivity: 87 });
     const veil = BLOCK5_SCENARIOS[BLOCK5_SCENARIOS.length - 1];
@@ -108,8 +110,8 @@ console.log("--- gates ---");
     const pr = predictChoice(veil.options, demanding, { vci: 70, stability: 80 });
     const probs = pr.options.map((o) => o.probability);
     const spread = Math.max(...probs) - Math.min(...probs);
-    gate("P8", shown.every((x) => x === 0) && spread > 0.05,
-      `all four options display 0 yet the prediction still separates them  (${probs.map((x) => pctS(x)).join(" ")})`);
+    gate("P8", new Set(shown).size > 1 && spread > 0.05,
+      `a demanding participant's four options no longer all display the same score (${shown.join(" / ")}) and the prediction separates them  (${probs.map((x) => pctS(x)).join(" ")})`);
   }
   gate("P3", detOk, "the same profile and scenario always give the identical prediction");
 }

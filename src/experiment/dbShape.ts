@@ -50,7 +50,7 @@ import { ACTIVE_TIME_KEY } from "./activeTime";
 import { SESSION_LOG_KEY } from "./sessionLog";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
-import { ALIGNMENT_LABEL } from "./block5CVR";
+import { ALIGNMENT_LABEL, FIT_SCORE_SCALE } from "./block5CVR";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
@@ -79,7 +79,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-24-card-order";
+export const SHAPE_VERSION = "2026-09-24-fit-share";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1212,9 +1212,13 @@ export function buildLiftedScenarios(block5: unknown): {
  * whole menu fits, so counting Aligned choices across scenarios measures how often somebody took
  * the top of the menu, never how well the menu suited them. The note travels in the record.
  *
- * `alignment_score_0_to_100` FLOORS AT ZERO and is not an interval measure at the bottom. Two
- * options that missed by 104 and by 154 both read 0. Use it for reporting; for anything that
- * ranks or subtracts, the uncensored quantity is `matchShortfall` on the raw row.
+ * `fit_percent_of_what_they_asked_for` (since 24 September 2026) is the share of what the
+ * participant's four values asked for that the option gives: 100 × (1 − shortfall ÷ the most they
+ * could lose). It no longer stops at 0, and it orders options exactly as the shortfall does. It is a
+ * share of each participant's OWN maximum. The raw shortfall itself is NOT saved on the scenario
+ * row; it can be rebuilt from `profile_by_scenario[i].profile_when_the_scenario_opened` and the
+ * option's fingerprint (export_block5_content.cjs). Rows saved before that date hold the old scale
+ * (100 − shortfall, stopped at 0) under `old_fit_score_saved_before_24_september_2026`.
  */
 /* ------------------------------------------------------------------- the card order, readable */
 
@@ -1370,6 +1374,7 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
     const chosen = optionOf(scenario, r.selectedOptionId);
     const role = r.decisionRole ?? "decider";
     const level = r.alignmentLevel ?? null;
+    const onNewScale = r.fitScoreScale === FIT_SCORE_SCALE;
 
     return {
       scenario_id: r.scenarioId ?? null,
@@ -1386,10 +1391,16 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       /* ---- alignment ---- */
       alignment_label: level ? ALIGNMENT_LABEL[level] : null,
       alignment_level: level,
-      alignment_score_0_to_100: r.matchScore ?? null,
+      /* A row saved before 24 September 2026 holds the OLD scale (100 minus the shortfall, stopped
+         at 0). It never goes under the new name; it goes under its own, so the two cannot be pooled
+         by accident. */
+      fit_percent_of_what_they_asked_for: onNewScale ? r.matchScore ?? null : null,
       alignment_rank_within_the_scenario: r.selectedRank ?? null,
       options_on_the_table: scenario?.options.length ?? null,
-      alignment_score_of_every_option: r.fitScoresByOptionId ?? null,
+      fit_percent_of_what_they_asked_for_every_option: onNewScale ? r.fitScoresByOptionId ?? null : null,
+      old_fit_score_saved_before_24_september_2026: onNewScale
+        ? null
+        : { chosen: r.matchScore ?? null, every_option: r.fitScoresByOptionId ?? null },
       chose_the_best_fitting_option: r.selectedWasTopCandidate ?? null,
       /*
        * RENAMED FROM `matched_the_pre_block5_profile`, which promised more than it holds. It is not
@@ -1462,7 +1473,7 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
     if (r.alignment_level) labelCounts[r.alignment_level] = (labelCounts[r.alignment_level] ?? 0) + 1;
   }
   const scores = scored
-    .map((r) => r.alignment_score_0_to_100)
+    .map((r) => r.fit_percent_of_what_they_asked_for)
     .filter((n): n is number => typeof n === "number");
 
   return {
@@ -1481,9 +1492,13 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       + "the profile the participant entered Block 5 with. It is NOT a claim that they chose the same "
       + "option they would have chosen before. Stated once here rather than repeated on every row.",
     read_this_before_using_the_score:
-      "alignment_score_0_to_100 floors at 0, so two options that missed by 104 and by 154 both read "
-      + "0. It is safe to report and unsafe to rank or subtract with. The uncensored quantity is "
-      + "matchShortfall on the raw scenario row.",
+      "fit_percent_of_what_they_asked_for is the share of what the participant's four values asked "
+      + "for that the option gives, weighted by how much they hold each: 100 = it meets every value, "
+      + "0 = it gives nothing on any. It is a share of each participant's OWN maximum, so compare it "
+      + "within a participant. The raw shortfall, which is on one scale for everybody, is not saved "
+      + "on the row; rebuild it from profile_by_scenario (profile_when_the_scenario_opened) and the "
+      + "option's fingerprint. Rows saved before 24 September 2026 hold the old scale (100 minus the "
+      + "shortfall, stopped at 0) under old_fit_score_saved_before_24_september_2026, and null here.",
     by_scenario: byScenario,
     totals: {
       counted_over:
@@ -1591,7 +1606,7 @@ export function buildMpfPredictions(block5: unknown): Record<string, unknown> | 
         option_title: o.optionTitle,
         mpf_chance_percent: pct1(o.probability),
         rank: o.rank,
-        fit_score_0_to_100: o.alignmentScore,
+        fit_percent_of_what_they_asked_for: o.alignmentScore,
         built_on: o.builtOn,
         built_on_label: POLICY_DIM_SHORT[o.builtOn as Block5PolicyDimKey],
       }));
@@ -2355,7 +2370,8 @@ export function buildScenario6Section(block5: unknown): Record<string, unknown> 
             rule: e.optionId ?? null,
             mpf_chance_percent: pct(e.probability),
             rank: e.rank ?? null,
-            fit_score_shown: e.alignmentScore ?? null,
+            fit_percent_of_what_they_asked_for_never_shown_to_them:
+              row.fitScoreScale === FIT_SCORE_SCALE ? e.alignmentScore ?? null : null,
           };
         })
         .sort((a, b) => (Number(a.rank) || 99) - (Number(b.rank) || 99)),

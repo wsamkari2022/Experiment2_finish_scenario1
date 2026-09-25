@@ -11,6 +11,18 @@
 the three sensitivity stabilities: section 4. The decision against the wish: section 6b,
 `decided_versus_wished`).
 
+> **What changed on 24 September 2026: the fit score.** It used to be 100 minus the weighted
+> shortfall, stopped at 0, so a demanding participant saw several options at 0 at once. It is now
+> the **share of what the participant's four values asked for** that the option gives: 100 × (1 −
+> shortfall ÷ the most they could lose). The order of the options, the labels, VCI, the planner and
+> the MPF did not change. The fields were renamed so the two scales cannot be mixed:
+> `alignment_score_0_to_100` → `fit_percent_of_what_they_asked_for`,
+> `alignment_score_of_every_option` → `fit_percent_of_what_they_asked_for_every_option`,
+> `fit_score_0_to_100` → `fit_percent_of_what_they_asked_for` (section 6e), and scenario 6's
+> `fit_score_shown` → `fit_percent_of_what_they_asked_for_never_shown_to_them`. A scenario row saved
+> before that date has no `fitScoreScale`; its old numbers sit under
+> `old_fit_score_saved_before_24_september_2026` and the new names are `null`. Section 6d, trap 2.
+
 > **What changed on 15 September 2026.** Five things, and the first one removes data:
 >
 > 1. **The insights page and the final-analysis page are no longer timed.** `insightsMs` and
@@ -294,7 +306,8 @@ Useful fields inside each `scenarioResults` entry:
 | `selectedOptionId` | What they chose |
 | `selectedRank` | Where that option sat in the ordering they were shown (1 = top) |
 | `alignmentLevel` | How well the choice matched their values: aligned / weakly_aligned / misaligned / strongly_misaligned |
-| `matchScore` | The same idea as a number, 0–100 |
+| `matchScore` | The same idea as a number, 0–100: the share of what their four values asked for that the chosen option gives (since 24 September 2026) |
+| `fitScoreScale` | Which scale `matchScore` and `fitScoresByOptionId` are on. **Absent = saved before 24 September 2026**, on the old scale (100 minus the shortfall, stopped at 0). Never average the two together |
 | `cvrFired` | Whether the reflection step appeared (it only appears for misaligned choices) |
 | `cvrEndorsement` | Whether they kept or changed their choice after reflecting |
 | `cvrAltViewGenerated` | Whether they asked to see the second perspective |
@@ -530,7 +543,7 @@ also be evidence for it.
 | Field | Meaning |
 |---|---|
 | `chance_if_guessing_percent` | **25 for four rules. Report this next to every percentage.** A 40% prediction is a modest claim, not a strong one, and the number means nothing without its baseline |
-| `by_rule` | Each rule with the percentage shown, its rank, and the fit score the participant saw |
+| `by_rule` | Each rule with the percentage shown, its rank, and its fit score as `fit_percent_of_what_they_asked_for_never_shown_to_them`. The participant never saw that score: scenario 6 hides the fit line on its cards. `null` on a record saved before 24 September 2026 |
 | `most_expected_rule` | The model's top pick |
 | `gap_between_top_two` | How far apart the top two were on the uncensored fit. **Near zero means the MPF had no real opinion, whatever the percentages look like.** Filter on this before treating a prediction as a commitment |
 | `how_sure_the_mpf_was` | 0 to 1, from the participant's own VCI and Stability at equal weight |
@@ -635,9 +648,10 @@ table.
 | `chosen_option_id`, `chosen_option_title` | What they chose |
 | `alignment_label` | `Aligned` / `Weakly aligned` / `Misaligned` / `Strongly misaligned` |
 | `alignment_level` | The same thing as the internal enum, for joins |
-| `alignment_score_0_to_100` | The fit score. ⚠️ **Floors at 0** — see below |
+| `fit_percent_of_what_they_asked_for` | The fit score: the share of what the participant's four values asked for that the chosen option gives. 100 = it meets every value they hold, 0 = it gives nothing on any. ⚠️ A share of **each participant's own** maximum — see below. `null` on a row saved before 24 September 2026 |
 | `alignment_rank_within_the_scenario` | 1 = best-fitting option available |
-| `alignment_score_of_every_option` | `{ option id: score }` for the whole menu, so the choice can be read in context |
+| `fit_percent_of_what_they_asked_for_every_option` | `{ option id: score }` for the whole menu, so the choice can be read in context. `null` on a row saved before 24 September 2026 |
+| `old_fit_score_saved_before_24_september_2026` | `{ chosen, every_option }` on the OLD scale (100 minus the shortfall, stopped at 0), only for rows saved before that date; `null` otherwise. Never pool it with the field above |
 | `chose_the_best_fitting_option` | Whether they took the top of the menu |
 | `choice_was_still_aligned_to_the_pre_block5_profile` | The chosen option landed in the **top two** alignment tiers (Aligned or Weakly aligned) when scored against the frozen pre-Block-5 profile. ⚠️ **Not** "they chose what they would have chosen before" |
 
@@ -716,9 +730,15 @@ than repeated on all six rows.
    Aligned *even when it fits the participant badly*, and every scenario produces exactly one.
    Counting Aligned choices measures how often somebody took the top of the menu — never how well
    the menu suited them.
-2. **`alignment_score_0_to_100` floors at 0.** Two options that missed by 104 and by 154 both read
-   0. Safe to report; unsafe to rank or subtract with. The uncensored quantity is `matchShortfall`
-   on the raw scenario row in `blocks`.
+2. **`fit_percent_of_what_they_asked_for` is a share of each participant's OWN maximum.** 100 × (1 −
+   shortfall ÷ the most this participant could lose). It no longer stops at 0 (before 24 September
+   2026 it was 100 minus the shortfall, stopped at 0, and two options that missed by 104 and by 154
+   both read 0). Within one participant it orders the options exactly as the shortfall does. Across
+   participants, 60 means "60% of what THIS person asked for", and a person who asks a lot has more
+   to fall short of. For a quantity on one scale for everybody, rebuild the raw shortfall, Σ (u/100)
+   × max(0, u − f): `u` from `analysis.profile_by_scenario[i].profile_when_the_scenario_opened`,
+   `f` from the option's fingerprint (`tools/export_block5_content.cjs`). The shortfall is **not**
+   saved on the scenario row; earlier versions of this file said it was, and that was wrong.
 
 ---
 
@@ -768,7 +788,7 @@ every option alike.
 | `chance_if_guessing_percent` | **16.7 or 25. Report it next to every percentage** |
 | `profile_used` | A sentence: which profile this row was predicted from |
 | `profile_used_values` | The four values used, so the row can be recomputed |
-| `by_option` | One entry per option, ranked: `option_id`, `option_title`, `mpf_chance_percent`, `rank`, `fit_score_0_to_100`, `built_on` (+ `_label`). ⚠️ Each percentage is rounded to one decimal, so six of them can sum to 100.1 rather than 100. That is rounding, not an error |
+| `by_option` | One entry per option, ranked: `option_id`, `option_title`, `mpf_chance_percent`, `rank`, `fit_percent_of_what_they_asked_for`, `built_on` (+ `_label`). ⚠️ Each percentage is rounded to one decimal, so six of them can sum to 100.1 rather than 100. That is rounding, not an error |
 | `most_expected_option_id`, `most_expected_option_chance_percent` | The model's top pick |
 | `gap_between_top_two` | On the uncensored fit. **Near zero means the MPF had no real opinion, whatever the percentages look like** |
 | `how_sure_the_mpf_was`, `sharpness_setting` | Confidence, and the softmax temperature it produced. The temperature is stored **unrounded** so the probabilities can be reproduced exactly |

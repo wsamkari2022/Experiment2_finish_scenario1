@@ -468,9 +468,17 @@ recomputable from the stored answers. Every tie is recorded on the tree (`tiedVa
 ### Alignment — `policyAlignmentScore()` in `block5CVR.ts`
 
 ```ts
-penalty = Σ over the 4 policy dims of  (u/100) · max(0, u − f)
-score   = 100 − penalty
+shortfall = Σ over the 4 policy dims of  (u/100) · max(0, u − f)
+most      = Σ over the 4 policy dims of  (u/100) · u        // an option that gives 0 on all four
+score     = 100 × (1 − shortfall / most)                  // 100 when most = 0
 ```
+
+**Since 24 September 2026 the score is a share.** It used to be `100 − shortfall`, stopped at 0.
+A participant who asks a lot of every value falls more than 100 short on many options, so several
+cards read 0 at once (5 in 100 cards for pretend participants; two or more zeros on one menu in 8
+in 100 scenarios; even the best fit under 50 in 7 in 100). Dividing by the most this participant
+could lose keeps every difference visible. For one participant `most` is one number, so the order
+of the options, the labels, VCI, the planner and the MPF do not change. Gates V16–V17.
 where `u` = participant's score on that value, `f` = the option's fingerprint on that value.
 
 **Why only shortfalls count.** `max(0, u − f)` means an option is penalized only when it delivers
@@ -631,9 +639,11 @@ recipient scenario uses.
 
 **The rule.** Each option's uncensored shortfall against the participant's profile goes through a
 softmax. Temperature runs from 18 at full confidence to 60 at none, where confidence is VCI and
-Stability at equal weight. The uncensored shortfall, not the displayed score: the score floors at 0,
-and a demanding participant can push every option there, which would hand the softmax four identical
-inputs and return an even split at exactly the moment their values are most pronounced.
+Stability at equal weight. The uncensored shortfall, not the displayed score: until 24 September
+2026 the score stopped at 0, and a demanding participant could push every option there, which would
+hand the softmax four identical inputs and return an even split at exactly the moment their values
+are most pronounced. The score is now a share and no longer stops at 0, but the shortfall stays the
+input, so the prediction rule (and `PREDICTION_VERSION`) did not change.
 
 **Why the predictions are modest.** Across 3,000 profiles the alignment gap between a scenario's
 best and second-best option is 7 points at the median and 0 at the tenth percentile. The instrument

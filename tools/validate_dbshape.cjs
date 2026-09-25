@@ -120,6 +120,7 @@ function makeParticipant(startScores, pick) {
       timeMs: 60_000 + index * 1000,
       alignmentLevel: chosen.level,
       matchScore: chosen.matchScore,
+      fitScoreScale: B("block5CVR.js").FIT_SCORE_SCALE,
       firstChoiceOptionId: chosen.id,
       decisionRole: role,
       vciScore: role === "decider" ? 0.7 : 0.5,
@@ -691,7 +692,7 @@ for (const [who, block5] of PEOPLE) {
   gate("D14", align.by_scenario.length === results.length,
     `one alignment row per scenario (${align.by_scenario.length})`);
   gate("D15", align.by_scenario.every((row, i) =>
-    row.alignment_score_0_to_100 === results[i].matchScore
+    row.fit_percent_of_what_they_asked_for === results[i].matchScore
     && row.alignment_level === results[i].alignmentLevel
     && row.chosen_option_id === results[i].selectedOptionId),
     "every label and score matches the raw scenario row it came from");
@@ -1120,6 +1121,29 @@ for (const [who, block5] of PEOPLE) {
       ? `card_order_by_scenario: ${rows.length} rows rebuilt from their saved inputs, a changed order caught, `
         + "old records and the shuffled scenario 6 labelled in words"
       : `the card-order section is wrong: ${why.join(" | ")}`);
+}
+
+/* D54 - A ROW ON THE OLD FIT SCALE NEVER LANDS UNDER THE NEW NAME (24 September 2026). Before that
+   date the fit score was 100 minus the shortfall, stopped at 0; since then it is a share of what
+   the participant asked for. A row without the scale tag must put its numbers under the old field
+   and leave the new one empty, so the two scales cannot be averaged together by accident. */
+{
+  const [, base] = PEOPLE[0];
+  const why = [];
+  const tagged = db.buildAlignmentRecords(base).by_scenario;
+  if (!tagged.every((r, i) => r.fit_percent_of_what_they_asked_for === base.scenarioResults[i].matchScore
+    && r.old_fit_score_saved_before_24_september_2026 === null)) why.push("a tagged row must use the new name only");
+  const untaggedResults = base.scenarioResults.map(({ fitScoreScale, ...rest }) => rest);
+  const untagged = db.buildAlignmentRecords({ ...base, scenarioResults: untaggedResults }).by_scenario;
+  if (!untagged.every((r, i) => r.fit_percent_of_what_they_asked_for === null
+    && r.fit_percent_of_what_they_asked_for_every_option === null
+    && r.old_fit_score_saved_before_24_september_2026?.chosen === untaggedResults[i].matchScore)) {
+    why.push("an untagged row must put its score under old_fit_score_saved_before_24_september_2026");
+  }
+  gate("D54", why.length === 0,
+    why.length === 0
+      ? `the fit score's scale is kept apart: ${tagged.length} tagged rows under the new name, the same rows untagged under the old one`
+      : `the two fit scales can mix: ${why.join(" | ")}`);
 }
 
 console.log("");

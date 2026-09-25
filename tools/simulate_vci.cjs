@@ -361,6 +361,42 @@ gate("V8", out["Flip-flopper (APA)"] < 50,
   gate("V15", threw, "a second-best pick without the scenario's options is refused loudly, never silently ignored");
 }
 
+/* V16, V17 — THE FIT SCORE IS A SHARE OF WHAT THE PARTICIPANT ASKED FOR (24 September 2026).
+     V16  it orders every menu exactly as the shortfall does, stays within 0-100, and never shows
+          two options with different shortfalls as the same 0;
+     V17  0 means the option gives nothing on any value the participant holds, and a participant
+          who holds no policy value at all scores 100 on everything. */
+{
+  const { policyAlignmentScore, policyAlignmentShortfall } = B("block5CVR.js");
+  let seed = 20260925;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  let orderWrong = 0, outOfRange = 0, falseZeros = 0, menus = 0;
+  for (let i = 0; i < 2000; i++) {
+    const p = makeProfile(Object.fromEntries(POLICY.map((k) => [k, Math.round(rnd() * 100)])));
+    for (const scenario of BLOCK5_SCENARIOS) {
+      menus++;
+      const rows = scenario.options.map((o) => ({ s: policyAlignmentScore(o, p), f: policyAlignmentShortfall(o, p) }));
+      for (const a of rows) {
+        if (a.s < 0 || a.s > 100) outOfRange++;
+        for (const b of rows) {
+          if (a.f < b.f - 1e-9 && a.s < b.s) orderWrong++;
+          if (a.s === 0 && b.s === 0 && Math.abs(a.f - b.f) > 1) falseZeros++;
+        }
+      }
+    }
+  }
+  gate("V16", orderWrong === 0 && outOfRange === 0 && falseZeros === 0,
+    `the fit score orders every menu as the shortfall does and never hides a difference at 0  (${menus} menus: ${orderWrong} out of order, ${outOfRange} outside 0-100, ${falseZeros} different options both at 0)`);
+
+  const nothing = { ...BLOCK5_SCENARIOS[0].options[0], fingerprint: Object.fromEntries(POLICY.map((k) => [k, 0])) };
+  const holder = makeProfile({ vulnerabilityProtectionSensitivity: 70, groupSizeSensitivity: 40,
+    gainResponsivenessSensitivity: 90, outcomeAggregationSensitivity: 10 });
+  const holdsNothing = makeProfile(Object.fromEntries(POLICY.map((k) => [k, 0])));
+  gate("V17", policyAlignmentScore(nothing, holder) === 0
+      && BLOCK5_SCENARIOS[0].options.every((o) => policyAlignmentScore(o, holdsNothing) === 100),
+    "0 = the option gives nothing on any value held; a participant who holds no policy value scores 100 on every option");
+}
+
 console.log("\n" + "=".repeat(72));
 console.log(fails === 0 ? "### ALL VCI GATES PASSED ###" : `### ${fails} VCI GATE FAILURE(S) ###`);
 console.log("=".repeat(72) + "\n");

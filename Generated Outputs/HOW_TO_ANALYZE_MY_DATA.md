@@ -167,8 +167,12 @@ Aligned option by construction.
 
 So "this participant made 4 Aligned choices out of 4" means *they took the top of the menu every
 time*, not *the options suited them*. If you want the second claim, use
-`alignment_score_0_to_100` — and remember it floors at 0, so for anything that ranks or subtracts,
-use `matchShortfall` on the raw row instead.
+`fit_percent_of_what_they_asked_for`: the share of what the participant's four values asked for that
+the option gives (since 24 September 2026; it no longer stops at 0). It is a share of each
+participant's own maximum, so compare it within a participant. Across participants, rebuild the raw
+shortfall, which is on one scale for everybody, from `profile_by_scenario` and the option
+fingerprints (HOW_TO_READ_MY_DATABASE.md, section 6d, trap 2). Rows saved before 24 September 2026
+are on the old scale, under `old_fit_score_saved_before_24_september_2026`: never pool the two.
 
 ### 4.7 Reading "chose card 1" as "chose by their values" (or the other way round)
 

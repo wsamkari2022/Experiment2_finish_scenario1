@@ -186,8 +186,9 @@ export interface ChoicePrediction {
  * against how often that option is actually chosen; saying "you will pick this" cannot.
  *
  * WHY THE SCORES ARE USED RAW.
- * `policyAlignmentScore` is already on a common ruler with the participant's own values, which is
- * the entire point of the calibration step upstream. Re-normalising the six scores per scenario
+ * The shortfall is already on a common ruler with the participant's own values, which is the
+ * entire point of the calibration step upstream. (The displayed score has been a share of each
+ * participant's own maximum since 24 September 2026; the softmax does not read it.) Re-normalising the six scores per scenario
  * would throw that away and make a scenario where every option fits badly look identical to one
  * where every option fits well.
  */
@@ -202,12 +203,13 @@ export function predictChoice(
   /*
    * THE SOFTMAX RUNS ON THE UNCENSORED SHORTFALL, NOT ON THE FLOORED SCORE.
    *
-   * `policyAlignmentScore` stops at 0, and for a demanding participant every option can land there.
+   * `policyAlignmentScore` stopped at 0 until 24 September 2026, and for a demanding participant
+   * every option could land there.
    * Feeding four identical zeros to a softmax returns four identical probabilities, so the
    * prediction would say "25% each" and mean nothing - exactly when the participant's own values
    * are most pronounced.
    *
-   * Nothing else changes. Away from the floor the score is 100 minus the shortfall, and a softmax
+   * Nothing else changes. Away from the floor the old score was 100 minus the shortfall, and a softmax
    * is unaffected by adding a constant to every input, so the probabilities are identical for every
    * participant who was already being served correctly. `alignmentScore` is still reported for
    * display; only the arithmetic moved.

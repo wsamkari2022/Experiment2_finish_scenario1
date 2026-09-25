@@ -53,14 +53,33 @@ function scoreOf(profile: Block5UserProfile, key: string): number {
  * participant cares about that value (their own score), so missing an important value
  * hurts more than missing one they barely care about.
  *
- *   alignment = 100 − Σ (user/100) × max(0, user − option)
+ *   shortfall = Σ (user/100) × max(0, user − option)
+ *   alignment = 100 × (1 − shortfall ÷ the most this participant could possibly lose)
  */
 /**
  * ALIGNMENT — how well one option fits one participant, on the four POLICY values only.
  *
- * WHAT:  penalty = Σ over the 4 policy dims of  (u / 100) x max(0, u − f)
- *        score   = 100 − penalty
+ * WHAT:  shortfall = Σ over the 4 policy dims of  (u / 100) x max(0, u − f)
+ *        most      = Σ over the 4 policy dims of  (u / 100) x u     (an option giving 0 on all four)
+ *        score     = 100 x (1 − shortfall / most)
  * where u is the participant's score on that value and f is the option's fingerprint on it.
+ *
+ * THE SHARE OF WHAT THEY ASKED FOR (24 September 2026, researcher's approval). The score used to be
+ * 100 − shortfall, stopped at 0. A demanding participant loses more than 100 points on many options,
+ * so several cards read "0 out of 100" at once - 5 in 100 of all cards for steady pretend
+ * participants, two or more on one menu in 8 scenarios in 100 - and even the BEST fit read under 50
+ * in 7 in 100. The screen could no longer tell those options apart. Dividing by the most this
+ * participant could possibly lose makes the score a share: 100 = the option meets every value they
+ * hold, 0 = it gives nothing on any of them. It never stops at 0 by accident.
+ *
+ * NOTHING THAT RANKS CHANGES. For one participant, "most" is a single number, so the new score is a
+ * straight rescaling of the shortfall and orders the options exactly as before (100 out of 100
+ * scenarios in the check). Labels, VCI, the planner and the MPF (which reads the shortfall itself)
+ * are untouched. Only the number printed or stored moves. A participant who holds no policy value
+ * at all has nothing to fall short of and scores 100 on every option.
+ *
+ * EXCEEDING STILL EARNS NOTHING, on purpose: the participant's score is a minimum, and giving more
+ * of one value does not make up for giving less of another.
  *
  * WHY ONLY SHORTFALLS COUNT — max(0, u − f): an option is penalized only when it delivers LESS
  * than the participant demands. Exceeding their bar costs nothing: you are not punished for
@@ -79,15 +98,36 @@ function scoreOf(profile: Block5UserProfile, key: string): number {
  * alignment would be comparing "what I demand of a policy" with "what kind of reflection moves
  * me", which are different questions.
  */
+/**
+ * The scale the fit score is on, stamped on every scenario result as `fitScoreScale`. A row
+ * without it was saved before 24 September 2026, when the score was 100 minus the shortfall,
+ * stopped at 0. The two scales must never be pooled, so the database puts an untagged row's
+ * numbers under a separate, plainly named field. Move this string if the formula ever moves again.
+ */
+export const FIT_SCORE_SCALE = "share-of-what-they-asked-for-2026-09-24";
+
 export function policyAlignmentScore(option: Block5ScenarioOption, profile: Block5UserProfile): number {
-  return Math.round(clamp(100 - policyAlignmentShortfall(option, profile)));
+  const most = policyMostPossibleShortfall(profile);
+  if (most <= 0) return 100;
+  return Math.round(clamp(100 * (1 - policyAlignmentShortfall(option, profile) / most)));
+}
+
+/**
+ * The most a participant could lose on one option: the shortfall of an option that gives 0 on all
+ * four policy values, Σ (u/100) x u. It is the denominator that turns the shortfall into a share.
+ */
+export function policyMostPossibleShortfall(profile: Block5UserProfile): number {
+  return POLICY_DIM_KEYS.reduce((sum, k) => {
+    const u = scoreOf(profile, k);
+    return sum + (u / 100) * u;
+  }, 0);
 }
 
 /**
  * THE SAME QUANTITY, BEFORE THE FLOOR IS APPLIED. Lower is a better fit; 0 is a perfect one.
  *
  * WHY THIS HAD TO BE SEPARATED OUT.
- * `policyAlignmentScore` clamps at 0, and a clamp destroys information. A demanding participant -
+ * `policyAlignmentScore` clamped at 0 until 24 September 2026, and a clamp destroys information. A demanding participant -
  * one who asked for a lot on several values - pushes most options past a shortfall of 100, and
  * every one of them then reports the same score of 0. Ranking on that number put those options in
  * order of their internal id, which is alphabetical, so the "best fit" badge went to whichever
@@ -101,13 +141,10 @@ export function policyAlignmentScore(option: Block5ScenarioOption, profile: Bloc
  * wrong label on 2.7% of cards and named the wrong best-fit option in 1.5% of scenarios. About one
  * participant in five was affected somewhere in their run.
  *
- * THE SCORE SHOWN TO PARTICIPANTS IS UNCHANGED. They still see 0 rather than a negative number,
- * which would mean nothing to them. Only the ORDERING moved onto this uncensored value, and for
- * every participant whose options all score above 0 the two orderings are identical - the score is
- * exactly 100 minus this, so ranking by one is ranking by the other.
- *
- * STORE THIS, NOT ONLY THE SCORE, for analysis. The score is censored above a shortfall of 100 and
- * cannot be treated as an interval measure at the bottom of the range; this can.
+ * SINCE 24 SEPTEMBER 2026 THE SCORE NO LONGER STOPS AT 0: it is this shortfall divided by the most
+ * the participant could possibly lose (see policyAlignmentScore), so it orders the options exactly
+ * as this does. This remains the quantity to store and analyse: it is on the same scale for every
+ * participant, while the score is a share of each participant's own maximum.
  */
 export function policyAlignmentShortfall(
   option: Block5ScenarioOption,
@@ -197,13 +234,14 @@ export const ALIGNMENT_LABEL: Record<AlignmentLevel, string> = {
 };
 
 export interface LabeledOption extends Block5ScenarioOption {
-  /** 0-100, shown to the participant. Floored at 0, so not an interval measure at the bottom. */
+  /**
+   * 0-100, shown to the participant: the share of what their four values asked for that this option
+   * gives (see policyAlignmentScore). Since 24 September 2026 it no longer stops at 0.
+   */
   matchScore: number;
   /**
-   * The same fit, uncensored: total weighted shortfall, lower is better.
-   *
-   * This is what the ranking uses and what an analysis should use. `matchScore` cannot separate an
-   * option that missed by 104 from one that missed by 154 - both read 0 - and this can.
+   * The same fit as a raw total: weighted shortfall, lower is better. The ranking uses this; the
+   * score is it divided by the participant's own maximum, so the two always agree on order.
    */
   matchShortfall: number;
   level: AlignmentLevel;

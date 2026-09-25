@@ -184,6 +184,27 @@ in two scenarios. The question still names the trade. **Participants see this ch
 before 24 September 2026 were made with the number on screen. The APA page's "missed by N points"
 is a separate case and is unchanged.
 
+## The fit score is a share of what the participant asked for, since 24 September 2026
+
+`policyAlignmentScore` used to be 100 minus the weighted shortfall, stopped at 0. A demanding
+participant falls more than 100 short on many options, so several cards read "0 out of 100" at once
+(5 in 100 cards; two or more on one menu in 8 in 100 scenarios; the best fit under 50 in 7 in 100).
+It is now `100 × (1 − shortfall ÷ the most this participant could lose)`: 100 = the option meets
+every value they hold, 0 = it gives nothing on any. For one participant the denominator is one
+number, so **no order, label, VCI, Stability, planner or MPF number moves** (the MPF reads the
+shortfall). **Participants see different numbers**: the card line "Matches your earlier answers",
+and the results page's fit bars and "Fit N" badges. The results page's "fit your values well but
+performed below 45" count now uses the label (Aligned or Weakly aligned) instead of "score 60 or
+more", a line that meant something else on the new scale. Every new scenario row carries
+`fitScoreScale`; `dbShape.ts` puts an untagged (older) row's numbers under
+`old_fit_score_saved_before_24_september_2026`, never under the new field names. Gates V16–V17
+(`validate:vci`) and D54 (`validate:dbshape`).
+
+The same day, the side-panel sentence "Each is labeled by how well it fits your earlier responses"
+was removed: the labels came off the cards on 15 September, so it sent participants looking for
+something that is not there, and it pointed them at their own fit. It now reads "Every option stays
+available, and you can choose any of them."
+
 ## The planner, revised 24 September 2026
 
 The tree, its three steps and the win counting are unchanged; no card order moved (24,000 orders

@@ -289,8 +289,14 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   });
   const perfVals = scenarios.map((r) => r.performanceCaptured).filter((v): v is number => typeof v === "number");
   const perfMean = perfVals.length ? Math.round(perfVals.reduce((a, b) => a + b, 0) / perfVals.length) : 0;
+  /* "Fit your values well" means one of the two best-fitting options (Aligned or Weakly aligned),
+     the same test as alignedCount above. It used to be a fit score of 60 or more, a line that meant
+     something different once the score became a share of what the participant asked for
+     (24 September 2026); the label does not depend on the scale at all. */
   const tradedCount = scenarios.filter((r) =>
-    typeof r.performanceCaptured === "number" && (r.matchScore ?? 0) >= 60 && r.performanceCaptured < 45).length;
+    typeof r.performanceCaptured === "number"
+    && (r.alignmentLevel === "aligned" || r.alignmentLevel === "weakly_aligned")
+    && r.performanceCaptured < 45).length;
   const perfCaption = perfVals.length === 0
     ? "No performance data recorded for these scenarios."
     : `On average you took ${perfMean}% of the outcome quality each scenario offered.` +
