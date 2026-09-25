@@ -32,7 +32,7 @@ import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { ordinal } from "./block5Performance";
 import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from "./blocks123Consistency";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
-import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest } from "./block5CVR";
+import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
 import { buildTimingSummary } from "./telemetry";
 import {
   POLICY_DIM_KEYS,
@@ -277,31 +277,40 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
    * The bar is `performanceCaptured`: a share of what that scenario's six options actually
    * offered, so a long bar always means "took a strong option here" regardless of menu.
    */
+  /* The wish (scenario 5) keeps its bar - it shows how strong the option wished for was - but is
+     starred and left out of the average, which counts the decisions only (25 September 2026). The
+     star is explained in the caption: the chart's label column is 116px, and "Scenario 5 (wish,
+     not counted)" ran into its own bar. */
   const perfBars: HBar[] = scenarios.map((r, i) => {
     const v = r.performanceCaptured;
     return {
-      label: `Scenario ${i + 1}`,
+      label: resultCountsTowardsPerformance(r) ? `Scenario ${i + 1}` : `Scenario ${i + 1} *`,
       value: v ?? 0,
       color: v === undefined ? SERIES_COLORS[1]
         : v >= 70 ? "#0d9488" : v >= 45 ? "#2563eb" : "#7c3aed",
       valueLabel: v === undefined ? "—" : `${v}`,
     };
   });
-  const perfVals = scenarios.map((r) => r.performanceCaptured).filter((v): v is number => typeof v === "number");
+  const perfVals = scenarios.filter(resultCountsTowardsPerformance)
+    .map((r) => r.performanceCaptured).filter((v): v is number => typeof v === "number");
   const perfMean = perfVals.length ? Math.round(perfVals.reduce((a, b) => a + b, 0) / perfVals.length) : 0;
   /* "Fit your values well" means one of the two best-fitting options (Aligned or Weakly aligned),
      the same test as alignedCount above. It used to be a fit score of 60 or more, a line that meant
      something different once the score became a share of what the participant asked for
      (24 September 2026); the label does not depend on the scale at all. */
   const tradedCount = scenarios.filter((r) =>
-    typeof r.performanceCaptured === "number"
+    resultCountsTowardsPerformance(r)
+    && typeof r.performanceCaptured === "number"
     && (r.alignmentLevel === "aligned" || r.alignmentLevel === "weakly_aligned")
     && r.performanceCaptured < 45).length;
   const perfCaption = perfVals.length === 0
     ? "No performance data recorded for these scenarios."
-    : `On average you took ${perfMean}% of the outcome quality each scenario offered.` +
+    : `In the scenarios you decided, you took on average ${perfMean}% of the outcome quality each one offered.` +
       (tradedCount > 0
         ? ` In ${tradedCount} scenario${tradedCount === 1 ? "" : "s"} you chose an option that fit your values well but performed poorly.`
+        : "") +
+      (scenarios.some((r) => !resultCountsTowardsPerformance(r))
+        ? ` * Scenario ${scenarios.findIndex((r) => !resultCountsTowardsPerformance(r)) + 1} was your wish: it is shown, but not counted.`
         : "");
   const choiceCaption = `Your final choice fit your values in ${alignedCount} of ${n} scenario${n === 1 ? "" : "s"}.`;
 

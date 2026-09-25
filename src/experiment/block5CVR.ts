@@ -511,6 +511,20 @@ function bump(p: Block5UserProfile, key: string, delta: number, moves?: Block5Va
   if (moves) moves.push(valueMove(key, from, delta, dim.score - from, why));
 }
 
+/**
+ * A copy of a profile with some scores replaced, ranks recomputed. Used to rebuild the profile a
+ * scenario OPENED with from the snapshots its predecessor saved (see profileShownIn in
+ * block5Mirror.ts). The array order is kept, so ties fall exactly as they did live.
+ */
+export function profileWithScores(profile: Block5UserProfile, scores: Record<string, number>): Block5UserProfile {
+  const p = cloneProfile(profile);
+  for (const d of p.dimensions) {
+    if (typeof scores[d.key] === "number") d.score = scores[d.key];
+  }
+  recompute(p);
+  return p;
+}
+
 /** Two decimals: enough for a stored record, and free of floating-point noise like 20.999999. */
 export function roundForRecord(n: number): number {
   return Math.round(n * 100) / 100;
@@ -1231,7 +1245,8 @@ export function scenarioIsScored(scenario: { decisionRole?: Block5DecisionRole }
  *
  * Everywhere except scenario 6. There the four options are standing rules rather than actions, so
  * "how fast" and "how reversible" have no answer for them; their metrics are all 50 to say exactly
- * that; and the scenario is excluded from the Performance measure along with VCI and Stability.
+ * that; and the scenario is excluded from the Performance measure along with VCI and Stability
+ * (really excluded only since 25 September 2026 - see scenarioCountsTowardsPerformance).
  *
  * Showing them anyway would be worse than useless. Six identical bars invite a participant to hunt
  * for a difference that is not there, and a scenario built to ask which VALUE someone acts on would
@@ -1269,6 +1284,28 @@ export function isPredictionTest(x: { decisionRole?: Block5DecisionRole }): bool
 /** Same question, asked of a stored result rather than of a scenario definition. */
 export function resultIsScored(result: Block5ScenarioResult): boolean {
   return (result.decisionRole ?? "decider") === "decider";
+}
+
+/**
+ * DOES THIS SCENARIO COUNT TOWARD THE PARTICIPANT'S PERFORMANCE? Only a decision does
+ * (25 September 2026, the researcher's decision).
+ *
+ * Until this date every average of performance - the running bars at the top of the page, the raw
+ * mean and the captured share - took in ALL six scenarios. Two of them are not decisions:
+ *   - scenario 5 is a WISH. Nothing the participant picks there happens because of them, so it
+ *     cannot be part of how well their decisions turned out. It now shows no "Preview impact".
+ *   - scenario 6's four rules all have performance 50, so it pulled every score toward 50 and
+ *     nobody could reach 100: the strongest option in every scenario scored 92.
+ * The same four decisions that VCI and Stability read are the only ones performance reads now.
+ * A wish's own performance number is still saved on its row; it simply is not averaged in.
+ */
+export function scenarioCountsTowardsPerformance(scenario: { decisionRole?: Block5DecisionRole }): boolean {
+  return scenarioIsScored(scenario);
+}
+
+/** Same question, asked of a stored result. */
+export function resultCountsTowardsPerformance(result: Block5ScenarioResult): boolean {
+  return resultIsScored(result);
 }
 
 /**
@@ -1612,9 +1649,10 @@ export function computeSensitivityStability(
  * construction rather than by the five menus happening to match.
  */
 export function averagePerformance(results: Block5ScenarioResult[]): number {
-  if (results.length === 0) return 0;
-  const sum = results.reduce((a, r) => a + (r.performanceScore ?? 0), 0);
-  return Math.round(sum / results.length);
+  const counted = results.filter(resultCountsTowardsPerformance);
+  if (counted.length === 0) return 0;
+  const sum = counted.reduce((a, r) => a + (r.performanceScore ?? 0), 0);
+  return Math.round(sum / counted.length);
 }
 
 /* ---------------- Cumulative / projected performance (top dashboard) ---------------- */
@@ -1639,9 +1677,10 @@ function averageMetricProfiles(list: Block5MetricProfile[]): Block5MetricProfile
   return out;
 }
 
-/** Running-average performance across the scenarios confirmed so far (0 when none). */
+/** Running-average performance across the DECISIONS confirmed so far (0 when none). A wish is not averaged in. */
 export function cumulativeMetrics(results: Block5ScenarioResult[]): Block5MetricProfile {
-  const list = results.map((r) => r.metrics).filter((m): m is Block5MetricProfile => !!m);
+  const list = results.filter(resultCountsTowardsPerformance)
+    .map((r) => r.metrics).filter((m): m is Block5MetricProfile => !!m);
   return averageMetricProfiles(list);
 }
 
@@ -1650,7 +1689,8 @@ export function projectedMetrics(
   results: Block5ScenarioResult[],
   optionMetricsProfile: Block5MetricProfile,
 ): Block5MetricProfile {
-  const list = results.map((r) => r.metrics).filter((m): m is Block5MetricProfile => !!m);
+  const list = results.filter(resultCountsTowardsPerformance)
+    .map((r) => r.metrics).filter((m): m is Block5MetricProfile => !!m);
   list.push(optionMetricsProfile);
   return averageMetricProfiles(list);
 }

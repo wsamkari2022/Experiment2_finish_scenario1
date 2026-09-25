@@ -60,6 +60,7 @@
  */
 
 import { METRIC_KEYS } from "./block5Types";
+import { resultCountsTowardsPerformance } from "./block5CVR";
 import type {
   Block5MetricKey,
   Block5Scenario,
@@ -221,7 +222,10 @@ export function overallStanding(
  * by construction rather than by the menus happening to match.
  */
 export function overallCaptured(results: Block5ScenarioResult[]): number {
+  /* The decisions only (25 September 2026): a wish and the scenario-6 rules are not averaged in.
+     See scenarioCountsTowardsPerformance in block5CVR.ts. */
   const vals = results
+    .filter(resultCountsTowardsPerformance)
     .map((r) => r.performanceCaptured)
     .filter((v): v is number => typeof v === "number");
   if (vals.length === 0) return 0;

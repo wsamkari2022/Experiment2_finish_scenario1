@@ -88,14 +88,14 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | F2 | Side panel says each option "is labeled by how well it fits"; no labels are shown | Medium | **Fixed** (sentence shortened) |
 | F3 | Docs said the raw shortfall is saved on the scenario row; it is not | Medium (docs) | **Fixed**: now saved (`matchShortfall`, `points_short_of_what_they_asked_for`, gate D56) |
 | G1 | "VCI acted" gets help from the reflection; "VCI wished" never does | High (analysis) | **Solved by decision** (25 Sept): no reflection in scenario 5 on purpose; the wish is compared with the final decision. Reason to be written down (Fix 4, step 9) |
-| G2 | The wish is scored on a profile the decision just moved | High (analysis) | Open; **plan written** (Fix 4, step 6) |
+| G2 | The wish is scored on a profile the decision just moved | High (analysis) | **Fixed** (Fix 4: scenario 5 shown and scored on scenario 4's opening values; W2, W3) |
 | G3 | VCI acted / wished are one choice each: 100, 80, 50 or 10 | Medium (reporting) | **Partly solved by decision**: the per-value difference (Fix 4, step 7) replaces the four steps; the VCI gap stays rough, report it for groups |
 | G4 | VCI and Stability are good for groups, rough for one person | Medium (reporting) | Open, state in the thesis |
 | G5 | Stability 100 usually means nothing was measured | Medium | Known; now counted |
 | G6 | One honest change of mind gets the Stability of a random responder | Medium, decision | For discussion |
 | G7 | A random responder's VCI is 56-57, not 50 | Low (docs) | Open |
-| G8 | Scenario 6 adds a fixed 50 to the performance average, so nobody reaches 100 | High | Open; **plan written** (Fix 4, step 1) |
-| G9 | Scenario 5 (a wish) is in the performance average | High | Open; **plan written** (Fix 4, Part A, Waseem's decision) |
+| G8 | Scenario 6 adds a fixed 50 to the performance average, so nobody reaches 100 | High | **Fixed** (Fix 4: performance counts the decisions only; W1, D57) |
+| G9 | Scenario 5 (a wish) is in the performance average | High | **Fixed** (Fix 4, Part A; W1, D57) |
 
 ---
 
@@ -1029,7 +1029,7 @@ measure the same thing.
 3. The flag line: 20 points (my suggestion), or another number.
 4. The sheet: Excel file, or a simple web form.
 
-## Fix 4 plan: scenario 5 is only a wish (written 25 September, waiting for approval)
+## Fix 4 plan: scenario 5 is only a wish (written 25 September; approved and DONE the same day)
 
 Nothing here is implemented. Waseem's decisions (25 September 2026), in his words:
 - Scenario 5 must not add anything to the overall performance score, and "Preview impact" goes
@@ -1066,7 +1066,8 @@ Nothing here is implemented. Waseem's decisions (25 September 2026), in his word
    (recommended: the screen stays as close to scenario 4 as possible), or hide the bars as in
    scenario 6.
 4. The results page: the average and the "fit your values but performed poorly" count use
-   scenarios 1-4 only; scenario 5's bar stays, labelled "your wish, not counted".
+   scenarios 1-4 only; scenario 5's bar stays, labelled "your wish, not counted" (built as
+   "Scenario 5 *" with the star explained under the chart: the long label ran into its bar).
 5. The database recomputes the headline performance from the saved rows with the new rule, so
    old test records and new ones follow one rule.
 
@@ -1197,3 +1198,4 @@ protecting the vulnerable, and less about everything else.
 - **2026-09-24. Shortfall saved (Waseem: "1-yes") and B5 done ("Do B5 implement").** Each scenario row now carries `matchShortfall` and `fitShortfallsByOptionId` (two decimals, `roundForRecord`), shown as `points_short_of_what_they_asked_for` in `analysis.alignment_records` (gate D56). B5: `bump()` records every move when given a list; three twins `applyKeepUpdatesWithMoves`, `applyEndorsementUpdatesWithMoves`, `applyApaUpdatesWithMoves` return `{ profile, moves }`, and the plain rules call them, so no score changed (V18: 9,000 updates, same profile every time, the moves always add up to the real change). The APA 30-point cap, if it ever binds, is its own move. The page passes the moves into the result as `valueMoves` (required in `commitChoice`, so no path can forget); `analysis.value_moves_asked_for_and_made` lists them in words with `cut_off_by` and totals (gate D55; D44 now sees 30 paths). `SHAPE_VERSION` `2026-09-24-moves-and-shortfall`. Not visible to participants, so not checked in the browser. Measured: 16-23 in 100 policy values START Block 5 at 0 or 100; 7-49 in 100 moves are cut off; the old 13% came from uniform profiles and the notes now say so.
 - **2026-09-24. VCI / Stability accuracy checked** (Group G above) and **Fix 3 plan (D1 + D2) written**, not implemented.
 - **2026-09-25. Fix 4 plan written (scenario 5 is only a wish).** Waseem decided: scenario 5 out of performance, no "Preview impact" there, no reflection there on purpose, same pick means gap 0, per-value reading of which value rose. Checked in the code first: scenario 5 AND scenario 6 (at a fixed 50) are in all three performance averages; card order is identical in 4 and 5 (0 of 3,000), but fit numbers differ for 81 in 100 and the same-pick VCI gap is not 0 for 56 in 100 (scratch `s5_check.cjs`, `s5_order.cjs`). G1 solved by his decision, G3 partly; G8 and G9 added. Nothing implemented.
+- **2026-09-25. Fix 4 done (Waseem: 1 yes, 2 A, 3 B, 4 approve A + B).** Part A: `scenarioCountsTowardsPerformance` / `resultCountsTowardsPerformance` gate `averagePerformance`, `overallCaptured`, `cumulativeMetrics`, `projectedMetrics`; scenario 6's fixed 50 is out too. Scenario 5: no Preview impact (`canPreview`), side-panel sentence without its preview half, the bars say "This is a wish, so it does not change these bars." (shown even minimized), help text adjusted. Results page: average and traded count over decisions, wish bar starred. Headline recomputed from rows (`performance_counts`), rows carry `counts_towards_performance`. Part B: `profileShownIn` (block5Mirror.ts) rebuilds scenario 4's opening profile from the saved snapshots; the page labels, shows and scores scenario 5 on it (`shownProfile`), the row carries `scoredOnProfileOf`, and dbShape's prediction and MCF rows use the same values (`profileScenarioWasShownOn`). `analyseMirror` adds `wishMinusDecision`, biggest rise/drop and `wishScoredOnTheDecisionsValues`; `decided_versus_wished` stores them with a sentence and both readings against the pre-Block-5 profile; copied into `major_info_and_scores.vci`. The block5Mirror note that called the same-pick gap "small" and "real" is corrected. Gates W1-W4 (validate:twins), D57, D58; D40 and D48 updated to the new rule. `SHAPE_VERSION` `2026-09-25-scenario5-is-a-wish`. **Checked in the browser** (pretend participant scored by the real code, best fit in 1-3, second-best in 4): scenario 5 showed 77/74/73/71/64/51, identical to scenario 4 (old rule would have shown 69/83/78/71/65/55); 0 Preview buttons; the wish line; saved performance 35 = the four decisions (old rule 31); same option in 4 and 5 both Weakly aligned 74, gap 0 (old rule +20); results chart fixed after the long label overlapped. No console errors.

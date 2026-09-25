@@ -220,6 +220,37 @@ changed. Each scenario row carries `valueMoves` (`{ value, from, requested, appl
 (`validate:vci`: 9,000 updates, the record always adds up to the real change) and D55
 (`validate:dbshape`).
 
+## Scenario 5 is only a wish, since 25 September 2026
+
+The researcher's design: scenario 5 exists only to see how far the WISH (the same decision, made by
+somebody else and landing on the participant) sits from the DECISION they made in scenario 4, and
+from their pre-Block-5 values. No reflection runs there on purpose: the participant has just seen
+scenario 4's information and reflection, and scenario 5 is identical except for their role. So they
+either wish for what they decided (every gap must be 0) or for something that helps or hurts them
+more, and the study reads, value by value, which value rose.
+
+- **Performance counts the four decisions only.** `scenarioCountsTowardsPerformance` /
+  `resultCountsTowardsPerformance` (block5CVR.ts) gate all three averages (`averagePerformance`,
+  `overallCaptured`, the running bars). This also took out scenario 6, whose rules all score 50 and
+  had kept everybody below 100: the strongest option in every scenario read 92. The database headline
+  is worked out again from the rows, so old records follow the same rule.
+- **Participants see it:** no "Preview impact" on scenario 5's cards; the side-panel sentence drops
+  its preview half; the performance bars carry one line, "This is a wish, so it does not change these
+  bars." The results page stars scenario 5's performance bar ("Scenario 5 *", explained in the
+  sentence under the chart: the label column is too narrow for more) and leaves it out of the average.
+- **Scenario 5 is shown and scored on the values scenario 4 OPENED with** (`profileShownIn` in
+  block5Mirror.ts), on screen and in the saved numbers; the live profile is still the one updated,
+  and scenario 5 updates nothing. Before, the same six options showed different fit numbers in the
+  two scenarios for 81 in 100 pretend participants, and wishing for the option they decided gave a
+  non-zero gap for 56 in 100. The card ORDER was already identical (it comes from the frozen
+  profile). The row carries `scoredOnProfileOf`, and the database rebuilds the wish's prediction
+  and MCF rows on the same values.
+- **What the wish changed, value by value:** `analysis.position_effect.decided_versus_wished.
+  wish_minus_decision_by_value`, with the biggest rise and drop in words, copied into
+  `major_info_and_scores.vci`.
+
+Gates W1-W4 (`validate:twins`) and D57-D58 (`validate:dbshape`).
+
 ## The planner, revised 24 September 2026
 
 The tree, its three steps and the win counting are unchanged; no card order moved (24,000 orders
@@ -341,7 +372,8 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 56 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55) and the saved shortfall (D56). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 58 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57) and what the wish changed (D58). `--dump` writes a full simulated document |
+| `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference (W1-W4) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |
@@ -398,8 +430,9 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   badge under each option title in the compare-charts overlay, removed on 15 September 2026, so no
   live scenario prints one anywhere. The level is still computed and still stored — it is simply
   never shown while the participant is still choosing.
-- Scenario 5 is a wish rather than a decision. It is excluded from consistency, stability and the
-  reflection measures, but included in the position effect.
+- Scenario 5 is a wish rather than a decision. It is excluded from consistency, stability, the
+  reflection measures and (since 25 September 2026) performance, but included in the position
+  effect. See "Scenario 5 is only a wish" above.
 - The planner's tree is settled (LEAP's trade-off tree, reviewed with the advisor) and its card order
   is not to be "fixed" without the researcher. What it does in practice is MEASURED
   (`npm run report:planner-overlap`): card 1 is the option best on the participant's #1 value for

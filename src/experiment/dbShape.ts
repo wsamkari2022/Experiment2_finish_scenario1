@@ -44,13 +44,14 @@ import {
 import { TELEMETRY_KEY, UNTIMED_DISPLAY_STAGES } from "./telemetry";
 import { PARTICIPANT_RECORD_KEY } from "./participantRecord";
 import {
-  analysePosition, positionEffectLabel, optionDistance, profileDistance, POSITION_LABEL,
+  analysePosition, positionEffectLabel, optionDistance, profileDistance, POSITION_LABEL, positionRows,
 } from "./block5Position";
 import { ACTIVE_TIME_KEY } from "./activeTime";
 import { SESSION_LOG_KEY } from "./sessionLog";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
-import { ALIGNMENT_LABEL, FIT_SCORE_SCALE } from "./block5CVR";
+import { ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, resultCountsTowardsPerformance } from "./block5CVR";
+import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT } from "./block5Types";
@@ -79,7 +80,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-24-moves-and-shortfall";
+export const SHAPE_VERSION = "2026-09-25-scenario5-is-a-wish";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -904,11 +905,20 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
     context_stability_label: sensitivityStabilityOf(b5, "context")?.level ?? null,
     stakeholder_stability_score: sensitivityStabilityOf(b5, "stakeholder")?.value ?? null,
     stakeholder_stability_label: sensitivityStabilityOf(b5, "stakeholder")?.level ?? null,
-    performance_score: b5.performance ?? null,
-    performance_captured: b5.performanceCaptured ?? null,
+    /* PERFORMANCE COUNTS THE FOUR DECISIONS ONLY (25 September 2026). Worked out again here from the
+       saved rows rather than copied, so a record saved before that date - whose stored figure
+       averaged the wish (scenario 5) and scenario 6's fixed 50 in with the decisions - reads by the
+       same rule as a new one. Null until the run is complete, exactly as before. */
+    performance_score: typeof b5.performance === "number" ? averagePerformance(resultsOf(b5)) : null,
+    performance_captured: typeof b5.performanceCaptured === "number" ? overallCaptured(resultsOf(b5)) : null,
     /* Every other score in this headline carries its label beside it; this one did not, so the
        one number here that needs a scale to read was the one without words. */
-    performance_captured_label: b5.performanceCapturedLevel ?? null,
+    performance_captured_label: typeof b5.performanceCaptured === "number"
+      ? capturedLabel(overallCaptured(resultsOf(b5)))
+      : null,
+    performance_counts:
+      "the four decisions only (scenarios 1-4). The wish (scenario 5) and the rule test (scenario 6) "
+      + "are not averaged in; each still has its own performance number on its own row.",
     position_effect: position?.effect ?? null,
     position_effect_label: position?.label ?? null,
     scenarios_completed: Array.isArray(b5.scenarioResults) ? b5.scenarioResults.length : null,
@@ -1048,6 +1058,29 @@ function profileWhenScenarioOpened(
 }
 
 /**
+ * THE PROFILE A SCENARIO WAS SHOWN AND SCORED ON: the one it opened on, except a wish saved since
+ * 25 September 2026. That row names, in `scoredOnProfileOf`, the decision whose OPENING values it
+ * was shown and scored on (profileShownIn in block5Mirror.ts), and every section that rebuilds what
+ * the participant saw - the prediction rows and the MCF readings - must use the same values, or it
+ * would describe a screen that was never shown. A wish saved before that date has no such field and
+ * is read, correctly for it, on the values it opened on.
+ */
+function profileScenarioWasShownOn(
+  index: number,
+  results: Block5ScenarioResult[],
+  originalProfile: unknown,
+): ReturnType<typeof profileWhenScenarioOpened> & { borrowedFromIndex: number | null } {
+  const from = results[index]?.scoredOnProfileOf;
+  if (typeof from === "string") {
+    const at = results.findIndex((r) => r.scenarioId === from);
+    if (at >= 0 && at < index) {
+      return { ...profileWhenScenarioOpened(at, results, originalProfile), borrowedFromIndex: at };
+    }
+  }
+  return { ...profileWhenScenarioOpened(index, results, originalProfile), borrowedFromIndex: null };
+}
+
+/**
  * THE FOUR POLICY VALUES AT EVERY STEP OF BLOCK 5, NOT ONLY AT THE END.
  *
  * WHY A LIST AND NOT ONE NUMBER. `profile_now` says where the four values finished. That is the
@@ -1085,6 +1118,7 @@ function buildProfileByScenario(block5: unknown): Record<string, unknown>[] | nu
     const scenario = scenarioOf(r.scenarioId);
     const opened = profileWhenScenarioOpened(index, results, original);
     const before = opened.profile ? policyScoresOfProfile(opened.profile) : null;
+    const shownOn = profileScenarioWasShownOn(index, results, original);
 
     const raw = (r.policySnapshotAfter ?? null) as Record<string, number> | null;
     const after = raw
@@ -1107,6 +1141,12 @@ function buildProfileByScenario(block5: unknown): Record<string, unknown>[] | nu
       decision_role: role,
       this_scenario_can_move_the_profile: canMove,
       profile_when_the_scenario_opened: before,
+      /* The same values, except the wish (since 25 September 2026): it is shown and scored on the
+         values its paired decision opened with. */
+      profile_it_was_shown_and_scored_on: shownOn.profile ? policyScoresOfProfile(shownOn.profile) : null,
+      shown_and_scored_on: shownOn.borrowedFromIndex !== null
+        ? `the values scenario ${shownOn.borrowedFromIndex + 1} opened with (the decision this wish mirrors)`
+        : "its own opening values",
       opened_on_the_frozen_profile: opened.usedFrozen,
       the_snapshot_before_it_was_missing: opened.snapshotWasMissing,
       profile_after_the_scenario: after,
@@ -1491,6 +1531,8 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       position_label: scenario?.stakePosition ? POSITION_LABEL[scenario.stakePosition] : null,
       decision_role: role,
       counts_towards_consistency_and_stability: role === "decider",
+      /* Since 25 September 2026 the same four decisions are the only ones performance reads. */
+      counts_towards_performance: resultCountsTowardsPerformance(r),
 
       chosen_option_id: r.selectedOptionId ?? null,
       chosen_option_title: chosen?.title ?? null,
@@ -1691,7 +1733,9 @@ export function buildMpfPredictions(block5: unknown): Record<string, unknown> | 
 
   const byScenario = results.map((r, index) => {
     const scenario = scenarioOf(r.scenarioId);
-    const opened = profileWhenScenarioOpened(index, results, b5.originalProfile);
+    /* The values the scenario was shown and scored on (the wish: its decision's opening values). */
+    const opened = profileScenarioWasShownOn(index, results, b5.originalProfile);
+    const at = opened.borrowedFromIndex ?? index;
     const profileThen = opened.profile;
     if (!scenario || !profileThen) {
       return { scenario_id: r.scenarioId ?? null, order_shown: index + 1, could_not_be_computed: true };
@@ -1765,12 +1809,15 @@ export function buildMpfPredictions(block5: unknown): Record<string, unknown> | 
 
       /* The sentence describes the numbers actually used, including when a missing snapshot forced
          a fall back to the frozen profile. See profileWhenScenarioOpened. */
-      profile_used: opened.snapshotWasMissing
-        ? `the participant's four values as they entered Block 5 — the snapshot after scenario ${index} `
+      profile_used: (opened.snapshotWasMissing
+        ? `the participant's four values as they entered Block 5 — the snapshot after scenario ${at} `
           + "is missing from this record, so the frozen profile was used instead"
-        : index === 0
+        : at === 0
           ? "the participant's four values as they entered Block 5"
-          : `the participant's four values after scenario ${index}`,
+          : `the participant's four values after scenario ${at}`)
+        + (opened.borrowedFromIndex !== null
+          ? ` — the values scenario ${at + 1} opened with, because this wish is scored on the same values as the decision it mirrors`
+          : ""),
       profile_used_values: policyScoresOfProfile(profileThen),
       profile_snapshot_was_missing: opened.snapshotWasMissing,
 
@@ -2047,9 +2094,11 @@ export function buildMcfSection(block5: unknown): Record<string, unknown> | null
     const scenario = scenarioOf(r.scenarioId);
     if (!scenario) return null;
 
-    const opened = profileWhenScenarioOpened(
+    /* The values the readings were shown on (the wish: its decision's opening values). */
+    const opened = profileScenarioWasShownOn(
       index, results, (block5 as Record<string, unknown>).originalProfile,
     );
+    const at = opened.borrowedFromIndex ?? index;
     if (!opened.profile) {
       return {
         order_shown: index + 1,
@@ -2079,12 +2128,15 @@ export function buildMcfSection(block5: unknown): Record<string, unknown> | null
       read_the_option_they_chose: read.includes(String(r.selectedOptionId ?? "")),
 
       /* ---- the profile the reading was built on ---- */
-      profile_used: opened.snapshotWasMissing
+      profile_used: (opened.snapshotWasMissing
         ? "the profile the participant entered Block 5 with — the snapshot for this scenario is "
           + "missing from this record"
-        : index === 0
+        : at === 0
           ? "the participant's four values as they entered Block 5"
-          : `the participant's four values after scenario ${index}`,
+          : `the participant's four values after scenario ${at}`)
+        + (opened.borrowedFromIndex !== null
+          ? ` — the values scenario ${at + 1} opened with, because this wish is shown on the same values as the decision it mirrors`
+          : ""),
       profile_used_values: policyScoresOfProfile(opened.profile),
 
       /* ---- one row per option ---- */
@@ -2233,7 +2285,10 @@ export function buildMajorScores(
       wishing_minus_deciding: decided?.responsibility_gap ?? null,
       what_the_gap_means:
         "Positive means they were truer to their own values when the decision was NOT theirs to "
-        + "make. Both sides are judged on the profile they brought into that scenario.",
+        + "make. Both sides are judged on the values the participant had when they opened scenario 4 "
+        + "(since 25 September 2026), so wishing for the option they decided gives 0.",
+      what_the_wish_changed_by_value: decided?.wish_minus_decision_by_value ?? null,
+      what_the_wish_changed_in_words: decided?.what_the_wish_changed_in_words ?? null,
     },
 
     /* 2 ------------------------------------------------------------------ stability */
@@ -2364,8 +2419,10 @@ export function buildMajorScores(
     what_profile_by_scenario_is_for:
       "profile_now is one closing figure, and a closing figure cannot show movement: somebody who "
       + "never shifted and somebody who swung twice and came back finish on the same numbers. Each "
-      + "row here holds the four values the scenario OPENED on - the ones its alignment, MCF "
-      + "reading and prediction were all built from - the four it CLOSED on, and the difference. "
+      + "row here holds the four values the scenario OPENED on, the four it CLOSED on, and the "
+      + "difference. Alignment, MCF reading and prediction were built on "
+      + "profile_it_was_shown_and_scored_on, which is the opening values everywhere except the wish: "
+      + "since 25 September 2026 it uses the values its paired decision opened with. "
       + "Rows where this_scenario_can_move_the_profile is false must show no movement: the wish "
       + "and the prediction test never update the profile.",
     profile_after_block5: profiles?.after ?? null,
@@ -2645,11 +2702,38 @@ export function buildPositionSection(block5: unknown): Record<string, unknown> |
  *   labels_apart                0-3; what the reading's "somewhat" or "much" counts
  *
  * "Aligned" means exactly the Aligned label. A Weakly aligned choice reads false, and its label is
- * stored beside the flag so the two can be told apart. Each side is judged on the profile the
- * participant brought into its own scenario, exactly as VCI is.
+ * stored beside the flag so the two can be told apart.
+ *
+ * BOTH SIDES ARE JUDGED ON ONE RULER (25 September 2026): the values the participant had when they
+ * opened scenario 4. Scenario 5 is scenario 4 with only the chair changed and never moves the
+ * profile, so wishing for the option they decided now gives a gap of exactly 0 (before, it was not
+ * 0 for 56 in 100 pretend participants). `wish_scored_on_the_same_values_as_the_decision` is false
+ * on older records, whose gap is not comparable with newer ones.
+ *
+ * WHAT THE WISH CHANGED, VALUE BY VALUE - the question scenario 5 exists for (the researcher's
+ * words: which value does a person start to care about more when someone else's decision lands on
+ * them?). `wish_minus_decision_by_value` compares the two options directly, no profile involved,
+ * and is 0 on all four values when they wished for the same option. The two `..._minus_profile_
+ * before_block5_by_value` fields are the same readings the position effect makes, side by side.
+ *
+ * NO REFLECTION RUNS IN SCENARIO 5, ON PURPOSE (the researcher, 25 September 2026): the participant
+ * has just seen scenario 4's information and reflection, and scenario 5 is identical except for
+ * their role. So the wish is compared with their FINAL decision in scenario 4.
  *
  * Null when either half is missing - a participant who stopped before scenario 5.
  */
+/** The wish's change from the decision, in one plain sentence. */
+function whatTheWishChanged(m: NonNullable<ReturnType<typeof analyseMirror>>): string {
+  if (m.sameOption) return "They wished for exactly the option they had decided: no value changed.";
+  const up = m.valueWishRaisedMost;
+  const down = m.valueWishLoweredMost;
+  const more = up ? `${up.points} points more ${POLICY_DIM_SHORT[up.value]}` : null;
+  const less = down ? `${-down.points} points less ${POLICY_DIM_SHORT[down.value]}` : null;
+  if (!more && !less) return "They wished for a different option with the same four values.";
+  return "When the same decision was made by someone else and landed on them, they wished for an "
+    + `option giving ${[more, less].filter(Boolean).join(" and ")} than the one they had decided.`;
+}
+
 function decidedVersusWished(b5: Record<string, unknown>): Record<string, unknown> | null {
   try {
     const results = b5.scenarioResults;
@@ -2679,6 +2763,27 @@ function decidedVersusWished(b5: Record<string, unknown>): Record<string, unknow
       mirror_gap: m.mirrorGap,
       wish_seconds: m.wished.seconds,
       wish_was_hurried: m.hurried,
+
+      /* ---- what the wish changed, value by value (25 September 2026) ---- */
+      wish_scored_on_the_same_values_as_the_decision: m.wishScoredOnTheDecisionsValues,
+      wish_minus_decision_by_value: m.wishMinusDecision,
+      value_the_wish_raised_most: m.valueWishRaisedMost
+        ? { value: m.valueWishRaisedMost.value, value_name: POLICY_DIM_SHORT[m.valueWishRaisedMost.value], points: m.valueWishRaisedMost.points }
+        : null,
+      value_the_wish_lowered_most: m.valueWishLoweredMost
+        ? { value: m.valueWishLoweredMost.value, value_name: POLICY_DIM_SHORT[m.valueWishLoweredMost.value], points: m.valueWishLoweredMost.points }
+        : null,
+      what_the_wish_changed_in_words: whatTheWishChanged(m),
+      decision_minus_profile_before_block5_by_value:
+        positionRows(results as never, before as never).find((r) => r.scenarioId === m.decided.scenarioId)?.valueDrift ?? null,
+      wish_minus_profile_before_block5_by_value:
+        positionRows(results as never, before as never).find((r) => r.scenarioId === m.wished.scenarioId)?.valueDrift ?? null,
+      how_to_read_the_wish:
+        "wish_minus_decision_by_value: positive means the option wished for gives MORE of that value "
+        + "than the option decided. All four are 0 when they wished for the same option. The two "
+        + "..._minus_profile_before_block5_by_value fields say how far each choice sat from the values "
+        + "the participant brought into Block 5 (the position effect's reading). One person's wish is "
+        + "one choice: read it for groups, not as a verdict on one person.",
     };
   } catch {
     return null;

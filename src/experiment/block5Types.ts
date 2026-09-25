@@ -936,6 +936,13 @@ export interface Block5ScenarioResult {
    * best-fit pick, the wish, the prediction test).
    */
   valueMoves?: Block5ValueMove[];
+  /**
+   * The wish only (scenario 5), since 25 September 2026: the id of the decision scenario whose
+   * OPENING values this row was shown and scored on (see profileShownIn in block5Mirror.ts).
+   * Absent on every other row, and on a wish saved before that date, which was scored on the values
+   * after its paired decision had moved them.
+   */
+  scoredOnProfileOf?: string;
   firstChoiceOptionId?: string;
   postCVRChoiceOptionId?: string;
   cvrFired?: boolean;

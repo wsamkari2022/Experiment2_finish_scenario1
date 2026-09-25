@@ -56,7 +56,8 @@
  *                        shoulders, i.e. responsibility pushed them off.
  *
  * The responsibility gap, as equations. Each half is the VCI label weight of that one choice (see
- * the VCI section of block5CVR.ts), judged on the profile brought into its own scenario:
+ * the VCI section of block5CVR.ts), both judged on the values the participant OPENED scenario 4 with
+ * (since 25 September 2026 - see profileShownIn), so the same option twice gives a gap of 0:
  *
  *     VCI acted            = 100 × w(label of the decision, scenario 4)
  *     VCI wished           = 100 × w(label of the wish, scenario 5)
@@ -86,9 +87,11 @@
 
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { positionRows } from "./block5Position";
-import { scenarioVciScore } from "./block5CVR";
+import { scenarioVciScore, profileWithScores } from "./block5CVR";
+import { POLICY_DIM_KEYS } from "./block5Types";
 import type {
   AlignmentLevel,
+  Block5PolicyDimKey,
   Block5ScenarioResult,
   Block5UserProfile,
 } from "./block5Types";
@@ -103,7 +106,8 @@ export interface MirrorSide {
   optionTitle: string;
   /** 0–100: share of the distance this menu made available that the participant used */
   departure: number;
-  /** the alignment label of the choice, judged on the profile brought into that scenario */
+  /** the alignment label of the choice: judged on the values scenario 4 opened with, for BOTH sides
+      since 25 September 2026 (the wish uses its decision's values; see profileShownIn) */
   level: AlignmentLevel;
   /** 0–1 label weight (`scenarioVciScore`), the same quantity VCI averages */
   vciScore: number;
@@ -145,6 +149,26 @@ export interface MirrorReading {
   hurried: boolean;
   /** plain-language reading, for the chart caption */
   sentence: string;
+  /**
+   * WHAT THE WISH CHANGED, VALUE BY VALUE (25 September 2026): the wished option's number minus the
+   * decided option's number, on each of the four values. All four are 0 when they wished for the
+   * same option. Positive = the wish gives MORE of that value than the decision did.
+   *
+   * This is the question scenario 5 exists to answer, in the researcher's words: which value does
+   * a person start to care about more when the decision is made by somebody else and lands on them?
+   * It needs no profile at all - it compares the two options directly - so no ruler can move it.
+   */
+  wishMinusDecision: Record<Block5PolicyDimKey, number>;
+  /** The value the wish raised most, or null when nothing rose. Ties go to the order of POLICY_DIM_KEYS. */
+  valueWishRaisedMost: { value: Block5PolicyDimKey; points: number } | null;
+  /** The value the wish lowered most, or null when nothing fell. */
+  valueWishLoweredMost: { value: Block5PolicyDimKey; points: number } | null;
+  /**
+   * True when the wish was scored on the values its decision opened with (every wish saved since 25
+   * September 2026). False on an older record, whose wish was scored on the values AFTER the decision
+   * had moved them - so vciWished and responsibilityGap there are not comparable with newer ones.
+   */
+  wishScoredOnTheDecisionsValues: boolean;
 }
 
 /**
@@ -154,6 +178,52 @@ export interface MirrorReading {
  * them. It is a flag for the analyst, never a judgment shown to the participant.
  */
 export const HURRIED_WISH_SECONDS = 12;
+
+/**
+ * THE VALUES A SCENARIO IS SHOWN AND SCORED ON (25 September 2026, the researcher's decision).
+ *
+ * Every scenario uses the live profile - except the wish. Scenario 5 is scenario 4 again with only
+ * the participant's chair changed, and scenario 5 never moves the profile. So it is shown and scored
+ * on the values the participant had when they OPENED scenario 4: the same ruler their decision was
+ * judged on. Before this, scenario 5 used the values after scenario 4's update, and two things went
+ * wrong (measured on pretend participants built by the real code):
+ *   - the same six options showed different fit numbers in the two scenarios for 81 in 100, and
+ *     different labels for 76 in 100, although nothing but the chair was meant to change;
+ *   - a participant who wished for EXACTLY what they had decided got a non-zero "wished minus acted"
+ *     gap in 56 in 100 cases. One example: decided an option labelled Misaligned (50), scenario 4
+ *     raised gain from 51 to 81, and the same option then read Aligned (100) in the wish - "50 points
+ *     truer to your values when wishing" for picking the same thing twice.
+ *
+ * The profile is REBUILT from the snapshots the row before the decision saved (the four policy
+ * values, the two lenses and the stakeholder value), which are exact, unrounded copies. When the
+ * decision was the first scenario, it is the frozen pre-Block-5 profile itself. When anything needed
+ * is missing, the live profile is returned and `borrowedFrom` is null, so a caller can never believe
+ * a rule was applied that was not.
+ *
+ * The live profile is still the one the study UPDATES: this only decides what scenario 5 shows and
+ * how its choice is scored.
+ */
+export function profileShownIn(
+  scenarioId: string,
+  results: Block5ScenarioResult[],
+  originalProfile: Block5UserProfile,
+  liveProfile: Block5UserProfile,
+): { profile: Block5UserProfile; borrowedFrom: string | null } {
+  const pair = findPair();
+  if (!pair || scenarioId !== pair.recipient) return { profile: liveProfile, borrowedFrom: null };
+  const at = results.findIndex((r) => r.scenarioId === pair.decider);
+  if (at < 0) return { profile: liveProfile, borrowedFrom: null };
+  if (at === 0) return { profile: originalProfile, borrowedFrom: pair.decider };
+
+  const before = results[at - 1];
+  if (!before?.policySnapshotAfter) return { profile: liveProfile, borrowedFrom: null };
+  const scores: Record<string, number> = { ...before.policySnapshotAfter };
+  if (before.framingSnapshotAfter) Object.assign(scores, before.framingSnapshotAfter);
+  if (typeof before.stakeholderSnapshotAfter === "number") {
+    scores.stakeholderPerspectiveShiftSensitivity = before.stakeholderSnapshotAfter;
+  }
+  return { profile: profileWithScores(liveProfile, scores), borrowedFrom: pair.decider };
+}
 
 /**
  * The decide/wish pair for this run, or null when the deck has no such pair.
@@ -342,10 +412,13 @@ export function analyseMirror(
    * Both halves now come from the matched pair: the same company, the same decision, the same six
    * options. That is the only comparison in which "the difference is responsibility" is true.
    *
-   * The two can still differ when the SAME option is chosen twice, and legitimately so: scenario 4
-   * is scored against the profile as it stood before its own update, scenario 5 against the profile
-   * after it. That residue is real movement in the participant's values, not an artifact — but it
-   * is small, where the old figure was dominated by scenarios that had nothing to do with the pair.
+   * THE SAME OPTION TWICE NOW GIVES A GAP OF EXACTLY 0 (25 September 2026). This note used to say
+   * the two could still differ when the same option was chosen twice, because scenario 5 was scored
+   * on the profile AFTER scenario 4's update, and called that residue small and real. It was
+   * neither: it was non-zero for 56 in 100 pretend participants who wished for exactly what they
+   * had decided, and it came from the ruler moving, not from the person. The wish is now scored on
+   * the values the decision opened with (profileShownIn), so the same option gets the same label.
+   * Older records keep the old reading; `wishScoredOnTheDecisionsValues` says which is which.
    */
   const vciActed = Math.round(decided.vciScore * 100);
   const vciWished = Math.round(wished.vciScore * 100);
@@ -368,9 +441,27 @@ export function analyseMirror(
      beside this in the database so the two can still be told apart. */
   const decisionWasAligned = decided.level === "aligned";
   const wishWasAligned = wished.level === "aligned";
+
+  /* WHAT THE WISH CHANGED, value by value: the two options compared directly, no profile involved. */
+  const optionIn = (scenarioId: string, optionId: string) =>
+    BLOCK5_SCENARIOS.find((s) => s.id === scenarioId)?.options.find((o) => o.id === optionId);
+  const decidedOption = optionIn(decided.scenarioId, decided.optionId);
+  const wishedOption = optionIn(wished.scenarioId, wished.optionId);
+  const wishMinusDecision = Object.fromEntries(POLICY_DIM_KEYS.map((k) => [
+    k,
+    decidedOption && wishedOption ? (wishedOption.fingerprint[k] ?? 0) - (decidedOption.fingerprint[k] ?? 0) : 0,
+  ])) as Record<Block5PolicyDimKey, number>;
+  const byChange = POLICY_DIM_KEYS.map((k) => ({ value: k, points: wishMinusDecision[k] }));
+  const raised = byChange.filter((x) => x.points > 0).sort((a, b) => b.points - a.points)[0] ?? null;
+  const lowered = byChange.filter((x) => x.points < 0).sort((a, b) => a.points - b.points)[0] ?? null;
+
   return {
     decided, wished, sameOption, mirrorGap, vciActed, vciWished, decisionWasAligned, wishWasAligned,
     responsibilityGap, labelSteps, hurried, sentence,
+    wishMinusDecision,
+    valueWishRaisedMost: raised,
+    valueWishLoweredMost: lowered,
+    wishScoredOnTheDecisionsValues: wRes.scoredOnProfileOf === pair.decider,
   };
 }
 

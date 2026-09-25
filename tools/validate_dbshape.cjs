@@ -58,6 +58,7 @@ const db = B("dbShape.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 const { labelOptions, computeVCI, computeStability, computeSensitivityStability } = B("block5CVR.js");
 const { predictChoice, predictionConfidence, PREDICTION_VERSION } = B("block5Prediction.js");
+const { profileShownIn } = B("block5Mirror.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
                 "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
@@ -90,7 +91,10 @@ function makeParticipant(startScores, pick) {
   const results = [];
 
   BLOCK5_SCENARIOS.forEach((scenario, index) => {
-    const labeled = labelOptions(scenario.options, current);
+    /* The values this scenario is shown and scored on: the live profile, except the wish, which uses
+       the values its paired decision opened with (25 September 2026). The real function. */
+    const shownIn = profileShownIn(scenario.id, results, original, current);
+    const labeled = labelOptions(scenario.options, shownIn.profile);
     const chosen = pick(labeled, index);
     const rank = labeled.findIndex((o) => o.id === chosen.id) + 1;
     const role = scenario.decisionRole ?? "decider";
@@ -124,6 +128,7 @@ function makeParticipant(startScores, pick) {
       matchShortfall: B("block5CVR.js").roundForRecord(chosen.matchShortfall),
       fitShortfallsByOptionId: Object.fromEntries(labeled.map((o) => [o.id, B("block5CVR.js").roundForRecord(o.matchShortfall)])),
       valueMoves: [],
+      ...(shownIn.borrowedFrom ? { scoredOnProfileOf: shownIn.borrowedFrom } : {}),
       firstChoiceOptionId: chosen.id,
       decisionRole: role,
       vciScore: role === "decider" ? 0.7 : 0.5,
@@ -407,17 +412,25 @@ console.log("  THINGS THAT WERE WRONG ONCE");
           + everyPath.length + " paths, " + roots.size + " allowed roots)");
 }
 
-/* ---- the headline carries the performance pair AND its label ---- */
+/* ---- the headline carries the performance pair AND its label ----
+   Since 25 September 2026 the pair is worked out again from the rows, over the decisions only, so
+   the stored 62 / 71 (which averaged a wish in) must NOT come through: two decisions at 50 / 60 and
+   70 / 80 give 60 / 70, and the wish at 0 is left out. */
 {
   const head = db.buildHeadline(
-    { scenarioResults: [], performance: 62, performanceCaptured: 71,
+    { scenarioResults: [
+        { decisionRole: "decider", performanceScore: 50, performanceCaptured: 60 },
+        { decisionRole: "decider", performanceScore: 70, performanceCaptured: 80 },
+        { decisionRole: "recipient", performanceScore: 0, performanceCaptured: 0 },
+      ],
+      performance: 62, performanceCaptured: 71,
       performanceCapturedLevel: "Took most of what was available" },
     {},
   );
   gate("D40",
-    head.performance_score === 62
-    && head.performance_captured === 71
-    && head.performance_captured_label === "Took most of what was available",
+    head.performance_score === 60
+    && head.performance_captured === 70
+    && head.performance_captured_label === "Took a strong option",
     `overall performance reaches the headline with its label  (${head.performance_score} / `
     + `${head.performance_captured} "${head.performance_captured_label}")`);
 }
@@ -634,10 +647,13 @@ console.log("  THINGS THAT WERE WRONG ONCE");
 
     /* The profile a row was predicted from must be the one that scenario OPENED on: the frozen
        profile for the first, and the snapshot the previous scenario left behind for the rest. */
-    const expectedProfile = i === 0
+    /* A wish saved since 25 September 2026 is predicted from the values its decision opened with. */
+    const from = block5.scenarioResults[i].scoredOnProfileOf;
+    const j = from ? block5.scenarioResults.findIndex((r) => r.scenarioId === from) : i;
+    const expectedProfile = j === 0
       ? Object.fromEntries(block5.originalProfile.dimensions
           .filter((d) => POLICY.includes(d.key)).map((d) => [d.key, d.score]))
-      : block5.scenarioResults[i - 1].policySnapshotAfter;
+      : block5.scenarioResults[j - 1].policySnapshotAfter;
     if (!row.profile_snapshot_was_missing && expectedProfile) {
       for (const k of POLICY) {
         if (Math.abs((row.profile_used_values?.[k] ?? -1) - (expectedProfile[k] ?? -2)) > 0.001) {
@@ -836,6 +852,10 @@ for (const [who, block5] of PEOPLE) {
     same(major.vci.overall_label, head.consistency_label, "vci label");
     same(major.vci.when_deciding_scenario_4, position.decided_versus_wished?.vci_acted, "vci acted");
     same(major.vci.when_wishing_scenario_5, position.decided_versus_wished?.vci_wished, "vci wished");
+    same(JSON.stringify(major.vci.what_the_wish_changed_by_value),
+      JSON.stringify(position.decided_versus_wished?.wish_minus_decision_by_value), "what the wish changed");
+    same(major.vci.what_the_wish_changed_in_words,
+      position.decided_versus_wished?.what_the_wish_changed_in_words, "what the wish changed, in words");
     same(major.stability.score, head.stability_score, "stability");
     same(major.stability.stakeholder_score, head.stakeholder_stability_score, "stakeholder stability");
     same(major.performance.score, head.performance_score, "performance");
@@ -1209,6 +1229,80 @@ for (const [who, block5] of PEOPLE) {
     why.length === 0
       ? `points_short_of_what_they_asked_for saved on all ${rows.length} rows and in the same order as the fit percent`
       : `the saved shortfall is wrong: ${[...new Set(why)].slice(0, 4).join(" | ")}`);
+}
+
+/* D57 - THE HEADLINE PERFORMANCE COUNTS THE FOUR DECISIONS ONLY (25 September 2026). A run that
+   took the strongest option in every decision and wished for the weakest one reads 100, whatever
+   the stored figure says: the headline is worked out again from the rows, so an old record whose
+   stored number averaged all six scenarios reads by the same rule. */
+{
+  const PF = B("block5Performance.js");
+  const C5 = B("block5CVR.js");
+  const [, base] = PEOPLE[0];
+  const strongest = (s) => [...s.options].sort((a, b) => PF.capturedOf(s, b) - PF.capturedOf(s, a))[0];
+  const weakest = (s) => [...s.options].sort((a, b) => PF.capturedOf(s, a) - PF.capturedOf(s, b))[0];
+  const rows = base.scenarioResults.map((r) => {
+    const s = BLOCK5_SCENARIOS.find((x) => x.id === r.scenarioId);
+    const role = r.decisionRole ?? "decider";
+    const opt = role === "recipient" ? weakest(s) : role === "decider" ? strongest(s) : s.options[0];
+    return { ...r, performanceScore: C5.performanceScore(opt), performanceCaptured: PF.capturedOf(s, opt) };
+  });
+  const oldStored = { ...base, scenarioResults: rows, performance: 60, performanceCaptured: 77, performanceCapturedLevel: "Took a strong option" };
+  const head = db.buildHeadline(oldStored, ledger);
+  const unfinished = db.buildHeadline({ ...base, scenarioResults: rows }, ledger);
+  const alignRows = db.buildAlignmentRecords(oldStored).by_scenario;
+  const flagsRight = alignRows.every((r, i) => r.counts_towards_performance === (rows[i].decisionRole === "decider"));
+  gate("D57", head.performance_captured === 100 && head.performance_captured_label === "Took the strongest option available"
+      && head.performance_score === C5.averagePerformance(rows) && unfinished.performance_captured === null && flagsRight,
+    `headline performance counts the decisions only  (strongest in 1-4, weakest wish: ${head.performance_captured}; the stored 77 is ignored; `
+    + "counts_towards_performance marks the four decisions)");
+}
+
+/* D58 - WHAT THE WISH CHANGED REACHES THE DATABASE (25 September 2026). The participant who takes
+   the best fit every time wishes for the option they decided, because both scenarios are now shown
+   on the same values: gap 0, every value 0. The "middling" participant wishes for a different option:
+   the per-value difference is the two options' numbers. The wish's row says it was shown on
+   scenario 4's opening values, the prediction row agrees, and an old record says it was not. */
+{
+  const why = [];
+  const [, same] = PEOPLE[0];
+  const [, differ] = PEOPLE[2];
+  const dvS = db.buildPositionSection(same).decided_versus_wished;
+  const dvD = db.buildPositionSection(differ).decided_versus_wished;
+  if (!dvS.wished_for_the_same_option) why.push("the best-fit participant should wish for the option they decided");
+  /* This fixture stores a fixed VCI weight per row (0.7 for a decision, 0.5 for the wish), so the
+     VCI gap itself is not what is tested here - W3 in validate:twins tests it through the real
+     rules. What must hold here: the same label on both sides, and 0 on every value. */
+  if (dvS.acted_alignment_label !== dvS.wished_alignment_label
+    || Object.values(dvS.wish_minus_decision_by_value).some((v) => v !== 0)) why.push("the same option must give the same label and 0 on every value");
+  if (!/exactly the option they had decided/.test(dvS.what_the_wish_changed_in_words)) why.push("the sentence for the same option is wrong");
+  if (!dvS.wish_scored_on_the_same_values_as_the_decision) why.push("a new wish must say it used the decision's values");
+  const d4 = differ.scenarioResults.find((r) => r.scenarioId === dvD.acted_scenario_id);
+  const d5 = differ.scenarioResults.find((r) => r.scenarioId === dvD.wished_scenario_id);
+  const optionOf = (r) => BLOCK5_SCENARIOS.find((s) => s.id === r.scenarioId).options.find((o) => o.id === r.selectedOptionId);
+  if (dvD.wished_for_the_same_option) why.push("the middling participant should wish for a different option");
+  if (!POLICY.every((k) => dvD.wish_minus_decision_by_value[k] === optionOf(d5).fingerprint[k] - optionOf(d4).fingerprint[k])) {
+    why.push("the per-value difference is not the two options' numbers");
+  }
+  if (!dvD.decision_minus_profile_before_block5_by_value || !dvD.wish_minus_profile_before_block5_by_value) why.push("the two readings against the pre-Block-5 profile are missing");
+  const i5 = differ.scenarioResults.indexOf(d5);
+  const i4 = differ.scenarioResults.indexOf(d4);
+  const major = db.buildMajorScores(differ, ledger, {
+    totalMs: 600000, byStage: { block5: 600000 }, sittings: 2, longestIdleMs: 0,
+    firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: false, owner: "x@y.z",
+  }, { dropped: 0, sessions: [] }, null);
+  const row5 = major.profile_by_scenario[i5];
+  if (!/scenario 4 opened with/.test(row5.shown_and_scored_on)) why.push("the wish's profile row does not say it was shown on scenario 4's values");
+  if (JSON.stringify(row5.profile_it_was_shown_and_scored_on) !== JSON.stringify(major.profile_by_scenario[i4].profile_when_the_scenario_opened)) {
+    why.push("the wish was not shown on the values scenario 4 opened with");
+  }
+  if (JSON.stringify(major.vci.what_the_wish_changed_by_value) !== JSON.stringify(dvD.wish_minus_decision_by_value)) why.push("major_info_and_scores does not copy the wish's reading");
+  const old = { ...differ, scenarioResults: differ.scenarioResults.map(({ scoredOnProfileOf, ...rest }) => rest) };
+  if (db.buildPositionSection(old).decided_versus_wished.wish_scored_on_the_same_values_as_the_decision !== false) why.push("an old record must say its wish used other values");
+  gate("D58", why.length === 0,
+    why.length === 0
+      ? `decided_versus_wished: the same wish reads 0 on every value, a different one reads the options' difference (${Object.entries(dvD.wish_minus_decision_by_value).map(([k, v]) => `${k.slice(0, 5)} ${v}`).join(", ")}), and the wish is shown on scenario 4's values`
+      : `the wish section is wrong: ${why.join(" | ")}`);
 }
 
 console.log("");

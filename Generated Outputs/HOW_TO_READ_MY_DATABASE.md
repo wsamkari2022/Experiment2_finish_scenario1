@@ -11,6 +11,14 @@
 the three sensitivity stabilities: section 4. The decision against the wish: section 6b,
 `decided_versus_wished`).
 
+> **What changed on 25 September 2026: scenario 5 is only a wish.** (1) Performance counts the four
+> decisions only. Until this date it averaged in the wish (scenario 5) and scenario 6, whose rules
+> all score 50, so nobody could reach 100. The headline is worked out again from the saved rows, so
+> old records follow the new rule too. (2) Scenario 5 is shown and scored on the values the
+> participant had when they OPENED scenario 4, so wishing for the option they decided gives a gap
+> of exactly 0. The row says so in `scoredOnProfileOf`. (3) `decided_versus_wished` has a new
+> per-value reading of what the wish changed (section 6b).
+
 > **What changed on 24 September 2026: the fit score.** It used to be 100 minus the weighted
 > shortfall, stopped at 0, so a demanding participant saw several options at 0 at once. It is now
 > the **share of what the participant's four values asked for** that the option gives: 100 × (1 −
@@ -179,7 +187,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 
 | Field | What it holds |
 |---|---|
-| `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them |
+| `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them, and (since 25 September 2026) `what_the_wish_changed_by_value` and `what_the_wish_changed_in_words`, copied from `decided_versus_wished` |
 | `stability` | The score and label, plus the directness, context and stakeholder stabilities |
 | `performance` | `score`, `captured`, `captured_label` |
 | `position_effect` | `overall`, a `by_scenario` list (role, distance, departure share) and a `by_role` list |
@@ -214,8 +222,9 @@ These are copies, lifted to the top so you do not have to dig. The originals sta
 | `directness_stability_score`, `directness_stability_label` | How far their directness sensitivity traveled on its 0–100 scale during Block 5, as 100 × (1 − distance / 100). Same five words as Stability. **Usually 100**: it moves only when the second lens was generated and answered | 0–100 |
 | `context_stability_score`, `context_stability_label` | The same for context sensitivity | 0–100 |
 | `stakeholder_stability_score`, `stakeholder_stability_label` | The same for stakeholder sensitivity, which moves ±25 on every reflection | 0–100 |
-| `performance_score` | Average outcome quality of the options they chose | 0–100 |
-| `performance_captured` | How much of the available performance they actually captured | 0–100 |
+| `performance_score` | Average outcome quality of the options they **decided** (scenarios 1-4 only, since 25 September 2026) | 0–100 |
+| `performance_captured` | How much of the available performance they actually captured, over the four decisions. Worked out again from the rows, so records saved before 25 September 2026 (which averaged all six scenarios) read by the same rule | 0–100 |
+| `performance_counts` | Says in words which scenarios the two numbers above average: the four decisions only | text |
 | `performance_captured_label` | Plain-language band for the above. Added 20 September 2026 | text |
 | `position_effect` | **How differently they chose depending on who the decision was about** — themselves, their household, or strangers | higher = position mattered more |
 | `position_effect_label` | Plain-language band for the above | text |
@@ -489,8 +498,17 @@ frozen profile is stored alone in `analysis.scenario6_mpf_test`.
 The same employer, the same cut and the same six options, met twice: in scenario 4 the participant
 decides and it lands on their colleagues; in scenario 5 someone else decides, it lands on them, and
 they only say what they wish. The numbers the results page shows under the mirror chart, saved.
-Each side is judged on the profile the participant brought into its own scenario, exactly as VCI is.
 `null` for a participant who stopped before scenario 5.
+
+**Both sides are judged on one ruler** (since 25 September 2026): the values the participant had when
+they opened scenario 4. Scenario 5 is scenario 4 with only the chair changed and never moves the
+profile, so wishing for the option they decided gives `responsibility_gap` 0 and 0 on every value.
+Before, scenario 5 was judged on the values after scenario 4 had moved them, and the same pick gave a
+non-zero gap for 56 in 100 pretend participants. `wish_scored_on_the_same_values_as_the_decision` is
+false on those older records: do not pool their gap with newer ones.
+
+**No reflection runs in scenario 5, on purpose** (the researcher): the participant has just seen
+scenario 4's information and reflection, so the wish is compared with their FINAL decision.
 
 | Field | Meaning |
 |---|---|
@@ -506,6 +524,11 @@ Each side is judged on the profile the participant brought into its own scenario
 | `wished_for_the_same_option` | They wished for exactly what they chose |
 | `mirror_gap` | The decision's `departure_share` minus the wish's. Positive = further from their own frozen values when deciding. Read it beside `responsibility_gap`: the two use different profiles on purpose |
 | `wish_seconds`, `wish_was_hurried` | Time on the wish; under 12 seconds is flagged as likely recall rather than reflection |
+| `wish_scored_on_the_same_values_as_the_decision` | `true` since 25 September 2026; `false` on older records (see above) |
+| `wish_minus_decision_by_value` | **What the wish changed, value by value**: the wished option's number minus the decided option's, on each of the four values. Positive = the wish gives MORE of that value. All 0 when they wished for the same option. This is the question scenario 5 exists for: which value does a person start to care about more when someone else's decision lands on them? |
+| `value_the_wish_raised_most`, `value_the_wish_lowered_most` | The biggest rise and the biggest drop, with the value's name and points; `null` when nothing rose (or fell) |
+| `what_the_wish_changed_in_words` | The same in one sentence |
+| `decision_minus_profile_before_block5_by_value`, `wish_minus_profile_before_block5_by_value` | How far each choice sat from the values the participant brought into Block 5, per value (the position effect's own reading, side by side) |
 
 ### The rest
 
@@ -653,6 +676,7 @@ table.
 | `scenario_id`, `order_shown`, `title`, `position`, `position_label` | Which situation this was |
 | `decision_role` | `decider` · `recipient` (the wish) · `predicted` (the model test) |
 | `counts_towards_consistency_and_stability` | True only for `decider`. **Filter on this before averaging anything** |
+| `counts_towards_performance` | The same four decisions, since 25 September 2026 (the wish and scenario 6 are not averaged into performance) |
 | `chosen_option_id`, `chosen_option_title` | What they chose |
 | `alignment_label` | `Aligned` / `Weakly aligned` / `Misaligned` / `Strongly misaligned` |
 | `alignment_level` | The same thing as the internal enum, for joins |

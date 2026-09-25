@@ -110,6 +110,127 @@ ok("the recipient half carries no cvrSeed",
    recipient.options.every((o) => !o.cvrSeed),
    recipient.options.some((o) => o.cvrSeed) ? "a wish scenario must run no reflection" : "none of the 6");
 
+
+/*
+ * ═════════════════════════════════════════════════════════════════════════════════════════════
+ * SCENARIO 5 IS ONLY A WISH (25 September 2026, the researcher's decisions)
+ *
+ *   W1  performance counts the four decisions only: the wish and scenario 6 are not averaged in;
+ *   W2  scenario 5 is shown and scored on the values scenario 4 OPENED with, every other scenario
+ *       on the live profile, and the values are rebuilt exactly from the saved snapshots;
+ *   W3  wishing for the option they decided gives a gap of exactly 0, on every value;
+ *   W4  wishing for a different option gives exactly the difference of the two options' numbers.
+ * Every run goes through the real update rules and the real analyseMirror.
+ * ═════════════════════════════════════════════════════════════════════════════════════════════
+ */
+console.log("\n  SCENARIO 5 IS ONLY A WISH");
+{
+  const C5 = B("block5CVR.js");
+  const PF = B("block5Performance.js");
+  const MI = B("block5Mirror.js");
+  const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
+    "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+  const ALL = [...POLICY, "directnessSensitivity", "contextSensitivity", "stakeholderPerspectiveShiftSensitivity"];
+  const scoreOf = (p, k) => p.dimensions.find((d) => d.key === k).score;
+  const mk = (scores) => {
+    const dims = ALL.map((key, i) => ({ key, label: key, score: scores[key] ?? 50, rank: i + 1, weight: 0.1, sourceBlocks: [] }));
+    [...dims].sort((a, b) => b.score - a.score).forEach((d, i) => { d.rank = i + 1; });
+    return { generatedAt: "", topThreeKeys: [], topSensitivityKey: "x", dimensions: dims };
+  };
+
+  /* ---- W1 ---- */
+  const strongest = (s) => [...s.options].sort((a, b) => PF.capturedOf(s, b) - PF.capturedOf(s, a))[0];
+  const weakest = (s) => [...s.options].sort((a, b) => PF.capturedOf(s, a) - PF.capturedOf(s, b))[0];
+  const perfRows = BLOCK5_SCENARIOS.map((s) => {
+    const role = s.decisionRole ?? "decider";
+    const opt = role === "recipient" ? weakest(s) : role === "decider" ? strongest(s) : s.options[0];
+    return { scenarioId: s.id, decisionRole: role, performanceScore: C5.performanceScore(opt),
+      performanceCaptured: PF.capturedOf(s, opt), metrics: C5.optionMetrics(opt) };
+  });
+  const deciders = perfRows.filter((r) => r.decisionRole === "decider");
+  const rawMean = Math.round(deciders.reduce((a, r) => a + r.performanceScore, 0) / deciders.length);
+  const cumulative = C5.cumulativeMetrics(perfRows);
+  const cumOk = Object.keys(cumulative).every((k) =>
+    cumulative[k] === Math.round(deciders.reduce((a, r) => a + r.metrics[k], 0) / deciders.length));
+  const wishOnly = C5.projectedMetrics(perfRows.filter((r) => r.decisionRole !== "decider"), deciders[0].metrics);
+  const projOk = Object.keys(wishOnly).every((k) => wishOnly[k] === deciders[0].metrics[k]);
+  const allSix = Math.round(perfRows.reduce((a, r) => a + r.performanceCaptured, 0) / perfRows.length);
+  ok("W1 performance counts the four decisions only",
+    PF.overallCaptured(perfRows) === 100 && C5.averagePerformance(perfRows) === rawMean && cumOk && projOk,
+    `strongest option in 1-4, weakest wish: ${PF.overallCaptured(perfRows)} (all six averaged: ${allSix})`);
+
+  /* ---- W2, W3, W4: runs through the real rules ---- */
+  const decider4 = decider, recipient5 = recipient;
+  let seed = 20260925;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const pick = (a) => a[Math.floor(rnd() * a.length)];
+  const isFit = (l) => l === "aligned" || l === "weakly_aligned";
+  let runs = 0, shownRight = 0, sameRuns = 0, sameZero = 0, diffRuns = 0, diffRight = 0;
+  for (let i = 0; i < 2000; i++) {
+    const original = mk(Object.fromEntries(ALL.map((k) => [k, Math.round(rnd() * 100)])));
+    let live = original;
+    const results = [];
+    let entry4 = null;
+    let decidedTitle = null;
+    let rightHere = true;
+    const wishSame = i % 2 === 0;
+    for (const s of BLOCK5_SCENARIOS) {
+      if (s.id === decider4.id) entry4 = live;
+      const shown = MI.profileShownIn(s.id, results, original, live);
+      if (s.id === recipient5.id) {
+        if (shown.borrowedFrom !== decider4.id) rightHere = false;
+        if (!ALL.every((k) => Math.abs(scoreOf(shown.profile, k) - scoreOf(entry4, k)) < 1e-9)) rightHere = false;
+      } else if (shown.profile !== live || shown.borrowedFrom !== null) {
+        rightHere = false;
+      }
+      const labeled = C5.labelOptions(s.options, shown.profile);
+      let opt = pick(labeled);
+      if (s.id === recipient5.id && decidedTitle) {
+        opt = wishSame ? labeled.find((o) => o.title === decidedTitle) : pick(labeled.filter((o) => o.title !== decidedTitle));
+      }
+      if (s.id === decider4.id) decidedTitle = opt.title;
+      const w = s.stakesWeight ?? 1;
+      if (C5.scenarioIsScored(s)) {
+        live = isFit(opt.level) ? C5.applyKeepUpdates(live, opt, opt.level, w, s.options)
+          : C5.applyEndorsementUpdates(live, opt, rnd() < 0.5, rnd() < 0.5,
+            rnd() < 0.3 ? { sensitivityKey: "contextSensitivity", delta: -20 } : null, w);
+      }
+      results.push({
+        scenarioId: s.id, selectedOptionId: opt.id, alignmentLevel: opt.level,
+        vciScore: C5.scenarioVciScore(opt.level, s.options.length), decisionRole: s.decisionRole ?? "decider",
+        timeMs: 60000, scoredOnProfileOf: shown.borrowedFrom ?? undefined,
+        policySnapshotAfter: Object.fromEntries(POLICY.map((k) => [k, scoreOf(live, k)])),
+        framingSnapshotAfter: { directnessSensitivity: scoreOf(live, "directnessSensitivity"), contextSensitivity: scoreOf(live, "contextSensitivity") },
+        stakeholderSnapshotAfter: scoreOf(live, "stakeholderPerspectiveShiftSensitivity"),
+      });
+    }
+    runs++;
+    if (rightHere) shownRight++;
+    const m = MI.analyseMirror(results, original);
+    if (!m) continue;
+    const zeros = POLICY.every((k) => m.wishMinusDecision[k] === 0);
+    if (wishSame) {
+      sameRuns++;
+      if (m.sameOption && m.responsibilityGap === 0 && m.labelSteps === 0 && zeros
+        && m.valueWishRaisedMost === null && m.valueWishLoweredMost === null && m.wishScoredOnTheDecisionsValues) sameZero++;
+    } else {
+      diffRuns++;
+      const a = decider4.options.find((o) => o.id === m.decided.optionId);
+      const b = recipient5.options.find((o) => o.id === m.wished.optionId);
+      const exact = POLICY.every((k) => m.wishMinusDecision[k] === b.fingerprint[k] - a.fingerprint[k]);
+      const ups = POLICY.map((k) => m.wishMinusDecision[k]).filter((x) => x > 0);
+      const upOk = ups.length ? m.valueWishRaisedMost?.points === Math.max(...ups) : m.valueWishRaisedMost === null;
+      if (!m.sameOption && exact && upOk) diffRight++;
+    }
+  }
+  ok("W2 scenario 5 is shown on the values scenario 4 opened with",
+    shownRight === runs, `${shownRight} of ${runs} runs (every other scenario on the live profile)`);
+  ok("W3 the same wish as the decision gives a gap of exactly 0",
+    sameZero === sameRuns && sameRuns > 0, `${sameZero} of ${sameRuns} runs: VCI gap 0, labels 0 apart, all four values 0`);
+  ok("W4 a different wish reads as the two options' difference",
+    diffRight === diffRuns && diffRuns > 0, `${diffRight} of ${diffRuns} runs, value by value, biggest rise named`);
+}
+
 console.log("\n" + "=".repeat(78));
 console.log(fails === 0
   ? "### THE MATCHED PAIR IS INTACT ###"

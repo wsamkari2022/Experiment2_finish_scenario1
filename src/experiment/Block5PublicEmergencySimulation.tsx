@@ -38,8 +38,9 @@ import {
   performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall, policyShortfallByValue,
-  FIT_SCORE_SCALE, roundForRecord,
+  FIT_SCORE_SCALE, roundForRecord, scenarioCountsTowardsPerformance,
 } from "./block5CVR";
+import { profileShownIn } from "./block5Mirror";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
@@ -595,6 +596,20 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   const introRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const profile = progress.profile;
+  /*
+   * THE VALUES THIS SCENARIO IS SHOWN AND SCORED ON (25 September 2026, the researcher's decision).
+   * The live `profile` in every scenario but the wish: scenario 5 uses the values its paired
+   * decision (scenario 4) opened with, so the same six options read the same in both, and the same
+   * pick scores the same. Every UPDATE still starts from the live `profile`, and scenario 5 makes
+   * none. See profileShownIn in block5Mirror.ts.
+   */
+  const shown = useMemo(
+    () => (scenario
+      ? profileShownIn(scenario.id, progress.scenarioResults, userProfile, profile)
+      : { profile, borrowedFrom: null }),
+    [scenario, progress.scenarioResults, userProfile, profile],
+  );
+  const shownProfile = shown.profile;
 
   /**
    * ALIGNMENT — unchanged. `labelOptions` still sorts by match score and assigns the four-level
@@ -602,8 +617,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * computation. It is no longer the display order, only the label source.
    */
   const labeled = useMemo<LabeledOption[]>(
-    () => (scenario ? labelOptions(scenario.options, profile) : []),
-    [scenario, profile],
+    () => (scenario ? labelOptions(scenario.options, shownProfile) : []),
+    [scenario, shownProfile],
   );
 
   /**
@@ -1306,6 +1321,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       matchShortfall: roundForRecord(opt.matchShortfall),
       fitShortfallsByOptionId: Object.fromEntries(labeled.map((o) => [o.id, roundForRecord(o.matchShortfall)])),
       valueMoves: opts.valueMoves,
+      /* The wish only: which decision's opening values it was shown and scored on (profileShownIn). */
+      scoredOnProfileOf: shown.borrowedFrom ?? undefined,
       firstChoiceOptionId: progress.firstChoiceId ?? opt.id,
       postCVRChoiceOptionId: opt.id,
       cvrFired: cvrRan,
@@ -1338,7 +1355,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     };
 
     finalizeScenario(result, opts.nextProfile);
-  }, [scenario, userProfile, profile, labeled, expandedOptions, progress, cvrWho, altViewGenerated, framingChoiceYes, finalizeScenario]);
+  }, [scenario, userProfile, profile, shown, labeled, expandedOptions, progress, cvrWho, altViewGenerated, framingChoiceYes, finalizeScenario]);
 
   // APA committed a final decision: apply the (pending) APA profile updates and record the chosen option.
   const handleApaCommit = useCallback((payload: ApaCommitPayload) => {
@@ -1590,7 +1607,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   // Show ONLY the 4 policy/value sensitivities (these drive policy fit), strongest first.
   // Directness, Context, and Stakeholder are CVR-framing dimensions — they only shape the
   // vignette, so they are deliberately not shown to the participant here.
-  const topDimensions = profile.dimensions
+  const topDimensions = shownProfile.dimensions
     .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key))
     .sort((a, b) => b.score - a.score);
 
@@ -1659,7 +1676,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       {scenarioShowsPerformance(scenario) && (
         <Box ref={dashRef} position="sticky" top="2" zIndex="30" maxW="7xl" mx="auto" mb="6">
           <MetricsDashboard current={cumulative} projected={projected} previewTitle={previewOption?.title ?? null}
-            accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} scenarioId={scenario.id} />
+            accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} scenarioId={scenario.id}
+            isWish={!scenarioCountsTowardsPerformance(scenario)} />
         </Box>
       )}
 
@@ -1868,9 +1886,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                     fits your earlier responses". The alignment labels came off the cards on 15
                     September, so the sentence sent participants looking for labels that are not
                     there - and pointed them at their own fit, which the study must not do. */}
+                {/* No "Preview impact" half where no card has the button (the wish, 25 September 2026). */}
                 <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                  Every option stays available, and you can choose any of them. Use “Preview impact”
-                  to see how an option would change your performance above.
+                  Every option stays available, and you can choose any of them.
+                  {scenarioCountsTowardsPerformance(scenario)
+                    && " Use “Preview impact” to see how an option would change your performance above."}
                 </Text>
               </Box>
             </VStack>
@@ -1968,7 +1988,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                     <Box flex="1" h="1px" bg={pal.separator} />
                   </HStack>
                 )}
-                <OptionCard option={opt} profile={profile} accent={pal.accent} pal={pal}
+                <OptionCard option={opt} profile={shownProfile} accent={pal.accent} pal={pal}
                   explanation={ex ?? null}
                   standing={standings[opt.id] ?? null}
                   scenarioId={scenario.id}
@@ -1980,6 +2000,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   hintDetails={expandedOptions.size === 0}
                   onSelect={() => handleSelect(opt.id)}
                   showPerformance={scenarioShowsPerformance(scenario)}
+                  canPreview={scenarioCountsTowardsPerformance(scenario)}
                   isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
                   impact={previewOptionId === opt.id ? impactFor(opt) : null}
                   disabled={step !== null} />
@@ -1997,7 +2018,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           onMcfReading={noteMcfReading}
           scenario={scenario}
           options={labeled}
-          yourPolicyScores={policyScoresOf(profile)}
+          yourPolicyScores={policyScoresOf(shownProfile)}
           cumulative={cumulative}
           completedCount={progress.scenarioResults.length}
           pal={pal}
@@ -2007,7 +2028,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
       {selectedOption && step && (
         <FlowOverlay
-          option={selectedOption} profile={profile} scenario={scenario} accent={pal.accent}
+          option={selectedOption} profile={shownProfile} scenario={scenario} accent={pal.accent}
           whoVariant={cvrWho}
           step={step} setStep={setStep}
           tradeoffAck={tradeoffAck} setTradeoffAck={setTradeoffAck}
@@ -2474,7 +2495,7 @@ export function ScenarioRoleCard({ scenario, pal, open = true, onToggle }: {
   );
 }
 
-function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal, scenarioId }: {
+function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal, scenarioId, isWish }: {
   current: Block5MetricProfile;
   projected: Block5MetricProfile | null;
   previewTitle: string | null;
@@ -2483,6 +2504,12 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
   pal: Block5Palette;
   /** Which scenario is on screen — decides which reading of each metric is shown. */
   scenarioId: string;
+  /**
+   * True in the wish (scenario 5), since 25 September 2026: the pick there is not averaged into
+   * these bars, and no card offers "Preview impact". The bars still show the decisions so far, so
+   * the page looks like scenario 4's, and one line says why nothing here will move them.
+   */
+  isWish: boolean;
 }) {
   /**
    * Definitions are shown UNDER each metric by default rather than hidden behind a hover.
@@ -2670,6 +2697,13 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
         participant learned is still the control - it has just moved onto the thing it opens.
         ═══════════════════════════════════════════════════════════════════════════════════════
       */}
+      {/* Shown even when the panel is minimized: it is the one fact about these bars that changes
+          in this scenario. */}
+      {isWish && (
+        <Text fontSize="xs" color={pal.textMuted} mb="3" lineHeight="tall">
+          This is a wish, so it does not change these bars.
+        </Text>
+      )}
       {!minimized && (isPreview ? (
         /* The second sentence exists so the automatic clear reads as a rule rather than a glitch.
            A number that disappears on its own, unexplained, is the kind of thing a participant
@@ -2772,8 +2806,13 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
                   These five bars are a running record of <b>your own choices</b> — not a score for
                   any option in front of you. Each time you confirm a choice, that option&apos;s five
                   readings are <b>averaged</b> in, so the bars start at zero, update with each
-                  scenario, and can never pass 100. “Preview impact” on a card shows what they{" "}
-                  <b>would become</b> if you picked it, without picking it.
+                  scenario, and can never pass 100.
+                  {isWish ? (
+                    <> Your wish in this scenario is not averaged in.</>
+                  ) : (
+                    <> “Preview impact” on a card shows what they <b>would become</b> if you picked it,
+                    without picking it.</>
+                  )}
                 </Text>
                 <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
                   The same five names appear inside each option card, under “What this option
@@ -2856,7 +2895,7 @@ const EMPTY_FOLDS: ReadonlySet<string> = new Set();
 
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, methodLabel, copy, expanded, onToggle, folded, onFoldToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance }: {
+function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, methodLabel, copy, expanded, onToggle, folded, onFoldToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance, canPreview }: {
   option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
   /** The scenario's own heading for the method box ("How you travel"). Absent hides the box. */
   methodLabel?: string;
@@ -2875,6 +2914,12 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
   /** False in scenario 6: no performance exists there, so there is nothing to preview. */
   showPerformance: boolean;
+  /**
+   * False in the wish (scenario 5), since 25 September 2026: its pick is not averaged into the
+   * performance bars, so a preview of how it would change them would be untrue. The option's own
+   * performance readings stay on the card, exactly as in scenario 4.
+   */
+  canPreview: boolean;
   /**
    * True until the participant has opened ANY option's details in this scenario.
    *
@@ -3329,8 +3374,9 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
           </Center>
         </Button>
         {/* Previewing impact means projecting this option's METRICS onto the running totals.
-            Scenario 6 has no metrics worth projecting and no running total to project onto. */}
-        {showPerformance && (
+            Scenario 6 has no metrics worth projecting and no running total to project onto, and the
+            wish (scenario 5) is not added to the totals at all. */}
+        {showPerformance && canPreview && (
           <Button size="sm" variant="outline"
             borderColor={isPreviewing ? accent : pal.cardBorder} color={isPreviewing ? accent : pal.textMuted}
             bg={isPreviewing ? pal.surfaceSubtle : "transparent"}

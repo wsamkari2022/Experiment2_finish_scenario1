@@ -74,7 +74,7 @@ dropped.
 |---|---|---|
 | **VCI (consistency)** | Did your choices match your values, judged as they stood at the time? | `headline.consistency_score` |
 | **Stability** | Did the order of your priorities change when you went against your best fit? | `headline.stability_score` |
-| **Performance** | How much outcome quality did your choices capture? | `headline.performance_captured` |
+| **Performance** | How much outcome quality did your **decisions** capture? Scenarios 1-4 only since 25 September 2026: a wish decides nothing, and scenario 6 scores 50 for every rule | `headline.performance_captured` |
 | **Position effect** | Did you choose differently depending on who carried the cost? | `analysis.position_effect` |
 | **Position, pair by pair** | How far apart were these two particular choices — alone against with dependents, say? | `analysis.position_effect.between_scenarios` |
 | **Alignment** | Did the choice fit their values, and what happened when it did not? | `analysis.alignment_records` |
@@ -147,6 +147,19 @@ the same decision, the same six options. Only the chair changes — deciding for
 having it done to you. `analysis.position_effect.authority_vs_receiving` is the cleanest causal
 reading in the whole study, because everything except position is held constant. **Lead with this
 comparison, and present the five-scenario number as description.**
+
+**What scenario 5 is for** (the researcher's design, written down 25 September 2026). The participant
+has just decided scenario 4, including its reflection; scenario 5 shows the same six options with
+only their role changed, so no reflection runs there on purpose. Either they wish for what they
+decided (every gap is 0), or they wish for something else because it helps or hurts them more. The
+reading is `analysis.position_effect.decided_versus_wished.wish_minus_decision_by_value`: which value
+rose and which fell when the decision landed on them. Both choices are judged on the same values
+(those they opened scenario 4 with), so a difference is the person, not a moved ruler. The wish is
+never averaged into VCI, Stability or performance. One person's wish is one choice: report the
+per-value shifts for groups (for example the mean shift in "protecting the vulnerable" across
+participants, with its spread), not as a verdict on one person. Records saved before 25 September
+2026 were judged on different values (`wish_scored_on_the_same_values_as_the_decision: false`);
+analyse them separately.
 
 ---
 
