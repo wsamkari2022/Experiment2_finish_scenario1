@@ -1194,6 +1194,20 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       }
     }
 
+    /*
+     * THE COMPANY'S VALUE, AS SHOWN (25 September 2026, the researcher's request). Scenarios 4 and 5
+     * print "The value <company> puts first" on the company card, and that value is chosen for this
+     * participant (their lowest pre-Block-5 value), so it is saved on the row. Here, where both result
+     * paths meet, so neither can ship without it. Same call, same frozen profile, as the card.
+     */
+    const shownScenario = BLOCK5_SCENARIOS.find((s) => s.id === result.scenarioId);
+    if (shownScenario?.employer) {
+      const shownCompany = deriveCompanyValues(userProfile, shownScenario.employer);
+      result.companyValueShown = {
+        employer: shownCompany.name, valueKey: shownCompany.statedKey, principle: shownCompany.principle,
+      };
+    }
+
     // Snapshot the 4 policy values + the two reflection lenses AFTER this scenario's update. The
     // policy snapshot is what Stability counts swaps on; the lens snapshot is what the directness
     // and context stabilities measure distance on; both feed the results charts.

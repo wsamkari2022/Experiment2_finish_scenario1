@@ -860,6 +860,7 @@ for (const [who, block5] of PEOPLE) {
       JSON.stringify(position.decided_versus_wished?.wish_minus_decision_by_performance_metric), "what the wish changed in performance");
     same(major.performance.what_the_wish_changed_in_performance_in_words,
       position.decided_versus_wished?.what_the_wish_changed_in_performance_in_words, "what the wish changed in performance, in words");
+    same(major.company_value_shown_in_scenarios_4_and_5, position.company_value_shown?.value_name, "company value shown");
     same(major.stability.score, head.stability_score, "stability");
     same(major.stability.stakeholder_score, head.stakeholder_stability_score, "stakeholder stability");
     same(major.performance.score, head.performance_score, "performance");
@@ -1351,6 +1352,40 @@ for (const [who, block5] of PEOPLE) {
       ? `wish minus decision in performance: the same wish reads 0 on all five metrics; a different one reads `
         + `${METRICS.map((k) => `${k} ${dvD.wish_minus_decision_by_performance_metric[k]}`).join(", ")}, overall ${dvD.overall_performance_wish_minus_decision}`
       : `the wish's performance reading is wrong: ${why.join(" | ")}`);
+}
+
+/* D60 - THE COMPANY'S VALUE AS SHOWN IS IN THE RECORD (25 September 2026, the researcher's request).
+   The company card in scenarios 4 and 5 names the value the participant scored LOWEST before
+   Block 5. A row saved since this date carries it (companyValueShown); an older row has it worked
+   out again from the frozen profile and says so. major_info_and_scores holds it in one line. */
+{
+  const why = [];
+  const [, base] = PEOPLE[0];
+  const lowest = [...POLICY].reduce((lo, k) => {
+    const sc = (key) => base.originalProfile.dimensions.find((d) => d.key === key).score;
+    return sc(k) < sc(lo) ? k : lo;
+  }, POLICY[0]);
+  const s4 = BLOCK5_SCENARIOS.find((s) => s.stakePosition === "under_authority");
+  const i4 = base.scenarioResults.findIndex((r) => r.scenarioId === s4.id);
+  const oldRecord = db.buildPositionSection(base).company_value_shown;
+  if (!oldRecord || oldRecord.value !== lowest || oldRecord.saved_when_shown !== false) why.push("an old record must work the value out again and say so");
+  if (JSON.stringify(oldRecord?.shown_in_scenarios) !== JSON.stringify([i4 + 1, i4 + 2])) why.push("it must say it was shown in scenarios 4 and 5");
+  const shownRow = { employer: "Meridian Care", valueKey: lowest, principle: "the sentence on the card" };
+  const withField = { ...base, scenarioResults: base.scenarioResults.map((r) => (
+    BLOCK5_SCENARIOS.find((s) => s.id === r.scenarioId)?.employer ? { ...r, companyValueShown: shownRow } : r)) };
+  const saved = db.buildPositionSection(withField).company_value_shown;
+  if (!saved.saved_when_shown || saved.value !== lowest || saved.principle_shown !== shownRow.principle
+    || saved.company !== "Meridian Care" || !saved.same_value_in_every_scenario_it_appeared) why.push("a saved record must be read as saved");
+  const major = db.buildMajorScores(withField, ledger, {
+    totalMs: 600000, byStage: { block5: 600000 }, sittings: 2, longestIdleMs: 0,
+    firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: false, owner: "x@y.z",
+  }, { dropped: 0, sessions: [] }, null);
+  if (major.company_value_shown_in_scenarios_4_and_5 !== saved.value_name) why.push("major_info_and_scores does not hold it in one line");
+  gate("D60", why.length === 0,
+    why.length === 0
+      ? `company_value_shown: "${saved.value_name}" (the participant's lowest value), shown in scenarios `
+        + `${saved.shown_in_scenarios.join(" and ")}; old records worked out again and marked; one line in major_info_and_scores`
+      : `the company value record is wrong: ${why.join(" | ")}`);
 }
 
 console.log("");

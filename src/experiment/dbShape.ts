@@ -56,6 +56,7 @@ import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
+import { deriveCompanyValues } from "./block5Company";
 import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
 import type {
   Block5PolicyDimKey,
@@ -80,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-25-wish-performance";
+export const SHAPE_VERSION = "2026-09-25-company-value";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1261,6 +1262,55 @@ export function buildLiftedScenarios(block5: unknown): {
  * fingerprint (export_block5_content.cjs). Rows saved before that date hold the old scale
  * (100 − shortfall, stopped at 0) under `old_fit_score_saved_before_24_september_2026`.
  */
+/* ------------------------------------------------------------------- the company's value, as shown */
+
+/**
+ * THE COMPANY'S VALUE SHOWN IN SCENARIOS 4 AND 5 (25 September 2026, the researcher's request).
+ *
+ * Both scenarios put the participant under Meridian Care, whose card says "The value Meridian Care
+ * puts first" and names one of the four values. That value is chosen for each participant: the one
+ * they scored LOWEST before Block 5 (deriveCompanyValues, block5Company.ts), so everybody works under
+ * an employer that prizes what they care about least. Because it differs from person to person,
+ * nothing in the record said which value a participant actually saw - until this.
+ *
+ * Read from the rows (`companyValueShown`, saved when each scenario was finished). A record saved
+ * before this date has no such field; the value is then worked out again from the frozen profile by
+ * the same function the card used, and `saved_when_shown` is false.
+ */
+export function buildCompanyValueShown(block5: unknown): Record<string, unknown> | null {
+  const results = resultsOf(block5);
+  const withEmployer = results
+    .map((r, index) => ({ r, index, scenario: scenarioOf(r.scenarioId) }))
+    .filter((x) => x.scenario?.employer);
+  if (!withEmployer.length) return null;
+  const original = (block5 as Record<string, unknown> | null)?.originalProfile as Block5UserProfile | undefined;
+  const saved = withEmployer.map((x) => x.r.companyValueShown).find((v) => v && v.valueKey);
+  const worked = !saved && original?.dimensions && withEmployer[0].scenario?.employer
+    ? deriveCompanyValues(original, withEmployer[0].scenario.employer)
+    : null;
+  const key = saved?.valueKey ?? worked?.statedKey ?? null;
+  if (!key) return null;
+  const keys = withEmployer.map((x) => x.r.companyValueShown?.valueKey ?? key);
+  const own = original?.dimensions?.find((d) => d.key === key)?.score;
+  return {
+    what_this_is:
+      "The value the company's published principle put first, as the participant saw it on the "
+      + "company card in the scenarios with an employer (scenarios 4 and 5).",
+    company: saved?.employer ?? worked?.name ?? null,
+    value: key,
+    value_name: POLICY_DIM_SHORT[key as Block5PolicyDimKey],
+    principle_shown: saved?.principle ?? worked?.principle ?? null,
+    shown_in_scenarios: withEmployer.map((x) => x.index + 1),
+    same_value_in_every_scenario_it_appeared: new Set(keys).size === 1,
+    participant_score_on_this_value_before_block5: typeof own === "number" ? Math.round(own) : null,
+    why_this_value:
+      "The company always puts first the value this participant scored LOWEST before Block 5, so "
+      + "every participant works under an employer that prizes what they care about least, and the "
+      + "conflict is the same for everybody.",
+    saved_when_shown: Boolean(saved),
+  };
+}
+
 /* ------------------------------------------------------------------- every value move (B5) */
 
 /** Every value a move can touch, in words a reader of the database will not misread. */
@@ -2454,6 +2504,12 @@ export function buildMajorScores(
        cannot disagree; gate D52 checks it. */
     blocks_1_to_4: buildBlocks1to4Checks(blocks1to4),
 
+    /* 14 ----------------------------------------------------------------- the company's value */
+    /* The value the company card put first in scenarios 4 and 5, in the card's own words (the
+       researcher's request, 25 September 2026). Chosen per participant, so it must be read here. */
+    company_value_shown_in_scenarios_4_and_5:
+      (buildCompanyValueShown(block5) as { value_name?: string } | null)?.value_name ?? null,
+
     where_each_number_lives: {
       vci: "headline.consistency_score · analysis.position_effect.decided_versus_wished",
       stability: "headline.stability_score and the three sensitivity scores beside it",
@@ -2467,6 +2523,7 @@ export function buildMajorScores(
       profile_by_scenario:
         "blocks.block5_emergency_scenarios.scenarioResults[].policySnapshotAfter, read against the snapshot before it",
       blocks_1_to_4: "analysis.blocks_1_to_4_checks",
+      company_value_shown_in_scenarios_4_and_5: "analysis.position_effect.company_value_shown",
       feedback: "blocks.feedback_answers",
     },
   };
@@ -2684,6 +2741,8 @@ export function buildPositionSection(block5: unknown): Record<string, unknown> |
       "Whether departure grew simply because the study went on, rather than because position changed. A large value here weakens any position reading.",
     direction_sentence: position.sentence,
     decided_versus_wished: decidedVersusWished(block5 as Record<string, unknown>),
+    /* Which value the company card put first in scenarios 4 and 5 (25 September 2026). */
+    company_value_shown: buildCompanyValueShown(block5),
     source: "Computed from blocks.block5_emergency_scenarios. Saved because the results page works these out live and would otherwise discard them.",
   };
 }

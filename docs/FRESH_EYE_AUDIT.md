@@ -96,6 +96,73 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | G7 | A random responder's VCI is 56-57, not 50 | Low (docs) | Open |
 | G8 | Scenario 6 adds a fixed 50 to the performance average, so nobody reaches 100 | High | **Fixed** (Fix 4: performance counts the decisions only; W1, D57) |
 | G9 | Scenario 5 (a wish) is in the performance average | High | **Fixed** (Fix 4, Part A; W1, D57) |
+| P1 | Position check: options alone move the raw distance too much for low-demand people (2.8x, wants 3x) | Medium | Open (after Fix 3: A / B / C) |
+| P2 | The position headline alone cannot tell a role-switcher from a random chooser; the time check cannot run | Medium, design | Known; decision |
+| P3 | Role, subject and order are mixed (one scenario per role) | Known, design | Stated in HOW_TO_ANALYZE 4.4 |
+| H1 | The company stance is shown on the results page but not saved | Medium | Open (proposal) |
+| H2 | The company's value shown in scenarios 4 and 5 was not saved | Medium | **Fixed** (`company_value_shown`, D60) |
+| I1 | D1 plan written without the 18 Sept value audit (checklist 2g) | Medium (process) | Open (Fix 3, step 1) |
+| I2 | Following your top value costs performance in this deck (40 against random 51) | Note | By design; say it |
+| I3 | Performance for one person is mostly luck of the pick (twice: 0.15-0.21) | Note | Report for groups |
+
+---
+
+## What is still not fixed, and the plan (written 25 September 2026)
+
+Everything mentioned in our work that is NOT fixed yet, in one place, grouped by when it should be
+done. IDs point to the sections below. "Decision" means Waseem has to choose; "docs" means only the
+documents change.
+
+### New items added today
+
+| ID | Problem (short) | Severity | Status |
+|---|---|---|---|
+| P1 | Position check: for "low-demand" people the options alone move the raw distance 5.0 points, their choice 13.9 (2.8x, the check wants 3x). The headline position number already corrects for this (it uses each scenario's own range); the raw distance does not | Medium | Open. Re-measure after Fix 3, then choose: A passes by itself / B fix the calculation / C accept and state it |
+| P2 | The position headline alone cannot tell a person who truly changes with their role from a random chooser: both score high. The check that separates them (the "time" check) needs one role to appear twice, and no role does in this deck, so it is skipped (3 skips in validate:position) | Medium, design | Known, not in the status board before. Decision: accept and say it (the scenario 4 vs 5 pair is the clean reading) |
+| P3 | Each role is one scenario, so role, subject and order are mixed together (HOW_TO_ANALYZE 4.4) | Known, design | Stated in the guide; nothing to fix |
+| H1 | The company stance ("Took the company's values" / "Split the difference" / "Held your own values") is shown on the results page but never saved | Medium | Open. Proposal: save it beside `company_value_shown` |
+| H2 | The company's value shown in scenarios 4 and 5 was never saved | Medium | **Fixed** 25 September (`company_value_shown`, gate D60) |
+| I1 | My D1 plan was written without knowing the 18 September value audit (checklist 2g), which already checked all 96 option numbers | Medium (process) | Open. First step of Fix 3: compare D1's examples with 2g |
+| I2 | In this deck, following your own top value costs performance: "true to top value" averages 40, random choosers 51, best-fit pickers 52-60 | Note | By design (the trade-off the study is about). Say it when reporting performance |
+| I3 | Performance for one person is mostly which options they happened to pick: same pretend person twice agrees only 0.15-0.21 | Note (reporting) | Report performance for groups |
+
+### The plan, in order
+
+**Phase 0 - small, can be done at once (my suggestion: yes to both)**
+1. H1: save the company stance with its two distances (to the person, to the company).
+2. Documents only, no change to the study: A7 (date the "Has a cost" removal), B4 (APA "zero-sum"
+   is not zero-sum at the floor), B8 (Route 3 described wrongly in the old request document), C5 ("no
+   tuning constants"), C6 (Copeland), G7 (random VCI is 56-57, not 50), G4 and I3 (group, not person).
+
+**Phase 1 - the option numbers (Fix 3 = D1 + D2), the biggest piece**
+3. I1 first: compare D1's examples with the 18 September value audit.
+4. Then the Fix 3 plan: one meaning per value, a blind rating sheet, 2-3 raters, a comparison script,
+   Waseem decides each flagged number, a `CONTENT_VERSION` on every row. Waiting for his 4 answers.
+
+**Phase 2 - measure again after Fix 3** (option numbers move, so everything that reads them moves)
+5. P1: re-run `validate:position`; choose A / B / C.
+6. Re-run the VCI, Stability, planner-overlap and MCF reports; update the method documents.
+
+**Phase 3 - measurement questions, each a decision**
+7. G6: what should one honest change of mind score on Stability?
+8. G5: store "Stability was not measured" (no reflection ever ran) beside the score?
+9. P2: accept the position headline as a description, or change the design?
+10. B3: a sensitivity report - re-run VCI, Stability and position with every step size x0.5 and x2,
+    and show the conclusions hold (defends the hand-picked numbers).
+11. Planner: C2 (the "every threshold comes from you" claim), C7 (near-ties decide the order),
+    C8 (the notice band cannot be personal; `strictness` unused). Planner item 1 (band wording) was
+    "not now".
+12. Blocks 1-4: B6 / E7 (differences against levels, for the advisor), D3 (fast "yes" clicking: the
+    flag exists since E5; decide how to report those people), E6 (an exchange-rate idea).
+13. B7: only four scenarios can move the profile (framing in the thesis).
+
+**Phase 4 - just before real participants (Fix 1, deferred by Waseem)**
+14. A1 (the fit number on cards), A2 (#1-value text on cards), A6 (CLAUDE.md claim), A8 (scenario
+    5's wish page "close to what you said matters most"), A4 second half (APA "missed by N points"),
+    A3 (the order reads as a recommendation), A5 (compare chart draws the person's values).
+15. Remove the two development-only buttons (CLAUDE.md).
+16. One full click-through of the study in the browser, then the full check chain.
+
 
 ---
 
@@ -1200,3 +1267,4 @@ protecting the vulnerable, and less about everything else.
 - **2026-09-25. Fix 4 plan written (scenario 5 is only a wish).** Waseem decided: scenario 5 out of performance, no "Preview impact" there, no reflection there on purpose, same pick means gap 0, per-value reading of which value rose. Checked in the code first: scenario 5 AND scenario 6 (at a fixed 50) are in all three performance averages; card order is identical in 4 and 5 (0 of 3,000), but fit numbers differ for 81 in 100 and the same-pick VCI gap is not 0 for 56 in 100 (scratch `s5_check.cjs`, `s5_order.cjs`). G1 solved by his decision, G3 partly; G8 and G9 added. Nothing implemented.
 - **2026-09-25. Fix 4 done (Waseem: 1 yes, 2 A, 3 B, 4 approve A + B).** Part A: `scenarioCountsTowardsPerformance` / `resultCountsTowardsPerformance` gate `averagePerformance`, `overallCaptured`, `cumulativeMetrics`, `projectedMetrics`; scenario 6's fixed 50 is out too. Scenario 5: no Preview impact (`canPreview`), side-panel sentence without its preview half, the bars say "This is a wish, so it does not change these bars." (shown even minimized), help text adjusted. Results page: average and traded count over decisions, wish bar starred. Headline recomputed from rows (`performance_counts`), rows carry `counts_towards_performance`. Part B: `profileShownIn` (block5Mirror.ts) rebuilds scenario 4's opening profile from the saved snapshots; the page labels, shows and scores scenario 5 on it (`shownProfile`), the row carries `scoredOnProfileOf`, and dbShape's prediction and MCF rows use the same values (`profileScenarioWasShownOn`). `analyseMirror` adds `wishMinusDecision`, biggest rise/drop and `wishScoredOnTheDecisionsValues`; `decided_versus_wished` stores them with a sentence and both readings against the pre-Block-5 profile; copied into `major_info_and_scores.vci`. The block5Mirror note that called the same-pick gap "small" and "real" is corrected. Gates W1-W4 (validate:twins), D57, D58; D40 and D48 updated to the new rule. `SHAPE_VERSION` `2026-09-25-scenario5-is-a-wish`. **Checked in the browser** (pretend participant scored by the real code, best fit in 1-3, second-best in 4): scenario 5 showed 77/74/73/71/64/51, identical to scenario 4 (old rule would have shown 69/83/78/71/65/55); 0 Preview buttons; the wish line; saved performance 35 = the four decisions (old rule 31); same option in 4 and 5 both Weakly aligned 74, gap 0 (old rule +20); results chart fixed after the long label overlapped. No console errors.
 - **2026-09-25. Wish minus decision in PERFORMANCE (Waseem's request).** Beside the per-value reading, `analyseMirror` now gives `wishMinusDecisionMetrics` (the two options' own numbers on the five metrics), the metric that rose and fell most, and `wishMinusDecisionCaptured` (overall share). Stored in `decided_versus_wished` as `wish_minus_decision_by_performance_metric`, `performance_metric_the_wish_raised_most` / `_lowered_most`, `overall_performance_wish_minus_decision` and a sentence; copied into `major_info_and_scores.performance`. Higher is better on all five metrics, so positive = the wish performs better. Example (real code): decided "Keep every care visit", wished "Protect full visits": speed +15, resources spared −32, reliability −30, durability +6, reversibility −36, overall −89. Gates W5, D59; D49 checks the copy. `SHAPE_VERSION` `2026-09-25-wish-performance`. Not shown to participants.
+- **2026-09-25. Company value saved (Waseem's request).** Each scenario-4/5 row carries `companyValueShown` { employer, valueKey, principle }, set in `finalizeScenario` from the same `deriveCompanyValues(userProfile, …)` call the card makes; `analysis.position_effect.company_value_shown` reads it (or works it out again for an old record, `saved_when_shown: false`), and `major_info_and_scores.company_value_shown_in_scenarios_4_and_5` holds the name in one line. Gate D60; D49 checks the copy. Checked in the browser: the card showed "how much is gained" in 4 and 5, and both rows saved gainResponsivenessSensitivity with the card's sentence. Found on the way: the company STANCE is shown on the results page and never saved (H1). VCI/Stability/performance re-measured on the fixed study (scratch `vci_stability_check_v2.cjs`): VCI and Stability unchanged; the same-pick gap is 0 for every kind; performance chaser 100 (old rule 92); true to top value 40, random 51. Added the "What is still not fixed, and the plan" section above.

@@ -943,6 +943,14 @@ export interface Block5ScenarioResult {
    * after its paired decision had moved them.
    */
   scoredOnProfileOf?: string;
+  /**
+   * Scenarios with an employer only (4 and 5), since 25 September 2026: the value the company's
+   * published principle put first, exactly as the participant saw it on the card ("The value
+   * Meridian Care puts first: reducing harm"). It is chosen PER PARTICIPANT - their lowest
+   * pre-Block-5 value (deriveCompanyValues in block5Company.ts) - so it has to be saved to be
+   * known. Absent on every other scenario, and on rows saved before that date.
+   */
+  companyValueShown?: { employer: string; valueKey: Block5PolicyDimKey; principle: string };
   firstChoiceOptionId?: string;
   postCVRChoiceOptionId?: string;
   cvrFired?: boolean;

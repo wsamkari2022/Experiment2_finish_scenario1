@@ -18,6 +18,8 @@ the three sensitivity stabilities: section 4. The decision against the wish: sec
 > participant had when they OPENED scenario 4, so wishing for the option they decided gives a gap
 > of exactly 0. The row says so in `scoredOnProfileOf`. (3) `decided_versus_wished` has a new
 > reading of what the wish changed, value by value AND performance metric by metric (section 6b).
+> (4) The value the company card put first in scenarios 4 and 5 is saved: `analysis.position_effect.
+> company_value_shown`, and in one line as `major_info_and_scores.company_value_shown_in_scenarios_4_and_5`.
 
 > **What changed on 24 September 2026: the fit score.** It used to be 100 minus the weighted
 > shortfall, stopped at 0, so a demanding participant saw several options at 0 at once. It is now
@@ -197,6 +199,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 | `alignment_by_scenario` | One row per scenario: what they chose and its alignment label · `alignment_counts` totals the four labels |
 | `profile_before_block5`, `profile_now`, `profile_after_block5`, `profile_change_during_block5` | The three profiles and the movement between the first and last |
 | `feedback` | The feedback answers, grouped as they were asked, each with its question text |
+| `company_value_shown_in_scenarios_4_and_5` | **Since 25 September 2026.** The value the company card put first, in the card's words (for example "reducing harm"). A copy of `analysis.position_effect.company_value_shown` |
 | `blocks_1_to_4` | **Since 24 September 2026.** How Blocks 1-4 were answered: `said_yes_at_the_first_step_everywhere`, `answered_very_fast`, the values the scoring could not measure, and the ties a coin decided. A copy of `analysis.blocks_1_to_4_checks` (section 6i), checked by gate D52 |
 
 > ⚠️ **`profile_now` is shorter than the other two.** It carries the four policy values only,
@@ -533,6 +536,23 @@ scenario 4's information and reflection, so the wish is compared with their FINA
 | `performance_metric_the_wish_raised_most`, `performance_metric_the_wish_lowered_most` | The metric with the biggest rise and the biggest drop, with its name and points; `null` when nothing rose (or fell) |
 | `overall_performance_wish_minus_decision` | The same for overall performance: the wish's share of the best performance on its table minus the decision's, in points of 0-100 |
 | `what_the_wish_changed_in_performance_in_words` | The same in one sentence |
+
+### `company_value_shown` — the value the company card put first in scenarios 4 and 5
+
+Both scenarios show Meridian Care's card: "The value Meridian Care puts first: <value>". The value is
+chosen **for each participant**: the one they scored **lowest** before Block 5, so everybody works
+under an employer that prizes what they care about least. Saved since 25 September 2026.
+
+| Field | Meaning |
+|---|---|
+| `company`, `value`, `value_name` | "Meridian Care", the value's key, and its name as printed on the card (for example "reducing harm") |
+| `principle_shown` | The company's sentence as the participant read it |
+| `shown_in_scenarios` | The order numbers of the scenarios that showed it (4 and 5) |
+| `same_value_in_every_scenario_it_appeared` | Should always be `true`: both scenarios read the frozen pre-Block-5 profile |
+| `participant_score_on_this_value_before_block5` | How much the participant held the value the company prized |
+| `saved_when_shown` | `true` when it was saved on the scenario rows as it was shown; `false` on an older record, where it was worked out again from the frozen profile by the same function the card used |
+
+The raw copy is `companyValueShown` on the scenario 4 and 5 rows in `blocks`.
 
 ### The rest
 
