@@ -4137,13 +4137,10 @@ function FlowOverlay({
     const span = (k: Block5PolicyDimKey, color: string) => (
       <Text as="span" color={color} fontWeight="bold" fontStyle="italic">{POLICY_DIM_SHORT[k]}</Text>
     );
-    const score = (k: Block5PolicyDimKey) =>
-      Math.round(profile.dimensions.find((d) => d.key === k)?.score ?? 0);
     return {
       noTrade: servedKey === sacrificedKey,
       servedSpan: span(servedKey, cm.f.color as string),
       sacrificedSpan: span(sacrificedKey, cm.v.color as string),
-      sacrificedScore: score(sacrificedKey),
     };
   })();
   /* Deciding or wishing. Derived from the scenario this overlay already holds rather than passed
@@ -4456,9 +4453,16 @@ function FlowOverlay({
                 <>This option is built around {confirmTrade.servedSpan}, but delivers less of it than
                   your earlier answers asked for. Do you stand by choosing it?</>
               ) : (
-                <>This option delivers {confirmTrade.servedSpan} and gives up {confirmTrade.sacrificedSpan},
-                  which you rated <b>{confirmTrade.sacrificedScore} out of 100</b>. Do you put{" "}
-                  {confirmTrade.servedSpan} above {confirmTrade.sacrificedSpan} here?</>
+                /* NO SCORE IN THE QUESTION (24 September 2026, researcher's approval). It used to add
+                   "which you rated 94 out of 100". Three things were wrong with that: it showed the
+                   participant a profile number while Block 5 was still running, which can change
+                   how they answer the scenarios left; "you rated" was untrue - nobody rates
+                   anything, the number is computed from their Blocks 1-4 answers; and it came from
+                   the profile as it stood at that moment, so the same value could read 99 in one
+                   scenario and 94 in a later one. The trade itself is still named, which is all
+                   the question needs. */
+                <>This option delivers {confirmTrade.servedSpan} and gives up {confirmTrade.sacrificedSpan}.
+                  Do you put {confirmTrade.servedSpan} above {confirmTrade.sacrificedSpan} here?</>
               )}
             >
               <Stack gap="2">

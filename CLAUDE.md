@@ -174,6 +174,16 @@ It replaced a rule that read the option alone, which let a best-fit pick lower t
 options as its fifth argument; every caller passes them. Gates V13-V15 in `validate:vci`. VCI and
 Stability figures in the method docs were re-run and updated the same day.
 
+## No profile number on the "confirm keeping" question, since 24 September 2026
+
+After a participant keeps a misaligned option, the question used to read "…gives up X, which you
+rated 94 out of 100. Do you put Y above X here?". The number is gone (the researcher's choice): it
+showed a profile score while Block 5 was still running, "you rated" was untrue (the score is
+computed, never rated), and it came from the live profile, so the same value could read differently
+in two scenarios. The question still names the trade. **Participants see this change**; records
+before 24 September 2026 were made with the number on screen. The APA page's "missed by N points"
+is a separate case and is unchanged.
+
 ## The planner, revised 24 September 2026
 
 The tree, its three steps and the win counting are unchanged; no card order moved (24,000 orders
