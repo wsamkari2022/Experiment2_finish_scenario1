@@ -87,13 +87,15 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | F1 | The fit score stopped at 0, so several cards on one menu read "0 out of 100" | High | **Fixed** (1-A: share of what the participant asked for; order unchanged) |
 | F2 | Side panel says each option "is labeled by how well it fits"; no labels are shown | Medium | **Fixed** (sentence shortened) |
 | F3 | Docs said the raw shortfall is saved on the scenario row; it is not | Medium (docs) | **Fixed**: now saved (`matchShortfall`, `points_short_of_what_they_asked_for`, gate D56) |
-| G1 | "VCI acted" gets help from the reflection; "VCI wished" never does | High (analysis) | Open, suggestion written |
-| G2 | The wish is scored on a profile the decision just moved | High (analysis) | Open, suggestion written |
-| G3 | VCI acted / wished are one choice each: 100, 80, 50 or 10 | Medium (reporting) | Open, report for groups only |
+| G1 | "VCI acted" gets help from the reflection; "VCI wished" never does | High (analysis) | **Solved by decision** (25 Sept): no reflection in scenario 5 on purpose; the wish is compared with the final decision. Reason to be written down (Fix 4, step 9) |
+| G2 | The wish is scored on a profile the decision just moved | High (analysis) | Open; **plan written** (Fix 4, step 6) |
+| G3 | VCI acted / wished are one choice each: 100, 80, 50 or 10 | Medium (reporting) | **Partly solved by decision**: the per-value difference (Fix 4, step 7) replaces the four steps; the VCI gap stays rough, report it for groups |
 | G4 | VCI and Stability are good for groups, rough for one person | Medium (reporting) | Open, state in the thesis |
 | G5 | Stability 100 usually means nothing was measured | Medium | Known; now counted |
 | G6 | One honest change of mind gets the Stability of a random responder | Medium, decision | For discussion |
 | G7 | A random responder's VCI is 56-57, not 50 | Low (docs) | Open |
+| G8 | Scenario 6 adds a fixed 50 to the performance average, so nobody reaches 100 | High | Open; **plan written** (Fix 4, step 1) |
+| G9 | Scenario 5 (a wish) is in the performance average | High | Open; **plan written** (Fix 4, Part A, Waseem's decision) |
 
 ---
 
@@ -1027,6 +1029,97 @@ measure the same thing.
 3. The flag line: 20 points (my suggestion), or another number.
 4. The sheet: Excel file, or a simple web form.
 
+## Fix 4 plan: scenario 5 is only a wish (written 25 September, waiting for approval)
+
+Nothing here is implemented. Waseem's decisions (25 September 2026), in his words:
+- Scenario 5 must not add anything to the overall performance score, and "Preview impact" goes
+  from its option cards, so there is no impact on the total performance.
+- Scenario 5 exists only to see how far the WISH (it happens to you) sits from the DECISION
+  (you are in control) in scenario 4, and how far the wish sits from the pre-Block-5 profile.
+- No reflection in scenario 5 on purpose: the participant has just seen scenario 4's information
+  and reflection, and scenario 5 is identical except for their role. So they either pick the same
+  answer (the gap must be 0), or something different because it helps or hurts them more, and the
+  study reads, value by value, which value they started to care about more.
+
+### What the code does today (checked 25 September)
+
+| Question | Today |
+|---|---|
+| Is scenario 5 in the overall performance average? | **Yes**, in all three averages (`averagePerformance`, `overallCaptured`, the running dashboard `cumulativeMetrics`) |
+| Is scenario 6 in it? | **Yes, at a fixed 50** (its four rules all have performance 50), although a code note says it is left out. So nobody can reach 100 |
+| Does scenario 5 show "Preview impact"? | Yes: the card button, the side-panel sentence, and the help text of the performance bars |
+| Same card ORDER in 4 and 5? | Yes (0 differences in 3,000 profiles): the planner reads the pre-Block-5 profile |
+| Same fit NUMBERS and labels in 4 and 5? | **No.** 81 in 100 pretend people see at least one different fit number, 76 in 100 a different label, because scenario 5 is judged on the profile AFTER scenario 4 moved it |
+| Same pick in 4 and 5 gives VCI gap 0? | **No, in 56 in 100** (G2) |
+| Scenario 5 against the pre-Block-5 profile, per value? | **Already saved**: `analysis.position_effect.by_scenario[].value_movement` |
+| Wish minus decision, per value? | **Not saved** as its own field |
+
+### Part A: scenario 5 adds nothing to performance
+
+1. The three averages count only the four decision scenarios (1-4). This also removes scenario
+   6's fixed 50 (G8), which is the same kind of mistake.
+2. Scenario 5's own performance number stays saved on its row (it describes the option wished
+   for), with a new `counts_towards_performance: false`.
+3. Scenario 5's screen: no "Preview impact" button; the side-panel sentence loses its "Preview
+   impact" half; the help text of the performance bars no longer says the choice is averaged in.
+   Decision: keep the bars with one line "This is a wish, so it does not change these bars"
+   (recommended: the screen stays as close to scenario 4 as possible), or hide the bars as in
+   scenario 6.
+4. The results page: the average and the "fit your values but performed poorly" count use
+   scenarios 1-4 only; scenario 5's bar stays, labelled "your wish, not counted".
+5. The database recomputes the headline performance from the saved rows with the new rule, so
+   old test records and new ones follow one rule.
+
+Example with the real performance numbers (share of the best option taken, 0-100): someone who
+takes the strongest option in scenarios 1-4 (100 each) and wishes for "Protect full visits for the
+clients with nobody else" in scenario 5 (11). Today: (100+100+100+100+11+50) / 6 = **77**. After
+the fix: **100**. Even wishing for the strongest option in scenario 5 gives only 92 today, because of
+scenario 6's 50.
+
+### Part B: the wish is compared fairly with the decision
+
+6. Scenario 5 uses the profile the participant had when they ENTERED scenario 4, the same one
+   their decision was judged on. Scenario 5 never moves the profile anyway. Then the same option
+   always gets the same label, so the same pick gives a gap of exactly 0. Decision: (A) use it
+   only for the saved numbers, or (B, recommended) also for what the screen shows in scenario 5
+   (the fit line on the cards and the Compare overlay's readings), so scenario 5 really is
+   scenario 4 with only the role changed.
+7. A new saved field, per value: the wished option minus the decided option. It is 0 on every
+   value when they wish for the same option. The biggest rise and the biggest drop are named in
+   words ("when it was done to them, they wanted more protecting the vulnerable").
+8. Beside it, for reading in one place: how far the decision and the wish each sit from the
+   pre-Block-5 profile, per value (copied from the position effect, which already computes it).
+9. Documents: Waseem's reason for leaving the reflection out of scenario 5 is written into
+   CLAUDE.md and HOW_TO_ANALYZE, and the code note in `block5Mirror.ts` that calls the same-pick
+   gap "small" and "real movement" is corrected (it was 56 in 100, and it came from the ruler).
+10. Checks: the same pick gives a VCI gap of 0 and a per-value difference of 0 on all four; a
+    different pick gives exactly the difference of the two options' numbers; a run whose wish is
+    the weakest option still gets 100 performance when 1-4 took the strongest.
+
+Worked example from the real code (a steady pretend person): entering scenario 4 with vulnerable
+23, harm 0, gain 51, helped 1, they decided "Keep the town routes that pay, and drop the rural
+ones" (Misaligned, VCI 50). Scenario 4's update moved gain to 81. They wished for the SAME option
+in scenario 5, which, judged on the moved profile, became Aligned (VCI 100). Today's record says
+"50 points truer to their values when wishing". After the fix: 0.
+
+Per-value example: decided "Keep every care visit, and cut the check-in visits", wished "Protect
+full visits for the clients with nobody else". Wish minus decision: vulnerable +60, harm −16,
+gain −40, helped −42. Reading: when the cut was done to them, they cared much more about
+protecting the vulnerable, and less about everything else.
+
+### G1-G7 after Waseem's answers (25 September)
+
+| ID | Status |
+|---|---|
+| G1 | **Solved by his decision.** Leaving the reflection out of scenario 5 is on purpose, and the wish is meant to be compared with the FINAL decision. Only the reason needs writing down (step 9) |
+| G2 | Not fixed yet. **Fixed by step 6** once built |
+| G3 | **Partly solved.** The per-value difference (step 7) gives real numbers instead of four steps. The VCI gap itself stays rough: report it for groups |
+| G4 | Not solved (not about scenario 5) |
+| G5 | Not solved |
+| G6 | Not solved, still his decision |
+| G7 | Not solved (a note in the documents) |
+| G8 | New: scenario 6 adds a fixed 50 to performance. **Fixed by step 1** if he agrees |
+
 ## Log
 
 - **2026-09-24.** Audit written (`a2ecc01`). Nothing fixed yet. Fix 1 plan sent to Waseem.
@@ -1103,3 +1196,4 @@ measure the same thing.
 - **2026-09-24. F1 + F2 done (Waseem: "1-A, 2-fix it now").** Waseem asked why "Seal your apartment" read "Matches your earlier answers: 0 out of 100" although it exceeds vulnerable and harm. Cause: the score was 100 − shortfall, stopped at 0, and exceeding a value earns nothing on purpose; his profile (vul 28, harm 32, gain 97, helped 82) asks so much of gain and helped that the option fell 100+ short. Measured on pretend participants: 5 in 100 cards at 0, 2+ zeros on one menu in 7.9 in 100 scenarios, the best fit under 50 in 7.1. Now `policyAlignmentScore = 100 × (1 − shortfall ÷ Σ(u/100)·u)`; his scenario 1 reads 90 / 74 / 70 / 67 / 41 / 40 (Seal your apartment 0 → 40), same order and labels. Nothing that ranks moved (labels, VCI, Stability, planner, MPF softmax all read the shortfall or the rank). Results page: the "fit well but performed below 45" count now uses the label, not score ≥ 60. Fields renamed to `fit_percent_of_what_they_asked_for…`; each new scenario row carries `fitScoreScale`, and an untagged (older) row goes under `old_fit_score_saved_before_24_september_2026`, never under the new name. `SHAPE_VERSION` `2026-09-24-fit-share`. Gates V16 (12,000 menus: order as shortfall, 0 hidden differences), V17 (0 and 100 ends), D54 (scales kept apart), P8 rewritten (a demanding participant's four scores are no longer equal: 51 / 27 / 47 / 53). F2: the side-panel sentence no longer mentions labels. **F3, found while writing the docs:** HOW_TO_READ, HOW_TO_ANALYZE and a dbShape note all said `matchShortfall` is on the raw scenario row; it is not saved anywhere. Docs now say how to rebuild it (profile_by_scenario + option fingerprints). Saving it directly was NOT done (not approved); offer it.
 - **2026-09-24. Shortfall saved (Waseem: "1-yes") and B5 done ("Do B5 implement").** Each scenario row now carries `matchShortfall` and `fitShortfallsByOptionId` (two decimals, `roundForRecord`), shown as `points_short_of_what_they_asked_for` in `analysis.alignment_records` (gate D56). B5: `bump()` records every move when given a list; three twins `applyKeepUpdatesWithMoves`, `applyEndorsementUpdatesWithMoves`, `applyApaUpdatesWithMoves` return `{ profile, moves }`, and the plain rules call them, so no score changed (V18: 9,000 updates, same profile every time, the moves always add up to the real change). The APA 30-point cap, if it ever binds, is its own move. The page passes the moves into the result as `valueMoves` (required in `commitChoice`, so no path can forget); `analysis.value_moves_asked_for_and_made` lists them in words with `cut_off_by` and totals (gate D55; D44 now sees 30 paths). `SHAPE_VERSION` `2026-09-24-moves-and-shortfall`. Not visible to participants, so not checked in the browser. Measured: 16-23 in 100 policy values START Block 5 at 0 or 100; 7-49 in 100 moves are cut off; the old 13% came from uniform profiles and the notes now say so.
 - **2026-09-24. VCI / Stability accuracy checked** (Group G above) and **Fix 3 plan (D1 + D2) written**, not implemented.
+- **2026-09-25. Fix 4 plan written (scenario 5 is only a wish).** Waseem decided: scenario 5 out of performance, no "Preview impact" there, no reflection there on purpose, same pick means gap 0, per-value reading of which value rose. Checked in the code first: scenario 5 AND scenario 6 (at a fixed 50) are in all three performance averages; card order is identical in 4 and 5 (0 of 3,000), but fit numbers differ for 81 in 100 and the same-pick VCI gap is not 0 for 56 in 100 (scratch `s5_check.cjs`, `s5_order.cjs`). G1 solved by his decision, G3 partly; G8 and G9 added. Nothing implemented.
