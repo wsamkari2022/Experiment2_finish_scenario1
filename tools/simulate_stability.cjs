@@ -110,7 +110,7 @@ function run(name) {
        and a wish or the prediction test never moves the profile. */
     const cvrFired = scored && !isFit(opt.level);
     if (scored) {
-      p = isFit(opt.level) ? applyKeepUpdates(p, opt, opt.level, w)
+      p = isFit(opt.level) ? applyKeepUpdates(p, opt, opt.level, w, scenario.options)
                            : applyEndorsementUpdates(p, opt, true, i % 2 === 0, null, w);
     }
     results.push({

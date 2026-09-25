@@ -159,6 +159,21 @@ deliberate acts — open the overlay, open a reading. `analysis.mcf` therefore l
 never on screen. `MCF_VERSION` is stamped on every row; rows made under two versions must not be
 pooled.
 
+## The keep rule, revised 24 September 2026
+
+When a participant picks one of their two best-fit options, no reflection runs and
+`applyKeepUpdates` (block5CVR.ts) moves the profile. It now learns from the COMPARISON:
+
+- a **best-fit (Aligned) pick moves nothing** — the model's own guess came true;
+- a **second-best (Weakly aligned) pick** is compared with the best fit it was chosen over: +20 to
+  the value where the pick beats the best fit most, −15 to the value where the best fit beat the
+  pick most (weighted by how much the participant holds it).
+
+It replaced a rule that read the option alone, which let a best-fit pick lower the #1 value (16 in
+100 best-fit picks) and let a second-best pick lower nothing (35 in 100). It needs the scenario's
+options as its fifth argument; every caller passes them. Gates V13-V15 in `validate:vci`. VCI and
+Stability figures in the method docs were re-run and updated the same day.
+
 ## The planner, revised 24 September 2026
 
 The tree, its three steps and the win counting are unchanged; no card order moved (24,000 orders

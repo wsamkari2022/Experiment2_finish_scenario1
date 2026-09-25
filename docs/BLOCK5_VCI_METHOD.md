@@ -197,14 +197,14 @@ scoring code by each kind of participant.
 |---|---|---|
 | Always the best fit | 100 | Highly Consistent (100%) |
 | Corrected by APA — tempted every time, then names their top value | 95 | Highly Consistent (72%) |
-| True to their Blocks 1–4 top value | 91 | Highly Consistent (57%) |
+| True to their Blocks 1–4 top value | 90 | Highly Consistent (49%) |
 | Mixes their best and second-best fit | 90 | Highly Consistent (71%) |
 | Always the second-best fit | 80 | Mostly Consistent (100%) |
-| Chases the best performance numbers | 73 | Moderate (47%) |
-| Changes value once, through APA, then holds it | 70 | Moderate (37%) |
-| Changes value once, keeps it after the CVR, then holds it | 69 | Moderate (47%) |
-| Random everywhere | 56 | Low (32%) |
-| Takes up a new value every scenario (either route) | 31 | Very Low (56–57%) |
+| Chases the best performance numbers | 76 | Moderate (38%) |
+| Changes value once, through APA, then holds it | 68 | Moderate (42%) |
+| Changes value once, keeps it after the CVR, then holds it | 68 | Moderate (46%) |
+| Random everywhere | 57 | Low (32%) |
+| Takes up a new value every scenario (either route) | 31–32 | Very Low (55–56%) |
 | Always the worst fit | 10 | Highly Inconsistent (100%) |
 
 **Separation** — how often the first kind outscores the second:
@@ -213,9 +213,9 @@ scoring code by each kind of participant.
 |---|---|
 | True to top value > random | 96% |
 | Random > flip-flopper | 88% |
-| One-time convert > random | 71% |
+| One-time convert > random | 70% |
 | One-time convert > flip-flopper | 97% |
-| One-time convert > performance chaser | 42% |
+| One-time convert > performance chaser | 35% |
 
 ---
 
@@ -228,10 +228,10 @@ scoring code by each kind of participant.
 2. **Four scenarios count,** so the scale is coarse: 30 possible values.
 3. **A change of heart is learned over about two scenarios.** One strong endorsement makes the
    newly endorsed value the participant's top value in 56% of profiles, so a genuine convert usually
-   loses part of the next scenario as well as the one in which they changed. They average 69, and
-   come out ahead of a performance chaser only 42% of the time (ties counted half).
+   loses part of the next scenario as well as the one in which they changed. They average 68, and
+   come out ahead of a performance chaser only 35% of the time (ties counted half).
 4. **Random answering.** Blind picking averages exactly 50. A responder who also answers the CVR and
-   APA at random averages 56, because APA lists only the options built on the value they name,
+   APA at random averages 57, because APA lists only the options built on the value they name,
    which steers some random choices toward a fit.
 5. **Gate V5 tests a convert who adopts one clear value.** A change of heart is a change to a value,
    so V5's convert takes up, in scenario 1, an option built on one value (its strongest value 85 or

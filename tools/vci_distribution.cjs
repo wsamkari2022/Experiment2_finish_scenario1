@@ -120,7 +120,7 @@ function run(start, beh) {
     let finalId = opt.id;
     let relabeled = null; // what relabeling on the moved profile would give; VCI never uses it
     if (scenarioIsScored(s)) {
-      if (isFit(opt.level)) p = applyKeepUpdates(p, opt, opt.level, w);
+      if (isFit(opt.level)) p = applyKeepUpdates(p, opt, opt.level, w, s.options);
       else if (cvr.path === "keep") p = applyEndorsementUpdates(p, opt, cvr.strong, cvr.moved, null, w);
       else {
         const pending = applyApaUpdates(p, cvr.moved, cvr.value, null, w, cvr.confidence);

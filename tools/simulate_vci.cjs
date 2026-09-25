@@ -166,7 +166,7 @@ function run(name) {
     let relabeledCredit = credit;
     if (scenarioIsScored(scenario)) {
       if (isFit(opt.level)) {
-        profile = applyKeepUpdates(profile, opt, opt.level, w);
+        profile = applyKeepUpdates(profile, opt, opt.level, w, scenario.options);
       } else if (spec.apa) {
         /* MIRRORS handleApaCommit (Block5PublicEmergencySimulation.tsx). The participant names the
            value this option stands for, at full confidence; the profile moves by applyApaUpdates;
@@ -242,7 +242,7 @@ gate("V6", out["Convert"] >= out["Hesitant convert"], `Convert >= Hesitant conve
   const scenario = BLOCK5_SCENARIOS[0];
   const best = labelOptions(scenario.options, p)[0];
   const kept = optionMainValue(best);
-  const after = applyKeepUpdates(p, best, best.level, scenario.stakesWeight ?? 1);
+  const after = applyKeepUpdates(p, best, best.level, scenario.stakesWeight ?? 1, scenario.options);
   const before = scoreOf(p, kept), now = scoreOf(after, kept);
   gate("V7", now >= before,
     `keeping your best-fit option never lowers the value it is built on  (${kept.replace("Sensitivity", "")}: ${before.toFixed(1)} -> ${now.toFixed(1)})`);
@@ -312,6 +312,53 @@ gate("V8", out["Flip-flopper (APA)"] < 50,
   const wrongCase = cases.filter(([v, l]) => consistencyLevel(v) !== l);
   gate("V12", edges.every((e, i) => near(e, want[i])) && wrongCase.length === 0,
     `levels at 90 / 80 / 65 / 50 / 30  (edges ${edges.join(" / ")}; ${wrongCase.length ? "misplaced: " + wrongCase.map((c) => c[0]).join(", ") : "all 12 test scores land correctly"})`);
+}
+
+/* V13, V14 — THE KEEP RULE LEARNS FROM THE COMPARISON (24 September 2026, researcher's approval).
+   Seeded random profiles, every decider scenario, the best-fit pick and the second-best pick.
+     V13  a best-fit pick moves nothing: the model's own guess came true.
+     V14  a second-best pick lowers the value on which the best fit beat it most (weighted by how
+          much the person holds it), raises the value on which it beat the best fit most, and never
+          lowers a value on which it was not worse. */
+{
+  let seed = 20260924;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  let bestMoved = 0, bestPicks = 0, secondPicks = 0, wrongDown = 0, missedDown = 0, missedUp = 0;
+  for (let i = 0; i < 2000; i++) {
+    const p = makeProfile(Object.fromEntries(POLICY.map((k) => [k, Math.round(rnd() * 100)])));
+    for (const scenario of BLOCK5_SCENARIOS.filter(scenarioIsScored)) {
+      const ranked = labelOptions(scenario.options, p);
+      const [best, second] = ranked;
+
+      bestPicks++;
+      const afterBest = applyKeepUpdates(p, best, best.level, 1, scenario.options);
+      if (POLICY.some((k) => scoreOf(afterBest, k) !== scoreOf(p, k))) bestMoved++;
+
+      secondPicks++;
+      const after = applyKeepUpdates(p, second, second.level, 1, scenario.options);
+      const lowered = POLICY.filter((k) => scoreOf(after, k) < scoreOf(p, k));
+      const raised = POLICY.filter((k) => scoreOf(after, k) > scoreOf(p, k));
+      if (lowered.some((k) => second.fingerprint[k] >= best.fingerprint[k])) wrongDown++;
+      const costs = POLICY.map((k) => ({ k, c: Math.max(0, best.fingerprint[k] - second.fingerprint[k]) * scoreOf(p, k) / 100 }));
+      const top = costs.filter((x) => x.c > 0).sort((a, b) => b.c - a.c)[0];
+      if (top && scoreOf(p, top.k) > 0 && lowered.length === 0) missedDown++;
+      /* The value it should raise is the one the pick beats the best fit on the most (ties by the
+         person's own rank). Raising nothing is allowed only when THAT value is already at 100. */
+      const rank = (k) => p.dimensions.find((d) => d.key === k).rank;
+      const why = POLICY.map((k) => ({ k, g: second.fingerprint[k] - best.fingerprint[k] }))
+        .filter((x) => x.g > 0).sort((a, b) => b.g - a.g || rank(a.k) - rank(b.k))[0];
+      if (why && raised.length === 0 && scoreOf(p, why.k) < 100) missedUp++;
+    }
+  }
+  gate("V13", bestMoved === 0,
+    `a best-fit pick moves nothing  (${bestMoved} of ${bestPicks} best-fit picks moved a value; it used to be about 16 in 100 lowering the #1 value)`);
+  gate("V14", wrongDown === 0 && missedDown === 0 && missedUp === 0,
+    `a second-best pick lowers what it gave up and raises why it was chosen  (${secondPicks} picks: `
+    + `${wrongDown} lowered a value it was not worse on, ${missedDown} lowered nothing, ${missedUp} raised nothing)`);
+  let threw = false;
+  try { applyKeepUpdates(START(), labelOptions(BLOCK5_SCENARIOS[0].options, START())[1], "weakly_aligned", 1); }
+  catch { threw = true; }
+  gate("V15", threw, "a second-best pick without the scenario's options is refused loudly, never silently ignored");
 }
 
 console.log("\n" + "=".repeat(72));

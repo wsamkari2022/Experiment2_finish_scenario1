@@ -542,22 +542,24 @@ Confirming an option that is **already labeled Aligned or Weakly Aligned** updat
 too. No reflection runs on those two tiers, so this is the only update they produce, and it is easy
 to miss when reading the CVR and APA paths alone.
 
-| Tier kept | Value the option is built on | A value it neglects by more than 5 |
-|---|---|---|
-| Aligned | +15 | −10 |
-| Weakly aligned | +20 | −15 |
-| Misaligned / strongly misaligned | no change (the reflection path handles these) | — |
+**Since 24 September 2026 it learns from the comparison, not from the option alone.**
 
-**Why the second-best option moves the profile further.** Keeping your top-ranked option tells the
-model almost nothing it did not already believe. Keeping your second-ranked option is the
-informative case, because it says the ordering may be wrong, so it earns the larger move.
+| Tier kept | What moves |
+|---|---|
+| Aligned (the best fit) | **nothing**: the model's own best guess came true |
+| Weakly aligned (the second best) | compared with the best fit it was chosen over: **+20** to the value on which the pick beats the best fit most (why it was chosen), **−15** to the value on which the best fit beat the pick most, weighted by how much the participant holds it (what was given up) |
+| Misaligned / strongly misaligned | no change (the reflection path handles these) |
 
-**Two guards on the decrement.** It never subtracts from the value just raised, which would net a
-participant down for agreeing with themselves; and it only fires on a value the option genuinely
-under-serves (`displacedTopValue`, a margin of more than 5). An option that satisfies everything
-the participant holds costs them nothing. In practice an aligned pick therefore moves one value and
-nothing else 46% of the time, and is mildly inflationary at about +6.3 points of net profile per
-pick against +5.4 for a weakly aligned pick.
+Ties go to the participant's own rank order. The function needs the scenario's options to know the
+best fit, and refuses a second-best pick without them (gate V15).
+
+**What it replaced, and why.** The rule before read the chosen option alone: +15/+20 to its biggest
+number and −10/−15 to the participant's highest value it fell short on by more than 5. Every option
+falls short somewhere, so **picking your best fit could lower your #1 value**. With 4,000 steady
+pretend participants on scenarios 1-4, that happened to 16 of 100 best-fit picks and reordered the
+four values in 23 of 100. The decrement also skipped whenever that value was the one just raised,
+so a second-best pick that gave up a held value by 20 points or more **lowered nothing** in 35 of
+100 cases. Now: 0, 0 and 0 (gates V13, V14). The step sizes are unchanged.
 
 **Scenario 5 is exempt.** It is a wish rather than a decision, `scenarioIsScored()` returns false,
 and the profile passes through untouched, so the profile - and Stability, which reads it - moves

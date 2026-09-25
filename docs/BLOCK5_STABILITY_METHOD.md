@@ -106,11 +106,14 @@ checked.
 
    | How often the first scores higher | Swaps | Distance |
    |---|---|---|
-   | Flip-flopper > one-time convert | 10% | 34% |
+   | Flip-flopper > one-time convert | 10% | 31% |
    | Flip-flopper > random responder | 12% | 36% |
-   | One-time convert > always the worst fit | 95% | 81% |
+   | One-time convert > always the worst fit | 95% | 84% |
 
-5. **Distance counted agreement as change.** Keeping an option that already fits still nudges the
+5. **Distance counted agreement as change.** (Figures for this point date from before 24 September
+   2026. Since then a best-fit pick moves nothing, so that participant scores 100 under both measures;
+   one who always takes the second best still scores 64 under distance against 100 under swaps.)
+   Keeping an option that already fits still nudged the
    profile, so a participant who chose their best fit every time averaged 86, with 38% of them below
    "Held steady", and "always my second best" averaged 69. Under swaps both score 100.
 
@@ -174,13 +177,13 @@ as `npm run report:vci`.
 | Always the best fit | 100 | Held steady (100%) | 100 |
 | Always the second best | 100 | Held steady (100%) | 100 |
 | Mixes best and second best | 100 | Held steady (100%) | 100 |
-| True to their Blocks 1–4 top value | 94 | Held steady (74%) | 90 |
+| True to their Blocks 1–4 top value | 94 | Held steady (71%) | 88 |
 | Corrected by APA — tempted every time, names their top value | 94 | Held steady (51%) | 49 |
-| Chases the best performance numbers | 81 | Held steady (36%) | 71 |
-| Changes value once, through APA | 75 | Shifted a little (52%) | 71 |
-| Changes value once, keeps it after the CVR | 57 | Shifted a little (39%) | 68 |
-| Random everywhere | 57 | Shifted a little (38%) | 44 |
-| Takes up a new value every scenario, through APA | 27 | Shifted a lot (37%) | 53 |
+| Chases the best performance numbers | 80 | Held steady (38%) | 74 |
+| Changes value once, through APA | 74 | Shifted a little (54%) | 70 |
+| Changes value once, keeps it after the CVR | 57 | Shifted a little (38%) | 68 |
+| Random everywhere | 56 | Shifted a little (40%) | 44 |
+| Takes up a new value every scenario, through APA | 27 | Shifted a lot (38%) | 53 |
 | Takes up a new value every scenario, by keeping | 11 | Changed substantially (71%) | 53 |
 | Always the worst fit | 4 | Changed substantially (86%) | 51 |
 
@@ -196,8 +199,8 @@ never open the second lens.
    −10; an endorsement moves the served value +30 and the sacrificed one −20. So the same change of
    heart reorders less through APA: a participant who takes up a new value every scenario averages 27
    through APA and 11 by keeping.
-3. **A change of heart is a large reordering.** A one-time convert averages 57, the same as a random
-   responder. Stability measures change, not quality.
+3. **A change of heart is a large reordering.** A one-time convert averages 57, about the same as a
+   random responder (56). Stability measures change, not quality.
 4. **Ties are common.** After 11% of conflict steps two of the four values are exactly equal — the
    updates are round numbers and stop at 0 and 100 — which is why a tie opening or closing counts
    half rather than being ignored or counted whole.

@@ -1438,9 +1438,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
   const handleKeep = useCallback(() => {
     if (!selectedOption) return;
-    // Keeping an option that already fits reinforces the value it is built on, and eases off a
-    // value it neglects. The amounts and the guards live in applyKeepUpdates so the scoring rule
-    // sits with the other scoring rules and can be simulated (tools/simulate_vci.cjs).
+    // Keeping an option that already fits: a best-fit pick moves nothing, and a second-best pick is
+    // compared with the best fit it was chosen over (see applyKeepUpdates, which needs the menu).
+    // The rule lives there so it sits with the other scoring rules and can be simulated.
     // Everyday scenarios teach the profile less than a life-and-death one (scenario.stakesWeight).
     /*
      * A WISH TEACHES THE PROFILE NOTHING. In a recipient scenario the profile is carried through
@@ -1449,7 +1449,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     const nextProfile = scenario && !scenarioIsScored(scenario)
       ? profile
       : applyKeepUpdates(
-          profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1,
+          profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1, scenario?.options ?? [],
         );
 
     /*

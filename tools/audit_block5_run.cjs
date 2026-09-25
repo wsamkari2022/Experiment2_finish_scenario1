@@ -130,7 +130,7 @@ for (const [pname, scores] of Object.entries(PARTICIPANTS)) {
           profile = CVR.applyApaUpdates(profile, i % 3 === 0, POLICY_DIM_KEYS[i % POLICY_DIM_KEYS.length], null, w);
         }
       } else {
-        profile = CVR.applyKeepUpdates(profile, chosen, chosen.level, w);
+        profile = CVR.applyKeepUpdates(profile, chosen, chosen.level, w, sc.options);
       }
 
       for (const k of ALL_KEYS) {

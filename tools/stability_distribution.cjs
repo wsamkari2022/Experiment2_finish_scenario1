@@ -106,7 +106,7 @@ function run(start, beh) {
     const scored = scenarioIsScored(s);
     const cvrFired = scored && !isFit(opt.level);
     if (scored) {
-      if (isFit(opt.level)) p = applyKeepUpdates(p, opt, opt.level, w);
+      if (isFit(opt.level)) p = applyKeepUpdates(p, opt, opt.level, w, s.options);
       else if (cvr.path === "keep") p = applyEndorsementUpdates(p, opt, cvr.strong, cvr.moved, null, w);
       else p = applyApaUpdates(p, cvr.moved, cvr.value, null, w, cvr.confidence);
     }

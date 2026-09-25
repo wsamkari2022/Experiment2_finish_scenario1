@@ -378,14 +378,14 @@ export function cvrCoordinate(option: Block5ScenarioOption, profile: Block5UserP
  * across three functions.
  *
  *  1. applyKeepUpdates - the participant confirmed an option ALREADY labeled a good fit.
- *       Aligned          +15 to the value the option is built on (optionMainValue)
- *                        -10 to a value it neglects by more than 5 (displacedTopValue)
- *       Weakly aligned   +20 / -15
+ *     Since 24 September 2026 (researcher's approval) it learns from the COMPARISON:
+ *       Aligned          nothing moves - the model's own best guess came true
+ *       Weakly aligned   compared with the best-fit option they passed over:
+ *                        +20 to the value on which their pick beats the best fit the most,
+ *                        -15 to the value on which the best fit beat their pick the most,
+ *                        weighted by how much they hold it
  *       Any other level  no change at all
- *     Weakly aligned moves FURTHER on purpose: keeping your top-ranked option tells the model
- *     what it already believed, while keeping your second says the ordering may be wrong.
- *     The decrement is skipped when the neglected value IS the value just raised, and when the
- *     option neglects nothing - so an aligned pick often moves one value and nothing else.
+ *     See the function for why, and for the two defects it replaced.
  *
  *  2. applyEndorsementUpdates - the reflection ran and the participant KEPT the misaligned choice.
  *       served value      +30 strong endorsement / +15 weak
@@ -471,23 +471,6 @@ function recompute(p: Block5UserProfile): void {
   const byRank = [...p.dimensions].sort((a, b) => a.rank - b.rank);
   p.topThreeKeys = byRank.slice(0, 3).map((d) => d.key);
   p.topSensitivityKey = byRank[0]?.key ?? p.topSensitivityKey;
-}
-
-/**
- * The value this option actually NEGLECTS — the participant's highest-scoring value that the
- * option falls more than 5 points short of. Returns null when the option falls short of nothing.
- *
- * That null matters. This used to fall back to `sorted[0]` — the participant's top value —
- * even when the option satisfied every value they hold. Combined with a downward bump, choosing
- * an option that serves you well would have pushed your top value DOWN. An option that costs you
- * nothing should cost you nothing.
- */
-function displacedTopValue(p: Block5UserProfile, option: Block5ScenarioOption): Block5PolicyDimKey | null {
-  const sorted = [...POLICY_DIM_KEYS].sort((a, b) => scoreOf(p, b) - scoreOf(p, a));
-  for (const k of sorted) {
-    if (option.fingerprint[k] < scoreOf(p, k) - 5) return k;
-  }
-  return null;
 }
 
 /**
@@ -747,44 +730,68 @@ export function applyApaUpdates(
   return p;
 }
 
-/** Keeping an aligned/weakly-aligned option reinforces its main value by `points` (clamped 0–100). */
 /**
  * Profile update when the participant KEEPS an option that already fits them (no CVR fires).
  *
- * WHY THE SECOND-BEST OPTION MOVES THE PROFILE FURTHER (+20 vs +15)
- * ----------------------------------------------------------------
- * Keeping your top-ranked option tells the model almost nothing it did not already believe — it
- * already thought that was your best fit. Keeping your SECOND-ranked option is the informative
- * case: it says the ordering may be wrong. So it earns the larger move, which is what lets a
- * value you keep choosing climb toward the top while the one you keep passing over settles
- * beneath it.
+ * IT LEARNS FROM THE COMPARISON, NOT FROM THE OPTION ALONE (24 September 2026, researcher's
+ * approval). The rule before read the chosen option by itself - +15/+20 to its biggest number,
+ * -10/-15 to the participant's highest value it fell short on - and had two defects:
  *
- * TWO GUARDS ON THE DOWNWARD BUMP, both of which were missing:
- *   1. Never subtract from the value just raised. If the option you kept is built on your top
- *      value, +15 and -10 would land on the SAME value and net out to +5 — punishing you for
- *      agreeing with yourself.
- *   2. Only subtract from a value the option genuinely neglects (see displacedTopValue). An
- *      option that satisfies everything you hold costs you nothing.
+ *   B2  PICKING YOUR BEST FIT COULD LOWER YOUR #1 VALUE. Every option falls short somewhere, so the
+ *       best fit usually "neglected" something too. A participant at gain 100, helped 99 who picked
+ *       their best fit (helped 87, gain 80) got helped +15, gain -10: their top two values swapped
+ *       for choosing exactly what the model predicted. It happened to 16 of 100 best-fit picks and
+ *       reordered the four values in 23 of 100 (4,000 steady pretend participants, scenarios 1-4).
+ *   B1  THE DECREMENT COULD HIT NOTHING. It lowered "your highest value this option misses by more
+ *       than 5", and when that was the value just raised it skipped - never looking further. A
+ *       second-best pick that gave up a value the person holds by 20 points or more then lowered
+ *       nothing in 35 of 100 cases; the researcher's own test run moved 0 in two scenarios.
  *
- * It cannot guarantee the kept value reaches rank 1 after a single choice, and should not:
- * whether an option counts as fitting depends on all four values together
- * (policyAlignmentScore), not on one. A forced swap would make the profile — and with it the CVR
- * targeting, which aims at whichever value is on top — jump around between scenarios.
+ * WHAT IT DOES NOW. A choice teaches the model only what it did not already expect:
+ *
+ *   Aligned          the model's own best guess came true, so nothing moves - like a rating that
+ *                    barely changes when you beat the player you were expected to beat.
+ *   Weakly aligned   the participant chose the model's SECOND guess over its FIRST. Compared with
+ *                    that best-fit option, their pick is better on some values and worse on others:
+ *                      +20 to the value where their pick beats the best fit the most (why they chose it)
+ *                      -15 to the value where the best fit beat their pick the most, weighted by how
+ *                          much they hold it (score/100, as violatedValue does) (what they gave up)
+ *                    Ties go to the participant's own rank order, never to the order of this file.
+ *   Anything else    no change (a misaligned pick goes through the reflection instead).
+ *
+ * The step sizes are the ones the rule always had; only WHICH values move changed. `menu` is the
+ * scenario's options, needed to know which option was the best fit. It is required for a
+ * second-best pick, and a call without it throws rather than silently teaching nothing.
  */
 export function applyKeepUpdates(
   profile: Block5UserProfile,
   option: Block5ScenarioOption,
   level: AlignmentLevel,
   stakesWeight = 1,
+  menu?: Block5ScenarioOption[],
 ): Block5UserProfile {
   const p = cloneProfile(profile);
-  const gain = level === "aligned" ? 15 : level === "weakly_aligned" ? 20 : 0;
-  if (gain === 0) return p;
-  const loss = level === "aligned" ? -10 : -15;
-  const kept = optionMainValue(option);
-  const neglected = displacedTopValue(p, option);
-  bump(p, kept, gain * stakesWeight);
-  if (neglected && neglected !== kept) bump(p, neglected, loss * stakesWeight);
+  if (level !== "weakly_aligned") return p;
+  if (!menu || menu.length === 0) {
+    throw new Error("[applyKeepUpdates] a second-best pick needs the scenario's options (menu) to know which best fit it was chosen over.");
+  }
+  const bestFit = labelOptions(menu, profile)[0];
+  if (!bestFit || bestFit.id === option.id) return p;
+
+  const rankOf = (k: Block5PolicyDimKey) =>
+    profile.dimensions.find((d) => d.key === k)?.rank ?? Number.MAX_SAFE_INTEGER;
+  const gaps = POLICY_DIM_KEYS.map((k) => ({ k, gap: option.fingerprint[k] - bestFit.fingerprint[k] }));
+  const whyChosen = gaps
+    .filter((x) => x.gap > 0)
+    .sort((a, b) => b.gap - a.gap || rankOf(a.k) - rankOf(b.k))[0];
+  const givenUp = gaps
+    .filter((x) => x.gap < 0)
+    .map((x) => ({ k: x.k, cost: (-x.gap * scoreOf(profile, x.k)) / 100 }))
+    .filter((x) => x.cost > 0)
+    .sort((a, b) => b.cost - a.cost || rankOf(a.k) - rankOf(b.k))[0];
+
+  if (whyChosen) bump(p, whyChosen.k, 20 * stakesWeight);
+  if (givenUp) bump(p, givenUp.k, -15 * stakesWeight);
   recompute(p);
   return p;
 }
@@ -984,13 +991,13 @@ export function performanceScore(option: Block5ScenarioOption): number {
    3. A CHANGE OF HEART IS LEARNED OVER ABOUT TWO SCENARIOS. One strong endorsement makes the
       newly endorsed value the participant's top value in 56% of profiles - a little over half - so
       a genuine convert usually loses part of the next scenario as well as the one in which they
-      changed. A one-time convert averages 69.
+      changed. A one-time convert averages 68.
    4. RANDOM ANSWERING. Blind picking averages exactly 50. A simulated responder who also answers
-      the CVR and APA at random averages 56, because APA lists only the options built on the value
+      the CVR and APA at random averages 57, because APA lists only the options built on the value
       they name, which steers some random choices toward a fit.
    5. SEPARATION. A participant true to their top value outscores a random responder 96% of the
       time; a random responder outscores a flip-flopper 88% of the time; a one-time convert
-      outscores a random responder 71% of the time.
+      outscores a random responder 70% of the time.
    ================================================================================================ */
 
 /**
@@ -1277,8 +1284,8 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
       −10; an endorsement moves the served value +30 and the sacrificed one −20. So the same change
       of heart reorders less when it goes through APA: a participant who takes up a new value in
       every scenario averages 27 through APA and 11 by keeping.
-   3. A CHANGE OF HEART IS A LARGE REORDERING. A one-time convert averages 57, the same as a random
-      responder. Stability measures change, not quality.
+   3. A CHANGE OF HEART IS A LARGE REORDERING. A one-time convert averages 57, about the same as a
+      random responder (56). Stability measures change, not quality.
    4. TIES ARE COMMON. After 11% of conflict steps two of the four values are exactly equal - the
       updates are round numbers and stop at 0 and 100 - which is why a tie opening or closing counts
       half rather than being ignored or counted whole.
