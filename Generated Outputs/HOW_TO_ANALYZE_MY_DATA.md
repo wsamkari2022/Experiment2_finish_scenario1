@@ -113,8 +113,9 @@ other is coarse.
 
 | Measure | How it is censored | What to do |
 |---|---|---|
-| Alignment / fit score | Floors at 0. A demanding participant pushes several options there | Use `matchShortfall` on the scenario result, which is uncensored |
+| Alignment / fit score | Until 24 September 2026 it stopped at 0, and a demanding participant pushed several options there. It is now a share of each participant's own maximum | Across participants use `points_short_of_what_they_asked_for` (saved since 24 September 2026), which is on one scale for everybody |
 | Stability | Ordinal and coarse: 13 possible values (100 down to 0 in steps of 8.3), and everyone who never met a conflict piles up at 100 | Do not model it as continuous; show its distribution |
+| Value movement | Scores stop at 0 and 100, so a move past an edge is cut off. A value at the edge "does not move" whatever the participant does | Check `analysis.value_moves_asked_for_and_made` (since 24 September 2026) and report participants with cut-off moves separately |
 
 **The alignment floor used to matter more than it does.** Until 14 September 2026 the ranking itself
 was computed from the floored score, which meant options tied at 0 were ordered alphabetically by
@@ -169,10 +170,11 @@ So "this participant made 4 Aligned choices out of 4" means *they took the top o
 time*, not *the options suited them*. If you want the second claim, use
 `fit_percent_of_what_they_asked_for`: the share of what the participant's four values asked for that
 the option gives (since 24 September 2026; it no longer stops at 0). It is a share of each
-participant's own maximum, so compare it within a participant. Across participants, rebuild the raw
-shortfall, which is on one scale for everybody, from `profile_by_scenario` and the option
-fingerprints (HOW_TO_READ_MY_DATABASE.md, section 6d, trap 2). Rows saved before 24 September 2026
-are on the old scale, under `old_fit_score_saved_before_24_september_2026`: never pool the two.
+participant's own maximum, so compare it within a participant. Across participants use
+`points_short_of_what_they_asked_for`, the raw shortfall, which is on one scale for everybody (saved
+since 24 September 2026; for older rows rebuild it, HOW_TO_READ_MY_DATABASE.md, section 6d, trap 2).
+Rows saved before 24 September 2026 are on the old scale, under
+`old_fit_score_saved_before_24_september_2026`: never pool the two.
 
 ### 4.7 Reading "chose card 1" as "chose by their values" (or the other way round)
 

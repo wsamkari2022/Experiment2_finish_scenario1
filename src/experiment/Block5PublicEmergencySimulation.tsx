@@ -32,13 +32,13 @@ import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
   labelOptions, type LabeledOption, isMisaligned, cvrCoordinate,
-  optionMetrics, applyEndorsementUpdates, applyKeepUpdates, applyApaUpdates, scenarioVciScore,
+  optionMetrics, applyEndorsementUpdatesWithMoves, applyKeepUpdatesWithMoves, applyApaUpdatesWithMoves, scenarioVciScore,
   scenarioShowsPerformance,
   scenarioIsScored, isPredictionTest,
   performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall, policyShortfallByValue,
-  FIT_SCORE_SCALE,
+  FIT_SCORE_SCALE, roundForRecord,
 } from "./block5CVR";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
@@ -67,6 +67,7 @@ import {
   type CVRFraming, type FramingAdjust, type StakePosition,
   BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
   type Block5MethodKind,
+  type Block5ValueMove,
 } from "./block5Types";
 import { plannerRank, PLANNER_VERSION, type PlannerResult } from "./block5Planner";
 import { deriveDecisionProfile, type DecisionProfile } from "./block5Thresholds";
@@ -283,6 +284,8 @@ const VALUE_BENEFIT: Record<Block5PolicyDimKey, string> = {
 interface ApaCommitPayload {
   finalOption: LabeledOption;
   pendingProfile: Block5UserProfile;
+  /** Every move that produced pendingProfile, as asked for and as made (B5). */
+  pendingMoves: Block5ValueMove[];
   confidence: number;
   q2Influenced: boolean;
   q3Value: Block5PolicyDimKey;
@@ -1237,6 +1240,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
   const commitChoice = useCallback((opt: LabeledOption, opts: {
     nextProfile: Block5UserProfile;
+    /** Every move that produced nextProfile, as asked for and as made (B5). Required, so no path
+        can forget it; an empty list when nothing was asked to move. */
+    valueMoves: Block5ValueMove[];
     endorsement: CVREndorsement;
     stakeholderGuided: boolean | null;
     /** Scenario 6 only. */
@@ -1297,6 +1303,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       alignmentLevel: opt.level,
       matchScore: opt.matchScore,
       fitScoreScale: FIT_SCORE_SCALE,
+      matchShortfall: roundForRecord(opt.matchShortfall),
+      fitShortfallsByOptionId: Object.fromEntries(labeled.map((o) => [o.id, roundForRecord(o.matchShortfall)])),
+      valueMoves: opts.valueMoves,
       firstChoiceOptionId: progress.firstChoiceId ?? opt.id,
       postCVRChoiceOptionId: opt.id,
       cvrFired: cvrRan,
@@ -1391,6 +1400,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       alignmentLevel: opt.level,
       matchScore: opt.matchScore,
       fitScoreScale: FIT_SCORE_SCALE,
+      matchShortfall: roundForRecord(opt.matchShortfall),
+      fitShortfallsByOptionId: Object.fromEntries(finalLabeled.map((o) => [o.id, roundForRecord(o.matchShortfall)])),
+      valueMoves: payload.pendingMoves,
       firstChoiceOptionId: progress.firstChoiceId ?? payload.originalOptionId,
       postCVRChoiceOptionId: opt.id,
       cvrFired: true,
@@ -1449,11 +1461,12 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
      * A WISH TEACHES THE PROFILE NOTHING. In a recipient scenario the profile is carried through
      * untouched, so the profile - and Stability, which reads it - moves only on actual decisions.
      */
-    const nextProfile = scenario && !scenarioIsScored(scenario)
-      ? profile
-      : applyKeepUpdates(
+    const update = scenario && !scenarioIsScored(scenario)
+      ? { profile, moves: [] as Block5ValueMove[] }
+      : applyKeepUpdatesWithMoves(
           profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1, scenario?.options ?? [],
         );
+    const nextProfile = update.profile;
 
     /*
      * SCENARIO 6 attaches what the participant was shown and what they did about it. `firstChoice`
@@ -1503,7 +1516,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       };
     }
     commitChoice(selectedOption, {
-      nextProfile, endorsement: "n/a", stakeholderGuided: null, predictionTest,
+      nextProfile, valueMoves: update.moves, endorsement: "n/a", stakeholderGuided: null, predictionTest,
     });
   }, [selectedOption, profile, scenario, commitChoice, prediction, predFirstChoiceId,
       predSoundsLike, predSurprised, progress.scenarioStartTime, displayOptions]);
@@ -1519,11 +1532,12 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     const framingAdjust: FramingAdjust | null = altViewGenerated && framingChoiceYes
       ? { sensitivityKey: framingSensitivityKey(framingChoiceYes), delta: -20 }
       : null;
-    const nextProfile = applyEndorsementUpdates(
+    const update = applyEndorsementUpdatesWithMoves(
       profile, selectedOption, q1Strong, moved, framingAdjust, scenario?.stakesWeight ?? 1,
     );
     commitChoice(selectedOption, {
-      nextProfile,
+      nextProfile: update.profile,
+      valueMoves: update.moves,
       endorsement: q1Strong ? "strong" : "weak",
       stakeholderGuided: moved,
     });
@@ -4846,10 +4860,10 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
     (confidence === null || q3 === null ? 1 : 0) +
     (altViewGenerated && framingInfluential === null ? 1 : 0);
 
-  const pending = useMemo(
+  const pendingUpdate = useMemo(
     () => (q3 !== null
-      ? applyApaUpdates(profile, stakeholderMoved === true, q3, framingAdjust, scenario.stakesWeight ?? 1, confidence ?? 3)
-      : profile),
+      ? applyApaUpdatesWithMoves(profile, stakeholderMoved === true, q3, framingAdjust, scenario.stakesWeight ?? 1, confidence ?? 3)
+      : { profile, moves: [] as Block5ValueMove[] }),
     /*
      * `confidence` MUST be listed here even though it is only read inside the call above.
      *
@@ -4867,6 +4881,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
      */
     [q3, confidence, stakeholderMoved, profile, framingAdjust, scenario],
   );
+  const pending = pendingUpdate.profile;
 
   const matching = useMemo<LabeledOption[]>(() => {
     if (q3 === null) return [];
@@ -4953,7 +4968,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
             <HStack gap="3" wrap="wrap">
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg" fontSize="xs"
                 onClick={() => onCommit({
-                  finalOption: section4, pendingProfile: pending,
+                  finalOption: section4, pendingProfile: pending, pendingMoves: pendingUpdate.moves,
                   confidence, q2Influenced: stakeholderMoved === true, q3Value: q3, originalOptionId: option.id,
                   altViewGenerated, framingShownFirst: framingFirst,
                   framingSelected: framingInfluential, framingAdjust,

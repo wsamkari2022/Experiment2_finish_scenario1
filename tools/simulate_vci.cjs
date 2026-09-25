@@ -397,6 +397,55 @@ gate("V8", out["Flip-flopper (APA)"] < 50,
     "0 = the option gives nothing on any value held; a participant who holds no policy value scores 100 on every option");
 }
 
+/* V18 - EVERY MOVE IS WRITTEN DOWN, AND THE RECORD IS TRUE (24 September 2026, audit item B5).
+     Over random profiles (many values pinned at 0 or 100) and all three update rules:
+       - the *WithMoves version returns exactly the profile the plain version returns;
+       - for every value, the moves' "made" amounts add up to how far the score really moved;
+       - a move makes less than it asked for only when the value ended at 0 or 100;
+       - somewhere a move is really cut off, so the check is not passing on an empty list. */
+{
+  const C5 = B("block5CVR.js");
+  let seed = 20260926;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const edge = () => (rnd() < 0.25 ? 0 : rnd() < 0.33 ? 100 : Math.round(rnd() * 100));
+  let runs = 0, sameProfile = 0, addsUp = 0, honestCut = 0, cutSeen = 0;
+  for (let i = 0; i < 3000; i++) {
+    const p = makeProfile(Object.fromEntries(ALL.map((k) => [k, edge()])));
+    const scenario = BLOCK5_SCENARIOS[i % 4];
+    const labeled = labelOptions(scenario.options, p);
+    const weak = labeled.find((o) => o.level === "weakly_aligned") ?? labeled[1];
+    const named = POLICY[i % 4];
+    const lens = i % 3 === 0 ? { sensitivityKey: "contextSensitivity", delta: i % 2 ? 20 : -20 } : null;
+    const conf = 1 + (i % 5);
+    const pairs = [
+      [C5.applyKeepUpdates(p, weak, "weakly_aligned", 1.2, scenario.options),
+        C5.applyKeepUpdatesWithMoves(p, weak, "weakly_aligned", 1.2, scenario.options)],
+      [C5.applyEndorsementUpdates(p, labeled[4], i % 2 === 0, i % 3 === 0, lens, 1),
+        C5.applyEndorsementUpdatesWithMoves(p, labeled[4], i % 2 === 0, i % 3 === 0, lens, 1)],
+      [C5.applyApaUpdates(p, i % 2 === 1, named, lens, 1, conf),
+        C5.applyApaUpdatesWithMoves(p, i % 2 === 1, named, lens, 1, conf)],
+    ];
+    for (const [plain, withMoves] of pairs) {
+      runs++;
+      if (JSON.stringify(plain.dimensions) === JSON.stringify(withMoves.profile.dimensions)) sameProfile++;
+      const ok = ALL.every((k) => {
+        const made = withMoves.moves.filter((m) => m.value === k).reduce((s, m) => s + m.applied, 0);
+        return Math.abs(made - (scoreOf(withMoves.profile, k) - scoreOf(p, k))) < 0.05;
+      });
+      if (ok) addsUp++;
+      const honest = withMoves.moves.every((m) => {
+        if (Math.abs(m.requested - m.applied) < 0.005) return true;
+        const at = m.from + m.applied;
+        return Math.abs(at) < 0.005 || Math.abs(at - 100) < 0.005;
+      });
+      if (honest) honestCut++;
+      cutSeen += withMoves.moves.filter((m) => Math.abs(m.requested - m.applied) >= 0.005).length;
+    }
+  }
+  gate("V18", sameProfile === runs && addsUp === runs && honestCut === runs && cutSeen > 0,
+    `every move is written down and the record is true  (${runs} updates: ${sameProfile} same profile, ${addsUp} add up, ${honestCut} cut only at 0 or 100; ${cutSeen} moves cut off)`);
+}
+
 console.log("\n" + "=".repeat(72));
 console.log(fails === 0 ? "### ALL VCI GATES PASSED ###" : `### ${fails} VCI GATE FAILURE(S) ###`);
 console.log("=".repeat(72) + "\n");

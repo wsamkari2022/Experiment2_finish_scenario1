@@ -879,6 +879,25 @@ export interface Block5ScenarioTelemetry {
   mcfDwellMs: number;          // time with an MCF reading open
 }
 
+/**
+ * ONE MOVE OF ONE VALUE, AS ASKED FOR AND AS MADE (24 September 2026, audit item B5).
+ *
+ * Every profile update is a list of these. `requested` is what the rule asked for, after the
+ * scenario's stakes weight and, in APA, the confidence weight. `applied` is how far the score
+ * actually moved, which is less when the value hit 0 or 100. Before this, a move swallowed by the
+ * edge left no trace, so "did not move" and "could not move" looked the same in the data.
+ */
+export interface Block5ValueMove {
+  /** The dimension key, e.g. "gainResponsivenessSensitivity". */
+  value: string;
+  /** The score just before this move. */
+  from: number;
+  requested: number;
+  applied: number;
+  /** Which part of the rule asked for this move, in words. */
+  why: string;
+}
+
 /** ---- Results ---- */
 export interface Block5ScenarioResult {
   scenarioId: string;
@@ -902,6 +921,21 @@ export interface Block5ScenarioResult {
    * shortfall, stopped at 0.
    */
   fitScoreScale?: string;
+  /**
+   * THE RAW FIT, saved since 24 September 2026 (absent before): how many weighted points the chosen
+   * option falls short of what the participant asked for (policyAlignmentShortfall, rounded to two
+   * decimals), and the same for every option. Lower is better; 0 meets every value. Unlike
+   * `matchScore`, which is a share of each participant's own maximum, this is on one scale for
+   * everybody, so it is the number to compare across participants.
+   */
+  matchShortfall?: number;
+  fitShortfallsByOptionId?: Record<string, number>;
+  /**
+   * Every value move this scenario's update asked for, and what it actually made (B5). Absent on
+   * rows saved before 24 September 2026; an empty list when the scenario asked nothing to move (a
+   * best-fit pick, the wish, the prediction test).
+   */
+  valueMoves?: Block5ValueMove[];
   firstChoiceOptionId?: string;
   postCVRChoiceOptionId?: string;
   cvrFired?: boolean;

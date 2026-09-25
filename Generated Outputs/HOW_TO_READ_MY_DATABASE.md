@@ -22,6 +22,10 @@ the three sensitivity stabilities: section 4. The decision against the wish: sec
 > `fit_score_shown` → `fit_percent_of_what_they_asked_for_never_shown_to_them`. A scenario row saved
 > before that date has no `fitScoreScale`; its old numbers sit under
 > `old_fit_score_saved_before_24_september_2026` and the new names are `null`. Section 6d, trap 2.
+>
+> **Also on 24 September 2026:** the raw fit is now saved, as `points_short_of_what_they_asked_for`
+> (section 6d), and every move of every value is recorded as asked for and as made, in the new
+> section `analysis.value_moves_asked_for_and_made` (section 6k).
 
 > **What changed on 15 September 2026.** Five things, and the first one removes data:
 >
@@ -308,6 +312,8 @@ Useful fields inside each `scenarioResults` entry:
 | `alignmentLevel` | How well the choice matched their values: aligned / weakly_aligned / misaligned / strongly_misaligned |
 | `matchScore` | The same idea as a number, 0–100: the share of what their four values asked for that the chosen option gives (since 24 September 2026) |
 | `fitScoreScale` | Which scale `matchScore` and `fitScoresByOptionId` are on. **Absent = saved before 24 September 2026**, on the old scale (100 minus the shortfall, stopped at 0). Never average the two together |
+| `matchShortfall`, `fitShortfallsByOptionId` | The raw fit: weighted points the chosen option (and every option) falls short of what the participant asked for. Lower is better, 0 meets every value. On one scale for everybody. Saved since 24 September 2026 |
+| `valueMoves` | Every value move this scenario asked for: `{ value, from, requested, applied, why }`. `applied` is less than `requested` when the value hit 0 or 100. Absent before 24 September 2026; `[]` when nothing was asked to move. Section 6k |
 | `cvrFired` | Whether the reflection step appeared (it only appears for misaligned choices) |
 | `cvrEndorsement` | Whether they kept or changed their choice after reflecting |
 | `cvrAltViewGenerated` | Whether they asked to see the second perspective |
@@ -327,6 +333,8 @@ Useful fields inside each `scenarioResults` entry:
 | `alignment_records` | Alignment label, fit score, CVR and APA for every scenario, in one table. **See section 6d.** |
 | `scenario6_mpf_test` | The prediction test. **See section 6c.** |
 | `mpf_predictions_every_scenario` | The prediction function run over all six scenarios. **See section 6e, and read its warning first.** |
+| `card_order_by_scenario` | The card order in every scenario and what decided it. **See section 6j.** |
+| `value_moves_asked_for_and_made` | Every value move, as asked for and as made, and the ones cut off at 0 or 100. **See section 6k.** |
 | `post_block3_insights` | The value profile worked out from Blocks 1–3. Feeds Block 4. |
 | `post_block4_final_analysis` | The analysis produced after Block 4, including the threshold tree. |
 | `participant_record` | A consolidated record of everything from Blocks 1–4, raw and derived together. Has its own `schemaVersion`. |
@@ -652,6 +660,8 @@ table.
 | `alignment_rank_within_the_scenario` | 1 = best-fitting option available |
 | `fit_percent_of_what_they_asked_for_every_option` | `{ option id: score }` for the whole menu, so the choice can be read in context. `null` on a row saved before 24 September 2026 |
 | `old_fit_score_saved_before_24_september_2026` | `{ chosen, every_option }` on the OLD scale (100 minus the shortfall, stopped at 0), only for rows saved before that date; `null` otherwise. Never pool it with the field above |
+| `points_short_of_what_they_asked_for` | The raw fit of the chosen option: weighted points it falls short of what the participant asked for. **Lower is better; 0 meets every value.** On one scale for every participant, so this is the fit to compare across people. `null` before 24 September 2026 |
+| `points_short_of_what_they_asked_for_every_option` | `{ option id: points short }` for the whole menu. `null` before 24 September 2026 |
 | `chose_the_best_fitting_option` | Whether they took the top of the menu |
 | `choice_was_still_aligned_to_the_pre_block5_profile` | The chosen option landed in the **top two** alignment tiers (Aligned or Weakly aligned) when scored against the frozen pre-Block-5 profile. ⚠️ **Not** "they chose what they would have chosen before" |
 
@@ -735,10 +745,12 @@ than repeated on all six rows.
    2026 it was 100 minus the shortfall, stopped at 0, and two options that missed by 104 and by 154
    both read 0). Within one participant it orders the options exactly as the shortfall does. Across
    participants, 60 means "60% of what THIS person asked for", and a person who asks a lot has more
-   to fall short of. For a quantity on one scale for everybody, rebuild the raw shortfall, Σ (u/100)
-   × max(0, u − f): `u` from `analysis.profile_by_scenario[i].profile_when_the_scenario_opened`,
-   `f` from the option's fingerprint (`tools/export_block5_content.cjs`). The shortfall is **not**
-   saved on the scenario row; earlier versions of this file said it was, and that was wrong.
+   to fall short of. For a quantity on one scale for everybody use
+   `points_short_of_what_they_asked_for`, the raw shortfall Σ (u/100) × max(0, u − f), saved since
+   24 September 2026. For an older row, rebuild it: `u` from
+   `major_info_and_scores.profile_by_scenario[i].profile_when_the_scenario_opened`, `f` from the
+   option's fingerprint (`tools/export_block5_content.cjs`). Before that date the shortfall was not
+   saved anywhere, although earlier versions of this file said it was.
 
 ---
 
@@ -1002,6 +1014,38 @@ outright in Blocks 1-3". The raw fields behind it (`plannerOrder`, `plannerBins`
 > Blocks 1-4 steadily (`npm run report:planner-overlap`), they were the same card for 57-68 out of
 > 100, depending on the scenario (chance would be about 17). Analyse choice position and fit
 > together; see HOW_TO_ANALYZE_MY_DATA.md, section 4.7.
+
+---
+
+## 6k. `analysis.value_moves_asked_for_and_made` — every value move, and the ones cut off
+
+Added **24 September 2026** (audit item B5). Block 5 moves the profile in flat steps (+30, −10,
++20 …) and keeps every score between 0 and 100. A step that would go past an edge is cut off there.
+Until this date nothing recorded it, so a value at 100 asked to rise 20 "did not move", exactly like
+a value nothing asked to move. It is common. With pretend participants built by the real Blocks 1-4
+scoring (24 September 2026), 16-23 in 100 policy values **start** Block 5 at 0 or 100, and 7-49 in
+100 moves are cut off, depending on how people choose: about 18 for people choosing at random, 49
+for people who always follow their top value (that value is usually already at 100).
+
+| Field | What it holds |
+|---|---|
+| `by_scenario[]` | One row per scenario: `moves_recorded`, `moves[]`, `moves_cut_off` |
+| `moves[]` | For each move: `value` and `value_name`, `score_before_the_move`, `asked_for`, `made`, `cut_off_by` ("the ceiling (100)", "the floor (0)" or null), and `why` (which part of the rule asked for it, in words) |
+| `totals` | `moves_asked_for`, `moves_cut_off`, `cut_off_by_the_ceiling_100`, `cut_off_by_the_floor_0`, `points_asked_for_but_not_made`, and how many scenarios have a record |
+| `by_value` | The same counts for each value |
+
+**Three readings, and they are different:**
+- `moves: []` with `moves_recorded: true` — the scenario asked nothing to move (a best-fit pick,
+  the wish, the prediction test).
+- `moves_recorded: false`, `moves: null` — saved before 24 September 2026. The moves happened; they
+  were not written down. **Never read this as "no moves".**
+- `made` smaller than `asked_for` — the value was already at (or reached) 0 or 100.
+
+> ⚠️ **Before counting movement or reading Stability, look at `moves_cut_off`.** A participant whose
+> values are pinned at 0 or 100 has less room for their ranking to change, so a high Stability can
+> partly be the edge rather than steadiness. Report those participants separately.
+
+The raw list is `valueMoves` on each `blocks.block5_emergency_scenarios.scenarioResults[]` row.
 
 ---
 

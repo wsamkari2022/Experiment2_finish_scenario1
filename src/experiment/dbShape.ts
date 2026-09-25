@@ -79,7 +79,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-24-fit-share";
+export const SHAPE_VERSION = "2026-09-24-moves-and-shortfall";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1215,11 +1215,118 @@ export function buildLiftedScenarios(block5: unknown): {
  * `fit_percent_of_what_they_asked_for` (since 24 September 2026) is the share of what the
  * participant's four values asked for that the option gives: 100 × (1 − shortfall ÷ the most they
  * could lose). It no longer stops at 0, and it orders options exactly as the shortfall does. It is a
- * share of each participant's OWN maximum. The raw shortfall itself is NOT saved on the scenario
- * row; it can be rebuilt from `profile_by_scenario[i].profile_when_the_scenario_opened` and the
- * option's fingerprint (export_block5_content.cjs). Rows saved before that date hold the old scale
+ * share of each participant's OWN maximum. The raw shortfall, on one scale for everybody, is
+ * `points_short_of_what_they_asked_for` (saved since the same day). For an older row it can be
+ * rebuilt from `profile_by_scenario[i].profile_when_the_scenario_opened` and the option's
+ * fingerprint (export_block5_content.cjs). Rows saved before that date hold the old scale
  * (100 − shortfall, stopped at 0) under `old_fit_score_saved_before_24_september_2026`.
  */
+/* ------------------------------------------------------------------- every value move (B5) */
+
+/** Every value a move can touch, in words a reader of the database will not misread. */
+const VALUE_MOVE_NAMES: Record<string, string> = {
+  vulnerabilityProtectionSensitivity: "protecting the vulnerable",
+  groupSizeSensitivity: "reducing harm",
+  gainResponsivenessSensitivity: "how much is gained",
+  outcomeAggregationSensitivity: "how many are helped",
+  stakeholderPerspectiveShiftSensitivity: "moved by the other person's story (stakeholder)",
+  directnessSensitivity: "the reflection view about your own hands (directness)",
+  contextSensitivity: "the reflection view about the circumstances (context)",
+};
+
+/**
+ * EVERY VALUE MOVE, AS ASKED FOR AND AS MADE (24 September 2026, audit item B5).
+ *
+ * The profile moves on flat steps (+30, -10, +20, ...) and every score is kept between 0 and 100.
+ * A step that would go past an edge is cut off there, and until this date nothing recorded it: a
+ * value at 100 asked to rise 20 "did not move", exactly like a value nobody asked to move. It is
+ * common: with pretend participants built by the real Blocks 1-4 scoring, 16-23 in 100 policy values
+ * START Block 5 at 0 or 100, and 7-49 in 100 moves are cut off depending on how people choose (18 for
+ * random choosers, 49 for people who always follow their top value, which is already at 100). So
+ * movement and Stability analyses mixed a measuring limit with behaviour. This section lists every move with what the rule asked for and what the
+ * score actually did, and counts the ones cut off.
+ *
+ * Rows saved before the date have no record (`moves_recorded: false`, `moves: null`): the moves
+ * happened, they were simply not written down, and they must not be read as "no moves".
+ */
+export function buildValueMovesSection(block5: unknown): Record<string, unknown> | null {
+  const results = resultsOf(block5);
+  if (!results.length) return null;
+  const two = (n: number) => Math.round(n * 100) / 100;
+  const cutOffBy = (m: { requested: number; applied: number }): string | null => {
+    if (Math.abs(m.requested - m.applied) < 0.005) return null;
+    return m.requested > m.applied ? "the ceiling (100)" : "the floor (0)";
+  };
+
+  const rows = results.map((r, index) => {
+    const moves = Array.isArray(r.valueMoves)
+      ? r.valueMoves.map((m) => {
+          const move = { requested: Number(m.requested) || 0, applied: Number(m.applied) || 0 };
+          return {
+            value: m.value ?? null,
+            value_name: VALUE_MOVE_NAMES[String(m.value)] ?? String(m.value),
+            score_before_the_move: m.from ?? null,
+            asked_for: move.requested,
+            made: move.applied,
+            cut_off_by: cutOffBy(move),
+            why: m.why ?? null,
+          };
+        })
+      : null;
+    return {
+      order_shown: index + 1,
+      scenario_id: r.scenarioId ?? null,
+      title: scenarioOf(r.scenarioId)?.title ?? null,
+      decision_role: r.decisionRole ?? "decider",
+      moves_recorded: moves !== null,
+      moves,
+      moves_cut_off: moves ? moves.filter((m) => m.cut_off_by !== null).length : null,
+    };
+  });
+
+  const all = rows.flatMap((r) => r.moves ?? []);
+  const cut = all.filter((m) => m.cut_off_by !== null);
+  const lost = (list: typeof all) => two(list.reduce((sum, m) => sum + Math.abs(m.asked_for - m.made), 0));
+  const byValue: Record<string, unknown> = {};
+  for (const key of Object.keys(VALUE_MOVE_NAMES)) {
+    const mine = all.filter((m) => m.value === key);
+    if (!mine.length) continue;
+    const mineCut = mine.filter((m) => m.cut_off_by !== null);
+    byValue[key] = {
+      value_name: VALUE_MOVE_NAMES[key],
+      moves: mine.length,
+      moves_cut_off: mineCut.length,
+      points_asked_for_but_not_made: lost(mineCut),
+    };
+  }
+
+  return {
+    what_this_is:
+      "Every move of every value in Block 5: what the rule asked for, and what the score actually "
+      + "did. Scores stay between 0 and 100, so a move past an edge is cut off there. A value that "
+      + "stayed put because it was already at the edge is NOT the same as a value nothing asked to "
+      + "move, and before 24 September 2026 the two could not be told apart.",
+    how_to_use_it:
+      "Before counting how much a value moved, or reading Stability, look at moves_cut_off. A "
+      + "participant with many cut-off moves has values pinned at 0 or 100; report them separately, "
+      + "because their ranking has less room to change than other people's.",
+    recorded_since:
+      "24 September 2026. A scenario saved before that has moves_recorded false and moves null: the "
+      + "moves happened but were not written down.",
+    by_scenario: rows,
+    totals: {
+      scenarios_with_a_record: rows.filter((r) => r.moves_recorded).length,
+      scenarios_without_a_record: rows.filter((r) => !r.moves_recorded).length,
+      moves_asked_for: all.length,
+      moves_cut_off: cut.length,
+      cut_off_by_the_ceiling_100: cut.filter((m) => m.cut_off_by === "the ceiling (100)").length,
+      cut_off_by_the_floor_0: cut.filter((m) => m.cut_off_by === "the floor (0)").length,
+      points_asked_for_but_not_made: lost(cut),
+    },
+    by_value: byValue,
+  };
+}
+
 /* ------------------------------------------------------------------- the card order, readable */
 
 /** The three planner groups in words a reader of the database will not misread. */
@@ -1401,6 +1508,10 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       old_fit_score_saved_before_24_september_2026: onNewScale
         ? null
         : { chosen: r.matchScore ?? null, every_option: r.fitScoresByOptionId ?? null },
+      /* The raw fit, on ONE scale for every participant: weighted points the option falls short of
+         what they asked for. Lower is better, 0 meets every value. Saved since 24 September 2026. */
+      points_short_of_what_they_asked_for: r.matchShortfall ?? null,
+      points_short_of_what_they_asked_for_every_option: r.fitShortfallsByOptionId ?? null,
       chose_the_best_fitting_option: r.selectedWasTopCandidate ?? null,
       /*
        * RENAMED FROM `matched_the_pre_block5_profile`, which promised more than it holds. It is not
@@ -1495,9 +1606,10 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       "fit_percent_of_what_they_asked_for is the share of what the participant's four values asked "
       + "for that the option gives, weighted by how much they hold each: 100 = it meets every value, "
       + "0 = it gives nothing on any. It is a share of each participant's OWN maximum, so compare it "
-      + "within a participant. The raw shortfall, which is on one scale for everybody, is not saved "
-      + "on the row; rebuild it from profile_by_scenario (profile_when_the_scenario_opened) and the "
-      + "option's fingerprint. Rows saved before 24 September 2026 hold the old scale (100 minus the "
+      + "within a participant. To compare participants use points_short_of_what_they_asked_for, the "
+      + "raw shortfall, which is on one scale for everybody (lower is better, 0 meets every value). "
+      + "Rows saved before 24 September 2026 have no saved shortfall (rebuild it from "
+      + "profile_by_scenario and the option's fingerprint) and hold the old score (100 minus the "
       + "shortfall, stopped at 0) under old_fit_score_saved_before_24_september_2026, and null here.",
     by_scenario: byScenario,
     totals: {

@@ -121,6 +121,9 @@ function makeParticipant(startScores, pick) {
       alignmentLevel: chosen.level,
       matchScore: chosen.matchScore,
       fitScoreScale: B("block5CVR.js").FIT_SCORE_SCALE,
+      matchShortfall: B("block5CVR.js").roundForRecord(chosen.matchShortfall),
+      fitShortfallsByOptionId: Object.fromEntries(labeled.map((o) => [o.id, B("block5CVR.js").roundForRecord(o.matchShortfall)])),
+      valueMoves: [],
       firstChoiceOptionId: chosen.id,
       decisionRole: role,
       vciScore: role === "decider" ? 0.7 : 0.5,
@@ -1144,6 +1147,68 @@ for (const [who, block5] of PEOPLE) {
     why.length === 0
       ? `the fit score's scale is kept apart: ${tagged.length} tagged rows under the new name, the same rows untagged under the old one`
       : `the two fit scales can mix: ${why.join(" | ")}`);
+}
+
+/* D55 - EVERY VALUE MOVE REACHES THE DATABASE, AND A CUT-OFF MOVE IS NAMED AS ONE (B5, 24 September
+   2026). A clarification on a profile with one value at 100 and one at 0: the named value is asked
+   for +30 and makes 0 (the ceiling); the value at 0 is asked for -10 and makes 0 (the floor). The
+   section must list them as cut off, count them, and add up the points that were lost. A row saved
+   before the date must say its moves were not recorded, never that there were none. */
+{
+  const C5 = B("block5CVR.js");
+  const [, base] = PEOPLE[0];
+  const why = [];
+  const dims = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity",
+    "outcomeAggregationSensitivity", "directnessSensitivity", "contextSensitivity", "stakeholderPerspectiveShiftSensitivity"];
+  const pinned = { gainResponsivenessSensitivity: 100, vulnerabilityProtectionSensitivity: 0 };
+  const start = {
+    generatedAt: "x", topThreeKeys: [], topSensitivityKey: dims[0],
+    dimensions: dims.map((key, i) => ({ key, label: key, rank: i + 1, weight: 0.1, sourceBlocks: [],
+      score: pinned[key] ?? 50 })),
+  };
+  const update = C5.applyApaUpdatesWithMoves(start, true, "gainResponsivenessSensitivity", null, 1, 5);
+  const results = base.scenarioResults.map((r, i) => (i === 0 ? { ...r, valueMoves: update.moves } : r));
+  const section = db.buildValueMovesSection({ ...base, scenarioResults: results });
+  const first = section?.by_scenario?.[0];
+  const gain = first?.moves?.find((m) => m.value === "gainResponsivenessSensitivity");
+  const vul = first?.moves?.find((m) => m.value === "vulnerabilityProtectionSensitivity");
+  if (!gain || gain.asked_for !== 30 || gain.made !== 0 || gain.cut_off_by !== "the ceiling (100)") why.push("the value at 100 was not shown as cut off by the ceiling");
+  if (!vul || vul.asked_for !== -10 || vul.made !== 0 || vul.cut_off_by !== "the floor (0)") why.push("the value at 0 was not shown as cut off by the floor");
+  if (section?.totals?.moves_cut_off !== 2 || section?.totals?.points_asked_for_but_not_made !== 40) why.push(`totals wrong: ${JSON.stringify(section?.totals)}`);
+  if (first?.moves_cut_off !== 2) why.push("the row's own count is wrong");
+  const others = section?.by_scenario?.slice(1) ?? [];
+  if (!others.every((r) => r.moves_recorded === true && Array.isArray(r.moves) && r.moves.length === 0)) why.push("an empty list must read as recorded, with no moves");
+  const old = base.scenarioResults.map(({ valueMoves, ...rest }) => rest);
+  const oldRows = db.buildValueMovesSection({ ...base, scenarioResults: old }).by_scenario;
+  if (!oldRows.every((r) => r.moves_recorded === false && r.moves === null && r.moves_cut_off === null)) why.push("an old row must say its moves were not recorded");
+  gate("D55", why.length === 0,
+    why.length === 0
+      ? "value_moves_asked_for_and_made: a +30 at 100 and a -10 at 0 are listed as cut off (40 points lost), empty lists read as no moves, old rows as not recorded"
+      : `the value-move section is wrong: ${why.join(" | ")}`);
+}
+
+/* D56 - THE RAW FIT IS SAVED AND AGREES WITH THE SCORE (24 September 2026). For every row: the chosen
+   option's shortfall is the one in its own every-option list, and the every-option shortfalls put
+   the options in the same order as the fit percentages (lower shortfall, higher percent). */
+{
+  const [, base] = PEOPLE[0];
+  const rows = db.buildAlignmentRecords(base).by_scenario;
+  const why = [];
+  rows.forEach((r, i) => {
+    const chosenId = base.scenarioResults[i].selectedOptionId;
+    const shorts = r.points_short_of_what_they_asked_for_every_option ?? {};
+    const pcts = r.fit_percent_of_what_they_asked_for_every_option ?? {};
+    if (typeof r.points_short_of_what_they_asked_for !== "number") why.push(`row ${i + 1} has no shortfall`);
+    if (shorts[chosenId] !== r.points_short_of_what_they_asked_for) why.push(`row ${i + 1}: the chosen shortfall is not the one in its own list`);
+    const ids = Object.keys(shorts);
+    for (const a of ids) for (const b of ids) {
+      if (shorts[a] < shorts[b] - 0.01 && pcts[a] < pcts[b]) why.push(`row ${i + 1}: ${a} falls short less than ${b} yet has a lower percent`);
+    }
+  });
+  gate("D56", why.length === 0,
+    why.length === 0
+      ? `points_short_of_what_they_asked_for saved on all ${rows.length} rows and in the same order as the fit percent`
+      : `the saved shortfall is wrong: ${[...new Set(why)].slice(0, 4).join(" | ")}`);
 }
 
 console.log("");

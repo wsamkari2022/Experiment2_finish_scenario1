@@ -23,6 +23,7 @@ import type {
   Block5ScenarioOption,
   Block5ScenarioResult,
   Block5UserProfile,
+  Block5ValueMove,
   CVRCoordinate,
   CVRFraming,
   FramingAdjust,
@@ -486,14 +487,49 @@ function cloneProfile(p: Block5UserProfile): Block5UserProfile {
  * in the write-up; it is not large enough to outweigh being able to state the rule truthfully in
  * one line.
  *
+ * MEASURED AGAIN, 24 September 2026, with pretend participants built by the REAL Blocks 1-4 scoring
+ * instead of uniform random profiles: 16-23 in 100 policy values already START Block 5 at 0 or 100,
+ * and 7-49 in 100 moves are cut off depending on how people choose (18 for random choosers, 49 for
+ * people who always follow their top value). The 13% above came from uniform profiles and
+ * understates it. Every cut is now recorded (see below).
+ *
+ * EVERY MOVE IS NOW WRITTEN DOWN (24 September 2026, audit item B5). When `moves` is given, each
+ * bump adds what it asked for and what it actually made. A move that `clamp` swallows used to leave
+ * no trace at all, so "this value did not move" and "this value could not move, it was already at
+ * 100" looked the same in the data. The *WithMoves update functions pass the list; the plain ones
+ * do not, and behave exactly as before.
+ *
  * CHANGING THIS FUNCTION CHANGES WHAT EVERY SCORE READS. Re-run `npm run validate:block5`, then
  * `npm run report:vci` and `npm run report:stability`, and update the figures their documentation
  * quotes.
  */
-function bump(p: Block5UserProfile, key: string, delta: number): void {
+function bump(p: Block5UserProfile, key: string, delta: number, moves?: Block5ValueMove[], why = ""): void {
   const dim = p.dimensions.find((d) => d.key === key);
   if (!dim) return;
+  const from = dim.score;
   dim.score = clamp(dim.score + delta);
+  if (moves) moves.push(valueMove(key, from, delta, dim.score - from, why));
+}
+
+/** Two decimals: enough for a stored record, and free of floating-point noise like 20.999999. */
+export function roundForRecord(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function valueMove(value: string, from: number, requested: number, applied: number, why: string): Block5ValueMove {
+  return {
+    value,
+    from: roundForRecord(from),
+    requested: roundForRecord(requested),
+    applied: roundForRecord(applied),
+    why,
+  };
+}
+
+/** A profile update together with every move it asked for and what it actually made (B5). */
+export interface ProfileUpdate {
+  profile: Block5UserProfile;
+  moves: Block5ValueMove[];
 }
 
 /**
@@ -526,7 +562,20 @@ export function applyEndorsementUpdates(
   framingAdjust?: FramingAdjust | null,
   stakesWeight = 1,
 ): Block5UserProfile {
+  return applyEndorsementUpdatesWithMoves(profile, option, q1Strong, q2Guided, framingAdjust, stakesWeight).profile;
+}
+
+/** The same update, with every move it asked for and what it actually made (B5). */
+export function applyEndorsementUpdatesWithMoves(
+  profile: Block5UserProfile,
+  option: Block5ScenarioOption,
+  q1Strong: boolean,
+  q2Guided: boolean,
+  framingAdjust?: FramingAdjust | null,
+  stakesWeight = 1,
+): ProfileUpdate {
   const p = cloneProfile(profile);
+  const moves: Block5ValueMove[] = [];
   const w = stakesWeight;
   /*
    * THE TWO VALUES MOVED ARE THE TWO VALUES THE PARTICIPANT WAS SHOWN.
@@ -556,14 +605,20 @@ export function applyEndorsementUpdates(
    */
   const served = optionMainValue(option);
   const sacrificed = violatedValue(option, p);
-  bump(p, served, (q1Strong ? 30 : 15) * w);
+  bump(p, served, (q1Strong ? 30 : 15) * w, moves, "kept a misaligned option: the value it serves most");
   // Equal only when the option's own strongest value is also the one it most under-serves. There is
   // no trade to record then, so the endorsement is the whole signal.
-  if (sacrificed !== served) bump(p, sacrificed, (q1Strong ? -20 : -10) * w);
-  bump(p, "stakeholderPerspectiveShiftSensitivity", (q2Guided ? 25 : -25) * w);
-  if (framingAdjust) bump(p, framingAdjust.sensitivityKey, framingAdjust.delta * w);
+  if (sacrificed !== served) {
+    bump(p, sacrificed, (q1Strong ? -20 : -10) * w, moves, "kept a misaligned option: the value it gives up most");
+  }
+  bump(p, "stakeholderPerspectiveShiftSensitivity", (q2Guided ? 25 : -25) * w, moves,
+    q2Guided ? "the other person's story guided the choice" : "the other person's story did not guide the choice");
+  if (framingAdjust) {
+    bump(p, framingAdjust.sensitivityKey, framingAdjust.delta * w, moves,
+      "the reflection view that did not influence keeping the option");
+  }
   recompute(p);
-  return p;
+  return { profile: p, moves };
 }
 
 /**
@@ -654,7 +709,22 @@ export function applyApaUpdates(
   stakesWeight = 1,
   confidence = 3,
 ): Block5UserProfile {
+  return applyApaUpdatesWithMoves(
+    profile, stakeholderInfluenced, prioritizedValue, framingAdjust, stakesWeight, confidence,
+  ).profile;
+}
+
+/** The same update, with every move it asked for and what it actually made (B5). */
+export function applyApaUpdatesWithMoves(
+  profile: Block5UserProfile,
+  stakeholderInfluenced: boolean,
+  prioritizedValue: Block5PolicyDimKey,
+  framingAdjust?: FramingAdjust | null,
+  stakesWeight = 1,
+  confidence = 3,
+): ProfileUpdate {
   const p = cloneProfile(profile);
+  const moves: Block5ValueMove[] = [];
   /*
    * ONE WEIGHT FOR ONE CLARIFICATION. Confidence scales the value move below.
    *
@@ -685,7 +755,10 @@ export function applyApaUpdates(
   // The stakeholder move is answered by a separate question and is NOT a matter of degree, so the
   // confidence rating attached to Q1 has no business scaling it.
   bump(p, "stakeholderPerspectiveShiftSensitivity",
-    (stakeholderInfluenced ? 25 : -25) * stakesWeight);
+    (stakeholderInfluenced ? 25 : -25) * stakesWeight, moves,
+    stakeholderInfluenced
+      ? "changed their mind: the other person's story moved them"
+      : "changed their mind: the other person's story did not move them");
   /*
    * THE PRIORITIZED VALUE: +30, AND THE OTHER THREE COME DOWN 10 EACH.
    *
@@ -725,12 +798,15 @@ export function applyApaUpdates(
    * exactly as much as a strong endorsement of a choice. Measured, it lifts the named value in the
    * ranking 59% of the time without inflating profiles any further than the old rule did.
    */
-  bump(p, prioritizedValue, 30 * w);
+  bump(p, prioritizedValue, 30 * w, moves, "changed their mind: the value they named");
   for (const k of POLICY_DIM_KEYS) {
-    if (k !== prioritizedValue) bump(p, k, -10 * w);
+    if (k !== prioritizedValue) bump(p, k, -10 * w, moves, "changed their mind: a value they did not name");
   }
   // Dual-perspective: NO path = +20 to the lens that changed their mind (only when answered).
-  if (framingAdjust) bump(p, framingAdjust.sensitivityKey, framingAdjust.delta * w);
+  if (framingAdjust) {
+    bump(p, framingAdjust.sensitivityKey, framingAdjust.delta * w, moves,
+      "changed their mind: the reflection view that changed their mind");
+  }
 
   /*
    * THE CAP: no policy value moves more than 30 x w in one clarification, in either direction.
@@ -761,11 +837,17 @@ export function applyApaUpdates(
     const moved = after - before;
     if (Math.abs(moved) > capped) {
       const dim = p.dimensions.find((d) => d.key === k);
-      if (dim) dim.score = clamp(before + Math.sign(moved) * capped);
+      if (dim) {
+        const from = dim.score;
+        const target = before + Math.sign(moved) * capped;
+        dim.score = clamp(target);
+        moves.push(valueMove(k, from, target - from, dim.score - from,
+          "the cap: no value moves more than 30 x weight in one clarification"));
+      }
     }
   }
   recompute(p);
-  return p;
+  return { profile: p, moves };
 }
 
 /**
@@ -808,13 +890,25 @@ export function applyKeepUpdates(
   stakesWeight = 1,
   menu?: Block5ScenarioOption[],
 ): Block5UserProfile {
+  return applyKeepUpdatesWithMoves(profile, option, level, stakesWeight, menu).profile;
+}
+
+/** The same update, with every move it asked for and what it actually made (B5). */
+export function applyKeepUpdatesWithMoves(
+  profile: Block5UserProfile,
+  option: Block5ScenarioOption,
+  level: AlignmentLevel,
+  stakesWeight = 1,
+  menu?: Block5ScenarioOption[],
+): ProfileUpdate {
   const p = cloneProfile(profile);
-  if (level !== "weakly_aligned") return p;
+  const moves: Block5ValueMove[] = [];
+  if (level !== "weakly_aligned") return { profile: p, moves };
   if (!menu || menu.length === 0) {
     throw new Error("[applyKeepUpdates] a second-best pick needs the scenario's options (menu) to know which best fit it was chosen over.");
   }
   const bestFit = labelOptions(menu, profile)[0];
-  if (!bestFit || bestFit.id === option.id) return p;
+  if (!bestFit || bestFit.id === option.id) return { profile: p, moves };
 
   const rankOf = (k: Block5PolicyDimKey) =>
     profile.dimensions.find((d) => d.key === k)?.rank ?? Number.MAX_SAFE_INTEGER;
@@ -828,10 +922,10 @@ export function applyKeepUpdates(
     .filter((x) => x.cost > 0)
     .sort((a, b) => b.cost - a.cost || rankOf(a.k) - rankOf(b.k))[0];
 
-  if (whyChosen) bump(p, whyChosen.k, 20 * stakesWeight);
-  if (givenUp) bump(p, givenUp.k, -15 * stakesWeight);
+  if (whyChosen) bump(p, whyChosen.k, 20 * stakesWeight, moves, "kept a second-best option: where it beats the best fit most");
+  if (givenUp) bump(p, givenUp.k, -15 * stakesWeight, moves, "kept a second-best option: where the best fit beat it most");
   recompute(p);
-  return p;
+  return { profile: p, moves };
 }
 
 /* ---------------- Performance metrics ---------------- */

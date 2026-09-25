@@ -198,12 +198,27 @@ performed below 45" count now uses the label (Aligned or Weakly aligned) instead
 more", a line that meant something else on the new scale. Every new scenario row carries
 `fitScoreScale`; `dbShape.ts` puts an untagged (older) row's numbers under
 `old_fit_score_saved_before_24_september_2026`, never under the new field names. Gates V16–V17
-(`validate:vci`) and D54 (`validate:dbshape`).
+(`validate:vci`) and D54 (`validate:dbshape`). The raw shortfall itself is saved too, as
+`matchShortfall` / `fitShortfallsByOptionId` on the row and `points_short_of_what_they_asked_for`
+in `analysis.alignment_records`: it is on one scale for every participant, which the share is not
+(gate D56).
 
 The same day, the side-panel sentence "Each is labeled by how well it fits your earlier responses"
 was removed: the labels came off the cards on 15 September, so it sent participants looking for
 something that is not there, and it pointed them at their own fit. It now reads "Every option stays
 available, and you can choose any of them."
+
+## Every value move is recorded, since 24 September 2026
+
+Block 5 moves the profile in flat steps and `bump()` keeps every score between 0 and 100, so a step
+past an edge is cut off there. Until this date the cut left no trace: "did not move" and "could not
+move, it was already at 100" looked the same. Each update rule now has a twin that also returns its
+moves (`applyKeepUpdatesWithMoves`, `applyEndorsementUpdatesWithMoves`, `applyApaUpdatesWithMoves`
+in `block5CVR.ts`); the plain versions call the twins and return the same profile, so no score
+changed. Each scenario row carries `valueMoves` (`{ value, from, requested, applied, why }`), and
+`analysis.value_moves_asked_for_and_made` lists them in words and counts the ones cut off. Gates V18
+(`validate:vci`: 9,000 updates, the record always adds up to the real change) and D55
+(`validate:dbshape`).
 
 ## The planner, revised 24 September 2026
 
@@ -326,7 +341,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 53 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52) and the readable card order (D53). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 56 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55) and the saved shortfall (D56). `--dump` writes a full simulated document |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |

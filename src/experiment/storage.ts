@@ -57,6 +57,7 @@ import {
   buildLiftedScenarios,
   buildAlignmentRecords,
   buildCardOrderSection,
+  buildValueMovesSection,
   buildMpfPredictions,
   buildMpfPercentages,
   buildMajorScores,
@@ -537,6 +538,10 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
          it - in words anybody can read. See buildCardOrderSection. */
       const cardOrder = buildCardOrderSection(translated);
       if (cardOrder) sendOrQueue({ op: "saveSection", path: "analysis.card_order_by_scenario", data: cardOrder });
+
+      /* Every value move, as asked for and as made, and the ones cut off at 0 or 100 (B5). */
+      const valueMoves = buildValueMovesSection(translated);
+      if (valueMoves) sendOrQueue({ op: "saveSection", path: "analysis.value_moves_asked_for_and_made", data: valueMoves });
 
       /* The prediction function run over every scenario, not only the one where it was shown. Every
          row says which it was. */
