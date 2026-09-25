@@ -60,7 +60,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | B2 | Picking your best fit can lower your #1 value | Critical | **Fixed** (Fix 2: a best-fit pick moves nothing) |
 | B3 | Step sizes (30/15/20/10/25) are hand-picked | High | Open |
 | B4 | "Zero-sum" APA move is not zero-sum at the floor | Low | Open |
-| B5 | A move cut off at 0 or 100 is not recorded | High | Open |
+| B5 | A move cut off at 0 or 100 is not recorded | High | **Fixed** (every move saved as asked for and made; `analysis.value_moves_asked_for_and_made`, gates V18, D55) |
 | B6 | Difference scores put consistent people at 0 | Critical, upstream | Open, decision |
 | B7 | Only four scenarios can move the profile | Medium (framing) | Open |
 | B8 | The audit-request document describes Route 3 wrongly | Medium (docs) | Open |
@@ -73,8 +73,8 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | C7 | Ties and near-ties in the participant's own ranking decide the whole order | Medium | Open |
 | C8 | The noise band cannot be personal; `strictness` is computed and never used | High | Open |
 | C9 | The planner's inputs are not stored, and there is no planner version | High | **Fixed** (item 4: `plannerInputs`, `PLANNER_VERSION`, `analysis.card_order_by_scenario`, gate D53) |
-| D1 | Option numbers disagree with the option's own words | Critical | Open |
-| D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | Open |
+| D1 | Option numbers disagree with the option's own words | Critical | **Plan written** (Fix 3), waiting for approval |
+| D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | **Plan written** (Fix 3), waiting for approval |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
 | E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | **Fixed**: vulnerable + harm (Idea 1, score 50); directness + context (flag, score 0, fair lens tie) |
 | E2 | One wobble of one step can make a value #1 | High | **Fixed** (Idea 2, half credit, approved 24 Sept) |
@@ -86,7 +86,14 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | E8 | One "donate" click earns the full donation signal, so donating hardly stands out | High | **Fixed** (share of refusals, 24 Sept) |
 | F1 | The fit score stopped at 0, so several cards on one menu read "0 out of 100" | High | **Fixed** (1-A: share of what the participant asked for; order unchanged) |
 | F2 | Side panel says each option "is labeled by how well it fits"; no labels are shown | Medium | **Fixed** (sentence shortened) |
-| F3 | Docs said the raw shortfall is saved on the scenario row; it is not | Medium (docs) | **Fixed in the docs**; saving it is a possible next step |
+| F3 | Docs said the raw shortfall is saved on the scenario row; it is not | Medium (docs) | **Fixed**: now saved (`matchShortfall`, `points_short_of_what_they_asked_for`, gate D56) |
+| G1 | "VCI acted" gets help from the reflection; "VCI wished" never does | High (analysis) | Open, suggestion written |
+| G2 | The wish is scored on a profile the decision just moved | High (analysis) | Open, suggestion written |
+| G3 | VCI acted / wished are one choice each: 100, 80, 50 or 10 | Medium (reporting) | Open, report for groups only |
+| G4 | VCI and Stability are good for groups, rough for one person | Medium (reporting) | Open, state in the thesis |
+| G5 | Stability 100 usually means nothing was measured | Medium | Known; now counted |
+| G6 | One honest change of mind gets the Stability of a random responder | Medium, decision | For discussion |
+| G7 | A random responder's VCI is 56-57, not 50 | Low (docs) | Open |
 
 ---
 
@@ -685,6 +692,88 @@ LB and size offsets, related money and trolley answers):
 
 **Sequencing.** Fix the inputs (Group E) before Fix P, because Fix P's P3-A uses these scores.
 
+## Group G: how accurate VCI and Stability are (checked 24 September, at Waseem's request)
+
+**Method.** Scratch script `vci_stability_check.cjs` (in the session scratchpad, not the repo).
+1,500 pretend people whose Blocks 1-4 answers go through the REAL scoring code (steady answerers,
+and random answerers), then all six Block 5 scenarios with the real rules (`labelOptions`, the three
+`*WithMoves` update rules, `computeVCI`, `analyseMirror`, `computeStability`). Ten kinds of Block 5
+behaviour, the same as `npm run report:vci`. Plus a "recovery" test: people who follow their own
+top value with chance q (0, 0.25, 0.5, 0.75, 1) and choose at random otherwise, each run twice.
+
+**Results, steady answerers (random answerers within a few points of these):**
+
+| Kind of person | VCI overall | VCI acted (sc 4) | VCI wished (sc 5) | Stability | Stability "100 because nothing was measured" |
+|---|---|---|---|---|---|
+| True to top value | 92 | 96 | 99 | 97 | 61% |
+| Always best fit | 100 | 100 | 100 | 100 | 100% |
+| Convert (one honest change) | 65 | 93 | 99 | 56 | 0% |
+| Corrected by APA | 96 | 100 | 31 | 93 | 0% |
+| Performance chaser | 70 | 71 | 84 | 78 | 15% |
+| Random responder | 57 | 57 | 50 | 61 | 1% |
+| Flip-flopper (keeps) | 33 | 31 | 33 | 17 | 0% |
+| Always the worst fit | 10 | 10 | 10 | 6 | 0% |
+
+**Accuracy:**
+
+| Question | VCI | Stability | VCI acted (one choice) |
+|---|---|---|---|
+| Tells "true to values" from "random" | 97 in 100 | 90 in 100 | - |
+| Tells "random" from "flip-flopper" | 86-89 in 100 | 87-88 in 100 | - |
+| Mean as true consistency q goes 0 → 1 | 57 → 92 | 62 → 99 | 56 → 98 |
+| Rank agreement with q (1 = perfect) | 0.61-0.64 | 0.58-0.60 | 0.48-0.49 |
+| Same person twice (1 = identical) | 0.45-0.48 | 0.34-0.38 | 0.27-0.28 |
+
+### G1. "VCI acted" gets help from the reflection step; "VCI wished" never does. HIGH (analysis).
+Scenario 4 is a decision, so a misaligned first pick opens the reflection, and APA can replace it
+with a better-fitting final choice. Scenario 5 is a wish: no reflection, the first pick is final.
+`analyseMirror` scores the FINAL choice in 4 against the FIRST in 5. Random responder: first pick in
+scenario 4 = 50, final = 57, wish = 50, so the gap "wished − acted" is pushed about 7 points
+negative by the design alone. "Corrected by APA": first pick 30, final 100, wish 31, a gap of −69
+made entirely by the reflection. **Suggestion:** also store, and analyse, the gap on the FIRST pick
+in scenario 4 (`firstChoiceOptionId` is already saved). Not implemented.
+
+### G2. The wish is scored on a profile the decision just moved. HIGH (analysis).
+Scenarios 4 and 5 have the same six options with the same numbers. Someone who picks the SAME
+option in both should get a gap of 0. They do not, in up to 49 in 100 cases (performance chasers,
+mean gap +13), because scenario 5 is judged on the profile after scenario 4's update, which moved
+toward that very option. Judged both on the profile they entered Block 5 with, the gap is 0 in 100
+of 100 same-option cases. **Suggestion:** store a second gap with both sides judged on the Block-5
+entry profile. Not implemented.
+
+### G3. One choice is a very rough measure. MEDIUM (reporting).
+VCI acted and VCI wished are each ONE choice, so they can only be 100, 80, 50 or 10. A random
+responder gets a gap of 50 points or more 35 in 100 times. Same person twice: 0.27. Report the gap
+for groups, never as a verdict about one person.
+
+### G4. VCI and Stability are good for groups, rough for one person. MEDIUM (reporting).
+Only four choices count. Same person twice: VCI 0.45-0.48, Stability 0.34-0.38 (research usually
+wants 0.70 or more to compare individuals). Group comparisons are well supported (the separation
+figures above).
+
+### G5. Stability 100 usually means "nothing was measured". MEDIUM (known, now counted).
+Stability only counts swaps at a reflection. 61 in 100 "true to top value" people, and every
+best-fit picker, never meet one, so they score 100 with nothing measured (`conflictSteps: 0`).
+Already in HOW_TO_ANALYZE 4.2; filter on `conflictSteps > 0` or report it beside the score.
+
+### G6. One honest change of mind scores like random. MEDIUM, a question for Waseem.
+"Convert" people change their top value once, in scenario 1, then stay true to it. Their Stability
+is 56, random people 61, and Stability tells them apart only 45-49 in 100 times (a coin is 50).
+The reason: after one change, the model needs several scenarios to catch up, and each catch-up
+reflection counts more swaps (1.9 reflections, 2.7 swaps on average). If Stability should mean "how
+often the person changed", one change should score higher than random. Decision needed.
+
+### G7. A random responder's VCI is 56-57, not 50. LOW (docs).
+Blind picking of the FIRST choice gives exactly 50. A random responder who goes through APA then
+chooses among the options serving the value they named, which fits better than a random option,
+so the final choice lifts VCI to 56-57. Already in the VCI method figures; say it next to "50".
+
+### Value moves cut off at 0 or 100 (B5, measured in the same run)
+16-23 in 100 policy values START Block 5 at 0 or 100 (straight out of Blocks 1-4). Moves cut off:
+7-49 in 100 depending on behaviour (random 18, true to top value 49: their top value is already at
+100). Values at 0 or 100 at the end: 2-70 in 100 (random 13). The old "13%" in the bump() comment
+came from uniform profiles; the comment now says so.
+
 ## Plans waiting for approval (24 September, evening)
 
 **P-DC. Directness and context: "never" is not zero, and a fair lens choice.**
@@ -839,6 +928,105 @@ code):
   - C: keep the number, fix the wording, record the exposure.
 - Same family as Fix 1; Waseem chooses when.
 
+## Fix 3 plan: D1 + D2, the option numbers and what the values mean (written 24 September, waiting for approval)
+
+Nothing here is implemented. Waseem asked for the plan first.
+
+### The problem in one picture
+
+Every option has four numbers from 0 to 100: how much it gives on "protecting the vulnerable",
+"reducing harm", "how much is gained" and "how many are helped". The fit score, the four labels,
+VCI, Stability, the card order, the MCF sentences and the predictions are ALL computed from these
+numbers. The participant never sees them. The participant reads the WORDS on the card.
+
+So if a number says the opposite of the words, a careful participant who chooses by their values
+can be scored "misaligned" for doing exactly that.
+
+**D1 example (checked again on 24 September 2026, the numbers are still these).** Cancer scenario,
+"reducing harm":
+
+| Option | Harm number | What the card says |
+|---|---|---|
+| Draw the 20 names from the patients who cannot wait | **94 (highest)** | "fewer of the 20 come through than under the rule that ranks by odds" |
+| Treat the 20 most likely to survive | 48 | saves the most lives |
+
+A participant who cares most about reducing harm, and reads the card, would pick "most likely to
+survive". The numbers say the lottery is the harm option. The other D1 rows (care visits, wildfire)
+are in the D1 table above.
+
+**D2 example.** The participant's own "how much is gained" score comes from Block 3: how small a
+payoff (money for the company) is enough for them to approve harming workers. But the options use
+"gained" to mean different things:
+
+| Scenario | "How much is gained" means (from `valueHere`) | Same thing Block 3 measured? |
+|---|---|---|
+| 1 and 2 (escape) | how quickly and safely YOU get out | No: personal safety, not a payoff |
+| 3 (cancer) | how many years of life the doses add | Partly: a size of benefit |
+| 4 and 5 (care visits) | keeping the service paid for and open next year | Yes: money |
+
+"Reducing harm" has the same problem. Block 3 measures it as "you ask for more money as MORE workers
+are hurt" (10, then 1,000, then 100,000 people): caring about numbers. In scenario 4 it means "the
+cut lands where someone else can step in", which is about how badly one person is hurt, not how many.
+
+Comparing a score measured on one thing with option numbers about another thing is like comparing
+someone's height in centimetres with a door's width in inches: both are numbers, but they do not
+measure the same thing.
+
+### What Blocks 1-3 actually measure (from docs/MEASUREMENT_MODEL.md)
+
+| Value | Where the participant's score comes from |
+|---|---|
+| Protecting the vulnerable | Block 3: asking for more before harming entry-level workers than senior ones (0.55); Block 1: giving found money back when it belongs to a shelter (0.30) |
+| Reducing harm | Block 3 only: asking for more as the number of people hurt grows |
+| How much is gained | Block 3: how small a payoff is enough to approve a harm (0.80) |
+| How many are helped | Block 2 only: the trolley. Willing to harm one to save more |
+
+### The plan, step by step
+
+1. **One definition per value that is true in every scenario** and matches the row above.
+   My draft, for Waseem to change:
+   - Protecting the vulnerable: the option protects the people least able to protect themselves.
+   - Reducing harm: the option keeps the NUMBER of people who are badly hurt as low as possible.
+   - How much is gained: the option produces a large benefit (money, time, years of life), even if
+     someone else pays for it.
+   - How many are helped: the option helps the largest number of people, even at a cost to a few.
+   Then rewrite each scenario's `valueHere` line (the "In this scenario:" sentence) as an example of
+   that one definition, keeping each scenario's own words.
+2. **A rating sheet with no numbers on it.** I generate it from the real content
+   (`tools/export_block5_content.cjs`): every scenario, the six cards exactly as participants read
+   them, the four definitions, and an empty 0-100 box per value per option. 24 options x 4 values
+   = 96 boxes per rater (scenarios 1-4; scenario 5 repeats scenario 4's six options, and scenario
+   6's four rules are each written as one value on purpose).
+3. **Two or three raters score it alone**, without seeing the current numbers (for example the
+   advisor and a lab colleague). Waseem has seen the numbers, so his own ratings are useful but not
+   blind. I can fill one copy as a starting point, clearly marked as mine and NOT counted as
+   independent.
+4. **A script compares the ratings.** (a) Do the raters agree with each other? Reported as ICC,
+   where 1 = perfect agreement and 0.75 or more is usually called good. (b) Where do the raters
+   disagree with the current numbers? Every number more than 20 points from the raters' average,
+   and every value where the raters put the six options in a different ORDER, goes on a list.
+5. **Waseem decides each flagged item**: change the number (usually to the raters' average), or
+   change the words, because sometimes the words are what is wrong.
+6. **Stamp and re-run.** A `CONTENT_VERSION` saved on every scenario row, so data from before and
+   after the change is never pooled. Then everything: the full check chain, `validate:mcf` (its
+   61,945 sentences are built from these numbers), the VCI, Stability, planner-overlap and position
+   reports, and the method documents' figures.
+
+### What this will change, honestly
+
+- Labels, fit scores, card order and predictions will move for many people. That is the point.
+- The position effect will move too. CLAUDE.md says: never change option numbers to make the
+  position check pass. This change is for a different reason (the numbers must mean what the
+  words say), but it must be reported that way, and the position check must be re-read after it.
+- No real participants yet, so this is the cheapest moment it will ever be.
+
+### What I need from Waseem
+
+1. The four definitions: approve, or rewrite them.
+2. The raters: who (two or three people), and whether he rates too.
+3. The flag line: 20 points (my suggestion), or another number.
+4. The sheet: Excel file, or a simple web form.
+
 ## Log
 
 - **2026-09-24.** Audit written (`a2ecc01`). Nothing fixed yet. Fix 1 plan sent to Waseem.
@@ -913,3 +1101,5 @@ code):
 - **2026-09-24. Fix 2 done (B1+B2):** Waseem 1-yes, 2-yes (a best-fit pick moves nothing), 3-A now. `applyKeepUpdates(profile, option, level, stakesWeight, menu)`: Aligned → no change; Weakly → +20 to where the pick beats the best fit most, −15 to where the best fit beat it most (×score/100), ties by the person's rank; throws without `menu`. `displacedTopValue` removed. Six callers pass the options. Gates V13 (0/8,000 best-fit picks move), V14 (0 wrong, 0 missed; a raise blocked only by 100 is allowed — my first version of the gate got that wrong), V15 (throws). Reports re-run and figures updated in block5CVR.ts, BLOCK5_VCI_METHOD.md, BLOCK5_STABILITY_METHOD.md: VCI true-to-top 91→90, convert 69→68, perf chaser 73→76, random 56→57, flip-flopper 31→32; convert>random 71→70%, convert>perf 42→35%; Stability small moves (random 57→56, perf 81→80, convert-APA 75→74). Position gate unchanged at 2.8x.
 - **2026-09-24. A4 option A done:** the confirm-keep question no longer says "which you rated N out of 100"; `sacrificedScore` removed from `confirmTrade`. Verified in the built site: "which you rated" occurs 0 times and "Do you put … above … here?" is present. Not verified by clicking through the study (it needs Blocks 1-4 plus a misaligned pick). Participant-visible; dated in CLAUDE.md. The APA page's "missed by N points" is untouched.
 - **2026-09-24. F1 + F2 done (Waseem: "1-A, 2-fix it now").** Waseem asked why "Seal your apartment" read "Matches your earlier answers: 0 out of 100" although it exceeds vulnerable and harm. Cause: the score was 100 − shortfall, stopped at 0, and exceeding a value earns nothing on purpose; his profile (vul 28, harm 32, gain 97, helped 82) asks so much of gain and helped that the option fell 100+ short. Measured on pretend participants: 5 in 100 cards at 0, 2+ zeros on one menu in 7.9 in 100 scenarios, the best fit under 50 in 7.1. Now `policyAlignmentScore = 100 × (1 − shortfall ÷ Σ(u/100)·u)`; his scenario 1 reads 90 / 74 / 70 / 67 / 41 / 40 (Seal your apartment 0 → 40), same order and labels. Nothing that ranks moved (labels, VCI, Stability, planner, MPF softmax all read the shortfall or the rank). Results page: the "fit well but performed below 45" count now uses the label, not score ≥ 60. Fields renamed to `fit_percent_of_what_they_asked_for…`; each new scenario row carries `fitScoreScale`, and an untagged (older) row goes under `old_fit_score_saved_before_24_september_2026`, never under the new name. `SHAPE_VERSION` `2026-09-24-fit-share`. Gates V16 (12,000 menus: order as shortfall, 0 hidden differences), V17 (0 and 100 ends), D54 (scales kept apart), P8 rewritten (a demanding participant's four scores are no longer equal: 51 / 27 / 47 / 53). F2: the side-panel sentence no longer mentions labels. **F3, found while writing the docs:** HOW_TO_READ, HOW_TO_ANALYZE and a dbShape note all said `matchShortfall` is on the raw scenario row; it is not saved anywhere. Docs now say how to rebuild it (profile_by_scenario + option fingerprints). Saving it directly was NOT done (not approved); offer it.
+- **2026-09-24. Shortfall saved (Waseem: "1-yes") and B5 done ("Do B5 implement").** Each scenario row now carries `matchShortfall` and `fitShortfallsByOptionId` (two decimals, `roundForRecord`), shown as `points_short_of_what_they_asked_for` in `analysis.alignment_records` (gate D56). B5: `bump()` records every move when given a list; three twins `applyKeepUpdatesWithMoves`, `applyEndorsementUpdatesWithMoves`, `applyApaUpdatesWithMoves` return `{ profile, moves }`, and the plain rules call them, so no score changed (V18: 9,000 updates, same profile every time, the moves always add up to the real change). The APA 30-point cap, if it ever binds, is its own move. The page passes the moves into the result as `valueMoves` (required in `commitChoice`, so no path can forget); `analysis.value_moves_asked_for_and_made` lists them in words with `cut_off_by` and totals (gate D55; D44 now sees 30 paths). `SHAPE_VERSION` `2026-09-24-moves-and-shortfall`. Not visible to participants, so not checked in the browser. Measured: 16-23 in 100 policy values START Block 5 at 0 or 100; 7-49 in 100 moves are cut off; the old 13% came from uniform profiles and the notes now say so.
+- **2026-09-24. VCI / Stability accuracy checked** (Group G above) and **Fix 3 plan (D1 + D2) written**, not implemented.
