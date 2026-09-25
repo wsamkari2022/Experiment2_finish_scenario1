@@ -793,6 +793,49 @@ comparison.
 from the best fit, enough for an analysis that uses both ranks. A cleaner separation would need a
 design change (for example a randomly ordered control group).
 
+## Fix 2 plan: B1 + B2, the keep rule (written 24 September, waiting for approval)
+
+**New rule for Route 3 (`applyKeepUpdates`, a pick in the top two, no reflection).**
+
+- **Best fit (Aligned) picked:** the model's own guess came true, so nothing moves.
+- **Second best (Weakly aligned) picked:** compare the pick with the model's best fit. Raise (+20) the
+  value where the pick beats the best fit the most. Lower (-15) the value where the best fit beat the
+  pick the most, weighted by how much the person holds it (u/100, as `violatedValue`).
+- The signature gains the scenario's options, so the best fit is known. The five tools that call it
+  are updated (simulate_vci, simulate_stability, vci_distribution, stability_distribution,
+  audit_block5_run).
+
+**Prototype** (scratch `keep_proto.cjs`, 4,000 steady pretend people × scenarios 1-4, real current
+code):
+
+| Measure | Today | New |
+|---|---|---|
+| Best-fit pick lowers the #1 value | 16.2% | 0 |
+| Best-fit pick reorders the four values | 23.0% | 0 |
+| Net change per best-fit pick | +7.0 | 0 |
+| 2nd-best pick lowers nothing although the best fit gave a held value (≥20) 20+ more | 35.2% | 0 |
+| 2nd-best pick lowers a value on which the pick was NOT worse | 3.0% | 0 |
+| Net change per 2nd-best pick | +6.9 | +3.8 |
+
+**Test-run replay (0/0/100/99).**
+
+- Today: 90/100 → 100/80 → 100/80 → 100/80 (two zero steps).
+- New: 100/99 → 100/79 → 100/64 → 100/64. The Care pick became Aligned because the profile had learned.
+
+**Open choice.** Aligned = no change (recommended) or a small comparison-based reinforcement.
+
+**A4 suggestion (the confirm-keep sentence, "which you rated 94 out of 100").**
+
+- Three problems:
+  - it shows a profile number mid-Block 5;
+  - "you rated" is false (it is a computed score);
+  - the number comes from the LIVE profile, so it can differ between scenarios.
+- Options:
+  - A: drop the clause (recommended);
+  - B: words instead of a number ("which your earlier answers put high");
+  - C: keep the number, fix the wording, record the exposure.
+- Same family as Fix 1; Waseem chooses when.
+
 ## Log
 
 - **2026-09-24.** Audit written (`a2ecc01`). Nothing fixed yet. Fix 1 plan sent to Waseem.
@@ -863,3 +906,4 @@ design change (for example a randomly ordered control group).
 - **2026-09-24. Donation signal fixed (E8):** `block1DonationSignal` = max(shelter share of refusals that were donate, 0.5 × the other places' share), instead of 1 or 0.5 for any single click. Waseem had ALREADY delegated this ("fix the donation button however you feel is right") and I asked him again; he told me to read his whole prompt (memory: feedback-read-whole-prompt). K1 caught the formula change before regeneration, as designed; tables regenerated. Rank-first shares 12.8-15.1%. Donor example 51 → 59; one small wobble 1 → 9; consistent people: #1 value changes 4.3%. Version `null-cdf-2026-09-24-recipe-donation-share`. Gates D1-D2; R3's reference updated to the share rule so it still tests only the refusal rule.
 - **2026-09-24. Planner re-tested (Fix P plan v2 above)**; created the project skill `.claude/skills/simple-english` at Waseem's request (every reply in very simple words with informative examples).
 - **2026-09-24. Fix P v2, Waseem's answers:** item 1 (band wording) NOT NOW, keep as is; item 3 (Step 3 rate) unchanged, and he asked what it is, so explain it simply; items 2, 4, 5, 6, 7 yes; big question = A (accept, state, analyse both). Done: item 2 `393e401` (floor named apart, 0/24,000 orders moved); item 6 `aa13ecf` (card sentence); item 4 `5730fa5` (inputs + version + readable `analysis.card_order_by_scenario` + self-check, gate D53); item 7 `tools/report_planner_overlap.cjs` (steady 57-68, random 46-55, first card = #1-value champion 90-100; these supersede the 56-68 / 88-100 in the plan v2 above); item 5 honest words in the planner header, CLAUDE.md, HOW_TO_ANALYZE 4.7 (the overlap in full and how to analyse it), HOW_TO_READ 6j, and a dated banner on the planner plan doc. Left untouched on purpose (item 1): the header's "NO CONSTANTS / every threshold derived" wording about the band. Noticed and NOT changed (Fix 1 territory): scenario 5's wish page tells participants how close their wish is to what they said matters most (Block5PublicEmergencySimulation.tsx ~line 2100) — another A-group disclosure, now A8.
+- **2026-09-24.** Waseem: keep the Step 3 trade rate (1-A). Fix 2 (B1+B2) plan written, with the A4 suggestion for the confirm-keep sentence; waiting for approval.
