@@ -1083,6 +1083,13 @@ Stability (`docs/BLOCK5_STABILITY_METHOD.md`) on these options, and both simulat
 | S4 even cut (+ S5 twin) | **Keep every care visit, and cut the check-in visits** (35 · 70 · 62 · 80); the card defines a check-in | it sat in the middle of every value and every metric — the choice with no consequence |
 | eight numbers | minibus 51→62 vulnerable, 45→62 harm; respirator 41→25 helped; convoy 67→55 vulnerable (S1); ridge road 48→25 and early highway 45→30 helped, fill every seat 54→62 vulnerable (S2); sickest 57→42 harm (S3) | each rank order now matches its card |
 
+**Third pass, 26 September 2026** (fresh-eye audit D1 / Fix 5, the researcher's approval): two numbers the
+cards did not earn, both in scenario 2. *Fill every seat* reducing harm 50 → **62** ("not anybody else's
+place in the line"; it cannot put more risk on others than the convoy at 59). *Leave immediately*
+protecting the vulnerable 44 → **35** (it leaves the farthest blocks, where the walker residents live, in the
+jam; 35 rather than lower keeps it the best fit for about 1 person in 100). Words unchanged; every check
+passed before and after.
+
 Numbers are vulnerable · harm · gained · helped. Each redesigned option carries a `REDESIGNED`
 comment with every number and metric justified from its card; the eight numbers carry `VALUE AUDIT,
 second pass` comments. The ids did not change, because the database stores them. The method kind

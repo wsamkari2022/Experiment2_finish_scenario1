@@ -1148,7 +1148,7 @@ export function performanceScore(option: Block5ScenarioOption): number {
       the CVR and APA at random averages 57, because APA lists only the options built on the value
       they name, which steers some random choices toward a fit.
    5. SEPARATION. A participant true to their top value outscores a random responder 96% of the
-      time; a random responder outscores a flip-flopper 88% of the time; a one-time convert
+      time; a random responder outscores a flip-flopper 87% of the time; a one-time convert
       outscores a random responder 70% of the time.
    ================================================================================================ */
 
@@ -1422,7 +1422,7 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
       or an update constant changed. Swaps have a natural maximum, a complete reversal, which needs
       no simulation and cannot go stale.
    4. DISTANCE COULD NOT TELL THE PARTICIPANTS APART. A participant who takes up a new value in every
-      scenario scored above a one-time convert in 34% of pairings under distance, and above a random
+      scenario scored above a one-time convert in 32% of pairings under distance, and above a random
       responder in 36%. Under swaps: 10% and 12%.
    5. DISTANCE COUNTED AGREEMENT AS CHANGE. Keeping an option that already fits still nudges the
       profile, so a participant who chose their best fit in every scenario averaged 86, and 38% of
@@ -1458,7 +1458,7 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
    2. THE ROUTE MATTERS A LITTLE. A clarification moves the named value +30 and each other value
       −10; an endorsement moves the served value +30 and the sacrificed one −20. So the same change
       of heart reorders less when it goes through APA: a participant who takes up a new value in
-      every scenario averages 27 through APA and 11 by keeping.
+      every scenario averages 28 through APA and 11 by keeping.
    3. A CHANGE OF HEART IS A LARGE REORDERING. A one-time convert averages 57, about the same as a
       random responder (56). Stability measures change, not quality.
    4. TIES ARE COMMON. After 11% of conflict steps two of the four values are exactly equal - the

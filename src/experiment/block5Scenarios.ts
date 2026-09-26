@@ -892,8 +892,16 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         givesUp: "Room, speed, and any choice of road. The car is full, your mother's walker is strapped to the roof, and a car in that state leaves in its slot or not at all.",
         moralTension: "How much of your own family's room, and your own way out, do you owe the neighbors who have no car?",
         /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 54 -> 62. It takes three neighbors who have no vehicle at all. */
+        /* VALUE AUDIT, third pass, 26 September 2026 (the researcher's approval; audit D1 / Fix 5):
+           Reducing harm 50 -> 62. In this scenario reducing harm is "keeping the risk your household
+           puts on everyone else as low as possible", and this card says "What it costs you is room and
+           speed, not anybody else's place in the line" - it leaves in its slot like the staged convoy
+           (59) and takes three people out who had no way out. So it puts no more risk on others than
+           the convoy; 50 said it put more. 62 sits just above the convoy and far below the school's
+           94, which stays the harm champion. Tested before the change: every check passes, every value
+           keeps its own champion, VCI / Stability / performance move by at most 1 point. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 62, groupSizeSensitivity: 50,
+          vulnerabilityProtectionSensitivity: 62, groupSizeSensitivity: 62,
           gainResponsivenessSensitivity: 40, outcomeAggregationSensitivity: 94,
           directnessSensitivity: 43, contextSensitivity: 62, stakeholderPerspectiveShiftSensitivity: 58,
         },
@@ -1004,8 +1012,19 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            morally clean on the one option that ends the staging. The number is unaffected either way.)
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         /* VALUE AUDIT, second pass, 18 September 2026: How many are helped 45 -> 30. The first few get a clear road; the blocks furthest from the junction sit in the jam. */
+        /* VALUE AUDIT, third pass, 26 September 2026 (the researcher's approval; audit D1 / Fix 5):
+           Protecting the vulnerable 44 -> 35. In this scenario it means "making sure the neighbors
+           least able to leave are not left until last", and this card says "The blocks furthest from
+           the junction waited their turn, and they are the ones still stuck in the jam when the fire
+           comes down" - the ninth block, where the two residents with walkers live (option 3). 44 put
+           it in the middle of the scale. 35 puts it below every option that protects them (school 56,
+           convoy 60, fill 62, give seats 97) and above the ridge road (18), which turns back the
+           engine the nursing home is waiting for. 35 rather than a lower number, on the researcher's
+           request: it keeps this option the best fit for at least 1 person in 100 (1.1% of steady
+           and 3.1% of random pretend participants; 25 gave 0.5%), and the order is what the card
+           supports either way. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 44, groupSizeSensitivity: 20,
+          vulnerabilityProtectionSensitivity: 35, groupSizeSensitivity: 20,
           gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 30,
           directnessSensitivity: 59, contextSensitivity: 51, stakeholderPerspectiveShiftSensitivity: 39,
         },

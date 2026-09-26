@@ -81,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-25-company-stance";
+export const SHAPE_VERSION = "2026-09-26-wildfire-numbers";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1601,9 +1601,9 @@ export function buildCardOrderSection(block5: unknown): Record<string, unknown> 
       + "participant's values best (alignment place 1). The planner does NOT put the best fit first on "
       + "purpose, so that choosing the first card and choosing the best fit can be told apart.",
     how_often_the_first_card_is_also_the_best_fit:
-      "Measured on 24 September 2026 (npm run report:planner-overlap, 4,000 pretend participants "
+      "Measured on 26 September 2026 (npm run report:planner-overlap, 4,000 pretend participants "
       + "answering Blocks 1-4, real code end to end): the first card was also the best-fit card for "
-      + "57-68 out of 100 who answer steadily, depending on the scenario, and 46-55 who answer at "
+      + "57-66 out of 100 who answer steadily, depending on the scenario, and 46-54 who answer at "
       + "random; chance would be about 17. First place and best fit coincide more often than not, so "
       + "analyse the two together, never one as a stand-in for the other (HOW_TO_ANALYZE_MY_DATA.md 4.7).",
     by_scenario: rows,

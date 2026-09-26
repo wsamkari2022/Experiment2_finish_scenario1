@@ -106,13 +106,13 @@ checked.
 
    | How often the first scores higher | Swaps | Distance |
    |---|---|---|
-   | Flip-flopper > one-time convert | 10% | 31% |
+   | Flip-flopper > one-time convert | 10% | 32% |
    | Flip-flopper > random responder | 12% | 36% |
    | One-time convert > always the worst fit | 95% | 84% |
 
 5. **Distance counted agreement as change.** (Figures for this point date from before 24 September
    2026. Since then a best-fit pick moves nothing, so that participant scores 100 under both measures;
-   one who always takes the second best still scores 64 under distance against 100 under swaps.)
+   one who always takes the second best still scores 63 under distance against 100 under swaps.)
    Keeping an option that already fits still nudged the
    profile, so a participant who chose their best fit every time averaged 86, with 38% of them below
    "Held steady", and "always my second best" averaged 69. Under swaps both score 100.
@@ -172,6 +172,8 @@ mostly counts reflections and whether the person's story moved the participant e
 `npm run report:stability` — 2,000 seeded random starting profiles, the same simulated participants
 as `npm run report:vci`.
 
+*Figures re-run 26 September 2026, after two wildfire option numbers changed (audit Fix 5).*
+
 | Kind of participant | Stability | Most common level | Stakeholder stability |
 |---|---|---|---|
 | Always the best fit | 100 | Held steady (100%) | 100 |
@@ -179,12 +181,12 @@ as `npm run report:vci`.
 | Mixes best and second best | 100 | Held steady (100%) | 100 |
 | True to their Blocks 1–4 top value | 94 | Held steady (71%) | 88 |
 | Corrected by APA — tempted every time, names their top value | 94 | Held steady (51%) | 49 |
-| Chases the best performance numbers | 80 | Held steady (38%) | 74 |
-| Changes value once, through APA | 74 | Shifted a little (54%) | 70 |
-| Changes value once, keeps it after the CVR | 57 | Shifted a little (38%) | 68 |
+| Chases the best performance numbers | 80 | Held steady (36%) | 74 |
+| Changes value once, through APA | 74 | Shifted a little (54%) | 69 |
+| Changes value once, keeps it after the CVR | 57 | Shifted a little (39%) | 67 |
 | Random everywhere | 56 | Shifted a little (40%) | 44 |
-| Takes up a new value every scenario, through APA | 27 | Shifted a lot (38%) | 53 |
-| Takes up a new value every scenario, by keeping | 11 | Changed substantially (71%) | 53 |
+| Takes up a new value every scenario, through APA | 28 | Shifted a lot (38%) | 53 |
+| Takes up a new value every scenario, by keeping | 11 | Changed substantially (69%) | 53 |
 | Always the worst fit | 4 | Changed substantially (86%) | 51 |
 
 Directness and context stability are 100 for every kind here, because the simulated participants

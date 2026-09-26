@@ -46,9 +46,10 @@
  *     scenario was authored with one clear champion per value, far ahead of the rest, so Step 2
  *     nearly always says "the gap is real". Step 3 mostly reorders the LOWER cards (it decides
  *     roughly 1 pair in 7 to 1 pair in 9).
- *   - The first card is ALSO the participant's best-fit card for 57-68 people in 100 who answer
- *     steadily, and 46-55 who answer at random (chance would be about 17). So first place and best
- *     fit are separated in 32-43 cases in 100, not in most of them. Analyse choice position and fit
+ *   - The first card is ALSO the participant's best-fit card for 57-66 people in 100 who answer
+ *     steadily, and 46-54 who answer at random (chance would be about 17). So first place and best
+ *     fit are separated in 34-43 cases in 100, not in most of them. (Re-measured 26 September 2026,
+ *     after two wildfire numbers changed; it was 57-68 and 46-55.) Analyse choice position and fit
  *     together: Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md, section 4.7.
  *
  * NAMES TO CITE. The pairwise tree is LEAP's trade-off tree (see the plan, §4d); a "look at the most

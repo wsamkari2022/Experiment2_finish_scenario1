@@ -284,6 +284,20 @@ compared before and after, 0 different). What changed:
   participants who answer Blocks 1-4 steadily and at random (real code end to end). It replaces the
   made-up-score figures of `report:planner` for this question, which understated the overlap.
 
+## Two wildfire option numbers, since 26 September 2026
+
+The last two questionable numbers from the audit's D1 list, both in scenario 2 (the researcher's
+approval): "Fill every seat in the car with neighbors who have none" reducing harm 50 -> 62 (its card
+says its cost is "room and speed, not anybody else's place in the line", so it cannot put more risk on
+others than the staged convoy at 59), and "Leave immediately on the main highway" protecting the
+vulnerable 44 -> 35 (its card leaves the farthest blocks, where the two residents with walkers live, in
+the jam). The words did not change. Tested first on scratch copies: every check passes, every value
+keeps its own champion, VCI / Stability / performance move by at most 1-2 points, the position check
+goes 2.8x -> 2.9x, and "Leave immediately" stays the best fit for 1.1 in 100 steady pretend participants
+(35 rather than a lower number, on purpose). **Participants see it**: in scenario 2 the fit numbers,
+labels and card order change for about 1 person in 3. Both numbers carry a "VALUE AUDIT, third pass"
+comment in block5Scenarios.ts; the figures the method documents quote were re-run.
+
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 
 The "Has a cost" tag and the divider "These cost you something on the value you ranked first" no
@@ -400,7 +414,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect. **Fails on purpose** (2.8× against a 3× gate) until the position calculation pass, which is why it runs LAST in the chain |
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
-| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 57-68 in 100 steady, 46-55 random, chance about 17 |
+| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 57-66 in 100 steady, 46-54 random, chance about 17 (26 September 2026) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
 
 ## Two files that carry rules rather than code
@@ -457,7 +471,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 - The planner's tree is settled (LEAP's trade-off tree, reviewed with the advisor) and its card order
   is not to be "fixed" without the researcher. What it does in practice is MEASURED
   (`npm run report:planner-overlap`): card 1 is the option best on the participant's #1 value for
-  90-100 people in 100, and is ALSO their best-fit card for 57-68 in 100 who answer steadily (46-55
+  90-100 people in 100, and is ALSO their best-fit card for 57-66 in 100 who answer steadily (46-54
   at random; chance about 17). The researcher's decision (24 September 2026): accept it, state it,
   and analyse position and fit together (HOW_TO_ANALYZE_MY_DATA.md 4.7).
 - **Scenario 6 is a test of the model, not of the participant.** It runs four options rather than

@@ -190,6 +190,8 @@ who never chose against themselves — the one pattern VCI exists to catch.
 
 ## 8. How it behaves
 
+*Figures re-run 26 September 2026, after two wildfire option numbers changed (audit Fix 5).*
+
 `npm run report:vci` — 2,000 seeded random starting profiles, every one of them run through the real
 scoring code by each kind of participant.
 
@@ -200,10 +202,10 @@ scoring code by each kind of participant.
 | True to their Blocks 1–4 top value | 90 | Highly Consistent (49%) |
 | Mixes their best and second-best fit | 90 | Highly Consistent (71%) |
 | Always the second-best fit | 80 | Mostly Consistent (100%) |
-| Chases the best performance numbers | 76 | Moderate (38%) |
-| Changes value once, through APA, then holds it | 68 | Moderate (42%) |
-| Changes value once, keeps it after the CVR, then holds it | 68 | Moderate (46%) |
-| Random everywhere | 57 | Low (32%) |
+| Chases the best performance numbers | 75 | Moderate (40%) |
+| Changes value once, through APA, then holds it | 68 | Moderate (43%) |
+| Changes value once, keeps it after the CVR, then holds it | 68 | Moderate (45%) |
+| Random everywhere | 57 | Low (31%) |
 | Takes up a new value every scenario (either route) | 31–32 | Very Low (55–56%) |
 | Always the worst fit | 10 | Highly Inconsistent (100%) |
 
@@ -212,10 +214,10 @@ scoring code by each kind of participant.
 | Pair | |
 |---|---|
 | True to top value > random | 96% |
-| Random > flip-flopper | 88% |
+| Random > flip-flopper | 87% |
 | One-time convert > random | 70% |
 | One-time convert > flip-flopper | 97% |
-| One-time convert > performance chaser | 35% |
+| One-time convert > performance chaser | 36% |
 
 ---
 
@@ -229,7 +231,7 @@ scoring code by each kind of participant.
 3. **A change of heart is learned over about two scenarios.** One strong endorsement makes the
    newly endorsed value the participant's top value in 56% of profiles, so a genuine convert usually
    loses part of the next scenario as well as the one in which they changed. They average 68, and
-   come out ahead of a performance chaser only 35% of the time (ties counted half).
+   come out ahead of a performance chaser only 36% of the time (ties counted half).
 4. **Random answering.** Blind picking averages exactly 50. A responder who also answers the CVR and
    APA at random averages 57, because APA lists only the options built on the value they name,
    which steers some random choices toward a fit.

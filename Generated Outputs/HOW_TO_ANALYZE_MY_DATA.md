@@ -217,9 +217,9 @@ to sit nearer the steady numbers.
 **What this means for analysis** (the researcher's decision, 24 September 2026: accept, state and
 analyse both):
 
-- A choice of card 1 is **ambiguous in 57-68 cases out of 100**: first place and best fit are the same
+- A choice of card 1 is **ambiguous in 57-66 cases out of 100**: first place and best fit are the same
   card, so either could explain it.
-- The **32-43 cases out of 100 where they differ** are the ones that can separate a position effect
+- The **34-43 cases out of 100 where they differ** are the ones that can separate a position effect
   from a values effect. Say so, and report how many such cases the sample actually had
   (`analysis.card_order_by_scenario.by_scenario[].the_first_card_was_also_the_best_fit_card`).
 - Put **both** in the same model: the chosen card's position on screen (`choiceRank`, or
@@ -271,6 +271,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 24 September 2026 | The fit number on cards became a share of what the participant asked for (the order of options did not change) |
 | 24 September 2026 | The side-panel sentence no longer says each option "is labeled by how well it fits" |
 | 25 September 2026 | Scenario 5: no "Preview impact", the wish line on the performance bars, and fit numbers shown on the values scenario 4 opened with |
+| 26 September 2026 | Scenario 2: two option numbers changed ("Fill every seat" harm 50 -> 62, "Leave immediately" vulnerable 44 -> 35), so fit numbers, labels and card order there differ for about 1 person in 3 |
 
 ---
 
