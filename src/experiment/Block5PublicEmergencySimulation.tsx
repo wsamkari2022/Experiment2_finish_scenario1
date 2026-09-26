@@ -26,7 +26,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Badge, Box, Button, Center, Flex, Grid, Heading, HStack, Icon, Separator, Spinner, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsUpDown, LuShield, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock, LuRoute, LuClipboardList, LuClock } from "react-icons/lu";
+import { LuCheck, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsUpDown, LuTriangleAlert, LuInfo, LuEye, LuGauge, LuSparkles, LuScale, LuChartSpline, LuUserRound, LuUsersRound, LuGlobe, LuBuilding2, LuCar, LuBus, LuTruck, LuFootprints, LuHouse, LuListOrdered, LuShuffle, LuLock, LuRoute, LuClipboardList, LuClock } from "react-icons/lu";
 import { SensitivityMeterBar, MeterLegend, MetricStandingBar, MetricStandingLegend } from "./block5Meters";
 import { predictChoice, type ChoicePrediction } from "./block5Prediction";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
@@ -53,11 +53,11 @@ import { MethodLogo } from "./MethodLogo";
 import { Tooltip } from "@/components/ui/tooltip";
 import { getBlock5Palette, onAccentText, type Block5Palette } from "./block5Palette";
 import { Block5ScenarioIntro } from "./Block5ScenarioIntro";
-import { Block5ValueGuide } from "./Block5ValueGuide";
+import { Block5ValuesPanel } from "./Block5ValuesPanel";
 import { runMorph } from "./block5Morph";
 import { deriveCompanyValues, type DerivedCompanyValues } from "./block5Company";
 import {
-  METRIC_KEYS, METRIC_LABELS, metricMeaning, POLICY_DIM_KEYS, POLICY_DIM_EXPLAIN, POLICY_DIM_HIGHER_MEANS,
+  METRIC_KEYS, METRIC_LABELS, metricMeaning, POLICY_DIM_KEYS, POLICY_DIM_HIGHER_MEANS,
   POLICY_DIM_SHORT,
   type AlignmentLevel, type Block5Results, type Block5Scenario, type Block5ScenarioResult,
   type PredictionTestRecord,
@@ -487,8 +487,21 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   const [q1Strong, setQ1Strong] = useState<boolean | null>(null);
   // The stakeholder voice shown for the current misaligned selection (random, stable while reading).
   const [cvrWho, setCvrWho] = useState<WhoVariant | null>(null);
-  // Which sidebar value the user is hovering, to show its plain-English explanation.
-  const [hoveredDim, setHoveredDim] = useState<string | null>(null);
+  /*
+   * IS THE VALUES PANEL PINNED? (26 September 2026). Pinned, it stays on screen under the
+   * performance panel while the page scrolls. It lives here, not in Block5ValuesPanel, because the
+   * sticky wrapper and every offset measured against it live here. Remembered across scenarios.
+   */
+  const [valuesPinned, setValuesPinned] = useState<boolean>(() => {
+    try { return localStorage.getItem(VALUES_PINNED_KEY) === "1"; } catch { return false; }
+  });
+  const toggleValuesPinned = useCallback(() => {
+    setValuesPinned((v) => {
+      const next = !v;
+      try { localStorage.setItem(VALUES_PINNED_KEY, next ? "1" : "0"); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
 
   /**
    * Keeps the scenario panel parked immediately below the sticky performance dashboard.
@@ -509,15 +522,24 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   const dashRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const sideRef = useRef<HTMLDivElement>(null);
+  /* The values panel's sticky wrapper (26 September 2026). When it is pinned it sits directly under
+     the performance panel, and everything measured against the performance panel - the sidebar's
+     sticky offset and whether the sidebar fits - has to count it too, or the sidebar would slide
+     underneath it. `pinnedValuesHeight` is that extra height, 0 when unpinned or on a phone. */
+  const valuesRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const dash = dashRef.current;
     const grid = gridRef.current;
     const side = sideRef.current;
-    if (!dash || !grid || !side) return;
+    const values = valuesRef.current;
+    if (!grid || !side) return;
 
     const apply = () => {
-      const dashH = Math.round(dash.getBoundingClientRect().height);
-      grid.style.setProperty("--b5-dash-h", `${dashH}px`);
+      /* No performance panel in scenario 6, so nothing to sit under there. */
+      const dashH = dash && dash.isConnected ? Math.round(dash.getBoundingClientRect().height) : 0;
+      if (values) values.style.setProperty("--b5-values-top", `${dashH > 0 ? dashH + 16 : 8}px`);
+      const pinnedExtra = pinnedValuesHeight(values);
+      grid.style.setProperty("--b5-dash-h", `${dashH + pinnedExtra}px`);
 
       /*
        * Stick ONLY if the whole panel fits in what is left of the viewport.
@@ -525,7 +547,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
        * A sticky element taller than its available space is a trap: it pins to the top and its
        * overflowing bottom can never be scrolled to. Capping its height and giving it an inner
        * scrollbar looked like the fix, but it is worse — it silently truncated "The situation
-       * right now" mid-sentence and buried the value priorities behind a scrollbar most people
+       * right now" mid-sentence and buried the lower cards behind a scrollbar most people
        * will never notice. Nothing on this panel is optional enough to hide.
        *
        * So the measurement decides. When it fits, the participant gets the scenario alongside
@@ -535,7 +557,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
        * scrollHeight (not offsetHeight) is the natural content height, which is what we need
        * even while the element is currently stuck.
        */
-      const available = window.innerHeight - dashH - 48;
+      const available = window.innerHeight - dashH - pinnedExtra - 48;
       const fits = side.scrollHeight <= available;
       const next = fits ? "on" : "off";
       // Only write on change: this element is observed below, and a no-op write would still
@@ -545,15 +567,16 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
     apply();
     const ro = new ResizeObserver(apply);
-    ro.observe(dash);
+    if (dash) ro.observe(dash);
     ro.observe(side);
+    if (values) ro.observe(values);
     // The fit also changes when the window gets shorter, which no ResizeObserver here sees.
     window.addEventListener("resize", apply);
     return () => {
       ro.disconnect();
       window.removeEventListener("resize", apply);
     };
-  }, []);
+  }, [valuesPinned, progress.currentScenarioIndex]);
   // Is the two-radar "compare all options" overlay open? Reset per scenario like every other
   // per-scenario UI flag, so it never carries over into the next scenario.
   const [compareChartsOpen, setCompareChartsOpen] = useState(false);
@@ -984,7 +1007,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     const card = document.querySelector(`[data-option-id="${previewOptionId}"]`);
     if (!card) return;
 
-    const dashH = Math.round(dashRef.current?.getBoundingClientRect().height ?? 0);
+    const dashH = Math.round(dashRef.current?.getBoundingClientRect().height ?? 0)
+      + pinnedValuesHeight(valuesRef.current);
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -1695,9 +1719,31 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         </Box>
       )}
 
-      {/* What the four values mean in THIS scenario (researcher, 18 September 2026). Scenarios 1-5;
-          renders nothing in scenario 6, on purpose. See Block5ValueGuide. */}
-      <Block5ValueGuide scenario={scenario} pal={pal} />
+      {/*
+        YOUR VALUES IN THIS SCENARIO (26 September 2026, researcher's request): the old "How to read
+        the four values" section and the sidebar's "Your value priorities" merged into one panel -
+        see Block5ValuesPanel. The wrapper is what pins: sticky only when pinned and only from tablet
+        width up, parked under the performance panel at a measured offset (--b5-values-top, written
+        by the effect above).
+      */}
+      <Box ref={valuesRef} data-pinned={valuesPinned ? "on" : "off"}
+        maxW="7xl" mx="auto" mb="6" position="relative" zIndex="29"
+        css={{
+          "@media (min-width: 48em)": {
+            "&[data-pinned='on']": { position: "sticky", top: "var(--b5-values-top, 8px)" },
+          },
+        }}
+      >
+        <Block5ValuesPanel scenario={scenario} pal={pal}
+          values={topDimensions.map((d) => ({ key: d.key as Block5PolicyDimKey, score: d.score }))}
+          note={<>
+            Every option stays available, and you can choose any of them.
+            {/* No "Preview impact" half where no card has the button (the wish, 25 September 2026). */}
+            {scenarioCountsTowardsPerformance(scenario)
+              && " Use “Preview impact” to see how an option would change your performance above."}
+          </>}
+          pinned={valuesPinned} onTogglePinned={toggleValuesPinned} />
+      </Box>
 
       <Grid ref={gridRef} templateColumns={{ base: "1fr", lg: "352px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
         {/*
@@ -1848,67 +1894,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           {company && <CompanyPrincipleCard company={company} pal={pal} />}
 
           {/*
-            YOUR VALUE PRIORITIES — split out of the scene card at the same time. Three cards that
-            each answer one question (what is happening / who am I in it / what do I care about)
-            read faster than one card that answers all three behind two separators, and it lets
-            the role card sit between the situation and the priorities, which is the order the
-            participant actually needs them in.
+            YOUR VALUE PRIORITIES MOVED, 26 September 2026 (researcher's request): the four numbers,
+            their hover definitions and the "every option stays available" sentence are now part of
+            the "Your values in this scenario" panel above the grid (Block5ValuesPanel), next to what
+            each value means here.
           */}
-          <Box
-            bg={pal.sidebarBg} backdropFilter={pal.backdropBlur}
-            borderWidth="1px" borderColor={pal.cardBorder}
-            rounded="2xl" overflow="hidden"
-            style={{ boxShadow: pal.sidebarShadow }}
-          >
-            <VStack align="stretch" gap="5" px={{ base: "5", md: "6" }} py={{ base: "5", md: "5" }}>
-              <Box>
-                <HStack gap="2" mb="3">
-                  <Icon color={pal.accent}><LuShield /></Icon>
-                  <Text fontSize="xs" fontWeight="semibold" color={pal.textMuted} textTransform="uppercase" letterSpacing="wider">Your value priorities</Text>
-                </HStack>
-                <VStack align="stretch" gap="2">
-                  {topDimensions.map((d) => (
-                    <Box key={d.key} position="relative" cursor="help"
-                      onMouseEnter={() => setHoveredDim(d.key)} onMouseLeave={() => setHoveredDim(null)}>
-                      <HStack justify="space-between">
-                        <Text fontSize="xs" color={hoveredDim === d.key ? pal.text : pal.textMuted}
-                          style={{ textDecoration: "underline dotted", textDecorationColor: pal.textFaint, textUnderlineOffset: "2px" }}>
-                          {d.label}
-                        </Text>
-                        {/*
-                          DISPLAY rounding only — d.score keeps its full precision everywhere it
-                          is scored against. The APA and CVR bumps are weighted by scenario
-                          stakes, so a score can land on 99.075, and printing that next to a
-                          clean 100 and 26 reads as a glitch rather than as precision.
-                        */}
-                        <Badge bg={pal.badgeBg} color={pal.text} rounded="md" px="2" fontSize="xs" fontFamily="mono">{Math.round(d.score)}</Badge>
-                      </HStack>
-                      {hoveredDim === d.key && (
-                        <Box position="absolute" top="100%" left="0" mt="1.5" zIndex="20"
-                          bg={pal.tooltipBg} color={pal.tooltipText}
-                          borderWidth="1px" borderColor={pal.tooltipBorder} rounded="lg" px="3" py="2"
-                          fontSize="2xs" lineHeight="tall" w="240px" shadow="xl">
-                          {POLICY_DIM_EXPLAIN[d.key as Block5PolicyDimKey]}
-                        </Box>
-                      )}
-                    </Box>
-                  ))}
-                </VStack>
-              </Box>
-              <Box bg={pal.surfaceSubtle} borderWidth="1px" borderColor={pal.cardBorder} rounded="xl" px="4" py="3">
-                {/* 24 September 2026 (researcher's approval): no longer says "Each is labeled by how well it
-                    fits your earlier responses". The alignment labels came off the cards on 15
-                    September, so the sentence sent participants looking for labels that are not
-                    there - and pointed them at their own fit, which the study must not do. */}
-                {/* No "Preview impact" half where no card has the button (the wish, 25 September 2026). */}
-                <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
-                  Every option stays available, and you can choose any of them.
-                  {scenarioCountsTowardsPerformance(scenario)
-                    && " Use “Preview impact” to see how an option would change your performance above."}
-                </Text>
-              </Box>
-            </VStack>
-          </Box>
 
           {/* Opens the two-radar comparison of all six options (see Block5OptionCompare). */}
           <Button
@@ -2092,6 +2082,19 @@ const METRIC_MEANINGS_KEY = "block5_show_metric_meanings";
  * a participant who has decided they want the room back should not have to say so six times.
  */
 const METRICS_MINIMIZED_KEY = "block5_metrics_minimized";
+
+/** LocalStorage key remembering whether the participant pinned the values panel (26 September 2026). */
+const VALUES_PINNED_KEY = "vrds_b5_values_pinned";
+
+/**
+ * The extra height a PINNED values panel takes at the top of the screen, gap included: 0 when it is
+ * unpinned, missing, or on a screen narrower than a tablet (where it never sticks).
+ */
+function pinnedValuesHeight(values: HTMLElement | null): number {
+  if (!values || values.dataset.pinned !== "on") return 0;
+  if (typeof window !== "undefined" && !window.matchMedia("(min-width: 48em)").matches) return 0;
+  return Math.round(values.getBoundingClientRect().height) + 8;
+}
 
 /**
  * EVERY PIECE OF COPY THAT DIFFERS BETWEEN DECIDING AND WISHING, in one table.
@@ -2342,7 +2345,7 @@ const STAKE_VIEW: Record<StakePosition, {
  *
  * This card briefly drew the company's position against the participant's own, and said this was
  * the value they rated lowest. Both numbers came from the FROZEN pre-Block-5 profile, while the
- * "your value priorities" card directly below it shows the LIVE one. A participant whose score had
+ * "your values" panel (then a card directly below it) shows the LIVE one. A participant whose score had
  * moved therefore saw two different numbers for themselves, stacked, on the same screen.
  *
  * Switching to the live number would have fixed that and broken two other things: "the one you

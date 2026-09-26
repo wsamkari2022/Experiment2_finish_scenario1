@@ -271,6 +271,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 24 September 2026 | The fit number on cards became a share of what the participant asked for (the order of options did not change) |
 | 24 September 2026 | The side-panel sentence no longer says each option "is labeled by how well it fits" |
 | 25 September 2026 | Scenario 5: no "Preview impact", the wish line on the performance bars, and fit numbers shown on the values scenario 4 opened with |
+| 26 September 2026 | "How to read the four values" and the sidebar's "Your value priorities" merged into one panel, "Your values in this scenario", which can be minimized and pinned. Same information, one place |
 | 26 September 2026 | Scenario 2: two option numbers changed ("Fill every seat" harm 50 -> 62, "Leave immediately" vulnerable 44 -> 35), so fit numbers, labels and card order there differ for about 1 person in 3 |
 
 ---

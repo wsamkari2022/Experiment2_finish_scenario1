@@ -1095,6 +1095,9 @@ comment with every number and metric justified from its card; the eight numbers 
 second pass` comments. The ids did not change, because the database stores them. The method kind
 "even" became "task" (and `audit_cvr_rules.cjs` R3 learned its words).
 
+*(Since 26 September 2026 this section and the sidebar's "Your value priorities" are one panel, "Your
+values in this scenario", in `Block5ValuesPanel.tsx`; the meanings below are unchanged.)*
+
 **A new section, "How to read the four values in this scenario"** (`Block5ValueGuide.tsx`), sits
 under the cumulative performance bar in scenarios 1–5 and prints each value's meaning in that
 scenario from `valueHere` — the same lines the APA page uses. Scenario 5 borrows scenario 4's.

@@ -284,6 +284,19 @@ compared before and after, 0 different). What changed:
   participants who answer Blocks 1-4 steadily and at random (real code end to end). It replaces the
   made-up-score figures of `report:planner` for this question, which understated the overlap.
 
+## One values panel, since 26 September 2026
+
+"How to read the four values in this scenario" (under the performance bars) and the sidebar's "Your
+value priorities" card are now one panel, "Your values in this scenario" (`Block5ValuesPanel.tsx`;
+`Block5ValueGuide.tsx` is gone). One tile per value, strongest first: the participant's number with a
+thin bar, and what the value means in this scenario; the sidebar's hover definitions and its "every
+option stays available" sentence moved with it. Like the performance panel it MINIMIZES to one row of
+four chips (name and number), and it can be PINNED to stay on screen under the performance panel
+while the page scrolls (tablet width and up; remembered per browser). The sticky wrapper and its
+offsets live in the simulation: when pinned, the sidebar's sticky offset and the preview observer
+count its height (`pinnedValuesHeight`). **Participants see it**: same information, one place.
+Nothing stored changed.
+
 ## Two wildfire option numbers, since 26 September 2026
 
 The last two questionable numbers from the audit's D1 list, both in scenario 2 (the researcher's
@@ -455,9 +468,11 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   context and stakeholder each have their own stability (distance on their 0–100 scale, the full
   scale = 0). Do not reintroduce a churn ceiling. Method: `docs/BLOCK5_STABILITY_METHOD.md`;
   figures: `npm run report:stability`; gates S1–S11.
-- The "How to read the four values in this scenario" section is absent from scenario 6 on purpose:
-  its four options are the four values, and naming them would turn the prediction test into "pick
-  your value".
+- The "In this scenario" meanings (the "Your values in this scenario" panel, formerly "How to read
+  the four values in this scenario") are absent from scenario 6 on purpose: its four options are the
+  four values, and naming them would turn the prediction test into "pick your value". The
+  participant's own four numbers are still shown there, as the sidebar always showed them; whether
+  scenario 6 should show them at all is an open decision (audit A9).
 
 - Participants are never shown an alignment verdict ("Misaligned with your values") or the scoring
   arithmetic. Both were removed on purpose: telling someone how they scored, or how the scoring

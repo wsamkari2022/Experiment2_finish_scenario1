@@ -820,8 +820,9 @@ const VALUE_HERE_FROM: Record<string, ScenarioCVRContent> = {
 /**
  * The "In this scenario" line for each value, or null for a scenario with none.
  *
- * Read in two places: the APA page, and the "How to read the four values" section under the
- * cumulative bar (Block5ValueGuide). Scenario 6 has none ON PURPOSE — its four options are the
+ * Read in two places: the APA page, and the "Your values in this scenario" panel under the
+ * cumulative bar (Block5ValuesPanel; until 26 September 2026 the "How to read the four values"
+ * section, Block5ValueGuide). Scenario 6 has none ON PURPOSE — its four options are the
  * four values, and naming them would turn the prediction test into "pick your value".
  */
 export function getCVRValueHere(scenario: Block5Scenario): Record<Block5PolicyDimKey, string> | null {
