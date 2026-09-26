@@ -1100,7 +1100,7 @@ export function performanceScore(option: Block5ScenarioOption): number {
    the block therefore counts from the next scenario on.
    Why it matters, measured over 2,000 random starting profiles (`npm run report:vci`, part 6): a
    participant who takes up a new value in every scenario scores 33 whichever route they take.
-   Relabeling the APA route on the profile it had just moved would lift the same behavior to 55 -
+   Relabeling the APA route on the profile it had just moved would lift the same behavior to 54 -
    about the score of a random responder (57). Gate V8 in tools/simulate_vci.cjs guards it.
 
    WHAT VCI DOES NOT READ
@@ -1143,13 +1143,13 @@ export function performanceScore(option: Block5ScenarioOption): number {
    3. A CHANGE OF HEART IS LEARNED OVER ABOUT TWO SCENARIOS. One strong endorsement makes the
       newly endorsed value the participant's top value in 58% of profiles - a little over half - so
       a genuine convert usually loses part of the next scenario as well as the one in which they
-      changed. A one-time convert averages 68.
+      changed. A one-time convert averages 67.
    4. RANDOM ANSWERING. Blind picking averages exactly 50. A simulated responder who also answers
       the CVR and APA at random averages 57, because APA lists only the options built on the value
       they name, which steers some random choices toward a fit.
-   5. SEPARATION. A participant true to their top value outscores a random responder 94% of the
+   5. SEPARATION. A participant true to their top value outscores a random responder 93% of the
       time; a random responder outscores a flip-flopper 87% of the time; a one-time convert
-      outscores a random responder 71% of the time. (Re-measured 26 September 2026, Fix 6.)
+      outscores a random responder 69% of the time. (Re-measured 26 September 2026, Fix 6.)
    ================================================================================================ */
 
 /**

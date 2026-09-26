@@ -1603,7 +1603,7 @@ export function buildCardOrderSection(block5: unknown): Record<string, unknown> 
     how_often_the_first_card_is_also_the_best_fit:
       "Measured on 26 September 2026, after the Fix 6 option numbers (npm run report:planner-overlap, "
       + "4,000 pretend participants answering Blocks 1-4, real code end to end): the first card was also "
-      + "the best-fit card for 52-65 out of 100 who answer steadily, depending on the scenario, and 42-52 who answer at "
+      + "the best-fit card for 52-62 out of 100 who answer steadily, depending on the scenario, and 42-50 who answer at "
       + "random; chance would be about 17. First place and best fit coincide more often than not, so "
       + "analyse the two together, never one as a stand-in for the other (HOW_TO_ANALYZE_MY_DATA.md 4.7).",
     by_scenario: rows,

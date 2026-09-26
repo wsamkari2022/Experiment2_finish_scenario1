@@ -79,12 +79,11 @@ for(const id of ids){const o=DATA[id];
   const wantOptions=isPredicted(id)?4:6;
   ok(id.padEnd(30),o.length===wantOptions&&champs.size===4&&owners.size===4,
      o.length+" options, "+champs.size+" unique champions across "+owners.size+" distinct options");}
-/* The ONE option allowed to lose on every value, by the researcher's choice (26 September 2026, audit
-   Fix 6, Part C): the blind raters read "Leave immediately" as worse than the closed ridge road on all
-   four values (protecting the vulnerable 14, how many are helped 8), and the researcher kept that
-   reading as the more honest one, knowing it can then never be anybody's best fit. Checks 2 and 3 still
-   hold for every other option; any new case must be added here by name, with its reason. */
-const ACCEPTED_DOMINATED={"fire_early_highway_run":"Fix 6 Part C, the raters' reading kept on purpose"};
+/* Options allowed to lose on every value, each by name with its reason. EMPTY since 26 September 2026:
+   "Leave immediately" was here for a few hours (Fix 6 Part C, the raters' 14 and 8 kept on purpose), and
+   left when the researcher raised its How much is gained to 95, above the ridge road. Checks 2 and 3
+   hold for every option again. */
+const ACCEPTED_DOMINATED={};
 for(const [k,why] of Object.entries(ACCEPTED_DOMINATED))console.log("  NOTE  "+k+" may lose on every value — "+why);
 console.log("\n=== 2. STRICT DOMINATION: no option beaten on all 4 dimensions ===");
 for(const id of ids){const o=DATA[id];const bad=[];
@@ -96,6 +95,13 @@ for(const id of ids){const o=DATA[id];const wins={};o.forEach(x=>wins[x.id]=0);
     let best=o[0],bv=-1e9;for(const x of o){const v=align(x,p);if(v>bv){bv=v;best=x;}}wins[best.id]++;}
   const never=Object.entries(wins).filter(([k,v])=>v===0&&!ACCEPTED_DOMINATED[k]).map(([k])=>k);
   ok(id.padEnd(30),never.length===0,never.length?"never wins: "+never.join(", "):"every option wins somewhere");}
+/* The ONE value in one scenario whose champion a pure lean may pass over, by the researcher's choice
+   (26 September 2026, audit Fix 6): "Leave immediately" is scenario 2's gain champion (95, above the
+   ridge road's 92, because its card calls it "the fastest ... way out - for you"), but it does almost
+   nothing on the other three values (14 / 20 / 8), so somebody who holds gain at 95 and the rest at 35
+   still fits the ridge road (18 / 23 / 92 / 25) better. Every other value in every scenario still elects
+   its champion. */
+const CHAMPION_MAPPING_ACCEPTED={"wildfire_household_evacuation/gainResponsivenessSensitivity":"Fix 6, Leave immediately's gain 95 is the researcher's reading of its card"};
 console.log("\n=== 4. CHAMPION MAPPING: a pure lean elects its champion ===");
 for(const id of ids)for(const lean of K){const o=DATA[id];const p={};K.forEach(k=>p[k]=k===lean?95:35);
   let best=o[0],bv=-1e9;for(const x of o){const v=align(x,p);if(v>bv){bv=v;best=x;}}
@@ -103,6 +109,8 @@ for(const id of ids)for(const lean of K){const o=DATA[id];const p={};K.forEach(k
   // fingerprint on that dimension) rather than an absolute ">=95", which was tied to the
   // pre-Stage-3 fingerprint scale.
   const mx=Math.max(...o.map(x=>x.fp[lean]));
+  const accepted=CHAMPION_MAPPING_ACCEPTED[id+"/"+lean];
+  if(accepted&&best.fp[lean]!==mx){console.log("  NOTE  "+(id+" / "+SH[lean]).padEnd(40)+"elects "+best.title+" — accepted: "+accepted);continue;}
   ok((id+" / "+SH[lean]).padEnd(40),best.fp[lean]===mx,best.title);}
 console.log("\n=== 5. CVR CONTENT INTEGRITY ===");
 for(const n of CVR_ALL){

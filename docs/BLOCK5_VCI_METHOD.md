@@ -198,28 +198,28 @@ scoring code by each kind of participant.
 | Kind of participant | Mean VCI | Most common level |
 |---|---|---|
 | Always the best fit | 100 | Highly Consistent (100%) |
-| Corrected by APA — tempted every time, then names their top value | 93 | Highly Consistent (68%) |
+| Corrected by APA — tempted every time, then names their top value | 92 | Highly Consistent (68%) |
 | Mixes their best and second-best fit | 90 | Highly Consistent (71%) |
-| True to their Blocks 1–4 top value | 87 | Mostly Consistent (43%) |
+| True to their Blocks 1–4 top value | 86 | Highly Consistent (41%) |
 | Always the second-best fit | 80 | Mostly Consistent (100%) |
-| Chases the best performance numbers | 79 | Moderate (34%) |
-| Changes value once, through APA, then holds it | 69 | Moderate (46%) |
-| Changes value once, keeps it after the CVR, then holds it | 68 | Moderate (52%) |
-| Random everywhere | 57 | Low (32%) |
-| Takes up a new value every scenario (either route) | 33 | Very Low (58–60%) |
+| Chases the best performance numbers | 79 | Moderate (33%) |
+| Changes value once, through APA, then holds it | 68 | Moderate (46%) |
+| Changes value once, keeps it after the CVR, then holds it | 67 | Moderate (52%) |
+| Random everywhere | 57 | Low (33%) |
+| Takes up a new value every scenario (either route) | 33 | Very Low (57–59%) |
 | Always the worst fit | 10 | Highly Inconsistent (100%) |
 
 **Separation** — how often the first kind outscores the second:
 
 | Pair | |
 |---|---|
-| True to top value > random | 94% |
+| True to top value > random | 93% |
 | Random > flip-flopper | 87% |
-| One-time convert > random | 71% |
-| One-time convert > flip-flopper | 96% |
-| One-time convert > performance chaser | 28% |
+| One-time convert > random | 69% |
+| One-time convert > flip-flopper | 95% |
+| One-time convert > performance chaser | 26% |
 
-*(Re-measured 26 September 2026 after the Fix 6 option numbers. Before: true to top value 90, performance
+*(Re-measured 26 September 2026 after the Fix 6 option numbers, Leave immediately's gain 95 included. Before: true to top value 90, performance
 chaser 75, flip-floppers 31–32; separations 96 / 87 / 70 / 97 / 36%. The performance chaser rose because
 both convoys, which perform well, now also fit many profiles.)*
 
@@ -234,8 +234,8 @@ both convoys, which perform well, now also fit many profiles.)*
 2. **Four scenarios count,** so the scale is coarse: 30 possible values.
 3. **A change of heart is learned over about two scenarios.** One strong endorsement makes the
    newly endorsed value the participant's top value in 58% of profiles, so a genuine convert usually
-   loses part of the next scenario as well as the one in which they changed. They average 68, and
-   come out ahead of a performance chaser only 28% of the time (ties counted half).
+   loses part of the next scenario as well as the one in which they changed. They average 67, and
+   come out ahead of a performance chaser only 26% of the time (ties counted half).
 4. **Random answering.** Blind picking averages exactly 50. A responder who also answers the CVR and
    APA at random averages 57, because APA lists only the options built on the value they name,
    which steers some random choices toward a fit.

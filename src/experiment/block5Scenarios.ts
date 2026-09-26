@@ -1063,9 +1063,22 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            participants (it was 1.1); the third pass had kept 35 above the raters' reading only to keep it somebody's
            best fit, and the researcher chose honesty over that.
            Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
+        /* VALUE AUDIT, fourth pass, second step, 26 September 2026 (the researcher's decision): How much is
+           gained 80 -> 95, above the closed ridge road (92). In this scenario it means "how quickly and how
+           safely your own household gets out", and this card says "Leaving now is the fastest, cheapest way out
+           - for you": an empty road and an immediate start, with no fire engine coming the other way. The
+           researcher's reasoning: it saves the household at once, while the ridge road climbs a lane kept for
+           the crews. The raters put it a little BELOW the ridge road (90 / 90 / 85, average 88, against 95),
+           so this is a stated disagreement with them, 7 points from their average (under the 20-point line
+           the study used). 95 rather than 93: at 93 the one-point lead read as a tie to the planner, and its
+           first card was the best option on the participant's #1 value for 59 steady pretend participants in
+           100 in this scenario (82 before; 72 at 95). With it, the option no longer loses on every value (it
+           is the best fit for about 1 in 100), and it is this scenario's gain champion - although somebody who
+           cares only about gain still fits the ridge road better, because the ridge road does more on the other
+           three values (the written exception in tools/validate_block5.cjs, check 4). */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 14, groupSizeSensitivity: 20,
-          gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 8,
+          gainResponsivenessSensitivity: 95, outcomeAggregationSensitivity: 8,
           directnessSensitivity: 59, contextSensitivity: 51, stakeholderPerspectiveShiftSensitivity: 39,
         },
         metrics: {

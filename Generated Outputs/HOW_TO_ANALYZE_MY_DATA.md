@@ -204,7 +204,7 @@ participants of each kind, real scoring from Blocks 1-4 to the card order), out 
 | Scenario | First card = best fit (steady answerers) | They differ | First card = best fit (random answerers) |
 |---|---|---|---|
 | Six Hours to Clear the District | 56 | 44 | 50 |
-| Eight Hours Ahead of the Fire | 65 | 35 | 52 |
+| Eight Hours Ahead of the Fire | 62 | 38 | 47 |
 | Limited Cancer Treatment Allocation | 57 | 43 | 46 |
 | The Care Visits You Have to Cut | 52 | 48 | 42 |
 | The Same Cut, Decided Without You | 52 | 48 | 42 |
@@ -217,9 +217,9 @@ to sit nearer the steady numbers.
 **What this means for analysis** (the researcher's decision, 24 September 2026: accept, state and
 analyse both):
 
-- A choice of card 1 is **ambiguous in 52-65 cases out of 100**: first place and best fit are the same
+- A choice of card 1 is **ambiguous in 52-62 cases out of 100**: first place and best fit are the same
   card, so either could explain it.
-- The **35-48 cases out of 100 where they differ** are the ones that can separate a position effect
+- The **38-48 cases out of 100 where they differ** are the ones that can separate a position effect
   from a values effect. Say so, and report how many such cases the sample actually had
   (`analysis.card_order_by_scenario.by_scenario[].the_first_card_was_also_the_best_fit_card`).
 - Put **both** in the same model: the chosen card's position on screen (`choiceRank`, or
@@ -273,7 +273,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 25 September 2026 | Scenario 5: no "Preview impact", the wish line on the performance bars, and fit numbers shown on the values scenario 4 opened with |
 | 26 September 2026 | "How to read the four values" and the sidebar's "Your value priorities" merged into one panel, "Your values in this scenario", which can be minimized and pinned. Same information, one place |
 | 26 September 2026 | Scenario 2: two option numbers changed ("Fill every seat" harm 50 -> 62, "Leave immediately" vulnerable 44 -> 35), so fit numbers, labels and card order there differ for about 1 person in 3 |
-| 26 September 2026 (later the same day) | Fix 6, the blind-rater numbers: nine option numbers in scenarios 1, 2 and 4 (and scenario 5's copies), listed in CLAUDE.md. Fit numbers, labels and card order change: the best fit for about 1 person in 5 or 6 in scenarios 1, 2 and 4, the card order for about 7 in 10 in scenario 2 and 6 in 10 in scenario 4. "Leave immediately" can no longer be anyone's best fit, and both convoys now count as built on Reducing harm |
+| 26 September 2026 (later the same day) | Fix 6, the blind-rater numbers: nine option numbers in scenarios 1, 2 and 4 (and scenario 5's copies), listed in CLAUDE.md. Fit numbers, labels and card order change: the best fit for about 1 person in 5 or 6 in scenarios 1, 2 and 4, the card order for about 7 in 10 in scenario 2 and 6 in 10 in scenario 4. "Leave immediately" went to 14 / 20 / 95 / 8 (its gain 95 is the researcher's reading of its card, above the ridge road), so it is scenario 2's gain champion and the best fit for about 1 person in 100; both convoys now count as built on Reducing harm |
 
 ---
 

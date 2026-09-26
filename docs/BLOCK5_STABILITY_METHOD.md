@@ -179,18 +179,18 @@ as `npm run report:vci`.
 | Always the best fit | 100 | Held steady (100%) | 100 |
 | Always the second best | 100 | Held steady (100%) | 100 |
 | Mixes best and second best | 100 | Held steady (100%) | 100 |
-| True to their Blocks 1–4 top value | 93 | Held steady (68%) | 87 |
+| True to their Blocks 1–4 top value | 91 | Held steady (66%) | 85 |
 | Corrected by APA — tempted every time, names their top value | 94 | Held steady (51%) | 49 |
-| Chases the best performance numbers | 82 | Held steady (45%) | 79 |
-| Changes value once, through APA | 75 | Shifted a little (53%) | 69 |
-| Changes value once, keeps it after the CVR | 57 | Shifted a little (39%) | 68 |
+| Chases the best performance numbers | 82 | Held steady (45%) | 78 |
+| Changes value once, through APA | 75 | Shifted a little (54%) | 68 |
+| Changes value once, keeps it after the CVR | 57 | Shifted a little (40%) | 66 |
 | Random everywhere | 56 | Shifted a little (40%) | 44 |
 | Takes up a new value every scenario, through APA | 28 | Shifted a lot (38%) | 53 |
 | Takes up a new value every scenario, by keeping | 11 | Changed substantially (69%) | 53 |
-| Always the worst fit | 7 | Changed substantially (74%) | 51 |
+| Always the worst fit | 7 | Changed substantially (75%) | 51 |
 
 *(Re-measured 26 September 2026 after the Fix 6 option numbers; every row moved by 0–3 points except
-the stakeholder stability of the performance chaser, 74 -> 79.)*
+the stakeholder stability of the performance chaser, 74 -> 78.)*
 
 Directness and context stability are 100 for every kind here, because the simulated participants
 never open the second lens.

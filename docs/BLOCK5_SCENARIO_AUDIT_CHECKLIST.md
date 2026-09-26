@@ -1096,8 +1096,9 @@ each moved to their average - convoy 61→87 and respirator 45→22 harm (S1); s
 your seats 56→83 harm, Leave immediately 35→14 vulnerable and 30→8 helped (S2); cut only where family covers
 58→83 vulnerable, the rural routes 55→15 harm, protect full visits 38→60 helped (S4, and S5's copies).
 Reducing harm now follows the scenario's own line, not the head count of the first pass. "Leave
-immediately" is kept at the raters' reading although it now loses to the ridge road on every value (the
-researcher's choice). **The position check passes since this pass (3.3x)**; the numbers moved because the
+immediately" is kept at the raters' 14 and 8, and its How much is gained went 80 → 95 (the researcher's reading:
+its card calls it "the fastest, cheapest way out - for you"; the raters had it just below the ridge road),
+so it is the scenario's gain champion and no longer loses on every value. **The position check passes since this pass (3.3x)**; the numbers moved because the
 raters read the cards that way, not for the check. Three more numbers wait for new words (Part B).
 
 Numbers are vulnerable · harm · gained · helped. Each redesigned option carries a `REDESIGNED`

@@ -325,6 +325,7 @@ their average (the researcher's approval, audit Fix 6 Parts A and C):
 | 2 | Take your household's place in the staged convoy | Reducing harm | 59 | 83 |
 | 2 | Give your car seats to the two residents with walkers | Reducing harm | 56 | 83 |
 | 2 | Leave immediately on the main highway | Protecting the vulnerable / How many are helped | 35 / 30 | 14 / 8 |
+| 2 | Leave immediately on the main highway | How much is gained (the researcher's decision, not the raters') | 80 | 95 |
 | 4 + 5 | Cut only where a family member can cover | Protecting the vulnerable | 58 | 83 |
 | 4 + 5 | Keep the town routes that pay, and drop the rural ones | Reducing harm | 55 | 15 |
 | 4 + 5 | Protect full visits for the clients with nobody else | How many are helped | 38 | 60 |
@@ -335,12 +336,17 @@ their average (the researcher's approval, audit Fix 6 Parts A and C):
   on purpose went back down (the respirator, the rural routes); both comments say so.
 - **Both convoys are now built on Reducing harm** (they were built on How much is gained): the APA page's
   list, the confirm-keep question and which value a kept convoy raises follow `optionMainValue`.
-- **Two accepted exceptions, both the researcher's choice for honesty.** "Leave immediately" now loses to
-  the closed ridge road on every value, so it can never be anyone's best fit
-  (`ACCEPTED_DOMINATED` in `validate_block5.cjs`); and in scenario 2 protecting the vulnerable no longer
-  costs performance as clearly (r = 0.38 against the 0.30 line; `G5_R_ACCEPTED` in
-  `validate_block5_metrics.mjs`; 25 was the lowest number that kept it). Every other option and scenario
-  is still held to both checks.
+- **"Leave immediately" How much is gained 80 -> 95 is the researcher's reading, not the raters'.** Its card
+  calls it "the fastest, cheapest way out - for you"; the raters put it just below the ridge road (88 against
+  95). At the raters' 14 and 8 alone it lost to the ridge road on every value and fitted nobody; at 95 it is
+  scenario 2's gain champion and the best fit for about 1 person in 100. 95 rather than 93: a one-point lead
+  read as a tie to the planner.
+- **Two accepted exceptions, both written next to the check they relax.** In scenario 2 protecting the
+  vulnerable no longer costs performance as clearly (r = 0.38 against the 0.30 line; `G5_R_ACCEPTED` in
+  `validate_block5_metrics.mjs`; 25 was the lowest vulnerable number that kept it). And somebody who holds
+  only gain still fits the ridge road better than the new gain champion, which does almost nothing on the
+  other values (`CHAMPION_MAPPING_ACCEPTED` in `validate_block5.cjs`). Every other option, value and
+  scenario is still held to every check; `ACCEPTED_DOMINATED` is empty again.
 - **VCI check V3 tests the flip-floppers as a group** (the 2,000 of `report:vci`, mean 33), not one scripted
   person, who lands on exactly 50 whenever none of its picks happens to be strongly misaligned.
 - **The position check passes** (2.9x -> 3.3x). VCI and Stability move by 0-4 points for every kind of
@@ -469,7 +475,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3×, after the Fix 6 option numbers); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
-| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 52-65 in 100 steady, 42-52 random, chance about 17 (26 September 2026, after Fix 6) |
+| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 52-62 in 100 steady, 42-50 random, chance about 17 (26 September 2026, after Fix 6) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
 | `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers |
 
@@ -530,7 +536,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 - The planner's tree is settled (LEAP's trade-off tree, reviewed with the advisor) and its card order
   is not to be "fixed" without the researcher. What it does in practice is MEASURED
   (`npm run report:planner-overlap`): card 1 is the option best on the participant's #1 value for
-  78-100 people in 100, and is ALSO their best-fit card for 52-65 in 100 who answer steadily (42-52
+  72-100 people in 100, and is ALSO their best-fit card for 52-62 in 100 who answer steadily (42-50
   at random; chance about 17; re-measured 26 September 2026, after Fix 6). The researcher's decision (24 September 2026): accept it, state it,
   and analyse position and fit together (HOW_TO_ANALYZE_MY_DATA.md 4.7).
 - **Scenario 6 is a test of the model, not of the participant.** It runs four options rather than
