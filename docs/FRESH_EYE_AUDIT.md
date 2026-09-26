@@ -1270,6 +1270,55 @@ CLAUDE.md, the 4.9 list in HOW_TO_ANALYZE. (3) Run the full chain and every sepa
 report:vci, report:stability and report:planner-overlap and update any figure the method documents
 quote. (4) Look at scenario 2 in the browser. (5) Commit, push, log here.
 
+## Launch plan: everything left, done by Waseem and Claude only (written 26 September, waiting for approval)
+
+Waseem has no human raters and an advisor who reads only finished work. So everything below is done
+with Claude Code (and Claude Code agents where noted), and the advisor receives one finished pack.
+Nothing here is implemented.
+
+**Step 1 - what participants see (Fix 1), only Waseem's choices needed.**
+- A1 + A2: the fit line and the "#1 value" lines on open cards shown in DEVELOPMENT only
+  (`import.meta.env.DEV`, like the dev buttons), so Waseem keeps them while testing and participants
+  never see them. Stamp a screen version on every row; a check that the words are absent from `dist/`.
+- A4 (second half): APA's "missed by N points" loses its number, like the confirm-keep question.
+- A8: scenario 5's wish page stops saying how close the wish is to "what you said matters most".
+- A3: "Ranked 1 - why" reads as a recommendation; decide: keep, or neutral words ("Card 1").
+- A5: the Compare chart draws the person's own values over the options; decide: keep or remove.
+- A6: CLAUDE.md's "no verdict or arithmetic is shown" becomes true, and says so.
+
+**Step 2 - evidence, done by agents and scripts.**
+- Fix 3 Step B with AI raters: three Claude Code agents, each in a fresh context, each a different model
+  if possible, never shown the study's numbers. Each gets the four value meanings and the cards as
+  participants read them (options shuffled), RANKS the options on each value first, then scores them
+  0-100 with a one-line reason quoting the card. A script measures agreement between the three and
+  against the study's numbers, and flags any number 20+ points off or in a different order. Waseem
+  decides each flag. Honest name for the thesis: an AI-assisted blind content review adjudicated by the
+  researcher - NOT human inter-rater reliability (the three can share the same blind spots).
+- B3: a sensitivity report - VCI, Stability and position re-run with every step size x0.5 and x2, to show
+  the conclusions do not depend on the hand-picked 30/15/20/10/25.
+- G5: save "Stability was measured" (a reflection ran at least once) beside the score.
+
+**Step 3 - measure again** (after any number changes from Step 2): all reports; P1 decided (A passes / B
+check the departure the headline uses / C accept 2.9x and state it).
+
+**Step 4 - decisions and writing (drafts ready for Waseem, then one advisor pack).**
+- Decisions with simulated evidence prepared: G6 (Stability for one honest change), C2 / C7 / C8
+  (planner claims and near-ties), D3 (how to report very fast "yes" clickers: a rule fixed in advance).
+- Drafts: a Limitations section (P2, P3, B7, G3, G4, I2, the AI-review limit); a pre-registration note
+  freezing constants and exclusion rules before real data.
+- The advisor pack: one short, finished document with only the questions that need him (E7 / B6 the
+  design question, the AI-review method, P2 accept), each with the evidence and a recommended answer.
+
+**Step 5 - last, just before real participants.**
+- Remove the two dev-only buttons and the dev-only card lines (CLAUDE.md steps).
+- One full click-through in the browser, Blocks 1-4 through feedback, on the production build; the full
+  check chain; the production-build string checks; a simulated-data dry run of the analysis guide.
+- Tag the commit that goes live, so every record can be tied to the exact version.
+
+**What only people can do:** the advisor's answers in the pack; ideally a tiny human pilot (even 3-5
+people). If none is possible, the simulated dry run plus the full click-through stand in, and the
+thesis says so.
+
 ## Log
 
 - **2026-09-24.** Audit written (`a2ecc01`). Nothing fixed yet. Fix 1 plan sent to Waseem.
@@ -1353,3 +1402,4 @@ quote. (4) Look at scenario 2 in the browser. (5) Commit, push, log here.
 - **2026-09-25. Phase 0 done (Waseem: "do now phase 0 only").** H1: `analysis.position_effect.company_stance` (built by the page's own `analyseStance` on the frozen profile: stance and label, both distances, the pull, the ±8 band, the page's sentence, all six options) and `major_info_and_scores.company_stance_in_scenario_4`; `STANCE_BAND` exported; gate D61 (the three pretend participants cover all three stances), D49 checks the copy; `SHAPE_VERSION` `2026-09-25-company-stance`. Documents: A7 (dated in CLAUDE.md, plus HOW_TO_ANALYZE 4.9, a list of every dated screen change), B4 (the edge case, checked with the real code: 0/0/100/80 naming harm totals 190, not 180), B8 (dated corrections in the request document, his words kept, and notes where B4/B5 answered his questions 3 and 4), C6 (loop rate and Kemeny in the planner header), G7 (56-57 in CLAUDE.md and HOW_TO_ANALYZE), G4 + I2 + I3 (HOW_TO_ANALYZE 4.8). **C5 NOT done, on purpose**: it is the planner header's "no constants" wording, which is Fix P item 1, and Waseem said to keep it on 24 September; I listed it in Phase 0 by mistake.
 - **2026-09-26. Fix 5 plan written** (the two wildfire numbers left from D1): change the numbers, not the words; tested in scratch copies (scratch `make_mirrors.cjs`, `wildfire_compare.cjs`); nothing implemented.
 - **2026-09-26. Fix 5 done (Waseem: "1-yes, 2-A", with 35 instead of 25).** block5Scenarios.ts: Fill every seat reducing harm 50 -> 62, Leave immediately protecting the vulnerable 44 -> 35, each with a "VALUE AUDIT, third pass" comment quoting its card; words unchanged. Full chain green except the intentional position gate, now 2.9x (was 2.8x); prediction, resume, MCF and visits checks green. Reports re-run and every quoted figure updated: planner overlap 57-66 steady / 46-54 random / 34-43 differ (was 57-68 / 46-55 / 32-43) in CLAUDE.md, block5Planner.ts, dbShape.ts (stored note; SHAPE_VERSION 2026-09-26-wildfire-numbers), HOW_TO_ANALYZE 4.7, HOW_TO_READ 6j and the planner plan banner; VCI method (performance chaser 76 -> 75, random > flip-flopper 88 -> 87%, convert > chaser 35 -> 36%) and Stability method (flip-flopper via APA 27 -> 28, and small shares) plus the code notes quoting them. Dated in CLAUDE.md, HOW_TO_ANALYZE 4.9 and the checklist's 2g. **Checked in the browser**: for the pretend participant (96/64/52/75) scenario 2 showed the same card order, Fill every seat 81 (was 78) and Leave immediately 44 (was 48), exactly as computed; no console errors.
+- **2026-09-26. Launch plan written** (Fix 1 through Phase 4, with Claude Code only: AI raters for Fix 3 Step B, one finished advisor pack); nothing implemented.
