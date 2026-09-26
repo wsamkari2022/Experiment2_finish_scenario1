@@ -235,7 +235,7 @@ const CANCER: ScenarioCVRContent = {
   },
   valueHere: {
     vulnerabilityProtectionSensitivity: "treating first the patients who are sickest or hardest to reach",
-    groupSizeSensitivity: "keeping as few patients as possible from losing their chance for good",
+    groupSizeSensitivity: "keeping as few patients as possible from becoming too sick to treat before next month's supply comes",
     gainResponsivenessSensitivity: "how many years of life the 20 doses add",
     outcomeAggregationSensitivity: "how many lives are saved, directly or through the people others depend on",
   },
@@ -435,7 +435,7 @@ const WILDFIRE: ScenarioCVRContent = {
     vulnerabilityProtectionSensitivity: "making sure the neighbors least able to leave are not left until last",
     groupSizeSensitivity: "keeping the risk your household puts on everyone else as low as possible",
     gainResponsivenessSensitivity: "how quickly and how safely your own household gets out",
-    outcomeAggregationSensitivity: "how many people get out of the valley because of your choice",
+    outcomeAggregationSensitivity: "how many more people get out of the valley because of your choice",
   },
   framingClause: {
     context:

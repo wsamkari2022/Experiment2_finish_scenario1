@@ -1192,7 +1192,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Treat the 20 most likely to survive",
         summary: "The most lives saved. Every one of the 120 is given a survival score, and the 20 highest are treated.",
-        gains: "More of the people treated come through than under any other rule on this list.",
+        gains: "More of the people treated come through than under any other rule on this list. It counts lives, not years: a survivor with five years ahead counts the same as one with forty.",
         consequence: "The 20 chosen are the ones most likely to recover, so this month's survival count is the highest here. But a late diagnosis lowers your score, so most of the 100 who wait are the people the system found too late — the same ones who waited last month.",
         givesUp: "The patients the system already failed. Being found late is what puts those patients at the bottom of this list, and the bottom is where they stay.",
         moralTension: "Is saving the greatest number the right goal, even when the people left out are the ones the system already failed?",
@@ -1300,7 +1300,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The most life-years. Each of the 120 is estimated for the years a dose would add, and the 20 highest are treated.",
         gains: "The 20 doses buy more future years of life than they could under any other rule here.",
         consequence: "The years bought are the most this month's supply can buy. But the estimate rewards having longer left, so most of the 100 who wait are the oldest patients on the list.",
-        givesUp: "Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated.",
+        givesUp: "Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated. A younger patient with a modest chance of responding can also come ahead of an older one who would almost surely recover, so fewer of the 20 come through than under the rule that ranks by odds.",
         moralTension: "Is a year of life the right way to measure a person, when it means the old always lose?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 18,
@@ -1575,7 +1575,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Redraw the routes to cut the driving",
         summary: "Redraw every route so caregivers spend less time driving and more time at doors.",
-        gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.",
+        gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit. The other 100 still come out of visits. It saves most on the driving, the part of the week that loses money.",
         consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met. Redrawing the map takes the office weeks, and every client has to be told again, so it is done once. The stranger who comes to the door on Monday is that client's caregiver for the whole three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
@@ -1687,7 +1687,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "Remove visits only from clients who have relatives living close enough to step in.",
         gains: "Every client without family nearby keeps every visit. The cut lands only on clients who have a relative nearby to take the visits on.",
         consequence: "About 60 clients lose their visits, and each has a relative nearby to take them on. But the families absorb work they never agreed to, and some of them are already stretched thin.",
-        givesUp: "The families. The cost is moved onto relatives rather than removed.",
+        givesUp: "The families. The cost is moved onto relatives rather than removed. None of the money-losing driving is saved.",
         moralTension: "Is moving the visits onto the families a smaller harm, or the same harm moved somewhere nobody counts it?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
            About 60 clients lose their visits; the other 180 keep every one - more than the even cut keeps whole.
@@ -1849,7 +1849,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "Protect full visits for the 50 clients who live alone. The other 190 absorb the cut between them.",
         gains: "Complete protection for the 50 people who have nobody else at home.",
         consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them. The 50 protected visits are fixed points in the week, and the other 190 have to fit in the hours around them. One visit that overruns pushes every visit behind it, so the schedule is being rewritten by the middle of the week.",
-        givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them.",
+        givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them. None of the money-losing driving is saved, and the week is rewritten around the 50 fixed visits.",
         moralTension: "Is it better to protect a few people completely, or many people a little?",
         /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
            How many are helped 38 -> 60. In this scenario it means "keeping every client's care going, for as many
@@ -1921,7 +1921,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         },
         title: "Redraw the routes to cut the driving",
         summary: "Redraw every route so caregivers spend less time driving and more time at doors.",
-        gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.",
+        gains: "About 300 of the 400 cut hours come out of driving rather than out of anyone's visit. The other 100 still come out of visits. It saves most on the driving, the part of the week that loses money.",
         consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met. Redrawing the map takes the office weeks, and every client has to be told again, so it is done once. The stranger who comes to the door on Monday is that client's caregiver for the whole three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
@@ -1984,7 +1984,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "Remove visits only from clients who have relatives living close enough to step in.",
         gains: "Every client without family nearby keeps every visit. The cut lands only on clients who have a relative nearby to take the visits on.",
         consequence: "About 60 clients lose their visits, and each has a relative nearby to take them on. But the families absorb work they never agreed to, and some of them are already stretched thin.",
-        givesUp: "The families. The cost is moved onto relatives rather than removed.",
+        givesUp: "The families. The cost is moved onto relatives rather than removed. None of the money-losing driving is saved.",
         moralTension: "Is moving the visits onto the families a smaller harm, or the same harm moved somewhere nobody counts it?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
            Scenario 4's twin - see care_cut_where_family_covers.
@@ -2092,7 +2092,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "Protect full visits for the 50 clients who live alone. The other 190 absorb the cut between them.",
         gains: "Complete protection for the 50 people who have nobody else at home.",
         consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them. The 50 protected visits are fixed points in the week, and the other 190 have to fit in the hours around them. One visit that overruns pushes every visit behind it, so the schedule is being rewritten by the middle of the week.",
-        givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them.",
+        givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them. None of the money-losing driving is saved, and the week is rewritten around the 50 fixed visits.",
         moralTension: "Is it better to protect a few people completely, or many people a little?",
         /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
            How many are helped 38 -> 60. In this scenario it means "keeping every client's care going, for as many

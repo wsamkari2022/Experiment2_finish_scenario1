@@ -41,14 +41,23 @@ const { BLOCK5_SCENARIOS } = require(path.join(BUILD, "block5Scenarios.js"));
 const { getCVRValueHere } = require(path.join(BUILD, "block5CVRContent.js"));
 
 const OUT = process.argv[2];
-if (!OUT) { console.error("  usage: node tools/build_rater_sheet.cjs <out-dir>"); process.exit(1); }
+if (!OUT) { console.error("  usage: node tools/build_rater_sheet.cjs <out-dir> [--scenarios 2,3,4] [--round 2]"); process.exit(1); }
+const argOf = (flag) => (process.argv.includes(flag) ? process.argv[process.argv.indexOf(flag) + 1] : null);
+/* Round 2 (26 September 2026) re-rates only the scenarios whose words changed in Fix 6 Part B, with its
+   own shuffles and check codes, so no copy repeats round 1. Scenario numbers stay the study's own. */
+const ROUND = Number(argOf("--round") || 1);
+const WANTED = (argOf("--scenarios") || "1,2,3,4").split(",").map(Number);
 fs.mkdirSync(OUT, { recursive: true });
 
 /* The raters and the seed that shuffles each one's copy. Fixed, so the sheets can be rebuilt. */
-const RATERS = [["opus", 20260926], ["sonnet", 20260927], ["fable", 20260928], ["haiku", 20260929]];
+const RATERS = ROUND === 1
+  ? [["opus", 20260926], ["sonnet", 20260927], ["fable", 20260928], ["haiku", 20260929]]
+  : [["opus", 20261126], ["sonnet", 20261127], ["haiku", 20261129]];
 /* The last line of each copy carries a check code the rater must copy back: a copy cut short on its
    way to the rater has no last line, so its answer says "MISSING" instead of the code. */
-const CHECK_CODES = { opus: "amber-falcon-17", sonnet: "cedar-orchard-58", fable: "silver-meadow-23", haiku: "copper-willow-91" };
+const CHECK_CODES = ROUND === 1
+  ? { opus: "amber-falcon-17", sonnet: "cedar-orchard-58", fable: "silver-meadow-23", haiku: "copper-willow-91" }
+  : { opus: "maple-river-64", sonnet: "birch-stone-37", haiku: "slate-field-82" };
 
 /* The four values: the participant-facing name, and what a HIGH number on an option means, as the
    study defines it (the value table the 18 September value audit used). */
@@ -72,7 +81,9 @@ function shuffled(list, seed) {
   return a;
 }
 
-const SCENARIOS = BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") === "decider");
+const DECIDERS = BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") === "decider");
+const NUMS = WANTED.filter((n) => n >= 1 && n <= DECIDERS.length);
+const SCENARIOS = NUMS.map((n) => DECIDERS[n - 1]);
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 function sheetFor(rater, seed) {
@@ -87,8 +98,8 @@ function sheetFor(rater, seed) {
   SCENARIOS.forEach((s, si) => {
     const here = getCVRValueHere(s);
     const order = shuffled(s.options, seed + si * 7919);
-    key[`scenario_${si + 1}`] = Object.fromEntries(order.map((o, i) => [LETTERS[i], o.id]));
-    out.push("---", "", `## Scenario ${si + 1}: ${s.title}`, "");
+    key[`scenario_${NUMS[si]}`] = Object.fromEntries(order.map((o, i) => [LETTERS[i], o.id]));
+    out.push("---", "", `## Scenario ${NUMS[si]}: ${s.title}`, "");
     out.push(`**What is happening.** ${strip(s.description)}`, "");
     if (s.factBase) out.push(`**The situation right now.** ${strip(s.factBase)}`, "");
     if (s.role) out.push(`**Your role.** ${strip(s.role)}`, "");

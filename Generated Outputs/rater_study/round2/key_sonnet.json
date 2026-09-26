@@ -1,0 +1,27 @@
+{
+  "scenario_2": {
+    "A": "fire_fill_every_seat",
+    "B": "fire_shelter_hill_school",
+    "C": "fire_early_highway_run",
+    "D": "fire_closed_ridge_road",
+    "E": "fire_assigned_convoy_slot",
+    "F": "fire_wait_accessible_bus"
+  },
+  "scenario_3": {
+    "A": "cancer_max_life_years",
+    "B": "cancer_weighted_lottery",
+    "C": "cancer_prioritize_vulnerable",
+    "D": "cancer_essential_workers",
+    "E": "cancer_max_total_lives",
+    "F": "cancer_reserve_underserved"
+  },
+  "scenario_4": {
+    "A": "care_cut_where_family_covers",
+    "B": "care_shorten_every_visit",
+    "C": "care_profitable_rounds",
+    "D": "care_equal_share",
+    "E": "care_highest_need_first",
+    "F": "care_rebuild_rounds_by_travel"
+  },
+  "sheet_check_code": "birch-stone-37"
+}

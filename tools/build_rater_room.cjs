@@ -27,12 +27,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const PROJECT = path.resolve(__dirname, "..");
-const STUDY = path.join(PROJECT, "Generated Outputs", "rater_study");
-const PARENT = process.argv[2] ? path.resolve(process.argv[2]) : null;
-if (!PARENT) { console.error("  usage: node tools/build_rater_room.cjs <parent folder outside this project>"); process.exit(1); }
+const argOf = (flag) => (process.argv.includes(flag) ? process.argv[process.argv.indexOf(flag) + 1] : null);
+/* --study: the sheets to use (round 2 lives in Generated Outputs/rater_study/round2); --raters: which
+   rooms to make (round 2 has no Fable, which needs paid credits). */
+const STUDY = argOf("--study") ? path.resolve(argOf("--study")) : path.join(PROJECT, "Generated Outputs", "rater_study");
+const PARENT = process.argv[2] && !process.argv[2].startsWith("--") ? path.resolve(process.argv[2]) : null;
+if (!PARENT) { console.error("  usage: node tools/build_rater_room.cjs <parent folder outside this project> [--study <dir>] [--raters opus,sonnet,haiku]"); process.exit(1); }
 if (PARENT.toLowerCase().startsWith(PROJECT.toLowerCase())) { console.error("  the rooms must be OUTSIDE this project"); process.exit(1); }
 
-const RATERS = [["opus", "Claude Opus"], ["sonnet", "Claude Sonnet"], ["fable", "Claude Fable"], ["haiku", "Claude Haiku"]];
+const WANT = (argOf("--raters") || "opus,sonnet,fable,haiku").split(",");
+const RATERS = [["opus", "Claude Opus"], ["sonnet", "Claude Sonnet"], ["fable", "Claude Fable"], ["haiku", "Claude Haiku"]].filter(([k]) => WANT.includes(k));
 const instructions = fs.readFileSync(path.join(__dirname, "blind_rater_instructions.md"), "utf8");
 const PROBE_WORD = "harbor-lantern-42";
 
@@ -87,7 +91,7 @@ what came back.
 
 ## Step 2 - the rating
 
-Only after the probe passes. Read \`sheet.md\` in full (about 6,300 words; if your reading tool splits
+Only after the probe passes. Read \`sheet.md\` in full (it is long; if your reading tool splits
 it, read every part). Then start ONE agent of type \`blind-value-rater\` in the foreground, again
 with no model parameter, with this prompt: the line
 "Here is your rating sheet. Follow your instructions and reply with the JSON block only."
@@ -101,7 +105,7 @@ Save the rater's JSON block to \`answer.json\`, unchanged: remove only the \`\`\
 Then check three things, without changing anything:
 1. It is valid JSON.
 2. Its \`sheet_check_code\` is exactly the code on the last line of sheet.md.
-3. It has all 4 scenarios, all 4 values in each (vulnerable, harm, gain, helped), and all 6 letters
+3. It has every scenario on the sheet, all 4 values in each (vulnerable, harm, gain, helped), and all 6 letters
    A-F in every ranking and every scores list.
 If any check fails, run the rater ONE more time with the same prompt, save the new answer over
 answer.json, and write down why.

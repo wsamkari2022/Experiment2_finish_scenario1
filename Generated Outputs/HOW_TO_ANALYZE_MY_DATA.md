@@ -274,6 +274,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 26 September 2026 | "How to read the four values" and the sidebar's "Your value priorities" merged into one panel, "Your values in this scenario", which can be minimized and pinned. Same information, one place |
 | 26 September 2026 | Scenario 2: two option numbers changed ("Fill every seat" harm 50 -> 62, "Leave immediately" vulnerable 44 -> 35), so fit numbers, labels and card order there differ for about 1 person in 3 |
 | 26 September 2026 (later the same day) | Fix 6, the blind-rater numbers: nine option numbers in scenarios 1, 2 and 4 (and scenario 5's copies), listed in CLAUDE.md. Fit numbers, labels and card order change: the best fit for about 1 person in 5 or 6 in scenarios 1, 2 and 4, the card order for about 7 in 10 in scenario 2 and 6 in 10 in scenario 4. "Leave immediately" went to 14 / 20 / 95 / 8 (its gain 95 is the researcher's reading of its card, above the ridge road), so it is scenario 2's gain champion and the best fit for about 1 person in 100; both convoys now count as built on Reducing harm |
+| 26 September 2026 (evening) | Fix 6 Part B: new words on seven cards (scenarios 3, 4 and 5) and on two value meanings (scenario 2 "How many are helped", scenario 3 "Reducing harm"), listed in CLAUDE.md. No number changed with them |
 
 ---
 

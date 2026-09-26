@@ -1,0 +1,27 @@
+{
+  "scenario_2": {
+    "A": "fire_closed_ridge_road",
+    "B": "fire_shelter_hill_school",
+    "C": "fire_wait_accessible_bus",
+    "D": "fire_fill_every_seat",
+    "E": "fire_assigned_convoy_slot",
+    "F": "fire_early_highway_run"
+  },
+  "scenario_3": {
+    "A": "cancer_reserve_underserved",
+    "B": "cancer_max_life_years",
+    "C": "cancer_weighted_lottery",
+    "D": "cancer_essential_workers",
+    "E": "cancer_max_total_lives",
+    "F": "cancer_prioritize_vulnerable"
+  },
+  "scenario_4": {
+    "A": "care_profitable_rounds",
+    "B": "care_cut_where_family_covers",
+    "C": "care_equal_share",
+    "D": "care_highest_need_first",
+    "E": "care_rebuild_rounds_by_travel",
+    "F": "care_shorten_every_visit"
+  },
+  "sheet_check_code": "maple-river-64"
+}

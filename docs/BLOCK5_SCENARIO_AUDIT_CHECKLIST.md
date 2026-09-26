@@ -1101,6 +1101,14 @@ its card calls it "the fastest, cheapest way out - for you"; the raters had it j
 so it is the scenario's gain champion and no longer loses on every value. **The position check passes since this pass (3.3x)**; the numbers moved because the
 raters read the cards that way, not for the check. Three more numbers wait for new words (Part B).
 
+**Part B words, 26 September 2026** (the researcher's approval): scenario 2's "How many are helped" became "how
+many more people get out of the valley because of your choice"; scenario 3's "Reducing harm" became "keeping as
+few patients as possible from becoming too sick to treat before next month's supply comes"; five cards gained one
+sentence each (the survival rule counts lives, not years; the years rule can put a younger, less likely
+responder ahead; Redraw's other 100 hours still come out of visits, and its money line; no money-losing driving
+is saved when cutting only where family covers, or when protecting full visits). Scenario 5's copies match. No
+number changed; the draw (#8) stays 56; scenarios 2-4 go back to the three raters (round 2) before #12 and #13.
+
 Numbers are vulnerable · harm · gained · helped. Each redesigned option carries a `REDESIGNED`
 comment with every number and metric justified from its card; the eight numbers carry `VALUE AUDIT,
 second pass` comments. The ids did not change, because the database stores them. The method kind

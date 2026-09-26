@@ -61,7 +61,13 @@ const VALUES = [
   ["helped", "outcomeAggregationSensitivity", "How many are helped"],
 ];
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
-const SCENARIOS = BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") === "decider");
+const DECIDERS = BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") === "decider");
+/* The scenarios this study-dir rated, read from its keys (round 2 rated 2, 3 and 4 only). */
+const firstKey = fs.readdirSync(DIR).find((f) => /^key_[a-z]+\.json$/.test(f));
+const NUMS = firstKey
+  ? Object.keys(JSON.parse(fs.readFileSync(path.join(DIR, firstKey), "utf8"))).filter((k) => /^scenario_\d+$/.test(k)).map((k) => Number(k.slice(9))).sort((a, b) => a - b)
+  : DECIDERS.map((_, i) => i + 1);
+const SCENARIOS = NUMS.map((n) => DECIDERS[n - 1]);
 const DISTANCE_FLAG = 20;
 const PLACE_FLAG = 2;
 const SPLIT_FLAG = 30;
@@ -108,26 +114,26 @@ for (const r of raters) {
     if (key.sheet_check_code && ans.sheet_check_code !== key.sheet_check_code) why.push(`check code "${ans.sheet_check_code}" is not "${key.sheet_check_code}": the sheet may have reached it incomplete`);
     const table = {};
     SCENARIOS.forEach((s, si) => {
-      const sc = (ans.scenarios ?? []).find((x) => x.scenario === si + 1);
-      if (!sc) { why.push(`scenario ${si + 1} missing`); return; }
+      const sc = (ans.scenarios ?? []).find((x) => x.scenario === NUMS[si]);
+      if (!sc) { why.push(`scenario ${NUMS[si]} missing`); return; }
       for (const [vk] of VALUES) {
         const v = sc.values?.[vk];
-        if (!v) { why.push(`scenario ${si + 1} ${vk} missing`); continue; }
-        if (!Array.isArray(v.ranking) || [...v.ranking].sort().join("") !== LETTERS.join("")) why.push(`scenario ${si + 1} ${vk}: ranking is not A-F once each`);
+        if (!v) { why.push(`scenario ${NUMS[si]} ${vk} missing`); continue; }
+        if (!Array.isArray(v.ranking) || [...v.ranking].sort().join("") !== LETTERS.join("")) why.push(`scenario ${NUMS[si]} ${vk}: ranking is not A-F once each`);
         for (const L of LETTERS) {
           const e = v.scores?.[L];
-          const id = key[`scenario_${si + 1}`]?.[L];
-          if (!e || typeof e.score !== "number" || e.score < 0 || e.score > 100) { why.push(`scenario ${si + 1} ${vk} ${L}: no score 0-100`); continue; }
-          table[`${si + 1}|${vk}|${id}`] = { score: e.score, reason: String(e.reason ?? ""), place: v.ranking.indexOf(L) + 1 };
+          const id = key[`scenario_${NUMS[si]}`]?.[L];
+          if (!e || typeof e.score !== "number" || e.score < 0 || e.score > 100) { why.push(`scenario ${NUMS[si]} ${vk} ${L}: no score 0-100`); continue; }
+          table[`${NUMS[si]}|${vk}|${id}`] = { score: e.score, reason: String(e.reason ?? ""), place: v.ranking.indexOf(L) + 1 };
         }
         /* A higher place should never carry a lower score. Noted, not disqualifying: the score is what is compared. */
         if (Array.isArray(v.ranking)) for (let i = 1; i < v.ranking.length; i++) {
           const up = v.scores?.[v.ranking[i - 1]]?.score, down = v.scores?.[v.ranking[i]]?.score;
-          if (typeof up === "number" && typeof down === "number" && down > up) notes.push(`scenario ${si + 1} ${vk}: ${v.ranking[i]} scored above ${v.ranking[i - 1]} but ranked below it`);
+          if (typeof up === "number" && typeof down === "number" && down > up) notes.push(`scenario ${NUMS[si]} ${vk}: ${v.ranking[i]} scored above ${v.ranking[i - 1]} but ranked below it`);
         }
       }
     });
-    const legend = SCENARIOS.map((s, si) => `Scenario ${si + 1}: ` + LETTERS.map((L) => `${L} = ${s.options.find((o) => o.id === key[`scenario_${si + 1}`]?.[L])?.title ?? "?"}`).join("; "));
+    const legend = SCENARIOS.map((s, si) => `Scenario ${NUMS[si]}: ` + LETTERS.map((L) => `${L} = ${s.options.find((o) => o.id === key[`scenario_${NUMS[si]}`]?.[L])?.title ?? "?"}`).join("; "));
     if (!why.length) valid[r] = { model: ans.rater_model ?? r, table, unclear: ans.unclear ?? [], comments: ans.comments ?? [], legend };
   }
   validity.push({ rater: r, model: ans?.rater_model ?? "?", valid: why.length === 0, problems: [...new Set(why)].slice(0, 8), notes: notes.slice(0, 8) });
@@ -142,8 +148,8 @@ const pairRho = [];
 SCENARIOS.forEach((s, si) => {
   for (const [vk, key, name] of VALUES) {
     const opts = s.options.map((o) => {
-      const scores = used.map((r) => valid[r].table[`${si + 1}|${vk}|${o.id}`].score);
-      const reasons = used.map((r) => `${r}: ${valid[r].table[`${si + 1}|${vk}|${o.id}`].reason}`);
+      const scores = used.map((r) => valid[r].table[`${NUMS[si]}|${vk}|${o.id}`].score);
+      const reasons = used.map((r) => `${r}: ${valid[r].table[`${NUMS[si]}|${vk}|${o.id}`].reason}`);
       return { id: o.id, title: o.title, study: o.fingerprint[key], scores, reasons, m: scores.length ? mean(scores) : null, spread: scores.length > 1 ? sd(scores) : 0 };
     });
     if (!used.length) continue;
@@ -153,21 +159,21 @@ SCENARIOS.forEach((s, si) => {
     const studyPlace = ranks(opts.map((o) => -o.study));
     const rho = spearman(opts.map((o) => o.study), opts.map((o) => o.m));
     for (let a = 0; a < used.length; a++) for (let b = a + 1; b < used.length; b++) {
-      pairRho.push(spearman(opts.map((o) => valid[used[a]].table[`${si + 1}|${vk}|${o.id}`].score),
-        opts.map((o) => valid[used[b]].table[`${si + 1}|${vk}|${o.id}`].score)));
+      pairRho.push(spearman(opts.map((o) => valid[used[a]].table[`${NUMS[si]}|${vk}|${o.id}`].score),
+        opts.map((o) => valid[used[b]].table[`${NUMS[si]}|${vk}|${o.id}`].score)));
     }
     const studyTop = opts[studyPlace.indexOf(Math.min(...studyPlace))];
     const raterTop = opts[raterPlace.indexOf(Math.min(...raterPlace))];
-    bySv.push({ scenario: si + 1, title: s.title, value: name, rho, studyTop: studyTop.title, raterTop: raterTop.title, opts: opts.map((o, i) => ({ ...o, studyPlace: studyPlace[i], raterPlace: raterPlace[i] })) });
+    bySv.push({ scenario: NUMS[si], title: s.title, value: name, rho, studyTop: studyTop.title, raterTop: raterTop.title, opts: opts.map((o, i) => ({ ...o, studyPlace: studyPlace[i], raterPlace: raterPlace[i] })) });
     opts.forEach((o, i) => {
       const reasonsOut = [];
       if (Math.abs(o.study - o.m) >= DISTANCE_FLAG) reasonsOut.push(`study ${o.study} vs raters ${o.m.toFixed(0)} (${o.study > o.m ? "+" : ""}${(o.study - o.m).toFixed(0)})`);
       if (Math.abs(studyPlace[i] - raterPlace[i]) >= PLACE_FLAG) reasonsOut.push(`place ${studyPlace[i]} in the study, ${raterPlace[i]} for the raters`);
       /* The raters disagreeing among themselves says the WORDS are unclear on this value, whatever the number. */
       if (o.scores.length > 1 && Math.max(...o.scores) - Math.min(...o.scores) >= SPLIT_FLAG) reasonsOut.push(`the raters themselves are ${Math.max(...o.scores) - Math.min(...o.scores)} points apart (the words may be unclear on this value)`);
-      if (reasonsOut.length) flags.push({ scenario: si + 1, value: name, option: o.title, study: o.study, raters: o.scores, raterMean: Math.round(o.m), why: reasonsOut, reasons: o.reasons });
+      if (reasonsOut.length) flags.push({ scenario: NUMS[si], value: name, option: o.title, study: o.study, raters: o.scores, raterMean: Math.round(o.m), why: reasonsOut, reasons: o.reasons });
     });
-    if (studyTop.id !== raterTop.id) flags.push({ scenario: si + 1, value: name, option: `TOP OPTION: study says "${studyTop.title}", raters say "${raterTop.title}"`, study: studyTop.study, raters: raterTop.scores, raterMean: Math.round(raterTop.m), why: ["the study's top option on this value is not the raters' top option"], reasons: raterTop.reasons });
+    if (studyTop.id !== raterTop.id) flags.push({ scenario: NUMS[si], value: name, option: `TOP OPTION: study says "${studyTop.title}", raters say "${raterTop.title}"`, study: studyTop.study, raters: raterTop.scores, raterMean: Math.round(raterTop.m), why: ["the study's top option on this value is not the raters' top option"], reasons: raterTop.reasons });
   }
 });
 

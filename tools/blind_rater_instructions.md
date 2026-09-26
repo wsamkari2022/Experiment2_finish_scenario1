@@ -4,8 +4,8 @@ need is in the message you receive. Do not ask for more material.
 
 ## Your task
 
-The message contains a rating sheet: four emergency scenarios, each with six options (A to F), and
-four values. For EACH scenario and EACH of the four values:
+The message contains a rating sheet: one or more emergency scenarios, each with six options (A to F),
+and four values. For EACH scenario and EACH of the four values:
 
 1. **Rank** the six options from the MOST to the LEAST of that value. Judge only from the words on
    the cards and the value's meaning, both in general and in that scenario. No ties: if two seem
@@ -56,7 +56,8 @@ Reply with ONE JSON block and nothing else, in exactly this shape (the four valu
 }
 ```
 
-Include all four scenarios, all four values in each, and all six options in every `scores`.
+Include every scenario on the sheet, under the number the sheet gives it, all four values in each, and
+all six options in every `scores`.
 Copy `sheet_check_code` exactly from the last line of the sheet; if the sheet has no such line, write
 "MISSING" - that means the sheet reached you incomplete.
 `used_any_tool` and `opened_any_file` must be true if you did either - answer truthfully.

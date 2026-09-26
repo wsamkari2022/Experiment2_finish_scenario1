@@ -355,9 +355,20 @@ their average (the researcher's approval, audit Fix 6 Parts A and C):
   fit changes for about 1 steady pretend participant in 5 or 6; the card order for about 7 in 10 in scenario 2
   and 6 in 10 in scenario 4). Do
   not pool records across this date (HOW_TO_ANALYZE_MY_DATA.md 4.9).
-- **Still to do (Part B)**: the words of scenario 2's seat swap, four scenario-3 cards and two scenario-4
-  cards, then three numbers held back (#8, #12, #13) because moving them alone would leave an option losing
-  on every value. Plan: docs/FRESH_EYE_AUDIT.md, "Fix 6 plan".
+- **Part B, the words (the researcher's approval, B1-B6). Participants see them.** Scenario 2's "How many
+  are helped" now reads "how many **more** people get out of the valley because of your choice" (a seat swap
+  moves nobody extra out); scenario 3's "Reducing harm" reads "keeping as few patients as possible from
+  becoming too sick to treat before next month's supply comes". "Treat the 20 most likely to survive" adds
+  "It counts lives, not years…"; "Treat the 20 with the most years ahead" adds that a younger patient with a
+  modest chance can come ahead of an older one who would almost surely recover; "Redraw the routes" adds "The
+  other 100 still come out of visits" and a money line; "Cut only where a family member can cover" and
+  "Protect full visits" each add that none of the money-losing driving is saved (scenario 5's copies too).
+  Every changed option's two reflection views and two stakeholder stories were re-read against the new
+  words; the lens, story, APA and MCF checks pass. No number moved with the words.
+- **Still open**: the scenario-3 draw (#8) stays 56 (the researcher's choice): "sickest" and "cannot wait"
+  overlap in scenario 3, which goes to the advisor. Scenarios 2-4 are being re-rated by the same three raters
+  on the new words (round 2, `Generated Outputs/rater_study/round2`); #12 and #13 (scenario 4, Reducing harm
+  of "Redraw the routes" and "Keep every care visit") wait for them. Plan: docs/FRESH_EYE_AUDIT.md, "Fix 6 plan".
 
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 
@@ -477,7 +488,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
 | `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 52-62 in 100 steady, 42-50 random, chance about 17 (26 September 2026, after Fix 6) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
-| `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers |
+| `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers. Round 2 (only the scenarios whose words changed): `--scenarios 2,3,4 --round 2`, `--study <dir> --raters opus,sonnet,haiku` |
 
 ## Two files that carry rules rather than code
 
