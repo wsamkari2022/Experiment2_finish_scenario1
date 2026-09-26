@@ -1189,6 +1189,82 @@ protecting the vulnerable, and less about everything else.
 | G7 | Not solved (a note in the documents) |
 | G8 | New: scenario 6 adds a fixed 50 to performance. **Fixed by step 1** if he agrees |
 
+## Fix 5 plan: the two wildfire numbers left from D1 (written 26 September, waiting for approval)
+
+Nothing here is implemented. Waseem asked: change the words to fit the numbers, or change the numbers
+if that costs us nothing important (alignment, VCI, Stability, a champion per value)?
+
+**What each value means in the wildfire scenario** (its own "In this scenario" lines):
+reducing harm = "keeping the risk your household puts on everyone else as low as possible";
+protecting the vulnerable = "making sure the neighbors least able to leave are not left until last".
+
+**Case 1 - "Fill every seat in the car with neighbors who have none", reducing harm 50.** Its own card:
+"What it costs you is room and speed, not anybody else's place in the line", and it leaves in its
+slot. The staged convoy (59) also keeps its place but takes nobody extra out. So by its own words
+this option puts no more risk on others than the convoy, and the number says it puts more.
+
+**Case 2 - "Leave immediately on the main highway", protecting the vulnerable 44.** Its own card: "The
+blocks furthest from the junction waited their turn, and they are the ones still stuck in the jam
+when the fire comes down." The ninth block is where the two residents with walkers live (option 3).
+It leaves the least able until last, and 44 puts it in the middle of the scale, far above the ridge
+road (18).
+
+**Can the words be changed instead?**
+- Case 2: no, not honestly. To earn 44 the card would have to protect someone vulnerable, which would
+  make it a different option.
+- Case 1: yes, one honest way: say the heavy, slow car holds up the blocks behind it (the convoy card
+  already says "the line only moves as fast as its slowest block"). But that needs two sentences
+  changed ("not anybody else's place in the line" would contradict it) and turns the option's cost
+  from "your family pays" into "others pay a little too", which changes what the dilemma asks.
+
+**Tested in scratch copies of the compiled code (the project untouched):** harm 50 -> 60 or 62; vulnerable
+44 -> 25 or 30; and both (62, 25).
+
+| Check | Today | Both changes |
+|---|---|---|
+| Each value keeps its own unique top option, every scenario | yes | yes |
+| VCI, Stability, MCF, planner, APA, lens, twin, prediction checks | pass | pass |
+| Position check (wants 3x) | 2.8x | 2.9x |
+| VCI / Stability / Performance by kind of person | - | every figure within 1 point |
+
+Wildfire scenario, 4,000 steady pretend people (random answerers similar):
+
+| | Today | harm 62 | vulnerable 25 | Both |
+|---|---|---|---|---|
+| "Fill every seat" is the best fit for | 35.4% | 41.5% | 35.4% | 41.5% |
+| "Leave immediately" is the best fit for | 4.3% | 4.3% | 0.5% | 0.5% |
+| People whose best fit changes | - | 6.0% | 3.8% | 9.8% |
+| People with any label changed | - | 26.0% | 12.7% | 36.6% |
+| People whose card order changes | - | 24.9% | 9.5% | 33.8% |
+| First card = best fit | 67.1% | 64.0% | 69.6% | 66.5% |
+
+**Recommendation.** Change the numbers, not the words: Fill every seat harm 50 -> 62 (just above the
+convoy, far below the school's 94), Leave immediately vulnerable 44 -> 25 (just above the ridge road).
+After the change each value reads in an order the cards support:
+harm school 94 > fill 62 > convoy 59 > give seats 56 > ridge 23 > early 20;
+vulnerable give seats 97 > fill 62 > convoy 60 > school 56 > early 25 > ridge 18.
+
+**What it costs, honestly.** "Leave immediately" becomes almost nobody's best fit (0.5%), as the even
+cut did on 18 September (29% -> 2%); that is TRUE of the option and belongs in the methods. "Fill every
+seat" becomes the best fit for 4 people in 10 instead of 3.5. About 1 person in 3 would see a
+different label or card order in this scenario, and scenario 2 only. No real participants yet.
+
+**Audit of this plan (what could be wrong).**
+1. The two new numbers are judgments, like the old ones. The rater study (Step B of Fix 3) is what
+   would confirm them independently.
+2. Pretend people are not real people; the shares above are for the model, not a forecast.
+3. The scratch copies patched the COMPILED code; the real change goes in block5Scenarios.ts, then
+   every check runs again in the project.
+4. The 18 September audit listed 9 "doubtful" numbers; only these two are in scope now.
+5. The fit numbers, labels and card order a participant sees in scenario 2 change, so it is a dated
+   screen change (HOW_TO_ANALYZE 4.9).
+
+**If approved, the steps.** (1) Change the two numbers in block5Scenarios.ts with a "VALUE AUDIT, third
+pass" comment quoting the card lines. (2) Update the 2g table in the scenario checklist, a dated note in
+CLAUDE.md, the 4.9 list in HOW_TO_ANALYZE. (3) Run the full chain and every separate check; re-run
+report:vci, report:stability and report:planner-overlap and update any figure the method documents
+quote. (4) Look at scenario 2 in the browser. (5) Commit, push, log here.
+
 ## Log
 
 - **2026-09-24.** Audit written (`a2ecc01`). Nothing fixed yet. Fix 1 plan sent to Waseem.
@@ -1270,3 +1346,4 @@ protecting the vulnerable, and less about everything else.
 - **2026-09-25. Wish minus decision in PERFORMANCE (Waseem's request).** Beside the per-value reading, `analyseMirror` now gives `wishMinusDecisionMetrics` (the two options' own numbers on the five metrics), the metric that rose and fell most, and `wishMinusDecisionCaptured` (overall share). Stored in `decided_versus_wished` as `wish_minus_decision_by_performance_metric`, `performance_metric_the_wish_raised_most` / `_lowered_most`, `overall_performance_wish_minus_decision` and a sentence; copied into `major_info_and_scores.performance`. Higher is better on all five metrics, so positive = the wish performs better. Example (real code): decided "Keep every care visit", wished "Protect full visits": speed +15, resources spared −32, reliability −30, durability +6, reversibility −36, overall −89. Gates W5, D59; D49 checks the copy. `SHAPE_VERSION` `2026-09-25-wish-performance`. Not shown to participants.
 - **2026-09-25. Company value saved (Waseem's request).** Each scenario-4/5 row carries `companyValueShown` { employer, valueKey, principle }, set in `finalizeScenario` from the same `deriveCompanyValues(userProfile, …)` call the card makes; `analysis.position_effect.company_value_shown` reads it (or works it out again for an old record, `saved_when_shown: false`), and `major_info_and_scores.company_value_shown_in_scenarios_4_and_5` holds the name in one line. Gate D60; D49 checks the copy. Checked in the browser: the card showed "how much is gained" in 4 and 5, and both rows saved gainResponsivenessSensitivity with the card's sentence. Found on the way: the company STANCE is shown on the results page and never saved (H1). VCI/Stability/performance re-measured on the fixed study (scratch `vci_stability_check_v2.cjs`): VCI and Stability unchanged; the same-pick gap is 0 for every kind; performance chaser 100 (old rule 92); true to top value 40, random 51. Added the "What is still not fixed, and the plan" section above.
 - **2026-09-25. Phase 0 done (Waseem: "do now phase 0 only").** H1: `analysis.position_effect.company_stance` (built by the page's own `analyseStance` on the frozen profile: stance and label, both distances, the pull, the ±8 band, the page's sentence, all six options) and `major_info_and_scores.company_stance_in_scenario_4`; `STANCE_BAND` exported; gate D61 (the three pretend participants cover all three stances), D49 checks the copy; `SHAPE_VERSION` `2026-09-25-company-stance`. Documents: A7 (dated in CLAUDE.md, plus HOW_TO_ANALYZE 4.9, a list of every dated screen change), B4 (the edge case, checked with the real code: 0/0/100/80 naming harm totals 190, not 180), B8 (dated corrections in the request document, his words kept, and notes where B4/B5 answered his questions 3 and 4), C6 (loop rate and Kemeny in the planner header), G7 (56-57 in CLAUDE.md and HOW_TO_ANALYZE), G4 + I2 + I3 (HOW_TO_ANALYZE 4.8). **C5 NOT done, on purpose**: it is the planner header's "no constants" wording, which is Fix P item 1, and Waseem said to keep it on 24 September; I listed it in Phase 0 by mistake.
+- **2026-09-26. Fix 5 plan written** (the two wildfire numbers left from D1): change the numbers, not the words; tested in scratch copies (scratch `make_mirrors.cjs`, `wildfire_compare.cjs`); nothing implemented.
