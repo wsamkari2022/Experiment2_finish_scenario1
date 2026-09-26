@@ -1,0 +1,35 @@
+{
+  "scenario_1": {
+    "A": "chem_seal_and_shelter",
+    "B": "chem_reserved_respirator",
+    "C": "chem_shuttle_loop",
+    "D": "chem_registered_convoy",
+    "E": "chem_service_road_run",
+    "F": "chem_walk_out_on_foot"
+  },
+  "scenario_2": {
+    "A": "fire_closed_ridge_road",
+    "B": "fire_assigned_convoy_slot",
+    "C": "fire_early_highway_run",
+    "D": "fire_fill_every_seat",
+    "E": "fire_wait_accessible_bus",
+    "F": "fire_shelter_hill_school"
+  },
+  "scenario_3": {
+    "A": "cancer_reserve_underserved",
+    "B": "cancer_weighted_lottery",
+    "C": "cancer_prioritize_vulnerable",
+    "D": "cancer_max_total_lives",
+    "E": "cancer_max_life_years",
+    "F": "cancer_essential_workers"
+  },
+  "scenario_4": {
+    "A": "care_rebuild_rounds_by_travel",
+    "B": "care_highest_need_first",
+    "C": "care_profitable_rounds",
+    "D": "care_shorten_every_visit",
+    "E": "care_cut_where_family_covers",
+    "F": "care_equal_share"
+  },
+  "sheet_check_code": "cobalt-garden-73"
+}

@@ -1,0 +1,35 @@
+{
+  "scenario_1": {
+    "A": "chem_seal_and_shelter",
+    "B": "chem_registered_convoy",
+    "C": "chem_walk_out_on_foot",
+    "D": "chem_shuttle_loop",
+    "E": "chem_reserved_respirator",
+    "F": "chem_service_road_run"
+  },
+  "scenario_2": {
+    "A": "fire_closed_ridge_road",
+    "B": "fire_fill_every_seat",
+    "C": "fire_shelter_hill_school",
+    "D": "fire_early_highway_run",
+    "E": "fire_wait_accessible_bus",
+    "F": "fire_assigned_convoy_slot"
+  },
+  "scenario_3": {
+    "A": "cancer_weighted_lottery",
+    "B": "cancer_max_total_lives",
+    "C": "cancer_reserve_underserved",
+    "D": "cancer_prioritize_vulnerable",
+    "E": "cancer_essential_workers",
+    "F": "cancer_max_life_years"
+  },
+  "scenario_4": {
+    "A": "care_rebuild_rounds_by_travel",
+    "B": "care_shorten_every_visit",
+    "C": "care_highest_need_first",
+    "D": "care_equal_share",
+    "E": "care_cut_where_family_covers",
+    "F": "care_profitable_rounds"
+  },
+  "sheet_check_code": "harvest-bridge-51"
+}

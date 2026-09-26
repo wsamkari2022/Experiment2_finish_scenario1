@@ -39,25 +39,33 @@ if (!fs.existsSync(BUILD)) {
 fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commonjs" }));
 const { BLOCK5_SCENARIOS } = require(path.join(BUILD, "block5Scenarios.js"));
 const { getCVRValueHere } = require(path.join(BUILD, "block5CVRContent.js"));
+const { METRIC_DEFS, METRIC_KEYS } = require(path.join(BUILD, "block5Types.js"));
 
 const OUT = process.argv[2];
-if (!OUT) { console.error("  usage: node tools/build_rater_sheet.cjs <out-dir> [--scenarios 2,3,4] [--round 2]"); process.exit(1); }
+if (!OUT) { console.error("  usage: node tools/build_rater_sheet.cjs <out-dir> [--scenarios 2,3,4] [--round 2] [--measures]"); process.exit(1); }
 const argOf = (flag) => (process.argv.includes(flag) ? process.argv[process.argv.indexOf(flag) + 1] : null);
 /* Round 2 (26 September 2026) re-rates only the scenarios whose words changed in Fix 6 Part B, with its
    own shuffles and check codes, so no copy repeats round 1. Scenario numbers stay the study's own. */
 const ROUND = Number(argOf("--round") || 1);
 const WANTED = (argOf("--scenarios") || "1,2,3,4").split(",").map(Number);
+/* --measures (round 2, the researcher's request): a SECOND sheet for the five performance measures, with
+   the scenario's own reading of each (what the participant's performance panel says), its own shuffles,
+   its own check codes and its own keys (sheet_measures_<rater>.md, key_measures_<rater>.json). */
+const MEASURES_MODE = process.argv.includes("--measures");
 fs.mkdirSync(OUT, { recursive: true });
 
 /* The raters and the seed that shuffles each one's copy. Fixed, so the sheets can be rebuilt. */
 const RATERS = ROUND === 1
   ? [["opus", 20260926], ["sonnet", 20260927], ["fable", 20260928], ["haiku", 20260929]]
   : [["opus", 20261126], ["sonnet", 20261127], ["haiku", 20261129]];
+const SEED_SHIFT = MEASURES_MODE ? 500 : 0;
 /* The last line of each copy carries a check code the rater must copy back: a copy cut short on its
    way to the rater has no last line, so its answer says "MISSING" instead of the code. */
 const CHECK_CODES = ROUND === 1
   ? { opus: "amber-falcon-17", sonnet: "cedar-orchard-58", fable: "silver-meadow-23", haiku: "copper-willow-91" }
-  : { opus: "maple-river-64", sonnet: "birch-stone-37", haiku: "slate-field-82" };
+  : MEASURES_MODE
+    ? { opus: "harvest-bridge-51", sonnet: "willow-quarry-26", haiku: "cobalt-garden-73" }
+    : { opus: "maple-river-64", sonnet: "birch-stone-37", haiku: "slate-field-82" };
 
 /* The four values: the participant-facing name, and what a HIGH number on an option means, as the
    study defines it (the value table the 18 September value audit used). */
@@ -89,21 +97,34 @@ const LETTERS = ["A", "B", "C", "D", "E", "F"];
 function sheetFor(rater, seed) {
   const key = {};
   const out = [];
-  out.push(`# Blind rating sheet - option values`, "");
-  out.push(`Rater copy: ${rater}. The options are in a random order made for this copy only.`, "");
-  out.push("## The four values", "");
-  out.push("Every option in every scenario is scored on the same four values. For each value, a HIGH score means:", "");
-  for (const [, , name, high] of VALUES) out.push(`- **${name}**: ${high}.`);
-  out.push("", "Each scenario below also says what each value means in that scenario.", "");
+  if (MEASURES_MODE) {
+    out.push(`# Blind rating sheet - performance measures`, "");
+    out.push(`Rater copy: ${rater}. The options are in a random order made for this copy only.`, "");
+    out.push("## The five measures", "");
+    out.push("Every option in every scenario is scored on the same five measures of how well it works. HIGHER IS ALWAYS BETTER. For each measure:", "");
+    for (const k of METRIC_KEYS) out.push(`- **${METRIC_DEFS[k].label}**: ${strip(METRIC_DEFS[k].hover)}`);
+    out.push("", "Each scenario below also says what each measure means in that scenario.", "");
+  } else {
+    out.push(`# Blind rating sheet - option values`, "");
+    out.push(`Rater copy: ${rater}. The options are in a random order made for this copy only.`, "");
+    out.push("## The four values", "");
+    out.push("Every option in every scenario is scored on the same four values. For each value, a HIGH score means:", "");
+    for (const [, , name, high] of VALUES) out.push(`- **${name}**: ${high}.`);
+    out.push("", "Each scenario below also says what each value means in that scenario.", "");
+  }
   SCENARIOS.forEach((s, si) => {
     const here = getCVRValueHere(s);
-    const order = shuffled(s.options, seed + si * 7919);
+    const order = shuffled(s.options, seed + SEED_SHIFT + si * 7919);
     key[`scenario_${NUMS[si]}`] = Object.fromEntries(order.map((o, i) => [LETTERS[i], o.id]));
     out.push("---", "", `## Scenario ${NUMS[si]}: ${s.title}`, "");
     out.push(`**What is happening.** ${strip(s.description)}`, "");
     if (s.factBase) out.push(`**The situation right now.** ${strip(s.factBase)}`, "");
     if (s.role) out.push(`**Your role.** ${strip(s.role)}`, "");
-    if (here) {
+    if (MEASURES_MODE) {
+      out.push("**What each measure means in this scenario.**", "");
+      for (const k of METRIC_KEYS) out.push(`- ${METRIC_DEFS[k].label}: ${strip(METRIC_DEFS[k].readings[s.id] ?? METRIC_DEFS[k].hover)}.`);
+      out.push("");
+    } else if (here) {
       out.push("**What each value means in this scenario.**", "");
       for (const [, k, name] of VALUES) out.push(`- ${name}: ${strip(here[k])}.`);
       out.push("");
@@ -133,8 +154,9 @@ for (const [rater, seed] of RATERS) {
     .filter((w) => w !== "_" ? text.includes(w) : /\b[a-z]+_[a-z_]+\b/.test(text));
   for (const s of SCENARIOS) for (const o of s.options) if (text.includes(o.id)) leaks.push(o.id);
   if (leaks.length) { problems++; console.error(`  ${rater}: LEAK ${leaks.join(", ")}`); }
-  fs.writeFileSync(path.join(OUT, `sheet_${rater}.md`), text);
-  fs.writeFileSync(path.join(OUT, `key_${rater}.json`), JSON.stringify(key, null, 2));
+  const stem = MEASURES_MODE ? "measures_" : "";
+  fs.writeFileSync(path.join(OUT, `sheet_${stem}${rater}.md`), text);
+  fs.writeFileSync(path.join(OUT, `key_${stem}${rater}.json`), JSON.stringify(key, null, 2));
   console.log(`  ${rater}: ${text.split(/\s+/).length} words, ${SCENARIOS.length} scenarios, key written separately`);
 }
 if (problems) process.exit(1);

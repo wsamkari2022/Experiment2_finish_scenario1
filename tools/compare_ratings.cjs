@@ -20,7 +20,11 @@
  *        - SPLIT: the raters are 30 or more points apart among themselves, which points at the card's
  *          words rather than its number.
  *
- *   node tools/compare_ratings.cjs <study-dir> [--rooms <rooms-dir>]
+ *   node tools/compare_ratings.cjs <study-dir> [--rooms <rooms-dir>] [--measures]
+ *     --measures (round 2, 26 September 2026): the same comparison over the five PERFORMANCE measures
+ *              (speed, resources spared, reliability, durability, reversibility) against each option's
+ *              metrics, from key_measures_<rater>.json and answers_measures/<rater>.json; it writes
+ *              REPORT_MEASURES.md and comparison_measures.json.
  *     <study-dir>/key_<rater>.json      letters -> option ids (from build_rater_sheet.cjs)
  *     <study-dir>/answers/<rater>.json  each rater's JSON answer, saved as it came back
  *     --rooms: first copy each <rooms-dir>/rater_<rater>/answer.json (build_rater_room.cjs) into
@@ -48,6 +52,10 @@ if (ROOMS) {
     const src = path.join(ROOMS, room);
     if (!fs.existsSync(path.join(src, "answer.json"))) { console.log(`  ${room}: no answer.json yet`); continue; }
     fs.copyFileSync(path.join(src, "answer.json"), path.join(DIR, "answers", `${r}.json`));
+    if (fs.existsSync(path.join(src, "answer_measures.json"))) {
+      fs.mkdirSync(path.join(DIR, "answers_measures"), { recursive: true });
+      fs.copyFileSync(path.join(src, "answer_measures.json"), path.join(DIR, "answers_measures", `${r}.json`));
+    }
     fs.mkdirSync(path.join(DIR, "runs", r), { recursive: true });
     for (const f of ["probe_result.md", "run_notes.md"]) if (fs.existsSync(path.join(src, f))) fs.copyFileSync(path.join(src, f), path.join(DIR, "runs", r, f));
     console.log(`  ${room}: answer collected`);
@@ -60,10 +68,25 @@ const VALUES = [
   ["gain", "gainResponsivenessSensitivity", "How much is gained"],
   ["helped", "outcomeAggregationSensitivity", "How many are helped"],
 ];
+const MEASURE_DIMS = [
+  ["speed", "speed", "Speed"],
+  ["resources", "resourceUse", "Resources spared"],
+  ["reliability", "reliability", "Reliability"],
+  ["durability", "durability", "Durability"],
+  ["reversibility", "reversibility", "Reversibility"],
+];
+const MEASURES = process.argv.includes("--measures");
+const DIMS = MEASURES ? MEASURE_DIMS : VALUES;
+const FIELD = MEASURES ? "measures" : "values";
+const KEYP = MEASURES ? "key_measures_" : "key_";
+const NOUN = MEASURES ? "measure" : "value";
+const OUT_REPORT = MEASURES ? "REPORT_MEASURES.md" : "REPORT.md";
+const OUT_JSON = MEASURES ? "comparison_measures.json" : "comparison.json";
+const studyOf = (o, k) => (MEASURES ? o.metrics[k] : o.fingerprint[k]);
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const DECIDERS = BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") === "decider");
 /* The scenarios this study-dir rated, read from its keys (round 2 rated 2, 3 and 4 only). */
-const firstKey = fs.readdirSync(DIR).find((f) => /^key_[a-z]+\.json$/.test(f));
+const firstKey = fs.readdirSync(DIR).find((f) => (MEASURES ? /^key_measures_[a-z]+\.json$/ : /^key_[a-z]+\.json$/).test(f));
 const NUMS = firstKey
   ? Object.keys(JSON.parse(fs.readFileSync(path.join(DIR, firstKey), "utf8"))).filter((k) => /^scenario_\d+$/.test(k)).map((k) => Number(k.slice(9))).sort((a, b) => a - b)
   : DECIDERS.map((_, i) => i + 1);
@@ -96,7 +119,7 @@ function icc21(rows) {
 }
 
 /* ---- 1. read and check every answer ---- */
-const answersDir = path.join(DIR, "answers");
+const answersDir = path.join(DIR, MEASURES ? "answers_measures" : "answers");
 const raters = fs.existsSync(answersDir)
   ? fs.readdirSync(answersDir).filter((f) => f.endsWith(".json")).map((f) => f.replace(/\.json$/, ""))
   : [];
@@ -106,7 +129,7 @@ for (const r of raters) {
   const why = [];
   let ans = null, key = null;
   try { ans = JSON.parse(fs.readFileSync(path.join(answersDir, `${r}.json`), "utf8")); } catch (e) { why.push(`not valid JSON (${e.message})`); }
-  try { key = JSON.parse(fs.readFileSync(path.join(DIR, `key_${r}.json`), "utf8")); } catch { why.push("no key file for this rater"); }
+  try { key = JSON.parse(fs.readFileSync(path.join(DIR, `${KEYP}${r}.json`), "utf8")); } catch { why.push("no key file for this rater"); }
   const notes = [];
   if (ans && key) {
     if (ans.used_any_tool !== false) why.push("did not state used_any_tool: false");
@@ -116,8 +139,8 @@ for (const r of raters) {
     SCENARIOS.forEach((s, si) => {
       const sc = (ans.scenarios ?? []).find((x) => x.scenario === NUMS[si]);
       if (!sc) { why.push(`scenario ${NUMS[si]} missing`); return; }
-      for (const [vk] of VALUES) {
-        const v = sc.values?.[vk];
+      for (const [vk] of DIMS) {
+        const v = sc[FIELD]?.[vk];
         if (!v) { why.push(`scenario ${NUMS[si]} ${vk} missing`); continue; }
         if (!Array.isArray(v.ranking) || [...v.ranking].sort().join("") !== LETTERS.join("")) why.push(`scenario ${NUMS[si]} ${vk}: ranking is not A-F once each`);
         for (const L of LETTERS) {
@@ -146,11 +169,11 @@ const flags = [];
 const bySv = [];
 const pairRho = [];
 SCENARIOS.forEach((s, si) => {
-  for (const [vk, key, name] of VALUES) {
+  for (const [vk, key, name] of DIMS) {
     const opts = s.options.map((o) => {
       const scores = used.map((r) => valid[r].table[`${NUMS[si]}|${vk}|${o.id}`].score);
       const reasons = used.map((r) => `${r}: ${valid[r].table[`${NUMS[si]}|${vk}|${o.id}`].reason}`);
-      return { id: o.id, title: o.title, study: o.fingerprint[key], scores, reasons, m: scores.length ? mean(scores) : null, spread: scores.length > 1 ? sd(scores) : 0 };
+      return { id: o.id, title: o.title, study: studyOf(o, key), scores, reasons, m: scores.length ? mean(scores) : null, spread: scores.length > 1 ? sd(scores) : 0 };
     });
     if (!used.length) continue;
     opts.forEach((o) => items.push(o.scores));
@@ -173,7 +196,7 @@ SCENARIOS.forEach((s, si) => {
       if (o.scores.length > 1 && Math.max(...o.scores) - Math.min(...o.scores) >= SPLIT_FLAG) reasonsOut.push(`the raters themselves are ${Math.max(...o.scores) - Math.min(...o.scores)} points apart (the words may be unclear on this value)`);
       if (reasonsOut.length) flags.push({ scenario: NUMS[si], value: name, option: o.title, study: o.study, raters: o.scores, raterMean: Math.round(o.m), why: reasonsOut, reasons: o.reasons });
     });
-    if (studyTop.id !== raterTop.id) flags.push({ scenario: NUMS[si], value: name, option: `TOP OPTION: study says "${studyTop.title}", raters say "${raterTop.title}"`, study: studyTop.study, raters: raterTop.scores, raterMean: Math.round(raterTop.m), why: ["the study's top option on this value is not the raters' top option"], reasons: raterTop.reasons });
+    if (studyTop.id !== raterTop.id) flags.push({ scenario: NUMS[si], value: name, option: `TOP OPTION: study says "${studyTop.title}", raters say "${raterTop.title}"`, study: studyTop.study, raters: raterTop.scores, raterMean: Math.round(raterTop.m), why: [`the study's top option on this ${NOUN} is not the raters' top option`], reasons: raterTop.reasons });
   }
 });
 
@@ -185,9 +208,9 @@ const summary = used.length >= 2 ? {
 } : null;
 
 /* ---- write ---- */
-fs.writeFileSync(path.join(DIR, "comparison.json"), JSON.stringify({ validity, summary, flags, bySv }, null, 2));
+fs.writeFileSync(path.join(DIR, OUT_JSON), JSON.stringify({ validity, summary, flags, bySv }, null, 2));
 const md = [];
-md.push("# Blind option-value review: the comparison", "");
+md.push(MEASURES ? "# Blind review of the performance numbers: the comparison" : "# Blind option-value review: the comparison", "");
 md.push("AI-assisted blind content review (Claude models, no tools, fresh context each), adjudicated by the researcher. Not human inter-rater reliability.", "");
 md.push("## 1. The answers", "", "| Rater | Model it reported | Valid | Problems | Notes |", "|---|---|---|---|---|");
 for (const v of validity) md.push(`| ${v.rater} | ${v.model} | ${v.valid ? "yes" : "**no**"} | ${v.problems.join("; ") || "-"} | ${v.notes.join("; ") || "-"} |`);
@@ -199,12 +222,12 @@ for (const v of validity) {
 md.push("");
 if (summary) {
   md.push("## 2. How much the raters agree with each other", "");
-  md.push(`- ICC(2,1), absolute agreement, over ${items.length} option-value scores: **${summary.icc_2_1}** (0.75 or more is usually called good, 0.90 excellent)`);
+  md.push(`- ICC(2,1), absolute agreement, over ${items.length} option-${NOUN} scores: **${summary.icc_2_1}** (0.75 or more is usually called good, 0.90 excellent)`);
   md.push(`- Mean Spearman correlation between two raters' orders: **${summary.mean_pairwise_spearman}**`);
   md.push(`- Mean distance between two raters' scores: **${summary.mean_distance_between_raters} points**`, "");
   md.push("## 3. How much the raters agree with the study's numbers", "");
   md.push(`Mean Spearman correlation between the study's order and the raters' order: **${summary.mean_spearman_study_vs_raters}** (1 = the same order).`, "");
-  md.push("| Scenario | Value | Same order? (Spearman) | Study's top | Raters' top |", "|---|---|---|---|---|");
+  md.push(`| Scenario | ${MEASURES ? "Measure" : "Value"} | Same order? (Spearman) | Study's top | Raters' top |`, "|---|---|---|---|---|");
   for (const x of bySv) md.push(`| ${x.scenario} | ${x.value} | ${x.rho.toFixed(2)} | ${x.studyTop} | ${x.raterTop} |`);
   md.push("");
 }
@@ -224,6 +247,6 @@ for (const r of used) {
   md.push("Comments:", ...(valid[r].comments.length ? valid[r].comments.map((x) => `- ${x}`) : ["- nothing"]), "");
   md.push("Letters:", ...valid[r].legend.map((x) => `- ${x}`), "");
 }
-fs.writeFileSync(path.join(DIR, "REPORT.md"), md.join("\n"));
-console.log(`  ${used.length} valid answer(s) of ${raters.length}; ${flags.length} flag(s); report written to ${path.join(DIR, "REPORT.md")}`);
+fs.writeFileSync(path.join(DIR, OUT_REPORT), md.join("\n"));
+console.log(`  ${used.length} valid answer(s) of ${raters.length}; ${flags.length} flag(s); report written to ${path.join(DIR, OUT_REPORT)}`);
 if (summary) console.log(`  ICC(2,1) ${summary.icc_2_1}, rater-rater Spearman ${summary.mean_pairwise_spearman}, study-raters Spearman ${summary.mean_spearman_study_vs_raters}`);
