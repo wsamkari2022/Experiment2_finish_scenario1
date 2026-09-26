@@ -1429,6 +1429,113 @@ honest", even though it fits nobody), and V3 checks "the 2,000".
   the APA page said it "missed by 52 points", and naming Reducing harm listed the convoy AND Seal your apartment
   (before: Seal only).
 
+## Fix 7 plan: the round-2 rater numbers, values and performance (written 26 September, waiting for approval)
+
+Waseem: "yes, write the Fix 7 plan and test it", and "test also the new proposed Performance distribution".
+Source: `Generated Outputs/rater_study/round2/REPORT.md` (values, scenarios 2-4) and `REPORT_MEASURES.md`
+(performance, scenarios 1-4). Rule, as in Fix 6: a number moves to the three raters' round-2 average where they
+agree with each other (spread under 30) and sit 20+ points away, unless that makes an option lose on every value
+or breaks a design check; then it stops where it is safe. **Nothing is implemented.** Measured on scratch copies
+(scratch `make_mirrors7.cjs`, `make_mirrors7b.cjs`, `perf7.cjs`, `g7_compare.cjs`, and every project check and
+report run on the copies).
+
+### Part A: eight value numbers (and scenario 5's copies)
+
+| Scenario | Option | Value | Today | New |
+|---|---|---|---|---|
+| 4 + 5 | Redraw the routes (#12) | Reducing harm | 47 | 76 |
+| 4 + 5 | Redraw the routes (paired) | How many are helped | 84 | 81 |
+| 4 + 5 | Keep every care visit, and cut the check-in visits (#13) | Reducing harm | 70 | 43 |
+| 4 + 5 | Keep every care visit (paired) | How many are helped | 80 | 88 |
+| 3 | Treat the 20 most likely to survive | Reducing harm | 48 | 23 |
+| 3 | Treat the 20 most likely to survive | How much is gained | 39 | 79 |
+| 3 | Treat the 20 with the most years ahead | How many are helped | 43 | 64 |
+| 4 + 5 | Keep the town routes that pay, and drop the rural ones | How many are helped | 45 | 25 |
+
+The two "paired" numbers are under the 20-point line, but they must move with #12 and #13: Part B of Fix 6 added
+"The other 100 still come out of visits" to Redraw, and the raters now put Keep every care visit ABOVE Redraw on
+helped (88 against 81). Without them, Keep every care visit loses to Redraw on every value. #13 is at the split line
+(40 / 60 / 30); round 1 read 38. Survival's gain is the one place the new words (B2) did not move the raters
+(80 -> 79), so the number follows them.
+
+**Kept, as stated disagreements:** "Shorten every visit" helped stays 92 (raters 72). Tested at 82 (as low as
+it can go without losing to Redraw on every value): it becomes the best fit for 0.2 in 100 steady pretend people
+(6.6 today), and the random-profile check found it winning nowhere. "Hold some doses back" harm stays 64 (raters
+28, but split 50 / 22 / 12).
+
+### Part B: fourteen performance numbers
+
+| Scenario | Option | Measure | Today | New |
+|---|---|---|---|---|
+| 1 | Drive the community shuttle | Speed | 45 | 24 |
+| 1 | Drive the community shuttle | Reliability | 71 | 38 |
+| 1 | Take the sealed respirator | Resources spared | 45 | 18 |
+| 1 | Take the sealed respirator | Reliability | 54 | 87 |
+| 1 | Take the sealed respirator | Durability | 76 | 17 |
+| 1 | Carry the respirator to the patient | Reversibility | 78 | **62** (raters 47) |
+| 1 | Drive out on the industrial service road | Reversibility | 45 | **27** (raters 8) |
+| 2 | Give your car seats to the two residents | Resources spared | 80 | 58 |
+| 2 | Take the closed ridge road | Durability | 70 | 23 |
+| 3 | Treat the 20 most likely to survive | Speed | 48 | 69 |
+| 3 | Treat the 20 with the most years ahead | Speed | 24 | 61 |
+| 3 | Treat the 20 with the most years ahead | Reliability | 45 | 73 |
+| 3 | Treat the 20 who others depend on | Durability | 44 | 72 |
+| 4 + 5 | Cut only where a family member can cover | Speed | 40 | 74 |
+
+**Half way on two.** At the raters' average the two scenario-1 reversibility numbers break three design checks:
+"Carry the respirator" becomes too like "Seal your apartment" (G6, 8.0 points apart; the line is 10), the convoy
+becomes a runaway top performer (G6, 8.4 ahead; the line is 8), and reversibility becomes a "hard" measure
+overall (G7, grand mean 49.6; the band is 50-80). Half way (62 and 27) every check passes (11.0, 4.6 and 50.6).
+
+### What the tests show (today -> Parts A + B)
+
+| Measure | Today | After |
+|---|---|---|
+| Every value keeps its own top option in every scenario | yes | yes |
+| Best fit changes (steady pretend people) | - | S3 19 in 100, S4 26 in 100; S1 and S2 none |
+| Card order changes | - | S3 52 in 100, S4 70 in 100 |
+| "Keep every care visit" is the best fit for | 18 in 100 | 2 in 100 (alive, weak) |
+| "Most likely to survive" is the best fit for (random answerers) | 7.5 in 100 | 18.5 in 100 |
+| VCI, every kind of pretend participant | - | moves 0-1 point, except the performance chaser 79 -> 76 |
+| VCI tells a convert from a performance chaser | 26 in 100 | 28 in 100 |
+| Stability, every kind | - | moves 0-1 point, except the performance chaser 82 -> 80 and always-the-worst 7 -> 10 |
+| Position check (needs 3x) | 3.3x | **5.4x** |
+| Prediction, best-fit chooser | 53.5% | 53.2% |
+| First card = best fit (steady), S3 / S4 | 57 / 52 | 62 / 50 |
+| **Performance by kind of participant** (mean) | - | moves 0-2 points for every kind; the performance chaser stays 70 |
+| Performance of a best-fit pick, S1 / S2 / S3 / S4 | 62.0 / 62.4 / 58.9 / 57.6 | 57.3 / 60.9 / 63.0 / 60.4 (average 60.2 -> 60.4) |
+| Top performer in scenario 3 | the draw (70) | "Treat the 20 who others depend on" (72) |
+| MCF, APA, lenses, stories, twins, stability gates, metric gates G1-G7 | pass | pass |
+| VCI check V8 (one scripted flip-flopper through APA < 50) | 40 | **50, fails by a hair** |
+
+**V8** is V3's twin: one scripted person who always takes the mildest wrong option, now through APA, lands on
+exactly 50. The group of 2,000 pretend flip-floppers through APA averages 34. Same choice as for V3 (Waseem chose
+the group then).
+
+### Steps, once approved
+
+1. The numbers in `block5Scenarios.ts` (scenario 5's copies too), each with a "fifth pass, rater study round 2"
+   comment quoting its card and the raters.
+2. V8 as Waseem decides. The full chain, plus prediction, resume, MCF and visits.
+3. Every quoted figure re-run and updated (VCI, Stability, planner overlap, prediction; performance figures where
+   quoted); CLAUDE.md dated section; HOW_TO_ANALYZE 4.9 (participants see new fit numbers, labels and order in
+   scenarios 3-5, and new performance bars and ranks in all four); checklist 2g; SHAPE_VERSION.
+4. Browser check with a pretend participant: scenario 3 and 4 cards, fit numbers, order, performance ranks.
+5. Later, a words pass (Part C): the raters disagreed among themselves on 28 of the 120 performance ratings,
+   mostly Durability and Reversibility, and two said the cards give little to go on for speed and reversibility.
+   Their meanings per scenario ("whether the way out stays open for the people still behind you") may need plainer
+   words before those numbers can be judged well.
+
+### Audit of this plan
+
+| Risk | What I do about it |
+|---|---|
+| Moving only flagged numbers can leave an option losing everywhere | Checked for every option; that is why the two helped numbers pair with #12 / #13 and why Shorten stays 92 |
+| Performance changes can unbalance the measures | Every metric gate run; the two numbers that broke G6 / G7 go half way |
+| Participants see new performance ranks | Dated in HOW_TO_ANALYZE 4.9; records across the date are not pooled |
+| The performance chaser's scores move most | Stated: it follows the top performer, which changes in scenario 3 |
+| The raters agree less on performance (ICC 0.73) | Only numbers all three agree on move; the rest wait for Part C words |
+
 ## Launch plan: everything left, done by Waseem and Claude only (written 26 September, waiting for approval)
 
 Waseem has no human raters and an advisor who reads only finished work. So everything below is done
@@ -1575,3 +1682,4 @@ thesis says so.
 - **2026-09-26. C1-C5: "most ill today" against "running out of time" in scenario 3** (Waseem, expecting his advisor to say "sickest" == "cannot wait": "Yes I approve C1-C5", if nothing contradicts). Quick audit of B1-B6 first: every changed option read against its card, two reflection views, two stakeholder stories and the APA lines - no contradiction; one older mismatch found and fixed (C4: the draw's reflection said "extra slips for the sickest" while its card says "for the most vulnerable"). C1 the scenario-3 vulnerable line -> "most ill right now, or hardest to reach"; C2 one sentence on "Treat the 20 who are sickest"; C3 one clause on the draw's summary; C5 the B3 sentence split in two. Read side by side afterwards: no contradiction. Full chain green; the running study serves every new sentence; round-2 sheets rebuilt with the new words (same letter orders, keys unchanged) and the three round-2 folders refreshed before anyone used them.
 - **2026-09-26. Round 2 also rates the performance numbers** (Waseem: "I want them to rate every performance metrics numbers also"). Each round-2 folder now holds a second task: `sheet_measures.md` (all six options of scenarios 1-4, the five measures with the general meaning and each scenario's own reading from METRIC_DEFS - the words of the participant's performance panel - higher always better, no number, no card performance label), a second no-tools agent type `blind-measure-rater` (tools/blind_measure_instructions.md; rank, score 0-100 and a reason per option and measure), and run-book steps for it (probe both agent types; Step 2b; answer_measures.json). Own shuffles and check codes; the value task is unchanged from round 1. `compare_ratings.cjs --measures` compares the answers with each option's metrics (REPORT_MEASURES.md). Tested end to end on pretend answers (120 option-measure scores; a planted 55-against-5 was flagged). The three folders were refreshed before anyone used them.
 - **2026-09-26. Rater study round 2 collected** (Opus, Sonnet, Haiku; values on scenarios 2-4 with the Part B and C1-C5 words, and - for the first time - the five performance numbers of every option in scenarios 1-4). Blindness checked in the logs: right models, only SubagentHandback (Haiku none), every sheet copied exactly EXCEPT Haiku's performance sheet, where its organizer added one sentence to the draw's "What happens" line ("Everyone is selected from the pool that has already been flagged.") - it restates the card, and no flag is on that option; Sonnet has one extra value run that never answered. VALUES: raters agree with each other ICC 0.90 (round 1: 0.861); with the study 0.834 on scenarios 2-4. The words moved the raters toward the study in most places (seat swap helped 78 -> 67; draw vulnerable 83 -> 76; Redraw helped 89 -> 81, now below Keep every care visit 88; cut-only gain 45 -> 30, exactly the study; Leave immediately vs the ridge road on gain now 91 vs 92) and not in one (survival gain 80 -> 79, study 39); the clarified scenario-3 harm line exposed two numbers (survival harm 48, raters 23; Hold some doses back 64, raters 28 but split), order 0.83 -> 0.09. "Hold some doses back" now reads 84 on protecting the vulnerable, above the draw (76). Consensus value flags: S3 survival harm 48/23 and gain 39/79, S3 years helped 43/64, S4 Redraw harm 47/76 (#12, both rounds), S4 Shorten helped 92/72, S4 rural helped 45/25; #13 (Keep every care visit harm 70) reads 43 but split. PERFORMANCE: ICC 0.73, with the study 0.737; 70 of 120 within 10 points, 97 within 20; 14 consensus flags, mostly durability and reversibility (durability order 0.03-0.60; S1 sealed respirator durability 76/17, reliability 54/87; S2 ridge road durability 70/23; S3 years speed 24/61; S4 cut-only speed 40/74). Reports: Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md. Nothing in the study changed.
+- **2026-09-26. Fix 7 plan written and tested** (Waseem: "write the Fix 7 plan and test it", "test also the new proposed Performance distribution"). Part A: eight value numbers (#12 / #13 with their helped numbers, scenario 3 survival harm and gain, years helped, the rural routes' helped); Part B: fourteen performance numbers, two of them half way because at the raters' average they break G6 and G7. Measured: position check 3.3x -> 5.4x; VCI and Stability 0-1 point except the performance chaser (79 -> 76, 82 -> 80); performance by kind of participant 0-2 points; best fit changes for 19 (S3) and 26 (S4) steady pretend people in 100; one scripted check V8 lands on 50. Kept: Shorten every visit helped 92 (at 82 it fits 0.2 in 100). Nothing implemented.
