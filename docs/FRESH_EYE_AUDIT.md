@@ -1259,6 +1259,11 @@ different label or card order in this scenario, and scenario 2 only. No real par
 5. The fit numbers, labels and card order a participant sees in scenario 2 change, so it is a dated
    screen change (HOW_TO_ANALYZE 4.9).
 
+**Waseem asked three questions before approving (26 September); answers measured on the real code, in memory only:**
+1. *Could the confirm-keep question read "delivers X and gives up X. Do you put X above X?"* No. When the two values are the same, the page already switches to "This option is built around X, but delivers less of it than your earlier answers asked for. Do you stand by choosing it?". That happens in 1.6% of possible keeps, the same before and after the change, and no option has a tie at its top value either way.
+2. *Keep "Leave immediately" the best fit for at least 1 in 100?* Yes: vulnerable **35** instead of 25 gives 1.1% (steady answerers) and 3.1% (random answerers); 25 gives 0.5% / 1.9%. 35 keeps the order the card supports (give seats 97 > fill 62 > convoy 60 > school 56 > early 35 > ridge 18). Revised proposal: 62 and **35**.
+3. *Reach 3x on the position check with these changes?* No: 2.80x -> 2.92x at most. The weak profile asks little of every value (20/25/30/20); the six care-visit options sit almost equally far from it (room 9.5, counted twice because scenarios 4 and 5 are twins), and the care menu sits farther from it on average than the cancer menu (33.9 against 29.0). Only other option numbers or the check itself could close the gap; changing numbers to pass the check is against the project rule. Stays Phase 2 (P1).
+
 **If approved, the steps.** (1) Change the two numbers in block5Scenarios.ts with a "VALUE AUDIT, third
 pass" comment quoting the card lines. (2) Update the 2g table in the scenario checklist, a dated note in
 CLAUDE.md, the 4.9 list in HOW_TO_ANALYZE. (3) Run the full chain and every separate check; re-run
