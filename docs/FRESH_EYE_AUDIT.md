@@ -1536,6 +1536,48 @@ the group then).
 | The performance chaser's scores move most | Stated: it follows the top performer, which changes in scenario 3 |
 | The raters agree less on performance (ICC 0.73) | Only numbers all three agree on move; the rest wait for Part C words |
 
+## Fix 8 plan: performance on a 0-100 scale inside each scenario (written 26 September, waiting for approval)
+
+Waseem: "I want the Performance chaser to be 100, and I want the performance to be distributed from 0 to 100,
+now the range [is] between 50 to 70." Why it is narrow today: an option's performance is the mean of its five
+numbers, the options of one scenario sit between about 43 and 72, and a participant's performance averages four
+such choices - so almost everybody lands at 50-70 and even the pretend participant who always takes the best
+performer gets only 70. **Nothing is implemented.** Tested on scratch copies (scratch `perf_scale.cjs`).
+
+**Two ways to stretch it, both measured inside each scenario** (the study's own rule: "scores are relative to the
+situation"):
+- **A. Range (recommended):** the scenario's best performer 100, its worst 0, the rest in proportion to their
+  distance. Keeps the size of the gaps: in scenario 1 the convoy (69) is 100 and the service road (68) is 94.
+- **B. Place:** 1st 100, 2nd 80 ... 6th 0, like VCI's place weights. Blind to gaps: 69 against 68 becomes 100
+  against 80.
+
+**Measured (2,000 pretend people per kind; today's numbers, raw -> A -> B, mean):** performance chaser 70 -> 100
+-> 100; always the worst performer 49 -> 0 -> 3; random 59 -> 51 -> 51; always the best fit 62 -> 65 -> 64 (p10 27,
+p90 96 on A); true to top value 57 -> 38 -> 37; changes value every scenario 56 -> 37 -> 36; always the worst fit
+55 -> 33 -> 30. With the Fix 7 numbers the picture is the same within 1-5 points. VCI and Stability do not use
+performance and do not move.
+
+**What would change (the plan):**
+1. `performanceScore` stays the raw mean (the design checks G1-G7 keep reading it); a new scenario-relative score
+   (A or B) is computed next to it, saved on every scenario row with a scale tag (as the fit score was), and the
+   participant's performance becomes its average over the four decisions. Old rows keep their raw number under
+   its own name, never pooled.
+2. Screens: the dashboard's "Overall", the preview, and the results page's performance bars use the new score.
+   The five measure bars can stay as today (their own "higher is better" numbers), with one line saying what
+   Overall now means - or be stretched too (then Overall is no longer their plain average either way).
+3. The results page's "fit your values well but performed below 45" count was drawn on the raw scale and needs a
+   new line (for example below 50 = the lower half of the situation's range).
+4. The database headline, the wish-minus-decision performance numbers and the position effect's performance
+   halves follow the new scale; `validate:position`, `validate:twins` and `validate:dbshape` re-run, and new checks:
+   the chaser scores 100, the worst performer 0, each scenario's best option 100 and worst 0, scenarios 4 and 5 read
+   the same.
+5. Docs: CLAUDE.md dated section, HOW_TO_READ (the new field), HOW_TO_ANALYZE 4.9 (a screen change) and a note that
+   performance is now a place inside each situation.
+
+**Risks:** a relative scale stretches small raw gaps (our scenarios span 16-27 raw points, so about x4-x6); a
+change to a scenario's best or worst option rescales that whole scenario (Fix 7's workers durability would make
+it scenario 3's best performer); participants see a different Overall. Best done after Fix 7, on the final numbers.
+
 ## Launch plan: everything left, done by Waseem and Claude only (written 26 September, waiting for approval)
 
 Waseem has no human raters and an advisor who reads only finished work. So everything below is done
@@ -1683,3 +1725,4 @@ thesis says so.
 - **2026-09-26. Round 2 also rates the performance numbers** (Waseem: "I want them to rate every performance metrics numbers also"). Each round-2 folder now holds a second task: `sheet_measures.md` (all six options of scenarios 1-4, the five measures with the general meaning and each scenario's own reading from METRIC_DEFS - the words of the participant's performance panel - higher always better, no number, no card performance label), a second no-tools agent type `blind-measure-rater` (tools/blind_measure_instructions.md; rank, score 0-100 and a reason per option and measure), and run-book steps for it (probe both agent types; Step 2b; answer_measures.json). Own shuffles and check codes; the value task is unchanged from round 1. `compare_ratings.cjs --measures` compares the answers with each option's metrics (REPORT_MEASURES.md). Tested end to end on pretend answers (120 option-measure scores; a planted 55-against-5 was flagged). The three folders were refreshed before anyone used them.
 - **2026-09-26. Rater study round 2 collected** (Opus, Sonnet, Haiku; values on scenarios 2-4 with the Part B and C1-C5 words, and - for the first time - the five performance numbers of every option in scenarios 1-4). Blindness checked in the logs: right models, only SubagentHandback (Haiku none), every sheet copied exactly EXCEPT Haiku's performance sheet, where its organizer added one sentence to the draw's "What happens" line ("Everyone is selected from the pool that has already been flagged.") - it restates the card, and no flag is on that option; Sonnet has one extra value run that never answered. VALUES: raters agree with each other ICC 0.90 (round 1: 0.861); with the study 0.834 on scenarios 2-4. The words moved the raters toward the study in most places (seat swap helped 78 -> 67; draw vulnerable 83 -> 76; Redraw helped 89 -> 81, now below Keep every care visit 88; cut-only gain 45 -> 30, exactly the study; Leave immediately vs the ridge road on gain now 91 vs 92) and not in one (survival gain 80 -> 79, study 39); the clarified scenario-3 harm line exposed two numbers (survival harm 48, raters 23; Hold some doses back 64, raters 28 but split), order 0.83 -> 0.09. "Hold some doses back" now reads 84 on protecting the vulnerable, above the draw (76). Consensus value flags: S3 survival harm 48/23 and gain 39/79, S3 years helped 43/64, S4 Redraw harm 47/76 (#12, both rounds), S4 Shorten helped 92/72, S4 rural helped 45/25; #13 (Keep every care visit harm 70) reads 43 but split. PERFORMANCE: ICC 0.73, with the study 0.737; 70 of 120 within 10 points, 97 within 20; 14 consensus flags, mostly durability and reversibility (durability order 0.03-0.60; S1 sealed respirator durability 76/17, reliability 54/87; S2 ridge road durability 70/23; S3 years speed 24/61; S4 cut-only speed 40/74). Reports: Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md. Nothing in the study changed.
 - **2026-09-26. Fix 7 plan written and tested** (Waseem: "write the Fix 7 plan and test it", "test also the new proposed Performance distribution"). Part A: eight value numbers (#12 / #13 with their helped numbers, scenario 3 survival harm and gain, years helped, the rural routes' helped); Part B: fourteen performance numbers, two of them half way because at the raters' average they break G6 and G7. Measured: position check 3.3x -> 5.4x; VCI and Stability 0-1 point except the performance chaser (79 -> 76, 82 -> 80); performance by kind of participant 0-2 points; best fit changes for 19 (S3) and 26 (S4) steady pretend people in 100; one scripted check V8 lands on 50. Kept: Shorten every visit helped 92 (at 82 it fits 0.2 in 100). Nothing implemented.
+- **2026-09-26. Fix 8 plan written** (Waseem: the performance chaser should be 100 and performance should spread over 0-100, not 50-70). Tested two scenario-relative scales: range (best 100, worst 0, in proportion) and place (100/80/60/40/20/0). Both give the chaser 100, the worst performer 0-3, random 51; recommended: range, after Fix 7. Nothing implemented.
