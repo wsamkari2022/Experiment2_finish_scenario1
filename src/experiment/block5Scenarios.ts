@@ -1246,7 +1246,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The most vulnerable first. The 120 are sorted by how ill they are, and the 20 worst off are treated.",
         gains: "The 20 least able to cope are treated, and nobody is ranked by how useful their recovery would be.",
         consequence: "The 20 in the worst condition are treated first. But they respond slowly and some will not recover, so fewer of the 120 are alive at the end of the year than under any other rule here.",
-        givesUp: "Lives. Doses go to patients who may be too ill to recover even with treatment, and the 100 who wait include people who would have recovered.",
+        givesUp: "Lives. Doses go to patients who may be too ill to recover even with treatment, and the 100 who wait include people who would have recovered. Being the most ill today is not the same as running out of time. Some of the 20 could have waited a month, and some who wait are less ill today but will be past treating by then.",
         moralTension: "Do you treat the people who need help most, even if that means fewer people survive?",
         /* VALUE AUDIT, 18 September 2026: How many are helped 40 -> 35.
            Its preview: "fewer of the 120 are alive at the end of the year than under any other rule here" - so it
@@ -1300,7 +1300,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         summary: "The most life-years. Each of the 120 is estimated for the years a dose would add, and the 20 highest are treated.",
         gains: "The 20 doses buy more future years of life than they could under any other rule here.",
         consequence: "The years bought are the most this month's supply can buy. But the estimate rewards having longer left, so most of the 100 who wait are the oldest patients on the list.",
-        givesUp: "Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated. A younger patient with a modest chance of responding can also come ahead of an older one who would almost surely recover, so fewer of the 20 come through than under the rule that ranks by odds.",
+        givesUp: "Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated. A younger patient with a modest chance of responding can also come ahead of an older one who would almost surely recover. So fewer of the 20 come through than under the rule that ranks by odds.",
         moralTension: "Is a year of life the right way to measure a person, when it means the old always lose?",
         fingerprint: {
           vulnerabilityProtectionSensitivity: 18,
@@ -1328,7 +1328,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           harm: "The rule you chose left them out of the draw, and the dose went to someone less likely to come through",
           benefitCase: "are one of the 45 patients who will be past treating before next month's supply comes",
           benefitLost: "Under this rule no dose goes to someone who could still wait while they go without",
-          act: "You put the names of the {a|45} patients who cannot wait into a sealed draw, with extra slips for the sickest. You approve whichever {a|20} come out.",
+          act: "You put the names of the {a|45} patients who cannot wait into a sealed draw, with extra slips for the most vulnerable. You approve whichever {a|20} come out.",
           parallelAct: "{w|A winch operator lifts only from the roofs the water will reach first, and draws by lot among them, with extra slips for the weakest.}",
           consequences: {
             soon: "20 doses go out within the hour, to patients who would have been past treating by next month.",
@@ -1353,7 +1353,7 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           detail: "the 45 the clinic has flagged as past treating by next month go in, with a few extra slips for the most vulnerable, and 20 are drawn.",
         },
         title: "Draw the 20 names from the patients who cannot wait",
-        summary: "The clinic already flags the 45 patients who will be past treating before next month's supply comes. The 20 are drawn from those 45, with a few extra slips for the most vulnerable. Everyone who can wait goes back onto next month's list.",
+        summary: "The clinic already flags the 45 patients who will be past treating before next month's supply comes — the ones whose cancer is moving fastest, whether or not they are the most ill today. The 20 are drawn from those 45, with a few extra slips for the most vulnerable. Everyone who can wait goes back onto next month's list.",
         gains: "Nobody who would lose their chance for good is passed over for somebody who could still wait, and among the 45 nobody is scored or ranked.",
         consequence: "The draw takes a morning, from a list the clinic already keeps. But the patients who cannot wait are the ones least likely to respond, and chance does not know which of them will, so fewer of the 20 come through than under the rule that ranks by odds.",
         givesUp: "Results. The doses go to the patients with the least time left, who are also the least likely to respond.",

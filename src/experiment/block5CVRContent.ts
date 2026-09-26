@@ -234,7 +234,7 @@ const CANCER: ScenarioCVRContent = {
     outcomeAggregationSensitivity: "the larger total benefit these doses could achieve",
   },
   valueHere: {
-    vulnerabilityProtectionSensitivity: "treating first the patients who are sickest or hardest to reach",
+    vulnerabilityProtectionSensitivity: "treating first the patients who are most ill right now, or hardest to reach",
     groupSizeSensitivity: "keeping as few patients as possible from becoming too sick to treat before next month's supply comes",
     gainResponsivenessSensitivity: "how many years of life the 20 doses add",
     outcomeAggregationSensitivity: "how many lives are saved, directly or through the people others depend on",

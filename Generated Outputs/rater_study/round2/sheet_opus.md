@@ -98,7 +98,7 @@ Each scenario below also says what each value means in that scenario.
 
 **What each value means in this scenario.**
 
-- Protecting the vulnerable: treating first the patients who are sickest or hardest to reach.
+- Protecting the vulnerable: treating first the patients who are most ill right now, or hardest to reach.
 - Reducing harm: keeping as few patients as possible from becoming too sick to treat before next month's supply comes.
 - How much is gained: how many years of life the 20 doses add.
 - How many are helped: how many lives are saved, directly or through the people others depend on.
@@ -119,14 +119,14 @@ Each scenario below also says what each value means in that scenario.
 - How: Ranked by years of life gained - each of the 120 is modeled for the years a dose would add, and the top 20 are treated.
 - Summary: The most life-years. Each of the 120 is estimated for the years a dose would add, and the 20 highest are treated.
 - What it gains: The 20 doses buy more future years of life than they could under any other rule here.
-- What it gives up: Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated. A younger patient with a modest chance of responding can also come ahead of an older one who would almost surely recover, so fewer of the 20 come through than under the rule that ranks by odds.
+- What it gives up: Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated. A younger patient with a modest chance of responding can also come ahead of an older one who would almost surely recover. So fewer of the 20 come through than under the rule that ranks by odds.
 - What happens (shown after choosing it): The years bought are the most this month's supply can buy. But the estimate rewards having longer left, so most of the 100 who wait are the oldest patients on the list.
 - The question it raises: Is a year of life the right way to measure a person, when it means the old always lose?
 
 ### Option C: Draw the 20 names from the patients who cannot wait
 
 - How: A sealed draw among the patients who cannot wait - the 45 the clinic has flagged as past treating by next month go in, with a few extra slips for the most vulnerable, and 20 are drawn.
-- Summary: The clinic already flags the 45 patients who will be past treating before next month's supply comes. The 20 are drawn from those 45, with a few extra slips for the most vulnerable. Everyone who can wait goes back onto next month's list.
+- Summary: The clinic already flags the 45 patients who will be past treating before next month's supply comes — the ones whose cancer is moving fastest, whether or not they are the most ill today. The 20 are drawn from those 45, with a few extra slips for the most vulnerable. Everyone who can wait goes back onto next month's list.
 - What it gains: Nobody who would lose their chance for good is passed over for somebody who could still wait, and among the 45 nobody is scored or ranked.
 - What it gives up: Results. The doses go to the patients with the least time left, who are also the least likely to respond.
 - What happens (shown after choosing it): The draw takes a morning, from a list the clinic already keeps. But the patients who cannot wait are the ones least likely to respond, and chance does not know which of them will, so fewer of the 20 come through than under the rule that ranks by odds.
@@ -155,7 +155,7 @@ Each scenario below also says what each value means in that scenario.
 - How: Worked down a severity list - the 120 are sorted by how ill they are, and the 20 in the worst condition are treated.
 - Summary: The most vulnerable first. The 120 are sorted by how ill they are, and the 20 worst off are treated.
 - What it gains: The 20 least able to cope are treated, and nobody is ranked by how useful their recovery would be.
-- What it gives up: Lives. Doses go to patients who may be too ill to recover even with treatment, and the 100 who wait include people who would have recovered.
+- What it gives up: Lives. Doses go to patients who may be too ill to recover even with treatment, and the 100 who wait include people who would have recovered. Being the most ill today is not the same as running out of time. Some of the 20 could have waited a month, and some who wait are less ill today but will be past treating by then.
 - What happens (shown after choosing it): The 20 in the worst condition are treated first. But they respond slowly and some will not recover, so fewer of the 120 are alive at the end of the year than under any other rule here.
 - The question it raises: Do you treat the people who need help most, even if that means fewer people survive?
 

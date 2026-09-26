@@ -1108,6 +1108,9 @@ sentence each (the survival rule counts lives, not years; the years rule can put
 responder ahead; Redraw's other 100 hours still come out of visits, and its money line; no money-losing driving
 is saved when cutting only where family covers, or when protecting full visits). Scenario 5's copies match. No
 number changed; the draw (#8) stays 56; scenarios 2-4 go back to the three raters (round 2) before #12 and #13.
+The same evening (C1-C5): scenario 3's "Protecting the vulnerable" became "treating first the patients who are most
+ill right now, or hardest to reach"; the "sickest" card and the draw card each gained a sentence separating being
+most ill today from running out of time; the draw's reflection says "most vulnerable" like its card.
 
 Numbers are vulnerable · harm · gained · helped. Each redesigned option carries a `REDESIGNED`
 comment with every number and metric justified from its card; the eight numbers carry `VALUE AUDIT,

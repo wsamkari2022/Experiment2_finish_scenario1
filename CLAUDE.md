@@ -365,8 +365,18 @@ their average (the researcher's approval, audit Fix 6 Parts A and C):
   "Protect full visits" each add that none of the money-losing driving is saved (scenario 5's copies too).
   Every changed option's two reflection views and two stakeholder stories were re-read against the new
   words; the lens, story, APA and MCF checks pass. No number moved with the words.
-- **Still open**: the scenario-3 draw (#8) stays 56 (the researcher's choice): "sickest" and "cannot wait"
-  overlap in scenario 3, which goes to the advisor. Scenarios 2-4 are being re-rated by the same three raters
+- **"Most ill today" is not "running out of time" (C1-C5, same evening, the researcher's approval).** In
+  scenario 3 the two ideas had read as one ("sickest" = "cannot wait"). Now "Protecting the vulnerable" means
+  "treating first the patients who are most ill right now, or hardest to reach"; "Treat the 20 who are
+  sickest" adds "Being the most ill today is not the same as running out of time. Some of the 20 could have
+  waited a month, and some who wait are less ill today but will be past treating by then."; the draw's 45 are
+  "the ones whose cancer is moving fastest, whether or not they are the most ill today"; the draw's own
+  reflection now says "extra slips for the most vulnerable" as its card does (it said "for the sickest"); and
+  the years rule's long new sentence is split in two. Read side by side with both cards' reflections and
+  stories: no contradiction (each new sentence says "some"; the stories already describe one patient of
+  each kind).
+- **Still open**: the scenario-3 draw (#8) stays 56 (the researcher's choice), now with words that say why it
+  is not the "most ill" option. Scenarios 2-4 are being re-rated by the same three raters
   on the new words (round 2, `Generated Outputs/rater_study/round2`); #12 and #13 (scenario 4, Reducing harm
   of "Redraw the routes" and "Keep every care visit") wait for them. Plan: docs/FRESH_EYE_AUDIT.md, "Fix 6 plan".
 
