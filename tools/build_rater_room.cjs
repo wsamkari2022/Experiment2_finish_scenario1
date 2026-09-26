@@ -1,0 +1,141 @@
+/**
+ * build_rater_room.cjs — makes the four "rater rooms": one folder per blind rater, OUTSIDE this
+ * project, where each rater is run in its own Claude Code session (audit Fix 3 Step B).
+ *
+ * WHY SEPARATE FOLDERS (26 September 2026). The researcher's rule for the raters: they must not
+ * modify the code or reach the code. Two things make a session opened in this project unsafe for that:
+ *   - agent types in .claude/agents load only when a session starts, so the no-tools rater cannot be
+ *     added to a session already running;
+ *   - a Claude Code session, and its helpers, read the project's CLAUDE.md, and CLAUDE.md quotes real
+ *     option value numbers (for example the two wildfire numbers of 26 September). A rater that saw
+ *     them would no longer be blind.
+ * Each room holds ONLY what its rater may see: its own shuffled sheet, the rater as a no-tools agent
+ * type, a probe file and a run-book. No CLAUDE.md, no code, and never the answer keys (letter ->
+ * option id), which stay in Generated Outputs/rater_study in this project.
+ *
+ * HOW A ROOM IS USED. The researcher opens a new Code session in the room, picks the room's model and
+ * types "Follow RUNBOOK.md". That session only organizes: it proves with a probe that the rater has no
+ * tools and no project notes, hands the sheet to ONE rater (the no-tools agent type, running on the
+ * session's own model), and saves the answer unchanged to answer.json, with run_notes.md beside it.
+ *
+ *   node tools/build_rater_sheet.cjs "Generated Outputs/rater_study"
+ *   node tools/build_rater_room.cjs "<parent folder outside this project>"
+ * Afterwards:
+ *   node tools/compare_ratings.cjs "Generated Outputs/rater_study" --rooms "<same parent folder>"
+ */
+const fs = require("node:fs");
+const path = require("node:path");
+
+const PROJECT = path.resolve(__dirname, "..");
+const STUDY = path.join(PROJECT, "Generated Outputs", "rater_study");
+const PARENT = process.argv[2] ? path.resolve(process.argv[2]) : null;
+if (!PARENT) { console.error("  usage: node tools/build_rater_room.cjs <parent folder outside this project>"); process.exit(1); }
+if (PARENT.toLowerCase().startsWith(PROJECT.toLowerCase())) { console.error("  the rooms must be OUTSIDE this project"); process.exit(1); }
+
+const RATERS = [["opus", "Claude Opus"], ["sonnet", "Claude Sonnet"], ["fable", "Claude Fable"], ["haiku", "Claude Haiku"]];
+const instructions = fs.readFileSync(path.join(__dirname, "blind_rater_instructions.md"), "utf8");
+const PROBE_WORD = "harbor-lantern-42";
+
+const probeQuestion = "This is a setup check, not the rating task. Answer in plain text, three numbered lines. "
+  + "1) List by name every tool you are able to call right now; write NONE if there are none. "
+  + "2) There is a file named probe.txt in your working folder. Open it and tell me the probe word inside; "
+  + "if you cannot open files, write COULD NOT READ. "
+  + "3) Apart from your instructions and this message, do you see any project notes, CLAUDE.md, memory or other "
+  + "files in your context? Quote the first line of any you see, or write NOTHING ELSE.";
+
+function runbook(model) {
+  return `# Run-book: one blind rater (${model})
+
+You are the ORGANIZER of one blind rating for Waseem's PhD study. You are not the rater. Your job is
+to prove the rater is blind, hand it the sheet, and save its answer unchanged. Tell Waseem in plain,
+simple English what happened at each step.
+
+Rules for you, the organizer:
+- Stay inside this folder. Do not open, search or list anything outside it. Do not look for the
+  study, its code, or the other raters' folders.
+- Do not rate the options yourself, and never change, fix, shorten or comment on the rater's answer.
+
+## Step 0 - check your model
+
+This folder is for **${model}**. Your system prompt names the model you are running as. If it is not
+${model}, stop and ask Waseem to switch the model for this session.
+
+## Step 1 - prove the rater has no tools (the probe)
+
+Start ONE agent of type \`blind-value-rater\` in the foreground. Do not pass a model: it must run on
+your own model. Give it exactly this prompt:
+
+> ${probeQuestion}
+
+The probe PASSES only if the reply is: 1) NONE, 2) COULD NOT READ (it must NOT contain the word
+inside probe.txt), 3) NOTHING ELSE - and the agent made no tool call. Save the reply, word for
+word, to \`probe_result.md\`, with one line saying PASSED or FAILED.
+If the agent type is not found, or the probe fails in any way, STOP. Start no rater and tell Waseem
+exactly what came back.
+
+## Step 2 - the rating
+
+Only after the probe passes. Read \`sheet.md\` in full (about 6,300 words; if your reading tool splits
+it, read every part). Then start ONE agent of type \`blind-value-rater\` in the foreground, again
+with no model parameter, with this prompt: the line
+"Here is your rating sheet. Follow your instructions and reply with the JSON block only."
+followed by a blank line and the WHOLE of sheet.md, copied exactly, word for word, down to its last
+line ("End of sheet. Check code: ..."). Never shorten, summarise, fix or reorder the sheet, and add
+nothing else: no hint, no example answer, nothing about the study.
+
+## Step 3 - save the answer exactly as it came back
+
+Save the rater's JSON block to \`answer.json\`, unchanged: remove only the \`\`\`json fence around it.
+Then check three things, without changing anything:
+1. It is valid JSON.
+2. Its \`sheet_check_code\` is exactly the code on the last line of sheet.md.
+3. It has all 4 scenarios, all 4 values in each (vulnerable, harm, gain, helped), and all 6 letters
+   A-F in every ranking and every scores list.
+If any check fails, run the rater ONE more time with the same prompt, save the new answer over
+answer.json, and write down why.
+
+## Step 4 - notes, and hand back
+
+Write \`run_notes.md\` with: the model you ran on (its full name), the probe result, whether the
+rater ran once or twice and why, and the rater's own \`unclear\` and \`comments\` lists copied as they
+are. Then tell Waseem this rater is done and the answer is in answer.json.
+`;
+}
+
+const made = [];
+for (const [key, model] of RATERS) {
+  const room = path.join(PARENT, `rater_${key}`);
+  if (fs.existsSync(path.join(room, "answer.json"))) { console.error(`  ${room} already holds an answer: not touched`); process.exit(1); }
+  fs.mkdirSync(path.join(room, ".claude", "agents"), { recursive: true });
+
+  /* 1. the rater, as an agent type with no tools, on the session's own model. disallowedTools is a
+        second lock in case an empty tools list is ever read as "all tools"; the probe checks both. */
+  fs.writeFileSync(path.join(room, ".claude", "agents", "blind-value-rater.md"), [
+    "---",
+    "name: blind-value-rater",
+    "description: Blind rater for a research study. Rates option cards on four values from the text in the message only. Has no tools. Use only when RUNBOOK.md says so.",
+    "tools: []",
+    "disallowedTools: Read, Write, Edit, MultiEdit, NotebookEdit, Bash, PowerShell, Glob, Grep, LS, WebFetch, WebSearch, Agent, Task, Skill",
+    "model: inherit",
+    "---",
+    "",
+    instructions,
+  ].join("\n"));
+
+  /* 2. this rater's own sheet (never a key), the probe, the run-book */
+  const sheet = fs.readFileSync(path.join(STUDY, `sheet_${key}.md`), "utf8");
+  const code = JSON.parse(fs.readFileSync(path.join(STUDY, `key_${key}.json`), "utf8")).sheet_check_code;
+  if (!code || !sheet.trimEnd().endsWith(`Check code: ${code}`)) { console.error(`  sheet_${key}.md has no check code: rebuild the sheets`); process.exit(1); }
+  fs.writeFileSync(path.join(room, "sheet.md"), sheet);
+  fs.writeFileSync(path.join(room, "probe.txt"), `The probe word is: ${PROBE_WORD}\n`);
+  fs.writeFileSync(path.join(room, "RUNBOOK.md"), runbook(model));
+
+  /* 3. nothing a rater must not see may be in the room */
+  const bad = [];
+  const walk = (d) => { for (const f of fs.readdirSync(d)) { const p = path.join(d, f); if (fs.statSync(p).isDirectory()) walk(p); else if (/^key_|CLAUDE(\.local)?\.md$|\.(ts|tsx|js|cjs|mjs)$/i.test(f)) bad.push(p); } };
+  walk(room);
+  if (bad.length) { console.error(`  NOT BLIND: ${bad.join(", ")}`); process.exit(1); }
+  made.push(`${room}  (${model})`);
+}
+console.log("  four rater rooms ready - each: its own sheet, the no-tools rater, a probe, a run-book; no key, no code, no CLAUDE.md");
+for (const m of made) console.log(`    ${m}`);

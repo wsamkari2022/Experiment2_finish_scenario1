@@ -1,0 +1,35 @@
+{
+  "scenario_1": {
+    "A": "chem_walk_out_on_foot",
+    "B": "chem_reserved_respirator",
+    "C": "chem_shuttle_loop",
+    "D": "chem_seal_and_shelter",
+    "E": "chem_service_road_run",
+    "F": "chem_registered_convoy"
+  },
+  "scenario_2": {
+    "A": "fire_closed_ridge_road",
+    "B": "fire_shelter_hill_school",
+    "C": "fire_early_highway_run",
+    "D": "fire_fill_every_seat",
+    "E": "fire_assigned_convoy_slot",
+    "F": "fire_wait_accessible_bus"
+  },
+  "scenario_3": {
+    "A": "cancer_prioritize_vulnerable",
+    "B": "cancer_weighted_lottery",
+    "C": "cancer_max_life_years",
+    "D": "cancer_essential_workers",
+    "E": "cancer_max_total_lives",
+    "F": "cancer_reserve_underserved"
+  },
+  "scenario_4": {
+    "A": "care_shorten_every_visit",
+    "B": "care_equal_share",
+    "C": "care_cut_where_family_covers",
+    "D": "care_profitable_rounds",
+    "E": "care_highest_need_first",
+    "F": "care_rebuild_rounds_by_travel"
+  },
+  "sheet_check_code": "amber-falcon-17"
+}

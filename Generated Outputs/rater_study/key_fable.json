@@ -1,0 +1,35 @@
+{
+  "scenario_1": {
+    "A": "chem_walk_out_on_foot",
+    "B": "chem_service_road_run",
+    "C": "chem_shuttle_loop",
+    "D": "chem_seal_and_shelter",
+    "E": "chem_registered_convoy",
+    "F": "chem_reserved_respirator"
+  },
+  "scenario_2": {
+    "A": "fire_fill_every_seat",
+    "B": "fire_early_highway_run",
+    "C": "fire_shelter_hill_school",
+    "D": "fire_closed_ridge_road",
+    "E": "fire_assigned_convoy_slot",
+    "F": "fire_wait_accessible_bus"
+  },
+  "scenario_3": {
+    "A": "cancer_weighted_lottery",
+    "B": "cancer_max_life_years",
+    "C": "cancer_essential_workers",
+    "D": "cancer_prioritize_vulnerable",
+    "E": "cancer_max_total_lives",
+    "F": "cancer_reserve_underserved"
+  },
+  "scenario_4": {
+    "A": "care_shorten_every_visit",
+    "B": "care_cut_where_family_covers",
+    "C": "care_equal_share",
+    "D": "care_profitable_rounds",
+    "E": "care_highest_need_first",
+    "F": "care_rebuild_rounds_by_travel"
+  },
+  "sheet_check_code": "silver-meadow-23"
+}

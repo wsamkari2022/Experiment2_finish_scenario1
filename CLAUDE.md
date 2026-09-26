@@ -429,6 +429,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
 | `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 57-66 in 100 steady, 46-54 random, chance about 17 (26 September 2026) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
+| `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers |
 
 ## Two files that carry rules rather than code
 
