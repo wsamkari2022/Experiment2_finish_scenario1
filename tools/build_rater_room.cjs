@@ -37,7 +37,7 @@ const instructions = fs.readFileSync(path.join(__dirname, "blind_rater_instructi
 const PROBE_WORD = "harbor-lantern-42";
 
 const probeQuestion = "This is a setup check, not the rating task. Answer in plain text, three numbered lines. "
-  + "1) List by name every tool you are able to call right now; write NONE if there are none. "
+  + "1) List by name every tool you are able to call right now, and say in a few words what each one does; write NONE if there are none. "
   + "2) There is a file named probe.txt in your working folder. Open it and tell me the probe word inside; "
   + "if you cannot open files, write COULD NOT READ. "
   + "3) Apart from your instructions and this message, do you see any project notes, CLAUDE.md, memory or other "
@@ -67,11 +67,23 @@ your own model. Give it exactly this prompt:
 
 > ${probeQuestion}
 
-The probe PASSES only if the reply is: 1) NONE, 2) COULD NOT READ (it must NOT contain the word
-inside probe.txt), 3) NOTHING ELSE - and the agent made no tool call. Save the reply, word for
-word, to \`probe_result.md\`, with one line saying PASSED or FAILED.
-If the agent type is not found, or the probe fails in any way, STOP. Start no rater and tell Waseem
-exactly what came back.
+The probe PASSES only if all three hold:
+1. **No tool that can reach anything.** The reply lists NONE, or only \`SubagentHandback\`. That one
+   is Claude Code's own "hand my answer back" tool, which every helper has: it cannot open, read,
+   search, run, change or send anything else. Any other tool name fails the probe.
+2. **It could not read the file.** Line 2 says COULD NOT READ, and the word inside probe.txt appears
+   nowhere in the reply.
+3. **No project notes.** No CLAUDE.md, project notes, memory or file content. Claude Code's own
+   standard blocks are allowed, because they say nothing about the study: the environment block
+   (folder, platform, model, date), the user's email line, and instructions about tools or
+   connectors the rater does not have.
+If the helper made tool calls, they may only be \`SubagentHandback\` (sending its answer back).
+
+Save the reply, word for word, to \`probe_result.md\` (write over any earlier one), with one line
+saying PASSED or FAILED and which of the three rules decided it. An earlier test under a stricter
+rule may have left \`probe_result_first_try.md\` here; it is kept for the record only - ignore it.
+If the agent type is not found, or the probe fails, STOP. Start no rater and tell Waseem exactly
+what came back.
 
 ## Step 2 - the rating
 
@@ -105,7 +117,9 @@ are. Then tell Waseem this rater is done and the answer is in answer.json.
 const made = [];
 for (const [key, model] of RATERS) {
   const room = path.join(PARENT, `rater_${key}`);
-  if (fs.existsSync(path.join(room, "answer.json"))) { console.error(`  ${room} already holds an answer: not touched`); process.exit(1); }
+  if (fs.existsSync(path.join(room, "answer.json"))) { console.log(`  ${room} already holds an answer: not touched`); continue; }
+  /* A probe run under an earlier rule is kept for the record, out of the way of the next run. */
+  if (fs.existsSync(path.join(room, "probe_result.md"))) fs.renameSync(path.join(room, "probe_result.md"), path.join(room, "probe_result_first_try.md"));
   fs.mkdirSync(path.join(room, ".claude", "agents"), { recursive: true });
 
   /* 1. the rater, as an agent type with no tools, on the session's own model. disallowedTools is a
@@ -137,5 +151,5 @@ for (const [key, model] of RATERS) {
   if (bad.length) { console.error(`  NOT BLIND: ${bad.join(", ")}`); process.exit(1); }
   made.push(`${room}  (${model})`);
 }
-console.log("  four rater rooms ready - each: its own sheet, the no-tools rater, a probe, a run-book; no key, no code, no CLAUDE.md");
+console.log(`  ${made.length} rater room(s) made or refreshed - each: its own sheet, the no-tools rater, a probe, a run-book; no key, no code, no CLAUDE.md`);
 for (const m of made) console.log(`    ${m}`);
