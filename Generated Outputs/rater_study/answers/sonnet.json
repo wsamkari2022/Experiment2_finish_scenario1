@@ -1,0 +1,212 @@
+{
+  "rater_model": "claude-sonnet-5",
+  "sheet_check_code": "cedar-orchard-58",
+  "used_any_tool": false,
+  "opened_any_file": false,
+  "scenarios": [
+    {
+      "scenario": 1,
+      "values": {
+        "vulnerable": {
+          "ranking": ["D", "C", "E", "F", "B", "A"],
+          "scores": {
+            "D": {"score": 95, "reason": "Carries respirator to the oxygen patient it was tagged for, walks them out."},
+            "C": {"score": 80, "reason": "Clears two streets with 'no car between them' who lack a slot."},
+            "E": {"score": 60, "reason": "Fair queue keeps place for others; doesn't single out vulnerable but doesn't harm them."},
+            "F": {"score": 45, "reason": "Takes nothing but does nothing to help anyone less able to leave."},
+            "B": {"score": 35, "reason": "Opens road for others but doesn't target the least able to cope."},
+            "A": {"score": 10, "reason": "Takes the mask 'tagged for a patient on home oxygen' for oneself."}
+          }
+        },
+        "harm": {
+          "ranking": ["F", "E", "D", "C", "B", "A"],
+          "scores": {
+            "F": {"score": 95, "reason": "Takes no seat, road, or mask; imposes no risk on anyone else."},
+            "E": {"score": 85, "reason": "Takes nothing set aside for anyone; fair line imposes no cost on others."},
+            "D": {"score": 75, "reason": "Respirator goes to intended patient; no harm caused to others."},
+            "C": {"score": 65, "reason": "Uses shuttle/roads but only to help others, no added harm to third parties."},
+            "B": {"score": 35, "reason": "Route 'passes closer to the tanker than any other,' others follow behind."},
+            "A": {"score": 15, "reason": "Denies the tagged patient their only means of walking out."}
+          }
+        },
+        "gain": {
+          "ranking": ["B", "A", "E", "F", "C", "D"],
+          "scores": {
+            "B": {"score": 95, "reason": "'Out in twenty minutes,' fastest and surest route for self."},
+            "A": {"score": 85, "reason": "Clean air, shortest street, out 'within the hour.'"},
+            "E": {"score": 65, "reason": "Out 'well within six hours' but must wait for assigned slot."},
+            "F": {"score": 55, "reason": "No travel needed, but success depends on the seal holding."},
+            "C": {"score": 35, "reason": "Two extra loops through the plume before finally leaving third."},
+            "D": {"score": 15, "reason": "Four-hour walk at patient's pace, breathing plume edge, arrives last."}
+          }
+        },
+        "helped": {
+          "ranking": ["C", "B", "D", "F", "E", "A"],
+          "scores": {
+            "C": {"score": 95, "reason": "Clears two full streets of people who had no car or slot yet."},
+            "B": {"score": 85, "reason": "Opens the service road so 'the streets behind you follow.'"},
+            "D": {"score": 50, "reason": "Gets one vulnerable patient out who otherwise couldn't leave."},
+            "F": {"score": 25, "reason": "Helps no one else directly; near tie with E on zero external help."},
+            "E": {"score": 20, "reason": "Follows the line but does nothing extra for anyone else."},
+            "A": {"score": 10, "reason": "Benefits only the chooser; takes a resource meant for another."}
+          }
+        }
+      }
+    },
+    {
+      "scenario": 2,
+      "values": {
+        "vulnerable": {
+          "ranking": ["D", "C", "B", "E", "F", "A"],
+          "scores": {
+            "D": {"score": 95, "reason": "Gets the two walker-residents out 'fifth instead of last' via own car/slot."},
+            "C": {"score": 75, "reason": "Carries three neighbors who have no vehicle at all."},
+            "B": {"score": 55, "reason": "Takes nothing from others but doesn't help other vulnerable neighbors."},
+            "E": {"score": 50, "reason": "Keeps own vulnerable family together but doesn't aid others; near tie with B."},
+            "F": {"score": 20, "reason": "Breaks staging, jamming the road that vulnerable/late blocks depend on."},
+            "A": {"score": 10, "reason": "Blocks the road fire crews need to reach the nursing home."}
+          }
+        },
+        "harm": {
+          "ranking": ["B", "E", "D", "C", "A", "F"],
+          "scores": {
+            "B": {"score": 90, "reason": "Uses no road capacity, takes nothing from anyone else."},
+            "E": {"score": 85, "reason": "Stays in assigned slot; imposes no extra risk on others."},
+            "D": {"score": 80, "reason": "Costs only the household itself; no harm imposed on others."},
+            "C": {"score": 65, "reason": "Stays in staged slot despite extra passengers; minimal added risk."},
+            "A": {"score": 25, "reason": "Turns back an engine, delaying crews and the nursing home rescue."},
+            "F": {"score": 10, "reason": "Triggers a cascade where 'nine blocks... end up on the road together.'"}
+          }
+        },
+        "gain": {
+          "ranking": ["A", "F", "E", "C", "B", "D"],
+          "scores": {
+            "A": {"score": 95, "reason": "Household 'over the ridge and out... in forty minutes.'"},
+            "F": {"score": 85, "reason": "Leaves immediately on an empty highway before staging starts."},
+            "E": {"score": 60, "reason": "Leaves guided, together, but must wait for the fifth slot."},
+            "C": {"score": 45, "reason": "Full car with walker on roof; slow and hot, kept to staged pace."},
+            "B": {"score": 35, "reason": "Slow 20-minute climb near the fire, no vehicle, front arrives while there."},
+            "D": {"score": 10, "reason": "Own household waits six hours for the last bus out of the valley."}
+          }
+        },
+        "helped": {
+          "ranking": ["C", "D", "E", "B", "A", "F"],
+          "scores": {
+            "C": {"score": 90, "reason": "Three extra neighbors with no vehicle leave in the car."},
+            "D": {"score": 85, "reason": "Two residents who'd have gone last now leave fifth of nine."},
+            "E": {"score": 30, "reason": "Helps only the household; no effect on others; near tie with B."},
+            "B": {"score": 28, "reason": "Frees no seat or road capacity for anyone else specifically."},
+            "A": {"score": 15, "reason": "Delays fire crews, indirectly hurting rescue of others like the nursing home."},
+            "F": {"score": 5, "reason": "Causes the junction to seize, trapping blocks still waiting behind."}
+          }
+        }
+      }
+    },
+    {
+      "scenario": 3,
+      "values": {
+        "vulnerable": {
+          "ranking": ["F", "C", "A", "D", "E", "B"],
+          "scores": {
+            "F": {"score": 95, "reason": "Sorted by illness; treats the '20 worst off.'"},
+            "C": {"score": 85, "reason": "Draws from those who cannot wait, with extra slips for the most vulnerable."},
+            "A": {"score": 65, "reason": "Reserves doses for patients too far out to reach a clinic quickly."},
+            "D": {"score": 30, "reason": "Selects by essential-worker register, pushing 'sickest... down the list.'"},
+            "E": {"score": 25, "reason": "Penalizes patients found late, keeping 'the system already failed' at bottom."},
+            "B": {"score": 15, "reason": "Ranks by years of life ahead, so 'age decides who is treated.'"}
+          }
+        },
+        "harm": {
+          "ranking": ["C", "F", "A", "D", "E", "B"],
+          "scores": {
+            "C": {"score": 90, "reason": "Targets exactly the 45 who would 'lose their chance for good.'"},
+            "F": {"score": 80, "reason": "Treats the most urgent/sickest, overlapping with those who'd lose their chance."},
+            "A": {"score": 65, "reason": "Reaches isolated patients but 'fewer than 20... may be treated,' some doses wasted."},
+            "D": {"score": 35, "reason": "Sickest patients pushed down for workers, raising their risk of losing the chance."},
+            "E": {"score": 25, "reason": "Late-diagnosed patients 'stay at the bottom,' losing their chance repeatedly."},
+            "B": {"score": 20, "reason": "Older patients systematically excluded, risking their only chance."}
+          }
+        },
+        "gain": {
+          "ranking": ["B", "E", "D", "A", "F", "C"],
+          "scores": {
+            "B": {"score": 95, "reason": "Explicitly maximizes 'more future years of life' bought by the doses."},
+            "E": {"score": 75, "reason": "Selects highest survival odds, which generally yields substantial years too."},
+            "D": {"score": 55, "reason": "Workers likely healthier/younger, moderate years gained, not optimized for it."},
+            "A": {"score": 35, "reason": "No optimization for years; uncertain outcomes for isolated patients."},
+            "F": {"score": 25, "reason": "Sickest patients 'respond slowly,' fewer years bought per dose."},
+            "C": {"score": 15, "reason": "Draws from least likely to respond, lowest expected years gained."}
+          }
+        },
+        "helped": {
+          "ranking": ["E", "D", "B", "A", "C", "F"],
+          "scores": {
+            "E": {"score": 95, "reason": "Explicitly maximizes number who 'come through,' most lives saved."},
+            "D": {"score": 80, "reason": "Workers return to jobs, indirectly helping wards/classrooms depending on them."},
+            "B": {"score": 65, "reason": "Buys most years but not necessarily most total lives saved."},
+            "A": {"score": 45, "reason": "Reaches some hard-to-reach patients but with uncertain, partial success."},
+            "C": {"score": 30, "reason": "Draws from least-likely-to-respond group; 'fewer of the 20 come through.'"},
+            "F": {"score": 15, "reason": "Explicitly yields fewest total survivors 'at the end of the year.'"}
+          }
+        }
+      }
+    },
+    {
+      "scenario": 4,
+      "values": {
+        "vulnerable": {
+          "ranking": ["B", "D", "F", "E", "C", "A"],
+          "scores": {
+            "B": {"score": 95, "reason": "Full protection for the 50 clients 'who live alone.'"},
+            "D": {"score": 80, "reason": "Cuts fall only where family can cover, sparing those with nobody else."},
+            "F": {"score": 55, "reason": "All clients kept on schedule regardless of vulnerability, spread evenly."},
+            "E": {"score": 45, "reason": "Preserves visits for all but not targeted at the most vulnerable."},
+            "C": {"score": 30, "reason": "Cuts check-ins, which especially hurts clients who live alone."},
+            "A": {"score": 15, "reason": "Drops ~45 rural clients, 'most of them have nobody else.'"}
+          }
+        },
+        "harm": {
+          "ranking": ["D", "E", "F", "B", "C", "A"],
+          "scores": {
+            "D": {"score": 90, "reason": "Cuts land 'only on clients who have a relative nearby to step in.'"},
+            "E": {"score": 80, "reason": "Cuts driving, not care; visits mostly survive at full length."},
+            "F": {"score": 55, "reason": "Harm (undone tasks) spread thinly across all clients, nobody dropped."},
+            "B": {"score": 40, "reason": "190 clients 'absorb the entire cut' with no one stepping in for them."},
+            "C": {"score": 30, "reason": "Loses 'eyes on the client,' trouble caught later, no substitute monitoring."},
+            "A": {"score": 15, "reason": "Rural clients transferred to a county agency 'with nobody to send.'"}
+          }
+        },
+        "gain": {
+          "ranking": ["A", "E", "F", "D", "B", "C"],
+          "scores": {
+            "A": {"score": 90, "reason": "Keeps the paying city contract, 'strongest financial position... open next year.'"},
+            "E": {"score": 70, "reason": "Saves ~300 hours from driving, improving efficiency without cutting care."},
+            "F": {"score": 45, "reason": "Keeps hours within budget but no financial upside beyond compliance."},
+            "D": {"score": 40, "reason": "Shifts cost to families, not to the company's financial position."},
+            "B": {"score": 35, "reason": "Redistributes hours without addressing financial viability directly."},
+            "C": {"score": 30, "reason": "Saves driving hours from dropped check-ins but no stated financial gain."}
+          }
+        },
+        "helped": {
+          "ranking": ["E", "F", "C", "B", "D", "A"],
+          "scores": {
+            "E": {"score": 90, "reason": "Most visits survive at full length for nearly all 240 clients."},
+            "F": {"score": 85, "reason": "'All 240 keep contact,' nobody removed from the books."},
+            "C": {"score": 80, "reason": "All clients keep bathing/meals/medication visits, only check-ins cut."},
+            "B": {"score": 65, "reason": "All 240 nominally served, but 190 clients get degraded care."},
+            "D": {"score": 45, "reason": "About 60 clients lose company-provided visits entirely."},
+            "A": {"score": 20, "reason": "About 45 clients dropped entirely with no agency to take them."}
+          }
+        }
+      }
+    }
+  ],
+  "unclear": [
+    "Scenario 2, Option F: 'How much is gained' for the household is high initially, but the sheet doesn't say whether the household itself gets caught in the jam it causes, making self-gain slightly ambiguous.",
+    "Scenario 4, Option A: 'gain' meaning (company finances vs. chooser's own situation) required treating 'gain' as organizational viability per the scenario's own definition."
+  ],
+  "comments": [
+    "Several near-ties were resolved by small distinctions in wording (e.g., Scenario 1 E vs F on 'vulnerable', Scenario 2 E vs B on 'vulnerable' and helped ranking) rather than strong textual differences.",
+    "In Scenario 3, distinguishing 'harm' (losing chance for good) from 'helped' (total lives saved) was subtle since several options affect both similarly; I kept the two value definitions strictly separate per instructions."
+  ]
+}

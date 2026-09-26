@@ -1,0 +1,2749 @@
+{
+  "validity": [
+    {
+      "rater": "haiku",
+      "model": "claude-haiku-4-5-20251001",
+      "valid": true,
+      "problems": [],
+      "notes": [
+        "scenario 3 vulnerable: E scored above B but ranked below it"
+      ]
+    },
+    {
+      "rater": "opus",
+      "model": "claude-opus-5-5",
+      "valid": true,
+      "problems": [],
+      "notes": []
+    },
+    {
+      "rater": "sonnet",
+      "model": "claude-sonnet-5",
+      "valid": true,
+      "problems": [],
+      "notes": []
+    }
+  ],
+  "summary": {
+    "icc_2_1": 0.861,
+    "mean_pairwise_spearman": 0.824,
+    "mean_distance_between_raters": 10.5,
+    "mean_spearman_study_vs_raters": 0.844
+  },
+  "flags": [
+    {
+      "scenario": 1,
+      "value": "Reducing harm",
+      "option": "Leave with the registered convoy at your assigned time",
+      "study": 61,
+      "raters": [
+        90,
+        85,
+        85
+      ],
+      "raterMean": 87,
+      "why": [
+        "study 61 vs raters 87 (-26)"
+      ],
+      "reasons": [
+        "haiku: Assigned slot; no additional risk to others",
+        "opus: 'Nobody loses their place in the line so that you can have yours.'",
+        "sonnet: Takes nothing set aside for anyone; fair line imposes no cost on others."
+      ]
+    },
+    {
+      "scenario": 1,
+      "value": "Reducing harm",
+      "option": "Take the sealed respirator the clinic had reserved",
+      "study": 45,
+      "raters": [
+        30,
+        20,
+        15
+      ],
+      "raterMean": 22,
+      "why": [
+        "study 45 vs raters 22 (+23)"
+      ],
+      "reasons": [
+        "haiku: Takes respirator; patient harmed",
+        "opus: Leaves the tagged patient without a mask: 'there is not another one'.",
+        "sonnet: Denies the tagged patient their only means of walking out."
+      ]
+    },
+    {
+      "scenario": 1,
+      "value": "Reducing harm",
+      "option": "Drive the community shuttle for two loops before you go",
+      "study": 62,
+      "raters": [
+        55,
+        70,
+        65
+      ],
+      "raterMean": 63,
+      "why": [
+        "place 2 in the study, 4 for the raters"
+      ],
+      "reasons": [
+        "haiku: Helps others by shuttle; doesn't increase their risk",
+        "opus: Moves waiting people out early, though each loop is 'another trip through the district's air'.",
+        "sonnet: Uses shuttle/roads but only to help others, no added harm to third parties."
+      ]
+    },
+    {
+      "scenario": 1,
+      "value": "How much is gained",
+      "option": "Carry the respirator to the patient it was kept for, and walk them out",
+      "study": 20,
+      "raters": [
+        50,
+        10,
+        15
+      ],
+      "raterMean": 25,
+      "why": [
+        "the raters themselves are 40 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Four hours at patient's pace, edge of plume",
+        "opus: 'Four hours', 'the most exposed person on any of these routes', and you 'arrive last'.",
+        "sonnet: Four-hour walk at patient's pace, breathing plume edge, arrives last."
+      ]
+    },
+    {
+      "scenario": 1,
+      "value": "How much is gained",
+      "option": "Seal your apartment, tell the district office you are staying, and shelter",
+      "study": 30,
+      "raters": [
+        5,
+        30,
+        55
+      ],
+      "raterMean": 30,
+      "why": [
+        "the raters themselves are 50 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Trapped if seal fails; worst case",
+        "opus: 'If the seal fails there is no way out.' Night inside the plume.",
+        "sonnet: No travel needed, but success depends on the seal holding."
+      ]
+    },
+    {
+      "scenario": 1,
+      "value": "How much is gained",
+      "option": "TOP OPTION: study says \"Take the sealed respirator the clinic had reserved\", raters say \"Drive out on the industrial service road\"",
+      "study": 94,
+      "raters": [
+        85,
+        95,
+        95
+      ],
+      "raterMean": 92,
+      "why": [
+        "the study's top option on this value is not the raters' top option"
+      ],
+      "reasons": [
+        "haiku: Out in 20 minutes; fastest but no turning back",
+        "opus: 'You are out in twenty minutes', the 'fastest clear route out'.",
+        "sonnet: 'Out in twenty minutes,' fastest and surest route for self."
+      ]
+    },
+    {
+      "scenario": 1,
+      "value": "How many are helped",
+      "option": "Leave with the registered convoy at your assigned time",
+      "study": 56,
+      "raters": [
+        36,
+        50,
+        20
+      ],
+      "raterMean": 35,
+      "why": [
+        "study 56 vs raters 35 (+21)",
+        "place 3 in the study, 5 for the raters",
+        "the raters themselves are 30 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Assigned slot; nobody else benefits",
+        "opus: Takes nothing and adds no one. Neutral.",
+        "sonnet: Follows the line but does nothing extra for anyone else."
+      ]
+    },
+    {
+      "scenario": 1,
+      "value": "How many are helped",
+      "option": "Drive out on the industrial service road",
+      "study": 87,
+      "raters": [
+        75,
+        55,
+        85
+      ],
+      "raterMean": 72,
+      "why": [
+        "the raters themselves are 30 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Opens risky road; everyone behind gets out faster",
+        "opus: 'So is everyone behind you' out fast, offset by the route past the tanker.",
+        "sonnet: Opens the service road so 'the streets behind you follow.'"
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "Protecting the vulnerable",
+      "option": "Leave immediately on the main highway, before the staging starts",
+      "study": 35,
+      "raters": [
+        15,
+        8,
+        20
+      ],
+      "raterMean": 14,
+      "why": [
+        "study 35 vs raters 14 (+21)"
+      ],
+      "reasons": [
+        "haiku: Breaks staging; walkers stuck in jam",
+        "opus: Farthest blocks 'are the ones still stuck in the jam when the fire comes down'. Near tie with A.",
+        "sonnet: Breaks staging, jamming the road that vulnerable/late blocks depend on."
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "Reducing harm",
+      "option": "Take your household's assigned place in the staged convoy",
+      "study": 59,
+      "raters": [
+        80,
+        85,
+        85
+      ],
+      "raterMean": 83,
+      "why": [
+        "study 59 vs raters 83 (-24)"
+      ],
+      "reasons": [
+        "haiku: Assigned slot; no added risk",
+        "opus: 'Nobody else is pushed down the list', on 'a road that is kept moving'.",
+        "sonnet: Stays in assigned slot; imposes no extra risk on others."
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "Reducing harm",
+      "option": "Give your car seats to the two residents with walkers and wait for the lift bus",
+      "study": 56,
+      "raters": [
+        90,
+        78,
+        80
+      ],
+      "raterMean": 83,
+      "why": [
+        "study 56 vs raters 83 (-27)"
+      ],
+      "reasons": [
+        "haiku: Swaps fairly; no additional risk",
+        "opus: A seat swap with the residents. The car keeps your slot, so no one is displaced.",
+        "sonnet: Costs only the household itself; no harm imposed on others."
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "Reducing harm",
+      "option": "Fill every seat in the car with neighbors who have none",
+      "study": 62,
+      "raters": [
+        65,
+        83,
+        65
+      ],
+      "raterMean": 71,
+      "why": [
+        "place 2 in the study, 4 for the raters"
+      ],
+      "reasons": [
+        "haiku: Heavier vehicle might slow convoy slightly",
+        "opus: 'Not anybody else's place in the line.' Keeps to 'the staged line'. Near tie with E.",
+        "sonnet: Stays in staged slot despite extra passengers; minimal added risk."
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "Reducing harm",
+      "option": "Take your household to the concrete school on the hill",
+      "study": 94,
+      "raters": [
+        100,
+        60,
+        90
+      ],
+      "raterMean": 83,
+      "why": [
+        "the raters themselves are 40 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Takes no road; zero risk imposed",
+        "opus: Takes no road, but 'a crew comes back into the valley to find out'.",
+        "sonnet: Uses no road capacity, takes nothing from anyone else."
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "Reducing harm",
+      "option": "TOP OPTION: study says \"Take your household to the concrete school on the hill\", raters say \"Take your household's assigned place in the staged convoy\"",
+      "study": 94,
+      "raters": [
+        80,
+        85,
+        85
+      ],
+      "raterMean": 83,
+      "why": [
+        "the study's top option on this value is not the raters' top option"
+      ],
+      "reasons": [
+        "haiku: Assigned slot; no added risk",
+        "opus: 'Nobody else is pushed down the list', on 'a road that is kept moving'.",
+        "sonnet: Stays in assigned slot; imposes no extra risk on others."
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "How many are helped",
+      "option": "Give your car seats to the two residents with walkers and wait for the lift bus",
+      "study": 39,
+      "raters": [
+        70,
+        78,
+        85
+      ],
+      "raterMean": 78,
+      "why": [
+        "study 39 vs raters 78 (-39)"
+      ],
+      "reasons": [
+        "haiku: Two residents out fifth instead of ninth",
+        "opus: Two walker users get out hours sooner, and nobody who needs the lift is left behind.",
+        "sonnet: Two residents who'd have gone last now leave fifth of nine."
+      ]
+    },
+    {
+      "scenario": 2,
+      "value": "How many are helped",
+      "option": "Leave immediately on the main highway, before the staging starts",
+      "study": 30,
+      "raters": [
+        15,
+        5,
+        5
+      ],
+      "raterMean": 8,
+      "why": [
+        "study 30 vs raters 8 (+22)"
+      ],
+      "reasons": [
+        "haiku: Breaks staging; early helped, later jammed",
+        "opus: The jam traps the blocks furthest from the junction. Net loss.",
+        "sonnet: Causes the junction to seize, trapping blocks still waiting behind."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "Protecting the vulnerable",
+      "option": "Draw the 20 names from the patients who cannot wait",
+      "study": 56,
+      "raters": [
+        80,
+        85,
+        85
+      ],
+      "raterMean": 83,
+      "why": [
+        "study 56 vs raters 83 (-27)"
+      ],
+      "reasons": [
+        "haiku: Draw from 45 who cannot wait; vulnerable",
+        "opus: Drawn from patients who 'cannot wait', 'with a few extra slips for the most vulnerable'.",
+        "sonnet: Draws from those who cannot wait, with extra slips for the most vulnerable."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "Reducing harm",
+      "option": "Treat the 20 most likely to survive",
+      "study": 48,
+      "raters": [
+        36,
+        65,
+        25
+      ],
+      "raterMean": 42,
+      "why": [
+        "the raters themselves are 40 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Most of 45 lose chance. Near tie.",
+        "opus: 'This month's survival count is the highest here.'",
+        "sonnet: Late-diagnosed patients 'stay at the bottom,' losing their chance repeatedly."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "Reducing harm",
+      "option": "Treat the 20 who are sickest",
+      "study": 42,
+      "raters": [
+        80,
+        30,
+        80
+      ],
+      "raterMean": 63,
+      "why": [
+        "study 42 vs raters 63 (-21)",
+        "place 4 in the study, 2 for the raters",
+        "the raters themselves are 50 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Sickest treated; 25-30 of 45 still lose",
+        "opus: 'Fewer of the 120 are alive at the end of the year than under any other rule.'",
+        "sonnet: Treats the most urgent/sickest, overlapping with those who'd lose their chance."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "Reducing harm",
+      "option": "Treat the 20 with the most years ahead",
+      "study": 25,
+      "raters": [
+        34,
+        55,
+        20
+      ],
+      "raterMean": 36,
+      "why": [
+        "the raters themselves are 35 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Most of 45 lose permanent chance. Near tie.",
+        "opus: Treats those with the most gain. The older, who may not last, wait.",
+        "sonnet: Older patients systematically excluded, risking their only chance."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "Reducing harm",
+      "option": "Hold some doses back for the patients nobody reaches",
+      "study": 64,
+      "raters": [
+        60,
+        25,
+        65
+      ],
+      "raterMean": 50,
+      "why": [
+        "the raters themselves are 40 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Holds doses for furthest-out; might expire",
+        "opus: 'Fewer than 20 patients may be treated', and expired doses help 'nobody at all'. Near tie with A.",
+        "sonnet: Reaches isolated patients but 'fewer than 20... may be treated,' some doses wasted."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "How much is gained",
+      "option": "Treat the 20 most likely to survive",
+      "study": 39,
+      "raters": [
+        85,
+        80,
+        75
+      ],
+      "raterMean": 80,
+      "why": [
+        "study 39 vs raters 80 (-41)"
+      ],
+      "reasons": [
+        "haiku: Highest survival odds; highest count",
+        "opus: The most survivors among those treated, which yields many years.",
+        "sonnet: Selects highest survival odds, which generally yields substantial years too."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "How many are helped",
+      "option": "Treat the 20 with the most years ahead",
+      "study": 43,
+      "raters": [
+        75,
+        75,
+        65
+      ],
+      "raterMean": 72,
+      "why": [
+        "study 43 vs raters 72 (-29)"
+      ],
+      "reasons": [
+        "haiku: 20 people with most years plus dependents",
+        "opus: Patients with long lives ahead likely respond well. Many survive.",
+        "sonnet: Buys most years but not necessarily most total lives saved."
+      ]
+    },
+    {
+      "scenario": 3,
+      "value": "How many are helped",
+      "option": "Hold some doses back for the patients nobody reaches",
+      "study": 37,
+      "raters": [
+        65,
+        35,
+        45
+      ],
+      "raterMean": 48,
+      "why": [
+        "the raters themselves are 30 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Furthest-out patients; some dependents",
+        "opus: Held doses may lapse, and an expired dose 'helps nobody at all'.",
+        "sonnet: Reaches some hard-to-reach patients but with uncertain, partial success."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "Protecting the vulnerable",
+      "option": "Cut only where a family member can cover",
+      "study": 58,
+      "raters": [
+        85,
+        85,
+        80
+      ],
+      "raterMean": 83,
+      "why": [
+        "study 58 vs raters 83 (-25)"
+      ],
+      "reasons": [
+        "haiku: Protects clients without family; includes vulnerable",
+        "opus: 'Every client without family nearby keeps every visit.'",
+        "sonnet: Cuts fall only where family can cover, sparing those with nobody else."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "Reducing harm",
+      "option": "Redraw the routes to cut the driving",
+      "study": 47,
+      "raters": [
+        75,
+        80,
+        80
+      ],
+      "raterMean": 78,
+      "why": [
+        "study 47 vs raters 78 (-31)",
+        "place 5 in the study, 2 for the raters"
+      ],
+      "reasons": [
+        "haiku: New caregivers step in though unknown",
+        "opus: 'About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.'",
+        "sonnet: Cuts driving, not care; visits mostly survive at full length."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "Reducing harm",
+      "option": "Keep every care visit, and cut the check-in visits",
+      "study": 70,
+      "raters": [
+        40,
+        45,
+        30
+      ],
+      "raterMean": 38,
+      "why": [
+        "study 70 vs raters 38 (+32)",
+        "place 2 in the study, 5 for the raters"
+      ],
+      "reasons": [
+        "haiku: Check-in visits cut; nobody steps in",
+        "opus: Care tasks are kept, but problems are 'found later', mostly for those living alone.",
+        "sonnet: Loses 'eyes on the client,' trouble caught later, no substitute monitoring."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "Reducing harm",
+      "option": "Shorten every visit so nobody is dropped",
+      "study": 44,
+      "raters": [
+        35,
+        40,
+        55
+      ],
+      "raterMean": 43,
+      "why": [
+        "place 6 in the study, 4 for the raters"
+      ],
+      "reasons": [
+        "haiku: Visits shortened; nobody finishes tasks",
+        "opus: 'Tasks undone at door after door.' No one is there to step in.",
+        "sonnet: Harm (undone tasks) spread thinly across all clients, nobody dropped."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "Reducing harm",
+      "option": "Keep the town routes that pay, and drop the rural ones",
+      "study": 55,
+      "raters": [
+        20,
+        10,
+        15
+      ],
+      "raterMean": 15,
+      "why": [
+        "study 55 vs raters 15 (+40)",
+        "place 3 in the study, 6 for the raters"
+      ],
+      "reasons": [
+        "haiku: Rural transferred; county has nobody to send",
+        "opus: Cut falls on rural clients who 'have nobody else', transferred to a county with nobody to send.",
+        "sonnet: Rural clients transferred to a county agency 'with nobody to send.'"
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "How much is gained",
+      "option": "Keep every care visit, and cut the check-in visits",
+      "study": 62,
+      "raters": [
+        95,
+        58,
+        30
+      ],
+      "raterMean": 61,
+      "why": [
+        "the raters themselves are 65 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Cuts 400 hours; keeps service viable",
+        "opus: 'The drives to the dropped visits are saved too.'",
+        "sonnet: Saves driving hours from dropped check-ins but no stated financial gain."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "How much is gained",
+      "option": "Shorten every visit so nobody is dropped",
+      "study": 35,
+      "raters": [
+        90,
+        40,
+        45
+      ],
+      "raterMean": 58,
+      "why": [
+        "study 35 vs raters 58 (-23)",
+        "the raters themselves are 50 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: Shortens all visits by 1/3; keeps viable",
+        "opus: 'Every trip still has to be driven', so the loss-making driving remains.",
+        "sonnet: Keeps hours within budget but no financial upside beyond compliance."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "How many are helped",
+      "option": "Cut only where a family member can cover",
+      "study": 65,
+      "raters": [
+        90,
+        45,
+        45
+      ],
+      "raterMean": 60,
+      "why": [
+        "the raters themselves are 45 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: 180 by Meridian, 60 by family; all kept",
+        "opus: 'About 60 clients lose their visits' to relatives who may be stretched.",
+        "sonnet: About 60 clients lose company-provided visits entirely."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "How many are helped",
+      "option": "Shorten every visit so nobody is dropped",
+      "study": 92,
+      "raters": [
+        75,
+        85,
+        85
+      ],
+      "raterMean": 82,
+      "why": [
+        "place 1 in the study, 3 for the raters"
+      ],
+      "reasons": [
+        "haiku: All 240 by caregivers; shortened, tasks undone",
+        "opus: 'All 240 keep contact', though visits are a third shorter.",
+        "sonnet: 'All 240 keep contact,' nobody removed from the books."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "How many are helped",
+      "option": "Keep the town routes that pay, and drop the rural ones",
+      "study": 45,
+      "raters": [
+        50,
+        20,
+        20
+      ],
+      "raterMean": 30,
+      "why": [
+        "the raters themselves are 30 points apart (the words may be unclear on this value)"
+      ],
+      "reasons": [
+        "haiku: 195 keep care; 45 transferred lost",
+        "opus: 'About 45 rural clients' lose care to a county 'with nobody to send'.",
+        "sonnet: About 45 clients dropped entirely with no agency to take them."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "How many are helped",
+      "option": "Protect full visits for the clients with nobody else",
+      "study": 38,
+      "raters": [
+        60,
+        55,
+        65
+      ],
+      "raterMean": 60,
+      "why": [
+        "study 38 vs raters 60 (-22)"
+      ],
+      "reasons": [
+        "haiku: 240 on schedule but 190 lose 1/3",
+        "opus: The 50 are protected, but 'the other 190 lose about a third of their visits'.",
+        "sonnet: All 240 nominally served, but 190 clients get degraded care."
+      ]
+    },
+    {
+      "scenario": 4,
+      "value": "How many are helped",
+      "option": "TOP OPTION: study says \"Shorten every visit so nobody is dropped\", raters say \"Redraw the routes to cut the driving\"",
+      "study": 92,
+      "raters": [
+        85,
+        92,
+        90
+      ],
+      "raterMean": 89,
+      "why": [
+        "the study's top option on this value is not the raters' top option"
+      ],
+      "reasons": [
+        "haiku: All 240 by caregivers though strangers",
+        "opus: All clients kept, and 'most visits survive at full length'.",
+        "sonnet: Most visits survive at full length for nearly all 240 clients."
+      ]
+    }
+  ],
+  "bySv": [
+    {
+      "scenario": 1,
+      "title": "Six Hours to Clear the District",
+      "value": "Protecting the vulnerable",
+      "rho": 1,
+      "studyTop": "Carry the respirator to the patient it was kept for, and walk them out",
+      "raterTop": "Carry the respirator to the patient it was kept for, and walk them out",
+      "opts": [
+        {
+          "id": "chem_registered_convoy",
+          "title": "Leave with the registered convoy at your assigned time",
+          "study": 55,
+          "scores": [
+            45,
+            55,
+            60
+          ],
+          "reasons": [
+            "haiku: Waits assigned slot; no active protection",
+            "opus: 'You take nothing that was set aside for anyone else'. Neutral toward those who cannot leave alone.",
+            "sonnet: Fair queue keeps place for others; doesn't single out vulnerable but doesn't harm them."
+          ],
+          "m": 53.333333333333336,
+          "spread": 7.637626158259733,
+          "studyPlace": 3,
+          "raterPlace": 3
+        },
+        {
+          "id": "chem_reserved_respirator",
+          "title": "Take the sealed respirator the clinic had reserved",
+          "study": 15,
+          "scores": [
+            15,
+            5,
+            10
+          ],
+          "reasons": [
+            "haiku: Takes respirator from vulnerable patient who needs it",
+            "opus: Takes 'the clinic's only respirator' from the patient 'who cannot walk out without it'.",
+            "sonnet: Takes the mask 'tagged for a patient on home oxygen' for oneself."
+          ],
+          "m": 10,
+          "spread": 5,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "chem_walk_out_on_foot",
+          "title": "Carry the respirator to the patient it was kept for, and walk them out",
+          "study": 96,
+          "scores": [
+            95,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: Takes respirator to patient on home oxygen; most vulnerable",
+            "opus: The patient on home oxygen, 'least able to get out alone', gets out wearing the mask tagged for them.",
+            "sonnet: Carries respirator to the oxygen patient it was tagged for, walks them out."
+          ],
+          "m": 95,
+          "spread": 0,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "chem_shuttle_loop",
+          "title": "Drive the community shuttle for two loops before you go",
+          "study": 62,
+          "scores": [
+            80,
+            72,
+            80
+          ],
+          "reasons": [
+            "haiku: Drives shuttle; helps people with no cars",
+            "opus: Clears 'two streets... who have no car between them' whose slot is hours away.",
+            "sonnet: Clears two streets with 'no car between them' who lack a slot."
+          ],
+          "m": 77.33333333333333,
+          "spread": 4.618802153517006,
+          "studyPlace": 2,
+          "raterPlace": 2
+        },
+        {
+          "id": "chem_seal_and_shelter",
+          "title": "Seal your apartment, tell the district office you are staying, and shelter",
+          "study": 50,
+          "scores": [
+            50,
+            52,
+            45
+          ],
+          "reasons": [
+            "haiku: Takes nothing; doesn't harm vulnerable",
+            "opus: 'You take no seat, no road and no mask'. Near tie with F; no active help.",
+            "sonnet: Takes nothing but does nothing to help anyone less able to leave."
+          ],
+          "m": 49,
+          "spread": 3.605551275463989,
+          "studyPlace": 4,
+          "raterPlace": 4
+        },
+        {
+          "id": "chem_service_road_run",
+          "title": "Drive out on the industrial service road",
+          "study": 43,
+          "scores": [
+            40,
+            25,
+            35
+          ],
+          "reasons": [
+            "haiku: Opens road; doesn't protect vulnerable",
+            "opus: The road 'takes everyone else past the leak', including the frailest who follow.",
+            "sonnet: Opens road for others but doesn't target the least able to cope."
+          ],
+          "m": 33.333333333333336,
+          "spread": 7.637626158259733,
+          "studyPlace": 5,
+          "raterPlace": 5
+        }
+      ]
+    },
+    {
+      "scenario": 1,
+      "title": "Six Hours to Clear the District",
+      "value": "Reducing harm",
+      "rho": 0.8285714285714286,
+      "studyTop": "Seal your apartment, tell the district office you are staying, and shelter",
+      "raterTop": "Seal your apartment, tell the district office you are staying, and shelter",
+      "opts": [
+        {
+          "id": "chem_registered_convoy",
+          "title": "Leave with the registered convoy at your assigned time",
+          "study": 61,
+          "scores": [
+            90,
+            85,
+            85
+          ],
+          "reasons": [
+            "haiku: Assigned slot; no additional risk to others",
+            "opus: 'Nobody loses their place in the line so that you can have yours.'",
+            "sonnet: Takes nothing set aside for anyone; fair line imposes no cost on others."
+          ],
+          "m": 86.66666666666667,
+          "spread": 2.8867513459481287,
+          "studyPlace": 3,
+          "raterPlace": 2
+        },
+        {
+          "id": "chem_reserved_respirator",
+          "title": "Take the sealed respirator the clinic had reserved",
+          "study": 45,
+          "scores": [
+            30,
+            20,
+            15
+          ],
+          "reasons": [
+            "haiku: Takes respirator; patient harmed",
+            "opus: Leaves the tagged patient without a mask: 'there is not another one'.",
+            "sonnet: Denies the tagged patient their only means of walking out."
+          ],
+          "m": 21.666666666666668,
+          "spread": 7.637626158259733,
+          "studyPlace": 5,
+          "raterPlace": 5
+        },
+        {
+          "id": "chem_walk_out_on_foot",
+          "title": "Carry the respirator to the patient it was kept for, and walk them out",
+          "study": 60,
+          "scores": [
+            65,
+            78,
+            75
+          ],
+          "reasons": [
+            "haiku: River path upwind; minimal harm to others",
+            "opus: The patient breathes 'clean air the whole way'. The exposure falls on you, not on others.",
+            "sonnet: Respirator goes to intended patient; no harm caused to others."
+          ],
+          "m": 72.66666666666667,
+          "spread": 6.8068592855540455,
+          "studyPlace": 4,
+          "raterPlace": 3
+        },
+        {
+          "id": "chem_shuttle_loop",
+          "title": "Drive the community shuttle for two loops before you go",
+          "study": 62,
+          "scores": [
+            55,
+            70,
+            65
+          ],
+          "reasons": [
+            "haiku: Helps others by shuttle; doesn't increase their risk",
+            "opus: Moves waiting people out early, though each loop is 'another trip through the district's air'.",
+            "sonnet: Uses shuttle/roads but only to help others, no added harm to third parties."
+          ],
+          "m": 63.333333333333336,
+          "spread": 7.637626158259733,
+          "studyPlace": 2,
+          "raterPlace": 4
+        },
+        {
+          "id": "chem_seal_and_shelter",
+          "title": "Seal your apartment, tell the district office you are staying, and shelter",
+          "study": 93,
+          "scores": [
+            100,
+            92,
+            95
+          ],
+          "reasons": [
+            "haiku: Takes nothing; nobody's risk increased",
+            "opus: 'You take nothing from anybody, and nobody is put at risk on your account.'",
+            "sonnet: Takes no seat, road, or mask; imposes no risk on anyone else."
+          ],
+          "m": 95.66666666666667,
+          "spread": 4.041451884327381,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "chem_service_road_run",
+          "title": "Drive out on the industrial service road",
+          "study": 25,
+          "scores": [
+            15,
+            10,
+            35
+          ],
+          "reasons": [
+            "haiku: Opens risky road near tanker; everyone behind exposed",
+            "opus: 'Everyone behind you' follows a road that 'runs past the split tanker itself'.",
+            "sonnet: Route 'passes closer to the tanker than any other,' others follow behind."
+          ],
+          "m": 20,
+          "spread": 13.228756555322953,
+          "studyPlace": 6,
+          "raterPlace": 6
+        }
+      ]
+    },
+    {
+      "scenario": 1,
+      "title": "Six Hours to Clear the District",
+      "value": "How much is gained",
+      "rho": 0.9276336570439175,
+      "studyTop": "Take the sealed respirator the clinic had reserved",
+      "raterTop": "Drive out on the industrial service road",
+      "opts": [
+        {
+          "id": "chem_registered_convoy",
+          "title": "Leave with the registered convoy at your assigned time",
+          "study": 70,
+          "scores": [
+            70,
+            70,
+            65
+          ],
+          "reasons": [
+            "haiku: Within six hours; watching plume approach",
+            "opus: 'You get out well within the six hours', but only when your slot is called.",
+            "sonnet: Out 'well within six hours' but must wait for assigned slot."
+          ],
+          "m": 68.33333333333333,
+          "spread": 2.8867513459481287,
+          "studyPlace": 3,
+          "raterPlace": 3
+        },
+        {
+          "id": "chem_reserved_respirator",
+          "title": "Take the sealed respirator the clinic had reserved",
+          "study": 94,
+          "scores": [
+            95,
+            90,
+            85
+          ],
+          "reasons": [
+            "haiku: Leave immediately, shortest route, clean air",
+            "opus: 'Clear of the district within the hour', 'breathing clean air the whole distance'.",
+            "sonnet: Clean air, shortest street, out 'within the hour.'"
+          ],
+          "m": 90,
+          "spread": 5,
+          "studyPlace": 1,
+          "raterPlace": 2
+        },
+        {
+          "id": "chem_walk_out_on_foot",
+          "title": "Carry the respirator to the patient it was kept for, and walk them out",
+          "study": 20,
+          "scores": [
+            50,
+            10,
+            15
+          ],
+          "reasons": [
+            "haiku: Four hours at patient's pace, edge of plume",
+            "opus: 'Four hours', 'the most exposed person on any of these routes', and you 'arrive last'.",
+            "sonnet: Four-hour walk at patient's pace, breathing plume edge, arrives last."
+          ],
+          "m": 25,
+          "spread": 21.79449471770337,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "chem_shuttle_loop",
+          "title": "Drive the community shuttle for two loops before you go",
+          "study": 36,
+          "scores": [
+            20,
+            35,
+            35
+          ],
+          "reasons": [
+            "haiku: Inside district when plume arrives; third loop",
+            "opus: 'You are still inside the district when the plume arrives.' Near tie with D.",
+            "sonnet: Two extra loops through the plume before finally leaving third."
+          ],
+          "m": 30,
+          "spread": 8.660254037844387,
+          "studyPlace": 4,
+          "raterPlace": 4.5
+        },
+        {
+          "id": "chem_seal_and_shelter",
+          "title": "Seal your apartment, tell the district office you are staying, and shelter",
+          "study": 30,
+          "scores": [
+            5,
+            30,
+            55
+          ],
+          "reasons": [
+            "haiku: Trapped if seal fails; worst case",
+            "opus: 'If the seal fails there is no way out.' Night inside the plume.",
+            "sonnet: No travel needed, but success depends on the seal holding."
+          ],
+          "m": 30,
+          "spread": 25,
+          "studyPlace": 5,
+          "raterPlace": 4.5
+        },
+        {
+          "id": "chem_service_road_run",
+          "title": "Drive out on the industrial service road",
+          "study": 80,
+          "scores": [
+            85,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: Out in 20 minutes; fastest but no turning back",
+            "opus: 'You are out in twenty minutes', the 'fastest clear route out'.",
+            "sonnet: 'Out in twenty minutes,' fastest and surest route for self."
+          ],
+          "m": 91.66666666666667,
+          "spread": 5.773502691896257,
+          "studyPlace": 2,
+          "raterPlace": 1
+        }
+      ]
+    },
+    {
+      "scenario": 1,
+      "title": "Six Hours to Clear the District",
+      "value": "How many are helped",
+      "rho": 0.8285714285714286,
+      "studyTop": "Drive the community shuttle for two loops before you go",
+      "raterTop": "Drive the community shuttle for two loops before you go",
+      "opts": [
+        {
+          "id": "chem_registered_convoy",
+          "title": "Leave with the registered convoy at your assigned time",
+          "study": 56,
+          "scores": [
+            36,
+            50,
+            20
+          ],
+          "reasons": [
+            "haiku: Assigned slot; nobody else benefits",
+            "opus: Takes nothing and adds no one. Neutral.",
+            "sonnet: Follows the line but does nothing extra for anyone else."
+          ],
+          "m": 35.333333333333336,
+          "spread": 15.01110699893027,
+          "studyPlace": 3,
+          "raterPlace": 5
+        },
+        {
+          "id": "chem_reserved_respirator",
+          "title": "Take the sealed respirator the clinic had reserved",
+          "study": 25,
+          "scores": [
+            10,
+            10,
+            10
+          ],
+          "reasons": [
+            "haiku: Takes mask; that patient cannot get out",
+            "opus: Nobody else is helped and the tagged patient loses their only mask.",
+            "sonnet: Benefits only the chooser; takes a resource meant for another."
+          ],
+          "m": 10,
+          "spread": 0,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "chem_walk_out_on_foot",
+          "title": "Carry the respirator to the patient it was kept for, and walk them out",
+          "study": 45,
+          "scores": [
+            60,
+            70,
+            50
+          ],
+          "reasons": [
+            "haiku: One vulnerable patient gets out safely",
+            "opus: One patient who could not otherwise leave 'is out'.",
+            "sonnet: Gets one vulnerable patient out who otherwise couldn't leave."
+          ],
+          "m": 60,
+          "spread": 10,
+          "studyPlace": 4,
+          "raterPlace": 3
+        },
+        {
+          "id": "chem_shuttle_loop",
+          "title": "Drive the community shuttle for two loops before you go",
+          "study": 94,
+          "scores": [
+            95,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: Two full streets cleared; more than any option",
+            "opus: 'You get more people out than any other option here manages': two full streets.",
+            "sonnet: Clears two full streets of people who had no car or slot yet."
+          ],
+          "m": 95,
+          "spread": 0,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "chem_seal_and_shelter",
+          "title": "Seal your apartment, tell the district office you are staying, and shelter",
+          "study": 30,
+          "scores": [
+            35,
+            48,
+            25
+          ],
+          "reasons": [
+            "haiku: Takes nothing; helps no one",
+            "opus: 'Nobody has to come looking.' No one else gets out because of you. Near tie with F.",
+            "sonnet: Helps no one else directly; near tie with E on zero external help."
+          ],
+          "m": 36,
+          "spread": 11.532562594670797,
+          "studyPlace": 5,
+          "raterPlace": 4
+        },
+        {
+          "id": "chem_service_road_run",
+          "title": "Drive out on the industrial service road",
+          "study": 87,
+          "scores": [
+            75,
+            55,
+            85
+          ],
+          "reasons": [
+            "haiku: Opens risky road; everyone behind gets out faster",
+            "opus: 'So is everyone behind you' out fast, offset by the route past the tanker.",
+            "sonnet: Opens the service road so 'the streets behind you follow.'"
+          ],
+          "m": 71.66666666666667,
+          "spread": 15.275252316519467,
+          "studyPlace": 2,
+          "raterPlace": 2
+        }
+      ]
+    },
+    {
+      "scenario": 2,
+      "title": "Eight Hours Ahead of the Fire",
+      "value": "Protecting the vulnerable",
+      "rho": 0.9428571428571428,
+      "studyTop": "Give your car seats to the two residents with walkers and wait for the lift bus",
+      "raterTop": "Give your car seats to the two residents with walkers and wait for the lift bus",
+      "opts": [
+        {
+          "id": "fire_assigned_convoy_slot",
+          "title": "Take your household's assigned place in the staged convoy",
+          "study": 60,
+          "scores": [
+            65,
+            50,
+            50
+          ],
+          "reasons": [
+            "haiku: Assigned slots; normal protection",
+            "opus: 'Nobody else is pushed down the list', with no extra help for the vulnerable.",
+            "sonnet: Keeps own vulnerable family together but doesn't aid others; near tie with B."
+          ],
+          "m": 55,
+          "spread": 8.660254037844387,
+          "studyPlace": 3,
+          "raterPlace": 3
+        },
+        {
+          "id": "fire_closed_ridge_road",
+          "title": "Take the closed ridge road",
+          "study": 18,
+          "scores": [
+            20,
+            15,
+            10
+          ],
+          "reasons": [
+            "haiku: Ridge road closes to rescuers; leaves vulnerable",
+            "opus: An engine turned back is 'not reaching the nursing home on the far side'.",
+            "sonnet: Blocks the road fire crews need to reach the nursing home."
+          ],
+          "m": 15,
+          "spread": 5,
+          "studyPlace": 6,
+          "raterPlace": 5
+        },
+        {
+          "id": "fire_wait_accessible_bus",
+          "title": "Give your car seats to the two residents with walkers and wait for the lift bus",
+          "study": 97,
+          "scores": [
+            95,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: Two walkers leave fifth instead of ninth",
+            "opus: Two walker users 'go fifth of nine instead of last out of the valley'.",
+            "sonnet: Gets the two walker-residents out 'fifth instead of last' via own car/slot."
+          ],
+          "m": 95,
+          "spread": 0,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "fire_fill_every_seat",
+          "title": "Fill every seat in the car with neighbors who have none",
+          "study": 62,
+          "scores": [
+            75,
+            78,
+            75
+          ],
+          "reasons": [
+            "haiku: Three neighbors get seats; two walkers still ninth",
+            "opus: 'Three people who had no way out at all are in your car.'",
+            "sonnet: Carries three neighbors who have no vehicle at all."
+          ],
+          "m": 76,
+          "spread": 1.7320508075688772,
+          "studyPlace": 2,
+          "raterPlace": 2
+        },
+        {
+          "id": "fire_shelter_hill_school",
+          "title": "Take your household to the concrete school on the hill",
+          "study": 56,
+          "scores": [
+            50,
+            55,
+            55
+          ],
+          "reasons": [
+            "haiku: School path doesn't protect vulnerable",
+            "opus: 'Takes nobody's place in the line', but a crew must come back to check.",
+            "sonnet: Takes nothing from others but doesn't help other vulnerable neighbors."
+          ],
+          "m": 53.333333333333336,
+          "spread": 2.8867513459481287,
+          "studyPlace": 4,
+          "raterPlace": 4
+        },
+        {
+          "id": "fire_early_highway_run",
+          "title": "Leave immediately on the main highway, before the staging starts",
+          "study": 35,
+          "scores": [
+            15,
+            8,
+            20
+          ],
+          "reasons": [
+            "haiku: Breaks staging; walkers stuck in jam",
+            "opus: Farthest blocks 'are the ones still stuck in the jam when the fire comes down'. Near tie with A.",
+            "sonnet: Breaks staging, jamming the road that vulnerable/late blocks depend on."
+          ],
+          "m": 14.333333333333334,
+          "spread": 6.027713773341708,
+          "studyPlace": 5,
+          "raterPlace": 6
+        }
+      ]
+    },
+    {
+      "scenario": 2,
+      "title": "Eight Hours Ahead of the Fire",
+      "value": "Reducing harm",
+      "rho": 0.7826908981308054,
+      "studyTop": "Take your household to the concrete school on the hill",
+      "raterTop": "Take your household's assigned place in the staged convoy",
+      "opts": [
+        {
+          "id": "fire_assigned_convoy_slot",
+          "title": "Take your household's assigned place in the staged convoy",
+          "study": 59,
+          "scores": [
+            80,
+            85,
+            85
+          ],
+          "reasons": [
+            "haiku: Assigned slot; no added risk",
+            "opus: 'Nobody else is pushed down the list', on 'a road that is kept moving'.",
+            "sonnet: Stays in assigned slot; imposes no extra risk on others."
+          ],
+          "m": 83.33333333333333,
+          "spread": 2.8867513459481287,
+          "studyPlace": 3,
+          "raterPlace": 1.5
+        },
+        {
+          "id": "fire_closed_ridge_road",
+          "title": "Take the closed ridge road",
+          "study": 23,
+          "scores": [
+            15,
+            15,
+            25
+          ],
+          "reasons": [
+            "haiku: Ridge road closes to crews; nursing home imperiled",
+            "opus: Blocks 'the road the fire crews need', delaying the engines for the nursing home.",
+            "sonnet: Turns back an engine, delaying crews and the nursing home rescue."
+          ],
+          "m": 18.333333333333332,
+          "spread": 5.773502691896257,
+          "studyPlace": 5,
+          "raterPlace": 5
+        },
+        {
+          "id": "fire_wait_accessible_bus",
+          "title": "Give your car seats to the two residents with walkers and wait for the lift bus",
+          "study": 56,
+          "scores": [
+            90,
+            78,
+            80
+          ],
+          "reasons": [
+            "haiku: Swaps fairly; no additional risk",
+            "opus: A seat swap with the residents. The car keeps your slot, so no one is displaced.",
+            "sonnet: Costs only the household itself; no harm imposed on others."
+          ],
+          "m": 82.66666666666667,
+          "spread": 6.429100507328637,
+          "studyPlace": 4,
+          "raterPlace": 3
+        },
+        {
+          "id": "fire_fill_every_seat",
+          "title": "Fill every seat in the car with neighbors who have none",
+          "study": 62,
+          "scores": [
+            65,
+            83,
+            65
+          ],
+          "reasons": [
+            "haiku: Heavier vehicle might slow convoy slightly",
+            "opus: 'Not anybody else's place in the line.' Keeps to 'the staged line'. Near tie with E.",
+            "sonnet: Stays in staged slot despite extra passengers; minimal added risk."
+          ],
+          "m": 71,
+          "spread": 10.392304845413264,
+          "studyPlace": 2,
+          "raterPlace": 4
+        },
+        {
+          "id": "fire_shelter_hill_school",
+          "title": "Take your household to the concrete school on the hill",
+          "study": 94,
+          "scores": [
+            100,
+            60,
+            90
+          ],
+          "reasons": [
+            "haiku: Takes no road; zero risk imposed",
+            "opus: Takes no road, but 'a crew comes back into the valley to find out'.",
+            "sonnet: Uses no road capacity, takes nothing from anyone else."
+          ],
+          "m": 83.33333333333333,
+          "spread": 20.816659994661325,
+          "studyPlace": 1,
+          "raterPlace": 1.5
+        },
+        {
+          "id": "fire_early_highway_run",
+          "title": "Leave immediately on the main highway, before the staging starts",
+          "study": 20,
+          "scores": [
+            10,
+            5,
+            10
+          ],
+          "reasons": [
+            "haiku: Breaks staging; junction seizes, blocks imperiled",
+            "opus: Breaks the staging, 'the junction seizes', and the farthest blocks are stuck when the fire arrives.",
+            "sonnet: Triggers a cascade where 'nine blocks... end up on the road together.'"
+          ],
+          "m": 8.333333333333334,
+          "spread": 2.8867513459481287,
+          "studyPlace": 6,
+          "raterPlace": 6
+        }
+      ]
+    },
+    {
+      "scenario": 2,
+      "title": "Eight Hours Ahead of the Fire",
+      "value": "How much is gained",
+      "rho": 1,
+      "studyTop": "Take the closed ridge road",
+      "raterTop": "Take the closed ridge road",
+      "opts": [
+        {
+          "id": "fire_assigned_convoy_slot",
+          "title": "Take your household's assigned place in the staged convoy",
+          "study": 65,
+          "scores": [
+            75,
+            55,
+            60
+          ],
+          "reasons": [
+            "haiku: Fifth of nine, guided, safe and timely",
+            "opus: Together and guided, but 'three hours of waiting' with a child who needs an inhaler.",
+            "sonnet: Leaves guided, together, but must wait for the fifth slot."
+          ],
+          "m": 63.333333333333336,
+          "spread": 10.408329997330663,
+          "studyPlace": 3,
+          "raterPlace": 3
+        },
+        {
+          "id": "fire_closed_ridge_road",
+          "title": "Take the closed ridge road",
+          "study": 92,
+          "scores": [
+            95,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: Ridge road 40 minutes; household out quickly",
+            "opus: 'Out of the valley in forty minutes', hours ahead of the convoy.",
+            "sonnet: Household 'over the ridge and out... in forty minutes.'"
+          ],
+          "m": 95,
+          "spread": 0,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "fire_wait_accessible_bus",
+          "title": "Give your car seats to the two residents with walkers and wait for the lift bus",
+          "study": 19,
+          "scores": [
+            20,
+            12,
+            10
+          ],
+          "reasons": [
+            "haiku: Household separated; wait 6+ hours",
+            "opus: 'Wait six hours in a shelter hall', on a bus that leaves last of all.",
+            "sonnet: Own household waits six hours for the last bus out of the valley."
+          ],
+          "m": 14,
+          "spread": 5.291502622129181,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "fire_fill_every_seat",
+          "title": "Fill every seat in the car with neighbors who have none",
+          "study": 40,
+          "scores": [
+            65,
+            45,
+            45
+          ],
+          "reasons": [
+            "haiku: Fifth of nine, slow loading and walker",
+            "opus: Fifth of nine, and 'the drive is slow and very hot' in a full car.",
+            "sonnet: Full car with walker on roof; slow and hot, kept to staged pace."
+          ],
+          "m": 51.666666666666664,
+          "spread": 11.547005383792515,
+          "studyPlace": 4,
+          "raterPlace": 4
+        },
+        {
+          "id": "fire_shelter_hill_school",
+          "title": "Take your household to the concrete school on the hill",
+          "study": 26,
+          "scores": [
+            40,
+            30,
+            35
+          ],
+          "reasons": [
+            "haiku: Walk uphill then trapped in fire's path",
+            "opus: 'Inside the fire's path in a building', a slow climb with the walker.",
+            "sonnet: Slow 20-minute climb near the fire, no vehicle, front arrives while there."
+          ],
+          "m": 35,
+          "spread": 5,
+          "studyPlace": 5,
+          "raterPlace": 5
+        },
+        {
+          "id": "fire_early_highway_run",
+          "title": "Leave immediately on the main highway, before the staging starts",
+          "study": 80,
+          "scores": [
+            90,
+            90,
+            85
+          ],
+          "reasons": [
+            "haiku: Empty highway; household out early",
+            "opus: 'Out early on an open highway', with 'an immediate start'.",
+            "sonnet: Leaves immediately on an empty highway before staging starts."
+          ],
+          "m": 88.33333333333333,
+          "spread": 2.8867513459481287,
+          "studyPlace": 2,
+          "raterPlace": 2
+        }
+      ]
+    },
+    {
+      "scenario": 2,
+      "title": "Eight Hours Ahead of the Fire",
+      "value": "How many are helped",
+      "rho": 0.8406680016960503,
+      "studyTop": "Fill every seat in the car with neighbors who have none",
+      "raterTop": "Fill every seat in the car with neighbors who have none",
+      "opts": [
+        {
+          "id": "fire_assigned_convoy_slot",
+          "title": "Take your household's assigned place in the staged convoy",
+          "study": 53,
+          "scores": [
+            40,
+            55,
+            30
+          ],
+          "reasons": [
+            "haiku: Assigned slot doesn't help others",
+            "opus: Your household only. The staged road keeps moving for everyone.",
+            "sonnet: Helps only the household; no effect on others; near tie with B."
+          ],
+          "m": 41.666666666666664,
+          "spread": 12.583057392117915,
+          "studyPlace": 2,
+          "raterPlace": 3
+        },
+        {
+          "id": "fire_closed_ridge_road",
+          "title": "Take the closed ridge road",
+          "study": 25,
+          "scores": [
+            42,
+            20,
+            15
+          ],
+          "reasons": [
+            "haiku: Ridge road helps only household",
+            "opus: Household out, but the engines are delayed and the nursing home put at risk.",
+            "sonnet: Delays fire crews, indirectly hurting rescue of others like the nursing home."
+          ],
+          "m": 25.666666666666668,
+          "spread": 14.364307617610162,
+          "studyPlace": 6,
+          "raterPlace": 5
+        },
+        {
+          "id": "fire_wait_accessible_bus",
+          "title": "Give your car seats to the two residents with walkers and wait for the lift bus",
+          "study": 39,
+          "scores": [
+            70,
+            78,
+            85
+          ],
+          "reasons": [
+            "haiku: Two residents out fifth instead of ninth",
+            "opus: Two walker users get out hours sooner, and nobody who needs the lift is left behind.",
+            "sonnet: Two residents who'd have gone last now leave fifth of nine."
+          ],
+          "m": 77.66666666666667,
+          "spread": 7.505553499465135,
+          "studyPlace": 3.5,
+          "raterPlace": 2
+        },
+        {
+          "id": "fire_fill_every_seat",
+          "title": "Fill every seat in the car with neighbors who have none",
+          "study": 94,
+          "scores": [
+            85,
+            92,
+            90
+          ],
+          "reasons": [
+            "haiku: Three neighbors without vehicles get out",
+            "opus: 'Seven people leave the valley instead of four.' Three had no way out.",
+            "sonnet: Three extra neighbors with no vehicle leave in the car."
+          ],
+          "m": 89,
+          "spread": 3.605551275463989,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "fire_shelter_hill_school",
+          "title": "Take your household to the concrete school on the hill",
+          "study": 39,
+          "scores": [
+            41,
+            50,
+            28
+          ],
+          "reasons": [
+            "haiku: School path helps only household",
+            "opus: Takes nothing, but helps no one else out and draws a crew back in.",
+            "sonnet: Frees no seat or road capacity for anyone else specifically."
+          ],
+          "m": 39.666666666666664,
+          "spread": 11.06044001535804,
+          "studyPlace": 3.5,
+          "raterPlace": 4
+        },
+        {
+          "id": "fire_early_highway_run",
+          "title": "Leave immediately on the main highway, before the staging starts",
+          "study": 30,
+          "scores": [
+            15,
+            5,
+            5
+          ],
+          "reasons": [
+            "haiku: Breaks staging; early helped, later jammed",
+            "opus: The jam traps the blocks furthest from the junction. Net loss.",
+            "sonnet: Causes the junction to seize, trapping blocks still waiting behind."
+          ],
+          "m": 8.333333333333334,
+          "spread": 5.773502691896257,
+          "studyPlace": 5,
+          "raterPlace": 6
+        }
+      ]
+    },
+    {
+      "scenario": 3,
+      "title": "Limited Cancer Treatment Allocation",
+      "value": "Protecting the vulnerable",
+      "rho": 0.9428571428571428,
+      "studyTop": "Treat the 20 who are sickest",
+      "raterTop": "Treat the 20 who are sickest",
+      "opts": [
+        {
+          "id": "cancer_max_total_lives",
+          "title": "Treat the 20 most likely to survive",
+          "study": 30,
+          "scores": [
+            25,
+            10,
+            25
+          ],
+          "reasons": [
+            "haiku: Healthiest prioritized; opposite of protecting",
+            "opus: The late-diagnosed stay at the bottom, 'the same ones who waited last month'.",
+            "sonnet: Penalizes patients found late, keeping 'the system already failed' at bottom."
+          ],
+          "m": 20,
+          "spread": 8.660254037844387,
+          "studyPlace": 5,
+          "raterPlace": 5
+        },
+        {
+          "id": "cancer_prioritize_vulnerable",
+          "title": "Treat the 20 who are sickest",
+          "study": 96,
+          "scores": [
+            100,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: Sickest 20 treated; most vulnerable",
+            "opus: 'The 20 in the worst condition are treated first.'",
+            "sonnet: Sorted by illness; treats the '20 worst off.'"
+          ],
+          "m": 96.66666666666667,
+          "spread": 2.8867513459481287,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "cancer_max_life_years",
+          "title": "Treat the 20 with the most years ahead",
+          "study": 18,
+          "scores": [
+            20,
+            20,
+            15
+          ],
+          "reasons": [
+            "haiku: Youngest prioritized; opposite of vulnerable",
+            "opus: 'Age decides who is treated', and the oldest wait. Near tie with D.",
+            "sonnet: Ranks by years of life ahead, so 'age decides who is treated.'"
+          ],
+          "m": 18.333333333333332,
+          "spread": 2.886751345948129,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "cancer_weighted_lottery",
+          "title": "Draw the 20 names from the patients who cannot wait",
+          "study": 56,
+          "scores": [
+            80,
+            85,
+            85
+          ],
+          "reasons": [
+            "haiku: Draw from 45 who cannot wait; vulnerable",
+            "opus: Drawn from patients who 'cannot wait', 'with a few extra slips for the most vulnerable'.",
+            "sonnet: Draws from those who cannot wait, with extra slips for the most vulnerable."
+          ],
+          "m": 83.33333333333333,
+          "spread": 2.8867513459481287,
+          "studyPlace": 3,
+          "raterPlace": 2
+        },
+        {
+          "id": "cancer_reserve_underserved",
+          "title": "Hold some doses back for the patients nobody reaches",
+          "study": 68,
+          "scores": [
+            60,
+            80,
+            65
+          ],
+          "reasons": [
+            "haiku: Furthest-out patients; underserved",
+            "opus: Doses held for 'patients who live too far out', the hardest to reach.",
+            "sonnet: Reserves doses for patients too far out to reach a clinic quickly."
+          ],
+          "m": 68.33333333333333,
+          "spread": 10.408329997330664,
+          "studyPlace": 2,
+          "raterPlace": 3
+        },
+        {
+          "id": "cancer_essential_workers",
+          "title": "Treat the 20 who others depend on",
+          "study": 43,
+          "scores": [
+            35,
+            25,
+            30
+          ],
+          "reasons": [
+            "haiku: Essential workers; generally healthy, not sickest",
+            "opus: 'The sickest of the 120 are pushed down the list.'",
+            "sonnet: Selects by essential-worker register, pushing 'sickest... down the list.'"
+          ],
+          "m": 30,
+          "spread": 5,
+          "studyPlace": 4,
+          "raterPlace": 4
+        }
+      ]
+    },
+    {
+      "scenario": 3,
+      "title": "Limited Cancer Treatment Allocation",
+      "value": "Reducing harm",
+      "rho": 0.8285714285714286,
+      "studyTop": "Draw the 20 names from the patients who cannot wait",
+      "raterTop": "Draw the 20 names from the patients who cannot wait",
+      "opts": [
+        {
+          "id": "cancer_max_total_lives",
+          "title": "Treat the 20 most likely to survive",
+          "study": 48,
+          "scores": [
+            36,
+            65,
+            25
+          ],
+          "reasons": [
+            "haiku: Most of 45 lose chance. Near tie.",
+            "opus: 'This month's survival count is the highest here.'",
+            "sonnet: Late-diagnosed patients 'stay at the bottom,' losing their chance repeatedly."
+          ],
+          "m": 42,
+          "spread": 20.663978319771825,
+          "studyPlace": 3,
+          "raterPlace": 4
+        },
+        {
+          "id": "cancer_prioritize_vulnerable",
+          "title": "Treat the 20 who are sickest",
+          "study": 42,
+          "scores": [
+            80,
+            30,
+            80
+          ],
+          "reasons": [
+            "haiku: Sickest treated; 25-30 of 45 still lose",
+            "opus: 'Fewer of the 120 are alive at the end of the year than under any other rule.'",
+            "sonnet: Treats the most urgent/sickest, overlapping with those who'd lose their chance."
+          ],
+          "m": 63.333333333333336,
+          "spread": 28.86751345948129,
+          "studyPlace": 4,
+          "raterPlace": 2
+        },
+        {
+          "id": "cancer_max_life_years",
+          "title": "Treat the 20 with the most years ahead",
+          "study": 25,
+          "scores": [
+            34,
+            55,
+            20
+          ],
+          "reasons": [
+            "haiku: Most of 45 lose permanent chance. Near tie.",
+            "opus: Treats those with the most gain. The older, who may not last, wait.",
+            "sonnet: Older patients systematically excluded, risking their only chance."
+          ],
+          "m": 36.333333333333336,
+          "spread": 17.61628034896508,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "cancer_weighted_lottery",
+          "title": "Draw the 20 names from the patients who cannot wait",
+          "study": 94,
+          "scores": [
+            95,
+            95,
+            90
+          ],
+          "reasons": [
+            "haiku: Draws from 45; minimizes permanent loss",
+            "opus: 'Nobody who would lose their chance for good is passed over for somebody who could still wait.'",
+            "sonnet: Targets exactly the 45 who would 'lose their chance for good.'"
+          ],
+          "m": 93.33333333333333,
+          "spread": 2.8867513459481287,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "cancer_reserve_underserved",
+          "title": "Hold some doses back for the patients nobody reaches",
+          "study": 64,
+          "scores": [
+            60,
+            25,
+            65
+          ],
+          "reasons": [
+            "haiku: Holds doses for furthest-out; might expire",
+            "opus: 'Fewer than 20 patients may be treated', and expired doses help 'nobody at all'. Near tie with A.",
+            "sonnet: Reaches isolated patients but 'fewer than 20... may be treated,' some doses wasted."
+          ],
+          "m": 50,
+          "spread": 21.79449471770337,
+          "studyPlace": 2,
+          "raterPlace": 3
+        },
+        {
+          "id": "cancer_essential_workers",
+          "title": "Treat the 20 who others depend on",
+          "study": 40,
+          "scores": [
+            38,
+            45,
+            35
+          ],
+          "reasons": [
+            "haiku: Most of 45 who cannot wait lose chance",
+            "opus: Picked by register, not need, so the sickest risk losing their chance.",
+            "sonnet: Sickest patients pushed down for workers, raising their risk of losing the chance."
+          ],
+          "m": 39.333333333333336,
+          "spread": 5.131601439446884,
+          "studyPlace": 5,
+          "raterPlace": 5
+        }
+      ]
+    },
+    {
+      "scenario": 3,
+      "title": "Limited Cancer Treatment Allocation",
+      "value": "How much is gained",
+      "rho": 0.8857142857142857,
+      "studyTop": "Treat the 20 with the most years ahead",
+      "raterTop": "Treat the 20 with the most years ahead",
+      "opts": [
+        {
+          "id": "cancer_max_total_lives",
+          "title": "Treat the 20 most likely to survive",
+          "study": 39,
+          "scores": [
+            85,
+            80,
+            75
+          ],
+          "reasons": [
+            "haiku: Highest survival odds; highest count",
+            "opus: The most survivors among those treated, which yields many years.",
+            "sonnet: Selects highest survival odds, which generally yields substantial years too."
+          ],
+          "m": 80,
+          "spread": 5,
+          "studyPlace": 3,
+          "raterPlace": 2
+        },
+        {
+          "id": "cancer_prioritize_vulnerable",
+          "title": "Treat the 20 who are sickest",
+          "study": 20,
+          "scores": [
+            30,
+            15,
+            25
+          ],
+          "reasons": [
+            "haiku: Sickest least likely to recover",
+            "opus: 'Some will not recover.' Fewest alive at year end.",
+            "sonnet: Sickest patients 'respond slowly,' fewer years bought per dose."
+          ],
+          "m": 23.333333333333332,
+          "spread": 7.637626158259733,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "cancer_max_life_years",
+          "title": "Treat the 20 with the most years ahead",
+          "study": 92,
+          "scores": [
+            100,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: 20 doses buy most future years",
+            "opus: 'More future years of life than they could under any other rule here.'",
+            "sonnet: Explicitly maximizes 'more future years of life' bought by the doses."
+          ],
+          "m": 96.66666666666667,
+          "spread": 2.8867513459481287,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "cancer_weighted_lottery",
+          "title": "Draw the 20 names from the patients who cannot wait",
+          "study": 33,
+          "scores": [
+            40,
+            35,
+            15
+          ],
+          "reasons": [
+            "haiku: 45 cannot wait least likely to respond",
+            "opus: 'Least likely to respond.' Fewer come through than under ranking by odds.",
+            "sonnet: Draws from least likely to respond, lowest expected years gained."
+          ],
+          "m": 30,
+          "spread": 13.228756555322953,
+          "studyPlace": 4,
+          "raterPlace": 5
+        },
+        {
+          "id": "cancer_reserve_underserved",
+          "title": "Hold some doses back for the patients nobody reaches",
+          "study": 30,
+          "scores": [
+            55,
+            30,
+            35
+          ],
+          "reasons": [
+            "haiku: Furthest-out; outcome uncertain; doses expire",
+            "opus: Doses may expire, and 'fewer than 20 patients may be treated'. Near tie with B.",
+            "sonnet: No optimization for years; uncertain outcomes for isolated patients."
+          ],
+          "m": 40,
+          "spread": 13.228756555322953,
+          "studyPlace": 5,
+          "raterPlace": 4
+        },
+        {
+          "id": "cancer_essential_workers",
+          "title": "Treat the 20 who others depend on",
+          "study": 70,
+          "scores": [
+            70,
+            60,
+            55
+          ],
+          "reasons": [
+            "haiku: Essential workers return; years benefit unclear",
+            "opus: Working-age treated patients are 'back at work within weeks'. Years not optimized.",
+            "sonnet: Workers likely healthier/younger, moderate years gained, not optimized for it."
+          ],
+          "m": 61.666666666666664,
+          "spread": 7.637626158259733,
+          "studyPlace": 2,
+          "raterPlace": 3
+        }
+      ]
+    },
+    {
+      "scenario": 3,
+      "title": "Limited Cancer Treatment Allocation",
+      "value": "How many are helped",
+      "rho": 0.9428571428571428,
+      "studyTop": "Treat the 20 most likely to survive",
+      "raterTop": "Treat the 20 most likely to survive",
+      "opts": [
+        {
+          "id": "cancer_max_total_lives",
+          "title": "Treat the 20 most likely to survive",
+          "study": 94,
+          "scores": [
+            95,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: 20 most likely to survive; highest count",
+            "opus: 'This month's survival count is the highest here.'",
+            "sonnet: Explicitly maximizes number who 'come through,' most lives saved."
+          ],
+          "m": 95,
+          "spread": 0,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "cancer_prioritize_vulnerable",
+          "title": "Treat the 20 who are sickest",
+          "study": 35,
+          "scores": [
+            35,
+            15,
+            15
+          ],
+          "reasons": [
+            "haiku: 20 sickest; fewer survive; few dependents",
+            "opus: 'Fewer of the 120 are alive... than under any other rule here.'",
+            "sonnet: Explicitly yields fewest total survivors 'at the end of the year.'"
+          ],
+          "m": 21.666666666666668,
+          "spread": 11.547005383792515,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "cancer_max_life_years",
+          "title": "Treat the 20 with the most years ahead",
+          "study": 43,
+          "scores": [
+            75,
+            75,
+            65
+          ],
+          "reasons": [
+            "haiku: 20 people with most years plus dependents",
+            "opus: Patients with long lives ahead likely respond well. Many survive.",
+            "sonnet: Buys most years but not necessarily most total lives saved."
+          ],
+          "m": 71.66666666666667,
+          "spread": 5.773502691896257,
+          "studyPlace": 3,
+          "raterPlace": 3
+        },
+        {
+          "id": "cancer_weighted_lottery",
+          "title": "Draw the 20 names from the patients who cannot wait",
+          "study": 38,
+          "scores": [
+            45,
+            45,
+            30
+          ],
+          "reasons": [
+            "haiku: 20 from 45 but fewer survive; few dependents",
+            "opus: 'Fewer of the 20 come through than under the rule that ranks by odds.'",
+            "sonnet: Draws from least-likely-to-respond group; 'fewer of the 20 come through.'"
+          ],
+          "m": 40,
+          "spread": 8.660254037844387,
+          "studyPlace": 4,
+          "raterPlace": 5
+        },
+        {
+          "id": "cancer_reserve_underserved",
+          "title": "Hold some doses back for the patients nobody reaches",
+          "study": 37,
+          "scores": [
+            65,
+            35,
+            45
+          ],
+          "reasons": [
+            "haiku: Furthest-out patients; some dependents",
+            "opus: Held doses may lapse, and an expired dose 'helps nobody at all'.",
+            "sonnet: Reaches some hard-to-reach patients but with uncertain, partial success."
+          ],
+          "m": 48.333333333333336,
+          "spread": 15.275252316519467,
+          "studyPlace": 5,
+          "raterPlace": 4
+        },
+        {
+          "id": "cancer_essential_workers",
+          "title": "Treat the 20 who others depend on",
+          "study": 86,
+          "scores": [
+            85,
+            80,
+            80
+          ],
+          "reasons": [
+            "haiku: 20 workers plus patients/students depending on them",
+            "opus: Saves the treated plus the 'wards and classrooms they staff', which 'keep running'.",
+            "sonnet: Workers return to jobs, indirectly helping wards/classrooms depending on them."
+          ],
+          "m": 81.66666666666667,
+          "spread": 2.8867513459481287,
+          "studyPlace": 2,
+          "raterPlace": 2
+        }
+      ]
+    },
+    {
+      "scenario": 4,
+      "title": "The Care Visits You Have to Cut",
+      "value": "Protecting the vulnerable",
+      "rho": 0.9428571428571428,
+      "studyTop": "Protect full visits for the clients with nobody else",
+      "raterTop": "Protect full visits for the clients with nobody else",
+      "opts": [
+        {
+          "id": "care_rebuild_rounds_by_travel",
+          "title": "Redraw the routes to cut the driving",
+          "study": 41,
+          "scores": [
+            55,
+            65,
+            45
+          ],
+          "reasons": [
+            "haiku: Routes redrawn; vulnerable still have contact",
+            "opus: 'Most visits survive at full length', but with strangers at the door.",
+            "sonnet: Preserves visits for all but not targeted at the most vulnerable."
+          ],
+          "m": 55,
+          "spread": 10,
+          "studyPlace": 3,
+          "raterPlace": 4
+        },
+        {
+          "id": "care_equal_share",
+          "title": "Keep every care visit, and cut the check-in visits",
+          "study": 35,
+          "scores": [
+            25,
+            25,
+            30
+          ],
+          "reasons": [
+            "haiku: Check-in visits cut; vulnerable lose only visitor",
+            "opus: 'The clients who live alone lose the most': their only check-in visitor.",
+            "sonnet: Cuts check-ins, which especially hurts clients who live alone."
+          ],
+          "m": 26.666666666666668,
+          "spread": 2.886751345948129,
+          "studyPlace": 5,
+          "raterPlace": 5
+        },
+        {
+          "id": "care_cut_where_family_covers",
+          "title": "Cut only where a family member can cover",
+          "study": 58,
+          "scores": [
+            85,
+            85,
+            80
+          ],
+          "reasons": [
+            "haiku: Protects clients without family; includes vulnerable",
+            "opus: 'Every client without family nearby keeps every visit.'",
+            "sonnet: Cuts fall only where family can cover, sparing those with nobody else."
+          ],
+          "m": 83.33333333333333,
+          "spread": 2.8867513459481287,
+          "studyPlace": 2,
+          "raterPlace": 2
+        },
+        {
+          "id": "care_shorten_every_visit",
+          "title": "Shorten every visit so nobody is dropped",
+          "study": 38,
+          "scores": [
+            70,
+            45,
+            55
+          ],
+          "reasons": [
+            "haiku: All 240 kept on schedule including vulnerable",
+            "opus: Clients who live alone also lose about a third of each visit. 'Tasks undone.'",
+            "sonnet: All clients kept on schedule regardless of vulnerability, spread evenly."
+          ],
+          "m": 56.666666666666664,
+          "spread": 12.583057392117917,
+          "studyPlace": 4,
+          "raterPlace": 3
+        },
+        {
+          "id": "care_profitable_rounds",
+          "title": "Keep the town routes that pay, and drop the rural ones",
+          "study": 16,
+          "scores": [
+            15,
+            8,
+            15
+          ],
+          "reasons": [
+            "haiku: Rural clients dropped; most isolated lost",
+            "opus: Rural clients go to a county 'with nobody to send, and most of them have nobody else'.",
+            "sonnet: Drops ~45 rural clients, 'most of them have nobody else.'"
+          ],
+          "m": 12.666666666666666,
+          "spread": 4.041451884327381,
+          "studyPlace": 6,
+          "raterPlace": 6
+        },
+        {
+          "id": "care_highest_need_first",
+          "title": "Protect full visits for the clients with nobody else",
+          "study": 95,
+          "scores": [
+            100,
+            95,
+            95
+          ],
+          "reasons": [
+            "haiku: Complete protection for 50 people living alone",
+            "opus: 'Complete protection for the 50 people who have nobody else at home.'",
+            "sonnet: Full protection for the 50 clients 'who live alone.'"
+          ],
+          "m": 96.66666666666667,
+          "spread": 2.8867513459481287,
+          "studyPlace": 1,
+          "raterPlace": 1
+        }
+      ]
+    },
+    {
+      "scenario": 4,
+      "title": "The Care Visits You Have to Cut",
+      "value": "Reducing harm",
+      "rho": 0.08571428571428572,
+      "studyTop": "Cut only where a family member can cover",
+      "raterTop": "Cut only where a family member can cover",
+      "opts": [
+        {
+          "id": "care_rebuild_rounds_by_travel",
+          "title": "Redraw the routes to cut the driving",
+          "study": 47,
+          "scores": [
+            75,
+            80,
+            80
+          ],
+          "reasons": [
+            "haiku: New caregivers step in though unknown",
+            "opus: 'About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.'",
+            "sonnet: Cuts driving, not care; visits mostly survive at full length."
+          ],
+          "m": 78.33333333333333,
+          "spread": 2.8867513459481287,
+          "studyPlace": 5,
+          "raterPlace": 2
+        },
+        {
+          "id": "care_equal_share",
+          "title": "Keep every care visit, and cut the check-in visits",
+          "study": 70,
+          "scores": [
+            40,
+            45,
+            30
+          ],
+          "reasons": [
+            "haiku: Check-in visits cut; nobody steps in",
+            "opus: Care tasks are kept, but problems are 'found later', mostly for those living alone.",
+            "sonnet: Loses 'eyes on the client,' trouble caught later, no substitute monitoring."
+          ],
+          "m": 38.333333333333336,
+          "spread": 7.637626158259733,
+          "studyPlace": 2,
+          "raterPlace": 5
+        },
+        {
+          "id": "care_cut_where_family_covers",
+          "title": "Cut only where a family member can cover",
+          "study": 93,
+          "scores": [
+            95,
+            90,
+            90
+          ],
+          "reasons": [
+            "haiku: Family members step in to cover cuts",
+            "opus: Cuts 'only from clients who have relatives living close enough to step in'.",
+            "sonnet: Cuts land 'only on clients who have a relative nearby to step in.'"
+          ],
+          "m": 91.66666666666667,
+          "spread": 2.8867513459481287,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "care_shorten_every_visit",
+          "title": "Shorten every visit so nobody is dropped",
+          "study": 44,
+          "scores": [
+            35,
+            40,
+            55
+          ],
+          "reasons": [
+            "haiku: Visits shortened; nobody finishes tasks",
+            "opus: 'Tasks undone at door after door.' No one is there to step in.",
+            "sonnet: Harm (undone tasks) spread thinly across all clients, nobody dropped."
+          ],
+          "m": 43.333333333333336,
+          "spread": 10.408329997330664,
+          "studyPlace": 6,
+          "raterPlace": 4
+        },
+        {
+          "id": "care_profitable_rounds",
+          "title": "Keep the town routes that pay, and drop the rural ones",
+          "study": 55,
+          "scores": [
+            20,
+            10,
+            15
+          ],
+          "reasons": [
+            "haiku: Rural transferred; county has nobody to send",
+            "opus: Cut falls on rural clients who 'have nobody else', transferred to a county with nobody to send.",
+            "sonnet: Rural clients transferred to a county agency 'with nobody to send.'"
+          ],
+          "m": 15,
+          "spread": 5,
+          "studyPlace": 3,
+          "raterPlace": 6
+        },
+        {
+          "id": "care_highest_need_first",
+          "title": "Protect full visits for the clients with nobody else",
+          "study": 54,
+          "scores": [
+            60,
+            55,
+            40
+          ],
+          "reasons": [
+            "haiku: Other 190 absorb cut; unclear if others step in",
+            "opus: The cut lands on the 190 who have someone at home, though the schedule becomes chaotic.",
+            "sonnet: 190 clients 'absorb the entire cut' with no one stepping in for them."
+          ],
+          "m": 51.666666666666664,
+          "spread": 10.408329997330664,
+          "studyPlace": 4,
+          "raterPlace": 3
+        }
+      ]
+    },
+    {
+      "scenario": 4,
+      "title": "The Care Visits You Have to Cut",
+      "value": "How much is gained",
+      "rho": 1,
+      "studyTop": "Keep the town routes that pay, and drop the rural ones",
+      "raterTop": "Keep the town routes that pay, and drop the rural ones",
+      "opts": [
+        {
+          "id": "care_rebuild_rounds_by_travel",
+          "title": "Redraw the routes to cut the driving",
+          "study": 68,
+          "scores": [
+            70,
+            72,
+            70
+          ],
+          "reasons": [
+            "haiku: Cuts 300 hours; 100 hours unaccounted",
+            "opus: Driving, which loses money on rural routes, 'falls by about 300 hours a week'.",
+            "sonnet: Saves ~300 hours from driving, improving efficiency without cutting care."
+          ],
+          "m": 70.66666666666667,
+          "spread": 1.1547005383792517,
+          "studyPlace": 2,
+          "raterPlace": 2
+        },
+        {
+          "id": "care_equal_share",
+          "title": "Keep every care visit, and cut the check-in visits",
+          "study": 62,
+          "scores": [
+            95,
+            58,
+            30
+          ],
+          "reasons": [
+            "haiku: Cuts 400 hours; keeps service viable",
+            "opus: 'The drives to the dropped visits are saved too.'",
+            "sonnet: Saves driving hours from dropped check-ins but no stated financial gain."
+          ],
+          "m": 61,
+          "spread": 32.60368077380221,
+          "studyPlace": 3,
+          "raterPlace": 3
+        },
+        {
+          "id": "care_cut_where_family_covers",
+          "title": "Cut only where a family member can cover",
+          "study": 30,
+          "scores": [
+            45,
+            50,
+            40
+          ],
+          "reasons": [
+            "haiku: Cuts only where family covers; total unclear",
+            "opus: Removes about 60 clients' visits. No specific financial effect is stated.",
+            "sonnet: Shifts cost to families, not to the company's financial position."
+          ],
+          "m": 45,
+          "spread": 5,
+          "studyPlace": 5,
+          "raterPlace": 5
+        },
+        {
+          "id": "care_shorten_every_visit",
+          "title": "Shorten every visit so nobody is dropped",
+          "study": 35,
+          "scores": [
+            90,
+            40,
+            45
+          ],
+          "reasons": [
+            "haiku: Shortens all visits by 1/3; keeps viable",
+            "opus: 'Every trip still has to be driven', so the loss-making driving remains.",
+            "sonnet: Keeps hours within budget but no financial upside beyond compliance."
+          ],
+          "m": 58.333333333333336,
+          "spread": 27.53785273643051,
+          "studyPlace": 4,
+          "raterPlace": 4
+        },
+        {
+          "id": "care_profitable_rounds",
+          "title": "Keep the town routes that pay, and drop the rural ones",
+          "study": 93,
+          "scores": [
+            100,
+            95,
+            90
+          ],
+          "reasons": [
+            "haiku: Guarantees solvent and job survival next year",
+            "opus: 'The strongest financial position.' Company 'comes out of the three months solvent'.",
+            "sonnet: Keeps the paying city contract, 'strongest financial position... open next year.'"
+          ],
+          "m": 95,
+          "spread": 5,
+          "studyPlace": 1,
+          "raterPlace": 1
+        },
+        {
+          "id": "care_highest_need_first",
+          "title": "Protect full visits for the clients with nobody else",
+          "study": 22,
+          "scores": [
+            55,
+            35,
+            35
+          ],
+          "reasons": [
+            "haiku: Protects 50 but scheduling chaos; unclear",
+            "opus: 'The schedule is being rewritten by the middle of the week.' Inefficient.",
+            "sonnet: Redistributes hours without addressing financial viability directly."
+          ],
+          "m": 41.666666666666664,
+          "spread": 11.547005383792515,
+          "studyPlace": 6,
+          "raterPlace": 6
+        }
+      ]
+    },
+    {
+      "scenario": 4,
+      "title": "The Care Visits You Have to Cut",
+      "value": "How many are helped",
+      "rho": 0.7247137945655605,
+      "studyTop": "Shorten every visit so nobody is dropped",
+      "raterTop": "Redraw the routes to cut the driving",
+      "opts": [
+        {
+          "id": "care_rebuild_rounds_by_travel",
+          "title": "Redraw the routes to cut the driving",
+          "study": 84,
+          "scores": [
+            85,
+            92,
+            90
+          ],
+          "reasons": [
+            "haiku: All 240 by caregivers though strangers",
+            "opus: All clients kept, and 'most visits survive at full length'.",
+            "sonnet: Most visits survive at full length for nearly all 240 clients."
+          ],
+          "m": 89,
+          "spread": 3.605551275463989,
+          "studyPlace": 2,
+          "raterPlace": 1
+        },
+        {
+          "id": "care_equal_share",
+          "title": "Keep every care visit, and cut the check-in visits",
+          "study": 80,
+          "scores": [
+            100,
+            80,
+            80
+          ],
+          "reasons": [
+            "haiku: Every client keeps full care; bathing, meals, meds",
+            "opus: 'Every client keeps the care they are assessed for', minus the check-ins.",
+            "sonnet: All clients keep bathing/meals/medication visits, only check-ins cut."
+          ],
+          "m": 86.66666666666667,
+          "spread": 11.547005383792516,
+          "studyPlace": 3,
+          "raterPlace": 2
+        },
+        {
+          "id": "care_cut_where_family_covers",
+          "title": "Cut only where a family member can cover",
+          "study": 65,
+          "scores": [
+            90,
+            45,
+            45
+          ],
+          "reasons": [
+            "haiku: 180 by Meridian, 60 by family; all kept",
+            "opus: 'About 60 clients lose their visits' to relatives who may be stretched.",
+            "sonnet: About 60 clients lose company-provided visits entirely."
+          ],
+          "m": 60,
+          "spread": 25.98076211353316,
+          "studyPlace": 4,
+          "raterPlace": 4.5
+        },
+        {
+          "id": "care_shorten_every_visit",
+          "title": "Shorten every visit so nobody is dropped",
+          "study": 92,
+          "scores": [
+            75,
+            85,
+            85
+          ],
+          "reasons": [
+            "haiku: All 240 by caregivers; shortened, tasks undone",
+            "opus: 'All 240 keep contact', though visits are a third shorter.",
+            "sonnet: 'All 240 keep contact,' nobody removed from the books."
+          ],
+          "m": 81.66666666666667,
+          "spread": 5.773502691896257,
+          "studyPlace": 1,
+          "raterPlace": 3
+        },
+        {
+          "id": "care_profitable_rounds",
+          "title": "Keep the town routes that pay, and drop the rural ones",
+          "study": 45,
+          "scores": [
+            50,
+            20,
+            20
+          ],
+          "reasons": [
+            "haiku: 195 keep care; 45 transferred lost",
+            "opus: 'About 45 rural clients' lose care to a county 'with nobody to send'.",
+            "sonnet: About 45 clients dropped entirely with no agency to take them."
+          ],
+          "m": 30,
+          "spread": 17.320508075688775,
+          "studyPlace": 5,
+          "raterPlace": 6
+        },
+        {
+          "id": "care_highest_need_first",
+          "title": "Protect full visits for the clients with nobody else",
+          "study": 38,
+          "scores": [
+            60,
+            55,
+            65
+          ],
+          "reasons": [
+            "haiku: 240 on schedule but 190 lose 1/3",
+            "opus: The 50 are protected, but 'the other 190 lose about a third of their visits'.",
+            "sonnet: All 240 nominally served, but 190 clients get degraded care."
+          ],
+          "m": 60,
+          "spread": 5,
+          "studyPlace": 6,
+          "raterPlace": 4.5
+        }
+      ]
+    }
+  ]
+}
