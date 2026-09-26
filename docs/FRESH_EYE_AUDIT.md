@@ -1272,6 +1272,134 @@ CLAUDE.md, the 4.9 list in HOW_TO_ANALYZE. (3) Run the full chain and every sepa
 report:vci, report:stability and report:planner-overlap and update any figure the method documents
 quote. (4) Look at scenario 2 in the browser. (5) Commit, push, log here.
 
+## Fix 6 plan: what the blind raters found (written 26 September, waiting for approval)
+
+Waseem's answers to the rater report: "1-yes, 2-words, 3-keep, write the Fix 6 plan". So: write the plan;
+Scenario 3 (#9, #10) and the seat swap (#5) get WORDS, not new numbers; "Leave immediately" (#6, #7)
+KEEPS 35 and 30. Numbers below are from `Generated Outputs/rater_study/REPORT.md` (#1-#15).
+
+**Nothing here is implemented.** Every figure was measured on scratch copies of the study with the numbers
+changed (scratch `make_mirrors6.cjs`, `fix6_compare.cjs`, `perf6.cjs`, and the project's own report tools run
+on the copies), with pretend participants scored by the real Blocks 1-4 code.
+
+### What I found while testing (it changed the plan)
+
+1. **Moving all 10 flagged numbers kills two options.** "Hold some doses back for the patients nobody reaches"
+   (S3) and "Keep every care visit, and cut the check-in visits" (S4) would each be worse than another option on
+   ALL four values, so each would be the best fit for 0 people in 100 (today 7.6 and 14.0). The cause:
+   - S3: the draw's "Protecting the vulnerable" 56 -> 83 makes the draw beat "Hold some doses back" everywhere.
+   - S4: "Redraw the routes" Reducing harm 47 -> 78 and "Keep every care visit" 70 -> 38 make Redraw beat it
+     everywhere. The raters themselves score Redraw above "Keep every care visit" on all four values: Redraw's
+     real cost (a stranger at the door, no continuity) is not one of the four values, so on the four values it
+     looks free. That is a WORDS problem, not a number problem.
+   So #8, #12 and #13 wait for the words (Part B).
+2. **Two options change the value they are "built on".** Both convoys (S1 #1, S2 #3) go from How much is gained to
+   Reducing harm. That changes the APA page's list for those two values, the confirm-keep question ("This option
+   delivers X…") and which value a kept convoy raises. Their cards support it ("nobody loses their place in the
+   line"), and the S1 / S2 "In this scenario" lines for Reducing harm fit both options each value now leads to.
+3. **The 18 September audit counted "Reducing harm" as the NUMBER of people harmed** (severity went to
+   Protecting the vulnerable). Participants never see that rule: they read the scenario lines ("keeping the risk
+   your choice puts on everyone else as low as possible", "making the cut land where someone else can step in, so
+   it hurts least"), and the raters followed those. Part A lets the numbers follow what participants read. This
+   reverses two numbers the 18 September audit raised on purpose: the respirator (24 -> 45, now 22) and the rural
+   routes (28 -> 55, now 15).
+
+### Part A: seven numbers, now (tested safe)
+
+| # | Scenario | Option | Value | Today | New (raters' average) |
+|---|---|---|---|---|---|
+| 1 | 1 | Leave with the registered convoy | Reducing harm | 61 | 87 |
+| 2 | 1 | Take the sealed respirator | Reducing harm | 45 | 22 |
+| 3 | 2 | Take your household's place in the staged convoy | Reducing harm | 59 | 83 |
+| 4 | 2 | Give your car seats to the two residents with walkers | Reducing harm | 56 | 83 |
+| 11 | 4 + 5 | Cut only where a family member can cover | Protecting the vulnerable | 58 | 83 |
+| 14 | 4 + 5 | Keep the town routes that pay, and drop the rural ones | Reducing harm | 55 | 15 |
+| 15 | 4 + 5 | Protect full visits for the clients with nobody else | How many are helped | 38 | 60 |
+
+Scenario 5 carries its own copy of scenario 4's options (the `wish_` ids): the same three numbers change there,
+and validate:twins keeps them identical. The words do not change in Part A.
+
+**Measured effect of Part A** (pretend participants; today -> after):
+
+| What | Today | After Part A |
+|---|---|---|
+| Every value keeps its own top option in every scenario | yes | yes |
+| Least-chosen best fit | Leave immediately 1.1 in 100 | the same 1.1; Seal your apartment 11.4 -> 4.2; the concrete school 14.8 -> 3.0 |
+| People who see a different best fit (steady) | - | S1 17, S2 18, S3 0, S4 19 in 100 |
+| People who see a different card order (steady) | - | S1 37, S2 34, S3 0, S4 61 in 100 |
+| VCI, "true to top value" / random / flip-flopper | 90 / 57 / 32 | 87 / 57 / 33 |
+| VCI tells true-to-top from random | 96 in 100 | 94 in 100 |
+| VCI tells a convert from a performance chaser | 36 in 100 | 28 in 100 (weaker) |
+| Stability, every kind of participant | - | moves 0-2 points (worst fit 4 -> 6) |
+| Position check, worst ratio (needs 3x) | 2.9x, FAILS | 3.3x, PASSES (all 10 numbers: 4.1x) |
+| Prediction, "almost always best fit" chooser | 52.1% | 53.2% |
+| Performance of the best-fit pick (4 decisions) | 60.0 | 60.3 |
+| First card = best fit (steady) | 57-66 in 100 | 52-64 in 100 (easier to tell position from fit) |
+| MCF sentences, APA arithmetic, CVR lenses, twins | pass | pass |
+| VCI check V3 (one scripted flip-flopper < 50) | 40, passes | 50, FAILS by a hair |
+
+**V3.** One scripted test person who changes value every scenario now lands on "Misaligned" in all four
+scenarios, which is exactly 50, the same as blind picking; the check wants less than 50. Across 2,000 pretend
+flip-floppers the average is 33 (today 32). Do NOT move an option number to pass it. In implementation: find why,
+and bring Waseem the reason and a choice (keep the strict one-person check, or check the 2,000 instead).
+
+### Part B: words first, then three numbers (#8, #12, #13), then rate again
+
+| Where | What the words must do |
+|---|---|
+| S2, the seat swap (#5) | Say that the same number of people leave the valley and only the order changes, so "How many are helped" (people out because of your choice) reads as it is scored (39) |
+| S3, "most likely to survive" (#9) | Say what the rule counts: survivors, not years ("a survivor with five years ahead counts the same as one with forty") |
+| S3, "most years ahead" (#10) | Say that ranking by years can pick a younger patient with a smaller chance of responding, so fewer of the 20 may come through |
+| S3, "Hold some doses back" and the draw (#8) | Give "Hold some doses back" a clear strength of its own (the patients nobody reaches), then set the draw's "Protecting the vulnerable" so it does not win on every value |
+| S3, the "Reducing harm" line | "Losing their chance for good" split the raters on 4 of 6 options; make it concrete |
+| S4, "Redraw the routes" and "Keep every care visit" (#12, #13) | Make one of them honestly better somewhere (for example, what the stranger at the door costs the clients who live alone, or what the check-in cut saves in money), then set the two Reducing harm numbers |
+| S4, "How much is gained" | Three cards say nothing about money; give each one plain money line |
+
+**Every option whose words change is checked in six places, by reading and by the checks:**
+1. the card itself (title, how, summary, gains, gives up, what happens, the question);
+2. the two CVR lens views, which are built from the option's own reflection material (its rule, the parallel
+   rule, the act, the parallel act, and both consequence pairs): they must still describe the same act;
+3. the two stakeholder stories (the person it hurts, the person who needed it): `validate:people`;
+4. the APA page: the "In this scenario" lines must still describe the options each value leads to (the main
+   value, `optionMainValue`), and `verify:apa`;
+5. MCF: `validate:mcf` (every sentence, no verdict, no digit);
+6. the planner's card sentence and the Word export (`export_block5_content.cjs`).
+
+Then the changed cards (only those) go back to the same three blind raters, in fresh rooms, and #8, #12, #13 are
+set from their average, but only where no option dies. Then every measurement above is run again.
+
+### Part C: kept on purpose
+
+"Leave immediately" (#6, #7) keeps 35 and 30 (Waseem: keep). The raters' 14 and 8 are written into the
+report as a known disagreement: lowering both would leave the option the best fit for almost nobody.
+
+### Steps, in order
+
+1. Part A: the seven numbers in `block5Scenarios.ts` (and the five `wish_` copies), each with a "VALUE AUDIT,
+   fourth pass, rater study" comment quoting the raters and the card words.
+2. The full chain, plus prediction, resume, MCF and visits. V3: find the reason, report, do not tune numbers.
+   The position check is expected to PASS: move `validate:position` out of "fails on purpose" everywhere it is
+   written (CLAUDE.md, the chain note, HOW_TO_ANALYZE, the checklist 2g), and close P1.
+3. Re-run and update every quoted figure (report:vci, report:stability, report:planner-overlap, prediction).
+4. Browser check with a pretend participant: scenario 1, 2 and 4 cards, fit numbers, order, the APA list for
+   Reducing harm, the confirm-keep question after keeping a convoy.
+5. Docs: CLAUDE.md dated section; HOW_TO_ANALYZE 4.9 (participants see new fit numbers, labels and order in
+   scenarios 1, 2, 4 and 5); HOW_TO_READ; the checklist 2g; SHAPE_VERSION; commit and push.
+6. Part B, one scenario at a time, each with its own plan and approval: words, the six-place check, re-rating,
+   the three numbers, measure again.
+
+### Audit of this plan
+
+| Risk | What I do about it |
+|---|---|
+| Moving only the flagged numbers can make an option lose on every value | Checked for every option in every scenario; that is why #8, #12, #13 wait |
+| The harm champions (Seal, the school) are chosen as best fit less often | Still above 1 in 100 (4.2 and 3.0); stated, not hidden |
+| Two convoys change their main value | APA list and confirm-keep question checked in the browser; the scenario lines re-read |
+| One VCI check fails by a hair | Reason found first; never a number moved to pass a check |
+| The raters are three AI models of one family | Written in the report: an AI-assisted blind review, adjudicated by the researcher, not human inter-rater reliability |
+| The numbers now follow the scenario lines, not the 18 September counting rule | Written in each comment and in the checklist 2g, with both old values |
+| Participants see new numbers and orders | Dated in HOW_TO_ANALYZE 4.9; records from before and after are not pooled |
+
 ## Launch plan: everything left, done by Waseem and Claude only (written 26 September, waiting for approval)
 
 Waseem has no human raters and an advisor who reads only finished work. So everything below is done
@@ -1411,3 +1539,4 @@ thesis says so.
 - **2026-09-26. Four rater folders made (Waseem: sheet "OK", route A, one folder per model).** `tools/build_rater_room.cjs` made `C:\Users\wsamk\Documents\Claude\Projects\VRDS rater rooms\rater_opus`, `rater_sonnet`, `rater_fable`, `rater_haiku`. Each holds only its own shuffled sheet, the rater as a no-tools agent type running on the session's own model (`tools: []`, plus `disallowedTools` as a second lock), `probe.txt` and a `RUNBOOK.md`; no answer key, no code, no CLAUDE.md (none in any parent folder either). Waseem opens a Code session in each, picks that folder's model and types "Follow RUNBOOK.md": the session checks its model, runs the probe (must answer NONE / COULD NOT READ / NOTHING ELSE), hands the whole sheet to one rater, and saves `answer.json`, `probe_result.md` and `run_notes.md` unchanged. Added the same day: a check code on each sheet's last line that the rater must copy back (a sheet cut short shows "MISSING"), and a `comments` list in the answer. `node tools/compare_ratings.cjs "Generated Outputs/rater_study" --rooms "<rooms folder>"` collects the four folders and writes REPORT.md; tested end to end on pretend answers (collected all four, rejected a missing check code and a broken answer, and the folder builder refuses to overwrite a folder that already holds an answer).
 - **2026-09-26. First rater runs: Haiku done; Opus and Sonnet stopped by a probe rule that was too strict (my mistake), not by a refusal.** Their saved logs (`~/.claude/projects/...rater-opus` and `...rater-sonnet`, `subagents/*.jsonl`) show the only tool either rater had or used was `SubagentHandback`, Claude Code's built-in "hand my answer back" tool that every helper has (Opus 1 call, Sonnet 2: the answer, then a reply to a system reminder that was refused as already delivered); neither read probe.txt. Opus also, honestly, reported Claude Code's standard environment block and the user's email line, which hold nothing about the study. My rule demanded "NONE" and zero tool calls, which no honest helper can give. Haiku answered "NONE", made no tool call at all, received the sheet exactly (compared character by character with sheet.md) and returned a valid answer (96 scores, check code right; one small note: in scenario 3 "protecting the vulnerable" one option scored above the option ranked just before it). Fixed in `build_rater_room.cjs`: the probe allows only `SubagentHandback` and the standard blocks, and asks what each tool does; the builder now skips a folder that holds an answer (Haiku's is untouched) and keeps an earlier probe as `probe_result_first_try.md`. Opus, Sonnet and Fable folders refreshed; to be run again in new sessions.
 - **2026-09-26. Rater study results (Haiku, Opus, Sonnet; Fable not run - it needs paid credits).** Blindness checked in each rater's saved log: right model, the only tool call `SubagentHandback` (Haiku none), the sheet received exactly as sheet.md (character for character), all three answers complete with the right check code. Collected with `compare_ratings.cjs --rooms` into `Generated Outputs/rater_study/` (answers, runs, REPORT.md, comparison.json). Agreement between raters: ICC(2,1) 0.861 over 96 scores (good), order 0.79-0.85 between pairs, about 10 points apart on average. Raters against the study: order 0.844 overall, 0.79-0.81 per rater - about as close as the raters are to each other; same top option in 13 of 16 scenario-values (the other 3 are near ties); 54 of 96 numbers within 10 points of the raters' average, 78 within 20. The 15 numbers where all three raters agree with each other (spread 15 or less) and sit 20+ points away: S1 harm registered convoy 61 (raters 87) and sealed respirator 45 (22); S2 vulnerable Leave immediately 35 (14, set on purpose in Fix 5), harm staged convoy 59 (83) and give your car seats 56 (83), helped give your car seats 39 (78) and Leave immediately 30 (8); S3 vulnerable draw the names 56 (83), gain most likely to survive 39 (80), helped most years ahead 43 (72); S4 vulnerable cut only where family can cover 58 (83), harm redraw the routes 47 (78), keep care / cut check-ins 70 (38), drop the rural routes 55 (15), helped protect full visits 38 (60). Scenario 4 "Reducing harm" is the one place where the order barely matches (0.09). Nothing in the study changed; a Fix 6 plan waits for Waseem's decisions.
+- **2026-09-26. Fix 6 plan written** (Waseem: "1-yes, 2-words, 3-keep, write the Fix 6 plan"). Measured on scratch copies first: moving all 10 flagged numbers would leave two options the best fit for nobody (S3 "Hold some doses back", S4 "Keep every care visit"), so the plan is Part A = 7 numbers now (tested: every option still somebody's best fit, position check 2.9x -> 3.3x PASSES, VCI and Stability move 0-3 points, prediction and performance about the same, one scripted VCI check V3 lands on exactly 50), Part B = words first for S2 / S3 / S4 with a six-place check (card, two lens views, two stakeholder stories, APA lines, MCF, planner sentence) and re-rating, Part C = Leave immediately kept. Nothing implemented.
