@@ -1,0 +1,256 @@
+{
+  "rater_model": "claude-sonnet-5",
+  "sheet_check_code": "willow-quarry-26",
+  "used_any_tool": false,
+  "opened_any_file": false,
+  "scenarios": [
+    {
+      "scenario": 1,
+      "measures": {
+        "speed": {
+          "ranking": ["E", "B", "D", "F", "C", "A"],
+          "scores": {
+            "E": { "score": 96, "reason": "\"Out in twenty minutes\" — fastest clear of the plume of any option." },
+            "B": { "score": 85, "reason": "\"Clear of the district within the hour\" via shortest street, immediate." },
+            "D": { "score": 60, "reason": "Reaches \"in good time\" but \"last hour... watching the plume come down the road.\"" },
+            "F": { "score": 38, "reason": "\"Four hours\" at patient's pace; \"the two of you arrive last.\"" },
+            "C": { "score": 18, "reason": "\"Still inside the district when the plume arrives,\" on the third loop." },
+            "A": { "score": 5, "reason": "Never travels; \"you spend the night inside the plume\" the whole time." }
+          }
+        },
+        "resources": {
+          "ranking": ["A", "D", "E", "C", "F", "B"],
+          "scores": {
+            "A": { "score": 97, "reason": "\"You take no seat, no road and no mask\" — spares everything for others." },
+            "D": { "score": 88, "reason": "\"Takes nothing that was set aside for anyone else,\" just your own slot." },
+            "E": { "score": 76, "reason": "Own car only; \"the streets behind you follow\" without using shared stock." },
+            "C": { "score": 50, "reason": "Drives the shuttle three loops, heavy use of the one shared vehicle." },
+            "F": { "score": 28, "reason": "Consumes \"the clinic's only respirator,\" though for its intended patient." },
+            "B": { "score": 15, "reason": "Takes \"the clinic's only respirator,\" the district's single reserved mask stock." }
+          }
+        },
+        "reliability": {
+          "ranking": ["B", "D", "F", "C", "E", "A"],
+          "scores": {
+            "B": { "score": 92, "reason": "\"Breathing clean air the whole way,\" mask makes the short route dependable." },
+            "D": { "score": 80, "reason": "Guided, timed convoy system, an established process though tight on timing." },
+            "F": { "score": 60, "reason": "Upwind river path is a clear route, despite four hours of plume-edge exposure." },
+            "C": { "score": 40, "reason": "Multiple loops raise exposure; \"the third loop is the one you are on\" when plume hits." },
+            "E": { "score": 25, "reason": "Single-track road passes \"closer to the tanker than any other route\" here." },
+            "A": { "score": 12, "reason": "\"If the seal does not hold, there is no way out\" — one point of failure." }
+          }
+        },
+        "durability": {
+          "ranking": ["E", "D", "F", "A", "C", "B"],
+          "scores": {
+            "E": { "score": 93, "reason": "\"The streets behind you follow\" — opening the service road stays open for others." },
+            "D": { "score": 82, "reason": "Timed slots keep running for the streets still waiting after yours." },
+            "F": { "score": 62, "reason": "Delivers the mask to the dependent it was \"tagged for,\" preserving their own way out." },
+            "A": { "score": 50, "reason": "No route touched; neither closes nor opens anything for people behind you." },
+            "C": { "score": 32, "reason": "You are the only driver and leave on the third loop; shuttle service ends." },
+            "B": { "score": 15, "reason": "Takes the mask \"tagged for\" the patient, closing that person's only way out." }
+          }
+        },
+        "reversibility": {
+          "ranking": ["B", "C", "D", "F", "A", "E"],
+          "scores": {
+            "B": { "score": 90, "reason": "Mask gives freedom of movement; nothing stops changing route while protected." },
+            "C": { "score": 75, "reason": "Driving the shuttle yourself, no stated block on turning the vehicle around." },
+            "D": { "score": 60, "reason": "Guided convoy with escorts ahead and behind could help you adapt if needed." },
+            "F": { "score": 45, "reason": "Slow, on foot, but you could still stop or turn back at the patient's pace." },
+            "A": { "score": 25, "reason": "\"If the seal does not hold there is no way out\" — trapped if wrong." },
+            "E": { "score": 10, "reason": "\"There is no turning around\" on the single-track road — stated explicitly." }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 2,
+      "measures": {
+        "speed": {
+          "ranking": ["C", "B", "D", "A", "F", "E"],
+          "scores": {
+            "C": { "score": 95, "reason": "\"Over the ridge in forty minutes\" — fastest stated household exit." },
+            "B": { "score": 85, "reason": "Leaves \"before the first slot is called,\" out early on the empty highway." },
+            "D": { "score": 65, "reason": "20-minute path, no slot to wait for, though \"slow with the walker.\"" },
+            "A": { "score": 50, "reason": "\"Your slot is the fifth of nine,\" hours of waiting before you roll." },
+            "F": { "score": 32, "reason": "Same fifth-of-nine slot as A, but \"the drive is slow and very hot.\"" },
+            "E": { "score": 10, "reason": "Waits for the bus that \"comes only once everything else has gone.\"" }
+          }
+        },
+        "resources": {
+          "ranking": ["D", "F", "A", "E", "C", "B"],
+          "scores": {
+            "D": { "score": 96, "reason": "\"Uses no road capacity and takes nobody's place in the line.\"" },
+            "F": { "score": 82, "reason": "Seven people out \"in one vehicle, on one tank of fuel\" — efficient capacity use." },
+            "A": { "score": 70, "reason": "\"Nobody else is pushed down the list\" — only your own assigned slot used." },
+            "E": { "score": 60, "reason": "Reallocates your car to two residents, though still uses lift-bus capacity for four." },
+            "C": { "score": 30, "reason": "Pulls a fire engine off the line, \"not reaching the nursing home.\"" },
+            "B": { "score": 10, "reason": "\"Nine blocks... end up on the road together,\" the junction seizes — capacity wrecked." }
+          }
+        },
+        "reliability": {
+          "ranking": ["A", "F", "E", "B", "C", "D"],
+          "scores": {
+            "A": { "score": 90, "reason": "Guided convoy, \"a guide ahead of you and behind you\" — most institutional support." },
+            "F": { "score": 78, "reason": "Same staged system as A, just heavier and hotter, more physical strain on the drive." },
+            "E": { "score": 65, "reason": "Household stays together per the plan, though six hours of worsening smoke." },
+            "B": { "score": 50, "reason": "\"Your household is out early\" ahead of the jam it later causes." },
+            "C": { "score": 35, "reason": "Fast empty road, but shares the lane with oncoming fire engines." },
+            "D": { "score": 20, "reason": "Narrow path, slow with a walker — more room for something to go wrong." }
+          }
+        },
+        "durability": {
+          "ranking": ["D", "A", "F", "E", "C", "B"],
+          "scores": {
+            "D": { "score": 95, "reason": "\"The way back down stays open all night,\" takes nothing from anyone." },
+            "A": { "score": 85, "reason": "Timed slots keep running normally for the blocks that follow you." },
+            "F": { "score": 75, "reason": "Doesn't disrupt the staged order, adds capacity without harming others' access." },
+            "E": { "score": 63, "reason": "Reallocated car and slot cause no lasting damage to the system for others." },
+            "C": { "score": 35, "reason": "Repeatedly pulls engines from the fire line, away from \"the nursing home.\"" },
+            "B": { "score": 8, "reason": "\"Nothing can put that back,\" staging destroyed for every block behind you." }
+          }
+        },
+        "reversibility": {
+          "ranking": ["D", "A", "C", "F", "E", "B"],
+          "scores": {
+            "D": { "score": 92, "reason": "\"You can still walk back down if the fire front turns\" — stated explicitly." },
+            "A": { "score": 78, "reason": "Formal guided system, presumably some capacity to adapt if plans change." },
+            "C": { "score": 55, "reason": "One-lane road shared with oncoming engines, hard to reverse mid-route." },
+            "F": { "score": 42, "reason": "\"Leaves in its slot or not at all\" — a fairly committed state." },
+            "E": { "score": 28, "reason": "Once the car is handed to the residents, you cannot take it back." },
+            "B": { "score": 8, "reason": "\"Nothing can put that back,\" the staged order is gone for good." }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 3,
+      "measures": {
+        "speed": {
+          "ranking": ["F", "C", "A", "D", "E", "B"],
+          "scores": {
+            "F": { "score": 90, "reason": "Uses the existing \"essential-worker register,\" likely the fastest to act on." },
+            "C": { "score": 85, "reason": "\"The draw takes a morning\" — a quick process before treatment starts." },
+            "A": { "score": 75, "reason": "Severity list from existing clinical data, fairly quick to start treating." },
+            "D": { "score": 65, "reason": "Scoring all 120 for survival odds adds modest administrative delay." },
+            "E": { "score": 50, "reason": "\"Modeled for the years a dose would add\" for all 120 — a slower process." },
+            "B": { "score": 15, "reason": "\"Reaching them takes weeks\" — explicitly the slowest to begin treatment." }
+          }
+        },
+        "resources": {
+          "ranking": ["F", "C", "A", "D", "E", "B"],
+          "scores": {
+            "F": { "score": 90, "reason": "Existing register needs minimal extra staff time to apply." },
+            "C": { "score": 82, "reason": "\"The draw takes a morning,\" an efficient use of staff time." },
+            "A": { "score": 72, "reason": "Standard severity sort, ordinary staff effort, all 20 doses go to use." },
+            "D": { "score": 55, "reason": "Scoring all 120 for survival odds takes more analytical staff time." },
+            "E": { "score": 40, "reason": "Modeling years for all 120 is the most staff-time intensive option here." },
+            "B": { "score": 12, "reason": "Doses may expire \"unused,\" plus weeks of staff time reaching remote patients." }
+          }
+        },
+        "reliability": {
+          "ranking": ["D", "E", "F", "B", "C", "A"],
+          "scores": {
+            "D": { "score": 92, "reason": "\"More of the people treated come through than any other rule here.\"" },
+            "E": { "score": 75, "reason": "Trades some odds for years; \"fewer... come through\" than the odds-based rule." },
+            "F": { "score": 62, "reason": "Register-based, prognosis unconsidered, no stated bias either way for response." },
+            "B": { "score": 50, "reason": "Reach-dependent, and any expired dose \"helps nobody at all.\"" },
+            "C": { "score": 35, "reason": "Draws from those \"least likely to respond\" — fewer of the 20 come through." },
+            "A": { "score": 18, "reason": "Sickest patients \"respond slowly and some will not recover\" — least reliable group." }
+          }
+        },
+        "durability": {
+          "ranking": ["E", "D", "F", "B", "C", "A"],
+          "scores": {
+            "E": { "score": 93, "reason": "Explicitly optimizes \"years of life,\" the longest-lasting benefit by design here." },
+            "D": { "score": 85, "reason": "\"Most lives saved\" implies the benefit is more likely to persist." },
+            "F": { "score": 68, "reason": "\"The wards and classrooms they staff keep running\" — ongoing societal benefit." },
+            "B": { "score": 48, "reason": "Reached patients get standard treatment, but expired doses \"help nobody at all.\"" },
+            "C": { "score": 32, "reason": "Drawn from \"least likely to respond\" patients — a shorter-lived benefit for many." },
+            "A": { "score": 15, "reason": "\"Some will not recover\" — the sickest group least likely to sustain benefit." }
+          }
+        },
+        "reversibility": {
+          "ranking": ["B", "F", "A", "D", "E", "C"],
+          "scores": {
+            "B": { "score": 90, "reason": "Doses explicitly \"held back\" and released later — most flexible option here." },
+            "F": { "score": 65, "reason": "An administrative register could be revised, though given doses stay final." },
+            "A": { "score": 58, "reason": "Straightforward severity list, some room to reassess before doses are given." },
+            "D": { "score": 50, "reason": "Data-driven ranking could be recomputed before commitment, moderate flexibility." },
+            "E": { "score": 42, "reason": "Complex modeling is harder to quickly revisit before the decision is final." },
+            "C": { "score": 20, "reason": "\"A sealed draw\" — deliberately designed to be locked in, least reversible." }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 4,
+      "measures": {
+        "speed": {
+          "ranking": ["B", "D", "F", "E", "C", "A"],
+          "scores": {
+            "B": { "score": 88, "reason": "\"The protection starts on Monday\" — fast implementation for the protected list." },
+            "D": { "score": 80, "reason": "Uniform shortening needs no restructuring, a quick, simple change to apply." },
+            "F": { "score": 72, "reason": "Sorting existing visit types into care versus check-in is a quick change." },
+            "E": { "score": 65, "reason": "Uses the existing next-of-kin file, a quick check before cutting visits." },
+            "C": { "score": 45, "reason": "Handing rural clients to a county agency needs some external coordination time." },
+            "A": { "score": 15, "reason": "\"Redrawing the map takes the office weeks\" — explicitly the slowest rollout." }
+          }
+        },
+        "resources": {
+          "ranking": ["C", "A", "F", "E", "D", "B"],
+          "scores": {
+            "C": { "score": 95, "reason": "\"The strongest financial position,\" dropping the money-losing rural routes entirely." },
+            "A": { "score": 88, "reason": "\"About 300 of the 400 cut hours come out of driving,\" saving most." },
+            "F": { "score": 75, "reason": "Cuts check-ins \"and the drives to them,\" saving visit and travel time together." },
+            "E": { "score": 60, "reason": "Removes 60 clients' visits from the roster, though \"driving is not saved.\"" },
+            "D": { "score": 45, "reason": "Cut comes only from visit time; \"every trip still has to be driven.\"" },
+            "B": { "score": 25, "reason": "\"None of the money-losing driving is saved,\" cut concentrated on 190 clients." }
+          }
+        },
+        "reliability": {
+          "ranking": ["C", "A", "F", "D", "E", "B"],
+          "scores": {
+            "C": { "score": 92, "reason": "\"The company comes out of the three months solvent\" — most guaranteed outcome." },
+            "A": { "score": 80, "reason": "Routes fixed once redrawn, stable \"for the whole three months\" once done." },
+            "F": { "score": 70, "reason": "Straightforward ongoing plan; full care visits continue as assessed, no cascading change." },
+            "D": { "score": 62, "reason": "Simple uniform shortening, little structural complexity to break down over time." },
+            "E": { "score": 40, "reason": "Depends on families who are \"already stretched thin,\" an uncertain outside factor." },
+            "B": { "score": 20, "reason": "\"The schedule is being rewritten by the middle of the week\" — unstable." }
+          }
+        },
+        "durability": {
+          "ranking": ["C", "A", "D", "E", "F", "B"],
+          "scores": {
+            "C": { "score": 93, "reason": "Explicitly \"a service that is still open next year\" — clearest long-term survival." },
+            "A": { "score": 80, "reason": "Permanent route redesign likely persists and works beyond the three months." },
+            "D": { "score": 60, "reason": "Repeatedly leaving \"tasks undone\" is a chronic, cumulative quality problem over time." },
+            "E": { "score": 48, "reason": "Family coverage risks burnout, since relatives \"are already stretched thin\" long term." },
+            "F": { "score": 35, "reason": "Losing \"the eyes on the client\" lets problems compound unnoticed over time." },
+            "B": { "score": 15, "reason": "Cascading rescheduling instability from week one suggests it will not hold up." }
+          }
+        },
+        "reversibility": {
+          "ranking": ["D", "F", "E", "B", "C", "A"],
+          "scores": {
+            "D": { "score": 88, "reason": "Shortened visit time is a simple dial that is easy to turn back." },
+            "F": { "score": 78, "reason": "Dropped check-ins could be reinstated on the schedule fairly easily if needed." },
+            "E": { "score": 68, "reason": "Visits could be resumed for those 60 clients if family coverage falls through." },
+            "B": { "score": 50, "reason": "Protected list could be adjusted, though it's already in constant scheduling flux." },
+            "C": { "score": 30, "reason": "Rural clients handed to a county agency are hard to reclaim quickly." },
+            "A": { "score": 15, "reason": "Redoing the labor-intensive, weeks-long route redraw to reverse is costly and slow." }
+          }
+        }
+      }
+    }
+  ],
+  "unclear": [
+    "Scenario 1, Option D: exact timing of the convoy slot within the six hours is not numerically specified, making precise speed placement against B and E somewhat interpretive.",
+    "Scenario 2, Option D: whether the concrete school on the shelf counts as 'clear of the valley' for the speed measure is ambiguous, since it is a refuge within the valley system rather than an exit route."
+  ],
+  "comments": [
+    "For several 'resources spared' judgments (e.g., Scenario 1 C, Scenario 4 E), an option that helps others directly (using a shared vehicle, shifting burden to family) is hard to separate from one that simply avoids using resources at all; I treated heavier use of a shared/communal resource as lower-scoring even when it benefited others, per the instruction to rate only what is used, not kindness.",
+    "Scenario 3's reversibility measure had little textual basis for most options besides B (explicit hold-back) and C ('a sealed draw'); rankings among A/D/E/F rely on secondary inference about how easily each allocation method could be revised before doses are given."
+  ]
+}

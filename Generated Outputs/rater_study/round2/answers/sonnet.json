@@ -1,0 +1,163 @@
+{
+  "rater_model": "claude-sonnet-5",
+  "sheet_check_code": "birch-stone-37",
+  "used_any_tool": false,
+  "opened_any_file": false,
+  "scenarios": [
+    {
+      "scenario": 2,
+      "values": {
+        "vulnerable": {
+          "ranking": ["F", "A", "E", "B", "C", "D"],
+          "scores": {
+            "F": { "score": 95, "reason": "Two walker-users move from last out to fifth, per definition's core aim." },
+            "A": { "score": 78, "reason": "Three neighbors with no vehicle at all get a seat; one still left behind." },
+            "E": { "score": 55, "reason": "Own vulnerable household kept in normal slot; no effect on other neighbors." },
+            "B": { "score": 45, "reason": "Own vulnerable family walks toward fire front; no benefit to other neighbors." },
+            "C": { "score": 25, "reason": "Jam traps blocks that \"waited their turn,\" hurting those still stuck." },
+            "D": { "score": 12, "reason": "Diverts fire crews the nursing home patients depend on to reach them." }
+          }
+        },
+        "harm": {
+          "ranking": ["F", "B", "E", "A", "D", "C"],
+          "scores": {
+            "F": { "score": 90, "reason": "Gives up car and slot, actively lowering risk carried by two neighbors." },
+            "B": { "score": 85, "reason": "Takes \"no seat, no lane and no fuel from anybody.\"" },
+            "E": { "score": 62, "reason": "Stays in assigned slot; \"nobody else is pushed down the list.\"" },
+            "A": { "score": 58, "reason": "Extra riders added within own slot; takes no resource from others." },
+            "D": { "score": 18, "reason": "Forces engines to reverse, delaying help meant for the nursing home." },
+            "C": { "score": 8, "reason": "Breaks staging so \"the junction seizes\" for every remaining block." }
+          }
+        },
+        "gain": {
+          "ranking": ["D", "C", "E", "A", "F", "B"],
+          "scores": {
+            "D": { "score": 95, "reason": "\"Over the ridge in forty minutes\" on an empty, fast road." },
+            "C": { "score": 85, "reason": "Leaves \"while the road is still empty,\" ahead of any queue." },
+            "E": { "score": 60, "reason": "Safe guided convoy, but \"three hours of waiting\" in worsening smoke." },
+            "A": { "score": 45, "reason": "Own slot kept, but gives up \"room, speed\" - slow, hot, heavy car." },
+            "F": { "score": 28, "reason": "Waits \"six hours in a shelter hall\" as smoke thickens outside." },
+            "B": { "score": 15, "reason": "Never leaves the valley; \"children watch the front arrive.\"" }
+          }
+        },
+        "helped": {
+          "ranking": ["A", "E", "F", "B", "D", "C"],
+          "scores": {
+            "A": { "score": 85, "reason": "\"Seven people leave... instead of four\"; three had no other way out." },
+            "E": { "score": 55, "reason": "No additional people leave or are blocked by this choice; neutral." },
+            "F": { "score": 50, "reason": "Near tie: swaps car/bus roles, same six people out, no headcount change." },
+            "B": { "score": 45, "reason": "Neutral for others; household neither adds nor removes an evacuee." },
+            "D": { "score": 20, "reason": "Reversing engines may slow rescues elsewhere, reducing others helped." },
+            "C": { "score": 8, "reason": "\"Junction seizes,\" trapping other blocks and shrinking total who escape." }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 3,
+      "values": {
+        "vulnerable": {
+          "ranking": ["C", "F", "B", "A", "D", "E"],
+          "scores": {
+            "C": { "score": 95, "reason": "\"Sorted by how ill they are\"; the 20 worst-off treated first, direct match." },
+            "F": { "score": 82, "reason": "Reserves doses for patients \"too far out to reach a clinic quickly.\"" },
+            "B": { "score": 68, "reason": "Draws only from those who cannot wait, \"extra slips for the most vulnerable.\"" },
+            "A": { "score": 40, "reason": "Years-ahead metric pushes older, sicker patients down the ranking." },
+            "D": { "score": 25, "reason": "Register-based; text notes \"the sickest patients... pushed down the list.\"" },
+            "E": { "score": 15, "reason": "\"Late diagnosis lowers your score,\" excluding the system-failed, most vulnerable." }
+          }
+        },
+        "harm": {
+          "ranking": ["B", "C", "A", "D", "E", "F"],
+          "scores": {
+            "B": { "score": 92, "reason": "Draws directly from the 45 flagged \"past treating by next month.\"" },
+            "C": { "score": 65, "reason": "Severity overlaps with urgency but is \"not the same as running out of time.\"" },
+            "A": { "score": 45, "reason": "Near tie: unrelated to progression speed, but all 20 doses still used." },
+            "D": { "score": 35, "reason": "Occupation-based, no link to progression risk; doses still fully used." },
+            "E": { "score": 22, "reason": "Deprioritizes late-diagnosed patients, plausibly closest to the untreatable threshold." },
+            "F": { "score": 12, "reason": "Held doses risk expiring; a lapsed dose \"helps nobody at all.\"" }
+          }
+        },
+        "gain": {
+          "ranking": ["A", "E", "D", "C", "B", "F"],
+          "scores": {
+            "A": { "score": 97, "reason": "Explicitly buys \"more future years of life... than any other rule here.\"" },
+            "E": { "score": 78, "reason": "Highest survivor count, though it \"counts lives, not years.\"" },
+            "D": { "score": 55, "reason": "No health-based optimization, but no active bias against years gained either." },
+            "C": { "score": 32, "reason": "\"Some will not recover\" despite treatment, lowering years gained per dose." },
+            "B": { "score": 22, "reason": "Targets those \"least likely to respond,\" yielding low total years." },
+            "F": { "score": 12, "reason": "\"Fewer than 20 patients may be treated,\" doses may go unused entirely." }
+          }
+        },
+        "helped": {
+          "ranking": ["E", "D", "A", "B", "F", "C"],
+          "scores": {
+            "E": { "score": 92, "reason": "Explicitly \"the most lives saved... highest here\" among all options." },
+            "D": { "score": 75, "reason": "Saves lives indirectly \"through the people others depend on\" per the value's own clause." },
+            "A": { "score": 55, "reason": "Fewer survivors than the odds-based rule, but still treats 20 with fair outcomes." },
+            "B": { "score": 35, "reason": "\"Fewer of the 20 come through\" given poor response in this group." },
+            "F": { "score": 20, "reason": "Fewer than 20 may even be treated, shrinking the total helped." },
+            "C": { "score": 12, "reason": "Explicitly \"fewer of the 120 alive at the end of the year.\"" }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 4,
+      "values": {
+        "vulnerable": {
+          "ranking": ["E", "A", "B", "F", "D", "C"],
+          "scores": {
+            "E": { "score": 95, "reason": "\"Protect full visits for the 50 clients who live alone,\" direct match." },
+            "A": { "score": 80, "reason": "Clients \"without family nearby keep every visit\"; cut lands on those with support." },
+            "B": { "score": 55, "reason": "Equal cut for everyone; no special protection for the most vulnerable." },
+            "F": { "score": 48, "reason": "Preserves visit length broadly, but breaks familiar caregiver relationships for all." },
+            "D": { "score": 32, "reason": "\"Clients who live alone lose the most\" once check-ins are cut." },
+            "C": { "score": 12, "reason": "About 45 isolated rural clients transferred \"with nobody to send.\"" }
+          }
+        },
+        "harm": {
+          "ranking": ["A", "F", "B", "E", "D", "C"],
+          "scores": {
+            "A": { "score": 90, "reason": "Cut \"lands only on clients who have a relative nearby to step in.\"" },
+            "F": { "score": 75, "reason": "About \"300 of the 400 cut hours come out of driving,\" not visits." },
+            "B": { "score": 55, "reason": "Uniform shortening leaves \"tasks undone at door after door\"; nobody substitutes." },
+            "E": { "score": 45, "reason": "190 absorb the whole cut; schedule \"rewritten,\" strain compounds with no substitute." },
+            "D": { "score": 30, "reason": "Losing check-ins removes the \"eyes on the client\"; trouble \"found later.\"" },
+            "C": { "score": 10, "reason": "Rural clients transferred \"with nobody to send\"; harm entirely unfilled." }
+          }
+        },
+        "gain": {
+          "ranking": ["C", "F", "D", "B", "A", "E"],
+          "scores": {
+            "C": { "score": 95, "reason": "\"Strongest financial position, and a service that is still open next year.\"" },
+            "F": { "score": 78, "reason": "Saves ~300 hours \"on the driving, the part of the week that loses money.\"" },
+            "D": { "score": 55, "reason": "Cutting check-ins also saves \"the drives to the dropped visits.\"" },
+            "B": { "score": 38, "reason": "\"Every trip still has to be driven\"; no driving cost is saved." },
+            "A": { "score": 28, "reason": "Near tie: \"none of the money-losing driving is saved.\"" },
+            "E": { "score": 25, "reason": "Near tie: \"none of the money-losing driving is saved\"; internal rewrite only." }
+          }
+        },
+        "helped": {
+          "ranking": ["D", "F", "B", "E", "A", "C"],
+          "scores": {
+            "D": { "score": 88, "reason": "Every bathing, feeding, medication visit kept for all 240 clients." },
+            "F": { "score": 80, "reason": "\"Most visits survive at full length\" once routes are redrawn." },
+            "B": { "score": 65, "reason": "All 240 keep contact, though visits come out \"about a third shorter.\"" },
+            "E": { "score": 55, "reason": "All 240 nominally retained; 190 absorb reduced visits between them." },
+            "A": { "score": 40, "reason": "60 clients lose company-provided visits entirely, shifted onto family instead." },
+            "C": { "score": 15, "reason": "About 45 rural clients lose company service completely, \"nobody to send.\"" }
+          }
+        }
+      }
+    }
+  ],
+  "unclear": [
+    "Scenario 2, Option F (helped value): the sheet's headcount-based definition makes it hard to distinguish F from E/B since all three leave total evacuee numbers unchanged - only timing/safety shifts, which the 'helped' value as defined does not capture.",
+    "Scenario 3, Option F (harm value): unclear whether reserved doses correlate at all with the 'cannot wait' progression-risk group, or are simply a separate axis (distance) from timing."
+  ],
+  "comments": [
+    "In Scenario 4, the 'gain' value (financial) and 'reducing harm' value (someone steps in) sometimes pull in the same direction for Option A/C, making it hard to keep the two values fully independent - I rated each strictly on its own card text.",
+    "Scenario 3's 'protecting the vulnerable' definition bundles two distinct criteria (sickest now vs. hardest to reach), which options C, F, and B each satisfy via a different one, complicating a clean single ranking."
+  ]
+}

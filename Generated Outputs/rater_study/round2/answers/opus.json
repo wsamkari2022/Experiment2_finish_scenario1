@@ -1,0 +1,168 @@
+{
+  "rater_model": "claude-opus-5-5 (Opus 5.5)",
+  "sheet_check_code": "maple-river-64",
+  "used_any_tool": false,
+  "opened_any_file": false,
+  "scenarios": [
+    {
+      "scenario": 2,
+      "values": {
+        "vulnerable": {
+          "ranking": ["C", "D", "E", "B", "A", "F"],
+          "scores": {
+            "C": { "score": 95, "reason": "\"The two people least able to get themselves out go fifth of nine instead of last.\"" },
+            "D": { "score": 72, "reason": "Carries three neighbors \"who had no way out at all\", but they are not specifically the least mobile." },
+            "E": { "score": 45, "reason": "Neutral: \"nobody else is pushed down the list\", but it does nothing for the neighbors least able to leave. Near tie with B." },
+            "B": { "score": 40, "reason": "Takes nothing from anyone, but \"a crew comes back into the valley\" to check the blocks. Near tie with E." },
+            "A": { "score": 15, "reason": "Turns back engines needed for \"people who cannot move themselves, like the nursing home.\"" },
+            "F": { "score": 5, "reason": "\"The blocks furthest from the junction\", including the last-out lift bus, are \"still stuck in the jam when the fire comes down.\"" }
+          }
+        },
+        "harm": {
+          "ranking": ["D", "C", "E", "B", "A", "F"],
+          "scores": {
+            "D": { "score": 90, "reason": "Takes \"not anybody else's place in the line\" and removes three neighbors from danger." },
+            "C": { "score": 86, "reason": "Nobody is displaced. The household takes the bus places the residents left, and the two most at-risk leave earlier." },
+            "E": { "score": 82, "reason": "\"Nobody else is pushed down the list to make room for you\". It adds no risk but removes none." },
+            "B": { "score": 60, "reason": "\"No seat, no lane and no fuel from anybody\", but a crew must come back to check the blocks." },
+            "A": { "score": 18, "reason": "\"A car coming up turns an engine back\", so minutes are lost for the fire and the nursing home." },
+            "F": { "score": 5, "reason": "It breaks the staging, \"the junction seizes\", and the far blocks are stuck when the fire comes." }
+          }
+        },
+        "gain": {
+          "ranking": ["F", "A", "E", "D", "C", "B"],
+          "scores": {
+            "F": { "score": 94, "reason": "\"An empty road and an immediate start\", \"the fastest, cheapest way out\". Near tie with A." },
+            "A": { "score": 90, "reason": "\"Out of the valley in forty minutes\", but up a lane where the engines are coming down. Near tie with F." },
+            "E": { "score": 62, "reason": "\"All four of you leave together, in a guided group\", after three hours of waiting in smoke." },
+            "D": { "score": 48, "reason": "Fifth of nine, \"slow and very hot\", with the walker roped to the roof of a full car." },
+            "C": { "score": 22, "reason": "\"Six hours in a shelter hall with a child on an inhaler\", then out on the last vehicle." },
+            "B": { "score": 15, "reason": "Never leaves: \"inside the fire's path in a building\", after a slow climb with the walker. Near tie with C." }
+          }
+        },
+        "helped": {
+          "ranking": ["D", "C", "E", "B", "A", "F"],
+          "scores": {
+            "D": { "score": 95, "reason": "\"Seven people leave the valley instead of four\". Three of them had no way out." },
+            "C": { "score": 70, "reason": "Two walker users go \"fifth of nine instead of last\", but the total number leaving is roughly the same." },
+            "E": { "score": 45, "reason": "Keeps the road \"kept moving\" but adds nobody else to those leaving." },
+            "B": { "score": 38, "reason": "Uses no road capacity but gets nobody out. The household stays in the valley and a crew has to return." },
+            "A": { "score": 15, "reason": "Delays engines on their way to the nursing home, so fewer others are likely to get out." },
+            "F": { "score": 5, "reason": "The jam traps the far blocks: \"still stuck in the jam when the fire comes down.\"" }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 3,
+      "values": {
+        "vulnerable": {
+          "ranking": ["F", "A", "C", "B", "D", "E"],
+          "scores": {
+            "F": { "score": 95, "reason": "\"The 20 in the worst condition are treated first.\"" },
+            "A": { "score": 82, "reason": "Doses held for patients \"too far out\", the hardest to reach, who are \"never near the front of the list.\"" },
+            "C": { "score": 76, "reason": "Patients who \"cannot wait\", plus \"extra slips for the most vulnerable\", though not necessarily \"the most ill today\"." },
+            "B": { "score": 32, "reason": "Ranks by years ahead and ignores illness and access. \"Older patients\" lose." },
+            "D": { "score": 22, "reason": "\"The sickest of the 120 are pushed down the list.\" Near tie with E." },
+            "E": { "score": 15, "reason": "Late-diagnosed patients stay at \"the bottom\", \"the same ones who waited last month.\" Near tie with D." }
+          }
+        },
+        "harm": {
+          "ranking": ["C", "F", "B", "D", "E", "A"],
+          "scores": {
+            "C": { "score": 95, "reason": "Draws only from \"the 45\" who would be \"past treating\" by next month. Nobody who could wait goes first." },
+            "F": { "score": 55, "reason": "Some of the sickest cannot wait, but \"some who wait... will be past treating by then.\"" },
+            "B": { "score": 38, "reason": "Ranks by years left, not by who is running out of time. Near tie with D." },
+            "D": { "score": 35, "reason": "The register ignores urgency, and \"the sickest of the 120 are pushed down the list.\" Near tie with B." },
+            "E": { "score": 28, "reason": "Favors good odds. The late-diagnosed patients, likely the most urgent, stay \"at the bottom\"." },
+            "A": { "score": 22, "reason": "\"Fewer than 20 patients may be treated\". \"Reaching them takes weeks\", and expired doses help nobody." }
+          }
+        },
+        "gain": {
+          "ranking": ["B", "E", "D", "A", "C", "F"],
+          "scores": {
+            "B": { "score": 100, "reason": "\"Buy more future years of life than they could under any other rule here.\"" },
+            "E": { "score": 80, "reason": "The most survivors, but it \"counts lives, not years.\"" },
+            "D": { "score": 58, "reason": "The workers treated are \"back at work within weeks\", but patients are not ranked by years or odds." },
+            "A": { "score": 32, "reason": "Some held doses may expire. \"Fewer than 20 patients may be treated.\" Near tie with C." },
+            "C": { "score": 28, "reason": "Doses go to the patients \"least likely to respond.\" Near tie with A." },
+            "F": { "score": 15, "reason": "\"Fewer of the 120 are alive at the end of the year than under any other rule here.\"" }
+          }
+        },
+        "helped": {
+          "ranking": ["E", "D", "B", "C", "A", "F"],
+          "scores": {
+            "E": { "score": 95, "reason": "\"This month's survival count is the highest here.\"" },
+            "D": { "score": 80, "reason": "Counts lives helped indirectly: \"the places that depend on them keep the staff they need.\"" },
+            "B": { "score": 68, "reason": "\"Fewer of the 20 come through than under the rule that ranks by odds.\"" },
+            "C": { "score": 40, "reason": "The patients chosen are the \"least likely to respond\", so \"fewer of the 20 come through.\"" },
+            "A": { "score": 32, "reason": "\"Fewer than 20 patients may be treated\", and an expired dose \"helps nobody at all.\"" },
+            "F": { "score": 15, "reason": "Fewest alive at year end, \"than under any other rule here.\"" }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 4,
+      "values": {
+        "vulnerable": {
+          "ranking": ["D", "B", "E", "F", "C", "A"],
+          "scores": {
+            "D": { "score": 95, "reason": "\"Complete protection for the 50 people who have nobody else at home.\"" },
+            "B": { "score": 85, "reason": "\"Every client without family nearby keeps every visit.\"" },
+            "E": { "score": 50, "reason": "Nobody is targeted, and \"most visits survive at full length\", but every client loses the caregiver they know." },
+            "F": { "score": 42, "reason": "Every visit is about a third shorter, including for those alone, and \"tasks undone\"." },
+            "C": { "score": 25, "reason": "\"The clients who live alone lose the most\": their only check-in visitor." },
+            "A": { "score": 5, "reason": "About 45 rural clients are dropped, and \"most of them have nobody else.\"" }
+          }
+        },
+        "harm": {
+          "ranking": ["B", "E", "C", "D", "F", "A"],
+          "scores": {
+            "B": { "score": 92, "reason": "The cut lands only where \"a relative nearby\" can \"take the visits on\", though some families are stretched." },
+            "E": { "score": 78, "reason": "\"About 300 of the 400 cut hours come out of driving rather than out of anyone's visit.\"" },
+            "C": { "score": 60, "reason": "Care tasks are kept, but trouble is \"found later\", and nobody steps in for those who live alone." },
+            "D": { "score": 45, "reason": "The cut falls on the 190 who have others at home, but they lose a third of visits and the schedule breaks down." },
+            "F": { "score": 38, "reason": "Every visit is shortened, with \"tasks undone at door after door\", and nobody steps in." },
+            "A": { "score": 10, "reason": "Transferred to \"a county agency with nobody to send.\"" }
+          }
+        },
+        "gain": {
+          "ranking": ["A", "E", "C", "B", "F", "D"],
+          "scores": {
+            "A": { "score": 98, "reason": "\"Solvent and every caregiver's job survives, which no other option here guarantees.\"" },
+            "E": { "score": 80, "reason": "\"It saves most on the driving, the part of the week that loses money.\"" },
+            "C": { "score": 60, "reason": "\"The drives to the dropped visits are saved too.\"" },
+            "B": { "score": 32, "reason": "\"None of the money-losing driving is saved.\" Near tie with F." },
+            "F": { "score": 30, "reason": "\"Every trip still has to be driven.\" Near tie with B." },
+            "D": { "score": 24, "reason": "No driving is saved, and \"the schedule is being rewritten by the middle of the week.\"" }
+          }
+        },
+        "helped": {
+          "ranking": ["C", "E", "F", "B", "D", "A"],
+          "scores": {
+            "C": { "score": 92, "reason": "\"Every client keeps the care they are assessed for\". Nobody loses a bath, a meal or a dose." },
+            "E": { "score": 80, "reason": "\"Most visits survive at full length\", though 100 hours still come out of visits. Near tie with F." },
+            "F": { "score": 75, "reason": "\"All 240 keep contact\", but with \"tasks undone\" at every door. Near tie with E." },
+            "B": { "score": 58, "reason": "\"About 60 clients lose their visits\" and their care moves to relatives. The other 180 keep everything. Near tie with D." },
+            "D": { "score": 50, "reason": "\"The other 190 lose about a third of their visits between them\", and the schedule is disrupted. Near tie with B." },
+            "A": { "score": 18, "reason": "About 45 clients lose their care entirely, and the county has \"nobody to send.\"" }
+          }
+        }
+      }
+    }
+  ],
+  "unclear": [
+    "Scenario 2, C (Give your car seats to the two residents with walkers): for 'How many are helped', the two residents would have left on the lift bus anyway. They get out sooner, not in addition, so the count of 'more people out' is unclear.",
+    "Scenario 2, B (Take your household to the concrete school on the hill): for 'How much is gained', the household shelters in place and never gets out of the valley. The value is worded as 'gets out', so it is unclear how to score an option that does not leave.",
+    "Scenario 3, A (Hold some doses back for the patients nobody reaches): the card does not say how the doses that are not held back are allocated. That affects its harm, gain and helped scores.",
+    "Scenario 3, D (Treat the 20 who others depend on): 'How many are helped' explicitly counts lives saved through people others depend on, but the card gives no direct survival comparison with E or B.",
+    "Scenario 4, E (Redraw the routes to cut the driving): the card does not say whose visits the remaining 100 cut hours come from, so it is unclear who bears them."
+  ],
+  "comments": [
+    "Scenario 4, 'Reducing harm' ('cut lands where someone else can step in') almost restates Option B's mechanism. B scores high even though its card says families 'absorb work they never agreed to'.",
+    "Scenario 4, D: protecting the 50 who live alone means the cut falls on clients who do have someone at home. That partly fits the 'Reducing harm' definition, even though the card stresses the scheduling disruption.",
+    "Scenario 2, A vs F on 'How much is gained': both are very fast. F's card calls itself 'the fastest', while A is timed at 'forty minutes' on a lane with engines coming down. I ranked them as a near tie.",
+    "Scenario 3, F's card says it leaves fewer alive at year end 'than under any other rule here'. I used that to put F below A and C on gain and helped, even though A may leave doses unused."
+  ]
+}

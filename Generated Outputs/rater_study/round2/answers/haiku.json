@@ -1,0 +1,373 @@
+{
+  "rater_model": "claude-haiku-4-5-20251001",
+  "sheet_check_code": "slate-field-82",
+  "used_any_tool": false,
+  "opened_any_file": false,
+  "scenarios": [
+    {
+      "scenario": 2,
+      "values": {
+        "vulnerable": {
+          "ranking": ["F", "C", "E", "B", "A", "D"],
+          "scores": {
+            "A": {
+              "score": 12,
+              "reason": "Breaks staging, nine blocks move at once; furthest from junction trapped in jam."
+            },
+            "B": {
+              "score": 55,
+              "reason": "Uses no road capacity; keeps staging system for others."
+            },
+            "C": {
+              "score": 72,
+              "reason": "Takes three vulnerable neighbors (no vehicles) immediately."
+            },
+            "D": {
+              "score": 15,
+              "reason": "Blocks rescuer road; ignores nursing home."
+            },
+            "E": {
+              "score": 68,
+              "reason": "Follows scheduled order designed to protect all."
+            },
+            "F": {
+              "score": 92,
+              "reason": "Gets two walkers out in slot five instead of last."
+            }
+          }
+        },
+        "harm": {
+          "ranking": ["B", "E", "F", "C", "D", "A"],
+          "scores": {
+            "A": {
+              "score": 8,
+              "reason": "Causes nine-block jam; fire catches blocks waiting in traffic."
+            },
+            "B": {
+              "score": 87,
+              "reason": "Uses no road, creates zero risk to others."
+            },
+            "C": {
+              "score": 78,
+              "reason": "Uses seven spots efficiently in your slot."
+            },
+            "D": {
+              "score": 18,
+              "reason": "Forces rescuer engine backward; delays nursing home help."
+            },
+            "E": {
+              "score": 83,
+              "reason": "Follows convoy system exactly; no extra risk created."
+            },
+            "F": {
+              "score": 82,
+              "reason": "Follows convoy system; helps vulnerable faster without extra risk."
+            }
+          }
+        },
+        "gain": {
+          "ranking": ["A", "D", "E", "C", "F", "B"],
+          "scores": {
+            "A": {
+              "score": 95,
+              "reason": "Empty highway, immediate start, hours before fire."
+            },
+            "B": {
+              "score": 22,
+              "reason": "Twenty-minute uphill walk, inside fire path."
+            },
+            "C": {
+              "score": 52,
+              "reason": "Full car, can't take curves fast, waits for slot."
+            },
+            "D": {
+              "score": 92,
+              "reason": "Forty minutes over ridge, out before fire reaches floor."
+            },
+            "E": {
+              "score": 58,
+              "reason": "Three-hour wait with smoke before convoy rolls."
+            },
+            "F": {
+              "score": 32,
+              "reason": "Six hours in shelter then bus, last out."
+            }
+          }
+        },
+        "helped": {
+          "ranking": ["F", "C", "B", "E", "D", "A"],
+          "scores": {
+            "A": {
+              "score": 15,
+              "reason": "Causes jam that kills more than four you save."
+            },
+            "B": {
+              "score": 48,
+              "reason": "Takes no spot; doesn't help others."
+            },
+            "C": {
+              "score": 76,
+              "reason": "Gets three neighbors with no cars out faster."
+            },
+            "D": {
+              "score": 45,
+              "reason": "Takes rescuer road; makes fewer people reachable."
+            },
+            "E": {
+              "score": 47,
+              "reason": "Takes assigned slot; doesn't change anyone else's outcome."
+            },
+            "F": {
+              "score": 80,
+              "reason": "Gets two walkers out six hours earlier than possible."
+            }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 3,
+      "values": {
+        "vulnerable": {
+          "ranking": ["D", "F", "C", "B", "A", "E"],
+          "scores": {
+            "A": {
+              "score": 18,
+              "reason": "Youngest get doses; sickest pushed back."
+            },
+            "B": {
+              "score": 23,
+              "reason": "Gives doses to working people; sickest remain."
+            },
+            "C": {
+              "score": 83,
+              "reason": "Draws from 45 who cannot wait, extra slips for most vulnerable."
+            },
+            "D": {
+              "score": 95,
+              "reason": "Twenty sickest treated first."
+            },
+            "E": {
+              "score": 12,
+              "reason": "Late diagnosis lowers score; found-too-late patients wait."
+            },
+            "F": {
+              "score": 88,
+              "reason": "Holds doses for unreachable patients to reach them."
+            }
+          }
+        },
+        "harm": {
+          "ranking": ["C", "F", "D", "A", "B", "E"],
+          "scores": {
+            "A": {
+              "score": 40,
+              "reason": "Sickest remain untreated; some become too ill by next month."
+            },
+            "B": {
+              "score": 38,
+              "reason": "Sickest untreated; some cross untreatable threshold."
+            },
+            "C": {
+              "score": 90,
+              "reason": "Nobody loses their chance; prevents becoming untreatable."
+            },
+            "D": {
+              "score": 45,
+              "reason": "Sickest treated but some waiting will cross threshold."
+            },
+            "E": {
+              "score": 20,
+              "reason": "System-found-late patients stay at back; remain at risk."
+            },
+            "F": {
+              "score": 50,
+              "reason": "Reaches unreachable but doses may be wasted."
+            }
+          }
+        },
+        "gain": {
+          "ranking": ["A", "E", "B", "C", "F", "D"],
+          "scores": {
+            "A": {
+              "score": 96,
+              "reason": "Most life-years per model; explicitly maximized."
+            },
+            "B": {
+              "score": 65,
+              "reason": "Essential workers, likely good survival but not optimized."
+            },
+            "C": {
+              "score": 35,
+              "reason": "Least-time-left patients least likely to respond."
+            },
+            "D": {
+              "score": 25,
+              "reason": "Sickest respond poorly; fewer survive long-term."
+            },
+            "E": {
+              "score": 80,
+              "reason": "High survival odds; counts lives not years."
+            },
+            "F": {
+              "score": 30,
+              "reason": "Unreachable patients, least time left, doses lost."
+            }
+          }
+        },
+        "helped": {
+          "ranking": ["E", "B", "A", "C", "F", "D"],
+          "scores": {
+            "A": {
+              "score": 70,
+              "reason": "Optimizes years; doesn't directly state lives saved."
+            },
+            "B": {
+              "score": 80,
+              "reason": "Twenty essential workers return to work; dependency count high."
+            },
+            "C": {
+              "score": 60,
+              "reason": "Cannot-wait group drawn; lower response rates."
+            },
+            "D": {
+              "score": 30,
+              "reason": "Fewest survive of any rule; lowest life count."
+            },
+            "E": {
+              "score": 85,
+              "reason": "Highest survival count under any rule; most lives."
+            },
+            "F": {
+              "score": 50,
+              "reason": "Reaches unreachable but wastes doses."
+            }
+          }
+        }
+      }
+    },
+    {
+      "scenario": 4,
+      "values": {
+        "vulnerable": {
+          "ranking": ["C", "A", "F", "B", "E", "D"],
+          "scores": {
+            "A": {
+              "score": 85,
+              "reason": "Clients with family lose visits; vulnerable without family protected."
+            },
+            "B": {
+              "score": 55,
+              "reason": "All kept but visits shortened; no one abandoned."
+            },
+            "C": {
+              "score": 90,
+              "reason": "Fifty living alone fully protected; others reduced."
+            },
+            "D": {
+              "score": 12,
+              "reason": "Rural clients abandoned; most have nobody else."
+            },
+            "E": {
+              "score": 30,
+              "reason": "Check-in visits cut; isolated clients lose most."
+            },
+            "F": {
+              "score": 72,
+              "reason": "All clients kept with care; no abandonment."
+            }
+          }
+        },
+        "harm": {
+          "ranking": ["C", "A", "F", "E", "D", "B"],
+          "scores": {
+            "A": {
+              "score": 78,
+              "reason": "Harm moved to families who can step in."
+            },
+            "B": {
+              "score": 10,
+              "reason": "All 240 harmed equally; nobody steps in."
+            },
+            "C": {
+              "score": 80,
+              "reason": "190 with support absorb cut; harm where stepping in possible."
+            },
+            "D": {
+              "score": 12,
+              "reason": "45 transferred to county with no staff; no one steps in."
+            },
+            "E": {
+              "score": 40,
+              "reason": "Check-in loss means trouble found late."
+            },
+            "F": {
+              "score": 75,
+              "reason": "Cuts only driving; most visits intact, harm minimized."
+            }
+          }
+        },
+        "gain": {
+          "ranking": ["D", "F", "E", "C", "B", "A"],
+          "scores": {
+            "A": {
+              "score": 30,
+              "reason": "Doesn't save money-losing rural driving."
+            },
+            "B": {
+              "score": 50,
+              "reason": "Keeps visits but truncated; unsustainable quality."
+            },
+            "C": {
+              "score": 58,
+              "reason": "Saves no driving; week rewritten constantly."
+            },
+            "D": {
+              "score": 95,
+              "reason": "Strongest position; service solvent and staff employed next year."
+            },
+            "E": {
+              "score": 80,
+              "reason": "Keeps essential care tasks; service likely survives."
+            },
+            "F": {
+              "score": 84,
+              "reason": "Saves most money-losing driving; keeps visits intact."
+            }
+          }
+        },
+        "helped": {
+          "ranking": ["E", "F", "B", "A", "C", "D"],
+          "scores": {
+            "A": {
+              "score": 65,
+              "reason": "Visits replaced by family care; all 240 retain some assistance."
+            },
+            "B": {
+              "score": 75,
+              "reason": "All 240 kept with shortened visits; reach maintained."
+            },
+            "C": {
+              "score": 50,
+              "reason": "Fifty fully, 190 partially; some lose access."
+            },
+            "D": {
+              "score": 42,
+              "reason": "195 kept fully; 45 completely abandoned."
+            },
+            "E": {
+              "score": 84,
+              "reason": "All 240 keep essential care tasks and professional contact."
+            },
+            "F": {
+              "score": 83,
+              "reason": "All 240 mostly-full visits; strangers but visits continue."
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unclear": [],
+  "comments": []
+}
