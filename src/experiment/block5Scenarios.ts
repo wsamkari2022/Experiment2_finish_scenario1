@@ -352,8 +352,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            A sure way out "well within the six hours", but slower than the service road, which is "the fastest clear route out".
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         /* VALUE AUDIT, second pass, 18 September 2026: Protecting the vulnerable 67 -> 55. Its card only says it takes nothing set aside; it does nothing for the least able. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Reducing harm 61 -> 87. In this scenario reducing harm is "keeping the risk your choice puts on
+           everyone else as low as possible", and this card says "nobody loses their place in the line so that you
+           can have yours" and "You take nothing that was set aside for anyone else". Raters 90 / 85 / 85. It stays
+           below Seal your apartment (93), the harm champion. Its main value is now Reducing harm (it was How much is
+           gained, 70): the confirm-keep question and the APA list follow it.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 55, groupSizeSensitivity: 61,
+          vulnerabilityProtectionSensitivity: 55, groupSizeSensitivity: 87,
           gainResponsivenessSensitivity: 70, outcomeAggregationSensitivity: 56,
           directnessSensitivity: 44, contextSensitivity: 61, stakeholderPerspectiveShiftSensitivity: 56,
         },
@@ -400,8 +407,14 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            It harms ONE person, the patient the mask was tagged for; the service road sends four streets past the leak.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
         /* VALUE AUDIT, second pass, 18 September 2026: How many are helped 41 -> 25. It helps only you, and takes the one mask from the patient it was kept for. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Reducing harm 45 -> 22. The 18 September audit raised it 24 -> 45 because "It harms ONE person".
+           The 18 September audit scored Reducing harm by COUNTING the people harmed and left the severity to Protecting the vulnerable. Participants never see that rule; they read the scenario's own line, and the raters followed it.
+           "Keeping the risk your choice puts on everyone else as low as possible": this card takes the one mask
+           from the patient it was tagged for, "and there is not another one". Raters 30 / 20 / 15.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 15, groupSizeSensitivity: 45,
+          vulnerabilityProtectionSensitivity: 15, groupSizeSensitivity: 22,
           gainResponsivenessSensitivity: 94, outcomeAggregationSensitivity: 25,
           directnessSensitivity: 81, contextSensitivity: 31, stakeholderPerspectiveShiftSensitivity: 23,
         },
@@ -748,8 +761,16 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            "Three hours of waiting, with a child who needs an inhaler, while the air gets steadily worse": a smaller
            payoff for the household than the ridge road or the early run.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Reducing harm 59 -> 83. In this scenario reducing harm is "keeping the risk your household puts on
+           everyone else as low as possible", and this card says "nobody else is pushed down the list to make room
+           for you", "on a road that is kept moving". Raters 80 / 85 / 85. It stays below the school (94), the harm
+           champion. Fill every seat (62) was set just above the old 59 by the third pass; the raters put it at 71,
+           below this card, and it was not flagged, so it stays. Its main value is now Reducing harm (it was How much
+           is gained, 65): the confirm-keep question and the APA list follow it.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 59,
+          vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 83,
           gainResponsivenessSensitivity: 65, outcomeAggregationSensitivity: 53,
           directnessSensitivity: 58, contextSensitivity: 49, stakeholderPerspectiveShiftSensitivity: 40,
         },
@@ -847,8 +868,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            The sacrifice is real without the exaggeration: middle of the line to last out. */
         givesUp: "Your car, your slot in the middle of the line, and any way out of the valley before the last vehicle leaves. You four wait six hours in a shelter hall with a child on an inhaler, while the smoke thickens outside.",
         moralTension: "Do your own dependents come first, or the dependents who have nobody at all?",
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Reducing harm 56 -> 83. The cost of this option lands on your own household (six hours in the shelter
+           hall); the two residents take your place in the line and "Nobody who needs the lift is left behind", so
+           nobody else is displaced. Raters 90 / 78 / 80.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 56,
+          vulnerabilityProtectionSensitivity: 97, groupSizeSensitivity: 83,
           gainResponsivenessSensitivity: 19, outcomeAggregationSensitivity: 39,
           directnessSensitivity: 65, contextSensitivity: 78, stakeholderPerspectiveShiftSensitivity: 75,
         },
@@ -900,6 +926,11 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            the convoy; 50 said it put more. 62 sits just above the convoy and far below the school's
            94, which stays the harm champion. Tested before the change: every check passes, every value
            keeps its own champion, VCI / Stability / performance move by at most 1 point. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6): NOT changed. The
+           raters moved the staged convoy 59 -> 83 and put this card at 71 (65 / 83 / 65), too close to 62
+           to flag. So "62 sits just above the convoy" above no longer holds: the raters read this card as
+           putting a little more risk on others than the convoy (a full, slow car, the walker on the roof).
+           It stays 62. See Generated Outputs/rater_study/REPORT.md. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 62, groupSizeSensitivity: 62,
           gainResponsivenessSensitivity: 40, outcomeAggregationSensitivity: 94,
@@ -1023,9 +1054,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            request: it keeps this option the best fit for at least 1 person in 100 (1.1% of steady
            and 3.1% of random pretend participants; 25 gave 0.5%), and the order is what the card
            supports either way. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Protecting the vulnerable 35 -> 14 and How many are helped 30 -> 8 (Part C: the researcher chose the
+           raters' reading as the more honest one). The card: once one car breaks the order "the junction seizes",
+           and "The blocks furthest from the junction waited their turn, and they are the ones still stuck in the jam
+           when the fire comes down" - the ninth block, where the two residents with walkers live. Raters: vulnerable
+           15 / 8 / 20, helped 15 / 5 / 5. Measured before the change: it is now the best fit for 0 in 100 pretend
+           participants (it was 1.1); the third pass had kept 35 above the raters' reading only to keep it somebody's
+           best fit, and the researcher chose honesty over that.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 35, groupSizeSensitivity: 20,
-          gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 30,
+          vulnerabilityProtectionSensitivity: 14, groupSizeSensitivity: 20,
+          gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 8,
           directnessSensitivity: 59, contextSensitivity: 51, stakeholderPerspectiveShiftSensitivity: 39,
         },
         metrics: {
@@ -1639,8 +1679,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
            About 60 clients lose their visits; the other 180 keep every one - more than the even cut keeps whole.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Protecting the vulnerable 58 -> 83. In this scenario it means "protecting the clients who have nobody
+           else at home", and this card says "Every client without family nearby keeps every visit." Raters
+           85 / 85 / 80. It stays below Protect full visits (95), the champion. Scenario 5 carries the same number.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 58,
+          vulnerabilityProtectionSensitivity: 83,
           groupSizeSensitivity: 93,
           gainResponsivenessSensitivity: 30,
           outcomeAggregationSensitivity: 65,
@@ -1738,9 +1783,16 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            It harms the fewest people - about 45 rural clients - though the most severely, and that severity is
            already counted where it belongs, in Protecting the vulnerable (16).
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Reducing harm 55 -> 15. The 18 September audit raised it 28 -> 55 because it "harms the fewest people".
+           The 18 September audit scored Reducing harm by COUNTING the people harmed and left the severity to Protecting the vulnerable. Participants never see that rule; they read the scenario's own line, and the raters followed it.
+           Here it is "making the cut land where someone else can step in, so it hurts least", and this card sends
+           about 45 rural clients "to a county agency with nobody to send, and most of them have nobody else".
+           Raters 20 / 10 / 15. Scenario 5 carries the same number.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 16,
-          groupSizeSensitivity: 55,
+          groupSizeSensitivity: 15,
           gainResponsivenessSensitivity: 93,
           outcomeAggregationSensitivity: 45,
           directnessSensitivity: 68,
@@ -1786,11 +1838,17 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them. The 50 protected visits are fixed points in the week, and the other 190 have to fit in the hours around them. One visit that overruns pushes every visit behind it, so the schedule is being rewritten by the middle of the week.",
         givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them.",
         moralTension: "Is it better to protect a few people completely, or many people a little?",
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           How many are helped 38 -> 60. In this scenario it means "keeping every client's care going, for as many
+           clients as possible". This card keeps all 240 clients on the schedule - the 50 who live alone in full,
+           the other 190 losing about a third of their visits - much as Shorten every visit (92) keeps everyone with
+           less time each. Raters 60 / 55 / 65. Scenario 5 carries the same number.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 95,
           groupSizeSensitivity: 54,
           gainResponsivenessSensitivity: 22,
-          outcomeAggregationSensitivity: 38,
+          outcomeAggregationSensitivity: 60,
           directnessSensitivity: 62,
           contextSensitivity: 68,
           stakeholderPerspectiveShiftSensitivity: 82,
@@ -1918,8 +1976,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* VALUE AUDIT, 18 September 2026: How many are helped 41 -> 65.
            Scenario 4's twin - see care_cut_where_family_covers.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Protecting the vulnerable 58 -> 83. In this scenario it means "protecting the clients who have nobody
+           else at home", and this card says "Every client without family nearby keeps every visit." Raters
+           85 / 85 / 80. It stays below Protect full visits (95), the champion. Scenario 5 carries the same number.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
-          vulnerabilityProtectionSensitivity: 58,
+          vulnerabilityProtectionSensitivity: 83,
           groupSizeSensitivity: 93,
           gainResponsivenessSensitivity: 30,
           outcomeAggregationSensitivity: 65,
@@ -1981,9 +2044,16 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* VALUE AUDIT, 18 September 2026: Reducing harm 28 -> 55.
            Scenario 4's twin - see care_profitable_rounds.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           Reducing harm 55 -> 15. The 18 September audit raised it 28 -> 55 because it "harms the fewest people".
+           The 18 September audit scored Reducing harm by COUNTING the people harmed and left the severity to Protecting the vulnerable. Participants never see that rule; they read the scenario's own line, and the raters followed it.
+           Here it is "making the cut land where someone else can step in, so it hurts least", and this card sends
+           about 45 rural clients "to a county agency with nobody to send, and most of them have nobody else".
+           Raters 20 / 10 / 15. Scenario 5 carries the same number.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 16,
-          groupSizeSensitivity: 55,
+          groupSizeSensitivity: 15,
           gainResponsivenessSensitivity: 93,
           outcomeAggregationSensitivity: 45,
           directnessSensitivity: 68,
@@ -2011,11 +2081,17 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The 50 most likely to come to harm keep every minute they had, and because the service already knows who they are the protection starts on Monday. But the other 190 lose about a third of their visits between them. The 50 protected visits are fixed points in the week, and the other 190 have to fit in the hours around them. One visit that overruns pushes every visit behind it, so the schedule is being rewritten by the middle of the week.",
         givesUp: "Everyone in the middle. The other 190 clients absorb the entire cut between them.",
         moralTension: "Is it better to protect a few people completely, or many people a little?",
+        /* VALUE AUDIT, fourth pass, 26 September 2026 (blind rater study, audit Fix 6; the researcher's approval):
+           How many are helped 38 -> 60. In this scenario it means "keeping every client's care going, for as many
+           clients as possible". This card keeps all 240 clients on the schedule - the 50 who live alone in full,
+           the other 190 losing about a third of their visits - much as Shorten every visit (92) keeps everyone with
+           less time each. Raters 60 / 55 / 65. Scenario 5 carries the same number.
+           Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 95,
           groupSizeSensitivity: 54,
           gainResponsivenessSensitivity: 22,
-          outcomeAggregationSensitivity: 38,
+          outcomeAggregationSensitivity: 60,
           directnessSensitivity: 62,
           contextSensitivity: 68,
           stakeholderPerspectiveShiftSensitivity: 82,

@@ -1090,6 +1090,16 @@ protecting the vulnerable 44 → **35** (it leaves the farthest blocks, where th
 jam; 35 rather than lower keeps it the best fit for about 1 person in 100). Words unchanged; every check
 passed before and after.
 
+**Fourth pass, 26 September 2026** (blind rater study, audit Fix 6 Parts A and C, the researcher's
+approval): nine numbers where three blind raters agreed with each other and sat 20+ points from the study,
+each moved to their average - convoy 61→87 and respirator 45→22 harm (S1); staged convoy 59→83 and give
+your seats 56→83 harm, Leave immediately 35→14 vulnerable and 30→8 helped (S2); cut only where family covers
+58→83 vulnerable, the rural routes 55→15 harm, protect full visits 38→60 helped (S4, and S5's copies).
+Reducing harm now follows the scenario's own line, not the head count of the first pass. "Leave
+immediately" is kept at the raters' reading although it now loses to the ridge road on every value (the
+researcher's choice). **The position check passes since this pass (3.3x)**; the numbers moved because the
+raters read the cards that way, not for the check. Three more numbers wait for new words (Part B).
+
 Numbers are vulnerable · harm · gained · helped. Each redesigned option carries a `REDESIGNED`
 comment with every number and metric justified from its card; the eight numbers carry `VALUE AUDIT,
 second pass` comments. The ids did not change, because the database stores them. The method kind

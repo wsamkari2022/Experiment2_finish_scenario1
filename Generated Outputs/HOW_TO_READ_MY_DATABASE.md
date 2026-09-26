@@ -1077,8 +1077,8 @@ outright in Blocks 1-3". The raw fields behind it (`plannerOrder`, `plannerBins`
 `plannerInputs`, `plannerVersion`) stay in `blocks.block5_emergency_scenarios.scenarioResults[]`.
 
 > ⚠️ **First place and best fit are often the same card.** With 4,000 pretend participants answering
-> Blocks 1-4 steadily (`npm run report:planner-overlap`), they were the same card for 57-66 out of
-> 100, depending on the scenario (chance would be about 17). Analyse choice position and fit
+> Blocks 1-4 steadily (`npm run report:planner-overlap`), they were the same card for 52-65 out of
+> 100, depending on the scenario (26 September 2026, after the Fix 6 option numbers) (chance would be about 17). Analyse choice position and fit
 > together; see HOW_TO_ANALYZE_MY_DATA.md, section 4.7.
 
 ---

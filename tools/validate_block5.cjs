@@ -79,16 +79,23 @@ for(const id of ids){const o=DATA[id];
   const wantOptions=isPredicted(id)?4:6;
   ok(id.padEnd(30),o.length===wantOptions&&champs.size===4&&owners.size===4,
      o.length+" options, "+champs.size+" unique champions across "+owners.size+" distinct options");}
+/* The ONE option allowed to lose on every value, by the researcher's choice (26 September 2026, audit
+   Fix 6, Part C): the blind raters read "Leave immediately" as worse than the closed ridge road on all
+   four values (protecting the vulnerable 14, how many are helped 8), and the researcher kept that
+   reading as the more honest one, knowing it can then never be anybody's best fit. Checks 2 and 3 still
+   hold for every other option; any new case must be added here by name, with its reason. */
+const ACCEPTED_DOMINATED={"fire_early_highway_run":"Fix 6 Part C, the raters' reading kept on purpose"};
+for(const [k,why] of Object.entries(ACCEPTED_DOMINATED))console.log("  NOTE  "+k+" may lose on every value — "+why);
 console.log("\n=== 2. STRICT DOMINATION: no option beaten on all 4 dimensions ===");
 for(const id of ids){const o=DATA[id];const bad=[];
-  for(const a of o)for(const b of o)if(a!==b&&K.every(k=>b.fp[k]>=a.fp[k])&&K.some(k=>b.fp[k]>a.fp[k]))bad.push(a.id+" < "+b.id);
+  for(const a of o)for(const b of o)if(a!==b&&!ACCEPTED_DOMINATED[a.id]&&K.every(k=>b.fp[k]>=a.fp[k])&&K.some(k=>b.fp[k]>a.fp[k]))bad.push(a.id+" < "+b.id);
   ok(id.padEnd(30),bad.length===0,bad.length?bad.join("; "):"none dominated");}
 console.log("\n=== 3. NO OBVIOUSLY-BEST: every option wins for some profile (4000 random) ===");
 for(const id of ids){const o=DATA[id];const wins={};o.forEach(x=>wins[x.id]=0);
   for(let n=0;n<4000;n++){const p={};K.forEach(k=>p[k]=Math.floor(Math.random()*101));
     let best=o[0],bv=-1e9;for(const x of o){const v=align(x,p);if(v>bv){bv=v;best=x;}}wins[best.id]++;}
-  const never=Object.entries(wins).filter(([,v])=>v===0).map(([k])=>k);
-  ok(id.padEnd(30),never.length===0,never.length?"never wins: "+never.join(", "):"all 6 win somewhere");}
+  const never=Object.entries(wins).filter(([k,v])=>v===0&&!ACCEPTED_DOMINATED[k]).map(([k])=>k);
+  ok(id.padEnd(30),never.length===0,never.length?"never wins: "+never.join(", "):"every option wins somewhere");}
 console.log("\n=== 4. CHAMPION MAPPING: a pure lean elects its champion ===");
 for(const id of ids)for(const lean of K){const o=DATA[id];const p={};K.forEach(k=>p[k]=k===lean?95:35);
   let best=o[0],bv=-1e9;for(const x of o){const v=align(x,p);if(v>bv){bv=v;best=x;}}

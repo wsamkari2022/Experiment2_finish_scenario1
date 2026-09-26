@@ -114,8 +114,8 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
 `validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED`
-(since 24 September 2026) and `ALL DATABASE GATES PASSED`. Since 23 September 2026 `validate:position` runs LAST in that chain: it fails on purpose
-(see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
+(since 24 September 2026) and `ALL DATABASE GATES PASSED`. Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
+until 26 September 2026 (it passes since Fix 6, see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
 above were never printed and four suites never ran. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
 a blocker, not a warning.
 
@@ -311,6 +311,48 @@ goes 2.8x -> 2.9x, and "Leave immediately" stays the best fit for 1.1 in 100 ste
 labels and card order change for about 1 person in 3. Both numbers carry a "VALUE AUDIT, third pass"
 comment in block5Scenarios.ts; the figures the method documents quote were re-run.
 
+## Blind-rater option numbers (Fix 6), since 26 September 2026
+
+Three blind raters (Claude Haiku, Opus and Sonnet, each in its own folder outside this project, with no
+tools; `Generated Outputs/rater_study/REPORT.md`) scored every option of scenarios 1-4 from its words
+alone. Where all three agreed with each other and sat 20+ points from the study, the number moved to
+their average (the researcher's approval, audit Fix 6 Parts A and C):
+
+| Scenario | Option | Value | Was | Now |
+|---|---|---|---|---|
+| 1 | Leave with the registered convoy | Reducing harm | 61 | 87 |
+| 1 | Take the sealed respirator | Reducing harm | 45 | 22 |
+| 2 | Take your household's place in the staged convoy | Reducing harm | 59 | 83 |
+| 2 | Give your car seats to the two residents with walkers | Reducing harm | 56 | 83 |
+| 2 | Leave immediately on the main highway | Protecting the vulnerable / How many are helped | 35 / 30 | 14 / 8 |
+| 4 + 5 | Cut only where a family member can cover | Protecting the vulnerable | 58 | 83 |
+| 4 + 5 | Keep the town routes that pay, and drop the rural ones | Reducing harm | 55 | 15 |
+| 4 + 5 | Protect full visits for the clients with nobody else | How many are helped | 38 | 60 |
+
+- **Reducing harm now follows the scenario's own line**, which is what participants read ("keeping the
+  risk your choice puts on everyone else as low as possible", "making the cut land where someone else can
+  step in, so it hurts least"), not the 18 September rule of counting heads. Two numbers that audit raised
+  on purpose went back down (the respirator, the rural routes); both comments say so.
+- **Both convoys are now built on Reducing harm** (they were built on How much is gained): the APA page's
+  list, the confirm-keep question and which value a kept convoy raises follow `optionMainValue`.
+- **Two accepted exceptions, both the researcher's choice for honesty.** "Leave immediately" now loses to
+  the closed ridge road on every value, so it can never be anyone's best fit
+  (`ACCEPTED_DOMINATED` in `validate_block5.cjs`); and in scenario 2 protecting the vulnerable no longer
+  costs performance as clearly (r = 0.38 against the 0.30 line; `G5_R_ACCEPTED` in
+  `validate_block5_metrics.mjs`; 25 was the lowest number that kept it). Every other option and scenario
+  is still held to both checks.
+- **VCI check V3 tests the flip-floppers as a group** (the 2,000 of `report:vci`, mean 33), not one scripted
+  person, who lands on exactly 50 whenever none of its picks happens to be strongly misaligned.
+- **The position check passes** (2.9x -> 3.3x). VCI and Stability move by 0-4 points for every kind of
+  pretend participant; the prediction and the performance of a best-fit pick are about the same.
+- **Participants see it**: fit numbers, labels and card order change in scenarios 1, 2, 4 and 5 (the best
+  fit changes for about 1 steady pretend participant in 5 or 6; the card order for about 7 in 10 in scenario 2
+  and 6 in 10 in scenario 4). Do
+  not pool records across this date (HOW_TO_ANALYZE_MY_DATA.md 4.9).
+- **Still to do (Part B)**: the words of scenario 2's seat swap, four scenario-3 cards and two scenario-4
+  cards, then three numbers held back (#8, #12, #13) because moving them alone would leave an option losing
+  on every value. Plan: docs/FRESH_EYE_AUDIT.md, "Fix 6 plan".
+
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 
 The "Has a cost" tag and the divider "These cost you something on the value you ranked first" no
@@ -425,9 +467,9 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |
 | `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
-| `validate:position` | The position effect. **Fails on purpose** (2.8× against a 3× gate) until the position calculation pass, which is why it runs LAST in the chain |
+| `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3×, after the Fix 6 option numbers); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
-| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 57-66 in 100 steady, 46-54 random, chance about 17 (26 September 2026) |
+| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 52-65 in 100 steady, 42-52 random, chance about 17 (26 September 2026, after Fix 6) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
 | `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers |
 
@@ -443,10 +485,11 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 
 ## Things that are deliberate, not oversights
 
-- **One simulation fails on purpose until the position pass: `simulate_position` (the 3x ratio).**
-  The researcher had the options redesigned to make sense first (18 September 2026), and the
-  calculations are being rebuilt on them one at a time; VCI and Stability are done and pass. Do not
-  revert an option's content or numbers to make the position gate pass — see
+- **The position simulation (`simulate_position`, the 3x ratio) failed on purpose from 18 to 26
+  September 2026.** The researcher had the options redesigned to make sense first, and the
+  calculations were rebuilt on them one at a time. It passes since the Fix 6 option numbers (3.3x):
+  those numbers moved because blind raters read the cards that way, not to pass the check. Never move
+  an option's content or numbers to make a check pass — see
   `docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md`, section 2g.
 - **A final choice reached through APA is judged on the profile the participant brought into the
   scenario**, exactly like a choice kept after the CVR (since 18 September 2026). Neither path
@@ -487,8 +530,8 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 - The planner's tree is settled (LEAP's trade-off tree, reviewed with the advisor) and its card order
   is not to be "fixed" without the researcher. What it does in practice is MEASURED
   (`npm run report:planner-overlap`): card 1 is the option best on the participant's #1 value for
-  90-100 people in 100, and is ALSO their best-fit card for 57-66 in 100 who answer steadily (46-54
-  at random; chance about 17). The researcher's decision (24 September 2026): accept it, state it,
+  78-100 people in 100, and is ALSO their best-fit card for 52-65 in 100 who answer steadily (42-52
+  at random; chance about 17; re-measured 26 September 2026, after Fix 6). The researcher's decision (24 September 2026): accept it, state it,
   and analyse position and fit together (HOW_TO_ANALYZE_MY_DATA.md 4.7).
 - **Scenario 6 is a test of the model, not of the participant.** It runs four options rather than
   six, shows no performance numbers, runs no reflection, and must never update the profile. If it

@@ -87,11 +87,13 @@ const near = (a, b) => Math.abs(a - b) < 1e-9;
  * A change of heart is a change to a VALUE, so the option the convert takes up in scenario 1 must
  * be built on one value: the first option outside their top two whose strongest value is at least
  * STANDS_FOR_ONE_VALUE. A middle-of-the-road option does not qualify. The scenario-1 convoy, for
- * example, scores 55 / 61 / 70 / 56: its "main value" is gained only because 70 is its largest
- * number, and a participant who picks it has not declared that gains now come first. A convert
- * who "adopted" gained that way was then asked to follow gained into the extreme gain option of
- * scenario 3 (18 / 25 / 92 / 43) - an escalation, not holding to what they chose - and paid twice.
- * The persona then tested the convoy's arithmetic rather than the property V5 is about.
+ * example, scored 55 / 61 / 70 / 56 when this was written: its "main value" was gained only because
+ * 70 was its largest number, and a participant who picks it has not declared that gains now come
+ * first. A convert who "adopted" gained that way was then asked to follow gained into the extreme
+ * gain option of scenario 3 (18 / 25 / 92 / 43) - an escalation, not holding to what they chose -
+ * and paid twice. The persona then tested the convoy's arithmetic rather than the property V5 is
+ * about. (Since 26 September 2026, audit Fix 6, the convoy reads 55 / 87 / 70 / 56: its Reducing
+ * harm now does stand for one value, and V5 still holds.)
  */
 const STANDS_FOR_ONE_VALUE = 85;
 const convertsFirstPick = (r) =>
@@ -222,8 +224,17 @@ gate("V1", out["Loyal"] === 100, `Loyal scores 100  (got ${out["Loyal"]})`);
 gate("V2", out["Near-loyal"] === Math.round(100 * W.weakly) && lvl["Near-loyal"] === "Mostly Consistent",
   `Near-loyal = ${Math.round(100 * W.weakly)}, "Mostly Consistent" — always your second best  (got ${out["Near-loyal"]}, "${lvl["Near-loyal"]}")`);
 /* V3 — 50 is what blind picking gives (V11). Changing what you value in every scenario must fall
-   below it. */
-gate("V3", out["Flip-flopper"] < 50, `Flip-flopper < 50 — below blind picking  (got ${out["Flip-flopper"]})`);
+   below it. Since 26 September 2026 (the researcher's choice, audit Fix 6) it is checked on the GROUP:
+   the 2,000 pretend flip-floppers of `npm run report:vci` (random starting profiles; each scenario the
+   top option on a value they have not held yet, kept). The scripted flip-flopper above always takes
+   the MILDEST wrong option, so it scores exactly 50 - the weight of "Misaligned" - whenever none of
+   its four picks happens to be strongly misaligned. The Fix 6 option numbers did that in scenario 4,
+   and the check then hung on one pick of one person. That person is still printed above. */
+const POP = require("./vci_distribution.cjs");
+POP.reseed(777); // the seed the report gives every behavior
+const ffGroup = POP.starts.map((s) => POP.run(s, "Flip-flopper (keeps)").vci);
+const ffMean = ffGroup.reduce((a, b) => a + b, 0) / ffGroup.length;
+gate("V3", ffMean < 50, `Flip-floppers < 50 — below blind picking, as a group  (mean ${ffMean.toFixed(0)} over ${ffGroup.length} pretend flip-floppers; the scripted one above: ${out["Flip-flopper"]})`);
 gate("V4", out["Contrarian"] <= out["Flip-flopper"] && out["Contrarian"] === Math.round(100 * W.strongly),
   `Contrarian = ${Math.round(100 * W.strongly)}, the floor, and <= Flip-flopper  (${out["Contrarian"]} vs ${out["Flip-flopper"]})`);
 /* V5 — a genuine change of heart, held to, costs only the scenario in which it happened. The floor

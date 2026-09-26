@@ -142,7 +142,14 @@ function run(start, beh) {
   return { vci: vci.value, level: vci.level, relabeled };
 }
 
+/* Shared with simulate_vci.cjs since 26 September 2026 (gate V3 checks the flip-floppers as a group):
+   the same starting profiles, the same behaviors and the same seed, so the gate and this report can
+   never quote two different numbers. The report itself runs only when this file is run directly. */
+module.exports = { starts, BEHAVIORS, run, reseed: (n) => { seed = n; } };
+if (require.main === module) main();
+
 /* ---------------------------------------------------------------------------------------------- */
+function main() {
 const LEVEL_NAMES = VCI_LEVELS.map((l) => l.label);
 const SHORT = { "Highly Consistent": "HC", "Mostly Consistent": "MC", "Moderate": "Mod", "Low": "Low",
                 "Very Low": "VL", "Highly Inconsistent": "HI" };
@@ -229,3 +236,4 @@ console.log("\n7. HOW FAST A CHANGE OF HEART IS LEARNED\n");
   console.log(`  one strong endorsement in scenario 1 makes the endorsed value the top value in ${pct(top / n)} of profiles`);
 }
 console.log("");
+}

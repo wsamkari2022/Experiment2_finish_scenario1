@@ -181,9 +181,20 @@ SCORED_SCEN.forEach((sc) => {
   const rank = [...g].sort((a, b) => perf(b) - perf(a)).findIndex((r) => r.id === champ.id) + 1;
   gate(rank >= 3, "G5", `${sc.padEnd(30)} "${champ.title.slice(0, 32)}" ranks ${rank}/6 on performance`);
 });
+/* The ONE scenario where this correlation may pass 0.30, by the researcher's choice (26 September
+   2026, audit Fix 6, Part C). The blind raters read "Leave immediately" as protecting the vulnerable
+   at 14, and it already has the lowest performance in the scenario (48), so it is weak on everything
+   and pulls r to 0.38. The researcher kept the raters' number as the more honest one, knowing this
+   weakens the wildfire trade-off; 25 was the lowest number that kept r under 0.30. The rank check
+   above still holds here, and this correlation still holds in every other scenario. */
+const G5_R_ACCEPTED = { wildfire_household_evacuation: "Fix 6 Part C: Leave immediately at the raters' 14, kept on purpose" };
 SCORED_SCEN.forEach((sc) => {
   const g = inScenario(sc);
   const r = corr(g.map((x) => x.fp.vulnerabilityProtectionSensitivity), g.map(perf));
+  if (G5_R_ACCEPTED[sc] && r >= 0.30) {
+    console.log(`  NOTE  G5   ${sc.padEnd(30)} vulnerability x performance r = ${r.toFixed(2)} — accepted: ${G5_R_ACCEPTED[sc]}`);
+    return;
+  }
   gate(r < 0.30, "G5", `${sc.padEnd(30)} vulnerability x performance r = ${r.toFixed(2)}`);
 });
 

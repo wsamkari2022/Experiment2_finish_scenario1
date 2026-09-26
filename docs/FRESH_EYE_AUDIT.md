@@ -75,7 +75,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | C7 | Ties and near-ties in the participant's own ranking decide the whole order | Medium | Open |
 | C8 | The noise band cannot be personal; `strictness` is computed and never used | High | Open |
 | C9 | The planner's inputs are not stored, and there is no planner version | High | **Fixed** (item 4: `plannerInputs`, `PLANNER_VERSION`, `analysis.card_order_by_scenario`, gate D53) |
-| D1 | Option numbers disagree with the option's own words | Critical | **Mostly resolved** 26 Sept: 7 of my 9 examples were already right under the 18 Sept value audit (I1); the last 2 fixed (Fix 5). **Rater study run 26 Sept** (Haiku, Opus, Sonnet; blind, checked in their logs): 15 more numbers where all three raters agree with each other and sit 20+ points from the study, 3 of them in scenario 4 "Reducing harm" (`Generated Outputs/rater_study/REPORT.md`). Waiting for Waseem's decisions |
+| D1 | Option numbers disagree with the option's own words | Critical | **Mostly resolved** 26 Sept: 7 of my 9 examples were already right under the 18 Sept value audit (I1); the last 2 fixed (Fix 5). **Rater study run 26 Sept** (Haiku, Opus, Sonnet; blind, checked in their logs): 15 more numbers where all three raters agree with each other and sit 20+ points from the study, 3 of them in scenario 4 "Reducing harm" (`Generated Outputs/rater_study/REPORT.md`). **Fix 6 Parts A + C done 26 Sept** (9 numbers moved to the raters' average). Part B (new words, then #8, #12, #13) waits for Waseem's approval of the exact wording |
 | D2 | "Reducing harm" and "gain" mean different things per scenario | Critical | **Plan written** (Fix 3), waiting for approval. The raters (26 Sept) point at three meaning problems: scenario 3 "Reducing harm" vs "How many are helped" (4 of 6 options split the raters), scenario 4 "How much is gained" (several cards say nothing about money), scenario 2 "How many are helped" for a swap |
 | D3 | Fast "yes" clicking produces a strong gain-first profile | High | Open |
 | E1 | A refusal becomes a zero; the never-harm refuser scores 0/0/0/0 and every option fits 100 | Critical | **Fixed**: vulnerable + harm (Idea 1, score 50); directness + context (flag, score 0, fair lens tie) |
@@ -98,7 +98,7 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 | G7 | A random responder's VCI is 56-57, not 50 | Low (docs) | **Fixed (docs)** 25 Sept: CLAUDE.md and HOW_TO_ANALYZE (the VCI method already said 57) |
 | G8 | Scenario 6 adds a fixed 50 to the performance average, so nobody reaches 100 | High | **Fixed** (Fix 4: performance counts the decisions only; W1, D57) |
 | G9 | Scenario 5 (a wish) is in the performance average | High | **Fixed** (Fix 4, Part A; W1, D57) |
-| P1 | Position check: options alone move the raw distance too much for low-demand people (2.8x, wants 3x) | Medium | Open (after Fix 3: A / B / C) |
+| P1 | Position check: options alone move the raw distance too much for low-demand people (2.8x, wants 3x) | Medium | **Resolved** 26 Sept (Fix 6): the check passes by itself, 3.3x - option A. The numbers moved for the raters, not for the check |
 | P2 | The position headline alone cannot tell a role-switcher from a random chooser; the time check cannot run | Medium, design | Known; decision |
 | P3 | Role, subject and order are mixed (one scenario per role) | Known, design | Stated in HOW_TO_ANALYZE 4.4 |
 | H1 | The company stance is shown on the results page but not saved | Medium | **Fixed** 25 Sept: `company_stance`, gate D61 |
@@ -119,7 +119,7 @@ documents change.
 
 | ID | Problem (short) | Severity | Status |
 |---|---|---|---|
-| P1 | Position check: for "low-demand" people the options alone move the raw distance 5.0 points, their choice 13.9 (2.8x, the check wants 3x). The headline position number already corrects for this (it uses each scenario's own range); the raw distance does not | Medium | Open. Re-measure after Fix 3, then choose: A passes by itself / B fix the calculation / C accept and state it |
+| P1 | Position check: for "low-demand" people the options alone move the raw distance 5.0 points, their choice 13.9 (2.8x, the check wants 3x). The headline position number already corrects for this (it uses each scenario's own range); the raw distance does not | Medium | **Resolved** 26 Sept (Fix 6): low-demand people now 6.1 against 19.8, 3.3x; the check passes. Option A (it passed by itself) |
 | P2 | The position headline alone cannot tell a person who truly changes with their role from a random chooser: both score high. The check that separates them (the "time" check) needs one role to appear twice, and no role does in this deck, so it is skipped (3 skips in validate:position) | Medium, design | Known, not in the status board before. Decision: accept and say it (the scenario 4 vs 5 pair is the clean reading) |
 | P3 | Each role is one scenario, so role, subject and order are mixed together (HOW_TO_ANALYZE 4.4) | Known, design | Stated in the guide; nothing to fix |
 | H1 | The company stance ("Took the company's values" / "Split the difference" / "Held your own values") is shown on the results page but never saved | Medium | Open. Proposal: save it beside `company_value_shown` |
@@ -1272,7 +1272,7 @@ CLAUDE.md, the 4.9 list in HOW_TO_ANALYZE. (3) Run the full chain and every sepa
 report:vci, report:stability and report:planner-overlap and update any figure the method documents
 quote. (4) Look at scenario 2 in the browser. (5) Commit, push, log here.
 
-## Fix 6 plan: what the blind raters found (written 26 September, waiting for approval)
+## Fix 6 plan: what the blind raters found (written 26 September; Parts A and C approved and DONE the same day, Part B waits)
 
 Waseem's answers to the rater report: "1-yes, 2-words, 3-keep, write the Fix 6 plan". So: write the plan;
 Scenario 3 (#9, #10) and the seat swap (#5) get WORDS, not new numbers; "Leave immediately" (#6, #7)
@@ -1399,6 +1399,35 @@ report as a known disagreement: lowering both would leave the option the best fi
 | The raters are three AI models of one family | Written in the report: an AI-assisted blind review, adjudicated by the researcher, not human inter-rater reliability |
 | The numbers now follow the scenario lines, not the 18 September counting rule | Written in each comment and in the checklist 2g, with both old values |
 | Participants see new numbers and orders | Dated in HOW_TO_ANALYZE 4.9; records from before and after are not pooled |
+
+### What was done (26 September, Parts A and C)
+
+Waseem: "I approve Parts A and C… Part B will be after these fixes and after you tell me what the wordings
+are that you will change exactly". Then two answers: "Leave immediately" follows the raters (14 and 8, "more
+honest", even though it fits nobody), and V3 checks "the 2,000".
+
+- **Nine numbers** in `block5Scenarios.ts`, each with a "VALUE AUDIT, fourth pass" comment quoting its card and
+  the three raters: the seven of Part A, plus Leave immediately 35 -> 14 (vulnerable) and 30 -> 8 (helped).
+  Scenario 5's copies of the three scenario-4 numbers moved too. Fill every seat's third-pass comment got a note:
+  its "just above the convoy" no longer holds (the raters put it at 71, below the convoy's 83; it stays 62).
+- **Three checks changed, each with its reason written next to it:**
+  - V3 (`simulate_vci.cjs`) tests the 2,000 pretend flip-floppers of `report:vci` (mean 33), which now shares its
+    people with the check (`vci_distribution.cjs` exports them). The scripted one scores 50 and is still printed.
+  - `validate_block5.cjs`: `ACCEPTED_DOMINATED` lets Leave immediately lose on every value (checks 2 and 3).
+  - `validate_block5_metrics.mjs`: `G5_R_ACCEPTED` lets scenario 2's vulnerable x performance correlation reach
+    0.38. Found while implementing: at 14 the option is weak on everything, since it already had the lowest
+    performance (48); 25 was the lowest number that kept 0.30. Waseem chose 14 and the exception.
+- **The chain is green, including the position check (3.3x), for the first time.** Prediction, resume, MCF and
+  visits pass. Reports re-run and every quoted figure updated: VCI method, Stability method, the code notes in
+  block5CVR.ts, the planner overlap (52-65 steady / 42-52 random / 35-48 differ; first card best on the #1 value
+  78-100) in CLAUDE.md, block5Planner.ts, dbShape.ts (stored note; SHAPE_VERSION 2026-09-26-rater-numbers),
+  HOW_TO_ANALYZE 4.7, HOW_TO_READ and the planner plan; CLAUDE.md, the checklist 2g and the advisor skill now say
+  the position check passes. HOW_TO_ANALYZE 4.9 dates the screen change.
+- **Checked in the browser** with a pretend participant (values 89 / 82 / 64 / 4): scenario 1 showed the card order
+  and all six fit numbers exactly as computed (the sealed respirator 26, was 34; the convoy 73, was 72); keeping the
+  convoy asked "This option delivers reducing harm and gives up how many are helped" (before: how much is gained);
+  the APA page said it "missed by 52 points", and naming Reducing harm listed the convoy AND Seal your apartment
+  (before: Seal only).
 
 ## Launch plan: everything left, done by Waseem and Claude only (written 26 September, waiting for approval)
 
@@ -1540,3 +1569,4 @@ thesis says so.
 - **2026-09-26. First rater runs: Haiku done; Opus and Sonnet stopped by a probe rule that was too strict (my mistake), not by a refusal.** Their saved logs (`~/.claude/projects/...rater-opus` and `...rater-sonnet`, `subagents/*.jsonl`) show the only tool either rater had or used was `SubagentHandback`, Claude Code's built-in "hand my answer back" tool that every helper has (Opus 1 call, Sonnet 2: the answer, then a reply to a system reminder that was refused as already delivered); neither read probe.txt. Opus also, honestly, reported Claude Code's standard environment block and the user's email line, which hold nothing about the study. My rule demanded "NONE" and zero tool calls, which no honest helper can give. Haiku answered "NONE", made no tool call at all, received the sheet exactly (compared character by character with sheet.md) and returned a valid answer (96 scores, check code right; one small note: in scenario 3 "protecting the vulnerable" one option scored above the option ranked just before it). Fixed in `build_rater_room.cjs`: the probe allows only `SubagentHandback` and the standard blocks, and asks what each tool does; the builder now skips a folder that holds an answer (Haiku's is untouched) and keeps an earlier probe as `probe_result_first_try.md`. Opus, Sonnet and Fable folders refreshed; to be run again in new sessions.
 - **2026-09-26. Rater study results (Haiku, Opus, Sonnet; Fable not run - it needs paid credits).** Blindness checked in each rater's saved log: right model, the only tool call `SubagentHandback` (Haiku none), the sheet received exactly as sheet.md (character for character), all three answers complete with the right check code. Collected with `compare_ratings.cjs --rooms` into `Generated Outputs/rater_study/` (answers, runs, REPORT.md, comparison.json). Agreement between raters: ICC(2,1) 0.861 over 96 scores (good), order 0.79-0.85 between pairs, about 10 points apart on average. Raters against the study: order 0.844 overall, 0.79-0.81 per rater - about as close as the raters are to each other; same top option in 13 of 16 scenario-values (the other 3 are near ties); 54 of 96 numbers within 10 points of the raters' average, 78 within 20. The 15 numbers where all three raters agree with each other (spread 15 or less) and sit 20+ points away: S1 harm registered convoy 61 (raters 87) and sealed respirator 45 (22); S2 vulnerable Leave immediately 35 (14, set on purpose in Fix 5), harm staged convoy 59 (83) and give your car seats 56 (83), helped give your car seats 39 (78) and Leave immediately 30 (8); S3 vulnerable draw the names 56 (83), gain most likely to survive 39 (80), helped most years ahead 43 (72); S4 vulnerable cut only where family can cover 58 (83), harm redraw the routes 47 (78), keep care / cut check-ins 70 (38), drop the rural routes 55 (15), helped protect full visits 38 (60). Scenario 4 "Reducing harm" is the one place where the order barely matches (0.09). Nothing in the study changed; a Fix 6 plan waits for Waseem's decisions.
 - **2026-09-26. Fix 6 plan written** (Waseem: "1-yes, 2-words, 3-keep, write the Fix 6 plan"). Measured on scratch copies first: moving all 10 flagged numbers would leave two options the best fit for nobody (S3 "Hold some doses back", S4 "Keep every care visit"), so the plan is Part A = 7 numbers now (tested: every option still somebody's best fit, position check 2.9x -> 3.3x PASSES, VCI and Stability move 0-3 points, prediction and performance about the same, one scripted VCI check V3 lands on exactly 50), Part B = words first for S2 / S3 / S4 with a six-place check (card, two lens views, two stakeholder stories, APA lines, MCF, planner sentence) and re-rating, Part C = Leave immediately kept. Nothing implemented.
+- **2026-09-26. Fix 6 Parts A and C done** (Waseem approved A and C; "Leave immediately" at the raters' 14 and 8; V3 on the group of 2,000; the G5 exception for scenario 2 at 14). Nine option numbers moved to the blind raters' average, each commented; three checks changed with their reasons (V3 group, ACCEPTED_DOMINATED, G5_R_ACCEPTED). The full chain passes, the position check included (2.9x -> 3.3x): P1 resolved. VCI and Stability move 0-4 points per kind of pretend participant; every quoted figure re-run and updated; browser check matched the computed card order, fit numbers, confirm-keep question and APA list. Part B (words) waits for Waseem's approval of the exact wording.
