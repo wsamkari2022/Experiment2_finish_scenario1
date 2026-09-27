@@ -1628,6 +1628,84 @@ corrected, 3 = leave the other four).
   show "Least reliable" on both. That changes what participants see, so it waits for Waseem.
 - **Left, as approved:** S1 "Longest-lasting", S2 "Slowest", S3 "Heaviest on resources", S3 "Shortest-lived".
 
+## Fix 7c plan: which chip a card shows when two of its measures tie (written 26 September, waiting for approval)
+
+Waseem: "yes, plan and test the tie rule fix first". **Nothing implemented.** Tested on a scratch copy of
+`src/experiment` and `tools` with the planned code, compiled by the project's own TypeScript, strict-checked
+with the app's rules, and run through every check (scratch `make_tie_mirror.cjs`, `chip_ties.cjs`,
+`tie_verify.cjs`, `add_g8.cjs`).
+
+**The problem.** A card shows three chips: its two best places and its one worst place, out of five measures.
+With six options and five measures an option often holds the SAME place on two measures, and then the
+alphabet of the measure's code name decides which one is shown (`buildPerfChips`, block5Planner.ts). This is
+not rare: 23 of the 30 cards in scenarios 1-5 have such a tie at the edge of what they show. Example: Seal your
+apartment is last on speed (18) and on reliability (23); "speed" comes after "reliability" in the alphabet, so
+the card says "Slowest" and never "Least reliable".
+
+**Part 1, the rule (recommended).** When two measures give the same place, show the one where the option is
+furthest from the scenario's average: furthest ABOVE it for the two best chips, furthest BELOW it for the worst.
+Seal: speed is 30 below the average (48), reliability 36 below (59), so "Least reliable". The places themselves
+do not change; the distance is used only to choose, never shown; the alphabet decides only if two distances are
+exactly equal. Code: `normaliseScenario` also computes each option's distance from the average
+(`metricLead`), and `buildPerfChips` sorts ties by it.
+
+Four rules were tested (the real numbers, scenarios 1-5):
+
+| Rule | Cards that change | Why kept or dropped |
+|---|---|---|
+| Distance from the average (recommended) | 16 of 30 (12 a different chip, 4 only the order of the two best) | One idea, uses all six options, so one other option's number rarely flips it |
+| Distance as a share of the measure's range | 17 | Cannot break a tie at first or last place (every first place is 100% of its range, every last 0%), so the alphabet still decides there |
+| The place held most clearly (gap to the neighbour) | 14 | Depends on one neighbour's number; it picked "Reversibility 2nd of 6" for the draw, which the raters put last |
+| Show every tied chip | 23 (3 to 5 chips a card, 99 in all) | Breaks the "two best, one worst" design and the planner test |
+
+**What participants would see (the 12 real changes):**
+
+| Card | Today | With the rule | Raters' places |
+|---|---|---|---|
+| S1 Leave with the registered convoy | Resources spared 4th of 6 | Durability 4th of 6 | resources 2nd, durability 1st: worse (its durability 66 is the number the raters read as 79, blocked by G6 in Fix 7b) |
+| S1 Seal your apartment | Slowest | Least reliable | both 6th |
+| S2 Leave immediately | Hardest to undo | Shortest-lived | both 6th |
+| S3 Treat the 20 most likely to survive | Durability 3rd of 6 | Speed 3rd of 6 | 2nd / 4th, one place off either way |
+| S3 Treat the 20 who are sickest | Durability 5th of 6 · Hardest to undo | Speed 5th of 6 · Least reliable | durability 6th, reversibility 3rd -> speed 3rd, reliability 6th: the worst chip now right, the middle one worse |
+| S3 Treat the 20 who others depend on | Durability 2nd of 6 | Speed 2nd of 6 | 3rd / 1st, one place off either way |
+| S4 + S5 Keep every care visit | Reliability 3rd of 6 | Resources spared 3rd of 6 | both 3rd |
+| S4 + S5 Cut only where a family member can cover | Resources spared 4th of 6 | Speed 4th of 6 | both 4th |
+| S4 + S5 Protect full visits | Heaviest on resources | Least reliable | both 6th |
+
+Four more cards only swap their two best chips (the stronger first): S1 Carry the respirator, S2 the school, S4 and
+S5 Redraw the routes.
+
+**Against the raters (scenarios 1-4, 72 chips):** at the raters' place 39 -> 40, one place off 26 -> 25, two or
+more off 7 -> 7; best/worst chips the raters agree with 21 -> 22, near-ties 9 -> 8, clear disagreements 4 -> 4.
+A small gain, and not the reason for the rule: the rule is chosen for what it means, the raters only check it.
+
+**Part 2, equal numbers (recommended: B).** Two OPTIONS with the same number on one measure have no true order,
+and the code gives them places by their code names. This happens once: in scenario 3, the sickest and the years
+rule are both 30 on reversibility, so the measure bars inside their details say "6th of 6" and "5th of 6" beside
+the same 30. With Part 1 no chip shows either place.
+- A: equal numbers share a place, with new words on screen ("tied 5th of 6", "tied for the weakest here").
+  Changes two functions and the bar's words for one case.
+- **B (recommended): keep it, write it down, and add check G8** to validate_block5_metrics.mjs: no two options in
+  a scenario share a number on one measure, except this listed pair. Tested: passes today; with a made-up new tie
+  (the shuttle's reliability set equal to Carry the respirator's) it fails and names both options.
+
+**Measured with Part 1 (and G8) on the scratch copy:** all 14 check scripts pass, and their output is the same
+line for line as the project's except the planner test's chip lines (the changes above) and one timing line.
+VCI, Stability, position, prediction, performance, MCF and the database cannot move: the chips are never scored
+or saved, and the planner reads performance only for the chips. The copy's real chips match the prediction on
+every card, and do not depend on the participant (checked with three very different pretend people). Scenario 6
+shows no chips.
+
+**No version stamp needed:** chips are not saved in the database, `PLANNER_VERSION` is for the card ORDER (which
+does not change), and `SHAPE_VERSION` only forces a re-send of saved sections (none changes). The date row in
+HOW_TO_ANALYZE 4.9 marks the screen change, as for the other screen-only changes.
+
+**Steps if approved:** (1) the code in block5Planner.ts as tested, with a dated comment; (2) a check in
+test_planner.cjs that every card follows the rule; (3) G8 if Part 2 = B; (4) the stale comment "the five chips
+beside it" in Block5PublicEmergencySimulation.tsx corrected to three (a comment only); (5) the full chain, and the
+chips read on screen for scenarios 1 and 3; (6) CLAUDE.md dated section, HOW_TO_ANALYZE 4.9 row, this file's Log,
+memory; commit and push.
+
 ## Fix 8 plan: performance on a 0-100 scale inside each scenario (written 26 September; NOT NEEDED - see the note)
 
 **Note, the same day:** Waseem meant the score AT THE END, and that already exists. The results page and the database use `performanceCaptured` / `overallCaptured` (block5Performance.ts): 100 x (chosen - worst) / (best - worst) inside each scenario, averaged over the decisions - option A below, built earlier for the same reason ("a participant who takes the WORST-performing option every time still scores 55.8"). Measured with it: the performance chaser 100, always the worst performer 0-1, random 52, always the best fit 65 (p10 28, p90 97). My tables of 50-70 were the RAW number, which only the live dashboard shows while a participant chooses. Nothing to build; the live dashboard stays raw on purpose (changing it would change what participants see while choosing). The plan below is kept for the record.
@@ -1824,3 +1902,4 @@ thesis says so.
 - **2026-09-26. Fix 7 done** (Waseem: "1-yes, 2-yes, 3-yes, 4-yes"). 28 number edits (8 value numbers, 14 performance numbers, scenario 5's copies), the service road's reversibility at 20 rather than 27 so its "Hardest to undo" chip matches "there is no turning around"; V8 on the group of 2,000 (mean 34). Full chain green: position 5.4x; VCI and Stability 0-3 points per kind of pretend participant; end-of-study performance 0-6 points, the chaser still 100; prediction calibrated. No built-on value and no champion changed. 6 of 40 chips still name a different best/worst option than the raters read, all on unflagged numbers (listed in Fix 7 "What was done").
 - **2026-09-26. Fix 7b plan written and tested** (the six chips): two moves pass the raters-agree rule (Seal reliability 40 -> 23; sickest reliability 35 -> 26); the second exposes a scripted position test whose code does less than its comment says (corrected version passes, today unchanged). Four chips are left: three on split readings, one blocked by G6. Nothing implemented.
 - **2026-09-26. Fix 7b done** (Waseem: "1-yes, 2-yes, 3-yes"). Seal your apartment reliability 40 -> 23, the sickest 35 -> 26; the "gives up both" test corrected to what its comment says (26 / 6, PASS). Full chain green, position 5.4x; VCI, Stability, prediction and planner overlap unchanged; end-of-study performance 0.5 points or less on average. On screen: four "Performance Nth of 6" places and the shuttle's "Least reliable" chip. The 40 best/worst places: 27 match the raters, 9 near-ties, 4 clear left. Found: a last-place tie shows the measure later in the alphabet, so no card in S1 or S3 says "Least reliable" (waits for Waseem).
+- **2026-09-26. Fix 7c plan written and tested** (the chip tie rule): 23 of 30 cards have two measures sharing a place at a chip's edge and the alphabet decides today. Recommended: show the measure furthest from the scenario's average (16 cards change, 12 in which chip; tested on a compiled scratch copy, every check passes with the same output). Part 2 (one pair of equal numbers, S3 reversibility 30/30): keep it and add check G8. Nothing implemented.
