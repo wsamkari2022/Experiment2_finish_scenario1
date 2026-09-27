@@ -50,9 +50,9 @@
  *     scenario was authored with one clear champion per value, far ahead of the rest, so Step 2
  *     nearly always says "the gap is real". Step 3 mostly reorders the LOWER cards (it decides
  *     roughly 1 pair in 7 to 1 pair in 9).
- *   - The first card is ALSO the participant's best-fit card for 52-62 people in 100 who answer
- *     steadily, and 42-50 who answer at random (chance would be about 17). So first place and best
- *     fit are separated in 38-48 cases in 100, not in most of them. (Re-measured 26 September 2026,
+ *   - The first card is ALSO the participant's best-fit card for 50-62 people in 100 who answer
+ *     steadily, and 41-52 who answer at random (chance would be about 17). So first place and best
+ *     fit are separated in 38-50 cases in 100, not in most of them (re-measured after Fix 7). (Re-measured 26 September 2026,
  *     after the Fix 6 option numbers; it was 57-66 and 46-54, and 57-68 and 46-55 before Fix 5.) Analyse choice position and fit
  *     together: Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md, section 4.7.
  *

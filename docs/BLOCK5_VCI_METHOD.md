@@ -200,26 +200,26 @@ scoring code by each kind of participant.
 | Always the best fit | 100 | Highly Consistent (100%) |
 | Corrected by APA — tempted every time, then names their top value | 92 | Highly Consistent (68%) |
 | Mixes their best and second-best fit | 90 | Highly Consistent (71%) |
-| True to their Blocks 1–4 top value | 86 | Highly Consistent (41%) |
+| True to their Blocks 1–4 top value | 85 | Mostly Consistent (39%) |
 | Always the second-best fit | 80 | Mostly Consistent (100%) |
-| Chases the best performance numbers | 79 | Moderate (33%) |
-| Changes value once, through APA, then holds it | 68 | Moderate (46%) |
-| Changes value once, keeps it after the CVR, then holds it | 67 | Moderate (52%) |
+| Chases the best performance numbers | 76 | Moderate (39%) |
+| Changes value once, through APA, then holds it | 67 | Moderate (47%) |
+| Changes value once, keeps it after the CVR, then holds it | 66 | Moderate (50%) |
 | Random everywhere | 57 | Low (33%) |
-| Takes up a new value every scenario (either route) | 33 | Very Low (57–59%) |
+| Takes up a new value every scenario (either route) | 34 | Very Low (60%) |
 | Always the worst fit | 10 | Highly Inconsistent (100%) |
 
 **Separation** — how often the first kind outscores the second:
 
 | Pair | |
 |---|---|
-| True to top value > random | 93% |
-| Random > flip-flopper | 87% |
-| One-time convert > random | 69% |
-| One-time convert > flip-flopper | 95% |
-| One-time convert > performance chaser | 26% |
+| True to top value > random | 92% |
+| Random > flip-flopper | 86% |
+| One-time convert > random | 67% |
+| One-time convert > flip-flopper | 94% |
+| One-time convert > performance chaser | 28% |
 
-*(Re-measured 26 September 2026 after the Fix 6 option numbers, Leave immediately's gain 95 included. Before: true to top value 90, performance
+*(Re-measured 26 September 2026 after the Fix 7 option numbers (rater round 2). After Fix 6 they were: true to top value 86, performance chaser 79, flip-floppers 33, separations 93 / 87 / 69 / 95 / 26%; the chaser fell because scenario 3's top performer changed. Before Fix 6: true to top value 90, performance
 chaser 75, flip-floppers 31–32; separations 96 / 87 / 70 / 97 / 36%. The performance chaser rose because
 both convoys, which perform well, now also fit many profiles.)*
 
@@ -229,13 +229,13 @@ both convoys, which perform well, now also fit many profiles.)*
 
 1. **It is ordinal.** The weight follows the option's place, not how much worse it fit. When two
    neighboring options fit almost equally well, the boundary between their labels can move one
-   scenario by up to 0.40 of weight, which is 10 VCI points. 26–31% of label boundaries are decided
+   scenario by up to 0.40 of weight, which is 10 VCI points. 28–33% of label boundaries are decided
    by under 3 points of fit.
 2. **Four scenarios count,** so the scale is coarse: 30 possible values.
 3. **A change of heart is learned over about two scenarios.** One strong endorsement makes the
    newly endorsed value the participant's top value in 58% of profiles, so a genuine convert usually
-   loses part of the next scenario as well as the one in which they changed. They average 67, and
-   come out ahead of a performance chaser only 26% of the time (ties counted half).
+   loses part of the next scenario as well as the one in which they changed. They average 66, and
+   come out ahead of a performance chaser only 28% of the time (ties counted half).
 4. **Random answering.** Blind picking averages exactly 50. A responder who also answers the CVR and
    APA at random averages 57, because APA lists only the options built on the value they name,
    which steers some random choices toward a fit.
@@ -258,7 +258,7 @@ both convoys, which perform well, now also fit many profiles.)*
 | V5 | A one-time convert who adopts one clear value scores at least 100 × ((K − 1) + 0.10) / K — the lowest label once and the best every time after (it scores 88) |
 | V6 | A convert who endorses firmly scores at least as much as one who endorses with doubt |
 | V7 | Keeping your best-fit option never lowers the value it is built on |
-| V8 | The APA route does not rescue a flip-flopper |
+| V8 | The APA route does not rescue a flip-flopper: the 2,000 pretend flip-floppers who change value through APA stay below 50 as a group (since 26 September 2026, as for V3) |
 | V9 | Ties in fit are ordered by what the option delivers, never by name |
 | V10 | The weights are the published ones on six and four options |
 | V11 | Blind picking scores exactly 50 on every menu size from 3 to 10 |

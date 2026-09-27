@@ -109,7 +109,7 @@ Rules the checks enforce and the audit found the hard way (checklist §2g):
 - The hurt stories blame the participant plainly, on purpose.
 - The "How to read the four values" section is absent from scenario 6 on purpose.
 - The position simulation (the 3x ratio) failed on purpose from 18 to 26 September 2026, while the
-  options were made to make sense first; it passes since the Fix 6 rater numbers (3.3x). Never propose
+  options were made to make sense first; it passes since the Fix 6 rater numbers (3.3x; 5.4x after Fix 7). Never propose
   moving an option to pass a check. VCI and Stability were
   rebuilt on 19 September 2026 and their gates pass.
 - The option ordering (the planner) is settled. Never propose reordering.

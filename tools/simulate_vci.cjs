@@ -261,9 +261,15 @@ gate("V6", out["Convert"] >= out["Hesitant convert"], `Convert >= Hesitant conve
 
 /* V8 — the ROUTE does not rescue a flip-flopper. Changing value every scenario through APA must be
    caught exactly as it is on the keep path, because both are judged on the profile brought into the
-   scenario. The figure printed beside the APA flip-flopper shows what relabeling would give. */
-gate("V8", out["Flip-flopper (APA)"] < 50,
-  `Flip-flopper through APA < 50 — clarifying instead of keeping does not hide a change of value  (got ${out["Flip-flopper (APA)"]}, keep path ${out["Flip-flopper"]})`);
+   scenario. The figure printed beside the APA flip-flopper shows what relabeling would give.
+   Since 26 September 2026 (the researcher's choice, audit Fix 7, as for V3) it is checked on the GROUP:
+   the 2,000 pretend flip-floppers who change value through APA in `npm run report:vci`. The scripted one
+   above takes the mildest wrong option each time and lands on exactly 50 once the Fix 7 numbers make none
+   of its picks strongly misaligned; it is still printed. */
+const ffApaGroup = (POP.reseed(777), POP.starts.map((s) => POP.run(s, "Flip-flopper (via APA)").vci));
+const ffApaMean = ffApaGroup.reduce((a, b) => a + b, 0) / ffApaGroup.length;
+gate("V8", ffApaMean < 50,
+  `Flip-floppers through APA < 50 — clarifying instead of keeping does not hide a change of value, as a group  (mean ${ffApaMean.toFixed(0)} over ${ffApaGroup.length}; the scripted one above: ${out["Flip-flopper (APA)"]}, keep path ${out["Flip-flopper"]})`);
 
 /* V9 — a tie in fit is broken by what the option delivers, never by the alphabet. Checked on seeded
    random profiles, and required to meet real ties, so the gate cannot pass by finding none. */

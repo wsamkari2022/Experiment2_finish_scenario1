@@ -380,6 +380,38 @@ their average (the researcher's approval, audit Fix 6 Parts A and C):
   on the new words (round 2, `Generated Outputs/rater_study/round2`); #12 and #13 (scenario 4, Reducing harm
   of "Redraw the routes" and "Keep every care visit") wait for them. Plan: docs/FRESH_EYE_AUDIT.md, "Fix 6 plan".
 
+## Rater round 2 numbers (Fix 7), since 26 September 2026
+
+The same three blind raters re-read scenarios 2-4 on the new words and, for the first time, scored the five
+PERFORMANCE numbers of every option in scenarios 1-4 (`Generated Outputs/rater_study/round2/`). Where they
+agreed with each other and sat 20+ points away, the number moved to their average, unless that made an option
+lose on every value or broke a design check (the researcher's approval, audit Fix 7). Every number carries a
+"VALUE AUDIT, fifth pass" or "METRIC AUDIT" comment quoting its card and the raters; scenario 5's copies move
+with scenario 4.
+
+- **Values (8):** Redraw the routes harm 47 -> 76 and helped 84 -> 81; Keep every care visit harm 70 -> 43 and
+  helped 80 -> 88 (the four move together, or Keep every care visit loses on every value); Treat the 20 most
+  likely to survive harm 48 -> 23 and gain 39 -> 79 (together; harm alone broke the position check); Treat the 20
+  with the most years ahead helped 43 -> 64; Keep the town routes that pay helped 45 -> 25.
+- **Performance (14, 15 with scenario 5's copy):** S1 shuttle speed 45 -> 24 and reliability 71 -> 38; S1 sealed
+  respirator resources 45 -> 18, reliability 54 -> 87, durability 76 -> 17 (together, or G5 fails); S1 carry the
+  respirator reversibility 78 -> 62 (half way to the raters' 47; further breaks G6 and G7); S1 service road
+  reversibility 45 -> 20 (its card: "there is no turning around", so it must be the least reversible option; 20,
+  not the raters' 8, keeps G6 and G7); S2 give your car seats resources 80 -> 58; S2 ridge road durability 70 -> 23;
+  S3 survival speed 48 -> 69; S3 years speed 24 -> 61 and reliability 45 -> 73; S3 essential workers durability
+  44 -> 72 (now scenario 3's top performer); S4 cut only where family covers speed 40 -> 74.
+- **Kept as stated disagreements:** Shorten every visit helped 92 (raters 72; at 82 or lower it loses on every
+  value); Hold some doses back harm 64 (raters split).
+- **VCI check V8 now tests the group** of 2,000 pretend flip-floppers through APA (mean 34), like V3.
+- **Measured:** the position check 3.3x -> 5.4x; VCI and Stability move 0-3 points for every kind of pretend
+  participant; the end-of-study performance (`performanceCaptured`) moves 0-6 points and the performance chaser
+  still scores 100. G3 (a metric restating a value) is now 0.78 against its 0.85 limit, G4 (two metrics alike)
+  -0.65 against 0.70, and reversibility's grand mean 50.4 against the 50 floor: all pass, closer to the lines.
+- **Participants see it:** fit numbers, labels and card order in scenarios 3-5, and the performance bars and the
+  cards' performance chips ("Fastest", "Hardest to undo", ...) in all four decisions. The chips are computed from
+  the numbers, so they always match them; six chips still name a different best or worst option than the raters
+  read (listed in docs/FRESH_EYE_AUDIT.md, Fix 7 "What was done"). Do not pool records across this date.
+
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 
 The "Has a cost" tag and the divider "These cost you something on the value you ranked first" no
@@ -494,9 +526,9 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |
 | `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
-| `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3×, after the Fix 6 option numbers); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
+| `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3× after Fix 6, 5.4× after Fix 7); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
-| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 52-62 in 100 steady, 42-50 random, chance about 17 (26 September 2026, after Fix 6) |
+| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 50-62 in 100 steady, 41-52 random, chance about 17 (26 September 2026, after Fix 7) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
 | `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers. Round 2 (only the scenarios whose words changed): `--scenarios 2,3,4 --round 2`, `--study <dir> --raters opus,sonnet,haiku`. Round 2 also rates the five PERFORMANCE numbers of every option in scenarios 1-4 (the researcher's request): `--measures` on the sheet builder and on the comparison (REPORT_MEASURES.md), a second no-tools rater in each folder |
 
@@ -514,7 +546,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 
 - **The position simulation (`simulate_position`, the 3x ratio) failed on purpose from 18 to 26
   September 2026.** The researcher had the options redesigned to make sense first, and the
-  calculations were rebuilt on them one at a time. It passes since the Fix 6 option numbers (3.3x):
+  calculations were rebuilt on them one at a time. It passes since the Fix 6 option numbers (3.3x; 5.4x after Fix 7):
   those numbers moved because blind raters read the cards that way, not to pass the check. Never move
   an option's content or numbers to make a check pass — see
   `docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md`, section 2g.
@@ -557,8 +589,8 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 - The planner's tree is settled (LEAP's trade-off tree, reviewed with the advisor) and its card order
   is not to be "fixed" without the researcher. What it does in practice is MEASURED
   (`npm run report:planner-overlap`): card 1 is the option best on the participant's #1 value for
-  72-100 people in 100, and is ALSO their best-fit card for 52-62 in 100 who answer steadily (42-50
-  at random; chance about 17; re-measured 26 September 2026, after Fix 6). The researcher's decision (24 September 2026): accept it, state it,
+  72-100 people in 100, and is ALSO their best-fit card for 50-62 in 100 who answer steadily (41-52
+  at random; chance about 17; re-measured 26 September 2026, after Fix 7). The researcher's decision (24 September 2026): accept it, state it,
   and analyse position and fit together (HOW_TO_ANALYZE_MY_DATA.md 4.7).
 - **Scenario 6 is a test of the model, not of the participant.** It runs four options rather than
   six, shows no performance numbers, runs no reflection, and must never update the profile. If it

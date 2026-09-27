@@ -6,7 +6,7 @@
 >   rung: the band is one step of each value's own ladder (1/6, or 1/8 for helped) for everyone.
 > - The "planner #1 = alignment #1" figures here (31-49%) came from synthetic profiles. With pretend
 >   participants answering Blocks 1-4 and scored by the real code, the first card is the best-fit
->   card for 52-62 people in 100 who answer steadily (`npm run report:planner-overlap`, 26 September 2026,
+>   card for 50-62 people in 100 who answer steadily (`npm run report:planner-overlap`, 26 September 2026,
 >   after the Fix 6 option numbers).
 > - In practice, card 1 is the option best on the participant's #1 value for 72-100 people in 100.
 >

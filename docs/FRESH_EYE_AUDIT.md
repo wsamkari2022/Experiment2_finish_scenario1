@@ -1429,7 +1429,7 @@ honest", even though it fits nobody), and V3 checks "the 2,000".
   the APA page said it "missed by 52 points", and naming Reducing harm listed the convoy AND Seal your apartment
   (before: Seal only).
 
-## Fix 7 plan: the round-2 rater numbers, values and performance (written 26 September, waiting for approval)
+## Fix 7 plan: the round-2 rater numbers, values and performance (written 26 September; approved and DONE the same night)
 
 Waseem: "yes, write the Fix 7 plan and test it", and "test also the new proposed Performance distribution".
 Source: `Generated Outputs/rater_study/round2/REPORT.md` (values, scenarios 2-4) and `REPORT_MEASURES.md`
@@ -1535,6 +1535,38 @@ the group then).
 | Participants see new performance ranks | Dated in HOW_TO_ANALYZE 4.9; records across the date are not pooled |
 | The performance chaser's scores move most | Stated: it follows the top performer, which changes in scenario 3 |
 | The raters agree less on performance (ICC 0.73) | Only numbers all three agree on move; the rest wait for Part C words |
+
+### What was done (26 September, night)
+
+Waseem: "1-yes, 2-yes, 3-yes, 4-yes ... make sure the performance tags in the option cards match the new
+performance numbers ... always audit your work from several perspectives".
+
+- **Numbers:** Part A's eight value numbers and Part B's fourteen performance numbers, 28 edits with scenario 5's
+  copies, each commented with its card words and the raters. **One change from the plan:** the service road's
+  reversibility is 20, not the half-way 27. Its card says "once you are committed to it there is no turning
+  around", so it must be the least reversible option in scenario 1; at 27 it stayed above Seal your apartment
+  (25) and the "Hardest to undo" chip would have gone to the wrong card. 20 keeps every balance check (G6 top
+  performer ahead by 6.0, G7 reversibility mean 50.4).
+- **Kept:** Shorten every visit helped 92 and Hold some doses back harm 64, each with a "NOT changed" note.
+- **V8** now tests the 2,000 pretend flip-floppers through APA (mean 34), like V3.
+- **Checks:** the full chain green (position 5.4x), plus prediction, resume, MCF and visits. G3 is now 0.78
+  (limit 0.85), G4 -0.65 (limit 0.70), reversibility's grand mean 50.4 (floor 50): all pass, closer to the lines.
+- **Nothing else moved:** no option changed the value it is built on and no value changed its top option in any
+  scenario, so the APA lists, the confirm-keep questions and the "In this scenario" lines are unchanged.
+- **The cards' performance chips** ("Fastest", "Hardest to undo", "Performance 3rd of 6") are computed from the
+  numbers, so they always match them; checked on screen for scenario 1 (the service road "Fastest ... Hardest to
+  undo", the sealed respirator "Most reliable ... Heaviest on resources", the performance places 1st-6th as
+  computed) and in the served numbers for scenarios 2-5. Against the WORDS (the raters' reading), 25 of the 40
+  best/worst chips match, 9 are near-ties (under 10 points), and 6 name a different option than the raters by 10+
+  points - all on numbers that were not flagged, so none was changed: S1 "Least reliable" (the shuttle, 38; raters:
+  Seal your apartment, 23), S1 "Longest-lasting" (Seal, 82; raters: the convoy, 79), S2 "Slowest" (the school, 15;
+  raters: give your car seats, 17), S3 "Heaviest on resources" (the years rule, 24; raters: Hold some doses back,
+  28 - both split), S3 "Least reliable" (Hold some doses back, 30; raters: the sickest, 26), S3 "Shortest-lived"
+  (the draw, 55; raters: the sickest, 27). Candidates for a later pass.
+- **Figures** re-run and updated (VCI and Stability methods, the code notes, the planner overlap 50-62 / 41-52 /
+  38-50 in CLAUDE.md, block5Planner.ts, dbShape.ts, HOW_TO_ANALYZE 4.7 and HOW_TO_READ; SHAPE_VERSION
+  2026-09-26-rater-round-2); CLAUDE.md dated section "Rater round 2 numbers (Fix 7)"; HOW_TO_ANALYZE 4.9; the
+  checklist 2g fifth pass.
 
 ## Fix 8 plan: performance on a 0-100 scale inside each scenario (written 26 September; NOT NEEDED - see the note)
 
@@ -1729,3 +1761,4 @@ thesis says so.
 - **2026-09-26. Fix 7 plan written and tested** (Waseem: "write the Fix 7 plan and test it", "test also the new proposed Performance distribution"). Part A: eight value numbers (#12 / #13 with their helped numbers, scenario 3 survival harm and gain, years helped, the rural routes' helped); Part B: fourteen performance numbers, two of them half way because at the raters' average they break G6 and G7. Measured: position check 3.3x -> 5.4x; VCI and Stability 0-1 point except the performance chaser (79 -> 76, 82 -> 80); performance by kind of participant 0-2 points; best fit changes for 19 (S3) and 26 (S4) steady pretend people in 100; one scripted check V8 lands on 50. Kept: Shorten every visit helped 92 (at 82 it fits 0.2 in 100). Nothing implemented.
 - **2026-09-26. Fix 8 plan written** (Waseem: the performance chaser should be 100 and performance should spread over 0-100, not 50-70). Tested two scenario-relative scales: range (best 100, worst 0, in proportion) and place (100/80/60/40/20/0). Both give the chaser 100, the worst performer 0-3, random 51; recommended: range, after Fix 7. Nothing implemented.
 - **2026-09-26. Fix 8 not needed** (Waseem: "I meant at the end"). The end-of-study score is already the within-scenario range score (`performanceCaptured`, results page and database): chaser 100, worst performer 0-1, random 52. My earlier performance tables were the raw composite of the live dashboard; from now on performance is reported on the captured scale. With Fix 7, captured moves 0-6 points per kind of participant (always the best fit 65 -> 67, true to top value 38 -> 41, always the worst fit 34 -> 28; chaser stays 100).
+- **2026-09-26. Fix 7 done** (Waseem: "1-yes, 2-yes, 3-yes, 4-yes"). 28 number edits (8 value numbers, 14 performance numbers, scenario 5's copies), the service road's reversibility at 20 rather than 27 so its "Hardest to undo" chip matches "there is no turning around"; V8 on the group of 2,000 (mean 34). Full chain green: position 5.4x; VCI and Stability 0-3 points per kind of pretend participant; end-of-study performance 0-6 points, the chaser still 100; prediction calibrated. No built-on value and no champion changed. 6 of 40 chips still name a different best/worst option than the raters read, all on unflagged numbers (listed in Fix 7 "What was done").

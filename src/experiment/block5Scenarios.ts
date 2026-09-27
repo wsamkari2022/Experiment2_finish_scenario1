@@ -418,11 +418,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           gainResponsivenessSensitivity: 94, outcomeAggregationSensitivity: 25,
           directnessSensitivity: 81, contextSensitivity: 31, stakeholderPerspectiveShiftSensitivity: 23,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Resources spared 45 -> 18 (30 / 8 / 15): it takes "The clinic's only respirator". Reliability 54 -> 87
+           (85 / 83 / 92): "breathing clean air the whole distance", "clear of the district within the hour".
+           Durability 76 -> 17 (25 / 12 / 15): here "whether the way out stays open for the people still behind
+           you", and "there is not another one". The three move together: durability alone made this scenario's
+           vulnerable champion stop costing performance (G5, r = 0.32).
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
           speed: 85,
-          resourceUse: 45,
-          reliability: 54,
-          durability: 76,
+          resourceUse: 18,
+          reliability: 87,
+          durability: 17,
           reversibility: 52,
         },
       },
@@ -481,12 +488,17 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           gainResponsivenessSensitivity: 20, outcomeAggregationSensitivity: 45,
           directnessSensitivity: 64, contextSensitivity: 72, stakeholderPerspectiveShiftSensitivity: 68,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Reversibility 78 -> 62, HALF WAY to the raters' 47 (45 / 50 / 45): "the river path takes four hours at
+           their pace". At 47 it breaks two balance checks (G6: it becomes too like Seal your apartment, 8 points
+           apart against a line of 10; G7: reversibility's grand mean drops under 50); 62 keeps both.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
           speed: 22,
           resourceUse: 88,
           reliability: 42,
           durability: 80,
-          reversibility: 78,
+          reversibility: 62,
         },
       },
       {
@@ -527,10 +539,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           gainResponsivenessSensitivity: 36, outcomeAggregationSensitivity: 94,
           directnessSensitivity: 53, contextSensitivity: 40, stakeholderPerspectiveShiftSensitivity: 66,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Speed 45 -> 24 (raters 30 / 25 / 18): "you leave on the third run". Reliability 71 -> 38 (45 / 28 / 40):
+           "Each loop you drive is another trip through the district's air" and "you are still inside the district
+           when the plume arrives".
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
-          speed: 45,
+          speed: 24,
           resourceUse: 40,
-          reliability: 71,
+          reliability: 38,
           durability: 72,
           reversibility: 37,
         },
@@ -630,12 +647,19 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           gainResponsivenessSensitivity: 80, outcomeAggregationSensitivity: 87,
           directnessSensitivity: 62, contextSensitivity: 45, stakeholderPerspectiveShiftSensitivity: 44,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Reversibility 45 -> 20 (raters 10 / 5 / 10): "once you are committed to it there is no turning around", and
+           it gives up "Any chance to change your mind". So it must be the LEAST reversible option here, below Seal
+           your apartment (25), and its card chip must say "Hardest to undo". The plan's half-way 27 would have left
+           it above that option; the raters' 8 breaks G6 (the convoy a runaway top performer) and G7. 20 keeps every
+           balance check.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
           speed: 89,
           resourceUse: 84,
           reliability: 76,
           durability: 45,
-          reversibility: 45,
+          reversibility: 20,
         },
       },
     ],
@@ -819,11 +843,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           gainResponsivenessSensitivity: 92, outcomeAggregationSensitivity: 25,
           directnessSensitivity: 80, contextSensitivity: 30, stakeholderPerspectiveShiftSensitivity: 37,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Durability 70 -> 23 (15 / 18 / 35): here "whether it still works for the households leaving after you",
+           and "a car coming up turns an engine back".
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
           speed: 92,
           resourceUse: 18,
           reliability: 62,
-          durability: 70,
+          durability: 23,
           reversibility: 45,
         },
       },
@@ -878,9 +906,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           gainResponsivenessSensitivity: 19, outcomeAggregationSensitivity: 39,
           directnessSensitivity: 65, contextSensitivity: 78, stakeholderPerspectiveShiftSensitivity: 75,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Resources spared 80 -> 58 (60 / 55 / 60): it hands over "Your car, your slot in the middle of the line" and
+           the household takes places on the one lift bus.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
           speed: 26,
-          resourceUse: 80,
+          resourceUse: 58,
           reliability: 55,
           durability: 86,
           reversibility: 30,
@@ -1199,17 +1231,29 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         /* VALUE AUDIT, 18 September 2026: Protecting the vulnerable 53 -> 30.
            Its cost line: "The patients the system already failed... the bottom is where they stay."
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fifth pass, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Reducing harm 48 -> 23 and How much is gained 39 -> 79. Harm here is "keeping as few patients as possible
+           from becoming too sick to treat before next month's supply comes", and this rule leaves "the people the
+           system found too late" waiting: raters 20 / 28 / 22. Gain is "how many years of life the 20 doses add";
+           the Part B sentence "It counts lives, not years" did not change the raters' reading (80 in round 1, 79 in
+           round 2: 80 / 80 / 78), so the number follows them; it stays below the years rule (92). The two move
+           together: the harm number alone took the position check below 3x.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 30,
-          groupSizeSensitivity: 48,
-          gainResponsivenessSensitivity: 39,
+          groupSizeSensitivity: 23,
+          gainResponsivenessSensitivity: 79,
           outcomeAggregationSensitivity: 94,
           directnessSensitivity: 47,
           contextSensitivity: 42,
           stakeholderPerspectiveShiftSensitivity: 60,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Speed 48 -> 69 (80 / 62 / 65): "Every one of the 120 is given a survival score" - one score per patient,
+           not a model or a search.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
-          speed: 48,
+          speed: 69,
           resourceUse: 46,
           reliability: 90,
           durability: 70,
@@ -1302,19 +1346,28 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "The years bought are the most this month's supply can buy. But the estimate rewards having longer left, so most of the 100 who wait are the oldest patients on the list.",
         givesUp: "Older patients. A shorter life ahead is counted as a smaller gain, so age decides who is treated. A younger patient with a modest chance of responding can also come ahead of an older one who would almost surely recover. So fewer of the 20 come through than under the rule that ranks by odds.",
         moralTension: "Is a year of life the right way to measure a person, when it means the old always lose?",
+        /* VALUE AUDIT, fifth pass, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           How many are helped 43 -> 64: "how many lives are saved". The Part B sentence (a younger patient with a
+           modest chance can come ahead) moved the raters from 72 to 64 (70 / 68 / 55) but not to 43: patients with
+           long lives ahead are also likely to come through. It stays below the survival rule (94).
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 18,
           groupSizeSensitivity: 25,
           gainResponsivenessSensitivity: 92,
-          outcomeAggregationSensitivity: 43,
+          outcomeAggregationSensitivity: 64,
           directnessSensitivity: 66,
           contextSensitivity: 53,
           stakeholderPerspectiveShiftSensitivity: 32,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Speed 24 -> 61 (79 / 55 / 50) and Reliability 45 -> 73 (70 / 74 / 75): the raters read a ranked list of
+           patients with long lives ahead as quick to act on and likely to work.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
-          speed: 24,
+          speed: 61,
           resourceUse: 24,
-          reliability: 45,
+          reliability: 73,
           durability: 92,
           reversibility: 30,
         },
@@ -1432,6 +1485,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            "Fewer than 20 patients may be treated this month, and a dose that goes past its date cannot be
            recovered." It scored above three rules that use all 20 doses.
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fifth pass, 26 September 2026 (audit Fix 7): Reducing harm NOT changed. The round-2 raters split
+           on it (50 / 22 / 12), so the rule that moves only numbers they agree on leaves 64. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 68,
           groupSizeSensitivity: 64,
@@ -1490,11 +1545,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           contextSensitivity: 41,
           stakeholderPerspectiveShiftSensitivity: 46,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Durability 44 -> 72 (75 / 74 / 68): "back at work within weeks, and the places that depend on them keep
+           the staff they need". With it this option is the scenario's top performer (72; the draw 70).
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
           speed: 86,
           resourceUse: 88,
           reliability: 74,
-          durability: 44,
+          durability: 72,
           reversibility: 38,
         },
       },
@@ -1579,11 +1638,19 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met. Redrawing the map takes the office weeks, and every client has to be told again, so it is done once. The stranger who comes to the door on Monday is that client's caregiver for the whole three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
+        /* VALUE AUDIT, fifth pass, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Reducing harm 47 -> 76 and How many are helped 84 -> 81. Harm here is "making the cut land where someone
+           else can step in, so it hurts least", and this card says "About 300 of the 400 cut hours come out of
+           driving rather than out of anyone's visit": both rater rounds read 78 and 76 (75 / 78 / 75). Helped: the
+           Part B words added "The other 100 still come out of visits", and the raters now put it at 81 (83 / 80 / 80),
+           BELOW Keep every care visit (88). The two options' helped numbers move with their harm numbers: without
+           them Keep every care visit would lose to this option on every value.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 41,
-          groupSizeSensitivity: 47,
+          groupSizeSensitivity: 76,
           gainResponsivenessSensitivity: 68,
-          outcomeAggregationSensitivity: 84,
+          outcomeAggregationSensitivity: 81,
           directnessSensitivity: 45,
           contextSensitivity: 44,
           stakeholderPerspectiveShiftSensitivity: 40,
@@ -1641,11 +1708,18 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            50 (loneliness and missed falls build up over three months), reversibility 82 (check-ins can come
            back any week).
            See docs/BLOCK5_SCENARIO_AUDIT_CHECKLIST.md, section 2g. */
+        /* VALUE AUDIT, fifth pass, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Reducing harm 70 -> 43 and How many are helped 80 -> 88. Harm: nobody steps in when the check-ins go -
+           "Trouble a check-in would have caught early is found later, and the clients who live alone lose the most".
+           Raters 40 / 60 / 30 (round 2, at the split line) and 38 in round 1. Helped: "Nobody loses a bath, a meal or a
+           dose of medication"; the raters put it at 88 (84 / 92 / 88), above Redraw the routes (81), which keeps this
+           option one real edge. At 88 it is the best fit for about 2 steady pretend participants in 100 (18 before).
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 35,
-          groupSizeSensitivity: 70,
+          groupSizeSensitivity: 43,
           gainResponsivenessSensitivity: 62,
-          outcomeAggregationSensitivity: 80,
+          outcomeAggregationSensitivity: 88,
           directnessSensitivity: 52,
           contextSensitivity: 58,
           stakeholderPerspectiveShiftSensitivity: 55,
@@ -1706,8 +1780,12 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           contextSensitivity: 62,
           stakeholderPerspectiveShiftSensitivity: 58,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           Speed 40 -> 74 (80 / 78 / 65): "taken from the next-of-kin on file, without asking the relatives" - the
+           list already exists.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         metrics: {
-          speed: 40,
+          speed: 74,
           resourceUse: 64,
           reliability: 46,
           durability: 38,
@@ -1745,6 +1823,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But every trip still has to be driven, so the visits absorb the whole cut and come out about a third shorter. Caregivers report leaving with tasks undone.",
         givesUp: "Depth. Every client is still seen, and caregivers leave tasks undone at door after door.",
         moralTension: "Is reaching every client worth leaving tasks undone at every door?",
+        /* VALUE AUDIT, fifth pass, 26 September 2026 (audit Fix 7, the researcher's approval): NOT changed. The raters
+           read How many are helped at 72 (75 / 75 / 65), but at 82 or lower this option loses to Redraw the routes on
+           every value and is nobody's best fit (0.2 steady pretend participants in 100 at 82), so 92 stays as a
+           stated disagreement. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 38,
           groupSizeSensitivity: 44,
@@ -1803,11 +1885,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            about 45 rural clients "to a county agency with nobody to send, and most of them have nobody else".
            Raters 20 / 10 / 15. Scenario 5 carries the same number.
            Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
+        /* VALUE AUDIT, fifth pass, 26 September 2026 (blind rater study round 2, audit Fix 7; the researcher's approval):
+           How many are helped 45 -> 25: "keeping every client's care going, for as many clients as possible", and
+           this card sends about 45 rural clients "to a county agency with nobody to send". Raters 42 / 18 / 15.
+           Generated Outputs/rater_study/round2/REPORT.md and REPORT_MEASURES.md; the new number is the three raters' average unless it says otherwise. */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 16,
           groupSizeSensitivity: 15,
           gainResponsivenessSensitivity: 93,
-          outcomeAggregationSensitivity: 45,
+          outcomeAggregationSensitivity: 25,
           directnessSensitivity: 68,
           contextSensitivity: 46,
           stakeholderPerspectiveShiftSensitivity: 34,
@@ -1925,11 +2011,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Driving falls by about 300 hours a week, so most visits survive at full length. But the new routes pair caregivers with clients they have never met. Redrawing the map takes the office weeks, and every client has to be told again, so it is done once. The stranger who comes to the door on Monday is that client's caregiver for the whole three months.",
         givesUp: "Continuity. Clients lose the caregiver who knows them, and caregivers lose the clients they know.",
         moralTension: "Is a visit from a stranger the same visit?",
+        /* Scenario 5 carries its own copy of this scenario-4 option: the same numbers, moved on the same day (audit Fix 7).
+ */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 41,
-          groupSizeSensitivity: 47,
+          groupSizeSensitivity: 76,
           gainResponsivenessSensitivity: 68,
-          outcomeAggregationSensitivity: 84,
+          outcomeAggregationSensitivity: 81,
           directnessSensitivity: 45,
           contextSensitivity: 44,
           stakeholderPerspectiveShiftSensitivity: 40,
@@ -1956,11 +2044,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         givesUp: "The eyes on the client. Trouble a check-in would have caught early is found later, and the clients who live alone lose the most.",
         moralTension: "Is care the tasks a caregiver does, or the person who comes to the door?",
         /* REDESIGNED, 18 September 2026 - scenario 4's twin; see care_equal_share. */
+        /* Scenario 5 carries its own copy of this scenario-4 option: the same numbers, moved on the same day (audit Fix 7).
+ */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 35,
-          groupSizeSensitivity: 70,
+          groupSizeSensitivity: 43,
           gainResponsivenessSensitivity: 62,
-          outcomeAggregationSensitivity: 80,
+          outcomeAggregationSensitivity: 88,
           directnessSensitivity: 52,
           contextSensitivity: 58,
           stakeholderPerspectiveShiftSensitivity: 55,
@@ -2003,8 +2093,10 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           contextSensitivity: 62,
           stakeholderPerspectiveShiftSensitivity: 58,
         },
+        /* Scenario 5 carries its own copy of this scenario-4 option: the same numbers, moved on the same day (audit Fix 7).
+ */
         metrics: {
-          speed: 40,
+          speed: 74,
           resourceUse: 64,
           reliability: 46,
           durability: 38,
@@ -2024,6 +2116,8 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
         consequence: "Nobody is removed from the books, so all 240 keep contact and nobody is told they no longer qualify. But every trip still has to be driven, so the visits absorb the whole cut and come out about a third shorter. Caregivers report leaving with tasks undone.",
         givesUp: "Depth. Every client is still seen, and caregivers leave tasks undone at door after door.",
         moralTension: "Is reaching every client worth leaving tasks undone at every door?",
+        /* VALUE AUDIT, fifth pass: NOT changed, as scenario 4's copy (audit Fix 7).
+ */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 38,
           groupSizeSensitivity: 44,
@@ -2064,11 +2158,13 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
            about 45 rural clients "to a county agency with nobody to send, and most of them have nobody else".
            Raters 20 / 10 / 15. Scenario 5 carries the same number.
            Three blind raters read only the card's words (Generated Outputs/rater_study/REPORT.md); the new number is their average. */
+        /* Scenario 5 carries its own copy of this scenario-4 option: the same numbers, moved on the same day (audit Fix 7).
+ */
         fingerprint: {
           vulnerabilityProtectionSensitivity: 16,
           groupSizeSensitivity: 15,
           gainResponsivenessSensitivity: 93,
-          outcomeAggregationSensitivity: 45,
+          outcomeAggregationSensitivity: 25,
           directnessSensitivity: 68,
           contextSensitivity: 46,
           stakeholderPerspectiveShiftSensitivity: 34,

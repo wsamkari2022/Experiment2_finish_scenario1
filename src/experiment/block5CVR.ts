@@ -1099,7 +1099,7 @@ export function performanceScore(option: Block5ScenarioOption): number {
    and neither re-labels the choice made in this one (see handleApaCommit). A value taken on during
    the block therefore counts from the next scenario on.
    Why it matters, measured over 2,000 random starting profiles (`npm run report:vci`, part 6): a
-   participant who takes up a new value in every scenario scores 33 whichever route they take.
+   participant who takes up a new value in every scenario scores 34 whichever route they take.
    Relabeling the APA route on the profile it had just moved would lift the same behavior to 54 -
    about the score of a random responder (57). Gate V8 in tools/simulate_vci.cjs guards it.
 
@@ -1136,20 +1136,20 @@ export function performanceScore(option: Block5ScenarioOption): number {
    themselves are asserted by `npm run validate:vci`.
    1. IT IS ORDINAL. The weight follows the option's place, not how much worse it fit. When two
       neighboring options fit almost equally well, the label boundary between them can move one
-      scenario by up to 0.40 of weight, which is 10 VCI points; 26-31% of label boundaries are
+      scenario by up to 0.40 of weight, which is 10 VCI points; 28-33% of label boundaries are
       decided by under 3 points of fit.
    2. FOUR SCENARIOS COUNT, so the scale is coarse: 30 different VCI values are possible, from 10
       to 100.
    3. A CHANGE OF HEART IS LEARNED OVER ABOUT TWO SCENARIOS. One strong endorsement makes the
       newly endorsed value the participant's top value in 58% of profiles - a little over half - so
       a genuine convert usually loses part of the next scenario as well as the one in which they
-      changed. A one-time convert averages 67.
+      changed. A one-time convert averages 66.
    4. RANDOM ANSWERING. Blind picking averages exactly 50. A simulated responder who also answers
       the CVR and APA at random averages 57, because APA lists only the options built on the value
       they name, which steers some random choices toward a fit.
-   5. SEPARATION. A participant true to their top value outscores a random responder 93% of the
-      time; a random responder outscores a flip-flopper 87% of the time; a one-time convert
-      outscores a random responder 69% of the time. (Re-measured 26 September 2026, Fix 6.)
+   5. SEPARATION. A participant true to their top value outscores a random responder 92% of the
+      time; a random responder outscores a flip-flopper 86% of the time; a one-time convert
+      outscores a random responder 67% of the time. (Re-measured 26 September 2026, Fix 7.)
    ================================================================================================ */
 
 /**
@@ -1458,9 +1458,9 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
    2. THE ROUTE MATTERS A LITTLE. A clarification moves the named value +30 and each other value
       −10; an endorsement moves the served value +30 and the sacrificed one −20. So the same change
       of heart reorders less when it goes through APA: a participant who takes up a new value in
-      every scenario averages 28 through APA and 11 by keeping.
-   3. A CHANGE OF HEART IS A LARGE REORDERING. A one-time convert averages 57, about the same as a
-      random responder (56). Stability measures change, not quality.
+      every scenario averages 29 through APA and 12 by keeping.
+   3. A CHANGE OF HEART IS A LARGE REORDERING. A one-time convert averages 56, about the same as a
+      random responder (57). Stability measures change, not quality.
    4. TIES ARE COMMON. After 11% of conflict steps two of the four values are exactly equal - the
       updates are round numbers and stop at 0 and 100 - which is why a tie opening or closing counts
       half rather than being ignored or counted whole.

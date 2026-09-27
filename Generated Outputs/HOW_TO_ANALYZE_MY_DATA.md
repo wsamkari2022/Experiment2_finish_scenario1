@@ -198,16 +198,16 @@ Rows saved before 24 September 2026 are on the old scale, under
 
 The planner orders the cards so that the first card is **not simply the best fit**. It is, in
 practice, almost always **the option that is best on the participant's #1 value**. Often that is also
-their best fit. Measured on 26 September 2026, after the Fix 6 option numbers (`npm run report:planner-overlap`, 4,000 pretend
+their best fit. Measured on 26 September 2026, after the Fix 7 option numbers (`npm run report:planner-overlap`, 4,000 pretend
 participants of each kind, real scoring from Blocks 1-4 to the card order), out of 100 people:
 
 | Scenario | First card = best fit (steady answerers) | They differ | First card = best fit (random answerers) |
 |---|---|---|---|
 | Six Hours to Clear the District | 56 | 44 | 50 |
 | Eight Hours Ahead of the Fire | 62 | 38 | 47 |
-| Limited Cancer Treatment Allocation | 57 | 43 | 46 |
-| The Care Visits You Have to Cut | 52 | 48 | 42 |
-| The Same Cut, Decided Without You | 52 | 48 | 42 |
+| Limited Cancer Treatment Allocation | 62 | 38 | 52 |
+| The Care Visits You Have to Cut | 50 | 50 | 41 |
+| The Same Cut, Decided Without You | 50 | 50 | 41 |
 
 Chance would be about 17 (one card in six). "Steady" pretend participants answer like a real person:
 one base answer, a small real preference, and sometimes one answer one step off. Their profiles are
@@ -217,9 +217,9 @@ to sit nearer the steady numbers.
 **What this means for analysis** (the researcher's decision, 24 September 2026: accept, state and
 analyse both):
 
-- A choice of card 1 is **ambiguous in 52-62 cases out of 100**: first place and best fit are the same
+- A choice of card 1 is **ambiguous in 50-62 cases out of 100**: first place and best fit are the same
   card, so either could explain it.
-- The **38-48 cases out of 100 where they differ** are the ones that can separate a position effect
+- The **38-50 cases out of 100 where they differ** are the ones that can separate a position effect
   from a values effect. Say so, and report how many such cases the sample actually had
   (`analysis.card_order_by_scenario.by_scenario[].the_first_card_was_also_the_best_fit_card`).
 - Put **both** in the same model: the chosen card's position on screen (`choiceRank`, or
@@ -276,6 +276,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 26 September 2026 (later the same day) | Fix 6, the blind-rater numbers: nine option numbers in scenarios 1, 2 and 4 (and scenario 5's copies), listed in CLAUDE.md. Fit numbers, labels and card order change: the best fit for about 1 person in 5 or 6 in scenarios 1, 2 and 4, the card order for about 7 in 10 in scenario 2 and 6 in 10 in scenario 4. "Leave immediately" went to 14 / 20 / 95 / 8 (its gain 95 is the researcher's reading of its card, above the ridge road), so it is scenario 2's gain champion and the best fit for about 1 person in 100; both convoys now count as built on Reducing harm |
 | 26 September 2026 (evening) | Fix 6 Part B: new words on seven cards (scenarios 3, 4 and 5) and on two value meanings (scenario 2 "How many are helped", scenario 3 "Reducing harm"), listed in CLAUDE.md. No number changed with them |
 | 26 September 2026 (evening) | Scenario 3: "Protecting the vulnerable" now means the patients "most ill right now"; the "sickest" card and the draw card each say how being most ill today differs from running out of time. No number changed |
+| 26 September 2026 (night) | Fix 7, rater round 2: eight value numbers in scenarios 3-5 and fifteen performance numbers in scenarios 1-5 (listed in CLAUDE.md). Fit numbers, labels and card order change in scenario 3 (best fit for about 1 person in 5) and scenario 4 (about 1 in 4), and the performance bars, the performance chips on the cards and scenario 3's top performer change in all four decisions |
 
 ---
 
