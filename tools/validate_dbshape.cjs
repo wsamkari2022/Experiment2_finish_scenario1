@@ -219,6 +219,13 @@ function makeParticipant(startScores, pick) {
     scenarioResults: results,
     vci: vci.value, vciLevel: vci.level,
     stability: stab.value, stabilityLevel: stab.level,
+    /* The same detail the live page stores on completion (Block5PublicEmergencySimulation). Added to
+       the pretend records on 26 September 2026 for gate D62: without it the fixture would be missing a
+       field every real record carries. */
+    stabilityDetail: {
+      swaps: stab.swaps, conflictSteps: stab.conflictSteps, swapsByScenario: stab.swapsByScenario,
+      topValueBefore: stab.topValueBefore, topValueAfter: stab.topValueAfter,
+    },
     sensitivityStability: computeSensitivityStability(results, original),
   };
 }
@@ -864,6 +871,8 @@ for (const [who, block5] of PEOPLE) {
     same(major.company_stance_in_scenario_4, position.company_stance?.stance_label, "company stance");
     same(major.stability.score, head.stability_score, "stability");
     same(major.stability.stakeholder_score, head.stakeholder_stability_score, "stakeholder stability");
+    same(major.stability.was_measured, head.stability_was_measured, "stability was measured");
+    same(major.stability.conflict_steps_counted, head.stability_conflict_steps_counted, "stability conflict steps");
     same(major.performance.score, head.performance_score, "performance");
     same(major.position_effect.overall, position.overall_effect, "position effect");
     same(major.visits.number_of_visits, 2, "visits");
@@ -1420,6 +1429,54 @@ for (const [who, block5] of PEOPLE) {
     why.length === 0
       ? `company_stance matches the results page for all ${PEOPLE.length} pretend participants (${[...seen].join(", ")}); one line in major_info_and_scores`
       : `the company stance is wrong: ${why.join(" | ")}`);
+}
+
+/* D62 - STABILITY SAYS WHETHER IT MEASURED ANYTHING (26 September 2026, audit G5). For every pretend
+   participant: the flag is true exactly when the stored detail counted a conflict step, the count is the
+   stored one, the SCORE is untouched (still the stored value, which computeStability made), and the
+   gathered copy agrees. Both answers must occur. The shared pretend records mark scenario 1's reflection
+   as run for everybody (cvrFired: index === 0 above), so all three read true; the "never measured" case
+   is therefore built here: the best-fit picker with no reflection anywhere, whose Stability is then 100
+   with nothing counted - exactly the reading this flag exists to expose. A record without the detail
+   reads null, never false: "not stored" is not "not measured". */
+{
+  const why = [];
+  const seen = new Set();
+  const [, bestFitPicker] = PEOPLE[0];
+  const calmResults = bestFitPicker.scenarioResults.map((r) => ({ ...r, cvrFired: false }));
+  const calmStab = computeStability(calmResults, bestFitPicker.originalProfile);
+  const neverTested = {
+    ...bestFitPicker, scenarioResults: calmResults,
+    stability: calmStab.value, stabilityLevel: calmStab.level,
+    stabilityDetail: {
+      swaps: calmStab.swaps, conflictSteps: calmStab.conflictSteps, swapsByScenario: calmStab.swapsByScenario,
+      topValueBefore: calmStab.topValueBefore, topValueAfter: calmStab.topValueAfter,
+    },
+  };
+  if (calmStab.value !== 100 || calmStab.conflictSteps !== 0) why.push(`no reflection anywhere should give 100 with 0 steps, got ${calmStab.value} / ${calmStab.conflictSteps}`);
+  for (const [who, block5] of [...PEOPLE, ["never met a reflection (built here)", neverTested]]) {
+    const head = db.buildHeadline(block5, ledger);
+    const steps = block5.stabilityDetail.conflictSteps;
+    seen.add(head.stability_was_measured);
+    if (head.stability_was_measured !== (steps > 0)) why.push(`${who}: flag ${head.stability_was_measured} with ${steps} steps`);
+    if (head.stability_conflict_steps_counted !== steps) why.push(`${who}: count differs`);
+    if (head.stability_score !== block5.stability) why.push(`${who}: the score moved`);
+    const major = db.buildMajorScores(block5, ledger, {
+      totalMs: 600000, byStage: { block5: 600000 }, sittings: 2, longestIdleMs: 0,
+      firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: false, owner: "x@y.z",
+    }, { dropped: 0, sessions: [] }, null);
+    if (major.stability.was_measured !== head.stability_was_measured) why.push(`${who}: major_info_and_scores differs`);
+  }
+  const [, first] = PEOPLE[0];
+  const withoutDetail = { ...first };
+  delete withoutDetail.stabilityDetail;
+  const old = db.buildHeadline(withoutDetail, ledger);
+  if (old.stability_was_measured !== null || old.stability_conflict_steps_counted !== null) why.push("a record without the detail does not read null");
+  if (!seen.has(true) || !seen.has(false)) why.push(`only ${[...seen].join("/")} occurred among the pretend participants`);
+  gate("D62", why.length === 0,
+    why.length === 0
+      ? `stability_was_measured follows the stored conflict steps for all ${PEOPLE.length} pretend participants and one who never met a reflection (Stability 100, measured false); the score untouched; a record without the detail reads null`
+      : `stability_was_measured is wrong: ${why.join(" | ")}`);
 }
 
 console.log("");

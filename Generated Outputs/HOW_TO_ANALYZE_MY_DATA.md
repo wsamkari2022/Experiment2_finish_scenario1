@@ -116,7 +116,7 @@ other is coarse.
 | Measure | How it is censored | What to do |
 |---|---|---|
 | Alignment / fit score | Until 24 September 2026 it stopped at 0, and a demanding participant pushed several options there. It is now a share of each participant's own maximum | Across participants use `points_short_of_what_they_asked_for` (saved since 24 September 2026), which is on one scale for everybody |
-| Stability | Ordinal and coarse: 13 possible values (100 down to 0 in steps of 8.3), and everyone who never met a conflict piles up at 100 | Do not model it as continuous; show its distribution |
+| Stability | Ordinal and coarse: 13 possible values (100 down to 0 in steps of 8.3), and everyone who never met a conflict piles up at 100 | Do not model it as continuous; show its distribution. **Since 26 September 2026 `headline.stability_was_measured` says who never met a conflict** (their 100 measures nothing): filter on it before averaging, or report the two groups apart. In the pretend-participant report, 38 in 100 people true to their top value are never measured |
 | Value movement | Scores stop at 0 and 100, so a move past an edge is cut off. A value at the edge "does not move" whatever the participant does | Check `analysis.value_moves_asked_for_and_made` (since 24 September 2026) and report participants with cut-off moves separately |
 
 **The alignment floor used to matter more than it does.** Until 14 September 2026 the ranking itself

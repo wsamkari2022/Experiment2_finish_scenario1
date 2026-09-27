@@ -170,14 +170,20 @@ const SHORT = { "Held steady": "Held", "Mostly steady": "Mostly", "Shifted a lit
 console.log(`\n=== STABILITY DISTRIBUTION — ${N} random starting profiles, real scoring code, seed ${SEED} ===`);
 
 console.log("\n1. STABILITY (the four policy values) BY KIND OF PARTICIPANT\n");
-console.log("  participant             mean  p10  p50  p90  swaps  conflicts   " + LEVELS.map((l) => SHORT[l].padStart(8)).join(""));
+/* "not measured" and "mean if measured" (since 26 September 2026, audit G5): the share of people who never
+   met a conflict step, whose 100 therefore measures nothing, and the mean over the others only. The
+   database carries the same flag as headline.stability_was_measured. */
+console.log("  participant             mean  p10  p50  p90  swaps  conflicts   " + LEVELS.map((l) => SHORT[l].padStart(8)).join("")
+  + "   not measured   mean if measured");
 for (const beh of Object.keys(BEHAVIORS)) {
   const r = RES[beh];
   const v = r.map((x) => x.stab.value);
   const share = LEVELS.map((l) => r.filter((x) => x.stab.level === l).length / r.length);
   console.log("  " + beh.padEnd(24) + avg(v).toFixed(0).padStart(4) + String(q(v, .1)).padStart(5) + String(q(v, .5)).padStart(5) +
     String(q(v, .9)).padStart(5) + avg(r.map((x) => x.stab.swaps)).toFixed(2).padStart(7) + avg(r.map((x) => x.stab.conflictSteps)).toFixed(1).padStart(11) +
-    "   " + share.map((x) => pct(x).padStart(8)).join(""));
+    "   " + share.map((x) => pct(x).padStart(8)).join("")
+    + pct(r.filter((x) => x.stab.conflictSteps === 0).length / r.length).padStart(15)
+    + (() => { const m = r.filter((x) => x.stab.conflictSteps > 0).map((x) => x.stab.value); return (m.length ? avg(m).toFixed(0) : "-").padStart(19); })());
 }
 
 console.log("\n2. THE THREE SENSITIVITY STABILITIES (mean score)\n");

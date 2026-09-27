@@ -209,6 +209,14 @@ never open the second lens.
 4. **Ties are common.** After 11% of conflict steps two of the four values are exactly equal — the
    updates are round numbers and stop at 0 and 100 — which is why a tie opening or closing counts
    half rather than being ignored or counted whole.
+5. **A 100 can mean "never tested".** With no conflict step there is nothing to count, and the formula
+   gives 100. In `npm run report:stability` (columns "not measured" and "mean if measured", 26 September
+   2026): every best-fit and second-best picker, 38 in 100 people true to their top value (their mean is
+   85 over the other 62), 26 in 100 performance chasers (73 over the rest), about 1 in 100 random
+   responders. Since 26 September 2026 the record says which (`headline.stability_was_measured`, audit G5);
+   report Stability over the measured participants, or the two groups apart. **Still true, and stated:**
+   Stability sets half of scenario 6's prediction confidence, so a never-tested 100 raises that confidence
+   too. Not changed (it would change the prediction and `PREDICTION_VERSION`).
 
 ---
 
@@ -237,6 +245,7 @@ never open the second lens.
 |---|---|---|
 | `stability`, `stabilityLevel` | `headline.stability_score`, `stability_label` | Stability and its level |
 | `stabilityDetail` | `blocks…stabilityDetail` | total swaps, conflict steps, swaps at each conflict step, top value before and after |
+| `stabilityDetail.conflictSteps` | `headline.stability_was_measured`, `stability_conflict_steps_counted` (since 26 September 2026; also in `major_info_and_scores.stability`) | whether any conflict step was counted, and how many; false = the score measures nothing |
 | `sensitivityStability` | `headline.directness_stability_score` / `_label`, `context_…`, `stakeholder_…` | the three sensitivity stabilities; `blocks…sensitivityStability` also holds each one's distance |
 
 Stability sets half of the scenario-6 prediction's confidence (`predictionConfidence` in

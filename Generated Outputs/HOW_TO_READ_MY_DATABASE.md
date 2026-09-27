@@ -192,7 +192,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 | Field | What it holds |
 |---|---|
 | `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them, and (since 25 September 2026) `what_the_wish_changed_by_value` and `what_the_wish_changed_in_words`, copied from `decided_versus_wished` |
-| `stability` | The score and label, plus the directness, context and stakeholder stabilities |
+| `stability` | The score and label, plus the directness, context and stakeholder stabilities, and (since 26 September 2026) `was_measured`, `conflict_steps_counted` and `how_to_read_was_measured`, copied from the headline |
 | `performance` | `score`, `captured`, `captured_label`, and (since 25 September 2026) `what_the_wish_changed_in_performance_by_metric` and `..._in_words`, copied from `decided_versus_wished` |
 | `position_effect` | `overall`, a `by_scenario` list (role, distance, departure share) and a `by_role` list |
 | `predictions_by_scenario` | One row per scenario: the model's favourite and its chance, their choice and its chance, and how many points behind it sat |
@@ -225,6 +225,7 @@ These are copies, lifted to the top so you do not have to dig. The originals sta
 | `consistency_label` | One of six levels: Highly Consistent (90+), Mostly Consistent (80–89), Moderate (65–79), Low (50–64), Very Low (30–49), Highly Inconsistent (below 30) | text |
 | `stability_score` | Whether the ORDER of their four policy values changed when they went against their best fit: at each conflict step (a scenario where the reflection ran) it counts the pairs of values that traded places, a tie opening or closing as half, and scores 100 × (1 − swaps / 6). Method: `docs/BLOCK5_STABILITY_METHOD.md` in the code | 0–100, 100 = no two priorities traded places |
 | `stability_label` | Held steady (100), Mostly steady (83–99), Shifted a little (50–82), Shifted a lot (17–49), Changed substantially (0–16) | text |
+| `stability_was_measured`, `stability_conflict_steps_counted` | **Since 26 September 2026.** Whether Stability counted anything: the number of conflict steps (scenarios where the participant went against their best fit and the reflection ran), and true when it is 1 or more. **false means the Stability score is 100 by default and measures nothing.** A copy of `blocks…stabilityDetail.conflictSteps`, so older finished records can be read the same way from there. null = no stored detail | true / false / null; 0–4 |
 | `directness_stability_score`, `directness_stability_label` | How far their directness sensitivity traveled on its 0–100 scale during Block 5, as 100 × (1 − distance / 100). Same five words as Stability. **Usually 100**: it moves only when the second lens was generated and answered | 0–100 |
 | `context_stability_score`, `context_stability_label` | The same for context sensitivity | 0–100 |
 | `stakeholder_stability_score`, `stakeholder_stability_label` | The same for stakeholder sensitivity, which moves ±25 on every reflection | 0–100 |

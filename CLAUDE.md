@@ -473,6 +473,30 @@ and on reliability (23, 36 below), so it now says "Least reliable" instead of "S
   (`EQUAL_NUMBERS_ACCEPTED` holds the one accepted pair and its reason).
 - The card's comment said the row had "five chips"; it has three, and now says so.
 
+## Stability says whether it measured anything (audit G5), since 26 September 2026
+
+Stability counts swaps only at the conflict steps (a decider scenario where the final choice went against the
+best fit and the reflection ran). Somebody who never meets one scores 100 with nothing counted, so a 100 could
+mean "held when tested" or "never tested". Two fields now say which, beside the score (the researcher's
+approval): `headline.stability_was_measured` (true / false / null) and `headline.stability_conflict_steps_counted`,
+copied into `major_info_and_scores.stability` as `was_measured` and `conflict_steps_counted` with a sentence on
+how to read them.
+
+- **A copy, not a new calculation.** Both come from `stabilityDetail.conflictSteps`, saved on every finished Block 5
+  since 8 September 2026 (`stabilityConflictStepsOf` in dbShape.ts). `computeStability` is untouched. Proved on the
+  full simulated record (`validate:dbshape --dump`, old code against new): only the six new or extended fields
+  differ; every existing number, `stability_score` included, is the same. null = no stored detail (never false).
+- **How common "not measured" is** (`npm run report:stability`, new columns): every best-fit and second-best
+  picker, 38 in 100 people true to their top value, 26 in 100 performance chasers, about 1 in 100 random
+  responders. Filter on `stability_was_measured` before averaging Stability, or report the groups apart.
+- **Gate D62** (`validate:dbshape`): the flag follows the stored steps for every pretend participant and for one
+  built to never meet a reflection (Stability 100, measured false); the score is untouched; a record without the
+  detail reads null. `SHAPE_VERSION` moved to "2026-09-26-stability-was-measured" so records already synced get
+  the new fields on their next sync.
+- **Not changed, stated:** Stability still sets half of scenario 6's prediction confidence, so a never-tested 100
+  raises it too. Changing that would change the prediction (and `PREDICTION_VERSION`); it is an open item in the
+  audit, not part of this fix. Nothing on screen changed.
+
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 
 The "Has a cost" tag and the divider "These cost you something on the value you ranked first" no
@@ -580,7 +604,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 61 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60) and the company stance (D61). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 62 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61) and whether Stability measured anything (D62). `--dump` writes a full simulated document |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

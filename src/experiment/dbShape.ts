@@ -81,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-26-rater-round-2b";
+export const SHAPE_VERSION = "2026-09-26-stability-was-measured";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -882,6 +882,26 @@ function sensitivityStabilityOf(
     : null;
 }
 
+/**
+ * How many conflict steps Stability counted, read from the stored detail, or null.
+ *
+ * WHY THIS EXISTS (since 26 September 2026, audit G5, the researcher's approval). Stability counts swaps
+ * in the order of the four policy values ONLY at the conflict steps: the decider scenarios where the
+ * participant's final choice went against their best fit, so the reflection (CVR) ran. A participant who
+ * never did that has nothing to count, and the formula gives them 100 (no swaps). So a Stability of 100
+ * can mean "the order held when it was tested" or "it was never tested", and the score alone cannot say
+ * which. The pretend-participant report shows how common the second is (`npm run report:stability`,
+ * column "not measured"): every best-fit picker, and most people who stay true to their top value.
+ *
+ * The number is COPIED from `stabilityDetail.conflictSteps`, which the study has saved on every finished
+ * Block 5 since 8 September 2026 (Block5PublicEmergencySimulation, on completion). Nothing is recomputed,
+ * so no score can change. null = a record without that detail (unfinished, or written before it existed).
+ */
+function stabilityConflictStepsOf(b5: Record<string, unknown>): number | null {
+  const detail = b5.stabilityDetail as { conflictSteps?: unknown } | undefined;
+  return detail && typeof detail.conflictSteps === "number" ? detail.conflictSteps : null;
+}
+
 export function buildHeadline(block5: unknown, timings: unknown): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
   const b5 = block5 as Record<string, unknown>;
@@ -889,6 +909,7 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
   const position = positionFor(b5);
 
   const totalMs = totalTimeMs(timings);
+  const stabilitySteps = stabilityConflictStepsOf(b5);
 
   return {
     /* "VCI" is the internal name. It measures how consistent the choices were, so that is what
@@ -898,6 +919,12 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
     /* Stability is the four policy values only: swaps in their order at the conflict steps. */
     stability_score: b5.stability ?? null,
     stability_label: b5.stabilityLevel ?? null,
+    /* WAS STABILITY MEASURED AT ALL? (since 26 September 2026, audit G5). true = at least one conflict
+       step was counted; false = none, so the score above is 100 by default and measures nothing; null =
+       no stored detail. Read beside the score, never instead of it: filter on it before averaging
+       Stability, or report the two groups apart. See stabilityConflictStepsOf for why. */
+    stability_was_measured: stabilitySteps === null ? null : stabilitySteps > 0,
+    stability_conflict_steps_counted: stabilitySteps,
     /* The three sensitivities each have their own: how far each traveled on its 0-100 scale.
        Null for a run recorded before 19 September 2026, or when a snapshot is missing. */
     directness_stability_score: sensitivityStabilityOf(b5, "directness")?.value ?? null,
@@ -2401,6 +2428,14 @@ export function buildMajorScores(
         + "their best fit. Counted as swaps at the conflict steps, never as distance travelled.",
       score: headline?.stability_score ?? null,
       label: headline?.stability_label ?? null,
+      /* Copied from the headline (since 26 September 2026, audit G5): whether the score measured
+         anything. A 100 with was_measured false means no reflection ever ran. */
+      was_measured: headline?.stability_was_measured ?? null,
+      conflict_steps_counted: headline?.stability_conflict_steps_counted ?? null,
+      how_to_read_was_measured:
+        "Stability only counts at the scenarios where the participant went against their best fit and "
+        + "the reflection ran. false = that never happened, so the score is 100 by default and measures "
+        + "nothing. Filter on was_measured before averaging Stability, or report the two groups apart.",
       directness_score: headline?.directness_stability_score ?? null,
       directness_label: headline?.directness_stability_label ?? null,
       context_score: headline?.context_stability_score ?? null,
@@ -2568,7 +2603,9 @@ export function buildMajorScores(
 
     where_each_number_lives: {
       vci: "headline.consistency_score · analysis.position_effect.decided_versus_wished",
-      stability: "headline.stability_score and the three sensitivity scores beside it",
+      stability: "headline.stability_score and the three sensitivity scores beside it; was_measured and "
+        + "conflict_steps_counted from headline.stability_was_measured / stability_conflict_steps_counted "
+        + "(a copy of blocks.block5.stabilityDetail.conflictSteps)",
       performance: "headline.performance_score, headline.performance_captured",
       position_effect: "analysis.position_effect",
       predictions_by_scenario: "analysis.mpf_predictions_every_scenario",
