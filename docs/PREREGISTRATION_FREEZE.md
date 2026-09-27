@@ -89,7 +89,7 @@ Effect sizes with every test.
 | H3 | Reflection costs no performance: within reflected decisions, the final choice's performance captured is within ±5 points of the first choice's | `performanceCaptured` of the two options | paired TOST, margin ±5, α = 0.05 each side (90% CI) |
 | H4 | The MPF names the first choice more often than chance (16.7%) over the four decisions, and beats the uniform predictor on log loss | `analysis.mpf_predictions_every_scenario.by_scenario[].participant.mpf_named_their_first_choice`, `mpf_chance_of_their_first_choice_percent` | one-sided, cluster bootstrap by participant |
 
-**Secondary family** (Benjamini-Hochberg, FDR 5%, across H5-H9):
+**Secondary family** (Benjamini-Hochberg, FDR 5%, across H5-H11):
 
 | | Hypothesis | Test |
 |---|---|---|
@@ -98,6 +98,8 @@ Effect sizes with every test.
 | H7 | The learning predictor beats the frozen one (`using_profile_before_block5`) | paired difference in log loss and hit rate |
 | H8 | Holding the other scores fixed, `wellbeingComposite` and `decisionSatisfaction` rise with `consistency_score` and with `stability_score` (measured participants), and fall with `performance_captured` | linear regression with standardized coefficients, controls age, gender, active minutes |
 | H9 | Self-reported value congruence (`subscales.valueCongruence`) rises with `consistency_score` | Spearman, one-sided |
+| H10 | **Context with money carries over to lives.** People whose Block 1 answers change more between the three places also change more between the chairs of Block 5. Block 1 place spread = the highest minus the lowest rung over the three places (rung = `thresholdAmountIndex` 0-7 when `accepted`, 8 when `thresholdBeyondRange`; range 0-8). Block 5: `analysis.position_effect.overall_effect` (the widest gap in `departure_share` between any two chairs). Added 27 September 2026 | Spearman ρ, one-sided (positive), **and** the partial Spearman controlling for `consistency_score` must also be positive; H10 is supported only if both are. Why the second: answering at random in both blocks makes both spreads large (a random chooser also reaches a high `overall_effect`, audit P2) and gives a low VCI, so controlling for VCI keeps randomness from producing the result. Also reported without `said_yes_at_the_first_step_everywhere` and `answered_very_fast` |
+| H11 | **Reconsidering is a trait.** People who changed their Block 4 decision after hearing the voices (`decisions.finalDecision` ≠ `decisions.initialDecision`) change their choice after the reflection in Block 5 more often (`analysis.alignment_records.by_scenario[].cvr.changed_their_choice` on the decisions where `cvrFired` is true). Added 27 September 2026 | mixed logistic regression on the reflected decisions, `changed_their_choice` ~ Block 4 changed + (1 | participant), one-sided on the coefficient; a simple check beside it: Mann-Whitney on each person's share of reflected decisions changed. Only participants with at least one reflected decision. The measurement model estimates that about 15 in 100 change their Block 4 decision (docs/MEASUREMENT_MODEL.md 5), so the group is likely small: report the odds ratio and its CI whatever the p-value |
 
 **Exploratory** (labelled as such, FDR within each family): everything else in the analysis plan, including the wish
 shift per value, the company stance, the five chairs, MCF reading and choice, the lens and stakeholder checks, the

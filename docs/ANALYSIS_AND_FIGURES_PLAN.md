@@ -514,11 +514,13 @@ across the top (two bands), Spearman coefficients in the cells, FDR-surviving ce
 
 **The questions worth asking** (exploratory unless frozen):
 
-1. **Does context sensitivity with money carry over to lives?** Block 1's place spread against the position effect in
+1. **Does context sensitivity with money carry over to lives?** (Frozen as **H10**, 27 September 2026; the exact test is
+   in section 11.) Block 1's place spread against the position effect in
    Block 5 (`authority_vs_receiving.difference`, the five chairs' `departure_share` spread). This is the study's own
    opening question (docs/VRDS_EXPERIMENT_GUIDE.md 1: the $50 outside a shelter and outside a bank; "does it also
    appear when the stakes are lives?"). **Figure 23:** Block 1 spread (x) against the Block 5 position spread (y).
-2. **Is reconsidering a trait?** Block 4's changed / wobbled decision against Block 5's reconsidering
+2. **Is reconsidering a trait?** (Frozen as **H11**, 27 September 2026, on the changed decision; the wobble stays
+   exploratory.) Block 4's changed / wobbled decision against Block 5's reconsidering
    (`cvr.changed_their_choice`, APA use, `choice_switches`) and against `stakeholderGuided` /
    `apa.the_stakeholder_influenced_them`. A person who moved after hearing the voices in Block 4 and moves again
    after the reflection in Block 5 shows the stakeholder sensitivity working across blocks.
@@ -815,7 +817,7 @@ figures are benchmarks, not findings.
 - **H4 (the MPF predicts).** Pooled over the four decisions, the MPF names the first choice more often than 16.7%,
   and its log loss beats the uniform predictor (skill > 0). One-sided; cluster bootstrap.
 
-**Secondary** (FDR across the family):
+**Secondary** (FDR across H5-H11):
 
 - **H5 (value-followers).** Real VCI is above 50 and above the random chooser's 57.
 - **H6 (the profile predicts choices).** In the conditional logit, the value terms of 4.3 are positive, beyond card
@@ -825,11 +827,19 @@ figures are benchmarks, not findings.
   `decisionSatisfaction` rise with `consistency_score` and with `stability_score` (measured participants), and fall
   with `performance_captured` (section 6.2).
 - **H9 (convergent validity).** `valueCongruence` correlates positively with `consistency_score`.
+- **H10 (context with money carries over to lives).** Block 1's place spread (the highest minus the lowest rung over
+  the three places; "never" = rung 8) correlates positively with `analysis.position_effect.overall_effect`. Spearman,
+  one-sided, and it must also hold as a partial Spearman controlling for `consistency_score`, because answering at
+  random in both blocks would make both spreads large.
+- **H11 (reconsidering is a trait).** People who changed their Block 4 decision (`finalDecision` ≠ `initialDecision`)
+  change their choice after the reflection in Block 5 more often (`cvr.changed_their_choice` on reflected decisions).
+  Mixed logistic regression with a random intercept per participant, one-sided; the changers are likely a small group
+  (about 15 in 100 by the measurement model's estimate), so report the odds ratio and its CI whatever the p-value.
 
 **Exploratory** (reported as such): the wish shift per value; the company stance; the five chairs; MCF reading and
 choice; the lens and stakeholder checks; the feedback links of 6.3; the case studies; the chooser types; every Blocks 1-4 analysis of section 4B (the known
-effects of each block, the Blocks 1-4 × major scores and × feedback maps, the eight questions of 4B.3 and the links of
-4B.4).
+effects of each block, the Blocks 1-4 × major scores and × feedback maps, the other questions of 4B.3 (1 and 2 are H10 and
+H11) and the links of 4B.4).
 
 ---
 
