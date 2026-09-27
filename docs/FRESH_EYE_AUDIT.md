@@ -1568,6 +1568,36 @@ performance numbers ... always audit your work from several perspectives".
   2026-09-26-rater-round-2); CLAUDE.md dated section "Rater round 2 numbers (Fix 7)"; HOW_TO_ANALYZE 4.9; the
   checklist 2g fifth pass.
 
+## Fix 7b plan: the six card chips the raters read differently (written 26 September, waiting for approval)
+
+Waseem: "yes, plan and test the 6 chips fix first". After Fix 7, 6 of the 40 best/worst performance chips
+("Least reliable", "Longest-lasting", ...) name a different option than the raters read by 10+ points. Same rule
+as Fix 6 and 7: move a number only where the three raters agree with each other (spread under 30), to their
+average, and only if every check still passes. **Nothing implemented.** Tested on scratch copies (scratch
+`make_chips.cjs`, `chips_check.cjs`).
+
+| Chip | Card today | Raters | Fix | Result of the test |
+|---|---|---|---|---|
+| S1 "Least reliable" | the shuttle (38) | Seal your apartment (40 / 18 / 12) | Seal reliability 40 -> 23 | every check passes |
+| S3 "Least reliable" | Hold some doses back (30) | Treat the 20 who are sickest (40 / 20 / 18) | sickest reliability 35 -> 26 ("they respond slowly and some will not recover") | one scripted position test fails (below) |
+| S3 "Shortest-lived" | the draw (55) | the sickest (45 / 20 / 15, spread exactly 30 = the split line) | sickest durability 56 -> 27 | same test; the rule says split, so not proposed |
+| S1 "Longest-lasting" | Seal (82) | the convoy (80 / 74 / 82) | the only agreed move, convoy 66 -> 79, makes the convoy a runaway top performer (G6: 8.6 ahead, line 8) | not possible |
+| S2 "Slowest" | the school (15) | give your car seats, but the school is split (30 / 8 / 65) | none agreed | left |
+| S3 "Heaviest on resources" | the years rule (24) | Hold some doses back; both split (86 / 50 / 40 and 50 / 22 / 12) | none agreed | left |
+
+**The scripted position test.** "Giving up values AND performance is reported as giving up both" uses one scripted
+person whose comment says it should "move away from the profile AND take the weakest-performing option", but the
+code only takes the weakest performer. With the sickest at 26 reliability, scenario 3's weakest performer becomes
+the sickest rule, which is also this person's best fit, so it no longer gives up values and the sentence changes.
+Correcting the code to what its comment says (the weakest performer among the options that are NOT the closest to
+the person's values) passes on today's numbers (26 / 0, unchanged) and with the fix (26 / 6).
+
+**Measured with the two proposed moves:** chips 25 -> 27 exact (9 near-ties, 4 clear left); end-of-study
+performance moves 0-1 point for every kind of pretend participant, the chaser still 100; VCI and Stability
+unchanged (no scenario's top performer changes, so the chaser picks the same options); position 5.4x; G3 0.77,
+G4 -0.65, reliability's grand mean 57.6; G5 in scenario 3 gets stronger (the vulnerable champion becomes its
+weakest performer).
+
 ## Fix 8 plan: performance on a 0-100 scale inside each scenario (written 26 September; NOT NEEDED - see the note)
 
 **Note, the same day:** Waseem meant the score AT THE END, and that already exists. The results page and the database use `performanceCaptured` / `overallCaptured` (block5Performance.ts): 100 x (chosen - worst) / (best - worst) inside each scenario, averaged over the decisions - option A below, built earlier for the same reason ("a participant who takes the WORST-performing option every time still scores 55.8"). Measured with it: the performance chaser 100, always the worst performer 0-1, random 52, always the best fit 65 (p10 28, p90 97). My tables of 50-70 were the RAW number, which only the live dashboard shows while a participant chooses. Nothing to build; the live dashboard stays raw on purpose (changing it would change what participants see while choosing). The plan below is kept for the record.
@@ -1762,3 +1792,4 @@ thesis says so.
 - **2026-09-26. Fix 8 plan written** (Waseem: the performance chaser should be 100 and performance should spread over 0-100, not 50-70). Tested two scenario-relative scales: range (best 100, worst 0, in proportion) and place (100/80/60/40/20/0). Both give the chaser 100, the worst performer 0-3, random 51; recommended: range, after Fix 7. Nothing implemented.
 - **2026-09-26. Fix 8 not needed** (Waseem: "I meant at the end"). The end-of-study score is already the within-scenario range score (`performanceCaptured`, results page and database): chaser 100, worst performer 0-1, random 52. My earlier performance tables were the raw composite of the live dashboard; from now on performance is reported on the captured scale. With Fix 7, captured moves 0-6 points per kind of participant (always the best fit 65 -> 67, true to top value 38 -> 41, always the worst fit 34 -> 28; chaser stays 100).
 - **2026-09-26. Fix 7 done** (Waseem: "1-yes, 2-yes, 3-yes, 4-yes"). 28 number edits (8 value numbers, 14 performance numbers, scenario 5's copies), the service road's reversibility at 20 rather than 27 so its "Hardest to undo" chip matches "there is no turning around"; V8 on the group of 2,000 (mean 34). Full chain green: position 5.4x; VCI and Stability 0-3 points per kind of pretend participant; end-of-study performance 0-6 points, the chaser still 100; prediction calibrated. No built-on value and no champion changed. 6 of 40 chips still name a different best/worst option than the raters read, all on unflagged numbers (listed in Fix 7 "What was done").
+- **2026-09-26. Fix 7b plan written and tested** (the six chips): two moves pass the raters-agree rule (Seal reliability 40 -> 23; sickest reliability 35 -> 26); the second exposes a scripted position test whose code does less than its comment says (corrected version passes, today unchanged). Four chips are left: three on split readings, one blocked by G6. Nothing implemented.
