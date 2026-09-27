@@ -554,9 +554,14 @@ console.log("===================================================================
     (b.tradeoffSentence || "").includes("MORE"), b.tradeoffSentence);
 
   // Give up both: move away from the profile AND take the weakest-performing option.
+  // Since 26 September 2026 (audit Fix 7b, the researcher's approval) the code does what this line says: the
+  // weakest performer among the options that are NOT the closest to the profile. It used to take the weakest
+  // performer whatever it was, which turned into this person's own best fit once scenario 3's vulnerable
+  // champion became its weakest performer - so the person no longer gave up values, and the check tested nothing.
   const loser = BLOCK5_SCENARIOS.map((sc) => {
-    if (sc.stakePosition !== "others") return resultOf(sc, nearestFarthest(profile, sc).nearest.id);
-    const worst = sc.options.map((o) => ({ id: o.id, p: PERF.capturedOf(sc, o) }))
+    const nearestId = nearestFarthest(profile, sc).nearest.id;
+    if (sc.stakePosition !== "others") return resultOf(sc, nearestId);
+    const worst = sc.options.filter((o) => o.id !== nearestId).map((o) => ({ id: o.id, p: PERF.capturedOf(sc, o) }))
       .sort((x, y) => x.p - y.p)[0];
     return resultOf(sc, worst.id);
   });

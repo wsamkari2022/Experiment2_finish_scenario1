@@ -1105,7 +1105,8 @@ raters read the cards that way, not for the check. Three more numbers wait for n
 (Redraw 47→76 harm and 84→81 helped; Keep every care visit 70→43 harm and 80→88 helped; survival 48→23 harm and
 39→79 gain; years 43→64 helped; rural routes 45→25 helped) and, for the first time, fourteen performance numbers
 (listed in CLAUDE.md, "Rater round 2 numbers"). Kept: Shorten every visit helped 92, Hold some doses back harm 64.
-The position check is 5.4x.
+The position check is 5.4x. **Fix 7b, the same night:** two reliability numbers, Seal your apartment 40→23 and the
+sickest 35→26 (the raters' least reliable options); no value number changed; position still 5.4x.
 
 **Part B words, 26 September 2026** (the researcher's approval): scenario 2's "How many are helped" became "how
 many more people get out of the valley because of your choice"; scenario 3's "Reducing harm" became "keeping as

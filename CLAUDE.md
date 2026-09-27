@@ -409,8 +409,43 @@ with scenario 4.
   -0.65 against 0.70, and reversibility's grand mean 50.4 against the 50 floor: all pass, closer to the lines.
 - **Participants see it:** fit numbers, labels and card order in scenarios 3-5, and the performance bars and the
   cards' performance chips ("Fastest", "Hardest to undo", ...) in all four decisions. The chips are computed from
-  the numbers, so they always match them; six chips still name a different best or worst option than the raters
-  read (listed in docs/FRESH_EYE_AUDIT.md, Fix 7 "What was done"). Do not pool records across this date.
+  the numbers, so they always match them; six best or worst places still went to a different option than the
+  raters read (listed in docs/FRESH_EYE_AUDIT.md, Fix 7 "What was done"); Fix 7b below moved two of them. Do not
+  pool records across this date.
+
+## Two reliability numbers (Fix 7b), since 26 September 2026
+
+After Fix 7, the three raters agreed (spread under 30) that two options were the LEAST reliable in their scenario,
+but the numbers gave that place to another option. Both moved to the raters' average (the researcher's approval,
+audit Fix 7b); each carries a "METRIC AUDIT ... audit Fix 7b" comment in block5Scenarios.ts.
+
+- **S1 Seal your apartment, reliability 40 -> 23** (raters 40 / 18 / 12). Reliability there is "how likely you
+  are to get clear without the route failing", and this option does not get clear at all. The shuttle (38) had held
+  the last place.
+- **S3 Treat the 20 who are sickest, reliability 35 -> 26** (raters 40 / 20 / 18). Its card says "they respond
+  slowly and some will not recover". Hold some doses back (30) had held the last place. The sickest rule, scenario
+  3's vulnerable champion, is now also its weakest performer.
+- **One scripted test corrected, not loosened.** The "gives up both" person in `simulate_position.cjs` now takes
+  the weakest performer among the options that are NOT the closest to its values, which is what its comment always
+  said. With the sickest at 26, the old code picked this person's own best fit in scenario 3, so the person no
+  longer gave up values and the line tested nothing. Result: 26 / 6, PASS.
+- **Measured:** VCI, Stability, the prediction check and the planner overlap unchanged (0 lines differ); the card
+  order cannot change (the planner reads performance numbers only for the chips); position 5.4x. End-of-study
+  performance (`performanceCaptured`): every kind of pretend participant's average moves 0.5 points or less, one
+  person at most 4 (scenario 3's worst performer changed, and that rescales the scenario); the chaser still 100.
+  G3 0.77 (limit 0.85), reliability's grand mean 57.6.
+- **Participants see it:** "Performance Nth of 6" on four cards (S1: the sealed respirator 5th -> 4th, Seal 4th ->
+  5th; S3: the sickest 5th -> 6th, Hold some doses back 6th -> 5th); the shuttle's third chip "Least reliable" is now
+  "Resources spared 5th of 6"; the reliability bars of the two options. Checked on screen for scenario 1.
+- **Why no card now says "Least reliable" in S1 or S3.** A card shows its two best places and ONE worst, and when
+  two measures tie for last, `buildPerfChips` (block5Planner.ts) shows the one later in the alphabet. Seal is also
+  the slowest, so it shows "Slowest" (the raters agree: last on both). The sickest shows "Hardest to undo", itself a
+  30-30 tie with the years rule broken by id (the raters put it 3rd). Not changed; a possible later fix.
+- **Against the raters now:** of the 40 best and worst places (5 measures x best/worst x scenarios 1-4), 27 go to
+  the option the raters picked (25 before), 9 are near-ties (under 10 points), 4 are clear disagreements left: S1
+  "Longest-lasting", S2 "Slowest", S3 "Heaviest on resources", S3 "Shortest-lived" (split readings, or G6 blocks
+  the move). Of the 72 chips the cards show in scenarios 1-4, 39 sit at the raters' place (38 before), 26 one place
+  off, 7 two or more places off.
 
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 

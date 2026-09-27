@@ -1568,7 +1568,7 @@ performance numbers ... always audit your work from several perspectives".
   2026-09-26-rater-round-2); CLAUDE.md dated section "Rater round 2 numbers (Fix 7)"; HOW_TO_ANALYZE 4.9; the
   checklist 2g fifth pass.
 
-## Fix 7b plan: the six card chips the raters read differently (written 26 September, waiting for approval)
+## Fix 7b plan: the six card chips the raters read differently (written 26 September; approved and DONE the same night)
 
 Waseem: "yes, plan and test the 6 chips fix first". After Fix 7, 6 of the 40 best/worst performance chips
 ("Least reliable", "Longest-lasting", ...) name a different option than the raters read by 10+ points. Same rule
@@ -1597,6 +1597,36 @@ performance moves 0-1 point for every kind of pretend participant, the chaser st
 unchanged (no scenario's top performer changes, so the chaser picks the same options); position 5.4x; G3 0.77,
 G4 -0.65, reliability's grand mean 57.6; G5 in scenario 3 gets stronger (the vulnerable champion becomes its
 weakest performer).
+
+### What was done (26 September, night)
+
+Waseem: "1-yes, 2-yes, 3-yes" (1 = Seal reliability, 2 = the sickest's reliability with the scripted test
+corrected, 3 = leave the other four).
+
+- **Numbers:** Seal your apartment reliability 40 -> 23; Treat the 20 who are sickest reliability 35 -> 26. Each
+  carries a "METRIC AUDIT ... audit Fix 7b" comment. Scenario 3 has no copy in scenario 5, so two edits in all.
+- **The test:** `simulate_position.cjs`'s "gives up both" person now takes the weakest performer among the options
+  that are not the closest to its values, with a comment saying why. Result 26 / 6, PASS.
+- **Checks:** the full chain green (position 5.4x, G3 0.77, reliability's grand mean 57.6), plus prediction, resume,
+  MCF and visits. SHAPE_VERSION 2026-09-26-rater-round-2b.
+- **Measured against Fix 7:** VCI, Stability, prediction and planner overlap 0 lines different; the card order
+  cannot change (the planner reads performance only for the chips); end-of-study performance averages move 0.5
+  points or less for every kind of pretend participant (one person at most 4, because scenario 3's worst performer
+  changed and that rescales the scenario), the chaser still 100.
+- **What participants see (checked on screen for scenario 1):** the sealed respirator "Performance 4th of 6" (was
+  5th), Seal "Performance 5th of 6" (was 4th), the shuttle's chips "Durability 3rd of 6 · Reversibility 4th of 6 ·
+  Resources spared 5th of 6" (the last was "Least reliable"); in scenario 3 the sickest "Performance 6th of 6" (was
+  5th) and Hold some doses back 5th (was 6th); the two reliability bars.
+- **Correction to my Fix 7 notes.** There I called the 40 best and worst places "chips". A card shows only its two
+  best places and one worst, so not every place is on screen. Counted both ways now: of the 40 places, 27 go to the
+  option the raters picked (25 before), 9 near-ties, 4 clear; of the 72 chips shown in scenarios 1-4, 39 sit at the
+  raters' place (38 before), 26 one place off, 7 two or more off (scratch `shown_chips_check.cjs`).
+- **Found while checking, not changed:** when two measures tie for last, the card shows the one later in the
+  alphabet (`buildPerfChips`). So no card in scenario 1 or 3 says "Least reliable": Seal shows "Slowest" (the raters
+  agree: last on both), and the sickest shows "Hardest to undo", which is itself a 30-30 tie with the years rule
+  broken by id (the raters put it 3rd). A tie rule that shows the measure furthest below the scenario's average would
+  show "Least reliable" on both. That changes what participants see, so it waits for Waseem.
+- **Left, as approved:** S1 "Longest-lasting", S2 "Slowest", S3 "Heaviest on resources", S3 "Shortest-lived".
 
 ## Fix 8 plan: performance on a 0-100 scale inside each scenario (written 26 September; NOT NEEDED - see the note)
 
@@ -1793,3 +1823,4 @@ thesis says so.
 - **2026-09-26. Fix 8 not needed** (Waseem: "I meant at the end"). The end-of-study score is already the within-scenario range score (`performanceCaptured`, results page and database): chaser 100, worst performer 0-1, random 52. My earlier performance tables were the raw composite of the live dashboard; from now on performance is reported on the captured scale. With Fix 7, captured moves 0-6 points per kind of participant (always the best fit 65 -> 67, true to top value 38 -> 41, always the worst fit 34 -> 28; chaser stays 100).
 - **2026-09-26. Fix 7 done** (Waseem: "1-yes, 2-yes, 3-yes, 4-yes"). 28 number edits (8 value numbers, 14 performance numbers, scenario 5's copies), the service road's reversibility at 20 rather than 27 so its "Hardest to undo" chip matches "there is no turning around"; V8 on the group of 2,000 (mean 34). Full chain green: position 5.4x; VCI and Stability 0-3 points per kind of pretend participant; end-of-study performance 0-6 points, the chaser still 100; prediction calibrated. No built-on value and no champion changed. 6 of 40 chips still name a different best/worst option than the raters read, all on unflagged numbers (listed in Fix 7 "What was done").
 - **2026-09-26. Fix 7b plan written and tested** (the six chips): two moves pass the raters-agree rule (Seal reliability 40 -> 23; sickest reliability 35 -> 26); the second exposes a scripted position test whose code does less than its comment says (corrected version passes, today unchanged). Four chips are left: three on split readings, one blocked by G6. Nothing implemented.
+- **2026-09-26. Fix 7b done** (Waseem: "1-yes, 2-yes, 3-yes"). Seal your apartment reliability 40 -> 23, the sickest 35 -> 26; the "gives up both" test corrected to what its comment says (26 / 6, PASS). Full chain green, position 5.4x; VCI, Stability, prediction and planner overlap unchanged; end-of-study performance 0.5 points or less on average. On screen: four "Performance Nth of 6" places and the shuttle's "Least reliable" chip. The 40 best/worst places: 27 match the raters, 9 near-ties, 4 clear left. Found: a last-place tie shows the measure later in the alphabet, so no card in S1 or S3 says "Least reliable" (waits for Waseem).

@@ -599,10 +599,15 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           gainResponsivenessSensitivity: 30, outcomeAggregationSensitivity: 30,
           directnessSensitivity: 48, contextSensitivity: 67, stakeholderPerspectiveShiftSensitivity: 54,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7b; the researcher's approval):
+           Reliability 40 -> 23 (raters 40 / 18 / 12): here "how likely you are to get clear without the route failing",
+           and this option does not get clear at all - it waits out the plume in the apartment. The raters read it as
+           the least reliable option in scenario 1, and the "Least reliable" chip had gone to the shuttle (38).
+           Generated Outputs/rater_study/round2/REPORT_MEASURES.md; the new number is the three raters' average. */
         metrics: {
           speed: 18,
           resourceUse: 98,
-          reliability: 40,
+          reliability: 23,
           durability: 82,
           reversibility: 25,
         },
@@ -1306,10 +1311,17 @@ export const BLOCK5_SCENARIOS: Block5Scenario[] = [
           contextSensitivity: 66,
           stakeholderPerspectiveShiftSensitivity: 85,
         },
+        /* METRIC AUDIT, 26 September 2026 (blind rater study round 2, audit Fix 7b; the researcher's approval):
+           Reliability 35 -> 26 (raters 40 / 20 / 18): here "how likely the treatment achieves what is hoped", and this
+           card says "they respond slowly and some will not recover". The raters read it as the least reliable option
+           in scenario 3; the last place on reliability had gone to Hold some doses back (30). With it this option,
+           the scenario's vulnerable champion, is also its weakest performer: the trade-off G5 checks for
+           (protecting the vulnerable costs performance).
+           Generated Outputs/rater_study/round2/REPORT_MEASURES.md; the new number is the three raters' average. */
         metrics: {
           speed: 58,
           resourceUse: 52,
-          reliability: 35,
+          reliability: 26,
           durability: 56,
           reversibility: 30,
         },

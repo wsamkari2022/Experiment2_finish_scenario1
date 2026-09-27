@@ -81,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-26-rater-round-2";
+export const SHAPE_VERSION = "2026-09-26-rater-round-2b";
 
 /* ------------------------------------------------------------------ where each source goes */
 
