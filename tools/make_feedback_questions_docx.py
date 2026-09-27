@@ -6,6 +6,11 @@ feedback page renders - so the document shows exactly the words participants rea
 The section titles and intro sentences are the ones on the page (UserFeedbackPage.tsx). The script stops if the
 number of questions in a list is not what it expects, so a changed list cannot slip through unnoticed.
 
+NO CODE COLUMN (27 September 2026, the researcher's request). The question codes (CVR_Q1, WB_DR1, ...) are for the
+database, not for a reader, so the tables show the question, its answer type and a comments column only. The "(R)"
+that marks a reverse-scored statement moved from the code into the Answer column, so every question still reads
+word for word as participants see it.
+
 Run:  python tools/make_feedback_questions_docx.py docs/VRDS_Experiment2_Feedback_Questions.docx
 """
 import re
@@ -126,7 +131,7 @@ def row_flags(row, header=False):
         tr_pr.append(h)
 
 
-def table(headers, rows, widths, code_column=False):
+def table(headers, rows, widths):
     t = doc.add_table(rows=1, cols=len(headers))
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
     t.autofit = False
@@ -146,10 +151,7 @@ def table(headers, rows, widths, code_column=False):
                 par.paragraph_format.keep_with_next = True
             continue
         for i, v in enumerate(row):
-            if i == 0 and code_column:
-                cell_text(r.cells[i], v.replace("_", "_​"), bold=True, size=8.5)  # wraps at "_" only
-            else:
-                cell_text(r.cells[i], v, bold=(i == 0), size=9.5 if i != 1 else 10)
+            cell_text(r.cells[i], v, size=10 if i == 0 else 9.5)
     for i, w in enumerate(widths):
         t.columns[i].width = Inches(w)
     for r in t.rows:
@@ -171,8 +173,8 @@ def answer(q):
     return "Yes / No" if q["type"] == "yesno" else "Open text"
 
 
-COLS = ["Code", "Question, as participants read it", "Answer", "Your comments or new wording"]
-WIDTHS = [1.1, 3.1, 1.3, 1.4]
+COLS = ["Question, as participants read it", "Answer", "Your comments or new wording"]
+WIDTHS = [3.7, 1.3, 1.9]
 
 # --------------------------------------------------------------------------------------------- front
 today = date.today()
@@ -195,27 +197,27 @@ heading("1. The reflection step (CVR)")
 para("What participants read first: “In some scenarios, after you chose an option that went against your usual values, "
      "you saw a short reflection: the same decision re-framed, plus the perspective of an affected person. These "
      "questions are about that step.”", size=9.5, color=GREY, italic=True, after=4).paragraph_format.keep_with_next = True
-rows = [[q["code"], q["text"], answer(q), ""] for q in CVR]
+rows = [[q["text"], answer(q), ""] for q in CVR]
 rows.append(("GROUP", "Only for participants who opened the second view"))
-rows += [[q["code"], q["text"], answer(q), ""] for q in DUAL]
-table(COLS, rows, WIDTHS, code_column=True)
+rows += [[q["text"], answer(q), ""] for q in DUAL]
+table(COLS, rows, WIDTHS)
 
 # --------------------------------------------------------------------------------------------- 2 APA
 heading("2. The clarification step (APA)")
 para("What participants read first: “In some scenarios you went through a short value-clarification step that asked "
      "which value you wanted the system to weight, then showed you the options that fit it. These questions are about "
      "that step.”", size=9.5, color=GREY, italic=True, after=4).paragraph_format.keep_with_next = True
-table(COLS, [[q["code"], q["text"], answer(q), ""] for q in APA], WIDTHS, code_column=True)
+table(COLS, [[q["text"], answer(q), ""] for q in APA], WIDTHS)
 
 # --------------------------------------------------------------------------------------------- 3 tools
 heading("3. The tools and the experiment design")
 para("What participants read first: “How helpful was each tool you saw while making your decisions? (1 = not helpful, "
      "7 = very helpful)”", size=9.5, color=GREY, italic=True, after=4).paragraph_format.keep_with_next = True
 rows = [("GROUP", "How helpful was each tool?")]
-rows += [[q["code"], q["text"], answer(q), ""] for q in TOOLS]
+rows += [[q["text"], answer(q), ""] for q in TOOLS]
 rows.append(("GROUP", "Closing questions"))
-rows += [[q["code"], q["text"], answer(q), ""] for q in CLOSERS]
-table(COLS, rows, WIDTHS, code_column=True)
+rows += [[q["text"], answer(q), ""] for q in CLOSERS]
+table(COLS, rows, WIDTHS)
 
 # --------------------------------------------------------------------------------------------- 4 well-being
 heading("4. How this experience was for you")
@@ -239,10 +241,10 @@ for item in WELL:
     if label != current:
         rows.append(("GROUP", label))
         current = label
-    rows.append([item["code"] + (" (R)" if item["reverse"] else ""), item["text"], "1–7 agreement", ""])
+    rows.append([item["text"], "1–7 agreement" + (" (R)" if item["reverse"] else ""), ""])
 rows.append(("GROUP", "Open questions (optional)"))
-rows += [[o["code"], o["text"], "Open text", ""] for o in OPEN]
-table(COLS, rows, WIDTHS, code_column=True)
+rows += [[o["text"], "Open text", ""] for o in OPEN]
+table(COLS, rows, WIDTHS)
 
 # --------------------------------------------------------------------------------------------- new questions
 doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
