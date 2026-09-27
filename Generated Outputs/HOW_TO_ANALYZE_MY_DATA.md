@@ -6,6 +6,8 @@ collection in front of them and has to turn it into findings and figures for a p
 **Read `HOW_TO_READ_MY_DATABASE.md` first.** That file is the field dictionary: where every number
 lives and what it literally means. This file is the next step: which questions the study can answer,
 which analyses answer them, what you are allowed to claim, and what will get the paper rejected.
+**Then `docs/ANALYSIS_AND_FIGURES_PLAN.md`** (27 September 2026): the full plan of analyses and figures for the
+paper, with the field for each, the test, and the hypotheses to freeze first.
 
 **The single most useful habit:** before reporting any number, ask what it would look like if the
 effect were absent. Most of the traps below are cases where the absent-effect version and the
@@ -122,7 +124,8 @@ other is coarse.
 **The alignment floor used to matter more than it does.** Until 14 September 2026 the ranking itself
 was computed from the floored score, which meant options tied at 0 were ordered alphabetically by
 their internal id. That is fixed — ranking now uses the uncensored shortfall — but if you ever load
-data written before that date, check `shapeVersion` and do not pool it with later records.
+data written before that date, check its date (`completed_at`; the document carries no stamp of the study code's
+version) and do not pool it with later records.
 
 ### 4.3 Reading `departure` as distance from values
 
@@ -509,10 +512,10 @@ differ without checking what changed.**
 
 | Stamp | Governs |
 |---|---|
-| `shapeVersion` | The database layout and field names |
+| (none) | **The document carries no stamp of the study code's version**: `SHAPE_VERSION` lives only in the browser's sync state (found 27 September 2026; an earlier version of this table listed a `shapeVersion` field that does not exist). Date records by `completed_at` against the dated tables (4.9, CLAUDE.md) |
 | `calibrationVersion` | The common ruler that makes the seven sensitivities comparable |
 | `analysis.scenario6_mpf_test.rule_version` | The MPF prediction rule |
-| `feedback_answers.schemaVersion` | Which feedback questions existed |
+| `blocks.feedback_answers.schemaVersion` | Which feedback questions existed |
 | `consent.version` | Which consent text they agreed to |
 
 These commands regenerate the study's own figures from the real scoring code:

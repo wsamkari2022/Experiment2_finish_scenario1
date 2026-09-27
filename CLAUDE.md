@@ -5,7 +5,7 @@ results, then give feedback. React 19 + Chakra UI v3 + Vite + TypeScript.
 
 ## Before analyzing any collected data
 
-**Read these two, in this order.**
+**Read these three, in this order.**
 
 1. `Generated Outputs/HOW_TO_READ_MY_DATABASE.md` — the data dictionary for the MongoDB
    `participants` collection: every field, what it means, which numbers are raw and which are
@@ -13,6 +13,12 @@ results, then give feedback. React 19 + Chakra UI v3 + Vite + TypeScript.
 2. `Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md` — which questions the data can answer, which
    analyses answer them, what may and may not be claimed, and which figures to build. Written for a
    person or an AI agent arriving with no other context.
+3. `docs/ANALYSIS_AND_FIGURES_PLAN.md` (since 27 September 2026) — the full plan for the paper: the analysis
+   tables to build, every analysis and figure with its database field and test, how the measures relate, the
+   feedback links, and the hypotheses to freeze in `docs/PREREGISTRATION_FREEZE.md` before the data is opened.
+
+**The document carries no stamp of the study code's version** (`SHAPE_VERSION` lives only in the browser's sync
+state; found 27 September 2026). Date records by `completed_at`.
 
 Two of those traps matter enough to repeat here:
 
@@ -532,7 +538,7 @@ and no score: these are reports.
   size** (VCI and Stability separate followers of their top value from random choosers, the order of the kinds, keep
   steps never cost Stability, following your values costs performance). With every step halved, Stability's
   separation of top-value followers from random choosers sits exactly on the 0.75 line. **What does depend on the
-  steps:** Stability's absolute level (random choosers 57 as shipped, 77 at half, 40 at double), so report Stability
+  steps:** Stability's absolute level (random choosers 57 as shipped, 77 at half, 36 at double), so report Stability
   as group comparisons and never one person's level word; and the one-time convert (audit G6), whose VCI moves up to 12 points and Stability up to 9 with
   the kept-misaligned step. For the other kinds VCI moves 1-3 points; performance 2 at most; the position effect and the card order not at all (they read the profile brought
   into Block 5; `simulate_position` gives identical output at x0.5 and x2). Write-up with every table:
@@ -658,7 +664,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3× after Fix 6, 5.4× after Fix 7); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
 | `report:major-scores` | Writes docs/MAJOR_SCORES_DISTRIBUTION.md: VCI, Stability (with "not measured"), end-of-study performance and the separations for all twelve kinds of pretend participant, plus the card-order overlap, the position ratios and the prediction calibration, stamped with the code version. **Run it after every change** (since 26 September 2026) |
-| `report:step-sensitivity` | Audit B3: every value step at half and double size, all together and one family at a time, through the real code (`tools/step_scale_hook.cjs` scales `bump()`; the source is not touched). Every conclusion holds; Stability's absolute level does not (random choosers 40-77). Write-up: docs/BLOCK5_STEP_SIZE_SENSITIVITY.md |
+| `report:step-sensitivity` | Audit B3: every value step at half and double size, all together and one family at a time, through the real code (`tools/step_scale_hook.cjs` scales `bump()`; the source is not touched). Every conclusion holds; Stability's absolute level does not (random choosers 36-77; the APA cap scales with the APA steps since 27 September 2026). Write-up: docs/BLOCK5_STEP_SIZE_SENSITIVITY.md |
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
 | `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 50-62 in 100 steady, 41-52 random, chance about 17 (26 September 2026, after Fix 7). Since 26 September 2026 also how close each person's #1 and #2 values are (16 in 100 steady within 5 points; audit C7) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |

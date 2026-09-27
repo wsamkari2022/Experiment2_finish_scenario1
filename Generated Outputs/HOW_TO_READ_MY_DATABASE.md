@@ -784,7 +784,10 @@ other of the change:
 **Do not pool the two.** `value_they_prioritized` looks identical across the change and means the
 same thing, but it moves the profile by a different rule, so `policy_snapshot_after` and everything
 derived from it — stability, the position effect, later alignment scores — are not comparable.
-`shape_version` on the document is what tells them apart.
+**The document carries no stamp of the study code's version** (found 27 September 2026: `SHAPE_VERSION` is kept
+only in the browser's sync state, never written to MongoDB), so an earlier version of this line was wrong. Tell
+the two apart by date (`completed_at` before or after 17 September 2026) and by whether `apa.what_they_said` is
+present.
 
 ### `totals`
 
@@ -1124,6 +1127,11 @@ The raw list is `valueMoves` on each `blocks.block5_emergency_scenarios.scenario
 
 ## 7. `feedback_answers` — and why it is readable
 
+**Where:** `blocks.feedback_answers.feedback.<section>.<code>` (the whole feedback record is stored, so the answers
+sit one level down, under `feedback`; the record also carries `schemaVersion`, `completedAt` and a per-scenario
+telemetry summary in `block5.scenarios[]`). The same answers are copied into `major_info_and_scores.feedback`;
+never count both.
+
 Every closed question is stored with **the question text next to the answer**:
 
 ```json
@@ -1148,12 +1156,29 @@ The sections are:
 
 **`wellbeing` is the exception.** It is not a flat list of coded questions; it holds `items`
 (the raw answers), `subscales`, a `wellbeingComposite`, and `openEnded` text. It is passed through
-unchanged because it already has its own meaningful structure.
+unchanged because it already has its own meaningful structure. What it holds (from `feedbackTypes.ts`, checked
+27 September 2026; the file's own header comment still says "20 items, 7 subscales", which is out of date):
+
+| Part | Content |
+|---|---|
+| `items` | 24 raw answers, 1-7: learning insight LI1-4; decision satisfaction DS1, DS2, DS4 (there is no DS3); decision regret DR1-4; value congruence VC1-2; decision confidence DC1-2; cognitive burden CB1-3; perceived support / autonomy SA1-3; overall well-being OW1-3 |
+| `subscales` | the mean of each subscale's items, reverse items turned (8 − x) so higher = better: `learningInsight`, `decisionSatisfaction`, `lowDecisionRegret`, `valueCongruence`, `decisionConfidence`, `lowCognitiveBurden`, `perceivedSupport`, `overallWellbeing`; plus the two raw ones, `decisionRegret` and `cognitiveBurden` (higher = MORE regret / burden) |
+| `wellbeingComposite` | the mean of seven subscales: satisfaction, low regret, value congruence, confidence, low burden, support, overall. Learning insight is left out |
+| `wellbeingPlusInsight` | the same seven plus learning insight |
+| `scoring` | the scale, the reverse-scored codes (`reverseScored`), the formulas |
+| `openEnded` | `OE_values`, `OE_change`, `OE_affect`, `OE_regret`, `OE_additional` |
+
+Satisfaction and regret are measured apart on purpose, so a person can be satisfied AND regretful at once; never
+treat `lowDecisionRegret` as the same thing as satisfaction.
 
 Answer types:
 - `likert` → a number 1–7
-- `yesno` → `true` / `false`
+- `yesno` → the word `"yes"` or `"no"`. (An earlier version of this line said `true` / `false`, and the `scale`
+  text stored beside each answer still says "true = yes, false = no"; the answer itself is the word.)
 - `open` → free text the participant typed
+
+> ⚠️ **The `cvr` and `apa` sections exist only for people who met that step** (a reflection; the APA page).
+> Their means describe those people, not the sample.
 
 ---
 

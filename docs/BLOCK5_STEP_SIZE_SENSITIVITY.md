@@ -1,7 +1,14 @@
 # Step sizes: do the study's conclusions depend on them? (audit B3)
 
 Written 26 September 2026, at the researcher's request ("you can do also (B7, P2, C7 B3)"). Nothing in the study
-changed: this is a test of the code as it stands. Re-run it with `npm run report:step-sensitivity` (about 30
+changed: this is a test of the code as it stands.
+
+> **Corrected 27 September 2026.** The APA rule ends with a cap applied outside `bump()` (no value moves more than
+> 30 x weight in one clarification). The first run did not scale it, so in the double-size APA runs the named
+> value's +60 was cut back to +30. The loader now scales the cap with the APA steps. Only the double-size APA runs
+> changed (random choosers' Stability 40 -> 36 at every step x2 and 55 -> 51 at APA x2; the APA flip-flopper's
+> Stability 17 -> 3 and 17 -> 4, its VCI 34 -> 30); **every conclusion still holds.** The tables below are the
+> corrected run. Re-run it with `npm run report:step-sensitivity` (about 30
 seconds); the numbers below are its output.
 
 ## 1. The question
@@ -50,7 +57,7 @@ cut off there and recorded, `analysis.value_moves_asked_for_and_made`). Picking 
 | C2 VCI: random choosers clearly above flip-floppers | 0.86 | 0.84 | 0.88 | 0.84 (kept misaligned x0.5) |
 | C3 VCI order: best fit > true to top > random > flip-flopper > worst fit | holds | holds | holds | holds in all |
 | C4 Stability: best-fit and second-best pickers always 100 | holds | holds | holds | holds in all |
-| C5 Stability: true to top value clearly above random choosers | 0.84 | **0.75** | 0.88 | 0.80 (APA x0.5) |
+| C5 Stability: true to top value clearly above random choosers | 0.84 | **0.75** | 0.90 | 0.80 (APA x0.5) |
 | C6 Stability: flip-floppers below random choosers | holds | holds | holds | holds in all |
 | C7 Performance: the chaser scores 100; following your top value costs performance | holds | holds | holds | holds in all |
 
@@ -69,13 +76,13 @@ these must not be reported as if they were fixed facts.
 |---|---|---|---|---|---|---|---|---|---|
 | As shipped | 100 | 91 | 94 | 56 | 80 | 57 | 12 | 29 | 10 |
 | Every step x0.5 | 100 | 94 | 98 | 63 | 90 | 77 | 41 | 57 | 36 |
-| Every step x2 | 100 | 85 | 80 | 48 | 66 | 40 | 1 | 17 | 2 |
+| Every step x2 | 100 | 85 | 80 | 48 | 66 | 36 | 1 | 3 | 2 |
 | Kept misaligned x0.5 | 100 | 95 | 94 | 64 | 91 | 71 | 43 | 29 | 36 |
 | Kept misaligned x2 | 100 | 85 | 94 | 47 | 63 | 42 | 0 | 29 | 2 |
 | APA named value x0.5 | 100 | 91 | 98 | 56 | 80 | 63 | 12 | 58 | 10 |
-| APA named value x2 | 100 | 91 | 80 | 56 | 80 | 55 | 12 | 17 | 10 |
+| APA named value x2 | 100 | 91 | 80 | 56 | 80 | 51 | 12 | 4 | 10 |
 
-A random chooser averages 57 as shipped, 77 with half steps and 40 with double steps. So a single participant's
+A random chooser averages 57 as shipped, 77 with half steps and 36 with double steps. So a single participant's
 "Shifted a little" or "Held steady" depends partly on a number we chose.
 
 **What this means:**
@@ -86,7 +93,7 @@ The step that matters most is the kept-misaligned step: it alone moves the rando
 
 **One honest change of mind (audit G6).** The convert, who changes value once and then holds it, scores between
 47 and 64 on Stability and between 54 and 74 on VCI, depending on the kept-misaligned step. Against random choosers
-on Stability it separates at only 0.33 to 0.57 across the runs. This is the known limit G6: at no step size does
+on Stability it separates at only 0.33 to 0.61 across the runs. This is the known limit G6: at no step size does
 one change of mind read clearly better than random. It is a question about what Stability should mean, not about
 the step size.
 

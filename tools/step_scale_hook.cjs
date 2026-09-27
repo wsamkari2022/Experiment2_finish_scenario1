@@ -12,7 +12,8 @@
  *
  * HOW. Every step in block5CVR.ts goes through one function, `bump(p, key, delta, moves, why)`. When
  * Node loads the compiled `.sim-build/block5CVR.js`, this hook adds ONE line at the top of that function:
- * `delta = delta * factor(why)`. The study's source is never touched, nothing is written to disk, and
+ * `delta = delta * factor(why)`, and scales the APA cap (30 x weight, applied outside bump; see CAP below) with
+ * the apa family. The study's source is never touched, nothing is written to disk, and
  * with every factor at 1 the code behaves exactly as shipped (the report checks that, person by person).
  * `why` is the sentence every step already carries, so each step is sorted into its family by it:
  *
@@ -35,6 +36,12 @@ const path = require("node:path");
 
 const TARGET = path.resolve(__dirname, "..", ".sim-build", "block5CVR.js");
 const HEAD = 'function bump(p, key, delta, moves, why = "") {';
+/* THE APA CAP (added 27 September 2026, after the first B3 run). applyApaUpdates ends with a limit applied
+   OUTSIDE bump(): no policy value moves more than 30 x weight in one clarification. Unscaled, it clipped the
+   doubled named-value step (+60) back to +30, so the first "APA x2" runs did not double that step. The cap is
+   part of the APA step size, so it now scales with the apa family. With the shipped rule (+30 / -10) the cap
+   never binds, so at factor 1 nothing changes. */
+const CAP = "const capped = 30 * w;";
 const FAMILIES = ["endorse", "apa", "keep", "stakeholder", "lens"];
 
 let scale = Object.fromEntries(FAMILIES.map((f) => [f, 1]));
@@ -54,6 +61,7 @@ function setScale(next) {
   scale = Object.fromEntries(FAMILIES.map((f) => [f, next[f] ?? all]));
 }
 
+globalThis.__stepScaleCapFactor = () => scale.apa;
 globalThis.__stepScaleFactor = (why) => {
   const family = familyOf(why);
   calls[family]++;
@@ -75,8 +83,13 @@ Module._extensions[".js"] = function load(module, filename) {
   if (src.split(HEAD).length !== 2) {
     throw new Error("step_scale_hook: bump() in .sim-build/block5CVR.js no longer looks as expected - update HEAD");
   }
+  if (src.split(CAP).length !== 2) {
+    throw new Error("step_scale_hook: the APA cap in .sim-build/block5CVR.js no longer looks as expected - update CAP");
+  }
   patched = true;
-  module._compile(src.replace(HEAD, `${HEAD}\n    delta = delta * globalThis.__stepScaleFactor(why);`), filename);
+  module._compile(src
+    .replace(HEAD, `${HEAD}\n    delta = delta * globalThis.__stepScaleFactor(why);`)
+    .replace(CAP, "const capped = 30 * w * globalThis.__stepScaleCapFactor();"), filename);
 };
 
 module.exports = {
