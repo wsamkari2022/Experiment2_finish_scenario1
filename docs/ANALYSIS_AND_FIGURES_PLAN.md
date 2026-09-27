@@ -23,9 +23,10 @@ collection (`participants`), same shape.
 
 ---
 
-## 0. Twelve rules that make every analysis below sound
+## 0. Eleven rules that make every analysis below sound
 
-1. **Sample:** `status: "Study Completed"` only. Report the drop-off separately (section 2.1).
+1. **Sample:** everyone with `status: "Study Completed"` when data collection closes (the researcher's decision,
+   27 September 2026); everyone who did not complete is excluded. Report the drop-off separately (section 2.1).
 2. **Pre-register first.** Fix the hypotheses (section 11), the exclusion rules, the cut-offs and the tests in
    `docs/PREREGISTRATION_FREEZE.md` before opening the real data. Everything not listed there is exploratory, and
    the paper says so.
@@ -35,8 +36,8 @@ collection (`participants`), same shape.
    `fitScoreScale` on each scenario row, `consent.version`), nor across the screen changes of HOW_TO_ANALYZE 4.9.
    **The document carries no version of the study code itself** (the `SHAPE_VERSION` stamp lives only in the
    browser's sync state, found 27 September 2026), so date every record by `completed_at` against the dated tables.
-   Real participants should all come after the final launch commit; check it anyway and show the check in a
-   supplementary table.
+   The code does not change during data collection (the researcher's decision: the deployed version is the final
+   one), so every real record comes from the launch commit.
 4. **Raw beats derived.** `blocks` is what people did; `headline`, `analysis` and `major_info_and_scores` are
    computed from it. Never correlate a derived field with the field it was computed from (section 5.2 lists every
    such "mechanical" link).
@@ -55,11 +56,7 @@ collection (`participants`), same shape.
    families. Say how many tests each family had.
 10. **Flags are robustness checks, not silent exclusions:** run the main result with and without each flag
     (section 2.4) and report both.
-11. **Participants saw their scores before the feedback.** The results page (`Block5SimulationSummaryPage`) shows
-    VCI, Stability and Performance with their labels, then the charts of their journey, and only then the
-    feedback questions. Every feedback-score link is therefore "how people rated the experience after seeing
-    their results" (section 6.1).
-12. **No control group without reflection.** The reflection (CVR) fires only after a misaligned choice, for
+11. **No control group without reflection.** The reflection (CVR) fires only after a misaligned choice, for
     everyone. Reflection results are within-person before/after descriptions, not causal effects against a
     no-reflection condition (section 3.2). Say so in the limitations.
 
@@ -129,12 +126,14 @@ completed (`status`) → met each quality rule → analysed. One box per step wi
 unfinished runs as a bar chart. **Figure S1.** It shows the design did not lose a selected group (compare the
 Blocks 1-4 profile of finishers and non-finishers: if the dropouts differ, say how).
 
-### 2.2 An exclusion table, fixed in advance
+### 2.2 Who is in the analysis (decided 27 September 2026)
 
-One row per rule, with the number each removes, applied in a stated order. Candidate rules (the freeze note picks
-the final list): `quality.met_time_requirement`, `quality.rushed_blocks`, `quality.scenarios_under_15_seconds`,
-`quality.straightlined_feedback`. `quality.compensation_eligible` is a payment rule, not an analysis rule
-(HOW_TO_ANALYZE 2): never use it silently.
+**Everyone who completed the study by the end of data collection** (`status: "Study Completed"`); everyone who did
+not complete is excluded. No one who completed is removed for any other reason. The quality flags
+(`quality.met_time_requirement`, `quality.rushed_blocks`, `quality.scenarios_under_15_seconds`,
+`quality.straightlined_feedback`) are reported descriptively, and the checks of section 2.4 show each main result
+again without the flagged people, beside the result for everyone. `quality.compensation_eligible` is the payment
+rule and is not used to select anyone.
 
 ### 2.3 Evidence of real engagement
 
@@ -244,7 +243,7 @@ improves on the moving ruler only, the model learned the person; if it improves 
 `apa.the_stakeholder_influenced_them`, `stakeholderGuided`. These test the sensitivities (section 4.3).
 
 **What may not be claimed:** that reflection *caused* better choices compared with no reflection. There is no group
-without it (rule 12), the reflection only reaches misaligned choices (a selected group; HOW_TO_READ trap 4), and a
+without it (rule 11), the reflection only reaches misaligned choices (a selected group; HOW_TO_READ trap 4), and a
 change after reflection can also be ordinary second thoughts. Claim the within-person before/after pattern, and name
 a randomized no-reflection arm as the design for a future study.
 
@@ -288,7 +287,7 @@ raises that sharpness too.
 | **Which way did Block 5 move people?** | `analysis.value_profile_change.*` per value | the mean shift per value with CI (a group moved toward protecting the vulnerable, say); **Figure S11**: four bars |
 | **Data-driven chooser types** | the value each decision was built on, across the four decisions (and the wish) | latent class analysis on those choice patterns, then compare the classes with the pretend kinds (section 7) |
 | **Fast choices against considered ones** | `telemetry.timeToFirstSelectionMs` against `alignmentLevel` and `cvrFired` (mixed logistic) | are quick first picks more or less value-consistent? A dual-process question the data can answer |
-| **Who the results page helped** | `TOOL_resultsPage` against `consistency_score` | if people with low scores rate the results page lower, the page's labels are doing work (section 6.1) |
+| **Who found the results page most helpful** | `TOOL_resultsPage` against the major scores and the Blocks 1-4 profile | which kinds of participant the page serves best |
 | **Age and gender** | `age`, `gender` as moderators of the primary results | exploratory unless pre-registered; report as such |
 
 ---
@@ -420,6 +419,147 @@ menu allowed. Check `analysis.position_effect.drift_check` before any five-scena
 
 ---
 
+## 4B. Blocks 1-4, block by block: what each shows, and how it links to Block 5 and the feedback
+
+Added 27 September 2026, at the researcher's request: *"analyze and visualize the information and data I will collect
+from each block 1-4 collectively and find the correlation between block 1-4 data and the major scores or the feedback
+answers."* Blocks 1-4 are more than the source of the profile: each is a small experiment of its own, and the paper is
+stronger when each is shown to behave as the literature expects before its numbers are used in Block 5.
+
+### 4B.1 What each block saves
+
+| Block | Raw answers | What the fields hold |
+|---|---|---|
+| **1 · Found money** (three places × eight amounts, $0.25 to $10,000) | `blocks.block1_money.thresholds.threshold_sidewalk`, `.threshold_wealthy`, `.threshold_shelter` | `accepted`, `thresholdAmount`, `thresholdAmountIndex` (the rung, 0-7), `thresholdBeyondRange` (never kept it, even at $10,000) |
+| | `blocks.block1_money.history[]` | every click: `contextKey`, `amountIndex`, `amountValue`, `action` (`keep`, `return`, `leave`, `donate`), `timestamp` |
+| **2 · Trolley** (lever, then bridge, eight life-counts) | `blocks.block2_trolley.leverThreshold`, `.bridgeThreshold` | `accepted`, `thresholdSavedLives`, `thresholdIndex`, `thresholdBeyondRange` (never acted) |
+| | `blocks.block2_trolley.summary` | `leverAcceptedValue`, `bridgeAcceptedValue`, `directnessGap` (in lives), `directnessGapIndex` (in rungs, signed), `directnessDirection`, `consistencyAtSameNumber` |
+| **3 · AI workforce** (two worker types × three group sizes, six gain levels) | `blocks.block3_ai_workforce.thresholds.threshold_entry_level_small` … `threshold_senior_level_large` (six cells) | `accepted`, `thresholdGain`, `thresholdGainIndex`, `thresholdBeyondRange`, `blockedByPriorNonAcceptance`, `groupSizeCount`; every click in `history[]` (`action`, `gainValue`, `timestamp`) |
+| **4 · Stakeholder reflection** (decide, hear the voices, decide again) | `blocks.block4_stakeholder_reflection.decisions` | `initialDecision`, `midDecision`, `finalDecision` (`proceed` / `do_not_proceed`), `initialConfidence` and `confidence` (1-5), `reportedInfluence`, `influentialValence` (`harmed` / `benefited`) |
+| | `blocks.block4_stakeholder_reflection` | `mostInfluentialPerspective`, `vignettesShown[]`, `scenarioDomain`, `seedCase` |
+
+**Computed from them** (never shown to the participant: the pages between blocks are hidden,
+docs/MEASUREMENT_MODEL.md 10b):
+
+- `analysis.post_block3_insights.profile`: `vulnerabilitySensitivityScore`, `wealthContextPermissivenessScore`,
+  `harmReluctanceScore`, `directnessAversionScore`, `scaleSensitivityScore`, `consistencyAcrossDomainsScore`, and the
+  refusal flags `refusedLever`, `refusedBridge`, `refusedAnyRollout`, `refusedAllLowBufferRollouts` ("LowBuffer" here
+  is the old word for entry-level workers).
+- `analysis.post_block4_final_analysis.tentative_style` (one of "more outcome-focused / utilitarian-leaning", "more
+  rule-focused / deontological-leaning", "mixed or context-sensitive", "high reluctance to sacrificial harm",
+  "insufficient data") and `.threshold_tree`: the seven sensitivities, each with `contributions[]` (`block`, `label`,
+  `value`, `weight`) — **exactly which answer of which block made each value, and how much it weighed**. The same tree
+  is in `analysis.participant_record.derived.thresholdTree`.
+- How they answered: `analysis.blocks_1_to_4_checks` (`first_step_yes_by_block`, `median_seconds_between_answers_by_block`,
+  `values_not_measured`, `tied_values`); the time per block in `timings.block1Ms` … `block4Ms` and
+  `active_time.by_stage_minutes`.
+
+### 4B.2 Each block on its own (collective description, and the effect it should show)
+
+**Read these answers the right way.** Each ladder walks upward and stops at the first "yes", so an answer is a rung
+(an ordered category), not a quantity, and "never" is the top category, not a missing value. The amounts are spaced
+roughly tenfold, so averaging dollars is meaningless; use the rung. Analyse with ranks, ordinal models or survival
+methods ("never" = still refusing when the ladder ended, i.e. censored at the top). The interface makes reversals on a
+ladder impossible, so consistency within a ladder is not a finding; across Block 3's six separate cells it can be.
+
+| Block | What to show | Test | Figure |
+|---|---|---|---|
+| 1 | For each place, the share of people who have NOT yet kept the money at each amount (a survival curve; "never" censored at $10,000) | the three places compared: Friedman test on the rungs, then paired Wilcoxon; or a log-rank test on the curves | **Figure S21**: three survival curves, one per place |
+| 1 | What people did instead of keeping, per place | shares of `return` / `leave` / `donate` from `history[].action` | stacked bars; donation outside the shelter stands out |
+| 1 | How much the place changed the answer, per person: the highest rung minus the lowest across the three places | its distribution | a histogram: 0 = the place made no difference |
+| 2 | Lever rung against bridge rung for every person | Wilcoxon signed-rank (bridge higher = the push/pull asymmetry); McNemar on "never" lever against "never" bridge | **Figure S22**: an 8 × 8 heat map (plus "never") of lever × bridge, the diagonal marked; `directnessGapIndex` as a histogram |
+| 3 | The median rung in each of the six cells | a mixed ordinal model: rung ~ worker type × group size + (1 \| participant) | **Figure S23**: a 2 × 3 heat map, "never" and blocked cells counted in each |
+| 3 | Per person: the worker-type gap (entry-level minus senior, over the three sizes) and the size slope (large minus small) | their distributions against 0 | two histograms; the share who price a larger group LOWER than a smaller one (the one ordering problem the block can show) |
+| 4 | The decision path: first → middle → final | the share who changed (final ≠ first), who wobbled (middle ≠ first, final = first); the confidence before against after (paired Wilcoxon) | **Figure S24**: a three-step Sankey of proceed / do not proceed |
+| 4 | Whose voice mattered | `mostInfluentialPerspective` and `influentialValence`, by `scenarioDomain` | bars |
+| all | Which block made each value | the mean `weight × value` of every `contributions[]` entry, per sensitivity | **Figure S25**: seven stacked bars, one colour per block — the profile's "provenance" |
+| all | The moral style and the cross-domain consistency | `tentative_style` shares; `consistencyAcrossDomainsScore` | bars and a histogram |
+| all | How people answered | `first_step_yes_by_block`, `median_seconds_between_answers_by_block`, minutes per block | rainclouds per block |
+
+The known effects these should reproduce (section 4.3): more lives before pushing than pulling; less keeping outside
+the shelter; more asked before harming entry-level workers and larger groups. If they appear, the instrument measures
+what the literature measures; if they do not, say so before any Block 5 result leans on the profile.
+
+### 4B.3 Blocks 1-4 against the major scores
+
+**The feature set** (one row per participant, fixed in advance so the number of tests is known):
+
+| Group | Features |
+|---|---|
+| Block 1 | the three rungs; the place spread (highest − lowest); the share of refusals that were donations |
+| Block 2 | the lever rung; the bridge rung; `directnessGapIndex`; never acted on the lever / the bridge |
+| Block 3 | the worker-type gap; the size slope; the number of "never" cells; the mean rung (how much gain it takes) |
+| Block 4 | changed the decision; wobbled; the confidence change (final − initial); named an influential voice; its valence |
+| The profile | the seven sensitivities; its clarity (`how_close_the_top_two_values_were.gap_in_points`); its spread (the standard deviation of the four policy values); values at 0 or 100; `values_not_measured`; `tentative_style` |
+| How they answered | `first_step_yes_count`; the median seconds between answers; active minutes in Blocks 1-4 |
+
+**Against:** `headline.consistency_score`, `stability_score` (measured participants), `performance_captured`,
+`analysis.position_effect.authority_vs_receiving.difference`, `decided_versus_wished.responsibility_gap`,
+`company_stance.pull_toward_the_company`, the MPF hit rate, `reflection_visits`, `adjustment_visits`,
+`choice_switches`, the MCF readings, and the size of the value change during Block 5.
+
+**Figure 21:** one heat map, Blocks 1-4 features down the side, the major scores and then the feedback subscales
+across the top (two bands), Spearman coefficients in the cells, FDR-surviving cells outlined, mechanical cells hatched.
+
+**Mechanical links in this map** (not findings; hatch them):
+
+- the seven sensitivities are computed from these raw answers (`contributions[]` is the formula), so raw-against-sensitivity is arithmetic;
+- VCI, the fit, the labels, the card order and the MPF are all computed AGAINST the profile these blocks built, so a
+  profile feature against VCI is partly definition: compare it with the same correlation among pretend random
+  choosers (section 5.3), who share the profile but not the behavior;
+- the MPF's separation, and so its sharpness, depends on the profile's shape by construction (a flat profile gives a
+  flat prediction);
+- the employer's value is the participant's LOWEST pre-Block-5 value by design, so the company stance and the profile
+  are linked by construction.
+
+**The questions worth asking** (exploratory unless frozen):
+
+1. **Does context sensitivity with money carry over to lives?** Block 1's place spread against the position effect in
+   Block 5 (`authority_vs_receiving.difference`, the five chairs' `departure_share` spread). This is the study's own
+   opening question (docs/VRDS_EXPERIMENT_GUIDE.md 1: the $50 outside a shelter and outside a bank; "does it also
+   appear when the stakes are lives?"). **Figure 23:** Block 1 spread (x) against the Block 5 position spread (y).
+2. **Is reconsidering a trait?** Block 4's changed / wobbled decision against Block 5's reconsidering
+   (`cvr.changed_their_choice`, APA use, `choice_switches`) and against `stakeholderGuided` /
+   `apa.the_stakeholder_influenced_them`. A person who moved after hearing the voices in Block 4 and moves again
+   after the reflection in Block 5 shows the stakeholder sensitivity working across blocks.
+3. **Do clear priorities make consistent choices?** Profile clarity (the top-two gap) and spread against VCI and
+   Stability, each against its simulation baseline.
+4. **Do refusers hold their line?** The refusal flags (`refusedBridge`, `refusedAnyRollout`, never keeping money)
+   against crossing one's own red line in Block 5 (`choiceCrossedOwnRedLine`) and against performance.
+5. **Does gain-responsiveness predict chasing performance?** Block 3's mean rung (low = accepts harm for little gain)
+   against `performance_captured`.
+6. **Does directness (Block 2) show in the reflection?** `directnessGapIndex` against the lens the participant picked
+   (`cvr.lens_the_participant_picked`, section 4.3).
+7. **Does the answering style carry over?** Fast, first-rung answering in Blocks 1-3 against Block 5 time, switching,
+   MCF reading and VCI.
+8. **Which blocks predict the major scores at all?** A penalized regression (elastic net) of each major score on the
+   feature set, with cross-validation; report the cross-validated R² against a permutation baseline (the R² reached
+   when the scores are shuffled), and the features kept. **Figure 22:** one bar per major score (cross-validated R²)
+   with the permutation band. Honest with a modest sample: a small R² is a real result.
+
+### 4B.4 Blocks 1-4 against the feedback
+
+The same features against the feedback subscales (the second band of Figure 21), and these specific links:
+
+| Blocks 1-4 | Feedback | The question |
+|---|---|---|
+| Block 4 confidence (`initialConfidence`, `confidence`) | `decisionConfidence` (DC1-2) | is confidence a stable trait across the study? (convergent) |
+| Block 4 changed / wobbled | `learningInsight`, `decisionRegret` | do people who changed their mind early report learning, or regret? |
+| profile clarity and spread | `valueCongruence`, `decisionSatisfaction` | do people with clear priorities feel their choices fit them? |
+| time and first-rung answering in Blocks 1-3 | `cognitiveBurden` (raw) | did the fast answerers find it light, or the slow ones heavy? |
+| `tentative_style` | every subscale | Kruskal-Wallis across the styles |
+| the Blocks 1-4 top value | `openEnded.OE_values` ("What did you learn about your values?"), coded for the value named | **self-knowledge**: do people name the value their answers put first? Agreement as Cohen's kappa |
+
+### 4B.5 Figures for Blocks 1-4, in one place
+
+S21 the money survival curves · S22 lever × bridge · S23 the workforce 2 × 3 heat map and the per-person gaps · S24
+the Block 4 decision Sankey · S25 the profile's provenance · Figure 21 the Blocks 1-4 × major scores × feedback heat map
+· Figure 22 what Blocks 1-4 can predict (cross-validated) · Figure 23 context with money against position with lives.
+A strong choice for the paper's main text: Figure 23, because it asks the study's own question with two independent
+measurements.
+
+---
+
 ## 5. How the measures relate to each other
 
 ### 5.1 The correlation map
@@ -497,20 +637,6 @@ never count both):
 
 Closed items read `….<CODE>.answer`; well-being reads `….wellbeing.items.<CODE>` (raw) and
 `….wellbeing.subscales.<name>`. Yes/no answers are stored as the words `"yes"` and `"no"`.
-
-**The fact:** every participant saw their VCI, Stability and Performance, with their level words, and the charts of
-their journey, on the results page just before the feedback. So a link between satisfaction and VCI can be (a)
-people who follow their values feel better, or (b) people who were TOLD they were "Highly Consistent" feel better.
-The data cannot fully separate them. Three things make the reading honest:
-
-1. **Test the link with behavior that was never shown as a score:** `points_short_of_what_they_asked_for` (never on
-   screen as a number), the frozen-profile fit, the MPF accuracy, switching and time. If satisfaction follows these
-   as it follows VCI, the link is not only the label.
-2. **Check whether the label's cut-offs matter:** people just above and just below a level boundary (for example VCI
-   79 against 80, "Moderate" against "Mostly Consistent") differ by one point of VCI but by a whole label. A jump in
-   satisfaction at the boundary is the label talking (a regression-discontinuity style check; needs a large N).
-3. **Say it in the limitations,** and consider (a researcher's decision, a screen change) asking the satisfaction,
-   regret, congruence and confidence items BEFORE the results page in future runs.
 
 ### 6.2 The researcher's hypotheses about well-being
 
@@ -604,7 +730,10 @@ quotes per theme. Word clouds are not evidence; do not use them.
 (5) and the pairs heat map (S5), position against performance per chair (6), the equivalence plot (9), the MPF
 separation histogram (S7), the #1-value alluvial (11), the sensitivity violins (12), the correlation map (15), the
 choice-model odds ratios (16), satisfaction against regret (17), the self-report/behavior dot plot (19), the open
-themes (S19), case-study journeys (20), the company stance (4), the scenario-6 order-effect and reactivity charts.
+themes (S19), case-study journeys (20), the company stance (4), the scenario-6 order-effect and reactivity charts;
+and for Blocks 1-4 (section 4B): the money survival curves (S21), lever × bridge (S22), the workforce heat map (S23),
+the Block 4 decision Sankey (S24), the profile's provenance (S25), the Blocks 1-4 × scores × feedback heat map (21),
+what Blocks 1-4 predict (22) and context with money against position with lives (23, a candidate for the main text).
 
 **Design rules for every figure:**
 
@@ -694,11 +823,13 @@ figures are benchmarks, not findings.
 - **H7 (learning helps the MPF).** The moving predictor beats the frozen one (`using_profile_before_block5`).
 - **H8 (well-being, the researcher's hypotheses).** Holding the other scores fixed, `wellbeingComposite` and
   `decisionSatisfaction` rise with `consistency_score` and with `stability_score` (measured participants), and fall
-  with `performance_captured` (section 6.2). With the stated caveat that the scores had been shown (6.1).
+  with `performance_captured` (section 6.2).
 - **H9 (convergent validity).** `valueCongruence` correlates positively with `consistency_score`.
 
 **Exploratory** (reported as such): the wish shift per value; the company stance; the five chairs; MCF reading and
-choice; the lens and stakeholder checks; the feedback links of 6.3; the case studies; the chooser types.
+choice; the lens and stakeholder checks; the feedback links of 6.3; the case studies; the chooser types; every Blocks 1-4 analysis of section 4B (the known
+effects of each block, the Blocks 1-4 × major scores and × feedback maps, the eight questions of 4B.3 and the links of
+4B.4).
 
 ---
 
@@ -710,9 +841,9 @@ choice; the lens and stakeholder checks; the feedback links of 6.3; the case stu
 4. The primary hypotheses, exactly as frozen; then the secondary; then the exploratory, labelled.
 5. The robustness forest plot for every primary result (section 2.4).
 6. The measurement evidence (section 4) and the correlation map with its mechanical links (section 5).
-7. The feedback analyses, with the results-page caveat in the same paragraph as each finding (section 6).
+7. The feedback analyses (section 6), and the Blocks 1-4 analyses (section 4B).
 8. Regenerate `docs/MAJOR_SCORES_DISTRIBUTION.md` from the final code, so the benchmarks match the data.
-9. Write the limitations from HOW_TO_ANALYZE 8 and rules 11-12 of this file.
+9. Write the limitations from HOW_TO_ANALYZE 8 and rule 11 of this file.
 
 ---
 
@@ -722,10 +853,8 @@ choice; the lens and stakeholder checks; the feedback links of 6.3; the case stu
   `feedbackTypes.ts`) or from HOW_TO_READ_MY_DATABASE.md, and checked by a script against those files after writing.
 - **Found while checking:** the database document carries no version of the study code (rule 3); the two guides
   said it did and were corrected the same day.
-- **Design facts** were checked in the code: the results page comes before the feedback (`ExperimentFlow.tsx`), and
-  shows VCI, Stability and Performance with their labels (`Block5SimulationSummaryPage.tsx`); the pages between
-  blocks are hidden (docs/MEASUREMENT_MODEL.md 10b); yes/no answers are stored as `"yes"` / `"no"`; the well-being
+- **Design facts** were checked in the code: the pages between blocks are hidden (docs/MEASUREMENT_MODEL.md 10b); yes/no answers are stored as `"yes"` / `"no"`; the well-being
   battery has 24 items in 8 subscales and its composite averages 7 of them.
 - **Traps looked for:** derived against raw, scores built from each other (5.2), selection (reflection, MCF readers,
   conditional feedback sections), position confounded with content, per-person unreliability, versions, many tests,
-  the score display before the feedback, and the missing no-reflection control.
+  and the missing no-reflection control.

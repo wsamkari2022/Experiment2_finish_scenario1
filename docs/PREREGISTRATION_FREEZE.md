@@ -25,8 +25,9 @@ hypotheses below.
 | Feedback questions | schema 4 | `FEEDBACK_SCHEMA_VERSION`, feedbackTypes.ts; saved as `blocks.feedback_answers.schemaVersion` |
 | Option numbers and words | as of the launch commit (after Fix 7, 7b, 7c) | block5Scenarios.ts. **At launch, save the export** `node tools/export_block5_content.cjs` beside this file, so the exact content is frozen with it |
 
-The database document carries no stamp of the code version itself (found 27 September 2026), so the launch commit
-and date below are what tie a record to this code.
+The code does not change after deployment (the researcher's decision, 27 September 2026: the deployed version is
+the final one), so every real record comes from the launch commit. The database document carries no stamp of the
+code version itself, so the launch commit and date below are what tie the records to this code.
 
 ## 2. How Block 5 moves the values (the step sizes)
 
@@ -57,21 +58,20 @@ Scores stay between 0 and 100; a step past an edge is cut off and recorded. Test
 | **MPF** | a softmax over the options' fit; confidence = the mean of VCI/100 and Stability/100; temperature = 60 − 42 × confidence (60 flat to 18 sharp) | strength by the top-two separation: 15 or more "clear", 5-14 "slight", under 5 "none" (`predictionStrength`) |
 | **Well-being** | subscale = the mean of its items, reverse items as 8 − x; `wellbeingComposite` = the mean of seven subscales (satisfaction, low regret, value congruence, confidence, low burden, support, overall) | 1-7 |
 
-## 4. The sample and the exclusions (PROPOSED — the researcher confirms each before launch)
+## 4. The sample (decided by the researcher, 27 September 2026)
 
-- [ ] **Analysis sample:** `status: "Study Completed"`. Unfinished runs are reported only in the flow diagram.
-- [ ] **Exclude from every analysis:** none beyond the sample rule. Every flag below is a robustness analysis, not an
-  exclusion (the result is reported with and without it).
-- [ ] **Robustness subsamples** (the analysis plan, section 2.4): without `said_yes_at_the_first_step_everywhere`;
-  without `answered_very_fast` (median under 2 seconds between answers, `FAST_ANSWER_SECONDS`); without
-  `top_value_was_decided_by_a_coin`; without a top-two gap within **5 points** (`how_close_the_top_two_values_were.gap_in_points` ≤ 5);
-  without any value `notMeasured`; without any `moves_cut_off`; without more than one browser or a restore.
-- [ ] **Block 5 engagement:** a participant with 2 or more scenarios under 15 seconds (`quality.scenarios_under_15_seconds`
-  ≥ 2) is left out of the Block 5 analyses as a robustness check.
-- [ ] **Feedback analyses:** without `quality.straightlined_feedback` participants.
-- [ ] **Stability:** analysed among `stability_was_measured` = true; the share never measured is reported.
-- [ ] **The matched-pair results:** also without `decided_versus_wished.wish_was_hurried` (under 12 seconds).
-- [ ] **MPF calibration:** also without predictions whose top-two separation is under 5 ("none").
+- **Who is analysed:** everyone who completed the study (`status: "Study Completed"`) by the end of data collection.
+  **Everyone who did not complete is excluded.** No one who completed is removed for any other reason.
+- **Extra checks, shown beside each main result** (they remove nobody from the main analysis; each shows the same
+  result again without one group, so a reader can see it does not depend on them; the analysis plan, section 2.4):
+  without `said_yes_at_the_first_step_everywhere`; without `answered_very_fast` (median under 2 seconds between
+  answers, `FAST_ANSWER_SECONDS`); without `top_value_was_decided_by_a_coin`; without a top-two gap within
+  **5 points** (`how_close_the_top_two_values_were.gap_in_points` ≤ 5); without any value `notMeasured`; without any
+  `moves_cut_off`; without more than one browser or a restore; for Block 5, without 2 or more scenarios under 15
+  seconds (`quality.scenarios_under_15_seconds` ≥ 2); for the feedback, without `quality.straightlined_feedback`; for
+  the matched pair, without `decided_versus_wished.wish_was_hurried` (under 12 seconds); for the MPF calibration,
+  without predictions whose top-two separation is under 5 ("none").
+- **Stability** is analysed among `stability_was_measured` = true; the share never measured is reported.
 - Payment is decided separately by `quality.compensation_eligible` (completed, 35 active minutes or more, not
   straight-lined, fewer than 3 blocks under 30 seconds) and is never used as an analysis rule.
 
@@ -96,7 +96,7 @@ Effect sizes with every test.
 | H5 | Real VCI is above 50 (blind picking) and above 57 (a random chooser who also answers the reflection at random) | one-sample Wilcoxon, one-sided |
 | H6 | The Blocks 1-4 value terms predict the Block 5 choices beyond card position and performance | conditional logit; likelihood-ratio test of the value terms |
 | H7 | The learning predictor beats the frozen one (`using_profile_before_block5`) | paired difference in log loss and hit rate |
-| H8 | Holding the other scores fixed, `wellbeingComposite` and `decisionSatisfaction` rise with `consistency_score` and with `stability_score` (measured participants), and fall with `performance_captured` | linear regression with standardized coefficients, controls age, gender, active minutes; stated caveat: the scores had been shown on the results page before the feedback |
+| H8 | Holding the other scores fixed, `wellbeingComposite` and `decisionSatisfaction` rise with `consistency_score` and with `stability_score` (measured participants), and fall with `performance_captured` | linear regression with standardized coefficients, controls age, gender, active minutes |
 | H9 | Self-reported value congruence (`subscales.valueCongruence`) rises with `consistency_score` | Spearman, one-sided |
 
 **Exploratory** (labelled as such, FDR within each family): everything else in the analysis plan, including the wish
@@ -107,7 +107,6 @@ feedback-behavior links, the known-effect replications of Blocks 1-3, the choose
 
 - Position is confounded with scenario content in the five-scenario reading; only the 4/5 pair holds content constant.
 - There is no no-reflection control group; reflection results are within-person descriptions.
-- The results page (with VCI, Stability and Performance) comes before the feedback.
 - The MPF's sharpness uses the participant's end-of-block VCI and Stability, including a never-tested Stability of
   100 (audit R6, kept and stated by the researcher on 27 September 2026); top-pick accuracy is free of it.
 - One person's scores are rough; results are reported for groups.
@@ -116,7 +115,7 @@ feedback-behavior links, the known-effect replications of Blocks 1-3, the choose
 ## 7. To fill in at launch
 
 - Launch commit: `__________`   Launch date: `__________`
-- Confirmed by the researcher (each box in section 4 ticked or changed): `__________`
+- End of data collection (the deadline that defines the sample): `__________`
 
 ## Deviations
 
