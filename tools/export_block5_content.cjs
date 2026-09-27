@@ -26,7 +26,40 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 const B = (f) => require(path.join(BUILD, f));
 
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
-const { getCVRStory, pickWhoVariant } = B("block5CVRContent.js");
+const { getCVRStory, pickWhoVariant, getCVRValueHere } = B("block5CVRContent.js");
+/* Performance, added 27 September 2026 (the researcher asked for every option's performance numbers in the Word
+   export). Everything comes from the functions the cards themselves call: the five numbers, each one's place
+   among the scenario's options (metricStandings), the overall place and its 0-100 captured score
+   (overallStanding), and the three chips the card prints (explainOption). The chips do not depend on the
+   participant, so any decision profile gives the same ones; a neutral one is used. */
+const { METRIC_KEYS, METRIC_LABELS, metricMeaning, POLICY_DIM_KEYS } = B("block5Types.js");
+const { metricStandings, overallStanding, rawComposite } = B("block5Performance.js");
+const { scenarioShowsPerformance } = B("block5CVR.js");
+const { plannerRank } = B("block5Planner.js");
+const { explainOption } = B("block5PlannerText.js");
+const NEUTRAL = {
+  order: [...POLICY_DIM_KEYS],
+  thresholds: Object.fromEntries(POLICY_DIM_KEYS.map((k) => [k, {
+    hasRedLine: false, strictness: 0.5, tolerance: 0.15, floor: 0.15, exchange: 2, source: "export",
+  }])),
+  degraded: false,
+};
+const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" })[n % 10] ?? "th"}`;
+
+function performanceOf(scenario, option, plan) {
+  if (!scenarioShowsPerformance(scenario)) return null;
+  const standings = metricStandings(scenario, option);
+  const overall = overallStanding(scenario, option);
+  return {
+    measures: standings.map((m) => ({
+      key: m.key, label: METRIC_LABELS[m.key], score: m.score, place: `${ordinal(m.rank)} of ${m.total}`,
+    })),
+    overallMean: Math.round(rawComposite(option) * 10) / 10,
+    overallPlace: `${ordinal(overall.rank)} of ${overall.total}`,
+    captured: overall.captured,
+    chips: explainOption(scenario, plan, NEUTRAL, option.id).chips,
+  };
+}
 
 /** The participant reads the words, not the markup. */
 const flat = (s) => String(s ?? "").replace(/\{[avwbf]\|([^{}]*)\}/g, "$1").trim();
@@ -60,8 +93,21 @@ const out = BLOCK5_SCENARIOS.map((s, si) => ({
   scene: flat(s.description),
   situation: flat(s.factBase),
   role: flat(s.role),
+  showsPerformance: scenarioShowsPerformance(s),
+  /* What each of the four values means in THIS scenario, as the "Your values in this scenario" panel says it
+     (getCVRValueHere). null for scenario 6, on purpose: its four options are the four values. */
+  valueMeanings: (() => {
+    const here = getCVRValueHere(s);
+    if (!here) return null;
+    const NAME = { vulnerabilityProtectionSensitivity: "Protecting the vulnerable", groupSizeSensitivity: "Reducing harm",
+      gainResponsivenessSensitivity: "How much is gained", outcomeAggregationSensitivity: "How many are helped" };
+    return POLICY_DIM_KEYS.map((k) => ({ value: NAME[k], meaning: flat(here[k]) }));
+  })(),
+  /* What each of the five measures means in THIS scenario, as the performance panel explains it. */
+  measureMeanings: METRIC_KEYS.map((k) => ({ key: k, label: METRIC_LABELS[k], meaning: metricMeaning(k, s.id) })),
   options: s.options.map((o, oi) => {
     const hasReflection = Boolean(o.cvrSeed);
+    const plan = plannerRank(s, NEUTRAL);
     return {
       number: oi + 1,
       id: o.id,
@@ -77,6 +123,7 @@ const out = BLOCK5_SCENARIOS.map((s, si) => ({
         "How much is gained": o.fingerprint.gainResponsivenessSensitivity,
         "How many are helped": o.fingerprint.outcomeAggregationSensitivity,
       },
+      performance: performanceOf(s, o, plan),
       views: hasReflection ? [view(s, o, "directness"), view(s, o, "context")] : [],
     };
   }),
