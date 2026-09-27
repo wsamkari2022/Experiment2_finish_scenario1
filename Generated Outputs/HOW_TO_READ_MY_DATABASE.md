@@ -1173,8 +1173,9 @@ treat `lowDecisionRegret` as the same thing as satisfaction.
 
 Answer types:
 - `likert` → a number 1–7
-- `yesno` → the word `"yes"` or `"no"`. (An earlier version of this line said `true` / `false`, and the `scale`
-  text stored beside each answer still says "true = yes, false = no"; the answer itself is the word.)
+- `yesno` → the word `"yes"` or `"no"`. (An earlier version of this line said `true` / `false`. The `scale` text
+  stored beside each answer said "true = yes, false = no" until 27 September 2026; it now says 'the word "yes" or the
+  word "no"'. Records saved before that date carry the old sentence; the answers themselves were always the words.)
 - `open` → free text the participant typed
 
 > ⚠️ **The `cvr` and `apa` sections exist only for people who met that step** (a reflection; the APA page).

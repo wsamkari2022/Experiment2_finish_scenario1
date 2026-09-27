@@ -638,20 +638,20 @@ export function applyEndorsementUpdatesWithMoves(
 /**
  * APA clarification updates (pending until the participant commits a final choice inside APA).
  *
- * THE AMOUNTS, as the code applies them. `w` is stakesWeight x confidenceWeight(confidence).
- *   Q1 endorse   option's own value +15 x w, the value it went against -10 x w
- *   Q1 context   option's own value +5 x w, and NOTHING is raised in return (see the long note
- *                inside the function: the old +10 to the sacrificed value was self-defeating)
- *   Q1 unsure    no value change
- *   Q2           stakeholder +25 if the person's story moved them, else -25. Multiplied by
- *                stakesWeight ONLY - never by confidence, because it is not a matter of degree
- *   Q3           +30 x w to the value the participant named, -20 x w to whichever value is
- *                currently top (skipped when those are the same value)
- *   Net cap      no policy value moves more than 30 x w in one clarification, either direction.
- *                Q1 and Q2 can name the same value and would otherwise stack to 45 x w.
+ * THE AMOUNTS, as the code applies them today. `w` is stakesWeight x confidenceWeight(confidence)
+ * (every scenario runs at stakesWeight 1; confidence 1-5 gives 0.6, 0.7, 0.8, 0.9, 1.0).
+ *   The named value   +30 x w to the value the participant names as the one they want weighted
+ *   The other three   -10 x w each (zero-sum by construction, except at the 0 / 100 edges)
+ *   Stakeholder       +25 if the other person's story moved them, else -25. Multiplied by stakesWeight
+ *                     ONLY - never by confidence, because it is not a matter of degree
+ *   Reflection view   +20 x w to the lens that changed their mind, when that question was answered
+ *   Net cap           no policy value moves more than 30 x w in one clarification. Kept as a guard: under
+ *                     today's rule it never binds (the named value moves exactly 30 x w)
  *
- * These superseded an earlier rule of "+5/+10 on context, +10 on prioritization". If a number
- * here disagrees with a paper draft, the code is the authority and the draft is stale.
+ * Rewritten 27 September 2026. Until then this list still described the rule before 17 September 2026 -
+ * a first question ("Q1": endorse +15 / -10, context +5, unsure nothing) and "+30 to the named value, -20
+ * to whichever value is on top". Both were removed that day (see the notes inside the function). If a
+ * number here disagrees with a paper draft, the code is the authority and the draft is stale.
  */
 /**
  * How much weight the participant's own certainty carries, 1–5 -> 0.6–1.0.
@@ -831,7 +831,8 @@ export function applyApaUpdatesWithMoves(
   /*
    * THE CAP: no policy value moves more than 30 x w in one clarification, in either direction.
    *
-   * WHY IT IS NEEDED. Q1 and Q2 can name the SAME value, and then they add. A participant who
+   * WHY IT WAS NEEDED (the rule before 17 September 2026; kept as a guard, and under today's +30 / -10 rule
+   * it never binds). Q1 and Q2 could name the SAME value, and then they added. A participant who
    * endorses their choice and goes on to name the value that choice served receives +15 and +30 —
    * +45 x w, not the +30 x w this rule is published as. That is not an edge case: it is what an
    * internally consistent participant naturally answers, so the documented constant was wrong for

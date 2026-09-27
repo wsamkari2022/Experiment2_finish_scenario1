@@ -6,12 +6,15 @@
  *   ① CVR (conditional — only if the participant saw a CVR vignette)
  *   ② APA (conditional — only if the APA panel opened)
  *   ③ Decision-support tools & experiment design (always)
- *   ④ Learning Insight & Well-being battery (always) — 20 Likert items, 7 subscales,
- *      with documented reverse-scoring and a computed Well-being Composite.
+ *   ④ Learning Insight & Well-being battery (always) — 24 Likert items (1-7) in 8 subscales, with
+ *      documented reverse-scoring (8 − x) and a computed Well-being Composite (the mean of 7 subscales;
+ *      Learning Insight is reported on its own). Updated 27 September 2026: this header said "20 items,
+ *      7 subscales" from before Decision Regret became its own subscale and DS3 moved into it.
  *
  * Raw item responses are the source of truth; computed subscale/composite scores are stored
- * for convenience with self-documenting scoring metadata so they are reproducible. No personal
- * identity is collected — only the anonymous session_id.
+ * for convenience with self-documenting scoring metadata so they are reproducible. This record itself
+ * carries no personal identity, only the anonymous session_id; the participant's email, which keys the
+ * database document, lives on that document, not here.
  */
 
 import type { Block5Results } from "./block5Types";
@@ -132,7 +135,7 @@ export interface WellbeingItem {
   reverse: boolean;
 }
 
-/** 20 items across 7 subscales. Order = presentation order (two grouped matrices in the UI). */
+/** 24 items across 8 subscales. Order = presentation order (two grouped matrices in the UI). */
 export const WELLBEING_ITEMS: WellbeingItem[] = [
   // A · Learning Insight
   { code: "LI1", subscale: "learningInsight", reverse: false, text: "I learned something about my own values during this experiment." },
@@ -201,7 +204,7 @@ export const WELLBEING_OPEN_ENDED = [
   { code: "OE_additional", text: "Any additional feedback?" },
 ] as const;
 
-/** The codes that are reverse-scored (6 − x) before entering the composite. */
+/** The codes that are reverse-scored (8 − x on the 1–7 scale) before entering the composite. */
 export const WELLBEING_REVERSE_CODES = WELLBEING_ITEMS.filter((i) => i.reverse).map((i) => i.code);
 
 export const WELLBEING_LIKERT_LOW = "Strongly disagree";
@@ -227,10 +230,10 @@ export interface WellbeingSubscaleScores {
 }
 
 export interface WellbeingResult {
-  /** raw 1–5 responses keyed by item code — the source of truth. */
+  /** raw 1–7 responses keyed by item code — the source of truth. */
   items: Record<string, number>;
   subscales: WellbeingSubscaleScores;
-  /** mean of the six affective/process subscales (Learning Insight reported separately). */
+  /** mean of the seven affective/process subscales in WELLBEING_COMPOSITE_SUBSCALES (Learning Insight reported separately). */
   wellbeingComposite: number;
   /** optional broad index including Learning Insight (mean of all seven subscales). */
   wellbeingPlusInsight: number;
@@ -244,7 +247,7 @@ export interface WellbeingResult {
   openEnded: Record<string, string>;
 }
 
-/** The six subscales that make up the Well-being Composite (Learning Insight excluded). */
+/** The seven subscales that make up the Well-being Composite (Learning Insight excluded). */
 export const WELLBEING_COMPOSITE_SUBSCALES: (keyof WellbeingSubscaleScores)[] = [
   "decisionSatisfaction", "lowDecisionRegret", "valueCongruence", "decisionConfidence",
   "lowCognitiveBurden", "perceivedSupport", "overallWellbeing",
@@ -317,7 +320,7 @@ export function computeWellbeing(
     : 0;
   const valueCongruence = subscaleMean("valueCongruence", true);
   const decisionConfidence = subscaleMean("decisionConfidence", true);
-  // Raw burden = items as entered (reverse NOT applied); inverted = 6 − raw.
+  // Raw burden = items as entered (reverse NOT applied); inverted = 8 − raw.
   const cognitiveBurden = subscaleMean("cognitiveBurden", false);
   const lowCognitiveBurden = subscaleMean("cognitiveBurden", true);
   const perceivedSupport = subscaleMean("perceivedSupport", true);
@@ -337,7 +340,7 @@ export function computeWellbeing(
     overallWellbeing,
   };
 
-  // Composite = mean of the six subscale MEANS (computed from unrounded means, rounded once).
+  // Composite = mean of the seven subscale MEANS (computed from unrounded means, rounded once).
   const composite = mean(WELLBEING_COMPOSITE_SUBSCALES.map((k) => raw[k]));
   const plusInsight = mean([raw.learningInsight, ...WELLBEING_COMPOSITE_SUBSCALES.map((k) => raw[k])]);
 

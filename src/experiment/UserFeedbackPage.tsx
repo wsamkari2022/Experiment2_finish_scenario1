@@ -5,7 +5,7 @@
  *   ① Value Reflection (CVR)  — conditional: only if the participant saw a CVR vignette
  *   ② Value Clarification (APA) — conditional: only if the APA panel opened
  *   ③ Decision-support tools & experiment design — always
- *   ④ Learning Insight & Well-being battery — always (20 Likert items, 7 subscales)
+ *   ④ Learning Insight & Well-being battery — always (24 Likert items, 8 subscales; see feedbackTypes.ts)
  *
  * On submit it computes the Well-being subscales/composite, assembles a MongoDB-ready
  * FeedbackRecord (session_id + timing + Block-5 telemetry + answers), stores it in

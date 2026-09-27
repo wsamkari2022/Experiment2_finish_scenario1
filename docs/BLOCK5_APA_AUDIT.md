@@ -36,7 +36,7 @@
 
 ## 0. What this document is for
 
-The APA rule fits in a sentence:
+The APA rule, as audited (before 17 September 2026; today's rule is in the box above), fit in a sentence:
 
 > *+30 to the value you name, −20 to the value currently on top, everything scaled 0.6–1.0 by how
 > sure you say you are, and no value moves more than 30 × that scale in one clarification.*

@@ -684,9 +684,15 @@ versions must not be pooled.
 **Not yet audited:** Block 4's internal scoring in depth, the final VCI and Stability measures,
 and the CVR ±20/±25 update magnitudes.
 
-**The APA profile update.** The rule is "+30 to the value you name, −20 to the value currently on
-top, scaled 0.6–1.0 by confidence, and no policy value moving more than 30 × that scale in one
-clarification". `npm run verify:apa` asserts it in 19 checks.
+> **Corrected 27 September 2026 — the rule today:** +30 × w to the value the participant names, −10 × w to each of the other three (zero-sum), where w is the
+> confidence weight 0.6-1.0; ±25 to the stakeholder sensitivity (never scaled by confidence); +20 × w to the reflection
+> view that changed their mind. The first question ("Q1") and "−20 to whatever is on top" were removed on 17 September
+> 2026. The cap (no value moves more than 30 × w) is still in the code as a guard and never binds under this rule.
+> The paragraphs below describe the rule as it was audited before 17 September 2026.
+
+**The APA profile update (as audited before 17 September 2026).** The rule was "+30 to the value you name, −20 to the
+value currently on top, scaled 0.6–1.0 by confidence, and no policy value moving more than 30 × that scale in one
+clarification". `npm run verify:apa` asserts today's rule.
 
 The cap is what makes the published constant the applied one. Q1 and Q2 can name the same value,
 and without a cap they add: an internally consistent participant — one who endorses their choice and

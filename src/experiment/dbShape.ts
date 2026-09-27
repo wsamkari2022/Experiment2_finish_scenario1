@@ -81,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-26-top-two-value-gap";
+export const SHAPE_VERSION = "2026-09-27-yes-no-scale-text";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -442,7 +442,9 @@ function scaleFor(type: string): string {
     case "likert":
       return "1 to 7, where 1 = strongly disagree and 7 = strongly agree";
     case "yesno":
-      return "true = yes, false = no";
+      /* The answer is stored as the word itself. Until 27 September 2026 this sentence said "true = yes,
+         false = no", which described a boolean the page never stored (audit R11). */
+      return 'the word "yes" or the word "no"';
     case "open":
       return "free text written by the participant";
     default:

@@ -368,6 +368,13 @@ were.
 
 ### The CLARIFICATION path — what the APA page itself does
 
+> **Corrected 27 September 2026 — the rule today:** +30 × w to the value the participant names, −10 × w to each of the other three (zero-sum), where w is the
+> confidence weight 0.6-1.0; ±25 to the stakeholder sensitivity (never scaled by confidence); +20 × w to the reflection
+> view that changed their mind. The first question ("Q1") and "−20 to whatever is on top" were removed on 17 September
+> 2026. The cap (no value moves more than 30 × w) is still in the code as a guard and never binds under this rule.
+> The table below is the rule before 17 September 2026: its Q1 rows and "−20 to whatever is currently top" no longer
+> apply.
+
 The table above covers keeping an option. This is the other path: the participant **refused** their
 first choice after the vignette, and the APA page asks them to say what they actually want.
 
