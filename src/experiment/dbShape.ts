@@ -81,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-26-stability-was-measured";
+export const SHAPE_VERSION = "2026-09-26-top-two-value-gap";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1522,6 +1522,51 @@ const CARD_GROUP_WORDS: Record<string, string> = {
  * SCENARIO 6 IS THE EXCEPTION. Its cards are shuffled once per participant, not planner-ordered;
  * its row says so, and the order the participant actually saw is in analysis.scenario6_mpf_test.
  */
+/**
+ * HOW CLOSE THE PARTICIPANT'S #1 AND #2 VALUES WERE (since 26 September 2026, audit C7, the researcher's
+ * approval of the "safe part": record it and say how ties are broken; the order rule itself is unchanged).
+ *
+ * The planner orders the cards of EVERY scenario by one ranking of the four policy values - the one the
+ * participant brought into Block 5 - and card 1 is usually the option best on value #1 (HOW_TO_ANALYZE 4.7).
+ * The ranking counts a 1-point lead exactly like a 50-point one. So when #1 and #2 are close, the whole card
+ * order rests on a small difference in the Blocks 1-4 answers: in the pretend-participant report
+ * (`npm run report:planner-overlap`, section "how close") that is common. Until this date no field said so.
+ *
+ * Read from `originalProfile`, exactly as deriveDecisionProfile (block5Thresholds.ts) builds the planner's
+ * order: the four policy values sorted by their stored rank. Scores are the whole numbers that profile
+ * stores. Works for every record ever saved, and changes nothing: the planner never reads this.
+ */
+function topTwoValueGap(block5: unknown): Record<string, unknown> | null {
+  const profile = (block5 as { originalProfile?: { dimensions?: unknown } } | null)?.originalProfile;
+  const dims = profile?.dimensions;
+  if (!Array.isArray(dims)) return null;
+  const policy = (dims as Array<{ key: string; score: number; rank: number }>)
+    .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key)
+      && typeof d.score === "number" && typeof d.rank === "number")
+    .sort((a, b) => a.rank - b.rank);
+  if (policy.length < 2) return null;
+  const [first, second] = policy;
+  const gap = first.score - second.score;
+  const short = (key: string) => POLICY_DIM_SHORT[key as keyof typeof POLICY_DIM_SHORT] ?? key;
+  return {
+    first_value: short(first.key),
+    second_value: short(second.key),
+    first_value_score: first.score,
+    second_value_score: second.score,
+    gap_in_points: gap,
+    the_two_have_the_same_score: gap === 0,
+    why_it_matters:
+      "The planner orders the cards of every scenario by this ranking, and card 1 is usually the option "
+      + "best on value #1. A 1-point lead counts exactly like a 50-point one, so a small gap means the whole "
+      + "card order rests on a small difference in the Blocks 1-4 answers (audit C7). Report it beside any "
+      + "analysis of card position. It changes nothing: the planner never reads this field.",
+    how_ties_are_broken:
+      "Scores are the whole numbers of the profile the participant brought into Block 5. An exact tie in "
+      + "the Blocks 1-4 scores is broken by a coin made from the participant's own answers (since 24 September "
+      + "2026; which values tied is in analysis.blocks_1_to_4_checks.tied_values). A near-tie counts in full.",
+  };
+}
+
 export function buildCardOrderSection(block5: unknown): Record<string, unknown> | null {
   const results = resultsOf(block5);
   if (!results.length) return null;
@@ -1639,6 +1684,8 @@ export function buildCardOrderSection(block5: unknown): Record<string, unknown> 
       times_the_first_card_was_chosen: choseFirst,
       times_the_first_card_was_also_the_best_fit_card: firstWasBest,
     },
+    /* Since 26 September 2026 (audit C7): one line per participant, the same for every scenario. */
+    how_close_the_top_two_values_were: topTwoValueGap(block5),
   };
 }
 

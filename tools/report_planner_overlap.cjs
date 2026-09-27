@@ -112,6 +112,7 @@ function steadyAnswers(rand) {
   });
 }
 
+const gapsOf = new Map();
 function measure(makeAnswers, seed) {
   const rand = recipe.seededRandom(seed);
   const people = [];
@@ -121,6 +122,13 @@ function measure(makeAnswers, seed) {
     const profile = extractBlock5Profile(buildThresholdTree(mp, a.ai, a.block4));
     people.push({ profile, decision: deriveDecisionProfile(profile, mp) });
   }
+  /* How close #1 and #2 are (since 26 September 2026, audit C7): the same reading the database stores as
+     analysis.card_order_by_scenario.how_close_the_top_two_values_were - the whole-number scores of the
+     planner's first two values, in the planner's own order. */
+  gapsOf.set(makeAnswers, people.map(({ profile, decision }) => {
+    const score = (k) => profile.dimensions.find((d) => d.key === k).score;
+    return score(decision.order[0]) - score(decision.order[1]);
+  }));
   return BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") !== "predicted").map((scenario) => {
     let bestFirst = 0, champFirst = 0;
     for (const { profile, decision } of people) {
@@ -156,3 +164,16 @@ for (const [label, rows] of groups) {
 }
 console.log("  Read the 'differ' column as the cases that can tell position from fit. Analyse choice position and fit");
 console.log("  together (HOW_TO_ANALYZE_MY_DATA.md), never one as a stand-in for the other.\n");
+
+/* HOW CLOSE THE #1 AND #2 VALUES ARE (since 26 September 2026, audit C7). The planner's ranking counts a
+   1-point lead like a 50-point one, so a small gap means the whole card order rests on a small difference. */
+console.log("  How close each pretend participant's #1 and #2 values are (whole points, the profile brought into Block 5)");
+console.log("  The planner counts a 1-point lead exactly like a 50-point one (audit C7).\n");
+for (const [label, makeAnswers] of [["STEADY", steadyAnswers], ["RANDOM", randomAnswers]]) {
+  const gaps = gapsOf.get(makeAnswers);
+  const share = (f) => Math.round((100 * gaps.filter(f).length) / gaps.length);
+  const sorted = [...gaps].sort((a, b) => a - b);
+  console.log(`    ${label.padEnd(8)} same score ${String(share((x) => x === 0)).padStart(3)}   within 2 points ${String(share((x) => x <= 2)).padStart(3)}   `
+    + `within 5 ${String(share((x) => x <= 5)).padStart(3)}   within 10 ${String(share((x) => x <= 10)).padStart(3)}   median gap ${sorted[Math.floor(sorted.length / 2)]}   (out of 100)`);
+}
+console.log("");

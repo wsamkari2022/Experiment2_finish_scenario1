@@ -497,6 +497,23 @@ how to read them.
   raises it too. Changing that would change the prediction (and `PREDICTION_VERSION`); it is an open item in the
   audit, not part of this fix. Nothing on screen changed.
 
+## Three limits written down: the top-two gap, four moving scenarios, the position headline (audit C7, B7, P2), 26 September 2026
+
+The researcher's approval ("you can do also (B7, P2, C7 ...)"). Nothing participants see changed, and no score.
+
+- **C7, the safe part.** The planner orders every scenario by one ranking of the four values and counts a 1-point
+  lead like a 50-point one. `analysis.card_order_by_scenario.how_close_the_top_two_values_were` now saves the gap
+  between #1 and #2 (read from `originalProfile`, so every record has it; `topTwoValueGap` in dbShape.ts; gate D63).
+  About 16 in 100 steady pretend participants are within 5 points. HOW_TO_ANALYZE 4.7 says how ties are broken
+  (a coin from the participant's own answers; near-ties count in full) and asks for a cut-off fixed in advance.
+  The order rule is unchanged; counting both orders when close is a separate decision.
+  `SHAPE_VERSION` "2026-09-26-top-two-value-gap".
+- **B7.** Only scenarios 1-4 can move the profile, so movement and Stability rest on at most four steps per
+  person: describe them for groups (HOW_TO_ANALYZE 4.8 and section 8).
+- **P2, accepted.** The five-scenario position number is 100 for a real role-switcher and for a random chooser
+  alike; the check that would separate them needs a role met twice, which this deck does not have (the 3 skips in
+  `validate:position`). Report it as description, beside VCI, and lead with the scenario 4/5 pair (4.4, section 8).
+
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 
 The "Has a cost" tag and the divider "These cost you something on the value you ranked first" no
@@ -604,7 +621,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 62 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61) and whether Stability measured anything (D62). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 63 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62) and how close the top two values were (D63). `--dump` writes a full simulated document |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
@@ -613,7 +630,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3× after Fix 6, 5.4× after Fix 7); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
-| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 50-62 in 100 steady, 41-52 random, chance about 17 (26 September 2026, after Fix 7) |
+| `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 50-62 in 100 steady, 41-52 random, chance about 17 (26 September 2026, after Fix 7). Since 26 September 2026 also how close each person's #1 and #2 values are (16 in 100 steady within 5 points; audit C7) |
 | `export_block5_content.cjs` | Writes every scenario, option, lens and stakeholder story as JSON, for the Word export |
 | `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers. Round 2 (only the scenarios whose words changed): `--scenarios 2,3,4 --round 2`, `--study <dir> --raters opus,sonnet,haiku`. Round 2 also rates the five PERFORMANCE numbers of every option in scenarios 1-4 (the researcher's request): `--measures` on the sheet builder and on the comparison (REPORT_MEASURES.md), a second no-tools rater in each folder |
 

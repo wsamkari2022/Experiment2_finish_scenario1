@@ -150,6 +150,14 @@ having it done to you. `analysis.position_effect.authority_vs_receiving` is the 
 reading in the whole study, because everything except position is held constant. **Lead with this
 comparison, and present the five-scenario number as description.**
 
+**The five-scenario number cannot tell a person who truly changes with their role from a random
+chooser** (audit P2; accepted and stated by the researcher, 26 September 2026). Both reach a Position
+Effect of 100 in `npm run validate:position`. The check that would separate them (does the SAME role,
+met twice, give the same answer?) needs one role to appear twice, and in this deck none does, so the
+suite skips those three gates on purpose. So: never read a high five-scenario number as "this person
+changes with their role"; report it as a description of the group, next to VCI (a random chooser also
+scores near 57 on VCI, a person who follows their values higher), and lead with the scenario 4/5 pair.
+
 **What scenario 5 is for** (the researcher's design, written down 25 September 2026). The participant
 has just decided scenario 4, including its reflection; scenario 5 shows the same six options with
 only their role changed, so no reflection runs there on purpose. Either they wish for what they
@@ -225,6 +233,26 @@ analyse both):
 - Put **both** in the same model: the chosen card's position on screen (`choiceRank`, or
   `position_of_the_card_chosen`) and its fit place (`selectedRank`, or `is_the_best_fit_card`). Never
   use one as a stand-in for the other.
+
+**How the participant's own ranking is used, ties included** (audit C7, written down 26 September 2026).
+The planner orders every scenario's cards by ONE ranking of the four values: the one the participant
+brought into Block 5. It counts a 1-point lead of value #1 over value #2 exactly like a 50-point lead,
+so when the two are close, the whole card order rests on a small difference in the Blocks 1-4 answers.
+An exact tie in the Blocks 1-4 scores is broken by a coin made from the participant's own answers (since
+24 September 2026; `analysis.blocks_1_to_4_checks.tied_values` names the tied values); a near-tie counts
+in full. The gap is saved for every record, old and new:
+`analysis.card_order_by_scenario.how_close_the_top_two_values_were.gap_in_points` (whole points). With
+4,000 pretend participants answering Blocks 1-4 (`npm run report:planner-overlap`, 26 September 2026):
+
+| Pretend participants | Same score | Within 2 points | Within 5 | Within 10 | Median gap |
+|---|---|---|---|---|---|
+| Steady | 2 in 100 | 7 | 16 | 28 | 20 points |
+| Random | 2 in 100 | 7 | 18 | 31 | 18 points |
+
+Put the gap in any model of card position as a covariate, or check that a position finding holds when
+the closest cases are left out. **Fix the cut-off before looking at the data** (for example "within 5
+points"), and say which one was used. The order rule itself was not changed (counting wins under both
+orders when #1 and #2 are close would change the order, and is a separate decision).
 - Do not claim the order is independent of fit. It is not, by design, and the numbers above are the
   size of the dependence.
 - A cleaner separation would need a design change (for example a randomly ordered control group).
@@ -245,7 +273,12 @@ judging one person):
 | VCI acted (scenario 4, one choice) | 0.27-0.28 |
 | Performance | 0.15-0.21 |
 
-The reason is simple: only four choices count, and one person's four choices carry a lot of luck. The
+The reason is simple: only four choices count, and one person's four choices carry a lot of luck.
+**Only scenarios 1-4 can move the profile** (audit B7, written down 26 September 2026): scenario 5 is a
+wish and scenario 6 a test of the model, and neither updates anything. So a person's value movement is
+at most four steps, Stability has only 13 possible values, and many people never meet a step that
+counts at all (`stability_was_measured`). Describe value movement for groups and compare groups (kinds
+of chooser, conditions, the scenario 4/5 pair), never as the story of one person's changing values. The
 same scores separate KINDS of people well: someone who follows their own top value scores above a
 random chooser on VCI 97 times in 100, and on Stability 90 times in 100. So report means and spreads
 for groups, and never write "participant 12 is inconsistent" from one VCI.
@@ -513,3 +546,9 @@ State these in the limitations section rather than waiting to be asked.
    on 0 or 100, so a participant who keeps drifting after saturating one value looks slightly
    steadier than they were.
 6. **Scenario 6 is one scenario.** Reactivity measured once is not a reactivity trait.
+7. **Only four scenarios can move the profile** (audit B7): value movement and Stability rest on at most
+   four steps per person; describe them for groups (4.8).
+8. **The five-scenario position number cannot tell a role-switcher from a random chooser** (audit P2):
+   no role appears twice, so the check that separates them cannot run (4.4).
+9. **A close #1 and #2 value decides the card order as firmly as a clear one** (audit C7): the gap is
+   saved; in pretend participants about 16 in 100 are within 5 points (4.7).

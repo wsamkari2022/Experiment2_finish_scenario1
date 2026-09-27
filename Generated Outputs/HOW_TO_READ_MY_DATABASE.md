@@ -1072,6 +1072,12 @@ scenario, one row:
 | `what_the_planner_used.values_from_1st_to_4th[]` | For each of the participant's four values, #1 first: `refused_outright_in_blocks_1_to_3`, the two bands as a share of the scenario's spread, and the `step_3_trade_rate` (only the #1 value's is used) |
 | `order_rebuilt_from_these_inputs_matches_the_order_stored` | The self-check: the planner run again from the saved inputs. **false = do not trust this row** until it is explained; null = too old to have inputs |
 
+One more field sits beside `by_scenario` and `totals`, once per participant (**since 26 September 2026**, audit C7):
+
+| Field | What it holds |
+|---|---|
+| `how_close_the_top_two_values_were` | The participant's #1 and #2 values in the planner's order (`first_value`, `second_value`), their whole-number scores in the profile brought into Block 5, `gap_in_points`, and `the_two_have_the_same_score`. The planner orders every scenario by this ranking and counts a 1-point lead like a 50-point one, so a small gap means the card order rests on a small difference. Read from `originalProfile`, so it exists for every record, old and new; the planner never reads it. See HOW_TO_ANALYZE_MY_DATA.md 4.7 |
+
 The three groups, in words: "inside every limit the participant set", "at the bottom of this
 scenario's range on the participant's #1 value", and "crosses a limit the participant refused
 outright in Blocks 1-3". The raw fields behind it (`plannerOrder`, `plannerBins`, `plannerWins`,

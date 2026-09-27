@@ -1479,6 +1479,43 @@ for (const [who, block5] of PEOPLE) {
       : `stability_was_measured is wrong: ${why.join(" | ")}`);
 }
 
+/* D63 - HOW CLOSE THE TOP TWO VALUES WERE (26 September 2026, audit C7). The shared pretend profiles give
+   ranks in code order whatever the scores (profileOf above), which a real profile never does, so this gate
+   builds its own: ranks follow the scores, as the Blocks 1-4 scoring makes them. It checks the gap, a tie at
+   the top (gap 0), a record without a profile (null), and that the card rows are exactly what they were -
+   the field describes the order and never changes it. */
+{
+  const why = [];
+  const [, base] = PEOPLE[0];
+  const ranked = (scores) => {
+    const p = profileOf(scores);
+    [...p.dimensions].sort((a, b) => b.score - a.score).forEach((d, i) => { d.rank = i + 1; });
+    return p;
+  };
+  const clear = db.buildCardOrderSection({ ...base, originalProfile: ranked({
+    vulnerabilityProtectionSensitivity: 82, groupSizeSensitivity: 40, gainResponsivenessSensitivity: 61,
+    outcomeAggregationSensitivity: 25, directnessSensitivity: 10, contextSensitivity: 10,
+    stakeholderPerspectiveShiftSensitivity: 10 }) });
+  const g = clear?.how_close_the_top_two_values_were;
+  if (!g || g.first_value_score !== 82 || g.second_value_score !== 61 || g.gap_in_points !== 21 || g.the_two_have_the_same_score !== false) {
+    why.push(`clear profile: ${JSON.stringify(g && { a: g.first_value_score, b: g.second_value_score, gap: g.gap_in_points })}`);
+  }
+  const tie = db.buildCardOrderSection({ ...base, originalProfile: ranked({
+    vulnerabilityProtectionSensitivity: 70, groupSizeSensitivity: 40, gainResponsivenessSensitivity: 70,
+    outcomeAggregationSensitivity: 25, directnessSensitivity: 10, contextSensitivity: 10,
+    stakeholderPerspectiveShiftSensitivity: 10 }) })?.how_close_the_top_two_values_were;
+  if (!tie || tie.gap_in_points !== 0 || tie.the_two_have_the_same_score !== true) why.push("a tie at the top does not read 0 / true");
+  const none = db.buildCardOrderSection({ ...base, originalProfile: null })?.how_close_the_top_two_values_were;
+  if (none !== null) why.push("no profile does not read null");
+  if (JSON.stringify(clear.by_scenario) !== JSON.stringify(db.buildCardOrderSection(base).by_scenario)) {
+    why.push("the card rows changed with the profile - the field must only describe the order");
+  }
+  gate("D63", why.length === 0,
+    why.length === 0
+      ? "how_close_the_top_two_values_were: 82 vs 61 reads a 21-point gap, a tie at the top reads 0 and 'same score', no profile reads null, and the card rows are untouched"
+      : `the top-two gap is wrong: ${why.join(" | ")}`);
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {
