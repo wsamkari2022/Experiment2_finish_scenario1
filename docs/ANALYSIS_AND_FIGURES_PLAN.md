@@ -194,7 +194,7 @@ options; only the chair changes. Everything else in Block 5 changes position and
 | Did they wish for the same option they decided? | `decided_versus_wished.wished_for_the_same_option` | share with a Wilson 95% CI | a single bar with its CI, in Figure 3 |
 | Which value rises when the decision lands on them? | `decided_versus_wished.wish_minus_decision_by_value` (four values) | a one-sample test per value against 0, Holm across the four; report the mean shift and CI | **Figure 3b**: four bars (one per value, the same colors as everywhere in the paper) with CIs and the 0 line |
 | The same in performance terms | `decided_versus_wished.wish_minus_decision_by_performance_metric` (five metrics), `overall_performance_wish_minus_decision` | the same tests | Figure 3c: five bars |
-| How much truer to their values when it was not their decision? | `decided_versus_wished.responsibility_gap` (a label gap), `labels_apart` | the distribution (it takes few values) and a sign test | a stacked bar of −3…+3 labels apart |
+| **VCI acted against VCI wished** (frozen as **H12**): how much truer to their values when it was not their decision? | `decided_versus_wished.vci_acted` (scenario 4, the decision), `.vci_wished` (scenario 5, the wish), `.responsibility_gap` (wished − acted), `labels_apart`; the same three in `major_info_and_scores.vci` (`when_deciding_scenario_4`, `when_wishing_scenario_5`, `wishing_minus_deciding`). Both are judged on the values the participant opened scenario 4 with, so wishing for the decided option gives 0 | Wilcoxon signed-rank on the gap (zeros kept, Pratt), one-sided (positive), with the sign test beside it; the distribution, since the gap takes few values (0, ±20, ±30, ±40, ±50, ±70, ±90) | **Figure 3d**: VCI acted and VCI wished as paired dots joined by a line per participant, and a stacked bar of −3…+3 labels apart |
 | The "self-serving reversal" | decision `acted_alignment_label` Misaligned or Strongly misaligned AND wish `wished_alignment_label` Aligned | share with CI | named in the text: abandoning your values when it costs colleagues, returning to them when it costs you |
 | What they did with the employer's values | `analysis.position_effect.company_stance.stance` (adopted / compromised / resisted), `.pull_toward_the_company` | shares with CIs; `pull` against how much they held the company's value (`analysis.position_effect.company_value_shown.participant_score_on_this_value_before_block5`, Spearman) | **Figure 4**: the distribution of `pull` with the ±8 bands shaded, and the three shares |
 
@@ -205,6 +205,17 @@ plot of departure share per chair in the order shown, with every participant's d
 `between_scenarios.alone_vs_with_dependents.difference_in_departure_share` (the study's opening question, alone
 against with your family) as one paired comparison, and a heat map of the mean
 `between_scenarios.pairs[].difference_in_departure_share` for all ten pairs (**Figure S5**).
+
+**The veil as a reference point: when people do not know their position** (frozen as **H13**, 27 September 2026).
+Scenario 6 has no position by design, so it never enters the Position Effect or `by_scenario` (HOW_TO_ANALYZE 5.3).
+Next to the five chairs it still answers a question of its own: when people do not know where they will stand, how
+close to their own values do they choose, compared with when they know? Measure: the veil's departure share = 100 × (distance of the rule chosen BEFORE seeing the guess − the nearest of the four rules) ÷ (the farthest − the nearest), every distance from the frozen pre-Block-5 profile by the study's own position arithmetic (`profileDistance` and the menu range in block5Position.ts, the four rules' numbers from `tools/export_block5_content.cjs`). The first rule is `analysis.scenario6_mpf_test.participant.rule_chosen_before_seeing_the_guess`; the stored `analysis.scenario6_mpf_test.distance_from_profile_before_block5` is for the FINAL rule, the same number unless the person changed after the guess. 0 = the rule
+closest to their own values, 100 = the farthest, the same reading as `departure_share` in the five chairs.
+**Figure 24:** Figure 5's five chairs with the veil drawn apart, as a separate reference line at the veil's mean share
+(never a sixth dot on the same axis). **Figure 25:** consistency in three situations for the same person — deciding
+for colleagues (`vci_acted`), on the receiving end (`vci_wished`), not knowing (the veil's
+`per_scenario_consistency_0_to_1` × 100 in `analysis.alignment_records`; recompute it for the first rule when
+`changed_after_seeing_the_guess` is true, from `mpf_prediction.by_rule`). All three have 50 as blind choice.
 
 **Position and performance together.** The results page's sentence "Where other people carried the cost, you moved
 furthest from your own values and took N points MORE performance" asks: when the cost is on strangers, do people
@@ -735,7 +746,9 @@ choice-model odds ratios (16), satisfaction against regret (17), the self-report
 themes (S19), case-study journeys (20), the company stance (4), the scenario-6 order-effect and reactivity charts;
 and for Blocks 1-4 (section 4B): the money survival curves (S21), lever × bridge (S22), the workforce heat map (S23),
 the Block 4 decision Sankey (S24), the profile's provenance (S25), the Blocks 1-4 × scores × feedback heat map (21),
-what Blocks 1-4 predict (22) and context with money against position with lives (23, a candidate for the main text).
+what Blocks 1-4 predict (22) and context with money against position with lives (23, a candidate for the main text);
+and VCI acted against VCI wished (3d), the veil as a reference point beside the five chairs (24) and consistency in
+three situations: deciding, receiving, not knowing (25).
 
 **Design rules for every figure:**
 
@@ -817,7 +830,7 @@ figures are benchmarks, not findings.
 - **H4 (the MPF predicts).** Pooled over the four decisions, the MPF names the first choice more often than 16.7%,
   and its log loss beats the uniform predictor (skill > 0). One-sided; cluster bootstrap.
 
-**Secondary** (FDR across H5-H11):
+**Secondary** (FDR across H5-H13):
 
 - **H5 (value-followers).** Real VCI is above 50 and above the random chooser's 57.
 - **H6 (the profile predicts choices).** In the conditional logit, the value terms of 4.3 are positive, beyond card
@@ -835,6 +848,14 @@ figures are benchmarks, not findings.
   change their choice after the reflection in Block 5 more often (`cvr.changed_their_choice` on reflected decisions).
   Mixed logistic regression with a random intercept per participant, one-sided; the changers are likely a small group
   (about 15 in 100 by the measurement model's estimate), so report the odds ratio and its CI whatever the p-value.
+- **H12 (truer to one's values when the decision is not theirs).** `responsibility_gap` (VCI wished − VCI acted,
+  scenarios 5 and 4, both judged on the values scenario 4 opened with) is above 0. Wilcoxon signed-rank with the zeros
+  kept (Pratt), one-sided; the sign test beside it. Added 27 September 2026.
+- **H13 (not knowing one's position).** The veil's departure share (section 3.1: the rule chosen before the guess, on
+  the study's own position arithmetic) differs from the participant's mean `departure_share` over the five chairs.
+  Paired Wilcoxon signed-rank, two-sided. The veil offers four rules where the chairs offer six actions; both shares
+  are scaled to their own menu, and the paper reads a difference as knowing against not knowing one's position in two
+  kinds of decision (a rule, an action). Added 27 September 2026.
 
 **Exploratory** (reported as such): the wish shift per value; the company stance; the five chairs; MCF reading and
 choice; the lens and stakeholder checks; the feedback links of 6.3; the case studies; the chooser types; every Blocks 1-4 analysis of section 4B (the known

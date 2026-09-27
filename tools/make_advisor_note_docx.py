@@ -44,7 +44,9 @@ def para(text="", size=10.5, bold=False, color=TEXT, italic=False, after=4, befo
 
 
 def heading(text):
-    return para(text, size=14, bold=True, color=BLUE, before=14, after=6)
+    h = para(text, size=14, bold=True, color=BLUE, before=14, after=6)
+    h.paragraph_format.keep_with_next = True  # a heading never ends a page alone
+    return h
 
 
 def shade(cell, fill):
@@ -140,13 +142,15 @@ para("This note summarizes what I plan to learn from the Experiment 2 data: the 
 # ---------------------------------------------------------------- 1. research questions
 heading("1. Research questions")
 W3 = [0.45, 4.35, 1.9]
-table(["#", "Research question", "Answered with"], [
+QUESTIONS = [
     ("GROUP", "Position: who carries the cost"),
     ["Q1", "Do people keep the same moral priorities when the cost lands on someone else?", "Distance of each choice from the participant's values, in five positions"],
     ["Q2", "Deciding for colleagues vs. having the same decision done to you: do the choices differ?", "Scenarios 4 and 5 (a matched pair)"],
     ["Q3", "Which value rises when a decision lands on the participant?", "The wish minus the decision, per value"],
+    ["Q", "Are people truer to their own values when the decision is not theirs?", "VCI acted (scenario 4) vs. VCI wished (scenario 5)"],
     ["Q4", "Under an employer's values, do people adopt them, compromise, or hold their own?", "Company stance"],
     ["Q5", "Do people cross their own red lines more when others carry the cost?", "Red-line crossings by position"],
+    ["Q", "When people do not know their position (the veil), how close do they stay to their own values, compared with when they know it?", "Scenario 6 next to the five positions"],
     ("GROUP", "Reflection (CVR) and clarification (APA)"),
     ["Q6", "How often do people choose against their own values, and what do they do after the reflection?", "CVR outcomes"],
     ["Q7", "When the reflection changes a choice, does the new choice fit their values better?", "Fit before vs. after"],
@@ -168,7 +172,13 @@ table(["#", "Research question", "Answered with"], [
     ["Q19", "Are consistent and stable participants more satisfied, and are high performers less satisfied?", "Well-being vs. the main scores"],
     ["Q20", "Do participants' self-reports match their behavior?", "E.g., value congruence vs. VCI"],
     ["Q21", "Do participants know which value matters most to them?", "Open answer vs. their top value"],
-], W3)
+]
+_n = 0
+for _row in QUESTIONS:
+    if isinstance(_row, list):
+        _n += 1
+        _row[0] = f"Q{_n}"
+table(["#", "Research question", "Answered with"], QUESTIONS, W3)
 
 # ---------------------------------------------------------------- 2. hypotheses
 heading("2. Hypotheses I will test")
@@ -187,12 +197,13 @@ table(["", "Hypothesis", "Test"], [
     ["H9", "Self-reported value congruence rises with VCI.", "Spearman correlation"],
     ["H10", "People whose money decisions change more across places also change more across positions in Block 5.", "Spearman, controlling for VCI"],
     ["H11", "People who changed their Block 4 decision also change their choice more often after the Block 5 reflection.", "Mixed logistic regression"],
+    ["H12", "People are truer to their own values when the decision is not theirs: VCI wished is higher than VCI acted.", "Wilcoxon signed-rank, one-sided"],
+    ["H13", "Departure from one's own values behind the veil, not knowing one's position, differs from the departure in the five known positions.", "Paired Wilcoxon, two-sided"],
 ], W3)
 para("Primary hypotheses are corrected together (Holm); secondary ones with a false-discovery-rate correction.",
      size=9.5, color=GREY, before=4, after=4)
 
 # ---------------------------------------------------------------- 3. scores
-doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 heading("3. The main scores and what they mean")
 table(["Score", "What it means", "How to read it"], [
     ["Value profile (seven sensitivities)", "How much each of seven values matters to the participant, measured in Blocks 1–4: protecting the vulnerable, reducing harm, how many are helped, how much is gained, directness, context, and how much others' perspectives move them.", "0–100 for each value"],
@@ -200,6 +211,8 @@ table(["Score", "What it means", "How to read it"], [
     ["Stability", "Whether the order of the participant's values holds when a decision goes against them.", "100 = the order held"],
     ["Performance", "How much of the best available outcome the decisions captured.", "0 = the weakest option · 100 = the strongest"],
     ["Position Effect", "How much choices shift with who carries the cost: oneself, one's family, strangers, colleagues under an employer, or oneself on the receiving end.", "Higher = position mattered more"],
+    ["VCI acted and VCI wished", "Consistency with one's own values when deciding for colleagues (scenario 4) and when only wishing, with the same decision landing on oneself (scenario 5), judged on the same values.", "Same scale as VCI · wished − acted = the responsibility gap"],
+    ["Veil reference (scenario 6)", "How close the rule chosen without knowing one's position stays to one's own values, shown next to the five known positions.", "0 = the closest rule · 100 = the farthest"],
     ["CVR (value-reflection step)", "When a choice goes against the participant's values, it shows the consequence from two views and the affected person's voice, then asks them to keep or reconsider.", "Kept or reconsidered"],
     ["APA (value-clarification step)", "Lets the participant say which value they want weighted; the profile follows their answer.", "The value named, with confidence 1–5"],
     ["MCF (Moral Commitment Function)", "For each option, says in plain words what it gives and asks of the participant's own values, and which option serves each value most.", "Read or not, and what was read"],
