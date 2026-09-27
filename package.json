@@ -17,6 +17,8 @@
     "validate:stability": "tsc -p tools/tsconfig.sim.json && node tools/simulate_stability.cjs",
     "validate:prediction": "tsc -p tools/tsconfig.sim.json && node tools/validate_prediction.cjs",
     "report:stability": "tsc -p tools/tsconfig.sim.json && node tools/stability_distribution.cjs",
+    "report:step-sensitivity": "tsc -p tools/tsconfig.sim.json && node tools/report_step_sensitivity.cjs",
+    "report:major-scores": "tsc -p tools/tsconfig.sim.json && node tools/report_major_scores.cjs",
     "validate:lenses": "tsc -p tools/tsconfig.sim.json && node tools/validate_cvr_lenses.cjs",
     "validate:people": "node tools/validate_cvr_people.mjs",
     "print:stories": "tsc -p tools/tsconfig.sim.json && node tools/print_stories.cjs",
