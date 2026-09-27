@@ -368,6 +368,73 @@ assert("the panel names no value and no ranking",
   valueWords.every((w) => !leak.includes(w)),
   valueWords.filter((w) => leak.includes(w)).join(", ") || "clean");
 
+/* =================================================================== *
+ * 7. Performance chips: two best places, one worst, ties by the distance from the average
+ *    (since 26 September 2026, audit Fix 7c). The rule is written again here, independently of
+ *    buildPerfChips, and every card of every scenario that shows performance is held to it.
+ * =================================================================== */
+console.log("\n=== 7. Performance chips follow the tie rule (the distance from the average) ===\n");
+{
+  const MK = ["speed", "resourceUse", "reliability", "durability", "reversibility"];
+  const { chipLabel } = B("block5PlannerText.js");
+  const expectedChips = (scn, o) => {
+    const places = {}, lead = {};
+    for (const k of MK) {
+      places[k] = [...scn.options].sort((a, b) => (b.metrics[k] - a.metrics[k]) || a.id.localeCompare(b.id))
+        .findIndex((x) => x.id === o.id) + 1;
+      lead[k] = o.metrics[k] - scn.options.reduce((sum, x) => sum + x.metrics[k], 0) / scn.options.length;
+    }
+    const best = [...MK].sort((a, b) => places[a] - places[b] || lead[b] - lead[a] || a.localeCompare(b)).slice(0, 2);
+    const worst = MK.filter((k) => !best.includes(k))
+      .sort((a, b) => places[b] - places[a] || lead[a] - lead[b] || a.localeCompare(b))[0];
+    return [...best, worst].map((k) => chipLabel({ key: k, label: "", rank: places[k], total: scn.options.length }));
+  };
+  let checked = 0;
+  const wrong = [];
+  const otherProfile = profileOf([GAIN, HELP, HARM, VULN]);
+  for (const scn of BLOCK5_SCENARIOS) {
+    if (scn.decisionRole === "predicted") continue; // scenario 6 shows no performance chips
+    const r = plannerRank(scn, textProfile);
+    const r2 = plannerRank(scn, otherProfile);
+    for (const o of scn.options) {
+      checked++;
+      const shown = explainOption(scn, r, textProfile, o.id).chips;
+      const shown2 = explainOption(scn, r2, otherProfile, o.id).chips;
+      const want = expectedChips(scn, o);
+      if (JSON.stringify(shown) !== JSON.stringify(want) || JSON.stringify(shown2) !== JSON.stringify(shown)) {
+        wrong.push(`${o.id}: ${shown.join(" · ")} (expected ${want.join(" · ")})`);
+      }
+    }
+  }
+  assert("every card shows its two best places and its worst, ties by the distance from the average",
+    wrong.length === 0, wrong.length ? wrong.slice(0, 3).join("; ") : `${checked} cards, the same for two different participants`);
+
+  /* The two cards that made the rule necessary, by name. */
+  const chipsOf = (scnId, optId) => {
+    const scn = BLOCK5_SCENARIOS.find((x) => x.id === scnId);
+    return explainOption(scn, plannerRank(scn, textProfile), textProfile, optId).chips;
+  };
+  check("Seal your apartment: last on speed and reliability, shows Least reliable (36 below the average, speed 30)",
+    chipsOf("chemical_release_escape", "chem_seal_and_shelter").at(-1), "Least reliable");
+  check("Treat the 20 who are sickest: last on reliability and reversibility, shows Least reliable",
+    chipsOf("cancer_treatment_allocation", "cancer_prioritize_vulnerable").at(-1), "Least reliable");
+
+  /* A made-up table small enough to check by hand: option "a" is last on speed (30, average 40) and on
+     reliability (10, average 33). Reliability is 23 below its average, speed only 10, so the card must say
+     "Least reliable". The old alphabet rule said "Slowest" here ("speed" comes after "reliability"), so
+     this line fails on the code as it was before 26 September 2026 - it tests the rule, not luck. */
+  const unit = scenarioOf([
+    { id: "a", gain: 50, harm: 50 }, { id: "b", gain: 50, harm: 50 }, { id: "c", gain: 50, harm: 50 },
+  ]);
+  unit.options[0].metrics = { speed: 30, resourceUse: 60, reliability: 10, durability: 60, reversibility: 60 };
+  unit.options[1].metrics = { speed: 40, resourceUse: 50, reliability: 40, durability: 50, reversibility: 50 };
+  unit.options[2].metrics = { speed: 50, resourceUse: 40, reliability: 50, durability: 40, reversibility: 40 };
+  const unitProfile = profileOf([GAIN, HARM, HELP, VULN]);
+  const ur = plannerRank(unit, unitProfile);
+  check("made-up table: the worst chip is the measure furthest below the average, not the first in the alphabet",
+    explainOption(unit, ur, unitProfile, "a").chips.at(-1), "Least reliable");
+}
+
 console.log("\n  --- sample card, scenario 1, as a participant would read it ---");
 {
   const scn = BLOCK5_SCENARIOS[0];

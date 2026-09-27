@@ -236,6 +236,12 @@ function normaliseField(values: number[]): number[] {
 interface Normalized {
   policy: Record<string, Record<Block5PolicyDimKey, number>>;
   metricRank: Record<string, Record<Block5MetricKey, number>>;
+  /**
+   * The option's number minus the average of the scenario's options, per measure (since 26 September
+   * 2026, audit Fix 7c). Used ONLY to choose between two measures on which an option holds the same
+   * place, when the card has room for one of them (buildPerfChips). Never shown, never scored.
+   */
+  metricLead: Record<string, Record<Block5MetricKey, number>>;
 }
 
 /**
@@ -249,9 +255,11 @@ interface Normalized {
 function normaliseScenario(options: Block5ScenarioOption[]): Normalized {
   const policy: Normalized["policy"] = {};
   const metricRank: Normalized["metricRank"] = {};
+  const metricLead: Normalized["metricLead"] = {};
   for (const o of options) {
     policy[o.id] = {} as Record<Block5PolicyDimKey, number>;
     metricRank[o.id] = {} as Record<Block5MetricKey, number>;
+    metricLead[o.id] = {} as Record<Block5MetricKey, number>;
   }
 
   for (const key of POLICY_DIM_KEYS) {
@@ -261,12 +269,21 @@ function normaliseScenario(options: Block5ScenarioOption[]): Normalized {
 
   // Metrics are RANKED, not normalized: they are shown as "Fastest / Least reversible", never
   // scored, so their standing is ordinal and a distance would imply a precision the chips do not claim.
+  // The distance from the scenario's average (metricLead) is computed only to choose between two
+  // measures on which an option holds the SAME place (see buildPerfChips); it is never shown.
+  //
+  // Two OPTIONS with the same number on a measure still get different places here, by id. That
+  // happens once in the deck (scenario 3, reversibility 30 and 30), it shows only inside the two
+  // cards' details bars, and check G8 in validate_block5_metrics.mjs stops the build if a later
+  // number change creates another such pair (the researcher's choice, audit Fix 7c Part 2 = B).
   for (const key of METRIC_KEYS) {
     const sorted = [...options].sort((a, b) => (b.metrics[key] - a.metrics[key]) || a.id.localeCompare(b.id));
     sorted.forEach((o, i) => { metricRank[o.id][key] = i + 1; });
+    const average = options.reduce((sum, o) => sum + o.metrics[key], 0) / options.length;
+    for (const o of options) metricLead[o.id][key] = o.metrics[key] - average;
   }
 
-  return { policy, metricRank };
+  return { policy, metricRank, metricLead };
 }
 
 /* ------------------------------------------------------------------------- *
@@ -425,7 +442,7 @@ function comparePair(
  */
 export function plannerRank(scenario: Block5Scenario, profile: DecisionProfile): PlannerResult {
   const options = scenario.options;
-  const { policy, metricRank } = normaliseScenario(options);
+  const { policy, metricRank, metricLead } = normaliseScenario(options);
   const { order, thresholds } = profile;
 
   const wins: Record<string, number> = {};
@@ -498,7 +515,7 @@ export function plannerRank(scenario: Block5Scenario, profile: DecisionProfile):
       decidedOn,
       breaches: breaches[o.id],
       ignoredTopValueAgainst: ignoredAgainst[o.id],
-      perfChips: buildPerfChips(metricRank[o.id], options.length),
+      perfChips: buildPerfChips(metricRank[o.id], metricLead[o.id], options.length),
       normalized: policy[o.id],
     };
   });
@@ -514,11 +531,38 @@ export function plannerRank(scenario: Block5Scenario, profile: DecisionProfile):
  *
  * Ordinal only. These are shown, never scored — nothing in Blocks 1–4 says how much any of them is
  * worth to this participant, so the planner reports standing and lets them weigh it.
+ *
+ * WHEN TWO MEASURES GIVE THE SAME PLACE (since 26 September 2026, audit Fix 7c, the researcher's
+ * approval). With six options and five measures an option often holds the same place on two
+ * measures - 23 of the 30 cards in scenarios 1-5 have such a tie at the edge of what they show.
+ * "Seal your apartment" is last on both speed (18) and reliability (23), and there is room for one
+ * worst chip. Until this date the ALPHABET of the measure's code name chose ("speed" comes after
+ * "reliability", so the card said "Slowest"): a reason that has nothing to do with the option.
+ *
+ * Now the card shows the measure where the option stands furthest from the scenario's average -
+ * furthest ABOVE it for the two best chips, furthest BELOW it for the worst - so the chips name where
+ * the option stands out most. Seal: speed is 30 below its average (48), reliability 36 below its
+ * average (59), so "Least reliable". The places themselves are unchanged, the distance is never
+ * shown, and the alphabet decides only if two distances are exactly equal.
+ *
+ * Three other rules were tested and dropped (docs/FRESH_EYE_AUDIT.md, "Fix 7c plan"): distance as a
+ * share of the measure's range cannot break a tie at first or last place (every first place is 100%
+ * of its range); "the place held most clearly" depends on one neighbour's number and picked a chip
+ * the raters read as the opposite; "show every tied chip" gave 3 to 5 chips a card. The rule changes
+ * no score, no card order and nothing saved: chips are shown only. tools/test_planner.cjs section 7
+ * checks every card against it.
  */
-function buildPerfChips(ranks: Record<Block5MetricKey, number>, total: number): PerfChip[] {
+function buildPerfChips(
+  ranks: Record<Block5MetricKey, number>,
+  lead: Record<Block5MetricKey, number>,
+  total: number,
+): PerfChip[] {
   const all = METRIC_KEYS.map((key) => ({ key, label: METRIC_LABELS[key], rank: ranks[key], total }));
-  const byRank = [...all].sort((a, b) => a.rank - b.rank || a.key.localeCompare(b.key));
-  const best = byRank.slice(0, 2);
-  const worst = byRank[byRank.length - 1];
+  const best = [...all]
+    .sort((a, b) => a.rank - b.rank || lead[b.key] - lead[a.key] || a.key.localeCompare(b.key))
+    .slice(0, 2);
+  const worst = all
+    .filter((c) => !best.includes(c))
+    .sort((a, b) => b.rank - a.rank || lead[a.key] - lead[b.key] || a.key.localeCompare(b.key))[0];
   return [...best, worst];
 }

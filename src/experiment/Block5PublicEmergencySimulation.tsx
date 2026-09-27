@@ -3291,13 +3291,15 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
               <HStack gap="2" wrap="wrap">
                 {/*
                   The overall placing, spelled out rather than abbreviated to "Perf". It leads the
-                  row because the five chips beside it are placings on single measures, and the
-                  combined standing is what they add up to.
+                  row because the three chips beside it are placings on single measures - the
+                  option's two best and its worst of the five (buildPerfChips in block5Planner.ts) -
+                  and the combined standing is the average of all five. (This said "five chips"
+                  until 26 September 2026; the card has shown three since the chips were built.)
                 */}
                 {/*
-                  Tinted, while the five beside it stay neutral. This one is the COMBINED standing
+                  Tinted, while the three beside it stay neutral. This one is the COMBINED standing
                   and the others are single measures, so they are different kinds of fact sitting
-                  in one row. Identically styled, the row reads as six equal chips and the summary
+                  in one row. Identically styled, the row reads as four equal chips and the summary
                   disappears into its own components.
                 */}
                 {standing && (

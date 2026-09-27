@@ -238,6 +238,33 @@ MK.forEach((k) => {
   gate(m >= 50 && m <= 80, "G7", `${k.padEnd(14)} grand mean ${m.toFixed(1)}`);
 });
 
+/* G8 — equal numbers (since 26 September 2026, audit Fix 7c Part 2, the researcher's choice B).
+   Every place a card or a measure bar shows ("Hardest to undo", "5th of 6") comes from sorting the
+   options on that measure. Two options with the SAME number have no true order, so the code falls back
+   to their code names - a place that nothing in the scenario decided. Today that happens once, and it
+   is written down below: the researcher chose to keep it and state it rather than add "tied" wording
+   to the screen for one case. Any NEW pair stops the build, so a later number change (another rater
+   round, for example) cannot create one unnoticed. To accept a new pair, add it here with its reason. */
+head("G8  no two options in a scenario share a number on one measure");
+const EQUAL_NUMBERS_ACCEPTED = {
+  "cancer_treatment_allocation/reversibility/30":
+    "the sickest and the most years ahead, both 30; their places (5th, 6th) fall to the code name and show only in the two details bars - no chip shows either since Fix 7c",
+};
+SCORED_SCEN.forEach((sc) => {
+  let pairs = 0;
+  for (const k of MK) {
+    const byValue = {};
+    for (const r of inScenario(sc)) (byValue[r.m[k]] ??= []).push(r);
+    for (const [v, rs] of Object.entries(byValue)) {
+      if (rs.length < 2) continue;
+      const key = `${sc}/${k}/${v}`;
+      if (EQUAL_NUMBERS_ACCEPTED[key]) console.log(`  NOTE  G8   ${sc.padEnd(30)} ${k} ${v} shared - accepted: ${EQUAL_NUMBERS_ACCEPTED[key]}`);
+      else { pairs++; gate(false, "G8", `${sc.padEnd(30)} ${k}: ${rs.map((r) => `"${r.title.slice(0, 30)}"`).join(" and ")} share ${v}`); }
+    }
+  }
+  if (!pairs) gate(true, "G8", `${sc.padEnd(30)} no unlisted shared number`);
+});
+
 console.log("\n" + "=".repeat(72));
 console.log(fails === 0 ? "### ALL METRIC GATES PASSED ###" : `### ${fails} METRIC GATE FAILURE(S) ###`);
 console.log("=".repeat(72) + "\n");

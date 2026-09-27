@@ -1628,7 +1628,7 @@ corrected, 3 = leave the other four).
   show "Least reliable" on both. That changes what participants see, so it waits for Waseem.
 - **Left, as approved:** S1 "Longest-lasting", S2 "Slowest", S3 "Heaviest on resources", S3 "Shortest-lived".
 
-## Fix 7c plan: which chip a card shows when two of its measures tie (written 26 September, waiting for approval)
+## Fix 7c plan: which chip a card shows when two of its measures tie (written 26 September; approved and DONE the same night)
 
 Waseem: "yes, plan and test the tie rule fix first". **Nothing implemented.** Tested on a scratch copy of
 `src/experiment` and `tools` with the planned code, compiled by the project's own TypeScript, strict-checked
@@ -1705,6 +1705,23 @@ test_planner.cjs that every card follows the rule; (3) G8 if Part 2 = B; (4) the
 beside it" in Block5PublicEmergencySimulation.tsx corrected to three (a comment only); (5) the full chain, and the
 chips read on screen for scenarios 1 and 3; (6) CLAUDE.md dated section, HOW_TO_ANALYZE 4.9 row, this file's Log,
 memory; commit and push.
+
+### What was done (26 September, night)
+
+Waseem: "Q1-yes, Q2-B". Part 1 (the rule) and Part 2 = B (keep the one equal pair, add G8).
+
+- **Code:** `normaliseScenario` computes each option's distance from the scenario's average (`metricLead`);
+  `buildPerfChips` sorts tied places by it; both carry a dated comment with the reason and the three dropped
+  rules. The same code as the scratch copy that was tested.
+- **Tests:** `test_planner.cjs` section 7 (every card, two participants, Seal and the sickest by name, and a
+  made-up table). Run on the OLD code it fails 4 times; on the new code it passes. My first made-up table gave
+  the same answer under both rules, so it tested nothing; I changed it before committing.
+- **G8** in `validate_block5_metrics.mjs`: passes, with the one accepted pair as a NOTE.
+- **Checks:** typecheck, lint, the full `validate:block5` chain and the build pass; "Fill feedback" 0 times in
+  `dist/`. **On screen** (scenario 1, read from the live page): Seal "Leanest · Longest-lasting · Least
+  reliable", the convoy "Easiest to undo · Reliability 2nd of 6 · Durability 4th of 6", Carry the respirator
+  "Resources spared 2nd · Durability 2nd · Speed 5th"; the other three unchanged.
+- The card's "five chips" comment corrected to three. Docs: CLAUDE.md section, HOW_TO_ANALYZE 4.9 row.
 
 ## Fix 8 plan: performance on a 0-100 scale inside each scenario (written 26 September; NOT NEEDED - see the note)
 
@@ -1903,3 +1920,4 @@ thesis says so.
 - **2026-09-26. Fix 7b plan written and tested** (the six chips): two moves pass the raters-agree rule (Seal reliability 40 -> 23; sickest reliability 35 -> 26); the second exposes a scripted position test whose code does less than its comment says (corrected version passes, today unchanged). Four chips are left: three on split readings, one blocked by G6. Nothing implemented.
 - **2026-09-26. Fix 7b done** (Waseem: "1-yes, 2-yes, 3-yes"). Seal your apartment reliability 40 -> 23, the sickest 35 -> 26; the "gives up both" test corrected to what its comment says (26 / 6, PASS). Full chain green, position 5.4x; VCI, Stability, prediction and planner overlap unchanged; end-of-study performance 0.5 points or less on average. On screen: four "Performance Nth of 6" places and the shuttle's "Least reliable" chip. The 40 best/worst places: 27 match the raters, 9 near-ties, 4 clear left. Found: a last-place tie shows the measure later in the alphabet, so no card in S1 or S3 says "Least reliable" (waits for Waseem).
 - **2026-09-26. Fix 7c plan written and tested** (the chip tie rule): 23 of 30 cards have two measures sharing a place at a chip's edge and the alphabet decides today. Recommended: show the measure furthest from the scenario's average (16 cards change, 12 in which chip; tested on a compiled scratch copy, every check passes with the same output). Part 2 (one pair of equal numbers, S3 reversibility 30/30): keep it and add check G8. Nothing implemented.
+- **2026-09-26. Fix 7c done** (Waseem: "Q1-yes, Q2-B"). Tied chip places go to the measure furthest from the scenario's average (12 cards change one chip, 4 swap two); test_planner section 7 (fails on the old code, passes on the new); G8 holds the one equal pair (S3 reversibility 30/30). Full chain green; checked on screen for scenario 1. No score, order or saved field changes.

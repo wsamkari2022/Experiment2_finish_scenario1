@@ -437,15 +437,41 @@ audit Fix 7b); each carries a "METRIC AUDIT ... audit Fix 7b" comment in block5S
 - **Participants see it:** "Performance Nth of 6" on four cards (S1: the sealed respirator 5th -> 4th, Seal 4th ->
   5th; S3: the sickest 5th -> 6th, Hold some doses back 6th -> 5th); the shuttle's third chip "Least reliable" is now
   "Resources spared 5th of 6"; the reliability bars of the two options. Checked on screen for scenario 1.
-- **Why no card now says "Least reliable" in S1 or S3.** A card shows its two best places and ONE worst, and when
+- **Why no card said "Least reliable" in S1 or S3 after this fix** (answered the same night by Fix 7c below: both cards now say it). A card shows its two best places and ONE worst, and when
   two measures tie for last, `buildPerfChips` (block5Planner.ts) shows the one later in the alphabet. Seal is also
   the slowest, so it shows "Slowest" (the raters agree: last on both). The sickest shows "Hardest to undo", itself a
-  30-30 tie with the years rule broken by id (the raters put it 3rd). Not changed; a possible later fix.
+  30-30 tie with the years rule broken by id (the raters put it 3rd).
 - **Against the raters now:** of the 40 best and worst places (5 measures x best/worst x scenarios 1-4), 27 go to
   the option the raters picked (25 before), 9 are near-ties (under 10 points), 4 are clear disagreements left: S1
   "Longest-lasting", S2 "Slowest", S3 "Heaviest on resources", S3 "Shortest-lived" (split readings, or G6 blocks
   the move). Of the 72 chips the cards show in scenarios 1-4, 39 sit at the raters' place (38 before), 26 one place
   off, 7 two or more places off.
+
+## Which chip a card shows when two measures tie (Fix 7c), since 26 September 2026
+
+A card's "How it performs" row shows three chips: the option's two best places and its one worst place, out of
+five measures. An option often holds the same place on two measures (23 of the 30 cards in scenarios 1-5 have
+such a tie at the edge of what they show), and until this date the ALPHABET of the measure's code name chose
+which one appeared. Now `buildPerfChips` (block5Planner.ts) shows the measure where the option stands furthest
+from the scenario's average: furthest above it for the two best chips, furthest below it for the worst (the
+researcher's approval, audit Fix 7c). Example: Seal your apartment is last on speed (18, 30 below the average)
+and on reliability (23, 36 below), so it now says "Least reliable" instead of "Slowest".
+
+- **Participants see it:** one chip changes on 12 cards (S1 the convoy and Seal; S2 Leave immediately; S3 the
+  survival rule, the sickest and the essential workers; S4 and S5 Keep every care visit, Cut only where family
+  covers, Protect full visits), and 4 cards swap the order of their two best chips. HOW_TO_ANALYZE 4.9 has the row.
+- **Nothing else moves:** the places are the same, the distance is never shown, and chips are never scored or
+  saved, so no score, card order or database field changes. Tested on a compiled scratch copy first: all 14 check
+  scripts gave the same output apart from the chip lines. No version stamp: `PLANNER_VERSION` is for the ORDER
+  (unchanged) and `SHAPE_VERSION` re-sends saved sections (none changed); the date in 4.9 marks the screen change.
+- **`tools/test_planner.cjs` section 7** writes the rule again independently and holds every card to it, for two
+  different participants; it fails on the code as it was before (4 failures), so it tests the rule.
+- **Equal numbers (Part 2, the researcher's choice B):** two OPTIONS with the same number still get places by
+  code name. It happens once (scenario 3, the sickest and the years rule, both 30 on reversibility; only their
+  details bars show "6th of 6" and "5th of 6"). Kept and written down; new check **G8** in
+  `validate_block5_metrics.mjs` stops the build if a later number change creates another pair
+  (`EQUAL_NUMBERS_ACCEPTED` holds the one accepted pair and its reason).
+- The card's comment said the row had "five chips"; it has three, and now says so.
 
 ## No "Has a cost" tag on costed cards, since 24 September 2026
 
