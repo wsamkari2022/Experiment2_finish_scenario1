@@ -184,6 +184,12 @@ planner wording Waseem said to keep; see the status board)
 14. A1 (the fit number on cards), A2 (#1-value text on cards), A6 (CLAUDE.md claim), A8 (scenario
     5's wish page "close to what you said matters most"), A4 second half (APA "missed by N points"),
     A3 (the order reads as a recommendation), A5 (compare chart draws the person's values).
+    **A5 is decided, keep it** (Waseem, 27 Sept, with the advisor): the dashed "you" shapes stay on
+    both charts in every scenario, and the MCF stays shown as a contribution. Fix 1 does not touch
+    either. **Added 28 Sept** (Waseem: "yes, add it to the Fix 1 list"): the page before Block 5,
+    section 6 ("What we already know about you", Block5IntroPage.tsx), says "Each option will show
+    you how closely it matches them." Once the fit line leaves the cards (A1), that sentence promises
+    something the cards no longer show; change it in the same step. See the Fix 1 plan below.
 15. Remove the two development-only buttons (CLAUDE.md).
 16. One full click-through of the study in the browser, then the full check chain.
 
@@ -312,6 +318,13 @@ Keep `explainOption` producing every line, and change only what renders. Stamp
 `screen_version = "…-no-fit-on-cards"` on every scenario result, add a dbshape gate, a source guard
 in `test:planner`, and a `dist/` string check. Document in CLAUDE.md and HOW_TO_READ. Consider
 the DEV-only variant above.
+
+**Added 28 September (Waseem's approval).** In the same step, reword the sentence in section 6 of the
+page before Block 5 (Block5IntroPage.tsx, "What we already know about you"): "Your earlier answers
+measured four values. Each option will show you how closely it matches them." Without the fit line,
+no card shows that any more. Only its second half needs new words; the wording is Waseem's decision
+when Fix 1 runs (for example, one that points to the values numbers on each card and to "Compare all
+options"). **Not part of Fix 1:** the MCF and the dashed shapes in the Compare overlay (A5, kept).
 
 ---
 
@@ -1956,3 +1969,4 @@ thesis says so.
 - **2026-09-27. MCF words, per-participant reading, and scenario 6** (Waseem: "Q1- Yes, Q2- B and also hide this section 'Your values in this scenario' entirely in the scenario 6, Q3-A, Q4-A", "make MCF very informative per-participant", "color the most important words"). Audit first (4,000 pretend participants answering Blocks 1-4 through the real code, 60,000 readings per group): R12, R13, R14. block5MCFWords.ts now builds colored spans (`mcfWords`, `plainText`) with three sizes each way, the "because" reason, "exactly", "where you stand"; Block5MCFPanel.tsx has a new intro, a value-by-value row per value in the participant's order (value colors from the new block5ValueLook.tsx, green/red tags whose weight shows the size, an "Asks most here" marker) and option chart colors; on a phone the labels sit above the sentences. Scenario 6: no MCF (Block5OptionCompare `showMcf`) and no values panel (`showValuesPanel`). dbShape: `could_be_opened_in_this_scenario`, SHAPE_VERSION 2026-09-27-mcf-not-in-scenario-6, gate D64. validate:mcf M8-M11, each shown to fail on a deliberate break. Full chain green (position 5.4x), prediction, resume and visits green; every major score identical (report:major-scores). Checked on screen: scenario 1 overlay in light, dark and phone width; scenario 5 still shows both; scenario 6 shows neither, the charts open, no gap where the panel was. MCF stays shown as a contribution (Q4-A); Fix 1 never removed it.
 - **2026-09-27. Chart note wording** (Waseem: "yes, change the chart note wording"; "about the dashes in the charts, keep them my advisor wants them"). Block5OptionCompare.tsx: the values chart's caption and the "How to read these charts" note now say an option "falls below where you stand on that value" (was "gives up something you said mattered" - the numbers are computed, never said). The dashed shapes stay on both charts in every scenario. No other page changed; the pre-Block-5 intro's example chart still says "reaches past what you asked for" (asked). Full chain green; checked on screen in scenario 6.
 - **2026-09-27. The page before Block 5 uses the same words, and names the MCF** (Waseem: "yes, change the intro page wording too and mention the MCF briefly too"). Block5IntroPage.tsx section 3: the example chart's note says the dashed line shows "where an option reaches above where you stand and where it falls below it" (was "past what you asked for"), and a new one-sentence box, "The same comparison, in words", names the panel "What each option asks of your four values", says it exists in the first five situations (none in scenario 6), what a reading holds (above or below, and how far) and that it never picks an option. No example reading, so no invented numbers and no real option before its situation. Checked on screen at desktop and phone width.
+- **2026-09-28. Fix 1 list: one more sentence** (Waseem: "yes, add it to the Fix 1 list"). The page before Block 5, section 6, says "Each option will show you how closely it matches them"; once Fix 1 takes the fit line off the cards it would promise something not shown, so it is reworded in the same step (Phase 4 item 14 and the Fix 1 plan). Also written there: A5 is decided, keep - the dashed shapes and the MCF are not part of Fix 1. Docs only.
