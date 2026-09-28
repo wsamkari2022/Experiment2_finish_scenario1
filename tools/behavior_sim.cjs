@@ -18,6 +18,10 @@
  *   performance                   end-of-study performance: the mean captured score of the four decisions,
  *                                 0 = the scenario's weakest option every time, 100 = its strongest
  *   stakeholder                   the stakeholder sensitivity's stability
+ *   vciAll, vciAllLevel           VCI_all (since 28 September 2026): the six hidden running fits, scenarios 5 and 6
+ *                                 included, by the real runningStep / computeVciAll (block5VciAll.ts). The wish is
+ *                                 shown on scenario 4's OPENING values, as the page shows it (profileShownIn); that
+ *                                 changes only which wish a kind picks, so no other score here can move.
  *
  * Load order: a caller that wants to change the step sizes must require step_scale_hook.cjs BEFORE this
  * file, because this file loads block5CVR.js.
@@ -34,6 +38,7 @@ const B = (f) => require(path.join(BUILD, f));
 const { labelOptions, applyKeepUpdates, applyEndorsementUpdates, applyApaUpdates, optionMainValue,
         scenarioIsScored, scenarioVciScore, computeVCI, computeStability, computeSensitivityStability } = B("block5CVR.js");
 const { capturedOf } = B("block5Performance.js");
+const { runningStep, computeVciAll } = B("block5VciAll.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 const POP = require("./vci_distribution.cjs");
 
@@ -47,11 +52,15 @@ const isFit = (l) => l === "aligned" || l === "weakly_aligned";
 function runPerson(start, beh) {
   const frozen = clone(start);
   let p = clone(start);
+  let running = clone(start);   // the hidden running values behind VCI_all
+  let s4Open = null;
   const st = {};
-  const vciRows = [], results = [], captured = [];
+  const vciRows = [], results = [], captured = [], runningRows = [];
   BLOCK5_SCENARIOS.forEach((s, i) => {
-    const ranked = labelOptions(s.options, p);
-    const { opt, cvr } = POP.BEHAVIORS[beh](ranked, p, frozen, i, st);
+    if ((s.decisionRole ?? "decider") === "decider" && BLOCK5_SCENARIOS[i + 1]?.decisionRole === "recipient") s4Open = clone(p);
+    const shownOn = s.decisionRole === "recipient" && s4Open ? s4Open : p;   // the wish: scenario 4's opening values
+    const ranked = labelOptions(s.options, shownOn);
+    const { opt, cvr } = POP.BEHAVIORS[beh](ranked, shownOn, frozen, i, st);
     const w = s.stakesWeight ?? 1;
     const scored = scenarioIsScored(s);
     let finalId = opt.id;
@@ -70,6 +79,9 @@ function runPerson(start, beh) {
     }
     const level = ranked.find((o) => o.id === finalId).level; // judged on the profile the scenario opened with
     vciRows.push({ vciScore: scenarioVciScore(level, s.options.length), decisionRole: s.decisionRole ?? "decider" });
+    const step = runningStep(s, finalId, running, p);
+    running = step.next;
+    runningRows.push({ running: step.record });
     results.push({
       scenarioId: s.id, decisionRole: s.decisionRole ?? "decider", cvrFired: scored && !isFit(opt.level),
       policySnapshotAfter: Object.fromEntries(POLICY.map((k) => [k, sc(p, k)])),
@@ -78,9 +90,11 @@ function runPerson(start, beh) {
     });
   });
   const vci = computeVCI(vciRows);
+  const vciAll = computeVciAll(runningRows);
   const stab = computeStability(results, frozen);
   return {
     vci: vci.value, vciLevel: vci.level,
+    vciAll: vciAll.value, vciAllLevel: vciAll.level,
     stability: stab.value, stabilityLevel: stab.level, measured: stab.conflictSteps > 0,
     performance: Math.round(captured.reduce((a, b) => a + b, 0) / captured.length),
     stakeholder: computeSensitivityStability(results, frozen).stakeholder?.value ?? null,

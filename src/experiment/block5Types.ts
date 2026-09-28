@@ -887,6 +887,31 @@ export interface Block5ScenarioTelemetry {
  * actually moved, which is less when the value hit 0 or 100. Before this, a move swallowed by the
  * edge left no trace, so "did not move" and "could not move" looked the same in the data.
  */
+/**
+ * One scenario's HIDDEN RUNNING FIT (since 28 September 2026, the researcher's design). The running values
+ * are the study's own four values through scenario 4 (every final decision there moves both the same way)
+ * and then ALSO move after the final choice in scenario 5 and in scenario 6, where the study's own values
+ * never move. A choice is judged on the running values as they stood when its scenario OPENED - never on
+ * values its own choice moved. Nothing of this is ever shown to the participant. See block5VciAll.ts.
+ */
+export interface Block5RunningFit {
+  /** RUNNING_VERSION in block5VciAll.ts. */
+  version: string;
+  /** The final choice's label on the running values when the scenario opened. */
+  level: AlignmentLevel;
+  /** labelWeight(level, number of options), 0-1: this scenario's part of VCI_all. */
+  vciScore: number;
+  /** The four running values when the scenario opened (what the choice is judged on). */
+  valuesWhenOpened: Record<Block5PolicyDimKey, number>;
+  /** The four running values after this final choice. */
+  valuesAfter: Record<Block5PolicyDimKey, number>;
+  /** How the running values moved after the choice: the study's own update (scenarios 1-4), or the
+   *  running rule's comparison with the best fit (scenarios 5 and 6). */
+  movedBy: "study_update" | "compare_with_best_fit";
+  /** Every move the running rule made (scenarios 5 and 6 only; empty when the pick was the best fit). */
+  moves?: Block5ValueMove[];
+}
+
 export interface Block5ValueMove {
   /** The dimension key, e.g. "gainResponsivenessSensitivity". */
   value: string;
@@ -989,6 +1014,14 @@ export interface Block5ScenarioResult {
    * "consistency when only wishing" on the same scale, which is the whole point of measuring it.
    */
   vciScore?: number;
+  /**
+   * THE HIDDEN RUNNING FIT of the final choice (since 28 September 2026): the same kind of label, judged
+   * on the hidden RUNNING values as they stood when this scenario opened. Never shown. It feeds VCI_all
+   * (all six scenarios). In scenarios 1-4 it equals `vciScore` (the running values ARE the study's values
+   * there); in scenario 5 it is judged on the values after scenario 4's choice (the cards show scenario
+   * 4's opening values); in scenario 6 on the values after the wish moved them. See block5VciAll.ts.
+   */
+  running?: Block5RunningFit;
   performanceScore?: number;
   /**
    * PERFORMANCE AS A SHARE OF WHAT THIS SCENARIO OFFERED, 0-100. See block5Performance.ts.
@@ -1290,6 +1323,11 @@ export interface Block5Results {
   scenarioResults: Block5ScenarioResult[];
   vci?: number;
   vciLevel?: string;
+  /** VCI_all, 0-100 (since 28 September 2026): the mean of the six scenarios' HIDDEN running fits
+   *  (`running.vciScore`), scenarios 5 and 6 included. Shown on the results page beside VCI (scenarios
+   *  1-4). Its level words have their own derived edges (VCI_ALL_LEVELS in block5VciAll.ts). */
+  vciAll?: number;
+  vciAllLevel?: string;
   /** Stability, 0-100: how far the ORDER of the four policy values changed at the conflict steps.
    *  See the Stability section of block5CVR.ts. */
   stability?: number;

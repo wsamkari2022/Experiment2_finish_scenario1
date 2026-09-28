@@ -11,7 +11,7 @@ import { useState } from "react";
 import {
   Badge, Box, Button, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuArrowRight, LuChartColumn, LuTrendingUp, LuScale, LuTarget, LuRotateCcw } from "react-icons/lu";
+import { LuCheck, LuArrowRight, LuChartColumn, LuTrendingUp, LuScale, LuTarget, LuRotateCcw, LuLayers } from "react-icons/lu";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL } from "./block5CVR";
 import { POLICY_DIM_KEYS } from "./block5Types";
@@ -134,6 +134,10 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
     .sort((a, b) => b.score - a.score);
 
   const vci = results.vci ?? 0;
+  /* VCI_all (28 September 2026): the same measure over all six scenarios, on the hidden running values
+     (block5VciAll.ts). Absent on a run finished before that date, and then its card is not drawn. */
+  const vciAll = results.vciAll;
+  const hasVciAll = typeof vciAll === "number";
   const stability = results.stability ?? 0;
   /*
    * PERFORMANCE IS REPORTED AS A SHARE OF WHAT WAS AVAILABLE, not as the raw mean of the metrics.
@@ -163,11 +167,21 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
           </Text>
         </VStack>
 
-        {/* Headline measures */}
-        <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap="4">
+        {/*
+          Headline measures. Since 28 September 2026 there are two consistency cards side by side (the
+          researcher's design): VCI over the four scenarios where the participant decided and knew their
+          position, and VCI_all over all six. Two columns from tablet width, so the pair reads as a pair
+          and every explanation keeps a readable line length (three or four across squeezed them).
+        */}
+        <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
           <MeasureCard icon={<LuTrendingUp />} palette="blue" label="Value Consistency (VCI)"
             value={`${vci}`} sub={results.vciLevel ?? "—"}
-            hint="How closely your choices matched your own values: 100 means you chose the option that fit you best every time, and 50 is what choosing blindly would give. It is judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
+            hint="In the four scenarios where you made the decision and knew your position (scenarios 1-4): how closely your choices matched your own values. 100 means you chose the option that fit you best every time, and 50 is what choosing blindly would give. It is judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
+          {hasVciAll && (
+            <MeasureCard icon={<LuLayers />} palette="cyan" label="Value Consistency, all six (VCI_all)"
+              value={`${vciAll}`} sub={results.vciAllLevel ?? "—"}
+              hint="The same measure across all six scenarios, including the one where the decision was made for you (scenario 5) and the one where you did not know your position (scenario 6). 100 means the best fit every time, and 50 is what choosing blindly would give. It is judged against your values as they stood at each moment, and here they keep updating after every one of your choices, scenarios 5 and 6 included." />
+          )}
           <MeasureCard icon={<LuScale />} palette="purple" label="Stability"
             value={`${stability}`} sub={results.stabilityLevel ?? "—"}
             hint="Whether the order of your priorities changed during Block 5, at the moments you chose against the option that fit you best. 100 means none of your four values traded places with another." />

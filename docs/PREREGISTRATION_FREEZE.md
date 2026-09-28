@@ -21,6 +21,7 @@ hypotheses below.
 | Card order (planner) | `2026-09-24-a` | `PLANNER_VERSION`, block5Planner.ts; saved per scenario |
 | Prediction rule (MPF) | `2026-09-19-e` | `PREDICTION_VERSION`, block5Prediction.ts; saved as `rule_version` |
 | Moral Commitment Function | `2026-09-23-a` | `MCF_VERSION`, block5MCF.ts; saved as `analysis.mcf.rule_version` |
+| Running values and VCI_all | `2026-09-28-a` | `RUNNING_VERSION`, block5VciAll.ts; saved on every running fit and as `analysis.vci_all.rule_version` |
 | Fit score scale | `share-of-what-they-asked-for-2026-09-24` | `FIT_SCORE_SCALE`, block5CVR.ts; saved as `fitScoreScale` per row |
 | Feedback questions | schema 4 | `FEEDBACK_SCHEMA_VERSION`, feedbackTypes.ts; saved as `blocks.feedback_answers.schemaVersion` |
 | Option numbers and words | as of the launch commit (after Fix 7, 7b, 7c) | block5Scenarios.ts. **At launch, save the export** `node tools/export_block5_content.cjs` beside this file, so the exact content is frozen with it |
@@ -104,7 +105,8 @@ Effect sizes with every test.
 | H13 | **Not knowing one's position.** The departure from one's own values behind the veil (scenario 6) differs from the mean departure over the five positions. Measure: the veil's departure share = 100 × (distance of the rule chosen BEFORE seeing the guess − the nearest of the four rules) ÷ (the farthest − the nearest), every distance from the frozen pre-Block-5 profile by the study's own position arithmetic (`profileDistance` and the menu range in block5Position.ts, the four rules' numbers from `tools/export_block5_content.cjs`). The first rule is `analysis.scenario6_mpf_test.participant.rule_chosen_before_seeing_the_guess`; the stored `analysis.scenario6_mpf_test.distance_from_profile_before_block5` is for the FINAL rule, the same number unless the person changed after the guess. Compared with the participant's mean `analysis.position_effect.by_scenario[].departure_share`. Added 27 September 2026 | Paired Wilcoxon signed-rank, two-sided. The veil stays out of the Position Effect itself; both shares are scaled to their own menu (four rules; six actions) |
 
 **Exploratory** (labelled as such, FDR within each family): everything else in the analysis plan, including the wish
-shift per value, the company stance, the five chairs, MCF reading and choice, the lens and stakeholder checks, the
+shift per value, the company stance, the five chairs, MCF reading and choice, VCI_all (described only, no hypothesis:
+the researcher's decision, 28 September 2026), the lens and stakeholder checks, the
 feedback-behavior links, the known-effect replications of Blocks 1-3, the chooser types and the case studies.
 
 ## 6. What is known in advance and stated, not tested

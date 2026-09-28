@@ -277,3 +277,86 @@ both convoys, which perform well, now also fit many profiles.)*
 VCI also sets part of the scenario-6 prediction's confidence (`predictionConfidence` in
 `block5Prediction.ts`), which is why `PREDICTION_VERSION` moved to `2026-09-19-d` with this method.
 Records made under an earlier version must not be pooled with these.
+
+---
+
+## 12. VCI_all: the same measure over all six scenarios (since 28 September 2026)
+
+**The question.** VCI asks how well the choices fit the participant's own values in the four scenarios where they
+decide and know their position. The researcher also wanted to know whether they hold to their values when the
+decision lands on them (scenario 5, the wish) and when they do not know their position (scenario 6, the veil).
+VCI_all is the same measure over all six. Both are shown on the results page; VCI is unchanged.
+
+**The hidden running values** (the researcher's design). A second copy of the four policy values that moves after
+EVERY final decision: in scenarios 1-4 by the study's own update (so it IS the study's values there), and ALSO
+after the wish and the veil, where the study's own values never move. No reflection runs in scenarios 5 and 6, so
+they use the **running rule**: the keep rule's comparison with the best fit for every pick that is not the best fit
+(+20 to the value where the pick beats the best fit most, -15 to the value where the best fit beat it most, weighted
+by how much the participant holds it; the best fit moves nothing). It was chosen ("Q1-A") over a weak endorsement
+(+15 / -10, as if a reflection had happened), which gave VCI_all within about one point for every pretend kind but
+assumed an answer never given. `applyRunningMoveWithMoves` in block5CVR.ts; the keep rule itself is unchanged
+(its comparison moved into `moveByComparisonWithBestFit`, proven identical on 60,000 cases, gate A1).
+
+**The running fit** of a scenario = the label of its FINAL choice on the running values as they stood when that
+scenario OPENED, weighted as in section 4 (six options 1.00 / 0.80 / 0.50 / 0.10; scenario 6's four 1.00 / 0.67 /
+0.33 / 0.00). Never on values its own choice moved: that is the circularity section 7 rules out (gate V8). Scenario
+6 counts its final choice, the one made after the MPF's guess (the researcher's decision); the rule chosen before
+the guess stays on the record.
+
+**VCI_all** = 100 × the mean of the six running fits, rounded. Blind picking gives 50 on either menu (gate A5:
+50.2 over 2,000 pretend runs), 100 = the best fit every time.
+
+**Its six levels** use VCI's names and are derived the same way (never hand-tuned, "Q3-yes"): the score of choosing
+the same label in every scenario, averaged over this deck's menus (five of six options, one of four), and the
+midpoints between neighbors:
+
+| Level | VCI_all from | (VCI from) |
+|---|---|---|
+| Highly Consistent | 88.89 | 90 |
+| Mostly Consistent | 77.78 | 80 |
+| Moderate | 62.5 | 65 |
+| Low | 47.22 | 50 |
+| Very Low | 27.78 | 30 |
+| Highly Inconsistent | below | below |
+
+They sit lower than VCI's only because scenario 6's four-option weights are lower for every label but the best fit.
+
+**How it behaves** (docs/MAJOR_SCORES_DISTRIBUTION.md, section 1b):
+
+| Pretend participant (report:vci's people) | VCI (1-4) | VCI_all (1-6) |
+|---|---|---|
+| Always the best fit | 100 | 100 |
+| Always the second-best | 80 | 80 |
+| True to their top value | 85 | 89 |
+| Performance chaser | 76 | 76 |
+| Random responder | 57 | 55 |
+| A new value every scenario (flip-flopper) | 34 | 36 |
+| Always the worst fit | 10 | 15 |
+
+**Two effects, measured and stated, not corrected** (the researcher accepted both, "Q2-yes"). Scenario 5's cards are
+shown and scored on the values scenario 4 OPENED with; the running fit judges the wish on the values AFTER scenario
+4's choice.
+- **The echo.** Scenario 4's choice moves the values toward the option chosen, and scenario 5 offers the same six
+  options, so wishing for the option one decided often scores higher: 35 in 100 of such wishes (example: "Protect
+  full visits" 80 in scenario 4, 100 as the wish).
+- **Screen against yardstick.** 8 in 100 wishes for the card that LOOKED best on screen score below 100 on the
+  running values. Checked on a real run in the browser on 28 September 2026: "Cut only where a family member can
+  cover" read 85 out of 100 (the best) on screen and scored 80 (second-best) on the running values.
+
+**Traps for the analysis.** VCI_all contains VCI's four scenarios: never correlate the two, compare their
+difference (`vci_all_minus_vci`). There are two scenario-5 fits and two scenario-6 fits (the study's and the running
+one) and two sets of values; `vci_wished` (hypothesis H12) is the study's scenario-5 fit. VCI_all is described, not
+tested: no hypothesis rests on it ("Q4-described").
+
+**Gates.** `npm run validate:vciall` (A1-A8: the keep rule unchanged, the running rule, running values = the study's
+through scenario 4, no choice judged on its own move, blind 50, derived edges, 100 for a value-follower, decisions'
+running fit = the study's fit and the wish and veil move only the running values), in the `validate:block5` chain;
+`validate:dbshape` gate D65 (saved running fits = the ones rebuilt from the record, VCI_all recomputed by hand in the
+section, the headline and the copy, an old record rebuilt to the same number). Each gate was shown to fail on a
+deliberate break of the code.
+
+**In the stored data.** `result.running` on every scenario (hidden: level, weight, the running values when the
+scenario opened and after, how they moved, the running rule's moves); `vciAll` / `vciAllLevel` on the results;
+`headline.consistency_score_all_six` / `consistency_label_all_six`; `analysis.vci_all` (every part, with a self-check
+that rebuilds the running fits from the saved record); `running_level` and `running_per_scenario_consistency_0_to_1`
+on each row of `analysis.alignment_records`; a copy in `major_info_and_scores.vci`. `RUNNING_VERSION` 2026-09-28-a.

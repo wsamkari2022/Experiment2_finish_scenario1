@@ -216,6 +216,10 @@ closest to their own values, 100 = the farthest, the same reading as `departure_
 for colleagues (`vci_acted`), on the receiving end (`vci_wished`), not knowing (the veil's
 `per_scenario_consistency_0_to_1` × 100 in `analysis.alignment_records`; recompute it for the first rule when
 `changed_after_seeing_the_guess` is true, from `mpf_prediction.by_rule`). All three have 50 as blind choice.
+Since 28 September 2026 draw a second panel from VCI_all's own parts (`analysis.vci_all.by_scenario[].
+running_score_0_to_100`): deciding = the mean of scenarios 1-4, receiving = scenario 5, not knowing = scenario 6 (its
+final rule). The first panel uses the study's own values; the second the running values that the participant sees
+summed up as VCI_all.
 
 **Position and performance together.** The results page's sentence "Where other people carried the cost, you moved
 furthest from your own values and took N points MORE performance" asks: when the cost is on strangers, do people
@@ -322,6 +326,17 @@ section in one table (section 10).
 - **Internal consistency:** the four decisions' `vciScore` as four items (McDonald's omega, or Cronbach's alpha);
   low values are expected (four choices, different scenarios) and are part of why it is a group measure.
 - **Watch:** VCI has 30 possible values; treat it as ordinal (Spearman, ordinal models).
+
+### 4.1b VCI_all — the same over all six scenarios (`headline.consistency_score_all_six`, since 28 September 2026)
+
+Described, not tested (the researcher's decision, "Q4-described"): no hypothesis rests on it.
+- **Known groups:** its distribution against the pretend kinds (docs/MAJOR_SCORES_DISTRIBUTION.md section 1b: best
+  fit 100, second-best 80, true to top value 89, performance chaser 76, random 55, a new value every scenario 36,
+  worst fit 15). Blind picking 50.
+- **What it adds to VCI:** `analysis.vci_all.vci_all_minus_vci` per person (how the wish and the veil compare with
+  deciding), and the three situations side by side (Figure 25). Never correlate VCI_all with VCI.
+- **State:** the echo (35 in 100 wishes for the decided option score higher) and the 8 in 100 wishes for the card
+  that looked best that score below 100; scenario 6 counts its final rule, chosen after the MPF's guess.
 
 ### 4.2 Stability — whether the order of the four values held (`headline.stability_score`)
 

@@ -222,6 +222,8 @@ These are copies, lifted to the top so you do not have to dig. The originals sta
 | Field | Meaning | Range |
 |---|---|---|
 | `consistency_score` | How well their Block 5 choices fit their own values. Internally called **VCI**. The average label weight of the final choices in the four decider scenarios × 100. **50 is what blind picking gives.** Method: `docs/BLOCK5_VCI_METHOD.md` in the code | 10–100, higher = more consistent (0 only if no decider scenario ran) |
+| `consistency_score_all_six` | Since **28 September 2026**. **VCI_all**: the same measure over all SIX scenarios (the four decisions, the wish, the veil's final choice), judged on hidden running values that also move after the wish and the veil. Shown to the participant beside VCI. It CONTAINS `consistency_score`'s four scenarios: never correlate the two. Every part: section 6l | 0–100, 50 = blind picking |
+| `consistency_label_all_six` | VCI_all's level, with its own derived edges: 88.89 / 77.78 / 62.5 / 47.22 / 27.78 (section 6l) | text |
 | `consistency_label` | One of six levels: Highly Consistent (90+), Mostly Consistent (80–89), Moderate (65–79), Low (50–64), Very Low (30–49), Highly Inconsistent (below 30) | text |
 | `stability_score` | Whether the ORDER of their four policy values changed when they went against their best fit: at each conflict step (a scenario where the reflection ran) it counts the pairs of values that traded places, a tie opening or closing as half, and scores 100 × (1 − swaps / 6). Method: `docs/BLOCK5_STABILITY_METHOD.md` in the code | 0–100, 100 = no two priorities traded places |
 | `stability_label` | Held steady (100), Mostly steady (83–99), Shifted a little (50–82), Shifted a lot (17–49), Changed substantially (0–16) | text |
@@ -1139,6 +1141,40 @@ for people who always follow their top value (that value is usually already at 1
 > partly be the edge rather than steadiness. Report those participants separately.
 
 The raw list is `valueMoves` on each `blocks.block5_emergency_scenarios.scenarioResults[]` row.
+
+---
+
+## 6l. `analysis.vci_all` — VCI over all six scenarios, on the hidden running values
+
+Added **28 September 2026** (the researcher's design). VCI (`headline.consistency_score`) is scenarios 1-4. VCI_all is
+the same measure over all six: the four decisions, the wish (scenario 5) and the veil (scenario 6, its FINAL choice).
+
+**The running values.** A hidden copy of the four policy values: the study's own values through scenario 4, then
+ALSO moved after the wish and the veil (the running rule: the keep rule's comparison with the best fit, +20 / -15;
+the best fit moves nothing). The study's own values never move there. Each scenario's **running fit** is its final
+choice's label on the running values as they stood when the scenario opened. Nothing of this was on screen except
+the final VCI_all on the results page.
+
+| Field | What it holds |
+|---|---|
+| `vci_all`, `vci_all_label` | VCI_all and its level (the same as `headline.consistency_score_all_six`) |
+| `vci_scenarios_1_to_4`, `vci_all_minus_vci` | VCI, and the difference: how the wish and the veil compare with deciding |
+| `level_edges` | 88.89 / 77.78 / 62.5 / 47.22 / 27.78, derived like VCI's |
+| `by_scenario[]` | Per scenario: `running_level`, `running_label`, `running_score_0_to_100` (the part of VCI_all), `study_score_0_to_100` (the study's own fit of the same choice; equal in 1-4), `running_values_when_opened`, `running_values_after`, `running_values_moved_by`, `running_value_moves`, and `running_fit_source` |
+| `self_check` | Every running fit REBUILT from the saved record (the values brought into Block 5, the final choices, the study's snapshots) and compared with the one saved when the choice was made; `saved_and_rebuilt_agree` must be true, and VCI_all is recomputed from the rows |
+
+`running_fit_source` says "rebuilt from the saved record" for a run finished before 28 September 2026: those runs
+saved no running fits, and this section works them out. The same two fields sit on every row of
+`analysis.alignment_records` (`running_level`, `running_per_scenario_consistency_0_to_1`; null before that date), and
+`major_info_and_scores.vci` copies `all_six_scenarios_score` / `all_six_scenarios_label`.
+
+> ⚠️ **Three traps.** (1) VCI_all contains VCI's four scenarios: never correlate the two; use `vci_all_minus_vci`.
+> (2) Two fits for scenario 5 and two for scenario 6: the study's (`per_scenario_consistency_0_to_1`; `vci_wished`,
+> hypothesis H12, is the study's scenario-5 fit on the values scenario 4 OPENED with) and the running one here.
+> (3) Scenario 5's cards SHOWED fit on the values scenario 4 opened with; the running fit judges the wish on the values
+> AFTER scenario 4's choice. So a wish for the option decided in scenario 4 often scores higher (35 in 100 of such
+> wishes in pretend runs, "the echo"), and 8 in 100 wishes for the card that looked best score below 100. The
+> researcher accepted both; they are stated, not corrected. Method: `docs/BLOCK5_VCI_METHOD.md` section 12.
 
 ---
 

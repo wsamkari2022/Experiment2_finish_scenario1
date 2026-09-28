@@ -41,6 +41,7 @@ import {
   FIT_SCORE_SCALE, roundForRecord, scenarioCountsTowardsPerformance,
 } from "./block5CVR";
 import { profileShownIn } from "./block5Mirror";
+import { computeVciAll, runningStep } from "./block5VciAll";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
@@ -95,6 +96,11 @@ interface ProgressState {
   scenarioStartTime: number;
   profile: Block5UserProfile;
   firstChoiceId: string | null;
+  /** The HIDDEN running values behind VCI_all (28 September 2026; block5VciAll.ts). Absent until the
+   *  first scenario finishes, when it starts from `profile`; equal to `profile` through scenario 4, and
+   *  moved again by the final choice in scenarios 5 and 6. Never shown and never read by anything the
+   *  participant sees. */
+  runningProfile?: Block5UserProfile;
 }
 
 /**
@@ -1232,6 +1238,21 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       };
     }
 
+    /*
+     * THE HIDDEN RUNNING FIT (28 September 2026, the researcher's design; block5VciAll.ts). The final
+     * choice is judged on the running values as they stood when this scenario OPENED, then the running
+     * values move: by the study's own update in scenarios 1-4 (they are the study's values there), by the
+     * running rule after the wish and the veil. Here, where both result paths meet, so neither can ship
+     * without it. Nothing on screen reads it; it feeds VCI_all on the results page.
+     */
+    const runningWhenOpened = progress.runningProfile ?? progress.profile;
+    let nextRunning = runningWhenOpened;
+    if (shownScenario) {
+      const step = runningStep(shownScenario, result.selectedOptionId, runningWhenOpened, nextProfile);
+      result.running = step.record;
+      nextRunning = step.next;
+    }
+
     // Snapshot the 4 policy values + the two reflection lenses AFTER this scenario's update. The
     // policy snapshot is what Stability counts swaps on; the lens snapshot is what the directness
     // and context stabilities measure distance on; both feed the results charts.
@@ -1244,6 +1265,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     const nextIndex = progress.currentScenarioIndex + 1;
     if (nextIndex >= BLOCK5_SCENARIOS.length) {
       const vci = computeVCI(nextResults);
+      /* VCI_all: the six hidden running fits, scenarios 5 and 6 included (block5VciAll.ts). */
+      const vciAll = computeVciAll(nextResults);
       // Both measured against the profile as it entered Block 5 — the Blocks 1-4 baseline.
       const stab = computeStability(nextResults, userProfile);
       const finalResults: Block5Results = {
@@ -1253,6 +1276,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         originalProfile: userProfile,
         scenarioResults: nextResults,
         vci: vci.value, vciLevel: vci.level,
+        vciAll: vciAll.value, vciAllLevel: vciAll.level,
         stability: stab.value, stabilityLevel: stab.level,
         stabilityDetail: {
           swaps: stab.swaps, conflictSteps: stab.conflictSteps, swapsByScenario: stab.swapsByScenario,
@@ -1282,6 +1306,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       scenarioStartTime: Date.now(),
       profile: nextProfile,
       firstChoiceId: null,
+      runningProfile: nextRunning,
     });
     telRef.current = newTelemetryAccum(); // fresh telemetry for the next scenario
     setExpandedOptions(new Set());

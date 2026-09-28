@@ -64,6 +64,7 @@ import {
   buildBlocks1to4Checks,
   BLOCKS_1_TO_4_KEYS,
   buildMcfSection,
+  buildVciAllSection,
   buildProfileChange,
   buildQuality,
   collectResumeFiles,
@@ -561,6 +562,11 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
          Exposure first: most of this section was never on screen. See buildMcfSection. */
       const mcfSection = buildMcfSection(translated);
       if (mcfSection) sendOrQueue({ op: "saveSection", path: "analysis.mcf", data: mcfSection });
+
+      /* VCI_all and every one of its six running fits, saved and rebuilt, with the check that they agree
+         (since 28 September 2026). See buildVciAllSection. */
+      const vciAllSection = buildVciAllSection(translated);
+      if (vciAllSection) sendOrQueue({ op: "saveSection", path: "analysis.vci_all", data: vciAllSection });
 
       /*
        * EVERY MAJOR SCORE IN ONE ROOM.

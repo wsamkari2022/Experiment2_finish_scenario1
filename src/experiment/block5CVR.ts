@@ -922,12 +922,38 @@ export function applyKeepUpdatesWithMoves(
   stakesWeight = 1,
   menu?: Block5ScenarioOption[],
 ): ProfileUpdate {
-  const p = cloneProfile(profile);
-  const moves: Block5ValueMove[] = [];
-  if (level !== "weakly_aligned") return { profile: p, moves };
+  if (level !== "weakly_aligned") return { profile: cloneProfile(profile), moves: [] };
   if (!menu || menu.length === 0) {
     throw new Error("[applyKeepUpdates] a second-best pick needs the scenario's options (menu) to know which best fit it was chosen over.");
   }
+  return moveByComparisonWithBestFit(profile, option, stakesWeight, menu, {
+    raised: "kept a second-best option: where it beats the best fit most",
+    lowered: "kept a second-best option: where the best fit beat it most",
+  });
+}
+
+/**
+ * THE COMPARISON WITH THE BEST FIT, shared by two rules (moved out of applyKeepUpdatesWithMoves on 28
+ * September 2026, unchanged - the keep rule gives the same profile and the same moves as before, which
+ * gate V13-V15 and every report confirm):
+ *
+ *   - the keep rule, for a second-best pick in scenarios 1-4 (above);
+ *   - the RUNNING rule, for any pick that is not the best fit in scenarios 5 and 6, which moves only the
+ *     hidden running values behind VCI_all (applyRunningMoveWithMoves below).
+ *
+ * If the pick IS the best fit, nothing moves. Otherwise: +20 × stakesWeight to the value where the pick
+ * beats the best fit most, -15 × stakesWeight to the value where the best fit beat it most, weighted by
+ * how much the participant holds it. Ties go to the participant's own rank order.
+ */
+export function moveByComparisonWithBestFit(
+  profile: Block5UserProfile,
+  option: Block5ScenarioOption,
+  stakesWeight: number,
+  menu: Block5ScenarioOption[],
+  why: { raised: string; lowered: string },
+): ProfileUpdate {
+  const p = cloneProfile(profile);
+  const moves: Block5ValueMove[] = [];
   const bestFit = labelOptions(menu, profile)[0];
   if (!bestFit || bestFit.id === option.id) return { profile: p, moves };
 
@@ -943,10 +969,38 @@ export function applyKeepUpdatesWithMoves(
     .filter((x) => x.cost > 0)
     .sort((a, b) => b.cost - a.cost || rankOf(a.k) - rankOf(b.k))[0];
 
-  if (whyChosen) bump(p, whyChosen.k, 20 * stakesWeight, moves, "kept a second-best option: where it beats the best fit most");
-  if (givenUp) bump(p, givenUp.k, -15 * stakesWeight, moves, "kept a second-best option: where the best fit beat it most");
+  if (whyChosen) bump(p, whyChosen.k, 20 * stakesWeight, moves, why.raised);
+  if (givenUp) bump(p, givenUp.k, -15 * stakesWeight, moves, why.lowered);
   recompute(p);
   return { profile: p, moves };
+}
+
+/**
+ * THE RUNNING RULE (28 September 2026, the researcher's approval "Q1-A"): how a FINAL choice in scenario
+ * 5 (the wish) or scenario 6 (the veil) moves the hidden RUNNING values behind VCI_all.
+ *
+ * The study's own values never move there (scenario 5 is only a wish; scenario 6 must never update the
+ * profile), and no reflection runs there, so the rules that need the reflection's answers - the
+ * endorsement update and the APA update - have nothing to read. The only evidence is the choice itself,
+ * compared with the best fit on the same running values, which is exactly what the keep rule reads. So
+ * it is the keep rule's comparison, used for EVERY pick that is not the best fit: the best fit moves
+ * nothing; any other pick moves +20 / -15 as above. It was chosen over a "weak endorsement" (+15 / -10,
+ * as if the person had kept the option after a reflection they never saw), which gave VCI_all within
+ * about one point for every kind of pretend participant but assumed an answer that was never given.
+ *
+ * Never called for scenarios 1-4 (the study's own rules move the running values there) and never on
+ * the study's own values. See block5VciAll.ts.
+ */
+export function applyRunningMoveWithMoves(
+  running: Block5UserProfile,
+  option: Block5ScenarioOption,
+  menu: Block5ScenarioOption[],
+  stakesWeight = 1,
+): ProfileUpdate {
+  return moveByComparisonWithBestFit(running, option, stakesWeight, menu, {
+    raised: "running values only (scenario 5 or 6): where the pick beats the best fit most",
+    lowered: "running values only (scenario 5 or 6): where the best fit beat the pick most",
+  });
 }
 
 /* ---------------- Performance metrics ---------------- */

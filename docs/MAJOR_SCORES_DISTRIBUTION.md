@@ -1,6 +1,6 @@
 # Major scores by kind of participant
 
-> **Generated** by `npm run report:major-scores` on 2026-09-27, from code version `56b3e17` plus changes not yet committed.
+> **Generated** by `npm run report:major-scores` on 2026-09-28, from code version `e146928` plus changes not yet committed.
 > Do not edit this page by hand: change `tools/report_major_scores.cjs` and run it again. **Run it after every change**
 > to an option number, a scoring rule, a step size, the planner or a scenario, and commit the new page with the change.
 
@@ -29,6 +29,7 @@ can be compared fairly. The numbers are the same on every run, until the code ch
 | Score | What it measures | What a fair or good value looks like |
 |---|---|---|
 | **VCI** (0-100) | How well the four decisions fit the participant's own values | Picking blindly gives 50; always the best fit gives 100; always the worst fit 10 |
+| **VCI_all** (0-100, since 28 September 2026) | The same over all six scenarios - the four decisions, the wish and the veil (its final choice) - on hidden running values that also move after the wish and the veil | Blind 50; always the best fit 100; its level edges are its own (88.89 / 77.78 / 62.5 / 47.22 / 27.78), derived the same way as VCI's |
 | **Stability** (0-100) | Whether the order of the four values changed when the participant went against their best fit | 100 = the order held, or it was never tested (see "not measured") |
 | **Performance** (0-100, end of study) | How good the chosen options were, inside each scenario | 0 = the weakest option in every decision, 100 = the strongest; random choosing gives about 50 |
 
@@ -51,6 +52,27 @@ or below the third. The level columns are the share of people in each named leve
 | Flip-flopper (keeps) | 34 | 20 | 30 | 50 | 0% | 0% | 1% | 10% | 60% | 29% |
 | Flip-flopper (via APA) | 34 | 20 | 30 | 50 | 0% | 0% | 1% | 10% | 60% | 28% |
 | Always the worst fit | 10 | 10 | 10 | 10 | 0% | 0% | 0% | 0% | 0% | 100% |
+
+## 1b. VCI_all (all six scenarios)
+
+The same pretend people; scenario 5 is shown on scenario 4's opening values, as on the page. VCI_all contains VCI's
+four decisions, so the two are never correlated; the difference says how the wish and the veil compare with deciding.
+It includes the two stated scenario-5 effects (the echo, and the wishes that followed the screen but score below 100).
+
+| Kind | Mean | p10 | p50 | p90 | VCI_all - VCI (mean) | Highly Consistent | Mostly Consistent | Moderate | Low | Very Low | Highly Inconsistent |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Always aligned | 100 | 100 | 100 | 100 | +0.0 | 100% | 0% | 0% | 0% | 0% | 0% |
+| Always weakly aligned | 80 | 78 | 81 | 81 | -0.2 | 0% | 95% | 5% | 0% | 0% | 0% |
+| Top-two mixer | 88 | 81 | 88 | 94 | -2.2 | 49% | 46% | 5% | 0% | 0% | 0% |
+| True to top value | 89 | 77 | 92 | 97 | +4.1 | 53% | 35% | 9% | 2% | 0% | 0% |
+| Corrected by APA | 70 | 60 | 71 | 81 | -22.1 | 0% | 17% | 67% | 15% | 1% | 0% |
+| Convert (keeps) | 76 | 62 | 77 | 88 | +10.0 | 6% | 36% | 46% | 11% | 2% | 0% |
+| Convert (via APA) | 77 | 62 | 77 | 88 | +9.5 | 9% | 34% | 47% | 10% | 1% | 0% |
+| Performance chaser | 76 | 55 | 80 | 90 | +0.2 | 16% | 40% | 29% | 11% | 5% | 0% |
+| Random responder | 55 | 37 | 55 | 72 | -2.0 | 1% | 4% | 24% | 40% | 28% | 4% |
+| Flip-flopper (keeps) | 36 | 22 | 35 | 51 | +1.9 | 0% | 0% | 1% | 14% | 58% | 26% |
+| Flip-flopper (via APA) | 36 | 22 | 36 | 51 | +2.1 | 0% | 0% | 1% | 14% | 58% | 27% |
+| Always the worst fit | 15 | 8 | 15 | 23 | +5.5 | 0% | 0% | 0% | 0% | 0% | 100% |
 
 ## 2. Stability
 

@@ -23,6 +23,7 @@
     "../src/experiment/block5Position.ts",
     "../src/experiment/block5Company.ts",
     "../src/experiment/block5Mirror.ts",
+    "../src/experiment/block5VciAll.ts",
     "../src/experiment/block5Types.ts",
     "../src/experiment/block5CVRContent.ts",
     "../src/experiment/blocksLegacyMethodology.ts",

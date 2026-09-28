@@ -54,6 +54,7 @@ import { ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, isPredictionTest,
 import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
+import { rebuildRunningFits, vciAllLevel, RUNNING_VERSION, VCI_ALL_LEVELS } from "./block5VciAll";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
 import { deriveCompanyValues, analyseStance, STANCE_LABEL, STANCE_BAND } from "./block5Company";
@@ -81,7 +82,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-27-mcf-not-in-scenario-6";
+export const SHAPE_VERSION = "2026-09-28-vci-all";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -918,6 +919,12 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
        it is called here. The original field stays in blocks for anyone checking the maths. */
     consistency_score: b5.vci ?? null,
     consistency_label: b5.vciLevel ?? null,
+    /* VCI_all (since 28 September 2026): the same measure over all six scenarios, on the hidden running
+       values (block5VciAll.ts; analysis.vci_all has every part). It CONTAINS consistency_score's four
+       scenarios, so never correlate the two - compare their difference. null on a run finished before
+       that date (analysis.vci_all rebuilds it from the saved record). */
+    consistency_score_all_six: b5.vciAll ?? null,
+    consistency_label_all_six: b5.vciAllLevel ?? null,
     /* Stability is the four policy values only: swaps in their order at the conflict steps. */
     stability_score: b5.stability ?? null,
     stability_label: b5.stabilityLevel ?? null,
@@ -1743,6 +1750,12 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
        */
       choice_was_still_aligned_to_the_pre_block5_profile: r.alignedToOriginal ?? null,
       per_scenario_consistency_0_to_1: r.vciScore ?? null,
+      /* The HIDDEN running fit (since 28 September 2026), the part of VCI_all this row gives: the same
+         label, judged on the running values when the scenario opened. Equal to the study's in scenarios
+         1-4; in 5 judged on the values after scenario 4's choice, in 6 on the values after the wish
+         moved them. Never shown. null when the record predates it (analysis.vci_all rebuilds it). */
+      running_level: r.running?.level ?? null,
+      running_per_scenario_consistency_0_to_1: r.running?.vciScore ?? null,
 
       /* ---- CVR: the reflection that fires on a misaligned choice ---- */
       cvr: {
@@ -2240,6 +2253,115 @@ export function buildMpfPercentages(mpfSection: unknown): Record<string, unknown
 }
 
 /**
+ * VCI_ALL, AND THE HIDDEN RUNNING VALUES BEHIND IT (since 28 September 2026, the researcher's design).
+ *
+ * VCI (headline.consistency_score) is scenarios 1-4. VCI_all is the same measure over all six: the four
+ * decisions, the wish (scenario 5) and the veil (scenario 6, its FINAL choice). Each scenario's part is
+ * its final choice's label on the RUNNING values as they stood when that scenario opened. The running
+ * values are the study's own values through scenario 4 and then also move after the wish and the veil
+ * (the running rule: the keep rule's comparison with the best fit, for any pick that is not the best
+ * fit), which the study's own values never do. Nothing of it was on screen except the final VCI_all.
+ *
+ * TWO SOURCES, ONE CHECK. Every scenario result saves its running fit when the choice is made (`running`).
+ * This section also REBUILDS every running fit from what the record saved anyway - the values brought into
+ * Block 5, each final choice, the study's value snapshot after each decision - with the same functions
+ * (rebuildRunningFits). `self_check` says whether the two agree; if they ever do not, one of them is wrong.
+ * A record finished before 28 September 2026 has no saved running fits, and gets the rebuilt ones, marked.
+ */
+export function buildVciAllSection(block5: unknown): Record<string, unknown> | null {
+  if (!block5 || typeof block5 !== "object") return null;
+  const b5 = block5 as Record<string, unknown>;
+  const results = resultsOf(block5);
+  if (!results.length) return null;
+  const original = b5.originalProfile as Block5UserProfile | undefined;
+  const rebuilt = original ? rebuildRunningFits(results, original) : results.map(() => null);
+
+  const disagreements: string[] = [];
+  let compared = 0;
+  const rows = results.map((r, index) => {
+    const scenario = scenarioOf(r.scenarioId);
+    const stored = r.running ?? null;
+    const again = rebuilt[index];
+    if (stored && again) {
+      compared += 1;
+      const valuesAgree = POLICY_DIM_KEYS.every((k) =>
+        Math.abs((stored.valuesAfter?.[k] ?? NaN) - again.valuesAfter[k]) < 0.011
+        && Math.abs((stored.valuesWhenOpened?.[k] ?? NaN) - again.valuesWhenOpened[k]) < 0.011);
+      if (stored.level !== again.level || Math.abs(stored.vciScore - again.vciScore) > 1e-9 || !valuesAgree) {
+        disagreements.push(`scenario ${index + 1} (${r.scenarioId}): saved ${stored.level}, rebuilt ${again.level}`
+          + (valuesAgree ? "" : " - the running values differ"));
+      }
+    }
+    const used = stored ?? again;
+    return {
+      order_shown: index + 1,
+      scenario_id: r.scenarioId ?? null,
+      title: scenario?.title ?? null,
+      decision_role: r.decisionRole ?? "decider",
+      final_choice_option_id: r.selectedOptionId ?? null,
+      running_fit_source: stored
+        ? "saved when the choice was made"
+        : used ? "rebuilt from the saved record (made before 28 September 2026)" : "not available",
+      running_level: used?.level ?? null,
+      running_label: used ? ALIGNMENT_LABEL[used.level] : null,
+      running_score_0_to_100: used ? Math.round(used.vciScore * 10000) / 100 : null,
+      /* The study's own fit of the same final choice, for comparison: equal in scenarios 1-4. */
+      study_score_0_to_100: typeof r.vciScore === "number" ? Math.round(r.vciScore * 10000) / 100 : null,
+      running_values_when_opened: used?.valuesWhenOpened ?? null,
+      running_values_after: used?.valuesAfter ?? null,
+      running_values_moved_by: used
+        ? used.movedBy === "study_update"
+          ? "the study's own update after this decision (scenarios 1-4: the running values are the study's values)"
+          : "the running rule after this choice: compared with the best fit, +20 / -15; the best fit moves nothing"
+        : null,
+      running_value_moves: used?.moves ?? [],
+    };
+  });
+
+  const parts = rows.map((row) => row.running_score_0_to_100);
+  const complete = parts.length > 0 && parts.every((x): x is number => typeof x === "number");
+  const recomputed = complete ? Math.round(parts.reduce((a, b) => a + b, 0) / parts.length) : null;
+  const vciAll = typeof b5.vciAll === "number" ? b5.vciAll : recomputed;
+  const vci = typeof b5.vci === "number" ? b5.vci : null;
+
+  return {
+    what_this_is:
+      "VCI_all: how well the final choices fit the participant's own values across ALL SIX scenarios - "
+      + "the four decisions, the wish (scenario 5) and the veil (scenario 6, its final choice) - judged on "
+      + "hidden running values that move after every final choice, the wish and the veil included. 50 is "
+      + "what blind picking gives, 100 the best fit every time. VCI (headline.consistency_score) is "
+      + "scenarios 1-4 only.",
+    read_this_first:
+      "Three traps. (1) VCI_all CONTAINS VCI's four scenarios: never correlate the two; compare them by "
+      + "vci_all_minus_vci. (2) There are two fits for scenario 5 and two for scenario 6: the study's "
+      + "(per_scenario_consistency_0_to_1; vci_wished for hypothesis H12 is the study's scenario-5 fit, on "
+      + "the values scenario 4 opened with) and the running one here. (3) Scenario 5's cards SHOW fit on "
+      + "the values scenario 4 opened with, while the running fit judges the wish on the values after "
+      + "scenario 4's choice. So a wish for the option decided in scenario 4 often scores higher (the "
+      + "echo; 35 in 100 of such wishes in pretend runs), and 8 in 100 wishes for the card that looked "
+      + "best score below 100. Both were accepted by the researcher and are stated, not corrected.",
+    rule_version: RUNNING_VERSION,
+    level_edges:
+      VCI_ALL_LEVELS.map((l) => `${l.label} from ${Number.isFinite(l.from) ? l.from : "below"}`).join(" · "),
+    vci_all: vciAll,
+    vci_all_label: typeof b5.vciAllLevel === "string" ? b5.vciAllLevel : vciAll === null ? null : vciAllLevel(vciAll),
+    vci_scenarios_1_to_4: vci,
+    vci_all_minus_vci: vciAll !== null && vci !== null ? vciAll - vci : null,
+    by_scenario: rows,
+    self_check: {
+      how:
+        "Every running fit rebuilt from the saved record with the same functions the page used, and "
+        + "compared with the one saved when the choice was made. VCI_all recomputed from the rows.",
+      rows_compared: compared,
+      saved_and_rebuilt_agree: disagreements.length === 0,
+      disagreements,
+      vci_all_recomputed_from_the_rows: recomputed,
+      matches_the_saved_vci_all: typeof b5.vciAll === "number" && recomputed !== null ? b5.vciAll === recomputed : null,
+    },
+  };
+}
+
+/**
  * THE MORAL COMMITMENT FUNCTION, PER SCENARIO AND PER OPTION — AND WHO ACTUALLY READ IT.
  *
  * WHAT MCF IS. For one option it says what that option gives beyond what the participant asked
@@ -2478,6 +2600,14 @@ export function buildMajorScores(
         + "(since 25 September 2026), so wishing for the option they decided gives 0.",
       what_the_wish_changed_by_value: decided?.wish_minus_decision_by_value ?? null,
       what_the_wish_changed_in_words: decided?.what_the_wish_changed_in_words ?? null,
+      /* VCI_all (since 28 September 2026), copied from the headline. Shown to the participant beside VCI. */
+      all_six_scenarios_score: headline?.consistency_score_all_six ?? null,
+      all_six_scenarios_label: headline?.consistency_label_all_six ?? null,
+      how_to_read_all_six:
+        "The same measure over all six scenarios - the four decisions, the wish (scenario 5) and the veil "
+        + "(scenario 6, its final choice) - judged on hidden running values that also move after the wish "
+        + "and the veil. 50 is what blind picking gives. It contains overall_score's four scenarios, so "
+        + "compare the two by their difference, never by a correlation. Every part: analysis.vci_all.",
     },
 
     /* 2 ------------------------------------------------------------------ stability */
@@ -2661,7 +2791,7 @@ export function buildMajorScores(
       (buildCompanyStance(block5) as { stance_label?: string } | null)?.stance_label ?? null,
 
     where_each_number_lives: {
-      vci: "headline.consistency_score · analysis.position_effect.decided_versus_wished",
+      vci: "headline.consistency_score · headline.consistency_score_all_six · analysis.vci_all · analysis.position_effect.decided_versus_wished",
       stability: "headline.stability_score and the three sensitivity scores beside it; was_measured and "
         + "conflict_steps_counted from headline.stability_was_measured / stability_conflict_steps_counted "
         + "(a copy of blocks.block5.stabilityDetail.conflictSteps)",

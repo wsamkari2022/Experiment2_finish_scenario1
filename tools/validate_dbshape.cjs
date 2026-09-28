@@ -59,6 +59,7 @@ const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 const { labelOptions, computeVCI, computeStability, computeSensitivityStability } = B("block5CVR.js");
 const { predictChoice, predictionConfidence, PREDICTION_VERSION } = B("block5Prediction.js");
 const { profileShownIn } = B("block5Mirror.js");
+const { runningStep, computeVciAll, vciAllLevel } = B("block5VciAll.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
                 "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
@@ -89,6 +90,10 @@ function makeParticipant(startScores, pick) {
   const original = profileOf(startScores);
   let current = profileOf(startScores);
   const results = [];
+  /* The hidden running values behind VCI_all (28 September 2026), kept the way the page keeps them:
+     judged when the scenario opens, then moved - by the study's update in the decisions, by the running
+     rule after the wish and the veil. The real runningStep. */
+  let running = original;
 
   BLOCK5_SCENARIOS.forEach((scenario, index) => {
     /* The values this scenario is shown and scored on: the live profile, except the wish, which uses
@@ -206,10 +211,15 @@ function makeParticipant(startScores, pick) {
       };
     }
 
+    const step = runningStep(scenario, chosen.id, running, current);
+    row.running = step.record;
+    running = step.next;
+
     results.push(row);
   });
 
   const vci = computeVCI(results);
+  const vciAll = computeVciAll(results);
   const stab = computeStability(results, original);
   return {
     completed: true,
@@ -218,6 +228,7 @@ function makeParticipant(startScores, pick) {
     originalProfile: original,
     scenarioResults: results,
     vci: vci.value, vciLevel: vci.level,
+    vciAll: vciAll.value, vciAllLevel: vciAll.level,
     stability: stab.value, stabilityLevel: stab.level,
     /* The same detail the live page stores on completion (Block5PublicEmergencySimulation). Added to
        the pretend records on 26 September 2026 for gate D62: without it the fixture would be missing a
@@ -856,6 +867,8 @@ for (const [who, block5] of PEOPLE) {
       if (a !== b) { agrees = false; gaps.push(`${who}: ${what} ${a} vs ${b}`); }
     };
     same(major.vci.overall_score, head.consistency_score, "vci");
+    same(major.vci.all_six_scenarios_score, head.consistency_score_all_six, "vci all six");
+    same(major.vci.all_six_scenarios_label, head.consistency_label_all_six, "vci all six label");
     same(major.vci.overall_label, head.consistency_label, "vci label");
     same(major.vci.when_deciding_scenario_4, position.decided_versus_wished?.vci_acted, "vci acted");
     same(major.vci.when_wishing_scenario_5, position.decided_versus_wished?.vci_wished, "vci wished");
@@ -1539,6 +1552,70 @@ for (const [who, block5] of PEOPLE) {
     why.length === 0
       ? `analysis.mcf says where a reading could be opened: false in scenario 6 only, never read there  (${rows} rows)`
       : `the MCF rows misstate where they could be opened: ${why.slice(0, 3).join(" | ")}`);
+}
+
+/* D65 - VCI_ALL AND ITS RUNNING FITS (28 September 2026, the researcher's design). Recomputed by hand:
+   - every saved running fit equals the one analysis.vci_all rebuilds from the record (self_check);
+   - in the four decisions the running fit IS the study's fit (the running values are the study's values);
+   - the wish is judged on the values AFTER scenario 4's choice (its cards were shown on scenario 4's
+     opening values), and the veil on the values the wish left behind;
+   - the running rule moves nothing after a best-fit pick, and only +20 / -15 otherwise;
+   - VCI_all = the rounded mean of the six weights, the same in the section, the headline and the copy;
+   - a record made before the running fits existed gets the same VCI_all rebuilt, marked as rebuilt. */
+{
+  const why = [];
+  const round = (x) => Math.round(x * 100) / 100;
+  for (const [who, block5] of PEOPLE) {
+    const section = db.buildVciAllSection(block5);
+    const head = db.buildHeadline(block5, null);
+    const rs = block5.scenarioResults;
+    if (!section.self_check.saved_and_rebuilt_agree || section.self_check.rows_compared !== rs.length) {
+      why.push(`${who}: saved and rebuilt disagree ${JSON.stringify(section.self_check.disagreements)}`);
+    }
+    rs.forEach((r, i) => {
+      const role = r.decisionRole ?? "decider";
+      if (role === "decider" && r.running.level !== r.alignmentLevel) why.push(`${who}: decision ${i + 1} running ${r.running.level} vs study ${r.alignmentLevel}`);
+      if (role === "decider" && r.running.movedBy !== "study_update") why.push(`${who}: decision ${i + 1} moved by ${r.running.movedBy}`);
+      if (role !== "decider") {
+        if (r.running.movedBy !== "compare_with_best_fit") why.push(`${who}: scenario ${i + 1} moved by ${r.running.movedBy}`);
+        const best = labelOptions(BLOCK5_SCENARIOS[i].options, profileOf(r.running.valuesWhenOpened))[0];
+        const moves = r.running.moves ?? [];
+        if (best.id === r.selectedOptionId && moves.length) why.push(`${who}: a best-fit pick moved the running values`);
+        if (moves.some((m) => Math.abs(m.requested) !== 20 && Math.abs(m.requested) !== 15)) why.push(`${who}: a running move of ${moves.map((m) => m.requested)}`);
+      }
+      if (i > 0 && JSON.stringify(r.running.valuesWhenOpened) !== JSON.stringify(rs[i - 1].running.valuesAfter)) {
+        why.push(`${who}: scenario ${i + 1} did not open on the running values scenario ${i} left`);
+      }
+    });
+    const wishAt = rs.findIndex((r) => r.decisionRole === "recipient");
+    const s4After = rs[wishAt - 1].policySnapshotAfter;
+    if (!POLICY.every((k) => Math.abs(rs[wishAt].running.valuesWhenOpened[k] - round(s4After[k])) < 0.011)) {
+      why.push(`${who}: the wish was not judged on the values after scenario 4's choice`);
+    }
+    const byHand = Math.round(100 * rs.reduce((a, r) => a + r.running.vciScore, 0) / rs.length);
+    if (block5.vciAll !== byHand || section.vci_all !== byHand || head.consistency_score_all_six !== byHand
+      || section.self_check.vci_all_recomputed_from_the_rows !== byHand || section.vci_all_label !== vciAllLevel(byHand)) {
+      why.push(`${who}: VCI_all ${block5.vciAll} / ${section.vci_all} / ${head.consistency_score_all_six} vs by hand ${byHand}`);
+    }
+    const rows = db.buildAlignmentRecords(block5).by_scenario;
+    if (rows.some((row, i) => row.running_per_scenario_consistency_0_to_1 !== rs[i].running.vciScore)) why.push(`${who}: alignment rows lack the running fit`);
+    /* the same record without its saved running fits: rebuilt, marked, the same VCI_all */
+    const old = { ...block5, vciAll: undefined, vciAllLevel: undefined,
+      scenarioResults: rs.map((r) => { const { running: _drop, ...rest } = r; return rest; }) };
+    const rebuilt = db.buildVciAllSection(old);
+    if (rebuilt.vci_all !== byHand || rebuilt.by_scenario.some((row) => !String(row.running_fit_source).startsWith("rebuilt"))) {
+      why.push(`${who}: a record without saved running fits rebuilt ${rebuilt.vci_all}, not ${byHand}`);
+    }
+  }
+  /* The derived edges: choosing the same label everywhere lands exactly on its edge. */
+  const edgeOk = vciAllLevel(100) === "Highly Consistent" && vciAllLevel(88.9) === "Highly Consistent"
+    && vciAllLevel(88.8) === "Mostly Consistent" && vciAllLevel(77.78) === "Mostly Consistent"
+    && vciAllLevel(77.7) === "Moderate" && vciAllLevel(50) === "Low" && vciAllLevel(47.2) === "Very Low" && vciAllLevel(10) === "Highly Inconsistent";
+  if (!edgeOk) why.push("VCI_all's level edges are not 88.89 / 77.78 / 62.5 / 47.22 / 27.78");
+  gate("D65", why.length === 0,
+    why.length === 0
+      ? "VCI_all: saved running fits = rebuilt ones, decisions = the study's fit, the wish judged after scenario 4's choice, the veil after the wish, best fit moves nothing, VCI_all recomputed by hand everywhere, an old record rebuilt to the same number, derived edges"
+      : `VCI_all is wrong: ${why.slice(0, 3).join(" | ")}`);
 }
 
 console.log("");
