@@ -186,7 +186,10 @@ more strongly than Y" when the costliest value is not the biggest gap (true by a
 value-by-value row per value, strongest first, with a colored tag. Each value keeps the color and icon of
 "Your values in this scenario" (`block5ValueLook.tsx`), above is green and below red, and each option
 carries its chart color. The words are built as colored spans in `block5MCFWords.ts` (`mcfWords`;
-`plainText` joins them), so the gates still read plain text. The arithmetic and `MCF_VERSION` did not
+`plainText` joins them), so the gates still read plain text. The values chart's caption and the "How to read these charts" note in the same overlay now
+say an option "falls below where you stand on that value" (was "gives up something you said mattered"), so
+the overlay says it one way; the dashed "you" shapes on both charts stay, in every scenario (the researcher's
+decision, with the advisor). The arithmetic and `MCF_VERSION` did not
 change. Gates M8 (every size word matches its gap), M9 (the "because" is said exactly when it should be,
 and is true), M10 (every reading names all four values once) in `validate:mcf`; each was checked by
 breaking the code on purpose.

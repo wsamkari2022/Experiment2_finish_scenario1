@@ -42,8 +42,8 @@
  * WHY IT LIVES IN THE COMPARE OVERLAY AND NOWHERE ELSE
  * ════════════════════════════════════════════════════════════════════════════════════════════
  * The overlay is something a participant chooses to open, and it already draws their own four
- * values as a dashed shape with a caption saying that any corner inside it is something they said
- * mattered and the option gives up. This panel is that same disclosure in sentences, for the
+ * values as a dashed shape with a caption saying that any corner inside it falls below where they
+ * stand on that value. This panel is that same disclosure in sentences, for the
  * participants who cannot read a radar chart. Moving it onto the option cards would change it from
  * a thing they went looking for into a thing they are told while choosing, which is a different
  * study (the researcher's decision, 27 September 2026: it stays here, and it stays SHOWN - MCF is

@@ -77,12 +77,21 @@ const POLICY_AXIS_LABEL: Record<Block5PolicyDimKey, string> = {
   outcomeAggregationSensitivity: "How many helped",
 };
 
-/** Plain-English one-liner under each chart title. */
+/**
+ * Plain-English one-liner under each chart title.
+ *
+ * "WHERE YOU STAND", NOT "YOU SAID MATTERED" (27 September 2026, the researcher's approval). The dashed
+ * shape is the participant's four value numbers, which are computed from their answers - they never
+ * said or rated them (the same reason "you rated" left the confirm-keep question on 24 September). The
+ * caption and the note below now use the MCF's words, so the overlay says it one way. The dashed shape
+ * itself is unchanged and stays in every scenario, scenario 6 included (the researcher's decision,
+ * with the advisor).
+ */
 const CHART_HELP = {
   performance:
     "What each option actually achieves. Five measures of how well a plan performs — the further a corner reaches from the middle, the better that option does on that measure. These describe the outcome, not who it favors; that is the second chart.",
   policy:
-    "What each option is built to prioritize. These are the same four values your own answers were scored on, so wherever an option's corner falls inside your dashed shape, that is something you said mattered and this option gives up.",
+    "What each option is built to prioritize. These are the same four values your own answers were scored on, so wherever an option's corner falls inside your dashed shape, that option falls below where you stand on that value.",
 } as const;
 
 interface Props {
@@ -377,7 +386,7 @@ export function Block5OptionCompare({
                 on the right-hand chart is <Key pal={pal}>you</Key> — your own four value
                 priorities. Wherever an option's corner falls short of your dashed line, that
                 option{" "}
-                <Key pal={pal} color={pal.costColor}>gives up something you said mattered</Key>.
+                <Key pal={pal} color={pal.costColor}>falls below where you stand</Key> on that value.
               </Text>
             </VStack>
           </Box>
@@ -388,8 +397,8 @@ export function Block5OptionCompare({
 
             THE MORAL COMMITMENT FUNCTION. The values chart above says, in shape, what each option
             gives and what it asks of this participant; the caption under it already says that a
-            corner inside their dashed shape is something they said mattered and the option gives
-            up. This panel says the same thing in sentences, so the disclosure does not depend on
+            corner inside their dashed shape falls below where they stand on that value. This panel
+            says the same thing in sentences, so the disclosure does not depend on
             being able to read a radar.
 
             IT SITS UNDER THE CHART IT EXPLAINS, and only here. On an option card it would become
