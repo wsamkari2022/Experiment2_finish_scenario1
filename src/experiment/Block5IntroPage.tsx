@@ -37,7 +37,7 @@
  */
 
 import { Badge, Box, Button, Grid, HStack, Heading, Icon, Stack, Text, VStack } from "@chakra-ui/react";
-import { LuArrowRight, LuBookOpen, LuChartColumn, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers } from "react-icons/lu";
+import { LuArrowRight, LuBookOpen, LuChartColumn, LuChevronDown, LuChevronUp, LuChevronsDownUp, LuChevronsRight, LuEye, LuMilestone, LuRoute, LuGauge, LuLayers, LuScale } from "react-icons/lu";
 
 import { ChartLegend, HBarChart, RadarChart } from "./block5Charts";
 import { REFERENCE_SERIES_COLOR, SERIES_COLORS } from "./block5ChartColors";
@@ -780,15 +780,43 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           <Box bg="bg" borderWidth="1px" borderColor="border" rounded="lg" px="4" py="3" mt="4">
             <Text fontSize="xs" color="fg" lineHeight="tall" textAlign="center">
               <Text as="span" fontWeight="semibold">The dashed gray shape is you.</Text>{" "}
+              {/* "WHERE YOU STAND" (27 September 2026, the researcher's approval): the same words as the
+                  real chart's note and the MCF. It said "what you asked for", which is not literally
+                  true - the numbers are computed from the participant's answers, never asked for. */}
               Every option is a solid colored line; the dashed one is your own answers, drawn on top
-              so you can see where an option reaches past what you asked for and where it falls
-              short of it.
+              so you can see where an option reaches above where you stand and where it falls below
+              it.
             </Text>
             <Text fontSize="2xs" color="fg.subtle" lineHeight="tall" textAlign="center" mt="1.5">
               These are example shapes, not real options. Your line on the right-hand chart appears
               from the second situation onward, once there is something to average.
             </Text>
           </Box>
+
+          {/*
+            THE MCF, NAMED ONCE BEFORE IT IS MET (27 September 2026, the researcher's request: "mention the
+            MCF briefly too"). One sentence, so a participant who opens "Compare all options" knows the
+            panel under the charts is the same comparison in words. It names the panel by its real
+            heading and says what a reading contains - above or below, and how far - and that it never
+            picks an option, which is the panel's own promise ("Nothing here is a recommendation").
+
+            "IN THE FIRST FIVE SITUATIONS", because the last one has no such panel (the researcher's
+            decision: no MCF in scenario 6). Said plainly rather than "usually", so the page never
+            promises something a participant will not find. It shows no example reading: a reading is
+            about one option against one person, and any example here would either be invented numbers
+            or a real option shown before its situation.
+          */}
+          <HStack align="start" gap="3" mt="3" bg="bg" borderWidth="1px" borderColor="border"
+            rounded="lg" px="4" py="3">
+            <Icon color="teal.fg" boxSize="4" mt="0.5" flexShrink={0}><LuScale /></Icon>
+            <Text fontSize="xs" color="fg" lineHeight="tall">
+              <Text as="span" fontWeight="semibold">The same comparison, in words.</Text>{" "}
+              In the first five situations, a panel under the two charts called{" "}
+              <Text as="span" fontWeight="semibold">“What each option asks of your four values”</Text>{" "}
+              lets you open any option and read, value by value, whether it sits above or below where
+              you stand, and how far. It never tells you which option to choose.
+            </Text>
+          </HStack>
         </Box>
 
         {/*
