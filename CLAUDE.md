@@ -170,6 +170,36 @@ deliberate acts — open the overlay, open a reading. `analysis.mcf` therefore l
 never on screen. `MCF_VERSION` is stamped on every row; rows made under two versions must not be
 pooled.
 
+**MCF is shown on purpose, as one of the study's contributions** (the researcher's decision, 27
+September 2026, after checking with the advisor). Fix 1 does not remove it: Fix 1 takes four lines off
+the open option cards and never touched MCF. It stays inside the Compare overlay, each reading closed
+until opened.
+
+**The words, revised 27 September 2026 (the researcher's approval).** An audit over 4,000 pretend
+participants found the old words gave the side of a gap but not its size ("More than you asked for" for
+1 point and for 60; "a little below" up to 24 points; 28 in 100 "It asks" sentences read "a little below
+on X" with no "where you stand"), and that "Most of all on X" could read as a contradiction because it
+weighs the gap by how strongly the value is held. Now: three sizes each way from the bands block5MCF
+already has (SLIGHTLY under 10, plain 10-24, WELL 25+); "exactly where you stand"; "because you hold it
+more strongly than Y" when the costliest value is not the biggest gap (true by arithmetic, and checked);
+"where you stand" instead of "what you asked for"; an intro that says what above and below mean; and a
+value-by-value row per value, strongest first, with a colored tag. Each value keeps the color and icon of
+"Your values in this scenario" (`block5ValueLook.tsx`), above is green and below red, and each option
+carries its chart color. The words are built as colored spans in `block5MCFWords.ts` (`mcfWords`;
+`plainText` joins them), so the gates still read plain text. The arithmetic and `MCF_VERSION` did not
+change. Gates M8 (every size word matches its gap), M9 (the "because" is said exactly when it should be,
+and is true), M10 (every reading names all four values once) in `validate:mcf`; each was checked by
+breaking the code on purpose.
+
+**Not in scenario 6, and neither is "Your values in this scenario"** (the researcher's decision, 27
+September 2026: "scenario 6 no MCF and no 'Your values in this scenario' section. Hide both"). There the
+four rules ARE the four values, so a reading told the participant which rule meets where they stand before
+they chose (74-84 in 100 readings of a rule that was not their best fit named exactly their best-fit rule),
+and the panel's four numbers, strongest first, pointed the same way. The two charts in the Compare overlay
+stay (the researcher's choice). Gate M11 (`validate:mcf`) reads the source; `analysis.mcf` rows carry
+`could_be_opened_in_this_scenario` (false in scenario 6; gate D64, `SHAPE_VERSION`
+"2026-09-27-mcf-not-in-scenario-6").
+
 ## The keep rule, revised 24 September 2026
 
 When a participant picks one of their two best-fit options, no reflection runs and
@@ -655,11 +685,11 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 63 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62) and how close the top two values were (D63). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 64 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6). `--dump` writes a full simulated document |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
-| `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence it can produce |
+| `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence and tag it can produce (M1-M7); since 27 September 2026 also that every size word matches its gap (M8), the "because you hold it more strongly" reason is said exactly when it should be and is true (M9), every reading names all four values once in the participant's order (M10), and scenario 6 renders neither the MCF nor "Your values in this scenario" (M11) |
 | `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3× after Fix 6, 5.4× after Fix 7); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
@@ -710,11 +740,10 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   context and stakeholder each have their own stability (distance on their 0–100 scale, the full
   scale = 0). Do not reintroduce a churn ceiling. Method: `docs/BLOCK5_STABILITY_METHOD.md`;
   figures: `npm run report:stability`; gates S1–S11.
-- The "In this scenario" meanings (the "Your values in this scenario" panel, formerly "How to read
-  the four values in this scenario") are absent from scenario 6 on purpose: its four options are the
-  four values, and naming them would turn the prediction test into "pick your value". The
-  participant's own four numbers are still shown there, as the sidebar always showed them; whether
-  scenario 6 should show them at all is an open decision (audit A9).
+- The "Your values in this scenario" panel is absent from scenario 6 on purpose (the whole panel
+  since 27 September 2026; its meanings were already absent): its four options are the four values, and
+  the meanings or the participant's four numbers, strongest first, would turn the prediction test into
+  "pick your value". The MCF is absent there for the same reason (audit A10, closed).
 
 - Participants are never shown an alignment verdict ("Misaligned with your values") or the scoring
   arithmetic. Both were removed on purpose: telling someone how they scored, or how the scoring

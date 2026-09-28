@@ -26,10 +26,10 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 const B = (f) => require(path.join(BUILD, f));
 
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
-const { POLICY_DIM_KEYS } = B("block5Types.js");
+const { POLICY_DIM_KEYS, POLICY_DIM_SHORT } = B("block5Types.js");
 const { policyAlignmentShortfall } = B("block5CVR.js");
 const { mcfForScenario, mcfForOption, MCF_VERSION } = B("block5MCF.js");
-const { mcfSentences } = B("block5MCFWords.js");
+const { mcfSentences, mcfWords, plainText, sideOf, sizeOf } = B("block5MCFWords.js");
 
 const ALL_KEYS = [...POLICY_DIM_KEYS, "directnessSensitivity", "contextSensitivity",
   "stakeholderPerspectiveShiftSensitivity"];
@@ -195,6 +195,121 @@ for (const scenario of BLOCK5_SCENARIOS) {
   }
 }
 
+/* M8, M9, M10 — THE REVISED WORDS SAY WHAT THE NUMBERS SAY (27 September 2026).
+ *
+ * M8  every value's side and size, on its tag AND in the sentence, match its gap: above / below /
+ *     exactly by the sign, and SLIGHTLY (under 10 points), plain (10-24), WELL (25 or more).
+ * M9  "because you hold it more strongly than X" appears exactly when the value the option asks most
+ *     of is not the biggest gap in points - and then it is true: that value is held more strongly.
+ * M10 every reading names each of the four values exactly once in "It gives" / "It asks", and its
+ *     value-by-value rows are the four values, once each, in the order the participant's panel uses.
+ */
+let m8 = true, m9 = true, m10 = true, becauseSaid = 0, rowsRead = 0;
+const expectedSize = (l) => {
+  const g = l.thisOptionDelivers - l.youHold;
+  if (Math.round(g * 10) / 10 === 0) return "exact";
+  return Math.abs(g) >= 25 ? "well" : Math.abs(g) >= 10 ? "plain" : "slightly";
+};
+const expectedSide = (l) => {
+  const g = Math.round((l.thisOptionDelivers - l.youHold) * 10) / 10;
+  return g > 0 ? "above" : g < 0 ? "below" : "exact";
+};
+/** Which group each value name sits in, walking a sentence's spans; stops at "Most of all". */
+function groupsIn(line) {
+  const out = new Map();
+  let current = null;
+  for (const sp of line) {
+    if (sp.tone === "strong") break;
+    if (sp.tone === "above" || sp.tone === "below") {
+      const words = sp.text.toLowerCase().split(" ");
+      current = words.length > 1 ? { size: words[0], side: words[1] } : { size: "plain", side: words[0] };
+    } else if (sp.tone === "exact") current = { size: "exact", side: "exact" };
+    else if (sp.tone === "value" && current) {
+      out.set(sp.value, out.has(sp.value) ? "twice" : current);
+    }
+  }
+  return out;
+}
+for (const scenario of BLOCK5_SCENARIOS) {
+  const titleOf = (id) => scenario.options.find((o) => o.id === id).title;
+  for (const profile of everyProfile) {
+    const score = (k) => profile.dimensions.find((d) => d.key === k).score;
+    const order = [...POLICY_DIM_KEYS].sort((a, b) => score(b) - score(a));
+    for (const row of mcfForScenario(scenario, profile).options) {
+      rowsRead += 1;
+      const w = mcfWords(row, titleOf, order);
+      const lineOf = (k) => row.lines.find((l) => l.value === k);
+
+      /* M10: the rows, and each value named once across the two sentences */
+      if (w.byValue.map((v) => v.value).join() !== order.join()) m10 = false;
+      const inGives = groupsIn(w.gives), inAsks = groupsIn(w.asks);
+      const named = new Map([...inGives, ...inAsks]);
+      const inBoth = [...inGives.keys()].filter((k) => inAsks.has(k));
+      if (named.size !== 4 || inBoth.length || [...named.values()].includes("twice")) {
+        m10 = false; problems.push(`M10 ${scenario.id}/${row.optionId}: ${plainText(w.gives)} | ${plainText(w.asks)}`);
+      }
+
+      /* M8: tag and sentence agree with the numbers */
+      for (const v of w.byValue) {
+        const l = lineOf(v.value);
+        if (v.side !== expectedSide(l) || v.size !== expectedSize(l)) {
+          m8 = false; problems.push(`M8 tag ${scenario.id}/${row.optionId}/${v.value}: ${v.tag} for gap ${l.gap}`);
+        }
+        const g = named.get(v.value);
+        if (g && g !== "twice" && (g.side !== v.side || g.size !== v.size)) {
+          m8 = false; problems.push(`M8 sentence ${scenario.id}/${row.optionId}/${v.value}: ${g.size} ${g.side} vs ${v.size} ${v.side}`);
+        }
+        if (sideOf(l) !== v.side || sizeOf(l) !== v.size) m8 = false;
+      }
+
+      /* M9: "because" exactly when it should be, and true when it is */
+      const below = row.lines.filter((l) => expectedSide(l) === "below")
+        .sort((a, b) => b.costOfFallingShort - a.costOfFallingShort || a.gap - b.gap
+          || POLICY_DIM_KEYS.indexOf(a.value) - POLICY_DIM_KEYS.indexOf(b.value));
+      const asksText = plainText(w.asks);
+      const says = asksText.includes("because you hold it more strongly than");
+      if (below.length > 1) {
+        const costliest = below[0];
+        const biggest = [...below].sort((a, b) => a.gap - b.gap
+          || POLICY_DIM_KEYS.indexOf(a.value) - POLICY_DIM_KEYS.indexOf(b.value))[0];
+        const should = costliest.value !== biggest.value;
+        if (should && !(costliest.youHold > biggest.youHold)) {
+          m9 = false; problems.push(`M9 the reason would be false: ${scenario.id}/${row.optionId}`);
+        }
+        if (says !== should) { m9 = false; problems.push(`M9 ${scenario.id}/${row.optionId}: says ${says}, should ${should}`); }
+        if (says) {
+          becauseSaid += 1;
+          if (!asksText.endsWith(`because you hold it more strongly than ${POLICY_DIM_SHORT[biggest.value]}.`)) m9 = false;
+        }
+        if (w.byValue.filter((v) => v.asksMost).map((v) => v.value).join() !== costliest.value) m9 = false;
+      } else if (says || w.byValue.some((v) => v.asksMost)) m9 = false;
+
+      /* M7, for the words on the tags too: no verdict word, no digit */
+      for (const v of w.byValue) {
+        if (/[0-9]/.test(v.tag) || WORDS.some((x) => v.tag.toLowerCase().includes(x))) m7 = false;
+      }
+    }
+  }
+}
+
+/* M11 — SCENARIO 6 SHOWS NEITHER THE MCF NOR "YOUR VALUES IN THIS SCENARIO" (27 September 2026, the
+ * researcher's decision). Read from the source, because the guard is a line of JSX: each panel is rendered
+ * in exactly one place, and that place sits behind a flag that is false in the prediction test. */
+let m11 = true;
+{
+  const dir = path.join(ROOT, "src", "experiment");
+  const src = (f) => fs.readFileSync(path.join(dir, f), "utf8");
+  const compare = src("Block5OptionCompare.tsx");
+  const sim = src("Block5PublicEmergencySimulation.tsx");
+  const all = fs.readdirSync(dir).filter((f) => f.endsWith(".tsx")).map((f) => src(f)).join("\n");
+  const count = (text, needle) => text.split(needle).length - 1;
+  if (count(all, "<Block5MCFPanel") !== 1 || count(all, "<Block5ValuesPanel") !== 1) m11 = false;
+  if (!compare.includes("const showMcf = !isPredictionTest(scenario);")) m11 = false;
+  if (!/\{showMcf && \(\s*<Box mt="6">\s*<Block5MCFPanel/.test(compare)) m11 = false;
+  if (!sim.includes("const showValuesPanel = !isPredictionTest(scenario);")) m11 = false;
+  if (!/\{showValuesPanel && \(\s*<Box ref=\{valuesRef\}/.test(sim)) m11 = false;
+}
+
 /* M6 — same inputs, same output, every time. */
 {
   const s = BLOCK5_SCENARIOS[0];
@@ -217,8 +332,15 @@ gate("M5", m5, m5 ? "no verdict words: nothing MCF emits says aligned, best fit,
                   : `a verdict word reached MCF: ${problems.slice(-1)[0]}`);
 gate("M6", m6, "the same scenario and profile give a byte-identical reading, every time");
 gate("M7", m7,
-  m7 ? `no verdict word and no digit in any sentence a participant can read  (${sentencesChecked} sentences)`
+  m7 ? `no verdict word and no digit in any sentence or tag a participant can read  (${sentencesChecked} sentences)`
      : `a forbidden word or number reached the page: ${problems.slice(-1)[0]}`);
+gate("M8", m8, m8 ? `every side and size, on the tags and in the sentences, matches its gap  (${rowsRead} readings)`
+                  : `a size or side word disagrees with the numbers: ${problems.filter((x) => x.startsWith("M8")).slice(0, 2).join(" | ")}`);
+gate("M9", m9, m9 ? `"because you hold it more strongly" appears exactly when the costliest value is not the biggest gap, and is true every time  (${becauseSaid} readings)`
+                  : `"Most of all" or its reason is wrong: ${problems.filter((x) => x.startsWith("M9")).slice(0, 2).join(" | ")}`);
+gate("M10", m10, m10 ? "every reading names each of the four values once, and its rows follow the participant's own order"
+                     : `a reading leaves a value out or names it twice: ${problems.filter((x) => x.startsWith("M10")).slice(0, 1).join("")}`);
+gate("M11", m11, "scenario 6 renders neither the MCF nor \"Your values in this scenario\"; each panel is rendered in one place only");
 
 if (process.argv.includes("--show") && sample.length) {
   const s = sample[0];

@@ -1648,6 +1648,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   const topDimensions = shownProfile.dimensions
     .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key))
     .sort((a, b) => b.score - a.score);
+  /* "Your values in this scenario" is not shown in scenario 6 (see the panel below). */
+  const showValuesPanel = !isPredictionTest(scenario);
 
   const baseOverall = metricProfileScore(cumulative);
   const impactFor = (opt: LabeledOption): PreviewImpact => {
@@ -1725,7 +1727,16 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         see Block5ValuesPanel. The wrapper is what pins: sticky only when pinned and only from tablet
         width up, parked under the performance panel at a measured offset (--b5-values-top, written
         by the effect above).
+
+        NOT IN SCENARIO 6 (27 September 2026, the researcher's decision: "scenario 6 no MCF and no
+        'Your values in this scenario' section. Hide both"). Its four rules ARE the four values, so
+        the participant's four numbers, strongest first, point at the rule the prediction test is
+        about to guess. The meanings were already hidden there; now the whole panel is (audit A10,
+        closed). Nothing else has to change: with the panel absent, valuesRef is null and
+        pinnedValuesHeight() reads 0, so the sidebar's sticky offset and the preview observer count
+        nothing for it. validate:mcf gate M11 checks this source.
       */}
+      {showValuesPanel && (
       <Box ref={valuesRef} data-pinned={valuesPinned ? "on" : "off"}
         maxW="7xl" mx="auto" mb="6" position="relative" zIndex="29"
         css={{
@@ -1744,6 +1755,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           </>}
           pinned={valuesPinned} onTogglePinned={toggleValuesPinned} />
       </Box>
+      )}
 
       <Grid ref={gridRef} templateColumns={{ base: "1fr", lg: "352px 1fr" }} gap={{ base: "6", lg: "8" }} maxW="7xl" mx="auto" alignItems="start">
         {/*
@@ -2023,6 +2035,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           scenario={scenario}
           options={labeled}
           yourPolicyScores={policyScoresOf(shownProfile)}
+          yourValueOrder={topDimensions.map((d) => d.key as Block5PolicyDimKey)}
           cumulative={cumulative}
           completedCount={progress.scenarioResults.length}
           pal={pal}

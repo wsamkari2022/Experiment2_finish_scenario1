@@ -23,37 +23,24 @@
  *     values scenario 4 opened with - see profileShownIn);
  *   - each value's meaning in THIS scenario from `valueHere` (getCVRValueHere), as the old guide
  *     did. NOT in scenario 6, on the researcher's decision: there the four options ARE the four
- *     values, so the meanings would turn the prediction test into "pick your value". The numbers
- *     stay in scenario 6 exactly as the sidebar showed them there; see the audit (A9, scenario 6).
+ *     values, so the meanings would turn the prediction test into "pick your value". Since 27
+ *     September 2026 the WHOLE panel is absent in scenario 6 (the researcher's decision: "scenario 6
+ *     no MCF and no 'Your values in this scenario' section"); the parent does not render it there,
+ *     so the `here === null` branch below is no longer reached by any live scenario (audit A10).
  *   - the general definition of each value, on hover, as the sidebar did (POLICY_DIM_EXPLAIN);
  *   - the sidebar's closing sentence about every option staying available.
  * No fit, no ranking of options, no verdict - the standing rule holds.
  */
 import { useState, type ReactNode } from "react";
 import { Box, Button, Flex, Grid, HStack, Icon, Text } from "@chakra-ui/react";
-import {
-  LuChevronsDownUp, LuChevronsUpDown, LuCompass, LuHeartPulse, LuPin, LuPinOff, LuShield,
-  LuTrendingUp, LuUsersRound,
-} from "react-icons/lu";
+import { LuChevronsDownUp, LuChevronsUpDown, LuCompass, LuPin, LuPinOff } from "react-icons/lu";
 import { POLICY_DIM_EXPLAIN, type Block5PolicyDimKey, type Block5Scenario } from "./block5Types";
 import { getCVRValueHere } from "./block5CVRContent";
 import type { Block5Palette } from "./block5Palette";
+import { LOOK, NAME } from "./block5ValueLook";
 
-/** The same four names every other Block 5 surface uses. */
-const NAME: Record<Block5PolicyDimKey, string> = {
-  vulnerabilityProtectionSensitivity: "Protecting the vulnerable",
-  groupSizeSensitivity: "Reducing harm",
-  gainResponsivenessSensitivity: "How much is gained",
-  outcomeAggregationSensitivity: "How many are helped",
-};
-
-/** One icon and one color family per value; Chakra's semantic tokens follow light and dark mode. */
-const LOOK: Record<Block5PolicyDimKey, { icon: ReactNode; palette: string }> = {
-  vulnerabilityProtectionSensitivity: { icon: <LuShield />, palette: "purple" },
-  groupSizeSensitivity: { icon: <LuHeartPulse />, palette: "teal" },
-  gainResponsivenessSensitivity: { icon: <LuTrendingUp />, palette: "orange" },
-  outcomeAggregationSensitivity: { icon: <LuUsersRound />, palette: "pink" },
-};
+/* The four values' names, icons and colors live in block5ValueLook.tsx since 27 September 2026, shared with
+   the MCF panel so each value looks the same in both. */
 
 /** Remembers, per viewer, whether the panel is minimized. Browser-only; losing it costs nothing. */
 const MINIMIZED_KEY = "vrds_b5_values_minimized";

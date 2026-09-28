@@ -50,7 +50,7 @@ import { ACTIVE_TIME_KEY } from "./activeTime";
 import { SESSION_LOG_KEY } from "./sessionLog";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
-import { ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, resultCountsTowardsPerformance } from "./block5CVR";
+import { ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
 import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
@@ -81,7 +81,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-27-yes-no-scale-text";
+export const SHAPE_VERSION = "2026-09-27-mcf-not-in-scenario-6";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -2262,7 +2262,14 @@ export function buildMpfPercentages(mpfSection: unknown): Record<string, unknown
  *
  * WHAT IS DELIBERATELY ABSENT. No sentence is stored. The wording is derived from these numbers by
  * block5MCFWords, so keeping a copy would only create a second thing to keep in step. What IS
- * stored is everything the sentences are built from.
+ * stored is everything the sentences are built from. (The words were revised on 27 September 2026 -
+ * three sizes each way, "because you hold it more strongly", a value-by-value reading - and are
+ * built from the same stored numbers; see block5MCFWords.ts and HOW_TO_ANALYZE 4.9.)
+ *
+ * NOT ON SCREEN IN SCENARIO 6 (27 September 2026, the researcher's decision). The prediction test's
+ * row is still computed, for analysis, but its reading could not be opened: the panel is not
+ * rendered there. `could_be_opened_in_this_scenario` says so on the row, so a `was_read: false`
+ * there is never mistaken for a participant who chose not to look (gate D64).
  */
 export function buildMcfSection(block5: unknown): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
@@ -2295,6 +2302,8 @@ export function buildMcfSection(block5: unknown): Record<string, unknown> | null
       scenario_id: r.scenarioId ?? null,
       title: scenario.title,
       rule_version: reading.version,
+      /* False only in the prediction test (scenario 6), where the panel is not rendered. */
+      could_be_opened_in_this_scenario: !isPredictionTest(scenario),
 
       /* ---- what this participant actually saw ---- */
       compare_overlay_opens: tel.compareChartsOpens ?? 0,
@@ -2361,7 +2370,8 @@ export function buildMcfSection(block5: unknown): Record<string, unknown> | null
       "MOST OF THIS WAS NEVER ON SCREEN. MCF lives inside the compare overlay and every option's "
       + "reading starts closed, so a participant sees it only by opening the overlay and then "
       + "opening a reading. Check was_read on the row and on the option before treating any of it "
-      + "as something they were told.",
+      + "as something they were told. In scenario 6 (the prediction test) it cannot be opened at all "
+      + "(could_be_opened_in_this_scenario is false): the row is computed for analysis only.",
     it_cannot_disagree_with_the_alignment_label:
       "cost_of_falling_short is the study's own per-value shortfall, taken from the function that "
       + "produces the alignment score rather than recomputed. The four parts sum to that score's "

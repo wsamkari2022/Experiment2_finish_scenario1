@@ -971,6 +971,7 @@ that table serves each value most, and what taking that one would ask in exchang
 
 | Field | What it holds |
 |---|---|
+| `could_be_opened_in_this_scenario` | Since **27 September 2026**. `false` only in scenario 6 (the prediction test), where the MCF is not shown at all; its row is computed for analysis only, so its `was_read: false` is not a choice not to look |
 | `was_read`, `options_read`, `readings_opened`, `seconds_reading` | The exposure. `read_the_option_they_chose` says whether one of the readings was for the option they took |
 | `compare_overlay_opens` | How many times the overlay itself was opened in that scenario |
 | `profile_used`, `profile_used_values` | The four values the reading was built on — the profile that scenario opened on, which is the profile the reading used |
@@ -989,6 +990,22 @@ recomputed, and the four parts sum to that score's shortfall. `npm run validate:
 
 **No sentence is stored.** The wording a participant read is derived from these numbers by
 `block5MCFWords`, so a stored copy would only be a second thing to keep in step.
+
+**The words changed on 27 September 2026; the numbers did not.** Since then each reading says how far
+an option sits from each of the four values, in three sizes each way, taken from `direction`: SLIGHTLY
+(`close`, under 10 points), plain (`above` / `below`, 10-24), WELL (`well_above` / `well_below`, 25 or
+more), and "exactly" when `gap` is 0. "Most of all on X" names the value with the largest
+`cost_of_falling_short` (= `asks_most_of`); when that is not the largest gap it adds "because you hold it
+more strongly than Y", which is always true (the cost is the gap weighted by `you_hold`). Records made
+before that date saw the older words (HOW_TO_ANALYZE 4.9).
+
+> ⚠️ **A value that was never measured reads as 50 here, like everywhere else.** When Blocks 1-4 measured
+> nothing for protecting the vulnerable or reducing harm, the profile holds the neutral 50 with
+> `notMeasured: true` (section 6h), and `you_hold` is that 50. The participant saw the same 50 in "Your
+> values in this scenario", so the reading agreed with the screen; but a gap on such a value is a gap from
+> a placeholder. About 11 in 100 steady pretend participants have at least one such value. Check the flag
+> on the profile before reading a gap on it as a real distance (the researcher's decision, 27 September
+> 2026: state it, do not change the words).
 
 ---
 

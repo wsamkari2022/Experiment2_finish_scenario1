@@ -3,7 +3,8 @@
  *
  * WHAT IT SHOWS
  * Two radar charts, the note that explains how to read them, and — since 23 September 2026 — the
- * Moral Commitment Function underneath both: the second chart in sentences, one option at a time.
+ * Moral Commitment Function underneath both: the second chart in sentences, one option at a time
+ * (not in scenario 6 since 27 September 2026; see `showMcf`).
  * See Block5MCFPanel. The order on the page is deliberate and was corrected on the same day: the
  * charts, then the note that explains the charts, then MCF. An explanation separated from the
  * thing it explains is not an explanation.
@@ -50,7 +51,7 @@ import { RadarChart, ChartLegend, type RadarSeries } from "./block5Charts";
 import { Block5MCFPanel } from "./Block5MCFPanel";
 import { OPTION_SERIES_COLORS, REFERENCE_SERIES_COLOR } from "./block5ChartColors";
 import type { Block5Palette } from "./block5Palette";
-import type { LabeledOption } from "./block5CVR";
+import { isPredictionTest, type LabeledOption } from "./block5CVR";
 import {
   METRIC_KEYS, POLICY_DIM_KEYS,
   type Block5MetricKey, type Block5MetricProfile, type Block5PolicyDimKey, type Block5Scenario,
@@ -90,6 +91,8 @@ interface Props {
   options: LabeledOption[];
   /** The participant's current four policy scores, for the dashed reference shape. */
   yourPolicyScores: Record<Block5PolicyDimKey, number>;
+  /** The same four values strongest first, the order of "Your values in this scenario" (for MCF). */
+  yourValueOrder?: Block5PolicyDimKey[];
   /** Running average performance across committed scenarios (starts at 0). */
   cumulative: Block5MetricProfile;
   /** How many scenarios are already committed — gates the performance reference line. */
@@ -101,8 +104,15 @@ interface Props {
 }
 
 export function Block5OptionCompare({
-  scenario, options, yourPolicyScores, cumulative, completedCount, pal, onClose, onMcfReading,
+  scenario, options, yourPolicyScores, yourValueOrder, cumulative, completedCount, pal, onClose, onMcfReading,
 }: Props) {
+  /* NO MCF IN SCENARIO 6 (27 September 2026, the researcher's decision: "scenario 6 no MCF and no
+     'Your values in this scenario' section"). Its four rules ARE the four values, so a reading says
+     which rule meets where the participant stands before they choose - in 74-84 of 100 readings of a
+     rule that was not their best fit it named exactly their best-fit rule, which is the answer the
+     prediction test measures. The two charts stay (the researcher's choice), so the overlay still
+     opens there; only the panel of readings is gone. validate:mcf gate M11 checks this source. */
+  const showMcf = !isPredictionTest(scenario);
   // Every option is visible on first open, so the participant sees the whole field at once
   // and narrows down from there rather than having to build the comparison up themselves.
   const [visibleOptionIds, setVisibleOptionIds] = useState<Set<string>>(
@@ -385,14 +395,18 @@ export function Block5OptionCompare({
             IT SITS UNDER THE CHART IT EXPLAINS, and only here. On an option card it would become
             something a participant is told while choosing rather than something they opened.
           */}
-          <Box mt="6">
-            <Block5MCFPanel
-              scenario={scenario}
-              yourPolicyScores={yourPolicyScores}
-              pal={pal}
-              onOpenOption={onMcfReading}
-            />
-          </Box>
+          {showMcf && (
+            <Box mt="6">
+              <Block5MCFPanel
+                scenario={scenario}
+                yourPolicyScores={yourPolicyScores}
+                yourValueOrder={yourValueOrder}
+                optionColors={colorOf}
+                pal={pal}
+                onOpenOption={onMcfReading}
+              />
+            </Box>
+          )}
 
 
         {/* ---------------- Footer ---------------- */}

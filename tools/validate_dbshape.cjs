@@ -1516,6 +1516,31 @@ for (const [who, block5] of PEOPLE) {
       : `the top-two gap is wrong: ${why.join(" | ")}`);
 }
 
+/* D64 - MCF IS NOT ON SCREEN IN SCENARIO 6 (27 September 2026, the researcher's decision). Every row says
+   whether its reading could be opened: false in the prediction test, true everywhere else, and a scenario-6
+   row always reads was_read false. */
+{
+  const why = [];
+  let rows = 0;
+  for (const [who, block5] of PEOPLE) {
+    const mcf = db.buildMcfSection(block5);
+    for (const row of mcf.by_scenario) {
+      if (row.could_not_be_computed) continue;
+      rows += 1;
+      const scenario = BLOCK5_SCENARIOS.find((s) => s.id === row.scenario_id);
+      const expected = (scenario.decisionRole ?? "decider") !== "predicted";
+      if (row.could_be_opened_in_this_scenario !== expected) why.push(`${who}/${row.scenario_id}: could_be_opened ${row.could_be_opened_in_this_scenario}`);
+      if (!expected && row.was_read !== false) why.push(`${who}/${row.scenario_id}: read in scenario 6`);
+    }
+  }
+  const six = PEOPLE.some(([, b]) => db.buildMcfSection(b).by_scenario.some((r) => r.could_be_opened_in_this_scenario === false));
+  if (!six) why.push("no scenario-6 row to check");
+  gate("D64", why.length === 0,
+    why.length === 0
+      ? `analysis.mcf says where a reading could be opened: false in scenario 6 only, never read there  (${rows} rows)`
+      : `the MCF rows misstate where they could be opened: ${why.slice(0, 3).join(" | ")}`);
+}
+
 console.log("");
 console.log("========================================================================");
 if (fails) {

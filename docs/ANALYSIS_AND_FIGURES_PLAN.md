@@ -407,7 +407,17 @@ Claims: it puts into words what an option asks of the person's own values, and t
   fit better in scenarios where MCF was read (mixed model)? Self-selection is the trap: people who read may be
   different people. A within-person comparison removes the stable differences; say that it cannot remove the rest.
 - **Content validity is built in:** its per-value costs add up exactly to the alignment shortfall (gate M1); every
-  sentence passes the no-verdict, no-number check (`npm run validate:mcf`). Say this in the methods.
+  sentence passes the no-verdict, no-number check (`npm run validate:mcf`). Say this in the methods. Since 27
+  September 2026 the words also say how far (three sizes each way) and why a value counts most, and gates M8-M10
+  check that every size word, every "because" and every one of the four values matches the numbers.
+- **Does "In exchange" move people?** When someone reads an option that is not their best fit, "In exchange" names
+  another option to take instead, and that is their best-fit option in about 57-61 readings in 100 (pretend
+  participants, scenarios 1-5, 27 September 2026). Test it: among readings of a non-best option, is the final choice
+  more often the option its `in_exchange[].take_this_instead` named than blind choice would give (1 in 6)?
+  Within person, as above. This is the MCF's nudge, stated as a result rather than hidden.
+- **Scenario 6 is out.** Since 27 September 2026 the MCF cannot be opened there
+  (`could_be_opened_in_this_scenario: false`), so leave scenario 6 out of every MCF exposure analysis, and never
+  count its `was_read: false` as a choice not to look.
 
 ### 4.7 MPF — the moral prediction function
 
