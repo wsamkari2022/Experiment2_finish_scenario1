@@ -9,7 +9,8 @@
  *
  * On submit it computes the Well-being subscales/composite, assembles a MongoDB-ready
  * FeedbackRecord (session_id + timing + Block-5 telemetry + answers), stores it in
- * LocalStorage (latest + archive), then shows a thank-you screen with Finish.
+ * LocalStorage (latest + archive), then shows a thank-you screen. (Its "Finish" button, which reset the
+ * browser, was removed on 28 September 2026 - see the note above the thank-you screen.)
  *
  * Privacy: no name/email/id is requested — only the anonymous session_id is attached.
  * This page never touches Block-5 scoring, the seven sensitivities, or the scenarios.
@@ -19,7 +20,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   Badge, Box, Button, Heading, HStack, Icon, Separator, Stack, Text, Textarea, VStack,
 } from "@chakra-ui/react";
-import { LuArrowLeft, LuCheck, LuClock, LuMessageSquare, LuRotateCcw, LuSparkles } from "react-icons/lu";
+import { LuArrowLeft, LuCheck, LuClock, LuMessageSquare, LuSparkles } from "react-icons/lu";
 import type { Block5Results } from "./block5Types";
 import { markStage } from "./telemetry";
 // DEV ONLY — delete this import and the <DevFillFeedbackButton /> below before the study is live.
@@ -30,10 +31,8 @@ import {
   WELLBEING_PART_A_SUBSCALES,
   assembleFeedbackRecord, computeWellbeing, saveFeedbackRecord,
   shouldShowApaSection, shouldShowCvrSection, usedDualPerspective,
-  FEEDBACK_ARCHIVE_KEY,
   type FeedbackAnswer, type FeedbackAnswers, type FeedbackQuestion,
 } from "./feedbackTypes";
-import { PARTICIPANT_DIRECTORY_KEY } from "./participantDirectory";
 import { getActiveSummary } from "./activeTime";
 import { MethodLogo, type Method } from "./MethodLogo";
 
@@ -282,31 +281,13 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
   }, [answers, collect, isAnswered, onCompleted, requiredCodes, results, sessionId, showApa, showCvr, showDual]);
 
-  /**
-   * Finish: reset for a fresh participant, but PRESERVE two things that outlive the run.
-   *
-   * The archived feedback records, as before — and the participant directory. The directory is
-   * every person this machine has enrolled, and it is what the start screen reads to recognise a
-   * returning participant and to refuse a second attempt. Clearing it with everything else would
-   * mean that finishing one session quietly erased the record of everyone who had used the
-   * machine before, and that each of them could then take the study again.
-   *
-   * Anything that must survive a reset goes in this list. Nothing else does.
+  /*
+   * NO "FINISH" BUTTON ON THE THANK-YOU PAGE (removed 28 September 2026, the researcher's request).
+   * It cleared this browser's copy of the run and reloaded to the start screen, which looked like an
+   * invitation to take the study again. It never recorded anything: the study is marked complete when
+   * the feedback is submitted (onCompleted, ExperimentFlow), so removing it changes no data. For
+   * testing, the development-only "Restart from Block 1" button still resets a browser.
    */
-  const handleFinish = useCallback(() => {
-    try {
-      const preserved: Array<[string, string | null]> = [
-        [FEEDBACK_ARCHIVE_KEY, localStorage.getItem(FEEDBACK_ARCHIVE_KEY)],
-        [PARTICIPANT_DIRECTORY_KEY, localStorage.getItem(PARTICIPANT_DIRECTORY_KEY)],
-      ];
-      localStorage.clear();
-      sessionStorage.clear();
-      for (const [key, value] of preserved) {
-        if (value) localStorage.setItem(key, value);
-      }
-    } catch { /* ignore */ }
-    window.location.reload();
-  }, []);
 
   if (submitted) {
     return (
@@ -359,10 +340,6 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Pr
               </HStack>
             </Box>
           )}
-          <Button onClick={handleFinish} size="lg" bg="gray.900" color="white" _hover={{ bg: "gray.800" }} rounded="lg" px="8" gap="2">
-            <Icon><LuRotateCcw /></Icon>
-            Finish
-          </Button>
         </VStack>
       </Box>
     );

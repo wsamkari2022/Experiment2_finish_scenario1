@@ -320,6 +320,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 27 September 2026 | Scenario 6: no MCF inside Compare all options (the two charts stay), and no "Your values in this scenario" panel at all. Before this date both were on that page, so a scenario-6 choice made before it may have been made after reading which rule meets the person's values. `analysis.mcf.by_scenario[].could_be_opened_in_this_scenario` is false for scenario 6 |
 
 | 28 September 2026 | The results page shows a second consistency card, "Value Consistency, all six (VCI_all)", beside VCI, and VCI's card now says it covers "the four scenarios where you made the decision and knew your position (scenarios 1-4)". Two columns of cards instead of three. Nothing on the scenario pages changed |
+| 28 September 2026 | The thank-you page has no "Finish" button any more (it reset the browser to the start screen). No data changes: completion is recorded when the feedback is submitted |
 
 ### 4.10 VCI_all contains VCI, and judges the wish on values the screen did not show
 

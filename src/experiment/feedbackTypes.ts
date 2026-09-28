@@ -408,7 +408,7 @@ export interface FeedbackBlock5Summary {
    * The LocalStorage key the full Block-5 results USED to live under.
    *
    * KEPT FOR REFERENCE ONLY - do not analyze from it. Storing a key rather than the data was a
-   * data-loss bug: "Finish" calls localStorage.clear(), which deletes exactly the entry this
+   * data-loss bug: "Finish" called localStorage.clear() (that button was removed on 28 September 2026), which deleted exactly the entry this
    * points at, so every archived record referred to something that no longer existed. The data
    * itself now travels in `FeedbackRecord.block5Full`.
    */
@@ -425,9 +425,9 @@ export interface FeedbackAnswers {
 /**
  * ONE RECORD PER PARTICIPANT, AND IT CONTAINS EVERYTHING.
  *
- * This is the row you will analyze. It is the only structure that survives a participant pressing
- * "Finish", because that handler clears LocalStorage and preserves the archive alone - so anything
- * not physically inside this object is gone.
+ * This is the row you will analyze. It is the only structure that survived a participant pressing
+ * "Finish" (removed from the thank-you page on 28 September 2026), because that handler cleared
+ * LocalStorage and preserved the archive alone - so anything not physically inside this object was gone.
  *
  * It did not always contain everything, and the gap was serious enough to name here so it is never
  * reintroduced: until 2026-09-02 the record held a Block-5 SUMMARY plus the string

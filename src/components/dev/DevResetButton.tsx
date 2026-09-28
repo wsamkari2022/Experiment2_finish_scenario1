@@ -44,9 +44,9 @@ import { FEEDBACK_ARCHIVE_KEY } from "@/experiment/feedbackTypes";
  *   theme / chakra-ui-color-mode — wiping these would flash the tester with a mode switch.
  *   FEEDBACK_ARCHIVE_KEY         — the accumulated feedback records, kept for export.
  *
- * The archive is not a guess. The app's own two reset paths (clearAllSessionData in
- * FinalMoralAnalysisPage and handleFinish in UserFeedbackPage) both call localStorage.clear() and
- * then put this one key back, with the comment "PRESERVE the archived records for export" — it
+ * The archive is not a guess. The app's own reset paths (clearAllSessionData in FinalMoralAnalysisPage,
+ * and handleFinish in UserFeedbackPage until its "Finish" button was removed on 28 September 2026) call
+ * localStorage.clear() and then put this one key back, with the comment "PRESERVE the archived records for export" — it
  * holds every completed run, not the state of the current one. A dev button that quietly deleted
  * a pilot's worth of feedback on its first press would be a worse bug than the one it fixes. To
  * clear the archive too, remove it from this set for that run.
