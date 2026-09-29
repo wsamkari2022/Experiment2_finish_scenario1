@@ -92,6 +92,7 @@ line("|---|---|---|");
 line("| **VCI** (0-100) | How well the four decisions fit the participant's own values | Picking blindly gives 50; always the best fit gives 100; always the worst fit 10 |");
 line("| **VCI_all** (0-100, since 28 September 2026) | The same over all six scenarios - the four decisions, the wish and the veil (its final choice) - on hidden running values that also move after the wish and the veil | Blind 50; always the best fit 100; its level edges are its own (88.89 / 77.78 / 62.5 / 47.22 / 27.78), derived the same way as VCI's |");
 line("| **Stability** (0-100) | Whether the order of the four values changed when the participant went against their best fit | 100 = the order held, or it was never tested (see \"not measured\") |");
+line("| **Stability_all** (0-100, since 29 September 2026) | The same rule over all six scenarios, on the running values: the wish and the veil count when the final choice was not one of the two best fits | Never above Stability; 100 = the order held, or it was never tested |");
 line("| **Performance** (0-100, end of study) | How good the chosen options were, inside each scenario | 0 = the weakest option in every decision, 100 = the strongest; random choosing gives about 50 |");
 line("");
 line("\"p10 / p50 / p90\": 10 in 100 people score at or below the first number, half at or below the second, 90 in 100 at");
@@ -138,6 +139,36 @@ for (const k of KINDS) {
   const v = col(k, "stability");
   const meas = res[k].filter((r) => r.measured).map((r) => r.stability);
   line(`| ${k} | ${mean(v).toFixed(0)} | ${q(v, 0.1)} | ${q(v, 0.5)} | ${q(v, 0.9)} | ${pct(1 - meas.length / v.length)} | ${meas.length ? mean(meas).toFixed(0) : "-"} | ${levelShares(k, "stabilityLevel", STABILITY_LEVELS).join(" | ")} |`);
+}
+line("");
+
+line("## 2b. Stability_all (all six scenarios)");
+line("");
+line("Stability's own rule over all six scenarios, on the hidden running values behind VCI_all (since 29 September 2026):");
+line("the four decisions count exactly as in Stability, the wish and the veil when the final choice was not one of the two");
+line("best fits. It contains Stability, so it is never higher and the two are never correlated; the difference says what");
+line("the wish and the veil added. \"Not measured\" = no step counted in any of the six.");
+line("");
+line(`| Kind | Mean | p10 | p50 | p90 | Stability_all - Stability (mean) | Not measured | ${STABILITY_LEVELS.map((l) => l.label).join(" | ")} |`);
+line(`|---|---|---|---|---|---|---|${STABILITY_LEVELS.map(() => "---").join("|")}|`);
+for (const k of KINDS) {
+  const v = col(k, "stabilityAll");
+  const d = res[k].map((r) => r.stabilityAll - r.stability);
+  const notMeasured = res[k].filter((r) => !r.stabilityAllMeasured).length / v.length;
+  line(`| ${k} | ${mean(v).toFixed(0)} | ${q(v, 0.1)} | ${q(v, 0.5)} | ${q(v, 0.9)} | ${mean(d) >= 0 ? "+" : ""}${mean(d).toFixed(1)} | ${pct(notMeasured)} | ${levelShares(k, "stabilityAllLevel", STABILITY_LEVELS).join(" | ")} |`);
+}
+line("");
+line("## 2c. Top-value choices (saved, never shown)");
+line("");
+line("In how many of the six scenarios the final choice was the option that does most for the #1 value brought into");
+line("Block 5, and for the #1 or #2 value (since 29 September 2026; analysis.top_value_choices). Choosing blindly gives");
+line(`${mean(col(KINDS[0], "blindTopValue")).toFixed(2)} and ${mean(col(KINDS[0], "blindTopOrSecond")).toFixed(2)} of 6 on these menus (worked out for these same people). It looks at the top value(s) only, so it is not VCI.`);
+line("");
+line("| Kind | #1 value (mean, of 6) | #1 or #2 value (mean, of 6) | 6 of 6 on the #1 value |");
+line("|---|---|---|---|");
+for (const k of KINDS) {
+  const a = col(k, "topValue"), b = col(k, "topOrSecond");
+  line(`| ${k} | ${mean(a).toFixed(1)} | ${mean(b).toFixed(1)} | ${pct(a.filter((x) => x === 6).length / a.length)} |`);
 }
 line("");
 

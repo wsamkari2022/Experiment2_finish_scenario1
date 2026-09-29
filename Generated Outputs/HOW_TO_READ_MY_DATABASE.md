@@ -228,6 +228,7 @@ These are copies, lifted to the top so you do not have to dig. The originals sta
 | `consistency_label` | One of six levels: Highly Consistent (90+), Mostly Consistent (80–89), Moderate (65–79), Low (50–64), Very Low (30–49), Highly Inconsistent (below 30) | text |
 | `stability_score` | Whether the ORDER of their four policy values changed when they went against their best fit: at each conflict step (a scenario where the reflection ran) it counts the pairs of values that traded places, a tie opening or closing as half, and scores 100 × (1 − swaps / 6). Method: `docs/BLOCK5_STABILITY_METHOD.md` in the code | 0–100, 100 = no two priorities traded places |
 | `stability_label` | Held steady (100), Mostly steady (83–99), Shifted a little (50–82), Shifted a lot (17–49), Changed substantially (0–16) | text |
+| `stability_all_score`, `stability_all_label`, `stability_all_was_measured`, `stability_all_conflict_steps_counted` | **Since 29 September 2026.** Stability_all: Stability's rule over all six scenarios on the running values (section 6n). It CONTAINS `stability_score` (never above it): compare the difference, never correlate. Shown on the results page | 0–100; text; true / false; 0–6 |
 | `stability_was_measured`, `stability_conflict_steps_counted` | **Since 26 September 2026.** Whether Stability counted anything: the number of conflict steps (scenarios where the participant went against their best fit and the reflection ran), and true when it is 1 or more. **false means the Stability score is 100 by default and measures nothing.** A copy of `blocks…stabilityDetail.conflictSteps`, so older finished records can be read the same way from there. null = no stored detail | true / false / null; 0–4 |
 | `directness_stability_score`, `directness_stability_label` | How far their directness sensitivity traveled on its 0–100 scale during Block 5, as 100 × (1 − distance / 100). Same five words as Stability. **Usually 100**: it moves only when the second lens was generated and answered | 0–100 |
 | `context_stability_score`, `context_stability_label` | The same for context sensitivity | 0–100 |
@@ -1204,6 +1205,38 @@ Use it with `TOOL_resultsPage` ("The final results page", not helpful to very he
 at once (`card_under_scores` with a short `active_time.by_stage_minutes.block5_summary` and no charts) means less than one
 from somebody who read the page. Decide the cut-off before looking. Records made before 28 September 2026 have no
 `results_page` at all: then the only way on was the bottom button.
+
+---
+
+## 6n. `analysis.stability_all` — Stability over all six scenarios
+
+Added **29 September 2026**. Stability's own rule (pairs of the four values that traded places, a tie as half) over all six
+scenarios, on the hidden running values behind VCI_all. The four decisions count exactly as Stability does (where the
+reflection ran), so that part equals Stability's swaps; the wish (scenario 5) and the veil (scenario 6) count when the final
+choice was not one of the two best fits on the running values the scenario opened with.
+
+| Field | What it holds |
+|---|---|
+| `stability_all`, `stability_all_label` | The score (100 × (1 − swaps / 6)) and Stability's level words; the same as the headline |
+| `stability_scenarios_1_to_4`, `stability_all_minus_stability` | Stability, and the difference: what the wish and the veil added (never positive) |
+| `was_measured`, `conflict_steps_counted`, `swaps_counted` | Whether any step counted (false: 100 means "never tested"), how many, and the swaps |
+| `by_scenario[]` | Per scenario: `kind`, `counted_as_a_conflict_step`, `why` in words, `swaps` |
+| `running_values_source` | "saved when each choice was made", or "rebuilt from the saved record" |
+| `self_check` | The score recomputed equals the saved one; the decisions' part equals Stability's swaps. Both must be true |
+
+> ⚠️ **Traps.** It contains Stability: never correlate them. Steps in scenarios 5 and 6 are smaller (+20 / −15) than a
+> reflection's. Scenario 5 is judged on the running values after scenario 4's choice (VCI_all's "echo"). Its level depends
+> on the step sizes: compare groups, never one person's word.
+
+## 6o. `analysis.top_value_choices` — did they choose for their top value?
+
+Added **29 September 2026**. **Never shown to the participant.** In how many of the six scenarios the final choice was the
+option that does most for the #1 value they brought into Block 5 (a tie counts for every tied option), and for their #1 or
+#2 value. `times_chose_most_for_top_value`, `times_chose_most_for_top_or_second_value`, `out_of` (6),
+`blind_choosing_would_give` (about 1.1 and 2.2 on these menus), `top_value_label`, `second_value_label`,
+`top_two_were_tied`, and `by_scenario[]`. It looks at the top value(s) only, so it is not VCI: a best-fit picker scores
+about 2.7 of 6, because the best fit balances all four values. A copy of the counts is in
+`major_info_and_scores.top_value_choices`.
 
 ---
 

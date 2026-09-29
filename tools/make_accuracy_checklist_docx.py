@@ -217,6 +217,14 @@ SECTIONS = [
         ("VCI_all (all six scenarios).",
          "Built on the hidden running values. Choosing blindly gives 50. Every saved running fit is rebuilt from the "
          "record and must agree with the saved one.", ["vciall", "dbshape"], "(D65)"),
+        ("Stability_all (all six scenarios).",
+         "Stability's own rule over all six, on the running values: the four decisions count exactly as Stability does, "
+         "the wish and the veil when the final choice was not one of the two best fits. It is never above Stability. "
+         "Shown beside Stability on the results page.", ["vciall", "dbshape", "journey"], "(A9-A11, D67, J11)"),
+        ("Top-value choices (saved, never shown).",
+         "In how many of the six scenarios the final choice did most for the #1 value brought into Block 5, and for the #1 "
+         "or #2. Blind choosing gives about 1.1 and 2.2 of 6; recounted by hand for every pretend participant.",
+         ["vciall", "dbshape", "journey"], "(A12, D67, J11)"),
         ("Stability.",
          "Counts how many pairs of values swapped places at the moments the person went against their best fit. It also "
          "says whether it measured anything at all (stability_was_measured).", ["stability", "dbshape"], "(D62)"),
@@ -333,6 +341,7 @@ OPEN = [
 
 LIMITS = [
     ("VCI_all contains VCI.", "Never correlate the two; use the difference (vci_all_minus_vci)."),
+    ("Stability_all contains Stability.", "Never correlate the two; use stability_all_minus_stability. Compare groups: the level depends on the step sizes."),
     ("The echo and the screen-against-yardstick gap.",
      "A wish for the decided option often scores higher on the running values (35 in 100), and 8 in 100 wishes for "
      "the best-looking card score below 100. You accepted both; they are stated."),

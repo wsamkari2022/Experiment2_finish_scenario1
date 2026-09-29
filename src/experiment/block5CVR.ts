@@ -1549,8 +1549,9 @@ export function rankSwaps(
   return swaps;
 }
 
-/** Equation (3) for a number of swaps. Also the level edges: one, three and five swaps. */
-function stabilityFromSwaps(swaps: number): number {
+/** Equation (3) for a number of swaps. Also the level edges: one, three and five swaps. Exported since
+ *  29 September 2026 for Stability_all (block5StabilityAll.ts), which must use the same equation. */
+export function stabilityFromSwaps(swaps: number): number {
   return Math.round(100 * (1 - Math.min(1, swaps / STABILITY_FULL_REVERSAL)));
 }
 

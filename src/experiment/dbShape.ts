@@ -56,6 +56,7 @@ import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { rebuildRunningFits, vciAllLevel, RUNNING_VERSION, VCI_ALL_LEVELS } from "./block5VciAll";
+import { computeStabilityAll, computeTopValueChoices, STABILITY_ALL_VERSION } from "./block5StabilityAll";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
 import { deriveCompanyValues, analyseStance, STANCE_LABEL, STANCE_BAND } from "./block5Company";
@@ -83,7 +84,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-28-results-page";
+export const SHAPE_VERSION = "2026-09-29-stability-all";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -996,6 +997,13 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
        Stability, or report the two groups apart. See stabilityConflictStepsOf for why. */
     stability_was_measured: stabilitySteps === null ? null : stabilitySteps > 0,
     stability_conflict_steps_counted: stabilitySteps,
+    /* STABILITY_ALL (since 29 September 2026): Stability's rule over all six scenarios, on the running values
+       (analysis.stability_all has every step). The score is the one the participant saw; whether it measured
+       anything is worked out from the rows. It CONTAINS stability_score: compare the difference, never correlate. */
+    stability_all_score: b5.stabilityAll ?? stabilityAllOf(b5)?.result?.value ?? null,
+    stability_all_label: b5.stabilityAllLevel ?? stabilityAllOf(b5)?.result?.level ?? null,
+    stability_all_was_measured: stabilityAllOf(b5)?.result?.measured ?? null,
+    stability_all_conflict_steps_counted: stabilityAllOf(b5)?.result?.conflictSteps ?? null,
     /* The three sensitivities each have their own: how far each traveled on its 0-100 scale.
        Null for a run recorded before 19 September 2026, or when a snapshot is missing. */
     directness_stability_score: sensitivityStabilityOf(b5, "directness")?.value ?? null,
@@ -2424,6 +2432,114 @@ export function buildVciAllSection(block5: unknown): Record<string, unknown> | n
 }
 
 /**
+ * STABILITY_ALL, AND WHICH OF THE SIX STEPS IT COUNTED (since 29 September 2026; block5StabilityAll.ts).
+ *
+ * Stability's own rule over all six scenarios, on the hidden running values behind VCI_all. Scenarios 1-4
+ * count exactly as Stability does (a decision where the reflection ran), so that part equals Stability swap for
+ * swap; scenarios 5 and 6 count when the final choice was not one of the two best fits. The saved running
+ * records are used, or, for a record without them, the ones rebuilt from the saved record (as analysis.vci_all).
+ * `self_check` recomputes the score and compares it with the one saved when the block finished, and checks that
+ * the decisions' part equals Stability's own count.
+ */
+function stabilityAllOf(block5: unknown): { result: ReturnType<typeof computeStabilityAll>; source: string } | null {
+  if (!block5 || typeof block5 !== "object") return null;
+  const b5 = block5 as Record<string, unknown>;
+  const results = resultsOf(block5);
+  if (results.length === 0) return null;
+  if (results.every((r) => r.running)) return { result: computeStabilityAll(results), source: "saved when each choice was made" };
+  const original = b5.originalProfile as Block5UserProfile | undefined;
+  if (!original) return null;
+  return { result: computeStabilityAll(results, rebuildRunningFits(results, original)), source: "rebuilt from the saved record" };
+}
+
+export function buildStabilityAllSection(block5: unknown): Record<string, unknown> | null {
+  const got = stabilityAllOf(block5);
+  if (!got?.result) return null;
+  const b5 = block5 as Record<string, unknown>;
+  const s = got.result;
+  const detail = b5.stabilityDetail as { swaps?: unknown } | undefined;
+  const decisionSwaps = s.steps.filter((x) => x.kind === "decision").reduce((a, x) => a + x.swaps, 0);
+  const stability = typeof b5.stability === "number" ? b5.stability : null;
+  return {
+    what_this_is:
+      "Stability's own rule over all six scenarios: at the moments the participant went against their best fit, how "
+      + "many pairs of their four values traded places, on the hidden running values behind VCI_all. Scenarios 1-4 "
+      + "count exactly as Stability does (a decision where the reflection ran); scenarios 5 and 6 count when the final "
+      + "choice was not one of the two best fits (no reflection runs there). 100 = no pair traded places.",
+    rule_version: STABILITY_ALL_VERSION,
+    stability_all: s.value,
+    stability_all_label: s.level,
+    stability_scenarios_1_to_4: stability,
+    stability_all_minus_stability: stability === null ? null : s.value - stability,
+    was_measured: s.measured,
+    conflict_steps_counted: s.conflictSteps,
+    swaps_counted: s.swaps,
+    running_values_source: got.source,
+    by_scenario: s.steps.map((x) => ({
+      order_shown: x.index,
+      scenario_id: x.scenarioId,
+      kind: x.kind,
+      counted_as_a_conflict_step: x.counted,
+      why: x.why,
+      swaps: x.swaps,
+    })),
+    self_check: {
+      matches_the_saved_stability_all: typeof b5.stabilityAll === "number" ? b5.stabilityAll === s.value : null,
+      decisions_part_equals_stability_swaps:
+        typeof detail?.swaps === "number" ? detail.swaps === decisionSwaps : null,
+    },
+    how_to_read:
+      "stability_all is never above stability_scenarios_1_to_4 and equals it when neither scenario 5 nor 6 was counted: "
+      + "it CONTAINS Stability, so never correlate the two - compare stability_all_minus_stability. was_measured false "
+      + "means no step counted, so 100 means 'never tested', not 'held'. Steps in scenarios 5 and 6 are smaller "
+      + "(+20 / -15) than a reflection's, and scenario 5 is judged on the running values after scenario 4's choice "
+      + "(VCI_all's 'echo'). Like Stability, its absolute level depends on the step sizes: compare groups.",
+  };
+}
+
+/**
+ * TOP-VALUE CHOICES (since 29 September 2026, the researcher's "Q4-A": saved, never shown). In how many of the six
+ * scenarios the final choice was the option that does most for the #1 value the participant brought into Block 5,
+ * and for their #1 or #2. A tie for most counts for every tied option; `blind_choosing_would_give` is the average for
+ * the same menus. It looks at the top value(s) only, so it is not VCI: a best-fit picker scores about 2.7 of 6.
+ */
+export function buildTopValueChoicesSection(block5: unknown): Record<string, unknown> | null {
+  if (!block5 || typeof block5 !== "object") return null;
+  const b5 = block5 as Record<string, unknown>;
+  const t = computeTopValueChoices(resultsOf(block5), b5.originalProfile as Block5UserProfile | undefined);
+  if (!t) return null;
+  return {
+    what_this_is:
+      "In how many of the six scenarios the final choice was the option that does most for the participant's #1 value "
+      + "as they brought it into Block 5 (and, second count, for their #1 or #2 value). Never shown to the participant.",
+    was_shown_to_the_participant: false,
+    rule_version: STABILITY_ALL_VERSION,
+    top_value: t.topValue,
+    top_value_label: POLICY_DIM_SHORT[t.topValue],
+    second_value: t.secondValue,
+    second_value_label: POLICY_DIM_SHORT[t.secondValue],
+    top_two_were_tied: t.topTwoTied,
+    times_chose_most_for_top_value: t.countTopValue,
+    times_chose_most_for_top_or_second_value: t.countTopOrSecond,
+    out_of: t.scenarios.length,
+    blind_choosing_would_give: { top_value: t.blindTopValue, top_or_second_value: t.blindTopOrSecond },
+    by_scenario: t.scenarios.map((x) => ({
+      order_shown: x.index,
+      scenario_id: x.scenarioId,
+      kind: x.kind,
+      chose_most_for_top_value: x.mostForTopValue,
+      chose_most_for_top_or_second_value: x.mostForTopOrSecond,
+      options_tied_best_for_top_value: x.optionsBestForTopValue,
+      options_on_the_table: x.optionsOnTheTable,
+    })),
+    how_to_read:
+      "6 of 6 = every final choice did most for the #1 value. Compare with blind_choosing_would_give. It ignores the "
+      + "other three values on purpose; a person who always takes their best fit often scores lower here, because the "
+      + "best fit balances all four values. top_two_were_tied true: which value counts as #1 was a tie.",
+  };
+}
+
+/**
  * THE MORAL COMMITMENT FUNCTION, PER SCENARIO AND PER OPTION — AND WHO ACTUALLY READ IT.
  *
  * WHAT MCF IS. For one option it says what that option gives beyond what the participant asked
@@ -2687,6 +2803,15 @@ export function buildMajorScores(
         "Stability only counts at the scenarios where the participant went against their best fit and "
         + "the reflection ran. false = that never happened, so the score is 100 by default and measures "
         + "nothing. Filter on was_measured before averaging Stability, or report the two groups apart.",
+      /* Stability_all (since 29 September 2026), copied from the headline. Shown beside Stability. */
+      all_six_scenarios_score: headline?.stability_all_score ?? null,
+      all_six_scenarios_label: headline?.stability_all_label ?? null,
+      all_six_scenarios_was_measured: headline?.stability_all_was_measured ?? null,
+      all_six_scenarios_conflict_steps_counted: headline?.stability_all_conflict_steps_counted ?? null,
+      how_to_read_all_six:
+        "The same rule over all six scenarios, on the running values: scenarios 5 and 6 count when the final choice "
+        + "was not one of the two best fits. It contains score, so compare the two by their difference, never by a "
+        + "correlation. Every step: analysis.stability_all.",
       directness_score: headline?.directness_stability_score ?? null,
       directness_label: headline?.directness_stability_label ?? null,
       context_score: headline?.context_stability_score ?? null,
@@ -2694,6 +2819,19 @@ export function buildMajorScores(
       stakeholder_score: headline?.stakeholder_stability_score ?? null,
       stakeholder_label: headline?.stakeholder_stability_label ?? null,
     },
+
+    /* 2b ----------------------------------------------------------------- top-value choices (never shown) */
+    top_value_choices: (() => {
+      const t = buildTopValueChoicesSection(block5) as Record<string, unknown> | null;
+      if (!t) return null;
+      return {
+        top_value: t.top_value_label, second_value: t.second_value_label,
+        times_chose_most_for_top_value: t.times_chose_most_for_top_value,
+        times_chose_most_for_top_or_second_value: t.times_chose_most_for_top_or_second_value,
+        out_of: t.out_of, blind_choosing_would_give: t.blind_choosing_would_give,
+        how_to_read: "Copied from analysis.top_value_choices, which has every scenario. Never shown to the participant.",
+      };
+    })(),
 
     /* 3 ------------------------------------------------------------------ performance */
     performance: {
@@ -2856,7 +2994,9 @@ export function buildMajorScores(
       vci: "headline.consistency_score · headline.consistency_score_all_six · analysis.vci_all · analysis.position_effect.decided_versus_wished",
       stability: "headline.stability_score and the three sensitivity scores beside it; was_measured and "
         + "conflict_steps_counted from headline.stability_was_measured / stability_conflict_steps_counted "
-        + "(a copy of blocks.block5.stabilityDetail.conflictSteps)",
+        + "(a copy of blocks.block5.stabilityDetail.conflictSteps); all_six_scenarios_* from headline.stability_all_* "
+        + "(analysis.stability_all)",
+      top_value_choices: "analysis.top_value_choices",
       performance: "headline.performance_score, headline.performance_captured",
       position_effect: "analysis.position_effect",
       predictions_by_scenario: "analysis.mpf_predictions_every_scenario",

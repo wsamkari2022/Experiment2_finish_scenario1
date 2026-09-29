@@ -1335,6 +1335,12 @@ export interface Block5Results {
    *  1-4). Its level words have their own derived edges (VCI_ALL_LEVELS in block5VciAll.ts). */
   vciAll?: number;
   vciAllLevel?: string;
+  /** STABILITY_ALL, 0-100 (since 29 September 2026; block5StabilityAll.ts): Stability's own rule over all six
+   *  scenarios on the hidden running values. Scenarios 1-4 count exactly as Stability does; scenarios 5 and 6
+   *  count when the final choice was not one of the two best fits. Shown on the results page beside
+   *  Stability, with Stability's level words. Absent on a run finished before that date. */
+  stabilityAll?: number;
+  stabilityAllLevel?: string;
   /** Stability, 0-100: how far the ORDER of the four policy values changed at the conflict steps.
    *  See the Stability section of block5CVR.ts. */
   stability?: number;

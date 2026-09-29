@@ -60,6 +60,7 @@ const { labelOptions, computeVCI, computeStability, computeSensitivityStability 
 const { predictChoice, predictionConfidence, PREDICTION_VERSION } = B("block5Prediction.js");
 const { profileShownIn } = B("block5Mirror.js");
 const { runningStep, computeVciAll, vciAllLevel } = B("block5VciAll.js");
+const { computeStabilityAll } = B("block5StabilityAll.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
                 "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
@@ -221,6 +222,7 @@ function makeParticipant(startScores, pick) {
   const vci = computeVCI(results);
   const vciAll = computeVciAll(results);
   const stab = computeStability(results, original);
+  const stabAll = computeStabilityAll(results);
   return {
     completed: true,
     completedAt: "2026-09-15T12:00:00.000Z",
@@ -230,6 +232,8 @@ function makeParticipant(startScores, pick) {
     vci: vci.value, vciLevel: vci.level,
     vciAll: vciAll.value, vciAllLevel: vciAll.level,
     stability: stab.value, stabilityLevel: stab.level,
+    /* Saved with the finished block since 29 September 2026, as the page does. */
+    stabilityAll: stabAll.value, stabilityAllLevel: stabAll.level,
     /* The same detail the live page stores on completion (Block5PublicEmergencySimulation). Added to
        the pretend records on 26 September 2026 for gate D62: without it the fixture would be missing a
        field every real record carries. */
@@ -1616,6 +1620,86 @@ for (const [who, block5] of PEOPLE) {
     why.length === 0
       ? "VCI_all: saved running fits = rebuilt ones, decisions = the study's fit, the wish judged after scenario 4's choice, the veil after the wish, best fit moves nothing, VCI_all recomputed by hand everywhere, an old record rebuilt to the same number, derived edges"
       : `VCI_all is wrong: ${why.slice(0, 3).join(" | ")}`);
+}
+
+/* D67 - STABILITY_ALL AND THE TOP-VALUE CHOICES (29 September 2026, the researcher's "Q1-yes, Q2, Q3, Q4-A").
+   Recomputed by hand from each record: which of the six steps count (a decision where the reflection ran; the wish
+   and the veil when the final choice is outside the two best fits on the running values it opened with), the swaps
+   at each counted step (pairs of values that trade places, a tie opening or closing as half), the score, and the
+   two top-value counts from the option fingerprints; then the headline, the copy in major_info_and_scores, and a
+   record without running fits (rebuilt to the same score). */
+{
+  const why = [];
+  const fit = (l) => l === "aligned" || l === "weakly_aligned";
+  const sign = (x) => (x > 0 ? 1 : x < 0 ? -1 : 0);
+  const swapsBy = (a, b) => {
+    const k = Object.keys(a); let n = 0;
+    for (let i = 0; i < k.length; i++) for (let j = i + 1; j < k.length; j++) {
+      const x = sign(a[k[i]] - a[k[j]]), y = sign(b[k[i]] - b[k[j]]);
+      if (x * y < 0) n += 1; else if (x !== y) n += 0.5;
+    }
+    return n;
+  };
+  for (const [who, block5] of PEOPLE) {
+    const section = db.buildStabilityAllSection(block5);
+    const head = db.buildHeadline(block5, null);
+    const major = db.buildMajorScores(block5, null, null, null, null);
+    const rs = block5.scenarioResults;
+    let total = 0, counted = 0;
+    rs.forEach((r, i) => {
+      const decision = (r.decisionRole ?? "decider") === "decider";
+      const shouldCount = decision ? !!r.cvrFired : !fit(r.running.level);
+      const sw = shouldCount ? swapsBy(r.running.valuesWhenOpened, r.running.valuesAfter) : 0;
+      total += sw; if (shouldCount) counted += 1;
+      const row = section.by_scenario[i];
+      if (row.counted_as_a_conflict_step !== shouldCount || row.swaps !== sw) why.push(`${who}: scenario ${i + 1} counted ${row.counted_as_a_conflict_step}/${row.swaps}, by hand ${shouldCount}/${sw}`);
+    });
+    const byHand = Math.round(100 * (1 - Math.min(1, total / 6)));
+    if (section.stability_all !== byHand || section.swaps_counted !== total || section.conflict_steps_counted !== counted) why.push(`${who}: ${section.stability_all} vs ${byHand} by hand`);
+    if (section.self_check.matches_the_saved_stability_all !== true || section.self_check.decisions_part_equals_stability_swaps !== true) why.push(`${who}: self_check ${JSON.stringify(section.self_check)}`);
+    if (section.stability_all > block5.stability) why.push(`${who}: Stability_all above Stability`);
+    if (head.stability_all_score !== byHand || head.stability_all_was_measured !== (counted > 0) || head.stability_all_conflict_steps_counted !== counted) why.push(`${who}: headline ${head.stability_all_score}/${head.stability_all_was_measured}`);
+    if (major.stability.all_six_scenarios_score !== head.stability_all_score || major.stability.all_six_scenarios_was_measured !== head.stability_all_was_measured) why.push(`${who}: the copy differs`);
+    /* the top-value choices, by hand */
+    const t = db.buildTopValueChoicesSection(block5);
+    const keys = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+    const score = (k) => block5.originalProfile.dimensions.find((d) => d.key === k).score;
+    const order = [...keys].sort((a, b) => score(b) - score(a));
+    let top = 0, either = 0;
+    rs.forEach((r) => {
+      const sc = BLOCK5_SCENARIOS.find((x) => x.id === r.scenarioId);
+      const chosen = sc.options.find((o) => o.id === r.selectedOptionId);
+      const most = (k) => Math.max(...sc.options.map((o) => o.fingerprint[k]));
+      const a = chosen.fingerprint[order[0]] === most(order[0]);
+      if (a) top += 1;
+      if (a || chosen.fingerprint[order[1]] === most(order[1])) either += 1;
+    });
+    if (!t || t.times_chose_most_for_top_value !== top || t.times_chose_most_for_top_or_second_value !== either || t.out_of !== rs.length || t.was_shown_to_the_participant !== false) why.push(`${who}: top-value choices ${t && t.times_chose_most_for_top_value}/${t && t.times_chose_most_for_top_or_second_value} vs ${top}/${either}`);
+    if (!major.top_value_choices || major.top_value_choices.times_chose_most_for_top_value !== top) why.push(`${who}: the top-value copy differs`);
+    /* a record without running fits: rebuilt, same score */
+    const bare = { ...block5, stabilityAll: undefined, stabilityAllLevel: undefined, scenarioResults: rs.map(({ running, ...rest }) => rest) };
+    const again = db.buildStabilityAllSection(bare);
+    if (!again || again.stability_all !== byHand || again.running_values_source !== "rebuilt from the saved record") why.push(`${who}: a record without running fits reads ${again && again.stability_all}`);
+    if (db.buildHeadline(bare, null).stability_all_score !== byHand) why.push(`${who}: the headline of a record without the saved score reads wrong`);
+  }
+  /* Stability and Stability_all can disagree on "was anything measured": a run with no reflection in the decisions,
+     but a wish or veil pick outside the two best fits. Every copy must follow its own score. */
+  const counted56 = PEOPLE.map(([w, b5]) => [w, b5]).find(([, b5]) =>
+    db.buildStabilityAllSection(b5).by_scenario.some((x) => x.kind !== "decision" && x.counted_as_a_conflict_step));
+  if (!counted56) why.push("no pretend person has a counted wish or veil step, so the flags cannot be told apart");
+  else {
+    const [who, b5] = counted56;
+    const calm = { ...b5, stabilityAll: undefined, stabilityAllLevel: undefined,
+      stabilityDetail: { ...b5.stabilityDetail, swaps: 0, conflictSteps: 0, swapsByScenario: [] },
+      scenarioResults: b5.scenarioResults.map((r) => ({ ...r, cvrFired: false })) };
+    const head = db.buildHeadline(calm, null);
+    const major = db.buildMajorScores(calm, null, null, null, null);
+    if (head.stability_was_measured !== false || head.stability_all_was_measured !== true) why.push(`${who}: flags ${head.stability_was_measured}/${head.stability_all_was_measured}, want false/true`);
+    if (major.stability.was_measured !== false || major.stability.all_six_scenarios_was_measured !== true) why.push(`${who}: the copy's flags ${major.stability.was_measured}/${major.stability.all_six_scenarios_was_measured}, want false/true`);
+  }
+  gate("D67", why.length === 0, why.length === 0
+    ? "Stability_all: every step counted or not by the rule, every swap and the score recounted by hand, never above Stability, the self-check, the headline and the copy; top-value choices recounted from the fingerprints; a record without running fits rebuilt to the same score"
+    : `Stability_all or the top-value choices are wrong: ${why.slice(0, 3).join(" | ")}`);
 }
 
 /* D66 - WHICH BUTTON TOOK THEM TO THE FEEDBACK (28 September 2026, the researcher's plan "Q5-yes"). The results

@@ -18,6 +18,9 @@
  *   performance                   end-of-study performance: the mean captured score of the four decisions,
  *                                 0 = the scenario's weakest option every time, 100 = its strongest
  *   stakeholder                   the stakeholder sensitivity's stability
+ *   stabilityAll, stabilityAllLevel, stabilityAllMeasured   Stability_all (since 29 September 2026, block5StabilityAll.ts):
+ *                                 Stability's rule over all six on the running values; topValue / topOrSecond: the
+ *                                 top-value choices (of six)
  *   vciAll, vciAllLevel           VCI_all (since 28 September 2026): the six hidden running fits, scenarios 5 and 6
  *                                 included, by the real runningStep / computeVciAll (block5VciAll.ts). The wish is
  *                                 shown on scenario 4's OPENING values, as the page shows it (profileShownIn); that
@@ -39,6 +42,7 @@ const { labelOptions, applyKeepUpdates, applyEndorsementUpdates, applyApaUpdates
         scenarioIsScored, scenarioVciScore, computeVCI, computeStability, computeSensitivityStability } = B("block5CVR.js");
 const { capturedOf } = B("block5Performance.js");
 const { runningStep, computeVciAll } = B("block5VciAll.js");
+const { computeStabilityAll, computeTopValueChoices } = B("block5StabilityAll.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 const POP = require("./vci_distribution.cjs");
 
@@ -84,6 +88,7 @@ function runPerson(start, beh) {
     runningRows.push({ running: step.record });
     results.push({
       scenarioId: s.id, decisionRole: s.decisionRole ?? "decider", cvrFired: scored && !isFit(opt.level),
+      selectedOptionId: finalId, running: step.record,
       policySnapshotAfter: Object.fromEntries(POLICY.map((k) => [k, sc(p, k)])),
       framingSnapshotAfter: { directnessSensitivity: sc(p, "directnessSensitivity"), contextSensitivity: sc(p, "contextSensitivity") },
       stakeholderSnapshotAfter: sc(p, STAKE),
@@ -92,10 +97,15 @@ function runPerson(start, beh) {
   const vci = computeVCI(vciRows);
   const vciAll = computeVciAll(runningRows);
   const stab = computeStability(results, frozen);
+  const stabAll = computeStabilityAll(results);
+  const top = computeTopValueChoices(results, frozen);
   return {
     vci: vci.value, vciLevel: vci.level,
     vciAll: vciAll.value, vciAllLevel: vciAll.level,
     stability: stab.value, stabilityLevel: stab.level, measured: stab.conflictSteps > 0,
+    stabilityAll: stabAll.value, stabilityAllLevel: stabAll.level, stabilityAllMeasured: stabAll.measured,
+    topValue: top.countTopValue, topOrSecond: top.countTopOrSecond,
+    blindTopValue: top.blindTopValue, blindTopOrSecond: top.blindTopOrSecond,
     performance: Math.round(captured.reduce((a, b) => a + b, 0) / captured.length),
     stakeholder: computeSensitivityStability(results, frozen).stakeholder?.value ?? null,
   };

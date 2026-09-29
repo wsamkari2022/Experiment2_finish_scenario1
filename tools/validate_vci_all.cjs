@@ -20,6 +20,14 @@
  *   A8  in the four decisions the running fit IS the study's fit (the label on the values the scenario
  *       opened with), and after a pick in the wish or the veil that is not the best fit the running
  *       values DO move, while the study's own values never do
+ *   A9  STABILITY_ALL (since 29 September 2026, block5StabilityAll.ts): its four decisions count exactly the swaps
+ *       Stability counts, so it is never above Stability and equals it when scenarios 5 and 6 add nothing
+ *   A10 a decision counts exactly when the reflection ran; the wish and the veil exactly when the final choice was
+ *       not one of the two best fits on the running values the scenario opened with
+ *   A11 somebody who always takes their best fit scores 100 and "not measured"; the kinds keep their order
+ *       (value followers above random choosers above flip-floppers)
+ *   A12 the top-value choices, recounted here by hand from the fingerprints for every pretend run; somebody true to
+ *       their top value scores 6 of 6
  *
  * It also PRINTS, without gating, the two stated effects the researcher accepted: the scenario-5 echo
  * and the scenario-5 screen-against-yardstick share (block5VciAll.ts). If they drift far from 35 and 8
@@ -41,8 +49,9 @@ const B = (f) => require(path.join(BUILD, f));
 
 const {
   labelOptions, applyKeepUpdates, applyEndorsementUpdates, applyApaUpdates, applyRunningMoveWithMoves,
-  optionMainValue, scenarioIsScored, labelWeight, computeVCI,
+  optionMainValue, scenarioIsScored, labelWeight, computeVCI, computeStability, rankSwaps,
 } = B("block5CVR.js");
+const { computeStabilityAll, computeTopValueChoices } = B("block5StabilityAll.js");
 const { runningStep, computeVciAll, VCI_ALL_LEVELS } = B("block5VciAll.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 const POP = require("./vci_distribution.cjs");
@@ -155,12 +164,15 @@ function run(start, beh) {
     results.push({
       scenarioId: s.id, decisionRole: s.decisionRole ?? "decider", selectedOptionId: finalId,
       vciScore: labelWeight(shown.find((o) => o.id === finalId).level, s.options.length), running: step.record,
+      /* What Stability reads, recorded as the page records it. */
+      cvrFired: scenarioIsScored(s) && !isFit(opt.level),
+      policySnapshotAfter: Object.fromEntries(POLICY.map((k) => [k, studyNext.dimensions.find((d) => d.key === k).score])),
     });
     running = step.next;
     lastAfter = vals(running);
     live = studyNext;
   });
-  return { results, checks };
+  return { results, checks, frozen };
 }
 
 {
@@ -235,6 +247,70 @@ function run(start, beh) {
   const got = VCI_ALL_LEVELS.slice(0, 5).map((l) => l.from);
   gate("A6", JSON.stringify(expected) === JSON.stringify(got),
     `VCI_all's level edges are derived from this deck: ${got.join(" / ")}`);
+}
+
+/* ---------------------------------------------------------------- A9-A12: Stability_all and the top-value choices */
+{
+  let a9 = true, a10 = true, a11 = true, a12 = true, people = 0, raised = 0;
+  const byKind = {};
+  const why = [];
+  for (const beh of Object.keys(POP.BEHAVIORS)) {
+    POP.reseed(777);
+    const rows = POP.starts.map((st) => run(st, beh));
+    const stab = [], stabAll = [], picks = [];
+    for (const r of rows) {
+      people += 1;
+      const st = computeStability(r.results, r.frozen);
+      const all = computeStabilityAll(r.results);
+      stab.push(st.value); stabAll.push(all.value);
+      /* A9 */
+      const decisionSwaps = all.steps.filter((x) => x.kind === "decision").reduce((a, x) => a + x.swaps, 0);
+      const extra = all.steps.filter((x) => x.kind !== "decision" && x.counted).length;
+      if (decisionSwaps !== st.swaps || all.value > st.value || (extra === 0 && all.value !== st.value)) {
+        a9 = false; if (why.length < 3) why.push(`A9 ${beh}: decisions ${decisionSwaps} vs Stability ${st.swaps}, ${all.value} vs ${st.value}`);
+      }
+      if (all.value < st.value) raised += 1;
+      /* A10 */
+      all.steps.forEach((x, i) => {
+        const res = r.results[i];
+        const expected = x.kind === "decision" ? res.cvrFired : !isFit(res.running.level);
+        if (x.counted !== expected) a10 = false;
+        if (x.counted && x.swaps !== rankSwaps(res.running.valuesWhenOpened, res.running.valuesAfter)) a10 = false;
+        if (!x.counted && x.swaps !== 0) a10 = false;
+      });
+      /* A11 */
+      if (beh === "Always aligned" && (all.value !== 100 || all.measured)) a11 = false;
+      /* A12: recount by hand */
+      const t = computeTopValueChoices(r.results, r.frozen);
+      const order = [...POLICY].sort((a, b) => r.frozen.dimensions.find((d) => d.key === b).score - r.frozen.dimensions.find((d) => d.key === a).score);
+      let top = 0, either = 0;
+      r.results.forEach((res) => {
+        const sc = BLOCK5_SCENARIOS.find((x) => x.id === res.scenarioId);
+        const chosen = sc.options.find((o) => o.id === res.selectedOptionId);
+        const most = (k) => Math.max(...sc.options.map((o) => o.fingerprint[k]));
+        const forTop = chosen.fingerprint[order[0]] === most(order[0]);
+        if (forTop) top += 1;
+        if (forTop || chosen.fingerprint[order[1]] === most(order[1])) either += 1;
+      });
+      if (!t || t.countTopValue !== top || t.countTopOrSecond !== either || t.scenarios.length !== 6) a12 = false;
+      if (beh === "True to top value" && t.countTopValue !== 6) a12 = false;
+      picks.push(t ? t.countTopValue : 0);
+    }
+    byKind[beh] = { stab: mean(stab), stabAll: mean(stabAll), picks: mean(picks) };
+  }
+  const k = byKind;
+  if (!(k["True to top value"].stabAll > k["Random responder"].stabAll && k["Random responder"].stabAll > k["Flip-flopper (keeps)"].stabAll
+      && k["Always aligned"].stabAll > k["Random responder"].stabAll)) a11 = false;
+  gate("A9", a9, why.length ? why.join(" | ")
+    : `Stability_all's four decisions count exactly Stability's swaps; never above Stability, equal when scenarios 5 and 6 add nothing  (${people} pretend runs, ${raised} lowered by scenario 5 or 6)`);
+  gate("A10", a10, "a decision counts exactly when the reflection ran; the wish and the veil exactly when the final choice was outside the two best fits");
+  gate("A11", a11, "always the best fit: 100, not measured; value followers above random choosers above flip-floppers");
+  gate("A12", a12, "the top-value choices equal a hand recount for every pretend run; true to their top value: 6 of 6");
+  console.log("");
+  console.log("  Stability, Stability_all and top-value choices (of 6) by kind of pretend participant:");
+  for (const [beh, v] of Object.entries(byKind)) {
+    console.log(`    ${beh.padEnd(24)} Stability ${v.stab.toFixed(1).padStart(5)}   Stability_all ${v.stabAll.toFixed(1).padStart(5)}   top-value choices ${v.picks.toFixed(1)}`);
+  }
 }
 
 console.log("");

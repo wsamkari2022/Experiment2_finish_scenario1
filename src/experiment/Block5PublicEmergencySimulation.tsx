@@ -42,6 +42,7 @@ import {
 } from "./block5CVR";
 import { profileShownIn } from "./block5Mirror";
 import { computeVciAll, runningStep } from "./block5VciAll";
+import { computeStabilityAll } from "./block5StabilityAll";
 import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
 import { progressSaved } from "./sessionGuard";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
@@ -1291,6 +1292,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       const vci = computeVCI(nextResults);
       /* VCI_all: the six hidden running fits, scenarios 5 and 6 included (block5VciAll.ts). */
       const vciAll = computeVciAll(nextResults);
+      /* Stability_all: Stability's own rule over all six, on the same running values (block5StabilityAll.ts). */
+      const stabilityAll = computeStabilityAll(nextResults);
       // Both measured against the profile as it entered Block 5 — the Blocks 1-4 baseline.
       const stab = computeStability(nextResults, userProfile);
       const finalResults: Block5Results = {
@@ -1301,6 +1304,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         scenarioResults: nextResults,
         vci: vci.value, vciLevel: vci.level,
         vciAll: vciAll.value, vciAllLevel: vciAll.level,
+        ...(stabilityAll ? { stabilityAll: stabilityAll.value, stabilityAllLevel: stabilityAll.level } : {}),
         stability: stab.value, stabilityLevel: stab.level,
         stabilityDetail: {
           swaps: stab.swaps, conflictSteps: stab.conflictSteps, swapsByScenario: stab.swapsByScenario,

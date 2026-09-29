@@ -22,6 +22,7 @@
  *   J9  the way on to the feedback, from the source: "1 step left", the card, the bar, every button recorded
  *   J10 the MPF in every scenario: the database's own numbers, the gap, a first choice only when it changed,
  *       scenario 6 as shown, the favourite = the best fit; scenario 6 a slate bar apart from the positions
+ *   J11 Stability_all's card right after Stability on the results page; the top-value choices on no page
  *
  * Run:  npm run validate:journey
  */
@@ -320,6 +321,25 @@ console.log("===================================================================
   if (!view.includes("const position = analysePosition(scenarios, before)")) why.push("the Position Effect no longer leaves scenario 6 out");
   gate("J10", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : `the MPF card: the database's numbers, the gap = favourite - choice, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit (${hitSeen} hits, ${missSeen} misses, ${changedSeen} changed); scenario 6 a slate bar apart with a label that fits, outside the Position Effect`);
+}
+
+/* J11 — Stability_all on the results page, and the top-value choices on no page (29 September 2026, the researcher's
+   "Q3-recommended, Q4-A"): the card sits right after Stability, Stability says it is scenarios 1-4, the block saves
+   Stability_all when it finishes, and nothing a participant sees computes or prints the top-value choices. */
+{
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const page = src("Block5SimulationSummaryPage.tsx");
+  const sim = src("Block5PublicEmergencySimulation.tsx");
+  const why = [];
+  const iStab = page.indexOf('label="Stability"'), iAll = page.indexOf('label="Stability, all six (Stability_all)"'), iPerf = page.indexOf("<LuTarget />");
+  if (!(iStab > 0 && iAll > iStab && iPerf > iAll)) why.push("the Stability_all card is not right after Stability");
+  if (!/label="Stability"[\s\S]{0,200}scenarios 1-4/.test(page)) why.push("the Stability card does not say it covers scenarios 1-4");
+  if (!sim.includes("computeStabilityAll(nextResults)") || !sim.includes("stabilityAll: stabilityAll.value")) why.push("the block does not save Stability_all when it finishes");
+  const shown = fs.readdirSync(path.join(ROOT, "src", "experiment")).filter((f) => f.endsWith(".tsx"))
+    .filter((f) => /computeTopValueChoices|top_value_choices|TopValueChoices/.test(src(f)));
+  if (shown.length) why.push(`the top-value choices reach a page: ${shown.join(", ")}`);
+  gate("J11", why.length === 0, why.length ? why.join(" | ")
+    : "Stability_all right after Stability on the results page, Stability says scenarios 1-4, saved when the block finishes; the top-value choices reach no page");
 }
 
 console.log("");

@@ -325,6 +325,16 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 28 September 2026 | The results page no longer says "Complete" / "Main Simulation Complete": it says "Scenarios done · 1 step left" over "Here are your results", shows a "One last step" card with a Continue button under the four score cards (about 5 to 10 minutes; it completes the study, which the $5 gift card needs), and a slim "1 step left" bar at the bottom of the screen on the results and charts pages. The progress bar marks Feedback "next" there, and on a phone it now slides to the current step. **Compare feedback completion and `TOOL_resultsPage` across this date with care**: before it, the only way on was the button at the very bottom. `analysis.results_page` records which button was used (HOW_TO_READ 6m) |
 | 28 September 2026 | The charts page, after all choices: scenario 6 is now a gray bar of its own in "How far each choice sat from the person you were" (still outside the Position Effect), and a new card, "What our software expected, and what you chose", shows the MPF's favourite and the final choice in all six scenarios with the percentage points between them. **From this date the MPF's numbers for scenarios 1-5 were on screen after the choices** for anybody who opened the charts page (`analysis.results_page.times_charts_opened`); the feedback asks nothing about the MPF. No stored data changes |
 | 29 September 2026 | A refresh, or a new browser or device, now continues Block 5 at the unfinished scenario (it restarted at scenario 1) and continues Blocks 2 and 3 where they stopped (Block 2 restarted). A half-done Block 5 scenario starts again and its row carries `restartedAfterLeaving`. A browser or tab that is no longer the participant's shows "This study is open somewhere else" / "open in another tab" and stops. No score changes |
+| 29 September 2026 | The results page shows a Stability_all card beside Stability (Stability over all six scenarios), and the Stability card now says it covers scenarios 1-4. Performance spans the full width under the four. No other score or screen changes |
+
+### 4.11 Stability_all contains Stability, and what the top-value choices can say
+
+`headline.stability_all_score` (since 29 September 2026) is Stability's rule over all six scenarios: its four decisions
+are Stability's, so it is never above Stability. Never correlate the two; report `stability_all_minus_stability`, which
+says what the wish and the veil added. As with Stability, filter on `stability_all_was_measured` and compare groups
+(the level depends on the step sizes). `analysis.top_value_choices` answers a different, simpler question - how often
+the final choice did most for the #1 value brought into Block 5 - and was never on screen; compare it with its blind
+baseline (about 1.1 of 6), not with VCI. Pretend-participant figures: docs/MAJOR_SCORES_DISTRIBUTION.md sections 2b, 2c.
 
 ### 4.10 VCI_all contains VCI, and judges the wish on values the screen did not show
 

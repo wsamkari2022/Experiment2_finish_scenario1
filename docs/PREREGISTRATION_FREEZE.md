@@ -22,6 +22,7 @@ hypotheses below.
 | Prediction rule (MPF) | `2026-09-19-e` | `PREDICTION_VERSION`, block5Prediction.ts; saved as `rule_version` |
 | Moral Commitment Function | `2026-09-23-a` | `MCF_VERSION`, block5MCF.ts; saved as `analysis.mcf.rule_version` |
 | Running values and VCI_all | `2026-09-28-a` | `RUNNING_VERSION`, block5VciAll.ts; saved on every running fit and as `analysis.vci_all.rule_version` |
+| Stability_all and the top-value choices | `2026-09-29-a` | `STABILITY_ALL_VERSION`, block5StabilityAll.ts; saved as `analysis.stability_all.rule_version` and `analysis.top_value_choices.rule_version` |
 | Fit score scale | `share-of-what-they-asked-for-2026-09-24` | `FIT_SCORE_SCALE`, block5CVR.ts; saved as `fitScoreScale` per row |
 | Feedback questions | schema 4 | `FEEDBACK_SCHEMA_VERSION`, feedbackTypes.ts; saved as `blocks.feedback_answers.schemaVersion` |
 | Option numbers and words | as of the launch commit (after Fix 7, 7b, 7c) | block5Scenarios.ts. **At launch, save the export** `node tools/export_block5_content.cjs` beside this file, so the exact content is frozen with it |

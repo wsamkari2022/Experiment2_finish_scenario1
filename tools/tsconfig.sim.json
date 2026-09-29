@@ -24,6 +24,7 @@
     "../src/experiment/block5Company.ts",
     "../src/experiment/block5Mirror.ts",
     "../src/experiment/block5VciAll.ts",
+    "../src/experiment/block5StabilityAll.ts",
     "../src/experiment/block5Journey.ts",
     "../src/experiment/block5Types.ts",
     "../src/experiment/block5CVRContent.ts",

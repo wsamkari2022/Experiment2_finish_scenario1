@@ -251,3 +251,23 @@ never open the second lens.
 Stability sets half of the scenario-6 prediction's confidence (`predictionConfidence` in
 `block5Prediction.ts`), which is why `PREDICTION_VERSION` moved to `2026-09-19-e` with this method.
 Records made under an earlier version must not be pooled with these.
+
+## 11. Stability_all: the same rule over all six scenarios (29 September 2026)
+
+The researcher's request ("Stability_all for all 6 scenarios"; plan answers "Q1-yes, Q2-recommended, Q3-recommended,
+Q4-A"). `block5StabilityAll.ts`. Equations (1) to (3) are unchanged and reused (`rankSwaps`, `stabilityFromSwaps`); only
+the list of steps grows:
+
+- **Values read:** the hidden running values behind VCI_all (block5VciAll.ts), which equal the study's values through
+  scenario 4 and also move after the wish and the veil (the running rule, +20 / −15, for any pick that is not the best fit).
+- **Steps counted:** scenarios 1-4 exactly as Stability (a decision where the reflection ran, `cvrFired`); scenarios 5 and
+  6 when the final choice was not one of the two best fits on the running values the scenario opened with. A second-best
+  pick never counts, as in Stability (the model refining its estimate).
+- **Consequences:** the decisions' part equals Stability's swaps, so Stability_all ≤ Stability, with equality when scenarios
+  5 and 6 add nothing (gate A9 over 24,000 pretend runs). It contains Stability: never correlate the two.
+- **Measured** (report:major-scores 2b): best-fit pickers 100; true to their top value 89 (Stability 90.5); random choosers
+  39 (57.5); flip-floppers 3-13 (12-29); corrected by APA 71 (94), because scenarios 5 and 6 offer no APA.
+- **Limits:** smaller steps in 5 and 6; scenario 5's echo (about 5 in 100 second-best pickers get a counted step there);
+  the level depends on the step sizes (section 8, R7).
+- **Beside it, never shown:** the top-value choices (`analysis.top_value_choices`): how often the final choice did most for
+  the #1 value brought into Block 5 (blind 1.08 of 6), and for the #1 or #2 (blind 2.17).

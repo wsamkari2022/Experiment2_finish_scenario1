@@ -97,11 +97,14 @@ function scenarioNote(sr: Block5ScenarioResult): string {
   return "Your choice favored a different moral trade-off than your earlier profile predicted.";
 }
 
-function MeasureCard({ icon, label, value, sub, hint, palette }: {
+function MeasureCard({ icon, label, value, sub, hint, palette, wide = false }: {
   icon: React.ReactNode; label: string; value: string; sub?: string; hint: string; palette: string;
+  /** Spans both columns: the last card of an odd number, so it never sits alone in a half row. */
+  wide?: boolean;
 }) {
   return (
-    <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
+    <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm"
+      gridColumn={wide ? { md: "span 2" } : undefined}>
       <HStack gap="2" mb="2">
         <Icon color={`${palette}.500`}>{icon}</Icon>
         <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">{label}</Text>
@@ -152,6 +155,9 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
   const vciAll = results.vciAll;
   const hasVciAll = typeof vciAll === "number";
   const stability = results.stability ?? 0;
+  /* Stability_all (29 September 2026): Stability over all six, on the running values (block5StabilityAll.ts). */
+  const stabilityAll = results.stabilityAll;
+  const hasStabilityAll = typeof stabilityAll === "number";
   /*
    * PERFORMANCE IS REPORTED AS A SHARE OF WHAT WAS AVAILABLE, not as the raw mean of the metrics.
    *
@@ -201,8 +207,15 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
           )}
           <MeasureCard icon={<LuScale />} palette="purple" label="Stability"
             value={`${stability}`} sub={results.stabilityLevel ?? "—"}
-            hint="Whether the order of your priorities changed during Block 5, at the moments you chose against the option that fit you best. 100 means none of your four values traded places with another." />
-          <MeasureCard icon={<LuTarget />} palette="teal"
+            hint="In the four scenarios where you made the decision (scenarios 1-4): whether the order of your priorities changed at the moments you chose against the option that fit you best. 100 means none of your four values traded places with another." />
+          {/* Stability_all (29 September 2026, the researcher's "Q3-recommended"): paired with Stability as VCI_all is
+              with VCI. Absent on a run finished before that date, and then Performance still closes the grid. */}
+          {hasStabilityAll && (
+            <MeasureCard icon={<LuLayers />} palette="purple" label="Stability, all six (Stability_all)"
+              value={`${stabilityAll}`} sub={results.stabilityAllLevel ?? "—"}
+              hint="The same measure across all six scenarios, including the one where the decision was made for you (scenario 5) and the one where you did not know your position (scenario 6). There it counts the moments you chose an option that was not one of the two that fit you best. 100 means none of your four values traded places with another." />
+          )}
+          <MeasureCard icon={<LuTarget />} palette="teal" wide={hasVciAll && hasStabilityAll}
             label={hasCaptured ? "Performance taken" : "Performance"}
             value={hasCaptured ? `${captured}` : `${performance}`}
             sub={hasCaptured ? results.performanceCapturedLevel : undefined}

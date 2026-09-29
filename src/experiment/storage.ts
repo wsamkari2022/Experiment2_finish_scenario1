@@ -65,6 +65,8 @@ import {
   BLOCKS_1_TO_4_KEYS,
   buildMcfSection,
   buildVciAllSection,
+  buildStabilityAllSection,
+  buildTopValueChoicesSection,
   buildProfileChange,
   buildQuality,
   collectResumeFiles,
@@ -691,6 +693,12 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
          (since 28 September 2026). See buildVciAllSection. */
       const vciAllSection = buildVciAllSection(translated);
       if (vciAllSection) sendOrQueue({ op: "saveSection", path: "analysis.vci_all", data: vciAllSection });
+
+      /* Stability_all with every step, and the top-value choices (since 29 September 2026). */
+      const stabilityAllSection = buildStabilityAllSection(translated);
+      if (stabilityAllSection) sendOrQueue({ op: "saveSection", path: "analysis.stability_all", data: stabilityAllSection });
+      const topValueSection = buildTopValueChoicesSection(translated);
+      if (topValueSection) sendOrQueue({ op: "saveSection", path: "analysis.top_value_choices", data: topValueSection });
 
       /*
        * EVERY MAJOR SCORE IN ONE ROOM.
