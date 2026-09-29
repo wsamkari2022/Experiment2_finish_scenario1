@@ -42,6 +42,8 @@ import {
 } from "./block5CVR";
 import { profileShownIn } from "./block5Mirror";
 import { computeVciAll, runningStep } from "./block5VciAll";
+import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
+import { progressSaved } from "./sessionGuard";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
@@ -67,7 +69,7 @@ import {
   type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
   type CVRLensBlock,
   type CVRFraming, type FramingAdjust, type StakePosition,
-  BLOCK5_PROGRESS_KEY, BLOCK5_RESULTS_KEY,
+  BLOCK5_RESULTS_KEY,
   type Block5MethodKind,
   type Block5ValueMove,
 } from "./block5Types";
@@ -88,6 +90,8 @@ interface Props {
    */
   moralProfile?: MoralProfile | null;
   onComplete: (results: Block5Results) => void;
+  /** The participant's email: the saved progress belongs to it and is restored only for it. */
+  owner?: string | null;
 }
 
 interface ProgressState {
@@ -458,19 +462,37 @@ function buildScenarioTelemetry(
   };
 }
 
-export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onComplete }: Props) {
-  // Issue 3: always start fresh at Scenario 1 on mount/refresh (no mid-block resume).
-  const [progress, setProgress] = useState<ProgressState>(() => ({
-    currentScenarioIndex: 0,
-    scenarioResults: [],
-    scenarioStartTime: Date.now(),
-    profile: userProfile,
-    firstChoiceId: null,
-  }));
-
-  useEffect(() => {
-    try { localStorage.removeItem(BLOCK5_PROGRESS_KEY); } catch { /* ignore */ }
-  }, []);
+export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onComplete, owner }: Props) {
+  /*
+   * CONTINUE WHERE THEY LEFT OFF (since 29 September 2026, the researcher's "Q1-yes"; block5Progress.ts).
+   *
+   * This used to start at scenario 1 on every load and delete any saved progress ("Issue 3: always start
+   * fresh ... no mid-block resume", from the first version, with no reason written down). Now a run saved
+   * after a finished scenario opens at the scenario that was not finished, built from the saved values, so
+   * its cards, order and fit numbers are the ones the participant would have seen had they never left.
+   */
+  const [resumedAt] = useState<number>(() =>
+    readBlock5Progress(owner, userProfile, BLOCK5_SCENARIOS.length)?.nextScenarioIndex ?? -1);
+  const [progress, setProgress] = useState<ProgressState>(() => {
+    const saved = readBlock5Progress(owner, userProfile, BLOCK5_SCENARIOS.length);
+    if (saved) {
+      return {
+        currentScenarioIndex: saved.nextScenarioIndex,
+        scenarioResults: saved.scenarioResults,
+        scenarioStartTime: Date.now(),
+        profile: saved.profile,
+        firstChoiceId: null,
+        runningProfile: saved.runningProfile,
+      };
+    }
+    return {
+      currentScenarioIndex: 0,
+      scenarioResults: [],
+      scenarioStartTime: Date.now(),
+      profile: userProfile,
+      firstChoiceId: null,
+    };
+  });
 
   // Per-scenario behavioral telemetry accumulator (additive observation only — never affects
   // the decision logic or scoring). Reset for each new scenario in finalizeScenario.
@@ -1261,6 +1283,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     // Stakeholder too, for the stakeholder stability: it moves ±25 on every reflection.
     result.stakeholderSnapshotAfter = nextProfile.dimensions
       .find((d) => d.key === "stakeholderPerspectiveShiftSensitivity")?.score ?? 50;
+    /* The scenario they came back to after leaving it half-done (block5Progress.ts). */
+    if (progress.currentScenarioIndex === resumedAt) result.restartedAfterLeaving = true;
     const nextResults = [...progress.scenarioResults, result];
     const nextIndex = progress.currentScenarioIndex + 1;
     if (nextIndex >= BLOCK5_SCENARIOS.length) {
@@ -1295,8 +1319,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       };
       try {
         localStorage.setItem(BLOCK5_RESULTS_KEY, JSON.stringify(finalResults));
-        localStorage.removeItem(BLOCK5_PROGRESS_KEY);
       } catch { /* ignore */ }
+      clearBlock5Progress();
       onComplete(finalResults);
       return;
     }
@@ -1308,13 +1332,20 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       firstChoiceId: null,
       runningProfile: nextRunning,
     });
+    /* Saved in this browser and sent to the server at once, so the next scenario can be continued here
+       after a refresh, or on another browser or device (block5Progress.ts, sessionGuard.ts). */
+    saveBlock5Progress({
+      owner, broughtIn: userProfile, nextScenarioIndex: nextIndex, scenarioResults: nextResults,
+      profile: nextProfile, runningProfile: nextRunning,
+    });
+    progressSaved(true);
     telRef.current = newTelemetryAccum(); // fresh telemetry for the next scenario
     setExpandedOptions(new Set());
     setOpenOptionId(null);
     setPreviewOptionId(null);
     setCompareChartsOpen(false);
     resetFlow();
-  }, [progress, userProfile, onComplete, resetFlow, plan, decisionProfile, labeled]);
+  }, [progress, userProfile, onComplete, resetFlow, plan, decisionProfile, labeled, owner, resumedAt]);
 
   const commitChoice = useCallback((opt: LabeledOption, opts: {
     nextProfile: Block5UserProfile;

@@ -16,6 +16,7 @@
  */
 
 import type { RemoteBackend } from "./storage";
+import { browserId } from "./sessionLog";
 import type { DirectoryEntry } from "./participantDirectory";
 
 /** Same origin: Vite proxies /api to the API server in development. */
@@ -29,7 +30,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetch(`${BASE}${path}`, {
       ...init,
       signal: controller.signal,
-      headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+      /* The browser's id goes with every request, so the server can keep ONE browser writing a
+         participant's record (since 29 September 2026; server/activeBrowser.js). */
+      headers: { "Content-Type": "application/json", "X-VRDS-Browser": browserId(), ...(init?.headers ?? {}) },
     });
     if (!response.ok) {
       /*
@@ -41,6 +44,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
        */
       const error = new Error(`${init?.method ?? "GET"} ${path} → ${response.status}`);
       (error as Error & { httpStatus?: number }).httpStatus = response.status;
+      /* The server's own word for the refusal, e.g. "another_browser_active", so the page can tell a
+         write from a browser that is no longer the participant's apart from any other refusal. */
+      try {
+        const body = (await response.json()) as { error?: unknown };
+        if (typeof body?.error === "string") (error as Error & { code?: string }).code = body.error;
+      } catch { /* no JSON body */ }
       throw error;
     }
     return (await response.json()) as T;
@@ -104,6 +113,21 @@ export const apiClient: RemoteBackend = {
 
   async markCompleted(email) {
     await request(`/participants/${encodeURIComponent(email)}/complete`, { method: "PATCH" });
+  },
+
+  async claimBrowser(email, age) {
+    await request(`/participants/${encodeURIComponent(email)}/claim`, {
+      method: "POST",
+      body: JSON.stringify({ age }),
+    });
+  },
+
+  async isActiveBrowser(email) {
+    const answer = await request<{ active?: boolean }>(`/participants/${encodeURIComponent(email)}/active`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    return answer?.active !== false;
   },
 
   async getResumeFiles(email) {

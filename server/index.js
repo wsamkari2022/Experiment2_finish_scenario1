@@ -29,6 +29,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { connect, participants, DB_NAME, SAFE_MONGO_URL } from "./db.js";
 import { mergeResumeState } from "./resumeMerge.js";
+import { browserVerdict, requestBrowser, REFUSED_BODY } from "./activeBrowser.js";
 
 const PORT = Number(process.env.PORT ?? 4000);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -71,6 +72,32 @@ app.get(
 
 /* ---------------------------------------------------------------------- participants */
 
+/**
+ * ONE BROWSER AT A TIME (since 29 September 2026; server/activeBrowser.js has the rule and why).
+ *
+ * Every write route calls this first. It reads the participant's `active_browser`, and:
+ *   refuse -> answers 409 { error: "another_browser_active" } and the route stops;
+ *   claim  -> nobody holds the record yet, so this browser takes it (a brand-new participant);
+ *   allow  -> carries on.
+ * Returns true when the route may continue.
+ */
+async function guardBrowser(req, res, email) {
+  const requestId = requestBrowser(req);
+  const doc = await participants().findOne({ email }, { projection: { active_browser: 1 } });
+  const verdict = browserVerdict(doc?.active_browser?.id ?? null, requestId);
+  if (verdict === "refuse") {
+    res.status(409).json(REFUSED_BODY);
+    return false;
+  }
+  if (verdict === "claim" && doc) {
+    await participants().updateOne(
+      { email },
+      { $set: { active_browser: { id: requestId, claimed_at: new Date().toISOString() } } },
+    );
+  }
+  return true;
+}
+
 app.post(
   "/api/participants/lookup",
   route(async (req, res) => {
@@ -88,7 +115,9 @@ app.post(
     const email = normalizeEmail(body.email);
     if (!email) return res.status(400).json({ error: "email is required" });
 
+    if (!(await guardBrowser(req, res, email))) return;
     const now = new Date().toISOString();
+    const requestId = requestBrowser(req);
 
     /*
      * $setOnInsert holds the facts that belong to the FIRST time this person was seen, so a
@@ -114,6 +143,8 @@ app.post(
           created_at: now,
           completed_at: null,
           blocks: {},
+          /* A brand-new participant belongs to the browser that created them. */
+          ...(requestId ? { active_browser: { id: requestId, claimed_at: now } } : {}),
         },
       },
       { upsert: true },
@@ -130,6 +161,7 @@ app.patch(
     const email = normalizeEmail(req.params.email);
     const stage = String(req.body?.stage ?? "");
     if (!stage) return res.status(400).json({ error: "stage is required" });
+    if (!(await guardBrowser(req, res, email))) return;
     const result = await participants().updateOne(
       { email },
       { $set: { current_stage: stage, updated_at: new Date().toISOString() } },
@@ -142,6 +174,7 @@ app.patch(
   "/api/participants/:email/complete",
   route(async (req, res) => {
     const email = normalizeEmail(req.params.email);
+    if (!(await guardBrowser(req, res, email))) return;
     const now = new Date().toISOString();
     /*
      * completedAt is only written if it is not already set, so a repeated request — a retry from
@@ -167,6 +200,41 @@ app.patch(
       },
     );
     res.json({ ok: true });
+  }),
+);
+
+
+/*
+ * THIS BROWSER TAKES THE RECORD (since 29 September 2026). Called by the start screen once the email-and-age
+ * check has passed, before the participant's answers are downloaded. The age must match the record: the same
+ * check the page makes, repeated here so the claim cannot be made with the email alone.
+ */
+app.post(
+  "/api/participants/:email/claim",
+  route(async (req, res) => {
+    const email = normalizeEmail(req.params.email);
+    const requestId = requestBrowser(req);
+    if (!requestId) return res.status(400).json({ error: "the browser id is required" });
+    const doc = await participants().findOne({ email }, { projection: { age: 1 } });
+    if (!doc) return res.status(404).json({ error: "no such participant" });
+    if (Number(doc.age) !== Number(req.body?.age)) return res.status(403).json({ error: "the age does not match" });
+    await participants().updateOne(
+      { email },
+      { $set: { active_browser: { id: requestId, claimed_at: new Date().toISOString() } } },
+    );
+    res.json({ ok: true });
+  }),
+);
+
+/* IS THIS BROWSER THE ACTIVE ONE? Asked by the page when it opens, after every page and after every Block 5
+   scenario. Unknown participant, or nobody holding the record: yes. */
+app.post(
+  "/api/participants/:email/active",
+  route(async (req, res) => {
+    const email = normalizeEmail(req.params.email);
+    const doc = await participants().findOne({ email }, { projection: { active_browser: 1 } });
+    const verdict = browserVerdict(doc?.active_browser?.id ?? null, requestBrowser(req));
+    res.json({ active: verdict !== "refuse" });
   }),
 );
 
@@ -202,6 +270,7 @@ app.patch(
     if (!WRITABLE_ROOTS.has(path.split(".")[0])) {
       return res.status(400).json({ error: `"${path}" is not a writable section` });
     }
+    if (!(await guardBrowser(req, res, email))) return;
 
     /*
      * RESUME STATE IS MERGED, NOT REPLACED, AND NOT ACCEPTED AT ALL ONCE THE STUDY IS DONE.

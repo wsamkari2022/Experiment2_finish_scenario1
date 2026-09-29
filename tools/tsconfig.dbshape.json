@@ -10,5 +10,10 @@
     "esModuleInterop": true,
     "jsx": "react-jsx"
   },
-  "files": ["../src/experiment/dbShape.ts"]
+  "files": [
+    "../src/experiment/dbShape.ts",
+    "../src/experiment/storage.ts",
+    "../src/experiment/sessionGuard.ts",
+    "../src/experiment/block5Progress.ts"
+  ]
 }

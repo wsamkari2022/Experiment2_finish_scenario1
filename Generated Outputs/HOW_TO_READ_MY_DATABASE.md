@@ -124,6 +124,7 @@ correlating the two will produce impressive and meaningless results.
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
 | `status` | `"Study Not Completed"` or `"Study Completed"` — nothing else. |
 | `current_stage` | The screen they last reached, e.g. `money`, `block5`, `feedback`. |
+| `active_browser` | Since 29 September 2026: `{ id, claimed_at }`, the one browser allowed to write this record (a random id, naming nothing but that browser). The newest browser that passed the email-and-age check. Not data about the participant; never analyse it. |
 | `consent` | `{ agreed, timestamp, version }`. The version records which wording they agreed to. |
 | `created_at` | First time this person was seen. Never rewritten. |
 | `updated_at` | Last write of any kind. |
@@ -1373,6 +1374,12 @@ computer. It is **deleted the moment they finish**, so a completed document neve
 
 If you see it, that participant is unfinished. Never analyze it: it is an untranslated duplicate
 of data that appears properly in `blocks`.
+
+> Since **29 September 2026** it is sent as progress is made: after every Block 5 scenario (with
+> `block5_public_emergency_progress`: the next scenario, the finished results and the values), and a few
+> seconds after each answer in Blocks 2 and 3. So an unfinished participant's `resume_state` shows how far
+> into a block they got. A Block 5 scenario row with `restartedAfterLeaving: true` was left half-done and
+> started again; its own timing covers the second try only.
 
 > Since **23 September 2026** the server MERGES this field per file instead of replacing it, and
 > refuses it altogether once the study is completed. Before that, whichever browser synced last

@@ -54,6 +54,7 @@ CHECKS = {
     "position": "npm run validate:position",
     "visits": "npm run validate:visits",
     "resume": "npm run validate:resume",
+    "session": "npm run validate:session",
     "mcf": "npm run validate:mcf",
     "prediction": "npm run validate:prediction",
     "build": "npm run build",
@@ -145,12 +146,34 @@ SECTIONS = [
          "The server merges a participant's saved files instead of replacing them, so a tab left open on an old "
          "computer cannot wipe a newer run. The check replays the 23 September case that sent a finished participant "
          "back to Block 1.", ["resume"], ""),
+        ("A save that fails is kept and sent later.",
+         "If the server cannot be reached for a moment, the save waits in the browser and is sent when the server is "
+         "back, in order, each one once. Until 29 September a failed save was never kept at all.", ["session"], "(C5)"),
+        ("Block 5 continues at the scenario that was not finished.",
+         "After a refresh, or on another browser or device after the email-and-age check, Block 5 opens at the unfinished "
+         "scenario with the same cards, order and fit numbers. Example from the test: scenario 1 done, page refreshed, "
+         "scenario 2 opened with fit numbers 80, 81, 76, 64, 36, 27, exactly what the saved values give. A half-done "
+         "scenario starts again and is marked restartedAfterLeaving.", ["session"], "(C3, C4, C8)"),
+        ("Blocks 2 and 3 continue where they stopped.",
+         "Both save their progress after every answer and restore it after a refresh or on another device. Block 2 "
+         "saved nothing before 29 September.", ["session"], "(C8)"),
+        ("Progress reaches the server as it is made.",
+         "Block 5 sends after every scenario; Blocks 2 and 3 a few seconds after each answer, and at once when the tab is "
+         "hidden or closed.", ["session"], "(C7, C8)"),
+        ("Only one browser writes a participant's record.",
+         "The newest browser that passes the email-and-age check takes the record. Any other browser is refused by the "
+         "server and shows \"This study is open somewhere else\", with \"Continue here instead\" (which asks for the email "
+         "and age again and brings the newest answers). Tested live against the local database: the old browser's save "
+         "was refused and never landed.", ["session"], "(C1, C2, C6)"),
+        ("Only one tab runs the study.",
+         "Opening the study in a second tab of the same browser stops the first one, with \"Continue in this tab instead\". "
+         "Tested live, both ways.", ["session"], "(C7)"),
+        ("Each saved progress belongs to one person.",
+         "It carries the participant's email and is restored only for that email, so a second person on the same computer "
+         "never continues the first person's run.", ["session"], "(C4, C8)"),
         ("A finished study stays finished.",
          "After \"Study Completed\" the server refuses resume writes. Reloading the thank-you page shows the thank-you "
          "page, never the form again, so answers cannot be overwritten.", ["resume", "journey"], "(J8)"),
-        ("New database fields reach records that were already saved.",
-         "When the record's shape changes, SHAPE_VERSION changes, and each browser sends everything once more.",
-         [], "read in the code (storage.ts)"),
         ("The database password stays private.",
          "The .env file is never committed, and the server hides the password in its logs and on /api/health.",
          ["envignored"], ""),
@@ -289,6 +312,13 @@ OPEN = [
      "quality.compensation_eligible is simple code (completed, at least 35 working minutes, feedback not all the same "
      "answer, fewer than 3 blocks under 30 seconds), and only its rushed-block part is checked (D6). Look at "
      "quality on one real finished record.", "At the click-through"),
+    ("The one-browser rule is only as strong as the email-and-age check",
+     "Anyone who knows a participant's email and age can take their record, exactly as they could already continue "
+     "their study. It stops accidents and casual misuse, not a determined attacker; there are no passwords.", "Known"),
+    ("A refresh on the Block 2 or Block 3 finished screen",
+     "Each block removes its progress when it finishes and shows a finished screen before moving on. A refresh on that "
+     "screen starts the block again (its results are already saved and would be answered again). Older than this work; "
+     "rare.", "Your choice"),
     ("Decisions still open (for you and your advisor)",
      "A3 (the card order read as a recommendation), A5 (your values drawn over the options), A9 (your value numbers on "
      "screen while choosing), B6 and E7 (difference scores against level scores), C2 and C8 (the thresholds' "
@@ -314,7 +344,6 @@ LIMITS = [
     ("Performance for one person is mostly luck of the options picked.", "Report performance for groups."),
     ("The first card is also the best-fit card for 50-62 in 100 steady people.", "Analyse position and fit together (HOW_TO_ANALYZE 4.7)."),
     ("The MPF's chances for scenarios 1-5 use the end-of-block VCI and Stability.", "This changes only how sharp they are, never which option leads."),
-    ("Records made on different dates saw different screens.", "Never pool records across the dated changes in HOW_TO_ANALYZE 4.9."),
 ]
 
 # ------------------------------------------------------------------------------------------------ the document
@@ -459,7 +488,6 @@ for name, value, what in VERSIONS:
     cell_text(r.cells[1], value)
     cell_text(r.cells[2], what, color=GREY)
 set_widths(t, [1.9, 2.6, 2.5])
-para("Records made under two different versions of the same stamp must not be pooled.", size=9, color=GREY, italic=True, before=3)
 
 # the checklists
 W = [0.35, 1.95, 3.45, 1.25]

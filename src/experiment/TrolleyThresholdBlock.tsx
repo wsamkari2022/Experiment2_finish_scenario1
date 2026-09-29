@@ -16,7 +16,8 @@ import {
   trolleyScenarioImagesFor,
   TROLLEY_IMAGE_ASPECT,
 } from "./scenarioImages";
-import { BLOCK2_LEGACY_PAIRED_BRIDGE } from "./blocksLegacyMethodology";
+import { BLOCK2_LEGACY_PAIRED_BRIDGE, BLOCKS_23_METHODOLOGY_VERSION } from "./blocksLegacyMethodology";
+import { progressOwner, progressSaved } from "./sessionGuard";
 import type { DirectnessDirection } from "./trolleyTypes";
 import { TrolleyCompletionScreen } from "./TrolleyCompletionScreen";
 import {
@@ -27,6 +28,7 @@ import { InterBlockPause } from "./InterBlockPause";
 import { GlowSpan } from "./GlowSpan";
 import {
   SAVED_LIVES_OPTIONS,
+  TROLLEY_PROGRESS_STORAGE_KEY,
   TROLLEY_RESULTS_STORAGE_KEY,
   type BridgeAction,
   type BridgeThresholdResult,
@@ -85,17 +87,56 @@ const INITIAL_STATE: InProgressState = {
 interface TrolleyThresholdBlockProps {
   participantId?: string;
   onContinue?: (results: TrolleyBlockResults) => void;
+  /** The participant's email: the saved progress belongs to it and is restored only for it. */
+  owner?: string | null;
+}
+
+/**
+ * THE SAVED PROGRESS (since 29 September 2026, the researcher's "Q5-yes"). Block 2 kept nothing: a refresh,
+ * or another browser, started it again at the first question. It now saves its state after every answer,
+ * the way Block 3 always has, with the owner and the Blocks 2-3 method stamp, and restores it only when
+ * both still match. The file is removed when the block is complete.
+ */
+function readTrolleyProgress(owner: string | null | undefined): InProgressState | null {
+  try {
+    const raw = localStorage.getItem(TROLLEY_PROGRESS_STORAGE_KEY);
+    if (!raw) return null;
+    const { owner: savedOwner, methodologyVersion, ...saved } =
+      JSON.parse(raw) as InProgressState & { owner?: string; methodologyVersion?: string };
+    if (savedOwner === progressOwner(owner) && methodologyVersion === BLOCKS_23_METHODOLOGY_VERSION
+        && Array.isArray(saved.trolleyChoiceHistory) && saved.currentPhase !== "complete") {
+      return saved;
+    }
+    localStorage.removeItem(TROLLEY_PROGRESS_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+  return null;
 }
 
 export function TrolleyThresholdBlock({
   participantId,
   onContinue,
+  owner,
 }: TrolleyThresholdBlockProps) {
   const surf = useBlock123Surfaces(); // coordinated light-mode surfaces (dark unchanged)
   /** Core session state machine — updated on every choice. */
-  const [state, setState] = useState<InProgressState>(INITIAL_STATE);
+  const [state, setState] = useState<InProgressState>(() => readTrolleyProgress(owner) ?? INITIAL_STATE);
   /** Whether the full block (both phases) has been completed and results are ready. */
   const [trolleyBlockCompleted, setTrolleyBlockCompleted] = useState(false);
+  /* Saves the progress after every answer, and sends it to the server a few seconds later (see
+     readTrolleyProgress above and sessionGuard.ts). Nothing is saved once the block is complete. */
+  useEffect(() => {
+    if (trolleyBlockCompleted || state.currentPhase === "complete") return;
+    try {
+      localStorage.setItem(TROLLEY_PROGRESS_STORAGE_KEY, JSON.stringify({
+        ...state, owner: progressOwner(owner), methodologyVersion: BLOCKS_23_METHODOLOGY_VERSION,
+      }));
+    } catch {
+      // ignore
+    }
+    progressSaved();
+  }, [state, trolleyBlockCompleted, owner]);
   /** Frozen results object produced by completeTrolleyBlock; passed to the completion screen. */
   const [finalResults, setFinalResults] =
     useState<TrolleyBlockResults | null>(null);
@@ -314,6 +355,7 @@ export function TrolleyThresholdBlock({
 
       try {
         localStorage.setItem(TROLLEY_RESULTS_STORAGE_KEY, JSON.stringify(results));
+        localStorage.removeItem(TROLLEY_PROGRESS_STORAGE_KEY);
       } catch {
         // ignore
       }

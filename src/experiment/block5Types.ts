@@ -1022,6 +1022,13 @@ export interface Block5ScenarioResult {
    * 4's opening values); in scenario 6 on the values after the wish moved them. See block5VciAll.ts.
    */
   running?: Block5RunningFit;
+  /**
+   * True when the participant left this scenario before finishing it (a refresh, a closed tab, another
+   * browser) and came back to it (since 29 September 2026, block5Progress.ts). The scenario was started
+   * again from its beginning, so its own timing and interaction counts cover only the second attempt; the
+   * minutes of the first attempt are still in the working-time total.
+   */
+  restartedAfterLeaving?: boolean;
   performanceScore?: number;
   /**
    * PERFORMANCE AS A SHARE OF WHAT THIS SCENARIO OFFERED, 0-100. See block5Performance.ts.

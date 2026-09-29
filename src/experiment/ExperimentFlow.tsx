@@ -6,6 +6,7 @@ import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
 /* Every participant write goes through storage.ts, never to the directory or a server directly.
    That is what lets the database be switched on in one place. See the header of storage.ts. */
 import {
+  claimThisBrowser,
   flushOutbox,
   resetSyncState,
   restoreParticipantFiles,
@@ -17,6 +18,11 @@ import {
   syncResumeState,
 } from "./storage";
 import { apiClient, isApiAvailable } from "./apiClient";
+import {
+  checkActiveBrowser, claimTab, getLock, onLockChange, setLock, setProgressSender, watchTabs,
+  type LockReason,
+} from "./sessionGuard";
+import { SessionLockScreen } from "./SessionLockScreen";
 import {
   claimActiveClockFor, noteNewVisit, setActiveStage, startActiveClock, stopActiveClock,
 } from "./activeTime";
@@ -35,7 +41,7 @@ import { GlobalStepper } from "./GlobalStepper";
 import { SHOW_INTER_BLOCK_PAGES } from "./interBlockPages";
 import { InterBlockPause } from "./InterBlockPause";
 import { captureParticipantRecord } from "./participantRecord";
-import { getSessionId } from "./session";
+import { getSessionId, SESSION_ID_KEY } from "./session";
 import { markStage } from "./telemetry";
 import { useScrollToTop } from "./useScrollToTop";
 import { extractBlock5Profile } from "./block5Profile";
@@ -240,6 +246,32 @@ export function ExperimentFlow() {
   const knownAtPageLoad = useRef(pendingEmail !== null);
 
   /*
+   * ONE PLACE AT A TIME (since 29 September 2026; sessionGuard.ts). This tab claims the study as it opens,
+   * so any older tab of this browser locks; and the page follows the lock, which the server sets when
+   * another browser or device has taken this participant's record.
+   */
+  const [lock, setLockState] = useState<LockReason | null>(getLock);
+  useEffect(() => {
+    claimTab();
+    watchTabs();
+    return onLockChange(setLockState);
+  }, []);
+
+  /* Progress saved inside a block (Block 5 after every scenario, Blocks 2 and 3 as they go) is sent to
+     the server as it is made, with the same "is this browser still the active one?" question. */
+  useEffect(() => {
+    if (!pendingEmail) {
+      setProgressSender(null);
+      return;
+    }
+    setProgressSender(() => {
+      syncResumeState(pendingEmail);
+      void checkActiveBrowser(pendingEmail);
+    });
+    return () => setProgressSender(null);
+  }, [pendingEmail]);
+
+  /*
    * ONE LOGIN ROW PER PAGE LOAD, WRITTEN THE MOMENT A PARTICIPANT IS IDENTIFIED.
    *
    * Not on mount: at mount a first-time visitor has no email, and a row written then would belong
@@ -310,6 +342,8 @@ export function ExperimentFlow() {
      * the screen they left, not back at the first block.
      */
     if (pendingEmail && stage !== "start" && stage !== "consent" && stage !== "demographics") {
+      /* After every page: is this browser still the one holding the participant's record? */
+      void checkActiveBrowser(pendingEmail);
       saveProgress(pendingEmail, stage);
       /*
        * And push whatever the blocks have written since the last screen.
@@ -365,6 +399,8 @@ export function ExperimentFlow() {
         /* And the copy that carries them to another machine — same reason, same moment. The
            stage effect that normally sends it ran before this backend existed. */
         syncResumeState(email);
+        /* And, as the page opens: is this browser still the one holding the record? (sessionGuard.ts) */
+        void checkActiveBrowser(email);
       }
     })();
     return () => {
@@ -520,6 +556,28 @@ export function ExperimentFlow() {
    * sits between here and the form: a refresh in that gap would otherwise lose it and ask for it
    * a second time.
    */
+  /*
+   * LOCKED: THE STUDY IS OPEN SOMEWHERE NEWER (sessionGuard.ts). Nothing else renders, so nothing else can
+   * run or write. "Continue here instead" goes back through the email-and-age check (another browser or
+   * device), or claims the study for this tab and reloads (another tab of this browser).
+   */
+  if (lock) {
+    return (
+      <SessionLockScreen
+        reason={lock}
+        onContinueHere={() => {
+          if (lock === "tab") {
+            claimTab();
+            window.location.reload();
+            return;
+          }
+          setLock(null);
+          setStage("start");
+        }}
+      />
+    );
+  }
+
   if (stage === "start") {
     return (
       <StartScreen
@@ -546,6 +604,10 @@ export function ExperimentFlow() {
               JSON.stringify({ email: entry.email, age: entry.age, gender: entry.gender }),
             );
             localStorage.setItem(STORAGE_KEY_STATUS, entry.status);
+            /* Their own participant id, not a new one made by this browser (since 29 September 2026). It
+               seeds scenario 6's rule order (shuffleForParticipant), so without it the four rules could
+               come in another order on a new device, and the blocks would record a second id. */
+            if (entry.sessionId) localStorage.setItem(SESSION_ID_KEY, entry.sessionId);
           } catch {
             /* Storage unavailable; the resume still works for this tab. */
           }
@@ -558,18 +620,12 @@ export function ExperimentFlow() {
            * which is exactly the situation the local-first rule exists to prevent. Writing it
            * here makes the browser self-sufficient again from the first moment of the session.
            */
-          saveParticipant({
-            email: entry.email,
-            sessionId: entry.sessionId,
-            age: entry.age,
-            gender: entry.gender,
-            stage: entry.stage,
-            consent: entry.consent,
-          });
           /* The sync fingerprints in this browser describe whoever used it last, not this
              participant, so forget them and let the next sync re-send from scratch. */
           resetSyncState();
           setPendingEmail(entry.email);
+          /* Nothing is left locked on this page: it is about to become the active one. */
+          setLock(null);
 
           /*
            * BRING THEIR ANSWERS DOWN BEFORE SHOWING THEM ANYTHING.
@@ -586,6 +642,21 @@ export function ExperimentFlow() {
            * screen.
            */
           void (async () => {
+            /*
+             * THIS BROWSER TAKES THE RECORD FIRST (since 29 September 2026; sessionGuard.ts). The
+             * email and age were just checked, so this is the participant. Claimed before anything is
+             * written or downloaded: every write from here on is accepted, and any other browser still
+             * open on this run is refused from now on and shows "open somewhere else".
+             */
+            await claimThisBrowser(entry.email, entry.age);
+            saveParticipant({
+              email: entry.email,
+              sessionId: entry.sessionId,
+              age: entry.age,
+              gender: entry.gender,
+              stage: entry.stage,
+              consent: entry.consent,
+            });
             const restored = await restoreParticipantFiles(entry.email);
             try {
               localStorage.setItem(STORAGE_KEY_STAGE, entry.stage || "money");
@@ -692,6 +763,7 @@ export function ExperimentFlow() {
         <TrolleyThresholdBlock
           participantId={participantId}
           onContinue={handleTrolleyContinue}
+          owner={pendingEmail}
         />
       </>
     );
@@ -704,6 +776,7 @@ export function ExperimentFlow() {
         <AIWorkforceThresholdBlock
           participantId={participantId}
           onContinue={handleProductContinue}
+          owner={pendingEmail}
         />
       </>
     );
@@ -783,6 +856,8 @@ export function ExperimentFlow() {
            Blocks 1-3 ladder answers held here; nothing in Block 5 writes back to it. */
         moralProfile={insights.profile}
         onComplete={handleBlock5Complete}
+        /* The saved progress belongs to this email and is restored only for it (block5Progress.ts). */
+        owner={pendingEmail}
       />
     );
   }

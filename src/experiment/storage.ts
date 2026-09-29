@@ -90,6 +90,10 @@ export interface RemoteBackend {
   saveSection(path: string, data: unknown): Promise<void>;
   /** The raw browser files stored for a half-finished participant, or null. */
   getResumeFiles(email: string): Promise<Record<string, unknown> | null>;
+  /** This browser takes the participant's record (after the email-and-age check). */
+  claimBrowser(email: string, age: number): Promise<void>;
+  /** Is this browser the one holding the participant's record? */
+  isActiveBrowser(email: string): Promise<boolean>;
 }
 
 /**
@@ -164,7 +168,38 @@ function queue(item: OutboxItem): void {
  *   refused   the server read it and said no. Retrying cannot help, so it is parked rather than
  *             left at the head of the queue blocking everything behind it
  */
-type SendResult = "sent" | "retry" | "refused";
+type SendResult = "sent" | "retry" | "refused" | "locked";
+
+/*
+ * ANOTHER BROWSER HOLDS THE RECORD (since 29 September 2026).
+ *
+ * The server answers 409 "another_browser_active" when a write comes from a browser that is no longer
+ * the participant's. That is neither "try again" nor "a bug to park": this browser must stop. The
+ * queue is set aside (kept in this browser, never sent), and the page is told, so it can cover itself
+ * with the "open on another browser or device" message (sessionGuard.ts).
+ */
+const LOCKED_OUT_KEY = "vrds_outbox_locked_out";
+let onLocked: (() => void) | null = null;
+
+/** The page registers what to do when the server says another browser holds the record. */
+export function setLockedListener(listener: (() => void) | null): void {
+  onLocked = listener;
+}
+
+function isAnotherBrowser(error: unknown): boolean {
+  const e = error as { httpStatus?: number; code?: string } | null;
+  return e?.httpStatus === 409 && e?.code === "another_browser_active";
+}
+
+/** Moves every waiting write aside: this browser will never send them. */
+export function setOutboxAside(): void {
+  const waiting = readOutbox();
+  if (waiting.length === 0) return;
+  try {
+    localStorage.setItem(LOCKED_OUT_KEY, JSON.stringify({ at: new Date().toISOString(), items: waiting }));
+  } catch { /* the queue is dropped either way */ }
+  writeOutbox([]);
+}
 
 /**
  * A 4xx means the server understood the request and rejected it: a section this server does not
@@ -197,6 +232,10 @@ async function send(item: OutboxItem): Promise<SendResult> {
         return "sent";
     }
   } catch (error) {
+    if (isAnotherBrowser(error)) {
+      onLocked?.();
+      return "locked";
+    }
     if (isRefusal(error)) {
       park(item, error);
       return "refused";
@@ -250,26 +289,80 @@ function park(item: OutboxItem, error: unknown): void {
  * A refusal is now parked (see park) and the queue moves on. The order guarantee is unaffected:
  * a write the server will never accept is not a write anything can be ordered against.
  */
-export async function flushOutbox(): Promise<void> {
-  if (!remote) return;
-  const items = readOutbox();
-  if (items.length === 0) return;
+/*
+ * ONE FLUSH AT A TIME, AND IT NEVER WRITES AN OLD COPY OF THE QUEUE BACK (29 September 2026).
+ *
+ * This used to read the queue once, work through its own copy and write that copy back at the end. While
+ * nothing was ever queued (see sendOrQueue) that did no harm. Once failed writes really are queued, several
+ * flushes can run together - one per new write while the server is down - and a flush writing back the copy
+ * it read earlier would erase a write queued after it read. So a flush now starts only when none is running
+ * (a request during one makes the running one go round again), reads the head of the queue fresh each time,
+ * and removes exactly that head once it is sent. New writes are only ever added at the end.
+ */
+let flushing: Promise<void> | null = null;
+let flushAgain = false;
 
-  const remaining = [...items];
-  while (remaining.length > 0) {
-    const result = await send(remaining[0]);
-    if (result === "retry") break;
-    /* "sent" and "refused" both leave the queue; only one of them reached the database. */
-    remaining.shift();
+export function flushOutbox(): Promise<void> {
+  if (!remote) return Promise.resolve();
+  if (flushing) {
+    flushAgain = true;
+    return flushing;
   }
-  writeOutbox(remaining);
+  flushing = (async () => {
+    do {
+      flushAgain = false;
+      for (let head = readOutbox()[0]; head; head = readOutbox()[0]) {
+        const result = await send(head);
+        if (result === "retry") return;
+        if (result === "locked") {
+          /* Another browser holds the record: nothing here may be sent any more. */
+          setOutboxAside();
+          return;
+        }
+        /* "sent" and "refused" both leave the queue; only one of them reached the database. */
+        writeOutbox(readOutbox().slice(1));
+      }
+    } while (flushAgain);
+  })().finally(() => {
+    flushing = null;
+  });
+  return flushing;
 }
 
-/** Sends now if possible, and queues for later if not. Never throws, never blocks the caller. */
+/** While anything waits, try again now and then: a write that failed must not wait for the next page. */
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+function retrySoon(): void {
+  if (retryTimer) return;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    void flushOutbox().then(() => {
+      if (readOutbox().length > 0) retrySoon();
+    });
+  }, 15_000);
+}
+
+/**
+ * Sends now if possible, and queues for later if not. Never throws, never blocks the caller.
+ *
+ * FIXED 29 September 2026. This read `send(item).then((ok) => { if (!ok) queue(item); })`, but `send`
+ * answers with a word ("sent", "retry", ...), never false, so a write that failed because the server
+ * could not be reached was NEVER queued: it was lost until the full re-send at the end of the study, and
+ * a lost "study completed" was never sent again. Now a "retry" is queued. And while anything is already
+ * waiting, a new write joins the END of the queue instead of overtaking it, so the order holds.
+ */
 function sendOrQueue(item: OutboxItem): void {
   if (!remote) return;
-  void send(item).then((ok) => {
-    if (!ok) queue(item);
+  if (readOutbox().length > 0 || flushing) {
+    queue(item);
+    void flushOutbox();
+    retrySoon();
+    return;
+  }
+  void send(item).then((result) => {
+    if (result === "retry") {
+      queue(item);
+      retrySoon();
+    }
   });
 }
 
@@ -363,6 +456,37 @@ export async function restoreParticipantFiles(email: string): Promise<number> {
     return restoreResumeFiles(files);
   } catch {
     return 0;
+  }
+}
+
+/**
+ * THIS BROWSER TAKES THE PARTICIPANT'S RECORD (since 29 September 2026). Called by the start screen after the
+ * email-and-age check, BEFORE their answers are downloaded, so every write that follows is accepted. Anything
+ * this browser still had waiting belongs to an older run here and is set aside, never sent over the newer
+ * answers. True when the server took the claim; false with no server or when it could not be reached.
+ */
+export async function claimThisBrowser(email: string, age: number): Promise<boolean> {
+  if (!remote) return false;
+  setOutboxAside();
+  try {
+    await remote.claimBrowser(email, age);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Is this browser still the one holding the participant's record? true / false, or null when it cannot be
+ * told (no server, no email, the server unreachable). Null never locks anybody: a network problem must not
+ * stop a real participant.
+ */
+export async function isThisBrowserActive(email: string | null): Promise<boolean | null> {
+  if (!remote || !email) return null;
+  try {
+    return await remote.isActiveBrowser(email);
+  } catch {
+    return null;
   }
 }
 

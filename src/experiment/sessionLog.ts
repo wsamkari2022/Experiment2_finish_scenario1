@@ -110,7 +110,9 @@ function write(log: SessionLog): void {
   }
 }
 
-/** This browser's id, made once and kept. Never leaves the row it is written into. */
+/** This browser's id, made once and kept. A random id that names nothing but this browser: it is written into
+ *  the login rows, and since 29 September 2026 it also goes with every request to the server, which uses it to
+ *  keep one browser writing a participant's record at a time (server/activeBrowser.js). */
 export function browserId(): string {
   try {
     const existing = localStorage.getItem(BROWSER_ID_KEY);

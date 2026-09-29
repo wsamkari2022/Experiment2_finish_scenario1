@@ -34,6 +34,7 @@ import {
   useAutoAdvance,
 } from "./interBlockPages";
 import { InterBlockPause } from "./InterBlockPause";
+import { progressOwner, progressSaved } from "./sessionGuard";
 import { GlowSpan } from "./GlowSpan";
 import {
   AI_WORKFORCE_PROGRESS_KEY,
@@ -113,6 +114,8 @@ const INITIAL_STATE: InProgressState = {
 interface Props {
   participantId?: string;
   onContinue?: (results: AIWorkforceBlockResults) => void;
+  /** The participant's email: the saved progress belongs to it and is restored only for it. */
+  owner?: string | null;
 }
 
 /**
@@ -211,18 +214,20 @@ function WorkerGroupInfoIcon({
   );
 }
 
-export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) {
+export function AIWorkforceThresholdBlock({ participantId, onContinue, owner }: Props) {
   const surf = useBlock123Surfaces(); // coordinated light-mode surfaces (dark unchanged)
   // Restore in-progress session from localStorage, falling back to INITIAL_STATE.
   const [state, setState] = useState<InProgressState>(() => {
     try {
       const saved = localStorage.getItem(AI_WORKFORCE_PROGRESS_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as InProgressState;
-        // Only resume a session that was started under the methodology now in force.
-        // Anything else (including pre-stamp saves) restarts the block cleanly rather than
-        // producing a record that is half one design and half the other.
-        if (parsed.methodologyVersion === BLOCKS_23_METHODOLOGY_VERSION) return parsed;
+        const { owner: savedOwner, ...parsed } = JSON.parse(saved) as InProgressState & { owner?: string };
+        // Only resume a session that was started under the methodology now in force, AND by this
+        // participant (since 29 September 2026: a second person on the same computer never continues
+        // the first person's run). Anything else restarts the block cleanly.
+        if (parsed.methodologyVersion === BLOCKS_23_METHODOLOGY_VERSION && savedOwner === progressOwner(owner)) {
+          return parsed;
+        }
         localStorage.removeItem(AI_WORKFORCE_PROGRESS_KEY);
       }
     } catch {
@@ -250,11 +255,14 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue }: Props) 
   useEffect(() => {
     if (completed) return;
     try {
-      localStorage.setItem(AI_WORKFORCE_PROGRESS_KEY, JSON.stringify(state));
+      localStorage.setItem(AI_WORKFORCE_PROGRESS_KEY, JSON.stringify({ ...state, owner: progressOwner(owner) }));
     } catch {
       // ignore
     }
-  }, [state, completed]);
+    /* And to the server a few seconds later, so another browser or device can continue here
+       (since 29 September 2026; sessionGuard.ts). */
+    progressSaved();
+  }, [state, completed, owner]);
 
   // Derived shortcuts for the currently active scenario values.
   const currentGroupType = WORKER_GROUPS[state.currentGroupTypeIndex];
