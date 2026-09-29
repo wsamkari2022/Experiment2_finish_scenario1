@@ -9,6 +9,13 @@
 /** Color-blind-safe categorical palette (teal · blue · amber · violet · pink). */
 export const SERIES_COLORS = ["#0d9488", "#2563eb", "#d97706", "#7c3aed", "#db2777"];
 
+/** Scenario 6 behind the veil, where a bar has no position: a neutral slate, never a position color. */
+export const VEIL_COLOR = "#64748b";
+
+/** The predictions card (since 28 September 2026): the MPF's favourite, the participant's choice, and the
+    line between them. Violet as on the scenario-6 guess card; teal as "you" elsewhere on the page. */
+export const PREDICTION_COLORS = { favourite: "#7c3aed", choice: "#0d9488", gap: "#db2777" };
+
 /** Alignment-level colors (always shown next to a text label). */
 export const ALIGN_COLORS: Record<string, string> = {
   aligned: "#16a34a",

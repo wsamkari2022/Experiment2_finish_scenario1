@@ -362,6 +362,21 @@ React), which `npm run validate:journey` checks (J1-J8, in the chain; every gate
   screen, never the form again (`alreadyCompleted`, ExperimentFlow -> UserFeedbackPage); before, a second submit
   could overwrite the answers. The "Finish" button was removed the same day.
 - `block5Journey.ts` is listed in `tools/tsconfig.sim.json` (the lesson of VCI_all above).
+- **Scenario 6 is a bar of its own in "How far each choice sat from the person you were"** (the researcher's
+  "Q2-yes", later the same day): it was a text box under the explanation and easy to miss. It is the last bar,
+  drawn APART under a dashed line ("Behind the veil · no position · not part of the Position Effect"), striped
+  slate (`VEIL_COLOR`), on the same scale, with a thin line for the four rules' range (`HBar.apartLabel`,
+  `hatched`, `range` in block5Charts.tsx). The Position Effect and the per-position averages still leave it out.
+- **A new card, "What our software expected, and what you chose"** ("Q3-yes, Q4-yes"), right after the scenario-6
+  guess card: for each of the six scenarios, the MPF's favourite (violet) and the final choice (teal) on one
+  0-100% line at the chance the MPF gave each, joined by the percentage points between them; one ringed dot when
+  they are the same option; a hollow dot for a first choice that later changed; a dashed tick for a blind guess
+  (`DumbbellChart`). Its numbers ARE `analysis.mpf_prediction_percentages`: the page calls
+  `buildMpfPercentages(buildMpfPredictions(results))` from dbShape.ts and `predictionReading` (block5Journey.ts)
+  only picks fields. The card says scenarios 1-5 were worked out afterwards, that the favourite is always the best
+  fit (so it is the consistency story told as chances), and that the chances use the end-of-block VCI and
+  Stability. The two "hurried" notes (the wish card under 12 seconds, Blocks 1-3 under 2.5 seconds) were kept on
+  screen (the researcher's "Q1-C"). Gate J10; 6 deliberate breaks, 6 caught.
 
 ## The way on from the results page to the feedback, since 28 September 2026
 
@@ -778,7 +793,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
 | `validate:dbshape` | What reaches MongoDB. 66 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6), VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65), and which button took them from the results page to the feedback (D66). `--dump` writes a full simulated document |
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8). Prints the echo and the screen-against-yardstick shares |
-| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score cards, the bar on both pages, every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9) |
+| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score cards, the bar on both pages, every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a striped bar apart from the positions (J10) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
@@ -868,6 +883,8 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   are gone. `UNTIMED_DISPLAY_STAGES` in `telemetry.ts` is the list, and `dbShape.ts` uses it to
   strip the two from any ledger written before the change.
 - **`analysis.mpf_predictions_every_scenario` is computed after the fact for scenarios 1–5.** Only
-  scenario 6's probabilities were ever on screen. Every row carries
-  `was_shown_to_the_participant`, and `self_check` re-derives scenario 6 by the same route to prove
+  scenario 6's probabilities were on screen while anybody was choosing. Since 28 September 2026 the
+  charts page shows all six AFTER every choice ("What our software expected, and what you chose"), for
+  those who open it (`analysis.results_page.times_charts_opened`); `was_shown_to_the_participant` still
+  means "while choosing". `self_check` re-derives scenario 6 by the same route to prove
   the recomputation still matches the live one. If that check ever fails, the section is wrong.

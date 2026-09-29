@@ -175,6 +175,80 @@ export function guessReading(results: Block5ScenarioResult[]): GuessReading | nu
   };
 }
 
+/* ------------------------------------------------------------------ the MPF in every scenario */
+
+export interface PredictionRow {
+  /** 1-6, the order the participant met the scenario in. */
+  index: number;
+  kind: ConsistencyPoint["kind"];
+  favouriteTitle: string;
+  /** The MPF's chance for its favourite option, in percent (one decimal, as stored). */
+  favouritePercent: number;
+  finalTitle: string;
+  /** The MPF's chance for the option finally chosen, in percent. */
+  finalPercent: number;
+  /** Percentage points between the two; 0 when the favourite was the final choice. */
+  pointsBehind: number;
+  /** True when the MPF's favourite IS the final choice. */
+  namedFinal: boolean;
+  /** Only when the first choice differs from the final one (reflection, or scenario 6's guess). */
+  firstTitle: string | null;
+  firstPercent: number | null;
+  /** A blind guess on that menu, in percent: 1 in 6, or 1 in 4 behind the veil. */
+  guessPercent: number;
+  /** True only in scenario 6: the other scenarios' numbers were worked out after the choices. */
+  shownWhileChoosing: boolean;
+}
+
+export interface PredictionReading {
+  rows: PredictionRow[];
+  /** How many of the rows had the MPF's favourite as the final choice. */
+  namedFinal: number;
+}
+
+/**
+ * THE MPF IN EVERY SCENARIO, READ FROM THE DATABASE'S OWN SECTION (since 28 September 2026, the
+ * researcher's plan, "Q3-yes, Q4-yes"). The page passes `buildMpfPercentages(buildMpfPredictions(results))`
+ * from dbShape.ts - the very section stored as `analysis.mpf_prediction_percentages` - so the card can
+ * never show a number the database does not hold. This only picks the fields the card draws.
+ *
+ * The favourite is always the option that fits the participant's values best as they stood when the
+ * scenario opened (the MPF is a softmax on that fit), so "the favourite was your choice" is the same
+ * fact as "you chose your best fit". The card adds how SURE the MPF was, and says so.
+ */
+export function predictionReading(section: unknown): PredictionReading | null {
+  if (!section || typeof section !== "object") return null;
+  const raw = (section as { by_scenario?: unknown }).by_scenario;
+  if (!Array.isArray(raw)) return null;
+  const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const rows: PredictionRow[] = [];
+  for (const r of raw as Record<string, unknown>[]) {
+    const fav = num(r.most_expected_option_chance_percent);
+    const final = num(r.their_final_choice_chance_percent);
+    const behind = num(r.points_behind_the_most_expected_option_at_final_choice);
+    const index = num(r.order_shown);
+    if (r.could_not_be_computed || fav === null || final === null || behind === null || index === null) continue;
+    const role = r.decision_role;
+    const changed = r.they_changed_their_choice === true;
+    rows.push({
+      index,
+      kind: role === "recipient" ? "wish" : role === "predicted" ? "veil" : "decision",
+      favouriteTitle: String(r.most_expected_option_title ?? r.most_expected_option_id ?? ""),
+      favouritePercent: fav,
+      finalTitle: String(r.their_final_choice_title ?? r.their_final_choice_option_id ?? ""),
+      finalPercent: final,
+      pointsBehind: behind,
+      namedFinal: r.mpf_named_their_final_choice === true,
+      firstTitle: changed ? String(r.their_first_choice_title ?? r.their_first_choice_option_id ?? "") : null,
+      firstPercent: changed ? num(r.their_first_choice_chance_percent) : null,
+      guessPercent: num(r.chance_if_guessing_percent) ?? 0,
+      shownWhileChoosing: r.was_shown_to_the_participant === true,
+    });
+  }
+  if (rows.length === 0) return null;
+  return { rows, namedFinal: rows.filter((r) => r.namedFinal).length };
+}
+
 /* ------------------------------------------------------------------ reconsidering, all six */
 
 export interface ReconsiderBar {

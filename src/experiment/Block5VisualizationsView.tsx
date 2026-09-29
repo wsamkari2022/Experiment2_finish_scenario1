@@ -30,10 +30,10 @@ import {
 } from "@chakra-ui/react";
 import { LuArrowLeft, LuArrowRight, LuInfo } from "react-icons/lu";
 import {
-  RadarChart, HBarChart, VBarChart, LineChart, ChartLegend,
+  RadarChart, HBarChart, VBarChart, LineChart, ChartLegend, DumbbellChart,
   type RadarSeries, type HBar, type VBar, type LineSeries,
 } from "./block5Charts";
-import { SERIES_COLORS, ALIGN_COLORS } from "./block5ChartColors";
+import { SERIES_COLORS, ALIGN_COLORS, PREDICTION_COLORS, VEIL_COLOR } from "./block5ChartColors";
 import { analysePosition, positionEffectLabel, POSITION_LABEL, POSITION_SHORT } from "./block5Position";
 import { analyseStance, STANCE_LABEL } from "./block5Company";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
@@ -42,8 +42,9 @@ import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
 import {
-  DECK_POSITIONS, block4Reading, consistencyReading, guessReading, reconsiderBars, veilRow,
+  DECK_POSITIONS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, veilRow,
 } from "./block5Journey";
+import { buildMpfPercentages, buildMpfPredictions } from "./dbShape";
 import { buildTimingSummary } from "./telemetry";
 import { FeedbackBar } from "./Block5FeedbackNudge";
 import type { FeedbackButton } from "./resultsPageRecord";
@@ -378,6 +379,11 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   /* Scenario 6, read by its FINAL rule ("Q2-final") and drawn apart from the five positions. */
   const veil = veilRow(allScenarios, before);
   const guess = guessReading(allScenarios);
+  /* The MPF over all six scenarios: the database's own section, read for the card ("Q3-yes, Q4-yes"). */
+  const preds = predictionReading(buildMpfPercentages(buildMpfPredictions(results)));
+  /* Chances as stored, one decimal, a whole number without its ".0". */
+  const pctNumber = (n: number) => (Number.isInteger(n) ? `${n}` : n.toFixed(1));
+  const pctText = (n: number) => `${pctNumber(n)}%`;
 
   const position = analysePosition(scenarios, before);
 
@@ -411,7 +417,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   */
   const cardOrder = [
     "radar", "evolution", "choice", "performance", "position", "positionChoices", "tradeoff",
-    guess ? "guess" : "", hasStance ? "stance" : "", hasMirror ? "mirror" : "",
+    guess ? "guess" : "", preds ? "predictions" : "", hasStance ? "stance" : "", hasMirror ? "mirror" : "",
     "consistency", "reconsidered", "time", lensHasMovement ? "lens" : "",
     hasMoney ? "money" : "", hasTrolley ? "trolley" : "", hasWorkforce ? "workforce" : "",
     b4 ? "block4" : "", hasDeliberation ? "deliberation" : "",
@@ -434,7 +440,25 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     color: POSITION_BAND_COLOR[r.position] ?? SERIES_COLORS[0],
     valueLabel: `${r.distance}`,
   }));
-  const positionMax = Math.max(20, ...position.rows.map((r) => r.farthest));
+  /*
+   * SCENARIO 6 AS A BAR OF ITS OWN (since 28 September 2026, the researcher's "Q2-yes"). It was a text box
+   * under the explanation, and easy to miss. It is now the last bar, drawn APART: under a dashed line that
+   * says it has no position, striped and slate rather than a position color, on the same scale, with a thin
+   * line for the four rules' range. It is still not part of the Position Effect: `position` above is built
+   * from `scenarios`, which leaves scenario 6 out.
+   */
+  if (veil) {
+    positionBars.push({
+      label: `S${veil.index} · veil rule`,
+      value: veil.distance,
+      color: VEIL_COLOR,
+      valueLabel: `${veil.distance}`,
+      apartLabel: "Behind the veil · no position · not part of the Position Effect",
+      hatched: true,
+      range: [veil.nearest, veil.farthest],
+    });
+  }
+  const positionMax = Math.max(20, ...position.rows.map((r) => r.farthest), veil ? veil.farthest : 0);
   /*
    * THE CAPTION NAMES ITS OWN QUANTITY, on each of its three lines.
    *
@@ -638,16 +662,27 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 5 · Position Effect — the study's independent variable, seen from the outside */}
           <ChartCard index={num("position")} title="How far each choice sat from the person you were"
-            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>, one color for each of the {DECK_POSITIONS.length} positions. Read <b>across the colors</b>: that is where the finding is. Scenario 6 is drawn apart below it — behind the veil you had no position.</>}
+            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>, one color for each of the {DECK_POSITIONS.length} positions. Read <b>across the colors</b>: that is where the finding is. Scenario 6 is the <b>striped gray bar</b> under the dashed line: behind the veil you had no position, so it is not part of the finding, and the thin line under it shows how far apart the four rules were.</>}
             caption={positionCaption}>
             {position.rows.length === 0 ? (
               <Text fontSize="sm" color="fg.muted">No position data recorded for these scenarios.</Text>
             ) : (
               <>
                 <HBarChart bars={positionBars} max={positionMax} unitHint="distance from your earlier profile" />
-                <ChartLegend items={DECK_POSITIONS.map((pos) => ({
-                  label: POSITION_LABEL[pos].toLowerCase(), color: POSITION_BAND_COLOR[pos] ?? SERIES_COLORS[0],
-                }))} />
+                <ChartLegend items={[
+                  ...DECK_POSITIONS.map((pos) => ({
+                    label: POSITION_LABEL[pos].toLowerCase(), color: POSITION_BAND_COLOR[pos] ?? SERIES_COLORS[0],
+                  })),
+                  ...(veil ? [{ label: "behind the veil (no position)", color: VEIL_COLOR, dashed: true }] : []),
+                ]} />
+                {veil && (
+                  <Text fontSize="xs" color="fg.muted" lineHeight="tall" mt="2">
+                    <b>Scenario 6:</b> your rule “{veil.ruleTitle}” sat <b>{veil.distance}</b> from your earlier profile;
+                    the four rules there ranged from {veil.nearest} to {veil.farthest}.
+                    {veil.changedAfterTheGuess && veil.firstRuleTitle
+                      ? ` This is your final rule: before our guess you had chosen “${veil.firstRuleTitle}”.` : ""}
+                  </Text>
+                )}
                 <Stack gap="1.5" mt="3">
                   {position.summaries.map((sm) => (
                     <HStack key={sm.position} gap="3" align="baseline">
@@ -691,26 +726,6 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                     </Text>
                   </Stack>
                 </Box>
-                {/* THE VEIL, DRAWN APART (28 September 2026). Never a sixth bar: behind the veil there is no
-                    position, so it is not part of the Position Effect, and its menu is four rules rather
-                    than six actions. Same distance, same frozen profile, its final rule ("Q2-final"). */}
-                {veil && (
-                  <Box mt="3" borderWidth="1px" borderStyle="dashed" borderColor="border.emphasized" rounded="lg" px="4" py="3">
-                    <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1.5">
-                      Behind the veil · scenario 6 · drawn apart
-                    </Text>
-                    <Text fontSize="sm" color="fg" lineHeight="tall">
-                      Your rule “{veil.ruleTitle}” sat <b>{veil.distance}</b> from your earlier profile; the four
-                      rules there ranged from {veil.nearest} to {veil.farthest}.
-                    </Text>
-                    <Text fontSize="xs" color="fg.muted" lineHeight="tall" mt="1">
-                      You did not know where you would stand, so this is not one of the positions above and is not
-                      part of the Position Effect.
-                      {veil.changedAfterTheGuess && veil.firstRuleTitle
-                        ? ` This is your final rule: before our guess you had chosen “${veil.firstRuleTitle}”.` : ""}
-                    </Text>
-                  </Box>
-                )}
               </>
             )}
           </ChartCard>
@@ -873,6 +888,64 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                   </Box>
                 ))}
               </Stack>
+            </ChartCard>
+          )}
+
+          {/*
+            THE MPF IN EVERY SCENARIO (28 September 2026, the researcher's plan "Q3-yes, Q4-yes"). The guess card
+            above is scenario 6 as it was shown; this is the same software run over all six. Its numbers are the
+            database's own section (analysis.mpf_prediction_percentages), built by the same dbShape functions.
+            Scenarios 1-5 were never on screen while the participant chose, and the card says so.
+          */}
+          {preds && (
+            <ChartCard index={num("predictions")} title="What our software expected, and what you chose"
+              howTo={<>One line for each scenario, from 0% to 100%. The <b>purple dot</b> is the option our Moral Prediction Function (MPF) thought most likely, at the chance it gave it. The <b>teal dot</b> is the option you finally chose, at the chance the MPF gave <i>that</i> option. The <b>pink line</b> between them is how many percentage points your choice sat behind the MPF's favourite; one dot with a purple ring means they were the same option. A <b>hollow dot</b> is your first choice, when you later changed it. The dashed mark is a blind guess (1 in 6, or 1 in 4 behind the veil). This tests our software, not you.</>}
+              caption={<>
+                The MPF's favourite was your final choice in <b>{preds.namedFinal} of the {preds.rows.length}</b> scenarios.{" "}
+                Scenarios 1 to 5 were worked out afterwards: <b>you never saw these numbers while choosing</b>.
+                {preds.rows.some((r) => r.shownWhileChoosing) && <> Scenario 6 shows the numbers you saw.</>}
+              </>}>
+              <DumbbellChart colors={PREDICTION_COLORS} rows={preds.rows.map((r) => ({
+                label: `S${r.index}${r.kind === "wish" ? " wish" : r.kind === "veil" ? " rule" : ""}`,
+                favourite: r.favouritePercent,
+                final: r.finalPercent,
+                first: r.firstPercent,
+                same: r.namedFinal,
+                guess: r.guessPercent,
+                note: (r.namedFinal
+                  ? `${pctText(r.finalPercent)} · the favourite was your ${r.kind === "wish" ? "wish" : r.kind === "veil" ? "rule" : "choice"}`
+                  : `your ${r.kind === "wish" ? "wish" : r.kind === "veil" ? "rule" : "choice"} ${pctText(r.finalPercent)} · favourite ${pctText(r.favouritePercent)} · ${pctNumber(r.pointsBehind)} percentage points behind`)
+                  + (r.firstPercent !== null ? ` · first choice ${pctText(r.firstPercent)}` : ""),
+              }))} />
+              <ChartLegend items={[
+                { label: "the MPF's favourite", color: PREDICTION_COLORS.favourite },
+                { label: "your final choice", color: PREDICTION_COLORS.choice },
+                { label: "percentage points between them", color: PREDICTION_COLORS.gap },
+                { label: "a blind guess", color: "#94a3b8", dashed: true },
+              ]} />
+              <Stack gap="2" mt="4">
+                {preds.rows.map((r) => (
+                  <HStack key={r.index} gap="2.5" align="baseline">
+                    <Text fontSize="xs" color="fg.subtle" fontFamily="mono" flex="none" w="7">S{r.index}</Text>
+                    <Text fontSize="xs" color="fg.muted" lineHeight="tall">
+                      {r.namedFinal ? (
+                        <>The favourite and your {r.kind === "wish" ? "wish" : r.kind === "veil" ? "rule" : "choice"}: <Text as="span" color="fg" fontWeight="medium">“{r.finalTitle}”</Text> ({pctText(r.finalPercent)})</>
+                      ) : (
+                        <>The favourite: <Text as="span" color="fg" fontWeight="medium">“{r.favouriteTitle}”</Text> ({pctText(r.favouritePercent)}). Your {r.kind === "wish" ? "wish" : r.kind === "veil" ? "rule" : "choice"}: <Text as="span" color="fg" fontWeight="medium">“{r.finalTitle}”</Text> ({pctText(r.finalPercent)}), <b>{pctNumber(r.pointsBehind)} percentage points behind</b>.</>
+                      )}
+                      {r.firstTitle && <> Your first choice was “{r.firstTitle}”{r.firstPercent !== null ? ` (${pctText(r.firstPercent)})` : ""}.</>}
+                    </Text>
+                  </HStack>
+                ))}
+              </Stack>
+              <Text fontSize="2xs" color="fg.subtle" lineHeight="tall" mt="3">
+                The MPF's favourite is always the option that fits your values best as they stood when that scenario
+                opened, so this tells the same story as the consistency card, as chances: a high percentage means the
+                MPF was sure, a low one that several options fitted you almost equally. Scenario 5 uses the values
+                scenario 4 opened with, like its cards. The chances use how consistent you were over the whole block,
+                so they are a little sharper than the MPF could have been at the time; which option is the favourite
+                does not change.
+              </Text>
             </ChartCard>
           )}
 

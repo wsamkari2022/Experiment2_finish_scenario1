@@ -837,6 +837,11 @@ than repeated on all six rows.
 >
 > The row tells you which is which: **`was_shown_to_the_participant`**. Check it before describing
 > anything here as a prediction the study made in advance.
+>
+> **Since 28 September 2026 the charts page shows these numbers for all six scenarios AFTER every choice**
+> (the card "What our software expected, and what you chose", built from section 6f by the same functions).
+> `was_shown_to_the_participant` still means "while choosing"; `analysis.results_page.times_charts_opened`
+> says whether this participant opened the charts page at all.
 
 ### What it is for
 
@@ -922,9 +927,10 @@ Added **20 September 2026**. Section 6e holds every prediction in full, spread a
 array of six entries inside each of six rows. This is the same predictions cut down to the three
 numbers that actually get asked for, one row per scenario, in the order they were shown.
 
-> ⚠️ **Only scenario 6's percentages were ever on screen.** Every other row was computed afterward,
+> ⚠️ **Only scenario 6's percentages were on screen while choosing.** Every other row was computed afterward,
 > exactly as in section 6e, and each row carries `was_shown_to_the_participant`. Check it before
-> describing any of this as a prediction the study made in advance.
+> describing any of this as a prediction the study made in advance. Since 28 September 2026 the charts page
+> draws this very section, after every choice (section 6e).
 
 ### `by_scenario` — the columns
 

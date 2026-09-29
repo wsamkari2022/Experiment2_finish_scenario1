@@ -19,6 +19,9 @@
  *   J7  Block 4: kept / changed / back, in the words the participant saw
  *   J8  the page and the flow, read from the source: the cards read every scenario, no "three colors",
  *       no Finish button, and a finished participant opens on the thank-you screen
+ *   J9  the way on to the feedback, from the source: "1 step left", the card, the bar, every button recorded
+ *   J10 the MPF in every scenario: the database's own numbers, the gap, a first choice only when it changed,
+ *       scenario 6 as shown, the favourite = the best fit; scenario 6 a striped bar apart from the positions
  *
  * Run:  npm run validate:journey
  */
@@ -255,6 +258,62 @@ console.log("===================================================================
   if (!stepper.includes("data-stop={i}") || !stepper.includes("rail.scrollLeft += over")) why.push("the rail does not slide to where you are on a phone");
   gate("J9", why.length === 0, why.length ? why.join(" | ")
     : '"1 step left" instead of "Complete", the card under the score cards, the bar on both pages, every button recorded, an honest gift-card line, no warning, Feedback "next" in the progress bar, the rail slides to it on a phone');
+}
+
+/* J10 — the MPF in every scenario, and scenario 6 as a bar of its own (28 September 2026, the researcher's
+   "Q2-yes, Q3-yes, Q4-yes"). The card reads the database's own section, so it is checked against that section,
+   against the scenario-6 numbers that were shown, and against the rule that the favourite is the best fit. */
+{
+  try {
+    execFileSync("npx", ["tsc", "-p", "tools/tsconfig.dbshape.json"], { cwd: ROOT, encoding: "utf8", shell: true });
+  } catch { /* as above */ }
+  const db = B("dbShape.js");
+  const why = [];
+  let changedSeen = 0, missSeen = 0, hitSeen = 0;
+  for (const [name, run] of RUNS) {
+    const b5 = { originalProfile: run.frozen, vci: 70, stability: 80, scenarioResults: run.results };
+    const section = db.buildMpfPercentages(db.buildMpfPredictions(b5));
+    const pr = J.predictionReading(section);
+    if (!pr || pr.rows.length !== 6) { why.push(`${name}: not six rows`); continue; }
+    if (pr.rows.map((r) => r.kind).join() !== "decision,decision,decision,decision,wish,veil") why.push(`${name}: the rows are not the four decisions, the wish and the veil`);
+    pr.rows.forEach((row, i) => {
+      const src = section.by_scenario[i];
+      if (row.favouritePercent !== src.most_expected_option_chance_percent
+          || row.finalPercent !== src.their_final_choice_chance_percent
+          || row.pointsBehind !== src.points_behind_the_most_expected_option_at_final_choice) {
+        why.push(`${name} S${i + 1}: not the database's numbers`);
+      }
+      const expected = Math.max(0, Math.round((row.favouritePercent - row.finalPercent) * 10) / 10);
+      if (Math.abs(expected - row.pointsBehind) > 0.11) why.push(`${name} S${i + 1}: the gap is not the favourite minus the choice`);
+      if (row.namedFinal !== (row.favouriteTitle === row.finalTitle)) why.push(`${name} S${i + 1}: "same option" is wrong`);
+      if (row.namedFinal) hitSeen += 1; else missSeen += 1;
+      const r = run.results[i];
+      const first = r.predictionTest?.firstChoiceOptionId ?? r.firstChoiceOptionId ?? r.selectedOptionId;
+      const changed = first !== r.selectedOptionId;
+      if (changed !== (row.firstPercent !== null)) why.push(`${name} S${i + 1}: the first choice is drawn when it did not change, or missing when it did`);
+      if (changed) changedSeen += 1;
+      if (row.guessPercent !== Math.round(1000 / BLOCK5_SCENARIOS[i].options.length) / 10) why.push(`${name} S${i + 1}: the blind guess is not 1 in ${BLOCK5_SCENARIOS[i].options.length}`);
+      if (row.shownWhileChoosing !== (r.decisionRole === "predicted")) why.push(`${name} S${i + 1}: says it was shown when it was not, or the other way round`);
+    });
+    /* Scenario 6: the favourite at the chance that was on screen. */
+    const top = run.results[5].predictionTest.shownProbabilities.find((o) => o.rank === 1);
+    if (Math.abs(pr.rows[5].favouritePercent - Math.round(top.probability * 1000) / 10) > 0.05) why.push(`${name}: scenario 6's favourite is not the chance that was shown`);
+    /* The favourite is the best fit on the values the scenario opened with: a best-fit picker is always
+       "expected" in scenarios 1-5, a worst-fit picker never. */
+    if (name === "best fit everywhere" && pr.rows.slice(0, 5).some((r) => !r.namedFinal)) why.push("the favourite is not the best fit");
+    if (name === "worst fit everywhere" && pr.rows.slice(0, 5).some((r) => r.namedFinal)) why.push("a worst-fit choice is called the favourite");
+    if (pr.namedFinal !== pr.rows.filter((r) => r.namedFinal).length) why.push(`${name}: the count in the caption is wrong`);
+  }
+  if (changedSeen === 0 || missSeen === 0 || hitSeen === 0) why.push("the pretend runs do not reach every case (a hit, a miss, a changed first choice)");
+  if (J.predictionReading(null) !== null || J.predictionReading({ by_scenario: [] }) !== null) why.push("an empty section should draw no card");
+
+  const view = fs.readFileSync(path.join(ROOT, "src", "experiment", "Block5VisualizationsView.tsx"), "utf8");
+  if (!view.includes("predictionReading(buildMpfPercentages(buildMpfPredictions(results)))")) why.push("the card does not read the database's own section");
+  if (!view.includes('guess ? "guess" : "", preds ? "predictions" : ""')) why.push("the predictions card is not right after the guess card");
+  if (!view.includes('apartLabel: "Behind the veil') || !view.includes("hatched: true") || !view.includes("range: [veil.nearest, veil.farthest]")) why.push("scenario 6 is not a striped bar drawn apart with its range");
+  if (!view.includes("const position = analysePosition(scenarios, before)")) why.push("the Position Effect no longer leaves scenario 6 out");
+  gate("J10", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : `the MPF card: the database's numbers, the gap = favourite - choice, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit (${hitSeen} hits, ${missSeen} misses, ${changedSeen} changed); scenario 6 a striped bar apart, outside the Position Effect`);
 }
 
 console.log("");

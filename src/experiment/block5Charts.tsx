@@ -12,6 +12,7 @@
  * These components only DRAW the values handed to them; they compute no experiment logic.
  */
 
+import { useId } from "react";
 import { Box } from "@chakra-ui/react";
 
 const AXIS = "currentColor";
@@ -110,6 +111,16 @@ export interface HBar {
   color: string;
   /** text shown at the end of the bar (defaults to the value) */
   valueLabel?: string;
+  /**
+   * Draws this bar APART from the ones above it: a dashed line across the chart with this label, then
+   * the bar (since 28 September 2026, for scenario 6 behind the veil, which has no position and is not
+   * part of the Position Effect but is measured on the same scale).
+   */
+  apartLabel?: string;
+  /** Striped rather than solid, so a bar drawn apart never reads as one more category. */
+  hatched?: boolean;
+  /** A thin line under the bar from the first number to the second (e.g. the nearest and farthest option). */
+  range?: [number, number];
 }
 
 /**
@@ -117,25 +128,122 @@ export interface HBar {
  * categories (per-scenario scores, time per stage). Axis starts at zero (honest scale).
  */
 export function HBarChart({ bars, max, unitHint }: { bars: HBar[]; max: number; unitHint?: string }) {
-  const rowH = 34, padT = unitHint ? 22 : 8, padB = 8, labelW = 116, padL = 8, padR = 48;
+  const rowH = 34, padT = unitHint ? 22 : 8, padB = 8, labelW = 116, padL = 8, padR = 48, apartH = 26;
   const W = 480;
   const plotW = W - labelW - padL - padR;
-  const H = padT + bars.length * rowH + padB;
+  /* Where each row starts: a bar drawn apart gets room above it for its dashed line and label. */
+  const tops: number[] = [];
+  let cursor = padT;
+  for (const b of bars) {
+    if (b.apartLabel) cursor += apartH;
+    tops.push(cursor);
+    cursor += rowH;
+  }
+  const H = cursor + padB;
   const scale = (v: number) => (max <= 0 ? 0 : Math.max(0, Math.min(1, v / max)) * plotW);
+  const hatchId = useId().replace(/:/g, "");
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={SVG_STYLE}>
+      {bars.some((b) => b.hatched) && (
+        <defs>
+          {bars.filter((b) => b.hatched).map((b, i) => (
+            <pattern key={i} id={`${hatchId}-${i}`} width={6} height={6} patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+              <rect width={6} height={6} fill={b.color} fillOpacity={0.28} />
+              <line x1={0} y1={0} x2={0} y2={6} stroke={b.color} strokeWidth={2.2} />
+            </pattern>
+          ))}
+        </defs>
+      )}
       {unitHint && <text x={labelW + padL} y={12} fontSize={10} fill={AXIS} fillOpacity={0.5}>{unitHint}</text>}
       {bars.map((b, i) => {
-        const y = padT + i * rowH;
+        const y = tops[i];
         const bw = scale(b.value);
+        const hatchIndex = bars.slice(0, i).filter((x) => x.hatched).length;
         return (
           <g key={b.label}>
+            {b.apartLabel && (
+              <>
+                <line x1={padL} y1={y - apartH + 8} x2={W - padR / 2} y2={y - apartH + 8} stroke={AXIS} strokeOpacity={0.35} strokeDasharray="4 4" />
+                <text x={padL} y={y - 5} fontSize={9.5} fontWeight={700} fill={AXIS} fillOpacity={0.55} letterSpacing="0.04em">{b.apartLabel.toUpperCase()}</text>
+              </>
+            )}
             <text x={padL} y={y + rowH / 2} dy="0.32em" fontSize={11.5} fontWeight={600} fill={AXIS} fillOpacity={0.85}>{b.label}</text>
             <rect x={labelW + padL} y={y + 6} width={plotW} height={rowH - 14} rx={5} fill={AXIS} fillOpacity={0.06} />
-            <rect x={labelW + padL} y={y + 6} width={Math.max(bw, 2)} height={rowH - 14} rx={5} fill={b.color} />
+            <rect x={labelW + padL} y={y + 6} width={Math.max(bw, 2)} height={rowH - 14} rx={5}
+              fill={b.hatched ? `url(#${hatchId}-${hatchIndex})` : b.color}
+              stroke={b.hatched ? b.color : undefined} strokeDasharray={b.hatched ? "3 2" : undefined} />
+            {b.range && (
+              <rect x={labelW + padL + scale(Math.min(...b.range))} y={y + rowH - 7}
+                width={Math.max(2, scale(Math.max(...b.range)) - scale(Math.min(...b.range)))} height={3} rx={1.5}
+                fill={b.color} fillOpacity={0.55} />
+            )}
             <text x={labelW + padL + Math.max(bw, 2) + 6} y={y + rowH / 2} dy="0.32em" fontSize={11} fontWeight={700} fill={AXIS} fillOpacity={0.75}>
               {b.valueLabel ?? b.value}
             </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ------------------------------- Dumbbell ------------------------------- */
+
+export interface DumbbellRow {
+  label: string;
+  /** 0-100: the chance the MPF gave its favourite option. */
+  favourite: number;
+  /** 0-100: the chance it gave the option finally chosen. */
+  final: number;
+  /** 0-100: the chance it gave the FIRST choice, only when that differs from the final one. */
+  first?: number | null;
+  /** True when the favourite IS the final choice: one dot with a ring. */
+  same: boolean;
+  /** 0-100: a blind guess on that menu (1 in 6, or 1 in 4). */
+  guess: number;
+  /** The line of words under the row. */
+  note: string;
+}
+
+/**
+ * Two dots per row on one 0-100% line (since 28 September 2026, the predictions card): the MPF's
+ * favourite and the participant's final choice, at the chance the MPF gave each, joined by a line whose
+ * length is the percentage points between them. A dashed tick marks a blind guess; a hollow dot marks a
+ * first choice that differs from the final one. Colors come from the caller, with a text label always.
+ */
+export function DumbbellChart({ rows, colors }: {
+  rows: DumbbellRow[]; colors: { favourite: string; choice: string; gap: string };
+}) {
+  const W = 560, labelW = 66, padL = 6, padR = 16, padT = 20, rowH = 48;
+  const x0 = labelW + padL + 6, x1 = W - padR;
+  const x = (p: number) => x0 + (Math.max(0, Math.min(100, p)) / 100) * (x1 - x0);
+  const H = padT + rows.length * rowH + 4;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={SVG_STYLE}>
+      {[0, 50, 100].map((p) => (
+        <text key={p} x={x(p)} y={11} fontSize={10} textAnchor={p === 0 ? "start" : p === 100 ? "end" : "middle"}
+          fill={AXIS} fillOpacity={0.5}>{p}%</text>
+      ))}
+      {rows.map((r, i) => {
+        const cy = padT + i * rowH + 12;
+        return (
+          <g key={r.label}>
+            <text x={padL} y={cy} dy="0.32em" fontSize={11.5} fontWeight={600} fill={AXIS} fillOpacity={0.85}>{r.label}</text>
+            <line x1={x0} y1={cy} x2={x1} y2={cy} stroke={AXIS} strokeOpacity={0.12} strokeWidth={6} strokeLinecap="round" />
+            <line x1={x(r.guess)} y1={cy - 9} x2={x(r.guess)} y2={cy + 9} stroke={AXIS} strokeOpacity={0.55} strokeDasharray="2 3" />
+            {typeof r.first === "number" && (
+              <circle cx={x(r.first)} cy={cy} r={5.5} fill="none" stroke={colors.choice} strokeWidth={2} />
+            )}
+            {r.same ? (
+              <circle cx={x(r.final)} cy={cy} r={6.5} fill={colors.choice} stroke={colors.favourite} strokeWidth={3} />
+            ) : (
+              <>
+                <line x1={x(r.final)} y1={cy} x2={x(r.favourite)} y2={cy} stroke={colors.gap} strokeWidth={3} />
+                <circle cx={x(r.favourite)} cy={cy} r={6.5} fill={colors.favourite} />
+                <circle cx={x(r.final)} cy={cy} r={6.5} fill={colors.choice} />
+              </>
+            )}
+            <text x={x0} y={cy + 22} fontSize={10.5} fill={AXIS} fillOpacity={0.7}>{r.note}</text>
           </g>
         );
       })}
