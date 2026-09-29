@@ -24,7 +24,7 @@
  * It computes no experiment logic and changes nothing about scoring or the flow.
  */
 
-import type { ReactNode } from "react";
+import { useMemo, useRef, type ReactNode } from "react";
 import {
   Badge, Box, Button, Heading, HStack, Icon, SimpleGrid, Stack, Text, VStack,
 } from "@chakra-ui/react";
@@ -45,6 +45,8 @@ import {
   DECK_POSITIONS, block4Reading, consistencyReading, guessReading, reconsiderBars, veilRow,
 } from "./block5Journey";
 import { buildTimingSummary } from "./telemetry";
+import { FeedbackBar } from "./Block5FeedbackNudge";
+import type { FeedbackButton } from "./resultsPageRecord";
 import {
   POLICY_DIM_KEYS,
   type Block5PolicyDimKey, type Block5Results, type Block5UserProfile,
@@ -53,7 +55,8 @@ import {
 interface Props {
   results: Block5Results;
   onBack: () => void;
-  onContinueToFeedback: () => void;
+  /** Goes to the feedback and records which button did it (resultsPageRecord.ts). */
+  onContinueToFeedback: (button: FeedbackButton) => void;
 }
 
 /** Clear, jargon-free names for the four policy values (no bare word like "total"). */
@@ -133,6 +136,10 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
    * of all of them because it cannot move the profile and was in no score; since VCI_all it is in one,
    * and a flat sixth step on the value line is now explained on the card instead of hidden.
    */
+  /* The bottom bar shows while the footer's own "Continue to feedback" is off screen (since
+     28 September 2026; Block5FeedbackNudge.tsx). */
+  const footerRef = useRef<HTMLDivElement>(null);
+  const watch = useMemo(() => [footerRef], []);
   const allScenarios = results.scenarioResults;
   const scenarios = allScenarios.filter((r) => !isPredictionTest(r));
   const decisionCount = allScenarios.filter((r) => (r.decisionRole ?? "decider") === "decider").length;
@@ -551,7 +558,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   const timeCaption = `You spent about ${fmtDur(totalMs)} on the whole experiment.`;
 
   return (
-    <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} py={{ base: "6", md: "10" }}>
+    <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} pt={{ base: "6", md: "10" }} pb="24">
       <VStack gap="6" align="stretch" maxW="6xl" mx="auto" animationName="fade-in" animationDuration="moderate">
         {/* Header */}
         <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} gap="4">
@@ -1179,17 +1186,18 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
         </SimpleGrid>
 
         {/* Footer actions */}
-        <HStack justify="space-between" pt="2" pb="8" wrap="wrap" gap="3">
+        <HStack ref={footerRef} justify="space-between" pt="2" pb="8" wrap="wrap" gap="3">
           <Button onClick={onBack} variant="ghost" colorPalette="gray" rounded="lg" gap="2">
             <Icon><LuArrowLeft /></Icon>
             Back to results
           </Button>
-          <Button onClick={onContinueToFeedback} colorPalette="pink" rounded="lg" px="8" gap="2">
+          <Button onClick={() => onContinueToFeedback("bottom_of_charts")} colorPalette="pink" rounded="lg" px="8" gap="2">
             Continue to feedback
             <Icon><LuArrowRight /></Icon>
           </Button>
         </HStack>
       </VStack>
+      <FeedbackBar watch={watch} onContinue={() => onContinueToFeedback("bar_on_charts")} />
     </Box>
   );
 }

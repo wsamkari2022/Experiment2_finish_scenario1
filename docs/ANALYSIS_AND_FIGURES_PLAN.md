@@ -302,7 +302,8 @@ raises that sharpness too.
 | **Which way did Block 5 move people?** | `analysis.value_profile_change.*` per value | the mean shift per value with CI (a group moved toward protecting the vulnerable, say); **Figure S11**: four bars |
 | **Data-driven chooser types** | the value each decision was built on, across the four decisions (and the wish) | latent class analysis on those choice patterns, then compare the classes with the pretend kinds (section 7) |
 | **Fast choices against considered ones** | `telemetry.timeToFirstSelectionMs` against `alignmentLevel` and `cvrFired` (mixed logistic) | are quick first picks more or less value-consistent? A dual-process question the data can answer |
-| **Who found the results page most helpful** | `TOOL_resultsPage` against the major scores and the Blocks 1-4 profile | which kinds of participant the page serves best |
+| **Who found the results page most helpful** | `TOOL_resultsPage` against the major scores and the Blocks 1-4 profile | which kinds of participant the page serves best; since 28 September 2026 read it beside `analysis.results_page` (which button, charts opened) and the time on the page, and set aside ratings from people who left at once, with the cut-off fixed in advance |
+| **Which reminder worked** | `analysis.results_page.first_button_used`, feedback completion (`status`) | descriptive: how many went on from the card, the bottom bar, or the bottom of the page; how many stopped on the results page (`current_stage: "block5_summary"`) |
 | **Age and gender** | `age`, `gender` as moderators of the primary results | exploratory unless pre-registered; report as such |
 
 ---

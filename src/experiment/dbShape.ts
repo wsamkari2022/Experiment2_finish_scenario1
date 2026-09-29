@@ -48,6 +48,7 @@ import {
 } from "./block5Position";
 import { ACTIVE_TIME_KEY } from "./activeTime";
 import { SESSION_LOG_KEY } from "./sessionLog";
+import { RESULTS_PAGE_KEY, FEEDBACK_BUTTONS, type FeedbackButton } from "./resultsPageRecord";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
 import { ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
@@ -82,7 +83,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-28-vci-all";
+export const SHAPE_VERSION = "2026-09-28-results-page";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -124,7 +125,65 @@ export const SOURCE_MAP: SourceMapping[] = [
   /* Who sat down, how often, and on how many machines. Its own room for the same reason as
      active_time: the whole object is written as one value, so a nested path would be wiped. */
   { key: SESSION_LOG_KEY, path: "sessions", transform: summariseSessions },
+  /* Which "Continue to feedback" button was used, and whether the charts were opened first (since
+     28 September 2026). See buildResultsPageSection. */
+  { key: RESULTS_PAGE_KEY, path: "analysis.results_page", transform: buildResultsPageSection },
 ];
+
+/** Each feedback button in words, for the reader of `analysis.results_page`. */
+export const FEEDBACK_BUTTON_WORDS: Record<FeedbackButton, string> = {
+  card_under_scores: "The \"One last step\" card under the four score cards on the results page",
+  bar_on_results: "The slim bar at the bottom of the screen, on the results page",
+  bar_on_charts: "The slim bar at the bottom of the screen, on the charts page",
+  bottom_of_results: "The button at the very bottom of the results page",
+  bottom_of_charts: "The button at the very bottom of the charts page",
+};
+
+/**
+ * THE WAY FROM THE RESULTS PAGE TO THE FEEDBACK (since 28 September 2026, the researcher's plan, "Q5-yes").
+ *
+ * The results page now shows more ways to the feedback than its old bottom button: a "One last step" card
+ * under the score cards, and a slim bar at the bottom of the screen on the results and charts pages. This
+ * says which one each participant used, how often they went to the feedback (the feedback page has a Back
+ * button, so it can be more than once), and whether they opened the charts page first.
+ *
+ * Two reasons to keep it: which reminder worked, and the rating of "The final results page"
+ * (TOOL_resultsPage), which means less from somebody who left the results page at once. The time spent on
+ * the results page (charts included) is NOT repeated here: it is `active_time.by_stage_minutes.block5_summary`.
+ * Nothing here was on screen.
+ */
+export function buildResultsPageSection(raw: unknown): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as { chartsOpened?: unknown; toFeedback?: unknown };
+  const clicks = (Array.isArray(r.toFeedback) ? r.toFeedback : [])
+    .filter((c): c is { button: FeedbackButton; at: string; chartsOpenedSoFar: number } =>
+      !!c && typeof c === "object"
+      && FEEDBACK_BUTTONS.includes((c as { button?: FeedbackButton }).button as FeedbackButton)
+      && typeof (c as { chartsOpenedSoFar?: unknown }).chartsOpenedSoFar === "number");
+  const chartsOpened = typeof r.chartsOpened === "number" && r.chartsOpened >= 0 ? r.chartsOpened : 0;
+  const first = clicks[0] ?? null;
+  const last = clicks[clicks.length - 1] ?? null;
+  return {
+    first_button_used: first?.button ?? null,
+    first_button_in_words: first ? FEEDBACK_BUTTON_WORDS[first.button] : null,
+    last_button_used: last?.button ?? null,
+    times_went_to_feedback: clicks.length,
+    times_charts_opened: chartsOpened,
+    opened_charts_before_first_feedback: first ? first.chartsOpenedSoFar > 0 : null,
+    moves_to_feedback: clicks.map((c) => ({
+      button: c.button,
+      at: typeof c.at === "string" ? c.at : null,
+      charts_opened_before_this: c.chartsOpenedSoFar,
+    })),
+    how_to_read:
+      "first_button_used is the button that first took this participant from the results (or charts) page to the "
+      + "feedback: card_under_scores, bar_on_results, bar_on_charts, bottom_of_results or bottom_of_charts. "
+      + "times_went_to_feedback is above 1 when they came back with the feedback page's Back button and left again. "
+      + "null means they have not gone to the feedback yet. The time spent on the results page, charts included, is "
+      + "active_time.by_stage_minutes.block5_summary. Recorded since 28 September 2026; older records have no "
+      + "results_page at all.",
+  };
+}
 
 /**
  * THE TWO READ-ONLY PAGES ARE REMOVED FROM EVERY PER-PAGE TIMING THE DATABASE HOLDS.
@@ -344,6 +403,9 @@ export const RESUME_FILES: string[] = [
      vrds_browser_id is deliberately NOT here: it names the machine it was made on, and copying
      it across would make two computers look like one. See sessionLog.ts. */
   SESSION_LOG_KEY,
+  /* Which feedback button was used and whether the charts were opened (since 28 September 2026), so a
+     participant who opens the charts on one machine and continues on another keeps one record. */
+  RESULTS_PAGE_KEY,
 ];
 
 /** Reads every resume file present in this browser. Missing ones are simply left out. */

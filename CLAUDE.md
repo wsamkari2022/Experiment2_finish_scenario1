@@ -363,6 +363,37 @@ React), which `npm run validate:journey` checks (J1-J8, in the chain; every gate
   could overwrite the answers. The "Finish" button was removed the same day.
 - `block5Journey.ts` is listed in `tools/tsconfig.sim.json` (the lesson of VCI_all above).
 
+## The way on from the results page to the feedback, since 28 September 2026
+
+The researcher: in the previous experiment participants reached the results page, took it for the end, and never gave
+feedback. The page said so itself: a green "Complete" badge over "Main Simulation Complete", and its only "Continue to
+feedback" button at the very bottom. Built on the approved plan ("Q1-A, Q2-yes, Q3-yes, Q4-yes, Q5-yes").
+**Participants see it** (HOW_TO_ANALYZE 4.9). No score and no stored scoring number changed.
+
+- **Header:** a pink "Scenarios done · 1 step left" badge over "Here are your results".
+- **A "One last step" card** (`Block5FeedbackNudge.tsx`, `LastStepCard`) right UNDER the four score cards ("Q1-A"): every
+  participant sees their main scores first (the advisor's design is results before feedback), and it asks them to look
+  through their results first. "About 5 to 10 minutes" (32 required answers, up to 48 with the reflection sections, plus
+  up to 8 optional written ones). The gift-card line says "Answering them completes the study, which you need for your
+  $5 gift card": NEEDED, never "earns", because the consent page names a second rule (the active minutes).
+- **A slim bar at the bottom of the screen** (`FeedbackBar`) on the results page and the charts page. It shows only while
+  neither the card nor the page's own bottom button is on screen (IntersectionObserver), slides in, never loops, and
+  reads "1 step left · feedback" on a phone. It invites and never warns: no leave pop-up (the consent page promises the
+  participant may stop at any time).
+- **The progress bar** (GlobalStepper): on the results page the Feedback dot is pink with "next" under it and the flag's
+  note reads "After the feedback" (it said "End of the study"). Static, not clickable; the flag keeps the one looping
+  animation. **On a phone the rail now slides to the current stop** (and the "next" one): it always opened at its left
+  end, so on a 375px phone the results page showed neither "Your results" nor Feedback. This affects every stage on a
+  narrow screen; on a wide one everything fits and nothing moves.
+- **Recorded:** `analysis.results_page` (resultsPageRecord.ts -> SOURCE_MAP in dbShape.ts): which button first took them
+  to the feedback (`card_under_scores`, `bar_on_results`, `bar_on_charts`, `bottom_of_results`, `bottom_of_charts`), how
+  often they went, and whether they opened the charts first. The time on the page is already
+  `active_time.by_stage_minutes.block5_summary`. The browser file travels with `resume_state`. `SHAPE_VERSION`
+  "2026-09-28-results-page". Gates D66 (`validate:dbshape`) and J9 (`validate:journey`, from the source); each was shown
+  to fail on a deliberate break (7 breaks, 7 caught).
+- **Testing note:** the bar's "is it on screen?" signal fires only when the page draws a frame, so in a hidden browser
+  pane it can look stuck until something is drawn. Not a bug on a real screen.
+
 ## The planner, revised 24 September 2026
 
 The tree, its three steps and the win counting are unchanged; no card order moved (24,000 orders
@@ -745,9 +776,9 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 65 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6) and VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 66 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6), VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65), and which button took them from the results page to the feedback (D66). `--dump` writes a full simulated document |
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8). Prints the echo and the screen-against-yardstick shares |
-| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8) |
+| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score cards, the bar on both pages, every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

@@ -215,6 +215,48 @@ console.log("===================================================================
     : "the cards read every scenario, five colors from the deck, no Finish button, a finished participant opens on the thank-you screen");
 }
 
+/* J9 — the way on to the feedback, read from the source (28 September 2026, the researcher's plan "Q1-A, Q2-yes,
+   Q3-yes, Q4-yes, Q5-yes"). In the previous experiment people took the results page for the end. */
+{
+  /* Comments are dropped first: they quote the old words on purpose ("Complete", "Don't leave"). */
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const results = src("Block5SimulationSummaryPage.tsx");
+  const view = src("Block5VisualizationsView.tsx");
+  const nudge = src("Block5FeedbackNudge.tsx");
+  const stepper = src("GlobalStepper.tsx");
+  const why = [];
+  /* The header no longer says the study is complete. */
+  if (/Main Simulation Complete/.test(results) || />\s*Complete\s*</.test(results)) why.push('the results page says "Complete" again');
+  if (!results.includes("Scenarios done · 1 step left")) why.push('the "1 step left" badge is gone');
+  /* Q1-A: the card sits after the four score cards and before the charts button. */
+  const grid = results.indexOf("</Grid>"), card = results.indexOf("<LastStepCard"), charts = results.indexOf("View your results as charts");
+  if (!(grid > 0 && card > grid && card < charts)) why.push("the last-step card is not right under the score cards");
+  /* Q2: the bar on both pages. */
+  if (!results.includes("<FeedbackBar") || !view.includes("<FeedbackBar")) why.push("the bottom bar is missing from a page");
+  /* Q5: every way to the feedback names its button. */
+  for (const b of ["card_under_scores", "bar_on_results", "bottom_of_results"]) {
+    if (!results.includes(`toFeedback("${b}")`)) why.push(`the results page does not record ${b}`);
+  }
+  for (const b of ["bar_on_charts", "bottom_of_charts"]) {
+    if (!view.includes(`onContinueToFeedback("${b}")`)) why.push(`the charts page does not record ${b}`);
+  }
+  if (/onClick=\{onContinueToFeedback\}/.test(results + view)) why.push("a feedback button skips the record");
+  if (!results.includes("noteChartsOpened()")) why.push("opening the charts is not recorded");
+  /* Q4, and the consent page: the gift card NEEDS a completed study; the feedback alone does not earn it. */
+  if (!nudge.includes("which you need for") || /earns your \$5/.test(nudge)) why.push("the gift-card sentence promises more than the consent page");
+  /* It invites and never warns, and nothing new loops. */
+  if (/beforeunload|Don't leave|Do not leave/i.test(nudge + results + view)) why.push("a leave warning is back");
+  if (/infinite|animationIterationCount/.test(nudge)) why.push("a second looping animation");
+  /* Q3: Feedback is "next" on the results page, and the flag says what still comes first. */
+  if (!stepper.includes("next={nextIsLast && i === current + 1}") || !/>\s*next\s*</.test(stepper)) why.push('the progress bar does not mark Feedback "next"');
+  if (!stepper.includes("`After the ${afterNext.toLowerCase()}`")) why.push('the flag does not say "After the feedback"');
+  /* On a phone the rail is wider than the screen: it must slide to the current stop (and the "next" one). */
+  if (!stepper.includes("data-stop={i}") || !stepper.includes("rail.scrollLeft += over")) why.push("the rail does not slide to where you are on a phone");
+  gate("J9", why.length === 0, why.length ? why.join(" | ")
+    : '"1 step left" instead of "Complete", the card under the score cards, the bar on both pages, every button recorded, an honest gift-card line, no warning, Feedback "next" in the progress bar, the rail slides to it on a phone');
+}
+
 console.log("");
 console.log("==============================================================================");
 if (fails) {

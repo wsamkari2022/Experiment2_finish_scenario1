@@ -7,7 +7,7 @@
  * recontextualized vignette).
  */
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Badge, Box, Button, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
 } from "@chakra-ui/react";
@@ -17,6 +17,8 @@ import { ALIGNMENT_LABEL } from "./block5CVR";
 import { POLICY_DIM_KEYS } from "./block5Types";
 import type { AlignmentLevel, Block5Results, Block5ScenarioResult } from "./block5Types";
 import { Block5VisualizationsView } from "./Block5VisualizationsView";
+import { FeedbackBar, LastStepCard } from "./Block5FeedbackNudge";
+import { noteChartsOpened, noteFeedbackButton, type FeedbackButton } from "./resultsPageRecord";
 import { useScrollToTop } from "./useScrollToTop";
 
 interface Props {
@@ -118,12 +120,23 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
   const [showCharts, setShowCharts] = useState(false);
   // Opening or closing the charts view starts at the top.
   useScrollToTop(showCharts);
+  /* The "One last step" card and the bottom button: the bottom bar shows only while neither is on
+     screen (Block5FeedbackNudge.tsx). */
+  const cardRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const watch = useMemo(() => [cardRef, bottomRef], []);
+  /* Every way to the feedback goes through here, so the record says which one was used (since
+     28 September 2026; resultsPageRecord.ts). */
+  const toFeedback = (button: FeedbackButton) => {
+    noteFeedbackButton(button);
+    onContinueToFeedback();
+  };
   if (showCharts) {
     return (
       <Block5VisualizationsView
         results={results}
         onBack={() => setShowCharts(false)}
-        onContinueToFeedback={onContinueToFeedback}
+        onContinueToFeedback={toFeedback}
       />
     );
   }
@@ -154,16 +167,20 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
   const hasCaptured = typeof captured === "number";
 
   return (
-    <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} py={{ base: "8", md: "12" }} display="flex" alignItems="flex-start" justifyContent="center">
+    <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} pt={{ base: "8", md: "12" }} pb="24" display="flex" alignItems="flex-start" justifyContent="center">
       <VStack gap="8" align="stretch" maxW="4xl" w="full" animationName="fade-in" animationDuration="moderate">
-        {/* Header */}
+        {/*
+          Header. It said "Complete" over "Main Simulation Complete" until 28 September 2026, and in the
+          previous experiment people took this page for the end and never gave feedback. It now says
+          the scenarios are done and one step is left (the researcher's plan; Block5FeedbackNudge.tsx).
+        */}
         <VStack gap="3" textAlign="center">
-          <Badge colorPalette="green" variant="subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="medium" px="3" py="1" rounded="md">
-            Complete
+          <Badge colorPalette="pink" variant="subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="medium" px="3" py="1" rounded="md">
+            Scenarios done · 1 step left
           </Badge>
-          <Heading size="2xl" color="fg" fontWeight="semibold">Main Simulation Complete</Heading>
+          <Heading size="2xl" color="fg" fontWeight="semibold">Here are your results</Heading>
           <Text color="fg.muted" fontSize="lg" maxW="2xl" mx="auto">
-            Here is how consistent your decisions were with your own moral values.
+            How consistent your decisions were with your own moral values.
           </Text>
         </VStack>
 
@@ -193,6 +210,10 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
               ? `Of the outcome quality each scenario actually put on the table, this is how much your choices took. 100 would mean you picked the strongest-performing option every time, 0 the weakest. (Raw metric average: ${performance}.)`
               : "Average outcome quality of the policies you chose (separate from how well they matched your values)."} />
         </Grid>
+
+        {/* The way on, right under the main scores ("Q1-A"): after them, so every participant sees
+            their results first, and long before the bottom of the page. */}
+        <LastStepCard ref={cardRef} onContinue={() => toFeedback("card_under_scores")} />
 
         {/*
           The two reflection lenses (Directness / Context) are reported here rather than folded
@@ -234,7 +255,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
 
         {/* See-your-journey-in-charts entry point */}
         <Box textAlign="center">
-          <Button onClick={() => setShowCharts(true)} size="lg" colorPalette="purple" variant="outline"
+          <Button onClick={() => { noteChartsOpened(); setShowCharts(true); }} size="lg" colorPalette="purple" variant="outline"
             rounded="xl" gap="2" px="7">
             <Icon><LuChartColumn /></Icon>
             View your results as charts
@@ -396,16 +417,17 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
 
         <Separator borderColor="border.subtle" />
 
-        <Box textAlign="center" pb="4">
+        <Box ref={bottomRef} textAlign="center" pb="4">
           <Text color="fg.muted" fontSize="md" mb="6">
             One last step — please share your feedback on the experience.
           </Text>
-          <Button onClick={onContinueToFeedback} size="lg" colorPalette="pink" rounded="lg" px="8" gap="2">
+          <Button onClick={() => toFeedback("bottom_of_results")} size="lg" colorPalette="pink" rounded="lg" px="8" gap="2">
             Continue to feedback
             <Icon><LuArrowRight /></Icon>
           </Button>
         </Box>
       </VStack>
+      <FeedbackBar watch={watch} onContinue={() => toFeedback("bar_on_results")} />
     </Box>
   );
 }

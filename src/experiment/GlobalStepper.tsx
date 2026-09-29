@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Box, Center, HStack, Icon, Text, VStack } from "@chakra-ui/react";
 import { LuCheck, LuFlag } from "react-icons/lu";
 import { SHOW_INTER_BLOCK_PAGES } from "./interBlockPages";
@@ -282,22 +283,32 @@ function MainStudyGroup({
  * the participant already finished at four, and these are short pages rather than sections of
  * work — but they still have to appear, because they are the reason the flag is not next.
  */
-function TailNode({ state, label }: { state: NodeState; label: string }) {
+function TailNode({ state, label, next = false }: { state: NodeState; label: string; next?: boolean }) {
   const done = state === "done";
   const current = state === "current";
+  /*
+   * "NEXT" - THE FEEDBACK, SEEN FROM THE RESULTS PAGE (since 28 September 2026, the researcher's plan).
+   *
+   * In the previous experiment people took the results page for the end and never gave feedback, and
+   * this bar showed Feedback as one more gray dot. While the results page is open, the Feedback dot is
+   * pink (the feedback buttons' color) with the word "next" under its label. It does not move - the
+   * flag keeps the one looping animation - and it is not a button: the bar only shows where you are.
+   */
+  const upNext = next && state === "upcoming";
 
   return (
     <VStack gap={{ base: "1", md: "1.5" }} flexShrink={0}>
       <Center h={RAIL_ROW_H}>
         <Center
-          boxSize={current ? { base: "6", md: "7" } : { base: "5", md: "6" }}
+          boxSize={current || upNext ? { base: "6", md: "7" } : { base: "5", md: "6" }}
           rounded="full"
-          bg={done ? "green.solid" : current ? "blue.solid" : "bg.muted"}
-          color={done ? "green.contrast" : current ? "blue.contrast" : "fg.subtle"}
-          borderWidth={state === "upcoming" ? "1px" : "0"}
-          borderColor="border"
+          bg={done ? "green.solid" : current ? "blue.solid" : upNext ? "pink.subtle" : "bg.muted"}
+          color={done ? "green.contrast" : current ? "blue.contrast" : upNext ? "pink.fg" : "fg.subtle"}
+          borderWidth={upNext ? "2px" : state === "upcoming" ? "1px" : "0"}
+          borderColor={upNext ? "pink.solid" : "border"}
           boxShadow={current ? "0 0 0 4px {colors.blue.muted}" : undefined}
           transition="all 0.35s ease"
+          aria-label={upNext ? `${label}, the next step` : undefined}
         >
           {done ? (
             <Icon boxSize="3">
@@ -305,23 +316,29 @@ function TailNode({ state, label }: { state: NodeState; label: string }) {
             </Icon>
           ) : (
             <Box
-              boxSize="1.5"
+              boxSize={upNext ? "2" : "1.5"}
               rounded="full"
-              bg={current ? "blue.contrast" : "fg.subtle"}
+              bg={current ? "blue.contrast" : upNext ? "pink.solid" : "fg.subtle"}
             />
           )}
         </Center>
       </Center>
-      <Text
-        fontSize="xs"
-        fontWeight={current ? "semibold" : "medium"}
-        color={current ? "fg" : done ? "fg.muted" : "fg.subtle"}
-        display={{ base: "none", md: "block" }}
-        whiteSpace="nowrap"
-        transition="color 0.35s ease"
-      >
-        {label}
-      </Text>
+      <VStack gap="0" display={{ base: "none", md: "flex" }}>
+        <Text
+          fontSize="xs"
+          fontWeight={current || upNext ? "semibold" : "medium"}
+          color={current ? "fg" : upNext ? "pink.fg" : done ? "fg.muted" : "fg.subtle"}
+          whiteSpace="nowrap"
+          transition="color 0.35s ease"
+        >
+          {label}
+        </Text>
+        {upNext && (
+          <Text fontSize="2xs" color="pink.fg" whiteSpace="nowrap" lineHeight="short">
+            next
+          </Text>
+        )}
+      </VStack>
     </VStack>
   );
 }
@@ -376,7 +393,7 @@ function GoalApproach() {
  * beneath, and the only thing on screen that moves. It should be impossible to mistake for
  * another step in the queue.
  */
-function GoalMarker({ reached }: { reached: boolean }) {
+function GoalMarker({ reached, afterNext }: { reached: boolean; afterNext: string | null }) {
   /*
    * No countdown here any more.
    *
@@ -384,8 +401,16 @@ function GoalMarker({ reached }: { reached: boolean }) {
    * direction or the other: the main study is ONE stop on the rail but five scenarios of work,
    * so any number either oversells how close the end is or undersells what is left. The rail
    * itself shows the distance, and it is drawn to scale. The flag just names the end.
+   *
+   * One stop before the last (the results page) it says what still stands before the end:
+   * "After the feedback" (since 28 September 2026). Beside "End of the study", a participant
+   * looking at their results read the flag as the place they had just arrived.
    */
-  const note = reached ? "You are nearly there" : "End of the study";
+  const note = reached
+    ? "You are nearly there"
+    : afterNext
+      ? `After the ${afterNext.toLowerCase()}`
+      : "End of the study";
 
   return (
     <HStack gap={{ base: "2", md: "2.5" }} flexShrink={0} align="flex-start">
@@ -441,10 +466,32 @@ function GoalMarker({ reached }: { reached: boolean }) {
 
 export function GlobalStepper({ stage }: { stage: string }) {
   const current = stopIndexForStage(stage);
+  /*
+   * ON A PHONE THE RAIL IS WIDER THAN THE SCREEN, SO IT SLIDES TO WHERE YOU ARE (since 28 September 2026).
+   *
+   * Only the section rail scrolls (see below), and it always opened at its left end. On a 375px phone
+   * that showed the four finished sections and cut the rail off just after the main study, so a
+   * participant on the results page saw neither "Your results" nor the Feedback step marked "next" -
+   * the one reminder the progress bar gives there. The rail now slides, once per page, just far enough
+   * to show the current stop (and the "next" one when there is one). On a wide screen everything
+   * already fits and nothing moves.
+   */
+  const railRef = useRef<HTMLDivElement>(null);
+  const showUpTo = current === STOPS.length - 2 && current >= 0 && STOPS[current].kind === "tail" ? current + 1 : current;
+  useEffect(() => {
+    const rail = railRef.current;
+    const target = rail?.querySelector<HTMLElement>(`[data-stop="${showUpTo}"]`);
+    if (!rail || !target) return;
+    const over = target.getBoundingClientRect().right - rail.getBoundingClientRect().right;
+    if (over > 0) rail.scrollLeft += over;
+  }, [showUpTo]);
   if (current < 0) return null; // hidden during the transition spinners
 
   /** True on the last stop, where the flag really is the next thing. */
   const reached = current === STOPS.length - 1;
+  /** On the results page (a tail stop with one tail stop left), the last stop is marked "next". */
+  const lastStop = STOPS[STOPS.length - 1];
+  const nextIsLast = current === STOPS.length - 2 && STOPS[current].kind === "tail";
 
   return (
     <Box
@@ -476,6 +523,7 @@ export function GlobalStepper({ stage }: { stage: string }) {
           phone most needs to see.
         */}
         <HStack
+          ref={railRef}
           flex="1"
           minW="0"
           gap={{ base: "2", md: "3" }}
@@ -488,6 +536,7 @@ export function GlobalStepper({ stage }: { stage: string }) {
             return (
               <HStack
                 key={s.label}
+                data-stop={i}
                 gap={{ base: "2", md: "3" }}
                 align="flex-start"
                 /* The main study is allowed to take the room its five dots need; everything else
@@ -499,14 +548,16 @@ export function GlobalStepper({ stage }: { stage: string }) {
                 {s.kind === "main" && (
                   <MainStudyGroup state={state} dots={s.dots} label={s.label} note={s.note} />
                 )}
-                {s.kind === "tail" && <TailNode state={state} label={s.label} />}
+                {s.kind === "tail" && (
+                  <TailNode state={state} label={s.label} next={nextIsLast && i === current + 1} />
+                )}
                 <RailSegment filled={i < current} />
               </HStack>
             );
           })}
         </HStack>
         <GoalApproach />
-        <GoalMarker reached={reached} />
+        <GoalMarker reached={reached} afterNext={nextIsLast ? lastStop.label : null} />
       </HStack>
     </Box>
   );

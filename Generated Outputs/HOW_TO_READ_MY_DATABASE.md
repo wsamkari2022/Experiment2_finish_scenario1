@@ -1178,6 +1178,28 @@ saved no running fits, and this section works them out. The same two fields sit 
 
 ---
 
+## 6m. `analysis.results_page` — which button took them to the feedback
+
+Added **28 September 2026** (the researcher's plan). In the previous experiment people took the results page for the
+end and never gave feedback, so the page gained a "One last step" card under the four score cards and a slim bar at
+the bottom of the screen (on the results and the charts page), beside the old button at the very bottom. This section
+says which of them was used. Nothing in it was on screen.
+
+| Field | What it holds |
+|---|---|
+| `first_button_used` | `card_under_scores`, `bar_on_results`, `bar_on_charts`, `bottom_of_results` or `bottom_of_charts`; null = they have not gone to the feedback yet |
+| `first_button_in_words` | the same, in a sentence |
+| `last_button_used`, `times_went_to_feedback` | more than 1 when they came back with the feedback page's Back button and left again |
+| `times_charts_opened`, `opened_charts_before_first_feedback` | whether they looked at "A picture of your journey" before the feedback |
+| `moves_to_feedback[]` | every move: `button`, `at`, `charts_opened_before_this` |
+
+Use it with `TOOL_resultsPage` ("The final results page", not helpful to very helpful): a rating from somebody who left
+at once (`card_under_scores` with a short `active_time.by_stage_minutes.block5_summary` and no charts) means less than one
+from somebody who read the page. Decide the cut-off before looking. Records made before 28 September 2026 have no
+`results_page` at all: then the only way on was the bottom button.
+
+---
+
 ## 7. `feedback_answers` — and why it is readable
 
 **Where:** `blocks.feedback_answers.feedback.<section>.<code>` (the whole feedback record is stored, so the answers
@@ -1356,6 +1378,14 @@ of data that appears properly in `blocks`.
 ---
 
 ## 9. Example queries
+
+**Who stopped on the results page and never gave feedback** (to send a reminder by hand; read-only):
+```js
+db.participants.find(
+  { status: { $ne: "Study Completed" }, current_stage: "block5_summary" },
+  { email: 1, updated_at: 1, "analysis.results_page.times_charts_opened": 1 }
+)
+```
 
 **Everyone who finished:**
 ```js
