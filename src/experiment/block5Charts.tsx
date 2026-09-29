@@ -177,15 +177,17 @@ export function VBarChart({ bars, max }: { bars: VBar[]; max: number }) {
 /* ---------------------------------- Lines ---------------------------------- */
 
 export interface LineSeries { name: string; color: string; values: number[]; }
-export interface RefLine { value: number; label: string; }
+export interface RefLine { value: number; label: string; /** Line and label color; the axis gray when absent. */ color?: string; }
 
 /**
  * Multi-series line chart over shared, ordered x categories (e.g. Before → after each scenario).
  * Used both for a single trajectory (with an optional dashed reference line) and for the
  * 4-value evolution. Y axis is fixed 0..max with light gridlines.
  */
-export function LineChart({ xLabels, series, max = 100, refLine }: {
+export function LineChart({ xLabels, series, max = 100, refLine, refLines }: {
   xLabels: string[]; series: LineSeries[]; max?: number; refLine?: RefLine;
+  /** Several dashed reference lines (since 28 September 2026: VCI and VCI_all on the consistency card). */
+  refLines?: RefLine[];
 }) {
   // padL/padR are generous so the first and last x-axis labels (e.g. "Scenario 1",
   // "After S3") are centered under their end points without being clipped at the edges.
@@ -203,13 +205,22 @@ export function LineChart({ xLabels, series, max = 100, refLine }: {
           <text x={padL - 6} y={y(t)} dy="0.32em" textAnchor="end" fontSize={10} fill={AXIS} fillOpacity={0.5}>{t}</text>
         </g>
       ))}
-      {refLine && (
-        <g>
-          <line x1={padL} y1={y(refLine.value)} x2={W - padR} y2={y(refLine.value)} stroke={AXIS}
-            strokeOpacity={0.45} strokeWidth={1.5} strokeDasharray="5 3" />
-          <text x={W - padR} y={y(refLine.value) - 4} textAnchor="end" fontSize={10} fill={AXIS} fillOpacity={0.6}>{refLine.label}</text>
-        </g>
-      )}
+      {/* Reference lines, highest first. When two sit within 12 units of each other, the lower one's
+          label goes UNDER its line, so the two labels never print on top of each other. */}
+      {[...(refLine ? [refLine] : []), ...(refLines ?? [])]
+        .sort((a, b) => b.value - a.value)
+        .map((ref, i, all) => {
+          const crowded = i > 0 && Math.abs(y(ref.value) - y(all[i - 1].value)) < 12;
+          const stroke = ref.color ?? AXIS;
+          return (
+            <g key={`${ref.label}-${i}`}>
+              <line x1={padL} y1={y(ref.value)} x2={W - padR} y2={y(ref.value)} stroke={stroke}
+                strokeOpacity={ref.color ? 0.75 : 0.45} strokeWidth={1.5} strokeDasharray="5 3" />
+              <text x={W - padR} y={y(ref.value) + (crowded ? 12 : -4)} textAnchor="end" fontSize={10}
+                fill={stroke} fillOpacity={ref.color ? 0.9 : 0.6} fontWeight={ref.color ? 600 : 400}>{ref.label}</text>
+            </g>
+          );
+        })}
       {xLabels.map((lbl, i) => (
         <text key={lbl + i} x={x(i)} y={H - padB + 16} textAnchor="middle" fontSize={11} fontWeight={600} fill={AXIS} fillOpacity={0.7}>{lbl}</text>
       ))}

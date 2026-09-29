@@ -2,15 +2,23 @@
  * Block5VisualizationsView — the optional "Your Experiment in Charts" view, opened from
  * the final results page (after the last Block-5 scenario, before the Feedback Page).
  *
- * Seven charts, each showing ONE idea, with clear plain-English labels, a "How to read this"
- * hint, a meaningful legend, and a short personalized caption:
- *   1. Radar   — your value profile before vs after Block 5 (shape + stability)
- *   2. Line    — how your four values shifted across the journey (Before → after each scenario)
- *   3. Bars    — your final choice & how well it fit your values, per scenario
- *   4. Line    — how consistent your choices were across the scenarios
- *   5. Bars    — how much you reconsidered inside each scenario
- *   6. Bars    — where your time went across the whole experiment
- *   7. Line    — how your two reflection lenses (Directness vs Context) shifted
+ * Up to eighteen cards, each showing ONE idea, with a "How to read this" hint, a legend where colors
+ * carry meaning, and a short personalized caption. In the order they appear:
+ *   values before vs after (+ Stability, and whether it was tested) · how the four values shifted
+ *   (before, then after each of the six scenarios) · the choice in each scenario and its fit (all six) ·
+ *   performance taken (the four decisions; the wish starred; scenario 6 has none) · distance from the
+ *   person you were, by position (five positions, the veil drawn apart) · the choices by position ·
+ *   values against performance by position · BEHIND THE VEIL: the rule and the MPF's guess · the
+ *   employer's values (scenario 4) · decided against wished (scenarios 4 and 5, with what the wish
+ *   changed) · consistency: VCI and VCI_all with their parts · reconsidering (all six) · time · the
+ *   reflection lenses (only when they moved) · Blocks 1-4, one card each where there is data · the
+ *   pace of the earlier answers.
+ *
+ * REFRESHED ON 28 SEPTEMBER 2026 (the researcher: "most of the visualization cards are stale"). The
+ * page had stopped at scenario 5 and predated a week of changes. The numbers added then come from
+ * block5Journey.ts, which `npm run validate:journey` checks; the researcher's decisions ("Q1-A,
+ * Q2-final, Q3-yes"): the consistency card shows VCI_all's six parts, scenario 6 is read by its final
+ * rule, and Block 4 has its own card.
  *
  * Read-only: it renders values already stored in the Block-5 results + the stage timer.
  * It computes no experiment logic and changes nothing about scoring or the flow.
@@ -26,13 +34,16 @@ import {
   type RadarSeries, type HBar, type VBar, type LineSeries,
 } from "./block5Charts";
 import { SERIES_COLORS, ALIGN_COLORS } from "./block5ChartColors";
-import { analysePosition, positionEffectLabel, POSITION_SHORT } from "./block5Position";
+import { analysePosition, positionEffectLabel, POSITION_LABEL, POSITION_SHORT } from "./block5Position";
 import { analyseStance, STANCE_LABEL } from "./block5Company";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { ordinal } from "./block5Performance";
 import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from "./blocks123Consistency";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
+import {
+  DECK_POSITIONS, block4Reading, consistencyReading, guessReading, reconsiderBars, veilRow,
+} from "./block5Journey";
 import { buildTimingSummary } from "./telemetry";
 import {
   POLICY_DIM_KEYS,
@@ -110,22 +121,24 @@ function ChartCard({ index, title, howTo, caption, children }: {
 
 export function Block5VisualizationsView({ results, onBack, onContinueToFeedback }: Props) {
   /*
-   * EVERY CHART ON THIS PAGE DESCRIBES THE PARTICIPANT, so the scenario-6 result is filtered out
-   * here, once, rather than at each of the dozen places that derive from this list.
+   * TWO LISTS, AND WHICH CARD READS WHICH (revised 28 September 2026).
    *
-   * Scenario 6 tests the MODEL: it cannot move the profile, it contributes nothing to VCI,
-   * Stability, Performance or the position effect, and it is the one scenario whose result says
-   * something about the software rather than about the person. Left in, the value-drift line would
-   * draw a flat sixth step, the consistency line would plot a sixth point that the consistency
-   * score beside it deliberately excludes, and the captions would count six scenarios where only
-   * five measured anything.
+   * `scenarios` leaves scenario 6 out. The POSITION cards read it: behind the veil there is no
+   * position, so the veil is never a sixth bar there - it is drawn apart, as a reference row
+   * (veilRow), which is how hypothesis H13 reads it too. So do the performance cards: scenario 6's
+   * rules have no performance numbers.
    *
-   * The recipient scenario is NOT filtered. It is a real choice, and it carries half of the
-   * decided-versus-wished pair.
+   * `allScenarios` is every scenario, and every other card now reads it: the choice card, the value
+   * line, consistency (VCI_all counts all six), reconsidering and time. Scenario 6 used to be left out
+   * of all of them because it cannot move the profile and was in no score; since VCI_all it is in one,
+   * and a flat sixth step on the value line is now explained on the card instead of hidden.
    */
   const allScenarios = results.scenarioResults;
   const scenarios = allScenarios.filter((r) => !isPredictionTest(r));
-  const n = scenarios.length;
+  const decisionCount = allScenarios.filter((r) => (r.decisionRole ?? "decider") === "decider").length;
+  /* S5 is the wish and S6 the rule behind the veil: said on every axis and row that shows them. */
+  const kindTag = (r: (typeof allScenarios)[number]): string =>
+    r.decisionRole === "recipient" ? " wish" : isPredictionTest(r) ? " rule" : "";
   const before = results.originalProfile;
   const after = results.userProfile;
 
@@ -171,7 +184,19 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
    * "How consistent your choices were", so the caption sends them there rather than leaving the
    * two numbers to be confused for one.
    */
-  const stabilityCaption = stability === null ? null : (
+  /* WAS STABILITY TESTED AT ALL (audit G5, 26 September 2026)? Somebody who never chose against their
+     best fit in a decision met no reflection, so nothing was counted and 100 is a default, not a
+     finding. The stored detail says which; an older record without it reads as tested. */
+  const stabilityNotTested = results.stabilityDetail?.conflictSteps === 0;
+  const stabilityCaption = stability === null ? null : stabilityNotTested ? (
+    <>
+      Stability {stability}/100 — <b>not tested.</b> You never chose against the option that fit you best
+      in a decision, so the reflection never ran and there was nothing to count: here 100 means “never
+      tested”, not “held when tested”. The two shapes can still differ a little, because keeping one of
+      your two best fits nudges your values. How well your choices matched your values is on the card
+      titled “How consistent your choices were”.
+    </>
+  ) : (
     <>
       Stability {stability}/100 — {stabilityWords?.toLowerCase()}.{" "}
       <b>
@@ -186,11 +211,11 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   );
 
   /* 2 · Line: how each value shifted across the journey */
-  const evoX = ["Before", ...scenarios.map((_, i) => `After S${i + 1}`)];
+  const evoX = ["Before", ...allScenarios.map((r, i) => `S${i + 1}${kindTag(r)}`)];
   const evoSeries: LineSeries[] = POLICY_DIM_KEYS.map((k, idx) => ({
     name: VALUE_LABEL[k],
     color: SERIES_COLORS[idx],
-    values: [scoreOf(before, k), ...scenarios.map((r) => r.policySnapshotAfter?.[k] ?? scoreOf(after, k))],
+    values: [scoreOf(before, k), ...allScenarios.map((r) => r.policySnapshotAfter?.[k] ?? scoreOf(after, k))],
   }));
   // biggest mover, for the caption
   let moverLabel = ""; let moverDelta = 0;
@@ -199,7 +224,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     if (d > moverDelta) { moverDelta = d; moverLabel = VALUE_LABEL[k]; }
   }
   const evoCaption = moverDelta < 3
-    ? `Your four values held remarkably steady across all ${n} scenarios.`
+    ? `Your four values held remarkably steady across your ${decisionCount} decisions.`
     : `“${moverLabel}” moved the most across the journey (by ${Math.round(moverDelta)} points).`;
 
   /* 7 · Line: how the two reflection views shifted across the journey. These only move when the
@@ -257,13 +282,16 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
       : "By the end, your own responsibility for the outcome carried more weight for you.";
 
   /* 3 · Bars: final choice & alignment per scenario */
-  const choiceBars: HBar[] = scenarios.map((r, i) => ({
-    label: `Scenario ${i + 1}`,
+  const choiceBars: HBar[] = allScenarios.map((r, i) => ({
+    label: `Scenario ${i + 1}${kindTag(r)}`,
     value: r.matchScore ?? 0,
     color: ALIGN_COLORS[r.alignmentLevel ?? "misaligned"] ?? SERIES_COLORS[0],
     valueLabel: `${r.matchScore ?? 0}`,
   }));
-  const alignedCount = scenarios.filter((r) => r.alignmentLevel === "aligned" || r.alignmentLevel === "weakly_aligned").length;
+  const isFit = (r: (typeof allScenarios)[number]) => r.alignmentLevel === "aligned" || r.alignmentLevel === "weakly_aligned";
+  const alignedCount = allScenarios.filter((r) => (r.decisionRole ?? "decider") === "decider" && isFit(r)).length;
+  const wishResult = allScenarios.find((r) => r.decisionRole === "recipient");
+  const veilResult = allScenarios.find((r) => isPredictionTest(r));
 
   /*
    * PERFORMANCE PER SCENARIO, on the same rows as the value-fit chart above it.
@@ -311,8 +339,11 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
         : "") +
       (scenarios.some((r) => !resultCountsTowardsPerformance(r))
         ? ` * Scenario ${scenarios.findIndex((r) => !resultCountsTowardsPerformance(r)) + 1} was your wish: it is shown, but not counted.`
-        : "");
-  const choiceCaption = `Your final choice fit your values in ${alignedCount} of ${n} scenario${n === 1 ? "" : "s"}.`;
+        : "") +
+      (veilResult ? " Scenario 6 has no bar: its options were rules, not actions, so it had no performance numbers." : "");
+  const choiceCaption = `Your final choice was one of your two best fits in ${alignedCount} of your ${decisionCount} decisions.`
+    + (wishResult?.alignmentLevel ? ` Your wish (scenario 5) was ${ALIGNMENT_LABEL[wishResult.alignmentLevel].toLowerCase()}.` : "")
+    + (veilResult?.alignmentLevel ? ` Your rule behind the veil (scenario 6) was ${ALIGNMENT_LABEL[veilResult.alignmentLevel].toLowerCase()}.` : "");
 
   /* 5 · Position Effect — how far each choice sat from the pre-Block-5 profile.
    *
@@ -333,6 +364,13 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
    */
   /* Blocks 1-3 are read straight from their own storage; Block 5 never rewrites them. */
   const b123 = readBlocks123();
+  /* Block 4 the same way (its card since 28 September 2026, "Q3-yes"). */
+  const b4 = (() => {
+    try { return block4Reading(JSON.parse(localStorage.getItem("block4_reflection_results") ?? "null")); } catch { return null; }
+  })();
+  /* Scenario 6, read by its FINAL rule ("Q2-final") and drawn apart from the five positions. */
+  const veil = veilRow(allScenarios, before);
+  const guess = guessReading(allScenarios);
 
   const position = analysePosition(scenarios, before);
 
@@ -359,25 +397,20 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   const hasStance = !!stance;
   const hasMirror = !!mirror;
 
-  const chartCount = 10 + (hasStance ? 1 : 0) + (hasMirror ? 1 : 0)
-    + (hasMoney ? 1 : 0) + (hasTrolley ? 1 : 0)
-    + (hasWorkforce ? 1 : 0) + (hasDeliberation ? 1 : 0);
-
   /*
     Card numbers are counted forward through the cards that will actually render, so hiding one
     never leaves a gap in the sequence. Hard-coded indices would print "10, 12, 13" the moment a
-    participant had no Block 1 data.
+    participant had no Block 1 data. One list in page order; a card's number is its place in it.
   */
-  const iStance = 8;
-  const iMirror = iStance + (hasStance ? 1 : 0);
-  const iConsistency = iMirror + (hasMirror ? 1 : 0);
-  const iReconsidered = iConsistency + 1;
-  const iTime = iReconsidered + 1;
-  const iLens = iTime + 1;
-  const iMoney = iLens + (lensHasMovement ? 1 : 0);
-  const iTrolley = iMoney + (hasMoney ? 1 : 0);
-  const iWorkforce = iTrolley + (hasTrolley ? 1 : 0);
-  const iDeliberation = iWorkforce + (hasWorkforce ? 1 : 0);
+  const cardOrder = [
+    "radar", "evolution", "choice", "performance", "position", "positionChoices", "tradeoff",
+    guess ? "guess" : "", hasStance ? "stance" : "", hasMirror ? "mirror" : "",
+    "consistency", "reconsidered", "time", lensHasMovement ? "lens" : "",
+    hasMoney ? "money" : "", hasTrolley ? "trolley" : "", hasWorkforce ? "workforce" : "",
+    b4 ? "block4" : "", hasDeliberation ? "deliberation" : "",
+  ].filter(Boolean);
+  const num = (key: string) => cardOrder.indexOf(key) + 1;
+  const chartCount = cardOrder.length;
   const POSITION_BAND_COLOR: Record<string, string> = {
     self: "#0d9488",
     self_and_group: "#2563eb",
@@ -445,24 +478,39 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   );
 
 
-  /* 4 · Line: consistency across scenarios */
-  const consistencyValues = scenarios.map((r) => Math.round((r.vciScore ?? 0) * 100));
-  const consistencySeries: LineSeries[] = [{ name: "Consistency", color: SERIES_COLORS[0], values: consistencyValues }];
+  /* Consistency across all six (28 September 2026, "Q1-A"): the points are VCI_all's six parts, so they
+     average to the VCI_all on the results page; the four decisions alone make VCI. The two dashed lines
+     take the colors of their cards on the results page (blue VCI, cyan VCI_all). */
+  const cons = consistencyReading(allScenarios, results.vci, results.vciAll);
+  const VCI_COLOR = "#2563eb";
+  const VCI_ALL_COLOR = "#0891b2";
+  const consistencySeries: LineSeries[] = [{
+    name: cons.pointsAreVciAllParts ? "Each scenario's part" : "Consistency",
+    color: SERIES_COLORS[0], values: cons.points.map((pt) => pt.value),
+  }];
   const vci = results.vci ?? 0;
-  const consistencyCaption = `Overall, your choices were ${vci}/100 consistent with your values${results.vciLevel ? ` (${results.vciLevel.toLowerCase()})` : ""}.`;
+  const consistencyCaption = cons.vciAll !== null
+    ? `VCI ${vci}/100${results.vciLevel ? ` (${results.vciLevel.toLowerCase()})` : ""} across your ${decisionCount} decisions; `
+      + `VCI_all ${cons.vciAll}/100${results.vciAllLevel ? ` (${results.vciAllLevel.toLowerCase()})` : ""} across all ${cons.points.length} scenarios.`
+    : `Overall, your ${decisionCount} decisions were ${vci}/100 consistent with your values${results.vciLevel ? ` (${results.vciLevel.toLowerCase()})` : ""}.`;
 
   /* 5 · Bars: reconsideration per scenario */
-  const switchBars: VBar[] = scenarios.map((r, i) => ({
-    label: `S${i + 1}`,
-    value: r.telemetry?.numberOfSwitches ?? 0,
-    color: SERIES_COLORS[1],
+  const rBars = reconsiderBars(allScenarios);
+  const switchBars: VBar[] = rBars.map((b) => ({
+    label: `S${b.index}`,
+    value: b.before + b.afterGuess,
+    color: b.kind === "veil" ? SERIES_COLORS[3] : SERIES_COLORS[1],
   }));
   const totalSwitches = switchBars.reduce((a, b) => a + b.value, 0);
   let maxSwitchI = 0;
   switchBars.forEach((b, i) => { if (b.value > switchBars[maxSwitchI].value) maxSwitchI = i; });
-  const switchCaption = totalSwitches === 0
+  const veilBar = rBars.find((b) => b.kind === "veil");
+  const switchCaption = (totalSwitches === 0
     ? "You settled quickly — little back-and-forth in any scenario."
-    : `You reconsidered most in Scenario ${maxSwitchI + 1}.`;
+    : `You reconsidered most in Scenario ${maxSwitchI + 1}.`)
+    + (veilBar && veilBar.before + veilBar.afterGuess > 0
+      ? ` In scenario 6 you changed your rule ${veilBar.before} time${veilBar.before === 1 ? "" : "s"} before our guess and ${veilBar.afterGuess} after it.`
+      : "");
   const switchMax = Math.max(3, ...switchBars.map((b) => b.value));
 
   /* 6 · Bars: time per stage */
@@ -512,8 +560,8 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
               textTransform="uppercase" letterSpacing="wider" mb="2">Your experiment in charts</Badge>
             <Heading size="2xl" color="fg" fontWeight="semibold">A picture of your journey</Heading>
             <Text color="fg.muted" fontSize="md" mt="1" maxW="2xl">
-              {chartCount + (lensHasMovement ? 1 : 0)} views of how you decided — your values, your
-              choices, your consistency, and your time.
+              {chartCount} views of how you decided — your values, your choices, your consistency,
+              and your time.
               Each chart shows one thing, with a short note on how to read it.
             </Text>
           </Box>
@@ -526,7 +574,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
         {/* Charts */}
         <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: "5", md: "6" }}>
           {/* 1 · Radar */}
-          <ChartCard index={1} title="Your values: before vs after Block 5"
+          <ChartCard index={num("radar")} title="Your values: before vs after Block 5"
             howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from Blocks 1–4); the <b>dashed</b> shape is where you ended after the scenarios. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> number below counts how often that happened when you chose against your best fit.</>}
             caption={stabilityCaption}>
             <RadarChart axes={radarAxes} series={radarSeries} max={100} />
@@ -534,16 +582,16 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
           </ChartCard>
 
           {/* 2 · Evolution line */}
-          <ChartCard index={2} title="How your four values shifted along the way"
-            howTo={<>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> Block 5, then after each scenario. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you.</>}
+          <ChartCard index={num("evolution")} title="How your four values shifted along the way"
+            howTo={<>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> Block 5, then after each scenario. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you. Only your <b>four decisions</b> can move them: your wish (S5) and your rule behind the veil (S6) never do, so those last two steps are always flat.</>}
             caption={evoCaption}>
             <LineChart xLabels={evoX} series={evoSeries} max={100} />
             <ChartLegend items={evoSeries.map((s) => ({ label: s.name, color: s.color }))} />
           </ChartCard>
 
           {/* 3 · Choice & alignment */}
-          <ChartCard index={3} title="Your choice in each scenario"
-            howTo={<>Each bar is one scenario. The bar length is how well your <b>final choice</b> fit your values (0–100), and its color shows the fit: <b>green</b> = aligned, <b>yellow</b> = weak, <b>orange/red</b> = against your values. Your actual choices are listed below.</>}
+          <ChartCard index={num("choice")} title="Your choice in each scenario"
+            howTo={<>Each bar is one scenario. The bar length is how well your <b>final choice</b> fit your values (0–100), and its color shows the fit: <b>green</b> = aligned, <b>yellow</b> = weak, <b>orange/red</b> = against your values. Scenario 5 was a <b>wish</b> (the decision was made for you) and scenario 6 a <b>rule</b> chosen without knowing where you would stand; they are shown too. Your actual choices are listed below.</>}
             caption={choiceCaption}>
             <HBarChart bars={choiceBars} max={100} unitHint="value fit (0–100)" />
             <ChartLegend items={[
@@ -553,7 +601,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
               { label: "Strongly misaligned", color: ALIGN_COLORS.strongly_misaligned },
             ]} />
             <Stack gap="2" mt="4">
-              {scenarios.map((r, i) => (
+              {allScenarios.map((r, i) => (
                 <HStack key={r.scenarioId} gap="2" align="start">
                   <Badge flexShrink={0} variant="subtle" rounded="md" px="2" fontSize="2xs"
                     style={{ color: ALIGN_COLORS[r.alignmentLevel ?? "misaligned"], borderColor: ALIGN_COLORS[r.alignmentLevel ?? "misaligned"] }}
@@ -570,7 +618,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
           </ChartCard>
 
           {/* 3b · Performance captured per scenario — read across from card 3 */}
-          <ChartCard index={4} title="How much performance you took in each scenario"
+          <ChartCard index={num("performance")} title="How much performance you took in each scenario"
             howTo={<>Each bar is one scenario, on the <b>same rows</b> as the chart beside it. The length is how much of the outcome quality that scenario actually offered you took: <b>100</b> would be the strongest-performing option on the table, <b>0</b> the weakest. Compare the two charts row by row — a long bar there and a short bar here is a decision where you kept your values and gave up performance.</>}
             caption={perfCaption}>
             <HBarChart bars={perfBars} max={100} unitHint="performance taken (0–100)" />
@@ -582,19 +630,17 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
           </ChartCard>
 
           {/* 5 · Position Effect — the study's independent variable, seen from the outside */}
-          <ChartCard index={5} title="How far each choice sat from the person you were"
-            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>. Read <b>across the three colors</b>, not down the five bars: that is where the finding is.</>}
+          <ChartCard index={num("position")} title="How far each choice sat from the person you were"
+            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>, one color for each of the {DECK_POSITIONS.length} positions. Read <b>across the colors</b>: that is where the finding is. Scenario 6 is drawn apart below it — behind the veil you had no position.</>}
             caption={positionCaption}>
             {position.rows.length === 0 ? (
               <Text fontSize="sm" color="fg.muted">No position data recorded for these scenarios.</Text>
             ) : (
               <>
                 <HBarChart bars={positionBars} max={positionMax} unitHint="distance from your earlier profile" />
-                <ChartLegend items={[
-                  { label: "only me", color: POSITION_BAND_COLOR.self },
-                  { label: "me and my people", color: POSITION_BAND_COLOR.self_and_group },
-                  { label: "other people", color: POSITION_BAND_COLOR.others },
-                ]} />
+                <ChartLegend items={DECK_POSITIONS.map((pos) => ({
+                  label: POSITION_LABEL[pos].toLowerCase(), color: POSITION_BAND_COLOR[pos] ?? SERIES_COLORS[0],
+                }))} />
                 <Stack gap="1.5" mt="3">
                   {position.summaries.map((sm) => (
                     <HStack key={sm.position} gap="3" align="baseline">
@@ -633,18 +679,38 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                     </Text>
                     <Text fontSize="xs" color="fg.muted" lineHeight="tall">
                       <Text as="span" fontWeight="semibold" color="fg">What matters is whether it changes
-                      between the three colors.</Text> One number on its own says very little; the same
+                      between the colors.</Text> One number on its own says very little; the same
                       person scoring 13 alone and 40 for strangers is the finding.
                     </Text>
                   </Stack>
                 </Box>
+                {/* THE VEIL, DRAWN APART (28 September 2026). Never a sixth bar: behind the veil there is no
+                    position, so it is not part of the Position Effect, and its menu is four rules rather
+                    than six actions. Same distance, same frozen profile, its final rule ("Q2-final"). */}
+                {veil && (
+                  <Box mt="3" borderWidth="1px" borderStyle="dashed" borderColor="border.emphasized" rounded="lg" px="4" py="3">
+                    <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1.5">
+                      Behind the veil · scenario 6 · drawn apart
+                    </Text>
+                    <Text fontSize="sm" color="fg" lineHeight="tall">
+                      Your rule “{veil.ruleTitle}” sat <b>{veil.distance}</b> from your earlier profile; the four
+                      rules there ranged from {veil.nearest} to {veil.farthest}.
+                    </Text>
+                    <Text fontSize="xs" color="fg.muted" lineHeight="tall" mt="1">
+                      You did not know where you would stand, so this is not one of the positions above and is not
+                      part of the Position Effect.
+                      {veil.changedAfterTheGuess && veil.firstRuleTitle
+                        ? ` This is your final rule: before our guess you had chosen “${veil.firstRuleTitle}”.` : ""}
+                    </Text>
+                  </Box>
+                )}
               </>
             )}
           </ChartCard>
 
           {/* 6 · The receipts — what was actually chosen, grouped by who carried the cost */}
-          <ChartCard index={6} title="What you chose in each position"
-            howTo={<>The five decisions, grouped by <b>who carried the cost</b>. For each one: how far that option sat from your earlier profile, and how much of the outcome quality that scenario offered it took. This is the raw record the two charts around it are built from.</>}
+          <ChartCard index={num("positionChoices")} title="What you chose in each position"
+            howTo={<>Your four decisions and your wish, grouped by <b>who carried the cost</b>. For each one: how far that option sat from your earlier profile, and how much of the outcome quality that scenario offered it took. Your rule behind the veil is listed last, apart. This is the raw record the two charts around it are built from.</>}
             caption={position.tradeoffSentence ?? undefined}>
             {position.choices.length === 0 ? (
               <Text fontSize="sm" color="fg.muted">No choices recorded.</Text>
@@ -675,6 +741,22 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                     </Stack>
                   </Box>
                 ))}
+                {veil && (
+                  <Box borderLeftWidth="3px" borderLeftStyle="dashed" borderLeftColor="border.emphasized" pl="3.5">
+                    <Text fontSize="xs" fontWeight="bold" color="fg.muted" textTransform="uppercase"
+                      letterSpacing="wider" mb="2">Behind the veil — no position</Text>
+                    <HStack gap="2" align="baseline" wrap="wrap">
+                      <Text fontSize="xs" color="fg.subtle" fontFamily="mono" flex="none">S{veil.index}</Text>
+                      <Text fontSize="sm" color="fg" fontWeight="medium">{veil.ruleTitle}</Text>
+                    </HStack>
+                    <HStack gap="4" pl="6" wrap="wrap">
+                      <Text fontSize="xs" color="fg.muted">
+                        distance from your profile <Text as="span" color="fg" fontWeight="semibold">{veil.distance}</Text>
+                      </Text>
+                      <Text fontSize="xs" color="fg.muted">no performance numbers (a rule, not an action)</Text>
+                    </HStack>
+                  </Box>
+                )}
               </Stack>
             )}
           </ChartCard>
@@ -687,7 +769,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
             chart whose two bars used different scales would invite exactly the comparison it
             cannot support.
           */}
-          <ChartCard index={7} title="Your values against your performance, in each position"
+          <ChartCard index={num("tradeoff")} title="Your values against your performance, in each position"
             howTo={<>Two bars for each position, on the <b>same 0–100 scale</b>. The first is how far your choices sat from your own values, as a share of the room that scenario gave you. The second is how much of the available outcome quality those same choices took. <b>Read the pair</b>: if the first bar grows while the second grows too, you let outcome quality pull you away from your values once somebody else was paying.</>}
             caption={position.tradeoffSentence ?? undefined}>
             {position.tradeoffs.length === 0 ? (
@@ -726,6 +808,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                   </Box>
                 ))}
                 <Text fontSize="2xs" color="fg.subtle" lineHeight="tall">
+                  Scenario 6 is not here: behind the veil there was no position and no performance.{" "}
                   Both bars answer “how much of what was available?”, which is why they share a scale.
                   They are not the same as the point distances in chart 5: an option can sit 23.8 points
                   from your profile and still be the closest one that scenario had, which is 0% of the
@@ -736,13 +819,64 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
           </ChartCard>
 
           {/*
+            BEHIND THE VEIL: THE RULE AND THE GUESS (28 September 2026). Scenario 6 as the participant met
+            it: they chose a rule, then the MPF showed how likely it thought each rule was. Nothing here is
+            new to them - it was all on screen - and it is a test of the software, not of them.
+          */}
+          {guess && (
+            <ChartCard index={num("guess")} title="Behind the veil: your rule and our guess"
+              howTo={<>In scenario 6 you chose a rule <b>without knowing where you would stand</b>. Then our Moral Prediction Function (MPF) showed how likely it thought each rule was for you. Each bar is its chance for one rule; with four rules, a coin toss would give <b>25%</b> each. This tests our software, not you.</>}
+              caption={<>
+                The MPF {guess.mpfNamedYourFirstRule ? <b>named</b> : <b>did not name</b>} the rule you chose before seeing its guess.
+                {guess.changedAfterTheGuess && <> You changed your rule after seeing the guess.</>}
+                {guess.soundsLikeYou !== null && <> You said the guess sounded <b>{guess.soundsLikeYou} out of 7</b> like how you decide.</>}
+                {guess.surprised !== null && <> {guess.surprised ? "It surprised you." : "It did not surprise you."}</>}
+              </>}>
+              <Stack gap="2.5">
+                {guess.rules.map((rule) => (
+                  <Box key={rule.optionId}
+                    bg={rule.isYourFinal ? "bg.subtle" : "transparent"}
+                    borderWidth="1px" borderColor={rule.isYourFinal ? "border.emphasized" : "transparent"}
+                    rounded="lg" px="3" py="2">
+                    <HStack gap="2" mb="1.5" align="baseline" wrap="wrap">
+                      <Text fontSize="xs" fontWeight={rule.isYourFinal ? "bold" : "medium"} color={rule.isYourFinal ? "fg" : "fg.muted"}>
+                        {rule.title}
+                      </Text>
+                      {rule.isYourFinal && (
+                        <Badge size="sm" bg="transparent" borderWidth="1px" borderColor="border.emphasized"
+                          color="fg.muted" rounded="md" px="1.5" fontSize="2xs">your rule</Badge>
+                      )}
+                      {rule.isYourFirst && !rule.isYourFinal && (
+                        <Badge size="sm" bg="transparent" borderWidth="1px" borderColor="border"
+                          color="fg.subtle" rounded="md" px="1.5" fontSize="2xs">your rule before the guess</Badge>
+                      )}
+                      {rule.isMpfFirst && (
+                        <Badge size="sm" colorPalette="purple" variant="subtle" rounded="md" px="1.5" fontSize="2xs">the MPF's most likely</Badge>
+                      )}
+                    </HStack>
+                    <HStack gap="3">
+                      <Box flex="1" h="2.5" bg="bg.subtle" rounded="full" overflow="hidden">
+                        <Box h="full" rounded="full" bg={SERIES_COLORS[3]}
+                          style={{ width: `${Math.max(1, Math.min(100, rule.chancePercent))}%`, opacity: rule.isYourFinal ? 1 : 0.55 }} />
+                      </Box>
+                      <Text fontSize="xs" color="fg" fontWeight="semibold" fontFamily="mono" flex="none" w="12" textAlign="right">
+                        {rule.chancePercent}%
+                      </Text>
+                    </HStack>
+                  </Box>
+                ))}
+              </Stack>
+            </ChartCard>
+          )}
+
+          {/*
             STANCE — what you did with an employer's values that were not yours.
             Drawn as two bars per option rather than a scatter: a scatter plots six unlabeled dots
             and asks the reader to find theirs, while paired bars put the chosen row's two distances
             side by side with the five it was chosen over.
           */}
           {stance && (
-            <ChartCard index={iStance} title="What you did with your employer's values"
+            <ChartCard index={num("stance")} title="What you did with your employer's values"
               howTo={<>Your employer published one priority: <b>{stance.company.principle}</b> Each row is one option that was on the table, with <b>two distances</b> — how far it sat from <b>your own</b> values (purple) and from <b>your employer's</b> stated priority (amber). Shorter is closer. <b>The row you chose is highlighted.</b> If its purple bar is short you held your own line; if its amber bar is short you took theirs.</>}
               caption={<>
                 <b>{STANCE_LABEL[stance.stance]}.</b> {stance.sentence}
@@ -799,7 +933,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
             which is the one conclusion the card is built to rule out.
           */}
           {mirror && (
-            <ChartCard index={iMirror} title="What you chose for them, and what you wished for yourself"
+            <ChartCard index={num("mirror")} title="What you chose for them, and what you wished for yourself"
               howTo={<>These two scenarios were <b>the same company, the same decision, and the same six options</b> — the only thing that changed was whether you were making the call or living with it. Each bar is how far your answer sat from <b>your own</b> values, as a share of the room that menu allowed. Because nothing else differed, <b>any gap between them is about position and nothing else.</b></>}
               caption={<>
                 {mirror.sentence}
@@ -850,27 +984,75 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                     found here is a floor rather than a ceiling.
                   </Text>
                 </Box>
+                {/* WHAT THE WISH CHANGED, value by value and in performance (computed since 25 September 2026
+                    by analyseMirror, drawn since 28 September). The two options compared directly, so no
+                    profile is involved: positive = the wish gives MORE of that value than the decision. */}
+                <Box borderTopWidth="1px" borderColor="border.subtle" pt="2.5">
+                  <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1.5">
+                    What your wish changed, compared with your decision
+                  </Text>
+                  {mirror.sameOption ? (
+                    <Text fontSize="xs" color="fg.muted">You wished for the option you had decided, so nothing changed.</Text>
+                  ) : (
+                    <Stack gap="1">
+                      {POLICY_DIM_KEYS.map((k) => {
+                        const d = Math.round(mirror.wishMinusDecision[k]);
+                        return (
+                          <HStack key={k} justify="space-between" gap="3">
+                            <Text fontSize="xs" color="fg.muted">{VALUE_LABEL[k]}</Text>
+                            <Text fontSize="xs" fontFamily="mono" fontWeight="semibold" color={d === 0 ? "fg.subtle" : "fg"}>
+                              {d > 0 ? `+${d} more` : d < 0 ? `${d} less` : "the same"}
+                            </Text>
+                          </HStack>
+                        );
+                      })}
+                      {typeof mirror.wishMinusDecisionCaptured === "number" && (
+                        <HStack justify="space-between" gap="3" pt="1" borderTopWidth="1px" borderColor="border.subtle">
+                          <Text fontSize="xs" color="fg.muted">Performance taken</Text>
+                          <Text fontSize="xs" fontFamily="mono" fontWeight="semibold">
+                            {mirror.wishMinusDecisionCaptured > 0 ? `+${mirror.wishMinusDecisionCaptured} more`
+                              : mirror.wishMinusDecisionCaptured < 0 ? `${mirror.wishMinusDecisionCaptured} less` : "the same"}
+                          </Text>
+                        </HStack>
+                      )}
+                    </Stack>
+                  )}
+                </Box>
               </Stack>
             </ChartCard>
           )}
 
           {/* 4 · Consistency */}
-          <ChartCard index={iConsistency} title="How consistent your choices were"
-            howTo={<>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b> — your values update as you go, so a value you take on during the block counts from then on. The <b>dashed line</b> is your overall consistency across all five.</>}
+          <ChartCard index={num("consistency")} title="How consistent your choices were"
+            howTo={cons.vciAll !== null ? (
+              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b>. Your <b>four decisions</b> (S1–S4) make your <b>VCI</b> (the blue dashed line). <b>All six</b> make your <b>VCI_all</b> (the cyan dashed line), the average of these six points. For your wish (S5) and your rule (S6), your values are the ones that kept updating after every choice, your wish included — so those two points can differ from the fit on their cards. 50 is what choosing blindly gives.</>
+            ) : (
+              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b> — your values update as you go, so a value you take on during the block counts from then on. The <b>dashed line</b> is your VCI, across your four decisions.</>
+            )}
             caption={consistencyCaption}>
-            <LineChart xLabels={scenarios.map((_, i) => `Scenario ${i + 1}`)} series={consistencySeries}
-              max={100} refLine={{ value: vci, label: "overall" }} />
+            <LineChart xLabels={cons.points.map((pt) => `S${pt.index}${pt.kind === "wish" ? " wish" : pt.kind === "veil" ? " rule" : ""}`)}
+              series={consistencySeries} max={100}
+              refLines={[
+                { value: vci, label: `VCI ${vci}`, color: VCI_COLOR },
+                ...(cons.vciAll !== null ? [{ value: cons.vciAll, label: `VCI_all ${cons.vciAll}`, color: VCI_ALL_COLOR }] : []),
+              ]} />
+            {cons.vciAll !== null && (
+              <ChartLegend items={[
+                { label: "VCI (four decisions)", color: VCI_COLOR, dashed: true },
+                { label: "VCI_all (all six)", color: VCI_ALL_COLOR, dashed: true },
+              ]} />
+            )}
           </ChartCard>
 
           {/* 5 · Reconsideration */}
-          <ChartCard index={iReconsidered} title="How much you reconsidered"
-            howTo={<>Each bar counts the times you genuinely <b>changed your mind</b> inside a scenario — switching to a different option, stepping back out of a reflection step, or changing a final pick before confirming. Taller means more back-and-forth.</>}
+          <ChartCard index={num("reconsidered")} title="How much you reconsidered"
+            howTo={<>Each bar counts the times you genuinely <b>changed your mind</b> inside a scenario — switching to a different option, stepping back out of a reflection step, or changing a final pick before confirming. Taller means more back-and-forth. Scenario 6 (a different color) counts your changes before and after our guess together.</>}
             caption={switchCaption}>
             <VBarChart bars={switchBars} max={switchMax} />
           </ChartCard>
 
           {/* 6 · Time */}
-          <ChartCard index={iTime} title="Where your time went"
+          <ChartCard index={num("time")} title="Where your time went"
             howTo={<>Each bar is the time you spent in one part of the experiment. <b>Indigo</b> bars are the value-profiling stages (Blocks 1–4); <b>teal</b> bars are the Block-5 scenarios.</>}
             caption={timeCaption}>
             <HBarChart bars={timeBars} max={timeMax} unitHint="time per stage" />
@@ -882,7 +1064,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 7 · Reflection lenses — only when they actually moved. See lensHasMovement. */}
           {lensHasMovement && (
-          <ChartCard index={iLens} title="How your two reflection lenses shifted"
+          <ChartCard index={num("lens")} title="How your two reflection lenses shifted"
             howTo={<>When a choice went against your values, the reflection could be framed two ways — <b>your own responsibility</b> for the outcome, or <b>the circumstances</b> that shaped the numbers. If you generated and compared both, the one that swayed (or didn't) you was nudged. Each line traces one of them from before Block 5 through each scenario.</>}
             caption={lensCaption}>
             <LineChart xLabels={lensX} series={lensSeries} max={100} />
@@ -898,10 +1080,10 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
             than positions about the world: clicking faster than the text can be read, and moving
             in both directions on an axis that only moves one way.
           */}
-          {b123.available && (
-            <>
+          {/* Each earlier-block card stands on its own condition (Block 4 has no Blocks 1-3 readout). */}
+          <>
               {hasMoney && b123.money && (
-                <ChartCard index={iMoney} title="Where the money was found, and what you did"
+                <ChartCard index={num("money")} title="Where the money was found, and what you did"
                   howTo={<>Block 1 asked the same question in three places, and each place started again from $0.25. A <b>longer bar</b> means you held out through more amounts before keeping the money. A short bar means you kept it early. There is no right answer here — the point is whether the <b>place</b> changed you.</>}
                   caption={moneySentence(b123.money)}>
                   <HBarChart
@@ -917,7 +1099,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
               )}
 
               {hasTrolley && b123.trolley && (
-                <ChartCard index={iTrolley} title="The same outcome, two different acts"
+                <ChartCard index={num("trolley")} title="The same outcome, two different acts"
                   howTo={<>Block 2 asked how many lives had to be saved before you would act — first by <b>pulling a lever</b>, then by <b>pushing a person</b>. Both ladders started from one life. A longer bar means you needed a bigger number before you were willing.</>}
                   caption={trolleySentence(b123.trolley)}>
                   <HBarChart
@@ -933,7 +1115,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
               )}
 
               {hasWorkforce && b123.workforce && (
-                <ChartCard index={iWorkforce} title="As the group got bigger, what did you ask for?"
+                <ChartCard index={num("workforce")} title="As the group got bigger, what did you ask for?"
                   howTo={<>Block 3 asked the same question six times: how much financial gain justified a rollout that harms workers, for <b>three group sizes</b> and <b>two kinds of worker</b>. Higher means you demanded more before agreeing. <b>Read each line left to right</b> — a line that rises, falls, or stays flat is all coherent; a line that does both is the one thing here worth a second look.</>}
                   caption={workforceSentence(b123.workforce)}>
                   <LineChart
@@ -949,8 +1131,31 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                 </ChartCard>
               )}
 
+              {/* BLOCK 4 (28 September 2026, "Q3-yes"): the one question asked three times. The answers are
+                  shown as the participant gave them - two neutral outlines, never a right and a wrong color. */}
+              {b4 && (
+                <ChartCard index={num("block4")} title="Did hearing the voices change your answer?"
+                  howTo={<>Block 4 asked one question three times — <b>“Would you approve the policy?”</b> — before you heard anyone, after the first voice, and after the second. You also said how confident you were (1–5) the first time and the last. Changing your answer is not better or worse than keeping it.</>}
+                  caption={<>{b4.sentence}{b4.voiceThatMattered && <> The voice you said mattered most: <b>“{b4.voiceThatMattered}”</b>.</>}</>}>
+                  <Stack gap="2.5">
+                    {b4.steps.map((step, i) => (
+                      <Stack key={i} gap="1" borderLeftWidth="3px" borderLeftColor="border.emphasized" pl="3">
+                        <Text fontSize="xs" color="fg.muted">{step.moment}</Text>
+                        <HStack gap="2">
+                          <Badge variant="outline" colorPalette={step.decision === "Approve the policy" ? "teal" : "purple"}
+                            rounded="md" px="2" fontSize="2xs">{step.decision ?? "no answer"}</Badge>
+                          {step.confidence !== null && (
+                            <Text fontSize="2xs" color="fg.subtle" fontFamily="mono">confidence {step.confidence}/5</Text>
+                          )}
+                        </HStack>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </ChartCard>
+              )}
+
               {hasDeliberation && b123.deliberation && (
-                <ChartCard index={iDeliberation} title="How long you took over each answer"
+                <ChartCard index={num("deliberation")} title="How long you took over each answer"
                   howTo={<>The time between one answer and the next, across Blocks 1–3, reported as a <b>median</b> so that one interruption cannot hide the rest. This is the only thing on this page that can be answered wrongly rather than differently: below about 2.5 seconds the question text cannot have been read.</>}
                   caption={b123.deliberation.hurried
                     ? `A median of ${b123.deliberation.medianSeconds}s per answer is quicker than the questions can be read. Worth knowing when you read everything else on this page.`
@@ -969,8 +1174,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                   </Stack>
                 </ChartCard>
               )}
-            </>
-          )}
+          </>
 
         </SimpleGrid>
 

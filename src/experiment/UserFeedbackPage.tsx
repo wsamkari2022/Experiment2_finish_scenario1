@@ -50,6 +50,13 @@ interface Props {
    * "Study Completed" mean the same thing every time it appears.
    */
   onCompleted?: () => void;
+  /**
+   * True when this browser already recorded the study as complete (28 September 2026, the researcher's
+   * "Q4-yes"). The page then opens on the thank-you screen instead of the form. Before, a reload of the
+   * thank-you screen showed the form again - nothing read the saved status - and a second submit would
+   * have overwritten the answers already sent. The flow reads the status; this page only shows it.
+   */
+  alreadyCompleted?: boolean;
 }
 
 /* ------------------------------- small inputs ------------------------------- */
@@ -152,12 +159,13 @@ function SectionCard({ accent, eyebrow, title, subtitle, method, children }: {
 
 /* ------------------------------- the page ------------------------------- */
 
-export function UserFeedbackPage({ results, sessionId, onBack, onCompleted }: Props) {
+export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alreadyCompleted = false }: Props) {
   const [answers, setAnswers] = useState<Record<string, FeedbackAnswer>>({});
-  const [submitted, setSubmitted] = useState(false);
-  /** The active-time summary, frozen at the moment of submission. */
+  const [submitted, setSubmitted] = useState(alreadyCompleted);
+  /** The active-time summary, frozen at the moment of submission. On a return to a finished study it is
+   *  read again: the clock stopped at submission, so it is the same number. */
   const [activeSummary, setActiveSummary] =
-    useState<ReturnType<typeof getActiveSummary> | null>(null);
+    useState<ReturnType<typeof getActiveSummary> | null>(() => (alreadyCompleted ? getActiveSummary() : null));
   const [showValidation, setShowValidation] = useState(false);
 
   const showCvr = useMemo(() => shouldShowCvrSection(results), [results]);

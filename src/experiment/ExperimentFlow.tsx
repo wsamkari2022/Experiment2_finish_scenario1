@@ -807,6 +807,11 @@ export function ExperimentFlow() {
           results={block5Results}
           sessionId={participantId}
           onBack={handleBackToSummary}
+          /* A finished participant who reloads sees the thank-you screen, never the form again
+             (28 September 2026). The status is the one onCompleted below writes. */
+          alreadyCompleted={(() => {
+            try { return localStorage.getItem(STORAGE_KEY_STATUS) === STATUS_COMPLETED; } catch { return false; }
+          })()}
           /*
            * THE ONLY PLACE THE STUDY IS MARKED COMPLETE.
            *

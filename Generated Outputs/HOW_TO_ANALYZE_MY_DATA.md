@@ -321,6 +321,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 
 | 28 September 2026 | The results page shows a second consistency card, "Value Consistency, all six (VCI_all)", beside VCI, and VCI's card now says it covers "the four scenarios where you made the decision and knew your position (scenarios 1-4)". Two columns of cards instead of three. Nothing on the scenario pages changed |
 | 28 September 2026 | The thank-you page has no "Finish" button any more (it reset the browser to the start screen). No data changes: completion is recorded when the feedback is submitted |
+| 28 September 2026 | The charts page ("A picture of your journey", after all choices, before the feedback) was refreshed: scenario 6 appears (a choice row, the value line to S6, a "behind the veil" row drawn apart, a card with the rule and the MPF's guess, reconsidering), the consistency card shows VCI and VCI_all with VCI_all's six parts, the wish's value-by-value change is drawn, and Block 4 has a card. A finished participant who reloads now sees the thank-you page, not the form. No stored data changes |
 
 ### 4.10 VCI_all contains VCI, and judges the wish on values the screen did not show
 

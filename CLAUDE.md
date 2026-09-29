@@ -120,7 +120,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
 `validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED`
-(since 24 September 2026), `ALL DATABASE GATES PASSED` and `ALL VCI_ALL GATES PASSED` (since 28 September 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
+(since 24 September 2026), `ALL DATABASE GATES PASSED`, `ALL VCI_ALL GATES PASSED` and `ALL JOURNEY GATES PASSED` (both since 28 September 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
 until 26 September 2026 (it passes since Fix 6, see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
 above were never printed and four suites never ran. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
 a blocker, not a warning.
@@ -337,6 +337,31 @@ other than the new section 1b is identical).
 - **A lesson from building it:** a new module the check tools `require` from `.sim-build` must be listed in
   `tools/tsconfig.sim.json`. `block5VciAll.ts` was first missing there, so a check ran on a stale compiled copy left
   over from a deliberate-break test and failed on the correct code. It is listed now.
+
+## The charts page ("A picture of your journey"), refreshed 28 September 2026
+
+The researcher: "most of the visualization cards are stale". The page (`Block5VisualizationsView.tsx`, opened from
+the results page, after every choice) had stopped at scenario 5 and predated a week of changes. Refreshed card by
+card on the approved plan ("Q1-A, Q2-final, Q3-yes, Q4-yes"); its new numbers live in `block5Journey.ts` (pure, no
+React), which `npm run validate:journey` checks (J1-J8, in the chain; every gate shown to fail on a deliberate break).
+
+- **Scenario 6 on the page:** a row in the choice card; the value line runs to S6 (S5 and S6 flat, explained);
+  a "behind the veil" reference drawn APART from the five positions, never a sixth bar (its FINAL rule's
+  `profileDistance` from the values brought into Block 5, the four rules' range; the H13 idea); its own card,
+  "Behind the veil: your rule and our guess" (the MPF's chances, first and final rule, the "sounds like me"
+  answer); reconsidering split before/after the guess; a note that it had no performance numbers.
+- **Consistency shows VCI and VCI_all** as two dashed lines (blue and cyan, the results page's colors); the six
+  points are VCI_all's parts, the hidden running fits, so they average to VCI_all ("Q1-A": shown after all choices).
+  A run without running fits falls back to the study's fits and draws no VCI_all.
+- **Stale text fixed:** five position colors from the deck (`DECK_POSITIONS`), not "three"; the wish is not called a
+  decision; VCI is "your four decisions"; Stability says "not tested" when no conflict step ran (G5).
+- **Added:** what the wish changed, value by value and in performance (analyseMirror had it since 25 September);
+  a Block 4 card ("Would you approve the policy?" before any voice, after each, with confidence). Card numbers and the
+  header count come from one ordered list (`cardOrder`), so a hidden card never leaves a gap.
+- **The thank-you page after a reload:** a finished participant (status "Study Completed") opens on the thank-you
+  screen, never the form again (`alreadyCompleted`, ExperimentFlow -> UserFeedbackPage); before, a second submit
+  could overwrite the answers. The "Finish" button was removed the same day.
+- `block5Journey.ts` is listed in `tools/tsconfig.sim.json` (the lesson of VCI_all above).
 
 ## The planner, revised 24 September 2026
 
@@ -722,6 +747,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
 | `validate:dbshape` | What reaches MongoDB. 65 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6) and VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65). `--dump` writes a full simulated document |
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8). Prints the echo and the screen-against-yardstick shares |
+| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
