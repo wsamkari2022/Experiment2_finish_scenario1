@@ -364,9 +364,12 @@ React), which `npm run validate:journey` checks (J1-J8, in the chain; every gate
 - `block5Journey.ts` is listed in `tools/tsconfig.sim.json` (the lesson of VCI_all above).
 - **Scenario 6 is a bar of its own in "How far each choice sat from the person you were"** (the researcher's
   "Q2-yes", later the same day): it was a text box under the explanation and easy to miss. It is the last bar,
-  drawn APART under a dashed line ("Behind the veil · no position · not part of the Position Effect"), striped
-  slate (`VEIL_COLOR`), on the same scale, with a thin line for the four rules' range (`HBar.apartLabel`,
-  `hatched`, `range` in block5Charts.tsx). The Position Effect and the per-position averages still leave it out.
+  drawn APART under a dashed line labelled "Behind the veil · no position" (`HBar.apartLabel` in block5Charts.tsx),
+  solid slate (`VEIL_COLOR`), on the same scale; the sentence under the chart gives the four rules' range and says
+  it is not part of the comparison between positions. The first version was striped with a range line under the
+  bar and a 63-character label in capitals: in dark mode the label ran off the chart and the bar looked like a
+  second bar behind it (the researcher's screenshot), so both went. J10 holds the label to 36 characters. The
+  Position Effect and the per-position averages still leave it out.
 - **A new card, "What our software expected, and what you chose"** ("Q3-yes, Q4-yes"), right after the scenario-6
   guess card: for each of the six scenarios, the MPF's favourite (violet) and the final choice (teal) on one
   0-100% line at the chance the MPF gave each, joined by the percentage points between them; one ringed dot when

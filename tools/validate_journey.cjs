@@ -21,7 +21,7 @@
  *       no Finish button, and a finished participant opens on the thank-you screen
  *   J9  the way on to the feedback, from the source: "1 step left", the card, the bar, every button recorded
  *   J10 the MPF in every scenario: the database's own numbers, the gap, a first choice only when it changed,
- *       scenario 6 as shown, the favourite = the best fit; scenario 6 a striped bar apart from the positions
+ *       scenario 6 as shown, the favourite = the best fit; scenario 6 a slate bar apart from the positions
  *
  * Run:  npm run validate:journey
  */
@@ -310,10 +310,16 @@ console.log("===================================================================
   const view = fs.readFileSync(path.join(ROOT, "src", "experiment", "Block5VisualizationsView.tsx"), "utf8");
   if (!view.includes("predictionReading(buildMpfPercentages(buildMpfPredictions(results)))")) why.push("the card does not read the database's own section");
   if (!view.includes('guess ? "guess" : "", preds ? "predictions" : ""')) why.push("the predictions card is not right after the guess card");
-  if (!view.includes('apartLabel: "Behind the veil') || !view.includes("hatched: true") || !view.includes("range: [veil.nearest, veil.farthest]")) why.push("scenario 6 is not a striped bar drawn apart with its range");
+  /* Scenario 6 drawn apart, in slate, with a label short enough for one line of the 480-wide chart (the first
+     one, 63 characters in capitals, ran off the edge). */
+  const apart = view.match(/apartLabel: "([^"]+)"/);
+  if (!apart || !apart[1].startsWith("Behind the veil") || !view.includes("color: VEIL_COLOR,")) why.push("scenario 6 is not a slate bar drawn apart");
+  if (apart && apart[1].length > 36) why.push(`the label over scenario 6's bar is too long for the chart (${apart[1].length} characters)`);
+  const charts = fs.readFileSync(path.join(ROOT, "src", "experiment", "block5Charts.tsx"), "utf8");
+  if (/toUpperCase\(\)/.test(charts)) why.push("the label is drawn in capitals again");
   if (!view.includes("const position = analysePosition(scenarios, before)")) why.push("the Position Effect no longer leaves scenario 6 out");
   gate("J10", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
-    : `the MPF card: the database's numbers, the gap = favourite - choice, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit (${hitSeen} hits, ${missSeen} misses, ${changedSeen} changed); scenario 6 a striped bar apart, outside the Position Effect`);
+    : `the MPF card: the database's numbers, the gap = favourite - choice, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit (${hitSeen} hits, ${missSeen} misses, ${changedSeen} changed); scenario 6 a slate bar apart with a label that fits, outside the Position Effect`);
 }
 
 console.log("");

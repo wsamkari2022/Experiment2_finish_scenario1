@@ -443,9 +443,10 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   /*
    * SCENARIO 6 AS A BAR OF ITS OWN (since 28 September 2026, the researcher's "Q2-yes"). It was a text box
    * under the explanation, and easy to miss. It is now the last bar, drawn APART: under a dashed line that
-   * says it has no position, striped and slate rather than a position color, on the same scale, with a thin
-   * line for the four rules' range. It is still not part of the Position Effect: `position` above is built
-   * from `scenarios`, which leaves scenario 6 out.
+   * says it has no position, solid slate rather than a position color, on the same scale. The first version
+   * was striped with a range line under it, and read as a second bar behind it (the researcher's screenshot),
+   * and its long label ran off the chart; the range is in the sentence under the chart instead. It is still
+   * not part of the Position Effect: `position` above is built from `scenarios`, which leaves scenario 6 out.
    */
   if (veil) {
     positionBars.push({
@@ -453,9 +454,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
       value: veil.distance,
       color: VEIL_COLOR,
       valueLabel: `${veil.distance}`,
-      apartLabel: "Behind the veil · no position · not part of the Position Effect",
-      hatched: true,
-      range: [veil.nearest, veil.farthest],
+      apartLabel: "Behind the veil · no position",
     });
   }
   const positionMax = Math.max(20, ...position.rows.map((r) => r.farthest), veil ? veil.farthest : 0);
@@ -662,7 +661,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 5 · Position Effect — the study's independent variable, seen from the outside */}
           <ChartCard index={num("position")} title="How far each choice sat from the person you were"
-            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>, one color for each of the {DECK_POSITIONS.length} positions. Read <b>across the colors</b>: that is where the finding is. Scenario 6 is the <b>striped gray bar</b> under the dashed line: behind the veil you had no position, so it is not part of the finding, and the thin line under it shows how far apart the four rules were.</>}
+            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>, one color for each of the {DECK_POSITIONS.length} positions. Read <b>across the colors</b>: that is where the finding is. Scenario 6 is the <b>gray bar</b> under the dashed line: behind the veil you had no position, so it is not part of the finding.</>}
             caption={positionCaption}>
             {position.rows.length === 0 ? (
               <Text fontSize="sm" color="fg.muted">No position data recorded for these scenarios.</Text>
@@ -673,12 +672,13 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                   ...DECK_POSITIONS.map((pos) => ({
                     label: POSITION_LABEL[pos].toLowerCase(), color: POSITION_BAND_COLOR[pos] ?? SERIES_COLORS[0],
                   })),
-                  ...(veil ? [{ label: "behind the veil (no position)", color: VEIL_COLOR, dashed: true }] : []),
+                  ...(veil ? [{ label: "behind the veil (no position)", color: VEIL_COLOR }] : []),
                 ]} />
                 {veil && (
                   <Text fontSize="xs" color="fg.muted" lineHeight="tall" mt="2">
                     <b>Scenario 6:</b> your rule “{veil.ruleTitle}” sat <b>{veil.distance}</b> from your earlier profile;
-                    the four rules there ranged from {veil.nearest} to {veil.farthest}.
+                    the four rules there ranged from {veil.nearest} to {veil.farthest}. It is not part of the
+                    comparison between positions, because behind the veil you had no position.
                     {veil.changedAfterTheGuess && veil.firstRuleTitle
                       ? ` This is your final rule: before our guess you had chosen “${veil.firstRuleTitle}”.` : ""}
                   </Text>
