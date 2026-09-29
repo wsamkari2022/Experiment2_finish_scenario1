@@ -154,8 +154,9 @@ disagree with the alignment label — it is the same number read one value at a 
 
 That is why the sentences live in `block5MCFWords.ts` rather than inside the panel: a rule that
 lives in JSX can only be checked by reading JSX. Built as plain strings, every sentence the study
-can produce is inspectable, and `npm run validate:mcf` generates all of them — 61,945 across every
-option in every scenario against 403 profiles — and fails on a verdict word or a digit. Quoted
+can produce is inspectable, and `npm run validate:mcf` generates all of them — 61,509 across every
+option in every scenario against 403 profiles on 29 September 2026 (61,945 before the words were revised on 27
+September; the run prints the current count) — and fails on a verdict word or a digit. Quoted
 option titles are exempt from the digit rule: "Draw the 20 names from the patients who cannot wait"
 is content the participant is already reading.
 
@@ -809,6 +810,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
 | `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 50-62 in 100 steady, 41-52 random, chance about 17 (26 September 2026, after Fix 7). Since 26 September 2026 also how close each person's #1 and #2 values are (16 in 100 steady within 5 points; audit C7) |
 | `export_block5_content.cjs` / `make_block5_content_docx.py` | Writes every scenario, option, lens and stakeholder story as JSON (since 27 September 2026 also each option's five performance numbers with their places, the overall place and the card's chips, and each scenario's value and measure meanings), and builds `docs/Block5_All_Options_and_Reflections.docx` from it: `node tools/export_block5_content.cjs x.json` then `python tools/make_block5_content_docx.py x.json docs/Block5_All_Options_and_Reflections.docx`. Rebuild after any change to an option's words or numbers |
+| `make_accuracy_checklist_docx.py` | Builds `docs/VRDS_Accuracy_Checklist.docx` (since 29 September 2026, for the researcher and Claude): what is accurate now, each item with the check that stands over it, what is still open, and the limits to state. It RUNS every check first (about five minutes) and ticks each row from that run, stamped with the date and commit; a failed check turns its rows red. When something is fixed or opened, update its lists (`SECTIONS`, `OPEN`, `LIMITS`) and rebuild: `python tools/make_accuracy_checklist_docx.py docs/VRDS_Accuracy_Checklist.docx` |
 | `make_feedback_questions_docx.py` | Builds `docs/VRDS_Experiment2_Feedback_Questions.docx` (every feedback question, word for word, with a column for comments) straight from `src/experiment/feedbackTypes.ts`; it stops if a question list changes size, so a new question cannot be left out silently |
 | `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers. Round 2 (only the scenarios whose words changed): `--scenarios 2,3,4 --round 2`, `--study <dir> --raters opus,sonnet,haiku`. Round 2 also rates the five PERFORMANCE numbers of every option in scenarios 1-4 (the researcher's request): `--measures` on the sheet builder and on the comparison (REPORT_MEASURES.md), a second no-tools rater in each folder |
 
