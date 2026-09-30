@@ -1703,9 +1703,11 @@ for (const [who, block5] of PEOPLE) {
 }
 
 /* D66 - WHICH BUTTON TOOK THEM TO THE FEEDBACK (28 September 2026, the researcher's plan "Q5-yes"). The results
-   page gained a "One last step" card and a bottom bar; analysis.results_page says which button was used and
-   whether the charts were opened first. Checked on hand-made records: the section follows them exactly, an
-   unknown button is dropped rather than counted, and the record is sent and carried to another machine. */
+   page gained a "One last step" card and a bottom bar; analysis.results_page says which button was used. Since
+   29 September 2026 the charts are on the thank-you page, after the feedback, so only the results page's three
+   buttons remain and the chart fields are gone. Checked on hand-made records: the section follows them exactly, an
+   unknown button (an old chart-page one included) is dropped rather than counted, and the record is sent and
+   carried to another machine. */
 {
   const why = [];
   const build = db.buildResultsPageSection;
@@ -1714,40 +1716,41 @@ for (const [who, block5] of PEOPLE) {
     why.push("SOURCE_MAP does not send vrds_results_page to analysis.results_page through buildResultsPageSection");
   }
   if (!db.RESUME_FILES.includes("vrds_results_page")) why.push("vrds_results_page is not carried to another machine");
-  const buttons = ["card_under_scores", "bar_on_results", "bar_on_charts", "bottom_of_results", "bottom_of_charts"];
+  const buttons = ["card_under_scores", "bar_on_results", "bottom_of_results"];
   for (const b of buttons) {
     if (typeof db.FEEDBACK_BUTTON_WORDS[b] !== "string") why.push(`no words for the button ${b}`);
   }
   if (Object.keys(db.FEEDBACK_BUTTON_WORDS).length !== buttons.length) why.push("FEEDBACK_BUTTON_WORDS has a button the check does not know");
   if (build(null) !== null || build("x") !== null) why.push("no record should give no section");
 
-  const none = build({ chartsOpened: 1, toFeedback: [] });
-  if (!none || none.first_button_used !== null || none.times_went_to_feedback !== 0
-      || none.opened_charts_before_first_feedback !== null || none.times_charts_opened !== 1) {
+  const none = build({ toFeedback: [] });
+  if (!none || none.first_button_used !== null || none.last_button_used !== null || none.times_went_to_feedback !== 0
+      || none.moves_to_feedback.length !== 0) {
     why.push(`a participant still on the results page reads wrong: ${JSON.stringify(none)}`);
   }
+  if (none && Object.keys(none).some((k) => /chart/.test(k))) why.push("a chart field is back, but nobody can open the charts before the feedback");
 
-  const straight = build({ chartsOpened: 0, toFeedback: [{ button: "card_under_scores", at: "2026-09-28T10:00:00.000Z", chartsOpenedSoFar: 0 }] });
+  const straight = build({ toFeedback: [{ button: "card_under_scores", at: "2026-09-29T10:00:00.000Z" }] });
   if (!straight || straight.first_button_used !== "card_under_scores" || straight.last_button_used !== "card_under_scores"
-      || straight.times_went_to_feedback !== 1 || straight.opened_charts_before_first_feedback !== false
+      || straight.times_went_to_feedback !== 1 || straight.moves_to_feedback[0].at !== "2026-09-29T10:00:00.000Z"
       || straight.first_button_in_words !== db.FEEDBACK_BUTTON_WORDS.card_under_scores) {
     why.push(`straight from the card reads wrong: ${JSON.stringify(straight)}`);
   }
 
-  const back = build({ chartsOpened: 2, toFeedback: [
-    { button: "bar_on_charts", at: "2026-09-28T10:00:00.000Z", chartsOpenedSoFar: 1 },
-    { button: "made_up_button", at: "2026-09-28T10:01:00.000Z", chartsOpenedSoFar: 1 },
-    { button: "bottom_of_results", at: "2026-09-28T10:05:00.000Z", chartsOpenedSoFar: 2 },
+  const back = build({ toFeedback: [
+    { button: "bar_on_results", at: "2026-09-29T10:00:00.000Z" },
+    { button: "made_up_button", at: "2026-09-29T10:01:00.000Z" },
+    { button: "bar_on_charts", at: "2026-09-29T10:02:00.000Z" },
+    { button: "bottom_of_results", at: "2026-09-29T10:05:00.000Z" },
   ] });
-  if (!back || back.first_button_used !== "bar_on_charts" || back.last_button_used !== "bottom_of_results"
-      || back.times_went_to_feedback !== 2 || back.opened_charts_before_first_feedback !== true
-      || back.times_charts_opened !== 2 || back.moves_to_feedback.length !== 2
-      || back.moves_to_feedback[1].charts_opened_before_this !== 2) {
-    why.push(`charts first, then back and out again, reads wrong: ${JSON.stringify(back)}`);
+  if (!back || back.first_button_used !== "bar_on_results" || back.last_button_used !== "bottom_of_results"
+      || back.times_went_to_feedback !== 2 || back.moves_to_feedback.length !== 2
+      || back.moves_to_feedback[1].at !== "2026-09-29T10:05:00.000Z") {
+    why.push(`the bar, then back and out again by the bottom button, reads wrong: ${JSON.stringify(back)}`);
   }
   gate("D66", why.length === 0,
     why.length === 0
-      ? "analysis.results_page: the first and last button, how often they went to the feedback, the charts opened before it, an unknown button dropped, sent and carried to another machine"
+      ? "analysis.results_page: the first and last button, how often they went to the feedback, every move with its time, an unknown or old chart-page button dropped, no chart fields, sent and carried to another machine"
       : `analysis.results_page is wrong: ${why.slice(0, 3).join(" | ")}`);
 }
 

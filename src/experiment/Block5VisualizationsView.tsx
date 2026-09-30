@@ -24,11 +24,11 @@
  * It computes no experiment logic and changes nothing about scoring or the flow.
  */
 
-import { useMemo, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
-  Badge, Box, Button, Heading, HStack, Icon, SimpleGrid, Stack, Text, VStack,
+  Badge, Box, Heading, HStack, Icon, SimpleGrid, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuArrowLeft, LuArrowRight, LuInfo } from "react-icons/lu";
+import { LuInfo } from "react-icons/lu";
 import {
   RadarChart, HBarChart, VBarChart, LineChart, ChartLegend, DumbbellChart,
   type RadarSeries, type HBar, type VBar, type LineSeries,
@@ -42,12 +42,11 @@ import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
 import {
-  DECK_POSITIONS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, veilRow,
+  DECK_POSITIONS, JOURNEY_TABS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, veilRow,
+  type JourneyTabKey,
 } from "./block5Journey";
 import { buildMpfPercentages, buildMpfPredictions } from "./dbShape";
 import { buildTimingSummary } from "./telemetry";
-import { FeedbackBar } from "./Block5FeedbackNudge";
-import type { FeedbackButton } from "./resultsPageRecord";
 import {
   POLICY_DIM_KEYS,
   type Block5PolicyDimKey, type Block5Results, type Block5UserProfile,
@@ -55,9 +54,13 @@ import {
 
 interface Props {
   results: Block5Results;
-  onBack: () => void;
-  /** Goes to the feedback and records which button did it (resultsPageRecord.ts). */
-  onContinueToFeedback: (button: FeedbackButton) => void;
+  /**
+   * Which of the thank-you page's five tabs to draw (block5Journey.ts, JOURNEY_TABS). Since 29 September 2026 the
+   * charts live on the thank-you page, after the feedback (the researcher's request), inside those tabs; without a
+   * tab every card is drawn. There is no header, no back button and no feedback button any more: the thank-you
+   * page frames it.
+   */
+  tab?: JourneyTabKey;
 }
 
 /** Clear, jargon-free names for the four policy values (no bare word like "total"). */
@@ -102,6 +105,8 @@ function HowTo({ children }: { children: ReactNode }) {
 function ChartCard({ index, title, howTo, caption, children }: {
   index: number; title: string; howTo: ReactNode; caption?: ReactNode; children: ReactNode;
 }) {
+  /* 0 = not in the tab being drawn (see `num` in the view). */
+  if (!index) return null;
   return (
     <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
       <HStack gap="2.5" mb="1" align="center">
@@ -123,7 +128,7 @@ function ChartCard({ index, title, howTo, caption, children }: {
 
 /* ----------------------------------- the view ----------------------------------- */
 
-export function Block5VisualizationsView({ results, onBack, onContinueToFeedback }: Props) {
+export function Block5VisualizationsView({ results, tab }: Props) {
   /*
    * TWO LISTS, AND WHICH CARD READS WHICH (revised 28 September 2026).
    *
@@ -137,10 +142,6 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
    * of all of them because it cannot move the profile and was in no score; since VCI_all it is in one,
    * and a flat sixth step on the value line is now explained on the card instead of hidden.
    */
-  /* The bottom bar shows while the footer's own "Continue to feedback" is off screen (since
-     28 September 2026; Block5FeedbackNudge.tsx). */
-  const footerRef = useRef<HTMLDivElement>(null);
-  const watch = useMemo(() => [footerRef], []);
   const allScenarios = results.scenarioResults;
   const scenarios = allScenarios.filter((r) => !isPredictionTest(r));
   const decisionCount = allScenarios.filter((r) => (r.decisionRole ?? "decider") === "decider").length;
@@ -160,8 +161,8 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   /* 1 · Radar: before vs after */
   const radarAxes = POLICY_DIM_KEYS.map((k) => VALUE_LABEL[k]);
   const radarSeries: RadarSeries[] = [];
-  if (before) radarSeries.push({ name: "Before Block 5", color: SERIES_COLORS[1], values: POLICY_DIM_KEYS.map((k) => scoreOf(before, k)) });
-  radarSeries.push({ name: "After Block 5", color: SERIES_COLORS[4], dashed: true, values: POLICY_DIM_KEYS.map((k) => scoreOf(after, k)) });
+  if (before) radarSeries.push({ name: "Before the scenarios", color: SERIES_COLORS[1], values: POLICY_DIM_KEYS.map((k) => scoreOf(before, k)) });
+  radarSeries.push({ name: "After the scenarios", color: SERIES_COLORS[4], dashed: true, values: POLICY_DIM_KEYS.map((k) => scoreOf(after, k)) });
   const stability = results.stability ?? null;
   /*
    * THE WORDS COME FROM stabilityLevel(), NOT FROM CUTOFFS WRITTEN HERE.
@@ -422,8 +423,10 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
     hasMoney ? "money" : "", hasTrolley ? "trolley" : "", hasWorkforce ? "workforce" : "",
     b4 ? "block4" : "", hasDeliberation ? "deliberation" : "",
   ].filter(Boolean);
-  const num = (key: string) => cardOrder.indexOf(key) + 1;
-  const chartCount = cardOrder.length;
+  /* The cards of the tab being drawn, numbered within it; a card outside it gets 0 and ChartCard draws nothing. */
+  const inTab = tab ? JOURNEY_TABS.find((t) => t.key === tab)?.cards ?? [] : null;
+  const shown = inTab ? cardOrder.filter((k) => inTab.includes(k)) : cardOrder;
+  const num = (key: string) => shown.indexOf(key) + 1;
   const POSITION_BAND_COLOR: Record<string, string> = {
     self: "#0d9488",
     self_and_group: "#2563eb",
@@ -549,10 +552,10 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
      total that does not match the clock. */
   const timing = buildTimingSummary(allScenarios.map((r) => r.timeMs ?? 0));
   const rawTimeBars: (HBar & { phase: keyof typeof PHASE_COLOR })[] = [
-    { label: "Block 1", value: timing.block1Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
-    { label: "Block 2", value: timing.block2Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
-    { label: "Block 3", value: timing.block3Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
-    { label: "Block 4", value: timing.block4Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
+    { label: "Found money", value: timing.block1Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
+    { label: "Trolley", value: timing.block2Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
+    { label: "AI workforce", value: timing.block3Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
+    { label: "Reflection", value: timing.block4Ms, color: PHASE_COLOR.profiling, phase: "profiling" },
     /*
       "Insights" and "Final analysis" are absent because they are NO LONGER MEASURED AT ALL.
 
@@ -580,32 +583,23 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
   const totalMs = timing.totalExperimentMs;
   const timeCaption = `You spent about ${fmtDur(totalMs)} on the whole experiment.`;
 
-  return (
-    <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} pt={{ base: "6", md: "10" }} pb="24">
-      <VStack gap="6" align="stretch" maxW="6xl" mx="auto" animationName="fade-in" animationDuration="moderate">
-        {/* Header */}
-        <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} gap="4">
-          <Box>
-            <Badge colorPalette="purple" variant="subtle" rounded="md" px="2" py="0.5" fontSize="2xs"
-              textTransform="uppercase" letterSpacing="wider" mb="2">Your experiment in charts</Badge>
-            <Heading size="2xl" color="fg" fontWeight="semibold">A picture of your journey</Heading>
-            <Text color="fg.muted" fontSize="md" mt="1" maxW="2xl">
-              {chartCount} views of how you decided — your values, your choices, your consistency,
-              and your time.
-              Each chart shows one thing, with a short note on how to read it.
-            </Text>
-          </Box>
-          <Button onClick={onBack} variant="outline" colorPalette="gray" rounded="lg" gap="2" flexShrink={0} alignSelf={{ base: "start", md: "center" }}>
-            <Icon><LuArrowLeft /></Icon>
-            Back to results
-          </Button>
-        </Stack>
+  /* Nothing in this tab for this run (an unfinished record, say). */
+  if (inTab && shown.length === 0) {
+    return (
+      <Text fontSize="sm" color="fg.muted" py="6" textAlign="center">
+        There is nothing to show in this part for your run.
+      </Text>
+    );
+  }
 
+  return (
+    <Box>
+      <VStack gap="6" align="stretch" maxW="6xl" mx="auto" animationName="fade-in" animationDuration="moderate">
         {/* Charts */}
         <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: "5", md: "6" }}>
           {/* 1 · Radar */}
-          <ChartCard index={num("radar")} title="Your values: before vs after Block 5"
-            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from Blocks 1–4); the <b>dashed</b> shape is where you ended after the scenarios. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> number below counts how often that happened when you chose against your best fit.</>}
+          <ChartCard index={num("radar")} title="Your values: before and after the scenarios"
+            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from the first parts of the study); the <b>dashed</b> shape is where you ended after the scenarios. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> number below counts how often that happened when you chose against your best fit.</>}
             caption={stabilityCaption}>
             <RadarChart axes={radarAxes} series={radarSeries} max={100} />
             <ChartLegend items={radarSeries.map((s) => ({ label: s.name, color: s.color, dashed: s.dashed }))} />
@@ -613,7 +607,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 2 · Evolution line */}
           <ChartCard index={num("evolution")} title="How your four values shifted along the way"
-            howTo={<>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> Block 5, then after each scenario. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you. Only your <b>four decisions</b> can move them: your wish (S5) and your rule behind the veil (S6) never do, so those last two steps are always flat.</>}
+            howTo={<>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> the scenarios, then after each one. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you. Only your <b>four decisions</b> can move them: your wish (S5) and your rule behind the veil (S6) never do, so those last two steps are always flat.</>}
             caption={evoCaption}>
             <LineChart xLabels={evoX} series={evoSeries} max={100} />
             <ChartLegend items={evoSeries.map((s) => ({ label: s.name, color: s.color }))} />
@@ -661,7 +655,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 5 · Position Effect — the study's independent variable, seen from the outside */}
           <ChartCard index={num("position")} title="How far each choice sat from the person you were"
-            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your profile <b>before Block 5 started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>, one color for each of the {DECK_POSITIONS.length} positions. Read <b>across the colors</b>: that is where the finding is. Scenario 6 is the <b>gray bar</b> under the dashed line: behind the veil you had no position, so it is not part of the finding.</>}
+            howTo={<>Each bar is one scenario. The length is how far the option you chose sat from your values <b>before the scenarios started</b> — averaged over your four values, so <b>0</b> would mean you chose an option that matched you exactly. The bars are colored by <b>who carried the cost</b>, one color for each of the {DECK_POSITIONS.length} positions. Read <b>across the colors</b>: that is where the finding is. Scenario 6 is the <b>gray bar</b> under the dashed line: behind the veil you had no position, so it is not part of the finding.</>}
             caption={positionCaption}>
             {position.rows.length === 0 ? (
               <Text fontSize="sm" color="fg.muted">No position data recorded for these scenarios.</Text>
@@ -1107,7 +1101,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
             howTo={cons.vciAll !== null ? (
               <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b>. Your <b>four decisions</b> (S1–S4) make your <b>VCI</b> (the blue dashed line). <b>All six</b> make your <b>VCI_all</b> (the cyan dashed line), the average of these six points. For your wish (S5) and your rule (S6), your values are the ones that kept updating after every choice, your wish included — so those two points can differ from the fit on their cards. 50 is what choosing blindly gives.</>
             ) : (
-              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b> — your values update as you go, so a value you take on during the block counts from then on. The <b>dashed line</b> is your VCI, across your four decisions.</>
+              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b> — your values update as you go, so a value you take on during the scenarios counts from then on. The <b>dashed line</b> is your VCI, across your four decisions.</>
             )}
             caption={consistencyCaption}>
             <LineChart xLabels={cons.points.map((pt) => `S${pt.index}${pt.kind === "wish" ? " wish" : pt.kind === "veil" ? " rule" : ""}`)}
@@ -1133,19 +1127,19 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
           {/* 6 · Time */}
           <ChartCard index={num("time")} title="Where your time went"
-            howTo={<>Each bar is the time you spent in one part of the experiment. <b>Indigo</b> bars are the value-profiling stages (Blocks 1–4); <b>teal</b> bars are the Block-5 scenarios.</>}
+            howTo={<>Each bar is the time you spent in one part of the experiment. <b>Indigo</b> bars are the first four parts of the study, where your values were measured; <b>teal</b> bars are the six scenarios.</>}
             caption={timeCaption}>
             <HBarChart bars={timeBars} max={timeMax} unitHint="time per stage" />
             <ChartLegend items={[
-              { label: "Value profiling (Blocks 1–4)", color: PHASE_COLOR.profiling },
-              { label: "Simulation (Block 5)", color: PHASE_COLOR.simulation },
+              { label: "The first four parts", color: PHASE_COLOR.profiling },
+              { label: "The six scenarios", color: PHASE_COLOR.simulation },
             ]} />
           </ChartCard>
 
           {/* 7 · Reflection lenses — only when they actually moved. See lensHasMovement. */}
           {lensHasMovement && (
           <ChartCard index={num("lens")} title="How your two reflection lenses shifted"
-            howTo={<>When a choice went against your values, the reflection could be framed two ways — <b>your own responsibility</b> for the outcome, or <b>the circumstances</b> that shaped the numbers. If you generated and compared both, the one that swayed (or didn't) you was nudged. Each line traces one of them from before Block 5 through each scenario.</>}
+            howTo={<>When a choice went against your values, the reflection could be framed two ways — <b>your own responsibility</b> for the outcome, or <b>the circumstances</b> that shaped the numbers. If you generated and compared both, the one that swayed (or didn't) you was nudged. Each line traces one of them from before the scenarios through each one.</>}
             caption={lensCaption}>
             <LineChart xLabels={lensX} series={lensSeries} max={100} />
             <ChartLegend items={lensSeries.map((s) => ({ label: s.name, color: s.color }))} />
@@ -1164,7 +1158,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
           <>
               {hasMoney && b123.money && (
                 <ChartCard index={num("money")} title="Where the money was found, and what you did"
-                  howTo={<>Block 1 asked the same question in three places, and each place started again from $0.25. A <b>longer bar</b> means you held out through more amounts before keeping the money. A short bar means you kept it early. There is no right answer here — the point is whether the <b>place</b> changed you.</>}
+                  howTo={<>The found-money questions asked the same question in three places, and each place started again from $0.25. A <b>longer bar</b> means you held out through more amounts before keeping the money. A short bar means you kept it early. There is no right answer here — the point is whether the <b>place</b> changed you.</>}
                   caption={moneySentence(b123.money)}>
                   <HBarChart
                     bars={b123.money.points.map((p) => ({
@@ -1180,7 +1174,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
               {hasTrolley && b123.trolley && (
                 <ChartCard index={num("trolley")} title="The same outcome, two different acts"
-                  howTo={<>Block 2 asked how many lives had to be saved before you would act — first by <b>pulling a lever</b>, then by <b>pushing a person</b>. Both ladders started from one life. A longer bar means you needed a bigger number before you were willing.</>}
+                  howTo={<>The trolley questions asked how many lives had to be saved before you would act — first by <b>pulling a lever</b>, then by <b>pushing a person</b>. Both ladders started from one life. A longer bar means you needed a bigger number before you were willing.</>}
                   caption={trolleySentence(b123.trolley)}>
                   <HBarChart
                     bars={[
@@ -1196,7 +1190,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
               {hasWorkforce && b123.workforce && (
                 <ChartCard index={num("workforce")} title="As the group got bigger, what did you ask for?"
-                  howTo={<>Block 3 asked the same question six times: how much financial gain justified a rollout that harms workers, for <b>three group sizes</b> and <b>two kinds of worker</b>. Higher means you demanded more before agreeing. <b>Read each line left to right</b> — a line that rises, falls, or stays flat is all coherent; a line that does both is the one thing here worth a second look.</>}
+                  howTo={<>The AI-workforce questions asked the same question six times: how much financial gain justified a rollout that harms workers, for <b>three group sizes</b> and <b>two kinds of worker</b>. Higher means you demanded more before agreeing. <b>Read each line left to right</b> — a line that rises, falls, or stays flat is all coherent; a line that does both is the one thing here worth a second look.</>}
                   caption={workforceSentence(b123.workforce)}>
                   <LineChart
                     xLabels={b123.workforce.sizeLabels}
@@ -1215,7 +1209,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                   shown as the participant gave them - two neutral outlines, never a right and a wrong color. */}
               {b4 && (
                 <ChartCard index={num("block4")} title="Did hearing the voices change your answer?"
-                  howTo={<>Block 4 asked one question three times — <b>“Would you approve the policy?”</b> — before you heard anyone, after the first voice, and after the second. You also said how confident you were (1–5) the first time and the last. Changing your answer is not better or worse than keeping it.</>}
+                  howTo={<>The reflection part asked one question three times — <b>“Would you approve the policy?”</b> — before you heard anyone, after the first voice, and after the second. You also said how confident you were (1–5) the first time and the last. Changing your answer is not better or worse than keeping it.</>}
                   caption={<>{b4.sentence}{b4.voiceThatMattered && <> The voice you said mattered most: <b>“{b4.voiceThatMattered}”</b>.</>}</>}>
                   <Stack gap="2.5">
                     {b4.steps.map((step, i) => (
@@ -1236,7 +1230,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
               {hasDeliberation && b123.deliberation && (
                 <ChartCard index={num("deliberation")} title="How long you took over each answer"
-                  howTo={<>The time between one answer and the next, across Blocks 1–3, reported as a <b>median</b> so that one interruption cannot hide the rest. This is the only thing on this page that can be answered wrongly rather than differently: below about 2.5 seconds the question text cannot have been read.</>}
+                  howTo={<>The time between one answer and the next, across the first three parts, reported as a <b>median</b> so that one interruption cannot hide the rest. This is the only thing on this page that can be answered wrongly rather than differently: below about 2.5 seconds the question text cannot have been read.</>}
                   caption={b123.deliberation.hurried
                     ? `A median of ${b123.deliberation.medianSeconds}s per answer is quicker than the questions can be read. Worth knowing when you read everything else on this page.`
                     : `A median of ${b123.deliberation.medianSeconds}s per answer, across ${b123.deliberation.decisions} decisions — enough time to read and consider each one.`}>
@@ -1249,7 +1243,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
                       <Text fontSize="sm" color="fg.muted">median time per answer</Text>
                     </HStack>
                     <Text fontSize="sm" color="fg.muted">
-                      across {b123.deliberation.decisions} decisions in Blocks 1–3
+                      across {b123.deliberation.decisions} decisions in the first three parts
                     </Text>
                   </Stack>
                 </ChartCard>
@@ -1258,19 +1252,7 @@ export function Block5VisualizationsView({ results, onBack, onContinueToFeedback
 
         </SimpleGrid>
 
-        {/* Footer actions */}
-        <HStack ref={footerRef} justify="space-between" pt="2" pb="8" wrap="wrap" gap="3">
-          <Button onClick={onBack} variant="ghost" colorPalette="gray" rounded="lg" gap="2">
-            <Icon><LuArrowLeft /></Icon>
-            Back to results
-          </Button>
-          <Button onClick={() => onContinueToFeedback("bottom_of_charts")} colorPalette="pink" rounded="lg" px="8" gap="2">
-            Continue to feedback
-            <Icon><LuArrowRight /></Icon>
-          </Button>
-        </HStack>
       </VStack>
-      <FeedbackBar watch={watch} onContinue={() => onContinueToFeedback("bar_on_charts")} />
     </Box>
   );
 }

@@ -327,3 +327,31 @@ export function block4Reading(payload: unknown): Block4Reading | null {
     sentence,
   };
 }
+
+/* ------------------------------------------------------------------ the thank-you page's tabs */
+
+export type JourneyTabKey = "values" | "choices" | "position" | "predictions" | "early";
+
+/**
+ * THE JOURNEY, IN FIVE TABS (since 29 September 2026, the researcher's "Q1-A"). The charts moved from the results
+ * page to the thank-you page, after the feedback, and are grouped by topic so nobody scrolls through twenty cards.
+ * Every chart card belongs to exactly one tab (gate J12); a card a run has no data for is simply not drawn, and
+ * cards are numbered within their tab. The words are for people who have never heard of "Block 5".
+ */
+export const JOURNEY_TABS: ReadonlyArray<{ key: JourneyTabKey; label: string; blurb: string; cards: readonly string[] }> = [
+  { key: "values", label: "Your values",
+    blurb: "What matters most to you, and how it moved during the six scenarios.",
+    cards: ["radar", "evolution", "lens"] },
+  { key: "choices", label: "Your choices",
+    blurb: "What you chose in each scenario, how well it matched your values, how often you changed your mind, and your time.",
+    cards: ["choice", "consistency", "reconsidered", "performance", "time"] },
+  { key: "position", label: "Who carried the cost",
+    blurb: "The position effect: did your choices change with who paid the price - you, your household, other people, your employer's rules, or you on the receiving end?",
+    cards: ["position", "positionChoices", "tradeoff", "stance", "mirror"] },
+  { key: "predictions", label: "Our predictions",
+    blurb: "What our software expected you to choose in each scenario, and what you chose.",
+    cards: ["guess", "predictions"] },
+  { key: "early", label: "Your first answers",
+    blurb: "Your answers in the first parts of the study: found money, the trolley, the AI workforce and the reflection.",
+    cards: ["money", "trolley", "workforce", "block4", "deliberation"] },
+];

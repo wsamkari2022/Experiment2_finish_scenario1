@@ -22,7 +22,10 @@
  *   J9  the way on to the feedback, from the source: "1 step left", the card, the bar, every button recorded
  *   J10 the MPF in every scenario: the database's own numbers, the gap, a first choice only when it changed,
  *       scenario 6 as shown, the favourite = the best fit; scenario 6 a slate bar apart from the positions
- *   J11 Stability_all's card right after Stability on the results page; the top-value choices on no page
+ *   J11 the results page's scores: three families in order (alignment, stability, performance), each "all six"
+ *       beside its "four decisions", the "not tested" notes; the top-value choices on no page
+ *   J12 the charts after the feedback (29 September 2026): none on the results page, the thank-you page's five
+ *       tabs, every chart card in exactly one tab, and plain words on the results page
  *
  * Run:  npm run validate:journey
  */
@@ -220,7 +223,9 @@ console.log("===================================================================
 }
 
 /* J9 — the way on to the feedback, read from the source (28 September 2026, the researcher's plan "Q1-A, Q2-yes,
-   Q3-yes, Q4-yes, Q5-yes"). In the previous experiment people took the results page for the end. */
+   Q3-yes, Q4-yes, Q5-yes"). In the previous experiment people took the results page for the end. Since 29 September
+   2026 the charts come after the feedback (J12), so the bar and every button to the feedback are on the results
+   page only. */
 {
   /* Comments are dropped first: they quote the old words on purpose ("Complete", "Don't leave"). */
   const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8")
@@ -233,20 +238,17 @@ console.log("===================================================================
   /* The header no longer says the study is complete. */
   if (/Main Simulation Complete/.test(results) || />\s*Complete\s*</.test(results)) why.push('the results page says "Complete" again');
   if (!results.includes("Scenarios done · 1 step left")) why.push('the "1 step left" badge is gone');
-  /* Q1-A: the card sits after the four score cards and before the charts button. */
-  const grid = results.indexOf("</Grid>"), card = results.indexOf("<LastStepCard"), charts = results.indexOf("View your results as charts");
-  if (!(grid > 0 && card > grid && card < charts)) why.push("the last-step card is not right under the score cards");
-  /* Q2: the bar on both pages. */
-  if (!results.includes("<FeedbackBar") || !view.includes("<FeedbackBar")) why.push("the bottom bar is missing from a page");
+  /* Q1-A: the card sits after the score boxes and before the scenario cards. */
+  const grid = results.indexOf("</Grid>"), card = results.indexOf("<LastStepCard"), tiles = results.indexOf("<ScenarioTile");
+  if (!(grid > 0 && card > grid && tiles > card)) why.push("the last-step card is not right under the score boxes");
+  /* Q2: the bar on the results page; the charts page is after the feedback and has no way to it. */
+  if (!results.includes("<FeedbackBar")) why.push("the bottom bar is missing from the results page");
+  if (/FeedbackBar|onContinueToFeedback/.test(view)) why.push("the charts page still leads to the feedback, but it now comes after it");
   /* Q5: every way to the feedback names its button. */
   for (const b of ["card_under_scores", "bar_on_results", "bottom_of_results"]) {
     if (!results.includes(`toFeedback("${b}")`)) why.push(`the results page does not record ${b}`);
   }
-  for (const b of ["bar_on_charts", "bottom_of_charts"]) {
-    if (!view.includes(`onContinueToFeedback("${b}")`)) why.push(`the charts page does not record ${b}`);
-  }
-  if (/onClick=\{onContinueToFeedback\}/.test(results + view)) why.push("a feedback button skips the record");
-  if (!results.includes("noteChartsOpened()")) why.push("opening the charts is not recorded");
+  if (/onClick=\{onContinueToFeedback\}/.test(results)) why.push("a feedback button skips the record");
   /* Q4, and the consent page: the gift card NEEDS a completed study; the feedback alone does not earn it. */
   if (!nudge.includes("which you need for") || /earns your \$5/.test(nudge)) why.push("the gift-card sentence promises more than the consent page");
   /* It invites and never warns, and nothing new loops. */
@@ -258,7 +260,7 @@ console.log("===================================================================
   /* On a phone the rail is wider than the screen: it must slide to the current stop (and the "next" one). */
   if (!stepper.includes("data-stop={i}") || !stepper.includes("rail.scrollLeft += over")) why.push("the rail does not slide to where you are on a phone");
   gate("J9", why.length === 0, why.length ? why.join(" | ")
-    : '"1 step left" instead of "Complete", the card under the score cards, the bar on both pages, every button recorded, an honest gift-card line, no warning, Feedback "next" in the progress bar, the rail slides to it on a phone');
+    : '"1 step left" instead of "Complete", the card under the score boxes, the bar on the results page, every button recorded, an honest gift-card line, no warning, Feedback "next" in the progress bar, the rail slides to it on a phone');
 }
 
 /* J10 — the MPF in every scenario, and scenario 6 as a bar of its own (28 September 2026, the researcher's
@@ -323,23 +325,76 @@ console.log("===================================================================
     : `the MPF card: the database's numbers, the gap = favourite - choice, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit (${hitSeen} hits, ${missSeen} misses, ${changedSeen} changed); scenario 6 a slate bar apart with a label that fits, outside the Position Effect`);
 }
 
-/* J11 — Stability_all on the results page, and the top-value choices on no page (29 September 2026, the researcher's
-   "Q3-recommended, Q4-A"): the card sits right after Stability, Stability says it is scenarios 1-4, the block saves
-   Stability_all when it finishes, and nothing a participant sees computes or prints the top-value choices. */
+/* J11 — the results page's scores (29 September 2026, the researcher's "Q2-A, Q4-yes"). Three families, one color
+   each: value alignment (VCI, then VCI_all), stability (Stability, then Stability_all) and performance, in that order;
+   each "all six" number right beside its "four decisions" one; the "not tested" notes read the stored steps; the
+   block saves Stability_all when it finishes; and nothing a participant sees computes or prints the top-value
+   choices. */
 {
   const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
   const page = src("Block5SimulationSummaryPage.tsx");
   const sim = src("Block5PublicEmergencySimulation.tsx");
   const why = [];
-  const iStab = page.indexOf('label="Stability"'), iAll = page.indexOf('label="Stability, all six (Stability_all)"'), iPerf = page.indexOf("<LuTarget />");
-  if (!(iStab > 0 && iAll > iStab && iPerf > iAll)) why.push("the Stability_all card is not right after Stability");
-  if (!/label="Stability"[\s\S]{0,200}scenarios 1-4/.test(page)) why.push("the Stability card does not say it covers scenarios 1-4");
+  const at = (t) => page.indexOf(t);
+  const order = ['title="Value alignment"', 'code="VCI" value={vci}', 'code="VCI_all" value={vciAll}',
+    'title="Stability"', 'code="Stability" value={stability}', 'code="Stability_all" value={stabilityAll}',
+    'title="Performance"', 'code="Performance" value={performance}'].map(at);
+  if (order.some((x) => x < 0) || order.some((x, k) => k > 0 && x < order[k - 1])) why.push("the three families or their numbers are not in order");
+  if (!page.includes('label="Your 4 decisions" code="Stability"') || !page.includes('label="All 6 scenarios" code="Stability_all"')) why.push("Stability does not say it covers the four decisions, or Stability_all all six");
+  if (!page.includes('label="Your 4 decisions" code="VCI"') || !page.includes('label="All 6 scenarios" code="VCI_all"')) why.push("VCI does not say it covers the four decisions, or VCI_all all six");
+  /* Colors by family ("Q2-A"): blue alignment, purple stability, teal performance. */
+  if (!/palette="blue"[\s\S]{0,80}title="Value alignment"/.test(page) || !/palette="purple"[\s\S]{0,80}title="Stability"/.test(page)
+      || !/palette="teal"[\s\S]{0,80}title="Performance"/.test(page)) why.push("a family is not in its color");
+  /* Q4: "not tested" when no moment tested the values. */
+  if (!page.includes("results.stabilityDetail?.conflictSteps === 0") || !page.includes("computeStabilityAll(results.scenarioResults)?.measured === false")
+      || !/note=\{stabilityUntested \?/.test(page) || !/note=\{stabilityAllUntested \?/.test(page)) why.push('the "not tested" notes are missing or read the wrong thing');
+  /* The researcher's words: stability is who they were before the scenarios and who they became. */
+  if (!/who you were before the scenarios with who you became/.test(page)) why.push("stability no longer says it compares who they were before and after");
   if (!sim.includes("computeStabilityAll(nextResults)") || !sim.includes("stabilityAll: stabilityAll.value")) why.push("the block does not save Stability_all when it finishes");
   const shown = fs.readdirSync(path.join(ROOT, "src", "experiment")).filter((f) => f.endsWith(".tsx"))
     .filter((f) => /computeTopValueChoices|top_value_choices|TopValueChoices/.test(src(f)));
   if (shown.length) why.push(`the top-value choices reach a page: ${shown.join(", ")}`);
   gate("J11", why.length === 0, why.length ? why.join(" | ")
-    : "Stability_all right after Stability on the results page, Stability says scenarios 1-4, saved when the block finishes; the top-value choices reach no page");
+    : "three families in order and in their colors, each all-six number beside its four-decision one, the not-tested notes, stability as before and after; Stability_all saved when the block finishes; the top-value choices reach no page");
+}
+
+/* J12 — the charts after the feedback (29 September 2026, the researcher's "Q1-A, Q3-A"). The charts moved from the
+   results page to the thank-you page, in five tabs, so nothing in them can shape a feedback answer; every card a run
+   can draw sits in exactly one tab, or it would never be seen; and the results page speaks to somebody who has never
+   heard how the study was built ("the user doesn't know block 1-4 means"). */
+{
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const bare = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const page = bare(src("Block5SimulationSummaryPage.tsx"));
+  const feedback = bare(src("UserFeedbackPage.tsx"));
+  const tabs = bare(src("JourneyTabs.tsx"));
+  const view = src("Block5VisualizationsView.tsx");
+  const why = [];
+  if (/Block5VisualizationsView|JourneyTabs|View your results as charts|noteChartsOpened/.test(page)) why.push("the results page still opens the charts");
+  const submitted = feedback.indexOf("if (submitted) {"), form = feedback.indexOf("return (", feedback.indexOf("return (", submitted) + 1);
+  const at = feedback.indexOf("<JourneyTabs results={results} />");
+  if (at < 0 || feedback.split("<JourneyTabs").length !== 2 || !(at > submitted && at < form)) why.push("the thank-you page does not draw the journey tabs, or they appear before the feedback is sent");
+  if (!tabs.includes("<Block5VisualizationsView results={results} tab={t.key} />") || !tabs.includes("lazyMount")) why.push("a tab does not draw its own cards");
+  /* Every card key the page can draw, in exactly one tab. */
+  const J = B("block5Journey.js");
+  const m = view.match(/const cardOrder = \[([\s\S]*?)\]\.filter\(Boolean\)/);
+  const keys = m ? [...m[1].matchAll(/"([a-zA-Z0-9]+)"/g)].map((x) => x[1]) : [];
+  if (keys.length < 15) why.push(`the card list was not read (${keys.length} keys)`);
+  const inTabs = J.JOURNEY_TABS.flatMap((t) => t.cards);
+  for (const k of keys) {
+    const n = inTabs.filter((c) => c === k).length;
+    if (n !== 1) why.push(`the card "${k}" is in ${n} tabs`);
+  }
+  for (const k of inTabs) if (!keys.includes(k)) why.push(`a tab lists a card the page never draws: ${k}`);
+  if (J.JOURNEY_TABS.length !== 5 || new Set(J.JOURNEY_TABS.map((t) => t.key)).size !== 5) why.push("not five tabs with their own keys");
+  /* Plain words on the results page: no block numbers and no internal short names in what is shown. */
+  const shownText = page.replace(/import[\s\S]*?from "[^"]+";/g, "");
+  for (const [re, what] of [[/Blocks? [1-5]/, "a block number"], [/\bCVR\b/, '"CVR"'], [/\bMPF\b/, '"MPF"'],
+    [/Why this study/i, '"Why this study"'], [/Raw metric average/, "the raw metric average"]]) {
+    if (re.test(shownText)) why.push(`the results page shows ${what}`);
+  }
+  gate("J12", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : `no charts on the results page; the thank-you page draws them in five tabs after the feedback; each of the ${keys.length} cards in exactly one tab; no block numbers, CVR or MPF on the results page`);
 }
 
 console.log("");

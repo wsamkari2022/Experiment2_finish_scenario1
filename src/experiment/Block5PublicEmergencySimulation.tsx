@@ -43,6 +43,7 @@ import {
 import { profileShownIn } from "./block5Mirror";
 import { computeVciAll, runningStep } from "./block5VciAll";
 import { computeStabilityAll } from "./block5StabilityAll";
+import { ROLE_BADGE } from "./block5RoleWords";
 import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
 import { progressSaved } from "./sessionGuard";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
@@ -2274,7 +2275,7 @@ const STAKE_VIEW: Record<StakePosition, {
   actors: { key: string; icon: ReactNode; label: string; state: string; strong: boolean }[];
 }> = {
   self: {
-    badge: "Deciding alone",
+    badge: ROLE_BADGE.self,
     headline: "You are one of the people at risk here — and you are the only one.",
     actors: [
       { key: "you", icon: <LuUserRound />, label: "You",
@@ -2286,7 +2287,7 @@ const STAKE_VIEW: Record<StakePosition, {
     ],
   },
   self_and_group: {
-    badge: "Deciding for your household",
+    badge: ROLE_BADGE.self_and_group,
     headline: "You are at risk, and so are the people who depend on you.",
     actors: [
       /*
@@ -2304,7 +2305,7 @@ const STAKE_VIEW: Record<StakePosition, {
     ],
   },
   others: {
-    badge: "Deciding for other people",
+    badge: ROLE_BADGE.others,
     headline: "You are not at risk. Every consequence of this choice lands on someone else.",
     actors: [
       { key: "you", icon: <LuUserRound />, label: "You",
@@ -2323,7 +2324,7 @@ const STAKE_VIEW: Record<StakePosition, {
    * waits.
    */
   under_authority: {
-    badge: "Deciding inside your employer's rules",
+    badge: ROLE_BADGE.under_authority,
     headline: "You are making this call at work, under values your employer has already published.",
     actors: [
       { key: "you", icon: <LuUserRound />, label: "You",
@@ -2335,7 +2336,7 @@ const STAKE_VIEW: Record<StakePosition, {
     ],
   },
   receiving_end: {
-    badge: "It is being decided for you",
+    badge: ROLE_BADGE.receiving_end,
     headline: "Someone else will decide this. This time, it happens to you.",
     actors: [
       { key: "you", icon: <LuUserRound />, label: "You",
@@ -2355,7 +2356,7 @@ const STAKE_VIEW: Record<StakePosition, {
    * exercise only works while every position is equally possible.
    */
   behind_the_veil: {
-    badge: "You do not know who you will be",
+    badge: ROLE_BADGE.behind_the_veil,
     headline: "You are writing a rule you will live under, from a position you do not get to choose.",
     actors: [
       { key: "you", icon: <LuUserRound />, label: "You",

@@ -354,8 +354,8 @@ halves, so there are two things. **Participants see the first** (a new card; HOW
   **it contains Stability - never correlate the two, compare the difference.** Steps in 5 and 6 are smaller (+20/-15);
   scenario 5 has VCI_all's echo (about 5 in 100 second-best pickers get a counted step there); its level depends on the
   step sizes, like Stability's (R7). Saved on the finished block (`stabilityAll`, `stabilityAllLevel`), shown on the
-  results page as a card beside Stability ("Q3"): VCI | VCI_all, Stability | Stability_all, Performance across. The
-  Stability card now says it covers scenarios 1-4. Stored: `headline.stability_all_score` / `_label` /
+  results page as a card beside Stability ("Q3"); since the redesign the same day, as the second number in the purple
+  stability box ("All 6 scenarios", beside Stability's "Your 4 decisions"). Stored: `headline.stability_all_score` / `_label` /
   `_was_measured` / `_conflict_steps_counted`, `analysis.stability_all` (every step, why it counted, its swaps, and a
   self-check: the score recomputed equals the saved one, and the decisions' part equals Stability's swaps), a copy in
   `major_info_and_scores.stability`. `STABILITY_ALL_VERSION` "2026-09-29-a"; `SHAPE_VERSION` "2026-09-29-stability-all".
@@ -378,8 +378,10 @@ halves, so there are two things. **Participants see the first** (a new card; HOW
 
 ## The charts page ("A picture of your journey"), refreshed 28 September 2026
 
-The researcher: "most of the visualization cards are stale". The page (`Block5VisualizationsView.tsx`, opened from
-the results page, after every choice) had stopped at scenario 5 and predated a week of changes. Refreshed card by
+The researcher: "most of the visualization cards are stale". The page (`Block5VisualizationsView.tsx`, then opened
+from the results page, after every choice; **since 29 September 2026 drawn on the thank-you page, after the feedback,
+in five tabs**, see "The results page and the thank-you page, redesigned" below) had stopped at scenario 5 and predated
+a week of changes. Refreshed card by
 card on the approved plan ("Q1-A, Q2-final, Q3-yes, Q4-yes"); its new numbers live in `block5Journey.ts` (pure, no
 React), which `npm run validate:journey` checks (J1-J8, in the chain; every gate shown to fail on a deliberate break).
 
@@ -432,7 +434,8 @@ feedback" button at the very bottom. Built on the approved plan ("Q1-A, Q2-yes, 
   through their results first. "About 5 to 10 minutes" (32 required answers, up to 48 with the reflection sections, plus
   up to 8 optional written ones). The gift-card line says "Answering them completes the study, which you need for your
   $5 gift card": NEEDED, never "earns", because the consent page names a second rule (the active minutes).
-- **A slim bar at the bottom of the screen** (`FeedbackBar`) on the results page and the charts page. It shows only while
+- **A slim bar at the bottom of the screen** (`FeedbackBar`) on the results page (and, until 29 September 2026, the charts
+  page). It shows only while
   neither the card nor the page's own bottom button is on screen (IntersectionObserver), slides in, never loops, and
   reads "1 step left · feedback" on a phone. It invites and never warns: no leave pop-up (the consent page promises the
   participant may stop at any time).
@@ -442,13 +445,56 @@ feedback" button at the very bottom. Built on the approved plan ("Q1-A, Q2-yes, 
   end, so on a 375px phone the results page showed neither "Your results" nor Feedback. This affects every stage on a
   narrow screen; on a wide one everything fits and nothing moves.
 - **Recorded:** `analysis.results_page` (resultsPageRecord.ts -> SOURCE_MAP in dbShape.ts): which button first took them
-  to the feedback (`card_under_scores`, `bar_on_results`, `bar_on_charts`, `bottom_of_results`, `bottom_of_charts`), how
-  often they went, and whether they opened the charts first. The time on the page is already
+  to the feedback (`card_under_scores`, `bar_on_results`, `bottom_of_results`; the two chart-page buttons and "opened the
+  charts first" went on 29 September 2026, when the charts moved after the feedback) and how often they went. The time
+  on the page is already
   `active_time.by_stage_minutes.block5_summary`. The browser file travels with `resume_state`. `SHAPE_VERSION`
   "2026-09-28-results-page". Gates D66 (`validate:dbshape`) and J9 (`validate:journey`, from the source); each was shown
   to fail on a deliberate break (7 breaks, 7 caught).
 - **Testing note:** the bar's "is it on screen?" signal fires only when the page draws a frame, so in a hidden browser
   pane it can look stuck until something is drawn. Not a bug on a real screen.
+
+## The results page and the thank-you page, redesigned 29 September 2026
+
+The researcher: show the study's purpose and the major scores "in very nice and elegant content and coloring numbers",
+keep every choice with its label and fit, less scrolling, and move the charts to the thank-you page "so the user can
+enjoy of their Journey results after finishing the feedback". Plan answers "1-A 2-A 3-A 4-Yes", with his wording notes:
+write for somebody who knows nothing of how the study was built (no "Block 1-4", no "CVR", no "MPF" on the results
+page), stability is "who they were before the main study and who they are after", say briefly how alignment and
+stability differ, and not "Why this study" (it reads as if they are about to take it). **Participants see it**
+(HOW_TO_ANALYZE 4.9). No score and no scoring number changed.
+
+- **Results page** (`Block5SimulationSummaryPage.tsx`), top to bottom: the "1 step left" header; **"What your results
+  show"** (the first parts measured their four values, the six scenarios their choices, the scores compare the two: "a
+  mirror of how you decide, not a grade"); **three score boxes, one color per family** ("2-A"): value alignment, blue
+  (VCI, VCI_all; "We call it your value consistency (VCI)", a mark at 50 for random choosing), stability, purple
+  (Stability, Stability_all; "Not tested" under a number when no moment tested it, "4-Yes"), performance, teal; a line
+  that says alignment looks at the choices, stability at the values, performance at the results; **the four values
+  before and after**; the "One last step" card; **every scenario as a compact card** ("3-A"), keeping everything the old
+  tall boxes held (the researcher: "I like all the information in the current 'your choices, scenario by scenario'"):
+  title, the place they stood (`ROLE_BADGE`, `block5RoleWords.ts`, the scenario page's own badges), ✓ "Your choice" (or
+  "Your wish", or "Your first choice, before you saw the guess" / "Your final choice" in scenario 6), the label,
+  "Reflection shown" (was "CVR shown"), "Kept after reflection", Fit, the note; scenario 6 "Our software expected this" /
+  "guessed right / wrong"; and a note naming what the thank-you page will show. The "View your results as charts" button,
+  the charts view and "Raw metric average" are gone.
+- **Thank-you page** (`UserFeedbackPage.tsx`): a hero with the thanks and the minutes and visits, then **`JourneyTabs.tsx`**:
+  the charts in five tabs ("Your values", "Your choices", "Who carried the cost", "Our predictions", "Your first
+  answers"; `JOURNEY_TABS` in block5Journey.ts), each a small card with its own color, icon and one line, the open one
+  filled; each tab draws only its own cards (`tab` on `Block5VisualizationsView`) and only when opened (lazyMount). On a
+  phone the row slides and snaps. The charts' words were made plain too ("the first parts of the study", "Found money",
+  "Trolley", ...).
+- **A Chakra trap found on the way:** `bgGradient` + `gradientFrom`/`gradientTo` on an element INSIDE a box that sets
+  `gradientVia` inherits the outer box's gradient (its `--gradient-via-stops` is resolved on the outer box). The
+  thank-you check circle turned almost white in light mode and hid its white check (the researcher's screenshot). It now
+  sets its own `backgroundImage`. Do not nest a Chakra gradient inside a `gradientVia` box.
+- **Recorded:** `analysis.results_page` keeps the three results-page buttons; the chart buttons and chart counts are
+  gone (`resultsPageRecord.ts`, `buildResultsPageSection`). `SHAPE_VERSION` "2026-09-29-results-redesign".
+- **Checked:** D66 (rewritten: three buttons, an old chart-page button dropped, no chart field), J9 (the bar on the
+  results page only, the charts page has no way to the feedback), J11 (the three families in order and in their colors,
+  each "all six" beside its "four decisions", the "not tested" notes, stability as before and after), J12 (new: no charts
+  on the results page, the thank-you page draws the tabs after the feedback is sent, every chart card in exactly one tab,
+  no block numbers, "CVR", "MPF", "Why this study" or "Raw metric average" on the results page). 8 deliberate breaks, 8
+  caught. Seen in the browser in light and dark mode, on a desktop and a 375px phone (the page never scrolls sideways).
 
 ## Continue where you left off, and one place at a time (since 29 September 2026)
 
@@ -879,7 +925,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
 | `validate:dbshape` | What reaches MongoDB. 67 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6), VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65), which button took them from the results page to the feedback (D66), and Stability_all with the top-value choices, recounted by hand (D67). `--dump` writes a full simulated document |
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8); since 29 September 2026 Stability_all: its decisions' part equals Stability's swaps (A9), which steps count (A10), a best-fit picker 100 and not measured, the kinds in order (A11), the top-value choices recounted by hand (A12). Prints the echo and the screen-against-yardstick shares, and Stability / Stability_all / top-value choices by kind |
-| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score cards, the bar on both pages, every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); Stability_all's card right after Stability, and the top-value choices on no page (J11) |
+| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12) |
 | `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
@@ -972,7 +1018,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   strip the two from any ledger written before the change.
 - **`analysis.mpf_predictions_every_scenario` is computed after the fact for scenarios 1–5.** Only
   scenario 6's probabilities were on screen while anybody was choosing. Since 28 September 2026 the
-  charts page shows all six AFTER every choice ("What our software expected, and what you chose"), for
-  those who open it (`analysis.results_page.times_charts_opened`); `was_shown_to_the_participant` still
-  means "while choosing". `self_check` re-derives scenario 6 by the same route to prove
+  charts show all six AFTER every choice ("What our software expected, and what you chose"); since 29
+  September 2026 on the thank-you page, AFTER the feedback (the "Our predictions" tab; opening it is not
+  recorded); `was_shown_to_the_participant` still means "while choosing". `self_check` re-derives scenario 6 by the same route to prove
   the recomputation still matches the live one. If that check ever fails, the section is wrong.

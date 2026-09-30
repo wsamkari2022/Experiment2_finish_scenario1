@@ -18,9 +18,10 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
-  Badge, Box, Button, Heading, HStack, Icon, Separator, Stack, Text, Textarea, VStack,
+  Badge, Box, Button, Center, Heading, HStack, Icon, Separator, Stack, Text, Textarea, VStack,
 } from "@chakra-ui/react";
-import { LuArrowLeft, LuCheck, LuClock, LuMessageSquare, LuSparkles } from "react-icons/lu";
+import { LuArrowLeft, LuCheck, LuClock, LuMessageSquare, LuRotateCw, LuSparkles } from "react-icons/lu";
+import { JourneyTabs } from "./JourneyTabs";
 import type { Block5Results } from "./block5Types";
 import { markStage } from "./telemetry";
 // DEV ONLY — delete this import and the <DevFillFeedbackButton /> below before the study is live.
@@ -298,55 +299,66 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
    */
 
   if (submitted) {
+    /*
+     * THE THANK-YOU PAGE (redesigned 29 September 2026, the researcher's request: "more visually elegant and
+     * attractive and well organized", and home of the charts since the same day). On top: the thanks, and the time
+     * they actually worked - no eligibility, no threshold, no "you needed X more minutes": a page that reports how
+     * close somebody is to a target teaches them how to reach it without doing the work; whether a participant
+     * qualifies is decided later, from the data. Below: their journey, in five tabs (JourneyTabs), when this browser
+     * holds their results.
+     */
+    const minutes = activeSummary && activeSummary.total_active_minutes > 0
+      ? Math.round(activeSummary.total_active_minutes) : null;
+    const visits = activeSummary && activeSummary.sittings > 1 ? activeSummary.sittings : null;
     return (
-      <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} py={{ base: "10", md: "16" }} display="flex" alignItems="flex-start" justifyContent="center">
-        <VStack gap="6" maxW="lg" w="full" textAlign="center" animationName="fade-in" animationDuration="moderate">
-          <Box w="16" h="16" rounded="full" bg="green.subtle" display="flex" alignItems="center" justifyContent="center">
-            <Icon boxSize="8" color="green.fg"><LuCheck /></Icon>
-          </Box>
-          <Heading size="2xl" color="fg">Thank you</Heading>
-          <Text color="fg.muted" fontSize="lg" lineHeight="tall">
-            Your feedback has been recorded. We're grateful for the time and thought you gave
-            to this experiment — it genuinely helps improve how these decision-support tools work.
-          </Text>
-
-          {/*
-            THE TIME THEY ACTUALLY WORKED, AND NOTHING ELSE.
-            No eligibility, no threshold, no "you needed X more minutes". A page that reports how
-            close somebody is to a target is a page that teaches them how to reach it without
-            doing the work. Whether a participant qualifies is decided later, from the data,
-            where nobody can nudge it.
-          */}
-          {activeSummary && activeSummary.total_active_minutes > 0 && (
-            <Box
-              bg="bg.subtle"
-              borderWidth="1px"
-              borderColor="border"
-              rounded="xl"
-              px="6"
-              py="4"
-              w="full"
-            >
-              <HStack gap="3" justify="center" align="center">
-                <Icon boxSize="4" color="fg.muted"><LuClock /></Icon>
-                <Text fontSize="sm" color="fg.muted">
-                  You spent{" "}
-                  <Text as="span" color="fg" fontWeight="bold">
-                    {Math.round(activeSummary.total_active_minutes)} minutes
-                  </Text>{" "}
-                  actively working on this study
-                  {activeSummary.sittings > 1 && (
-                    <>
-                      , across{" "}
-                      <Text as="span" color="fg" fontWeight="bold">
-                        {activeSummary.sittings} visits
+      <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} pt={{ base: "10", md: "14" }} pb="16">
+        <VStack gap={{ base: "10", md: "12" }} maxW="6xl" mx="auto" w="full" animationName="fade-in" animationDuration="moderate">
+          <Box w="full" rounded="3xl" borderWidth="1px" borderColor="border" shadow="sm" overflow="hidden"
+            bgGradient="to-br" gradientFrom="green.subtle" gradientVia="bg.panel" gradientTo="teal.subtle">
+            <VStack gap="4" textAlign="center" px={{ base: "6", md: "10" }} py={{ base: "8", md: "10" }} maxW="3xl" mx="auto">
+              {/* Its own colors, written out: a Chakra bgGradient here inherits the card's three-color gradient
+                  (gradientVia leaks into children), which turned the circle almost white in light mode and hid
+                  the white check (the researcher's screenshot, 29 September 2026). */}
+              <Center boxSize={{ base: "16", md: "20" }} rounded="full" bg="green.600" color="white" shadow="lg"
+                style={{ backgroundImage: "linear-gradient(135deg, var(--chakra-colors-green-500), var(--chakra-colors-teal-600))" }}>
+                <Icon boxSize={{ base: "8", md: "10" }}><LuCheck /></Icon>
+              </Center>
+              <Heading size={{ base: "2xl", md: "3xl" }} color="fg" fontWeight="semibold" letterSpacing="tight">
+                Thank you — the study is complete
+              </Heading>
+              <Text color="fg.muted" fontSize={{ base: "md", md: "lg" }} lineHeight="tall">
+                Your answers are saved. We are grateful for the time and thought you gave: it helps us understand
+                how people make hard choices. Below is the story of yours.
+              </Text>
+              {(minutes !== null || visits !== null) && (
+                <HStack gap="3" wrap="wrap" justify="center" pt="1">
+                  {minutes !== null && (
+                    <HStack gap="2.5" bg="bg.panel" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="2.5" shadow="xs">
+                      <Icon boxSize="4" color="teal.fg"><LuClock /></Icon>
+                      <Text fontSize="sm" color="fg.muted">
+                        <Text as="span" color="fg" fontWeight="bold" fontSize="md">{minutes}</Text> minutes of work
                       </Text>
-                    </>
+                    </HStack>
                   )}
-                  .
-                </Text>
-              </HStack>
-            </Box>
+                  {visits !== null && (
+                    <HStack gap="2.5" bg="bg.panel" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="2.5" shadow="xs">
+                      <Icon boxSize="4" color="teal.fg"><LuRotateCw /></Icon>
+                      <Text fontSize="sm" color="fg.muted">
+                        <Text as="span" color="fg" fontWeight="bold" fontSize="md">{visits}</Text> visits
+                      </Text>
+                    </HStack>
+                  )}
+                </HStack>
+              )}
+            </VStack>
+          </Box>
+
+          {results?.scenarioResults?.length ? (
+            <JourneyTabs results={results} />
+          ) : (
+            <Text fontSize="sm" color="fg.muted" textAlign="center">
+              Your journey charts are kept in the browser where you finished the scenarios.
+            </Text>
           )}
         </VStack>
       </Box>

@@ -1,29 +1,43 @@
 /**
- * Block5SimulationSummaryPage — Summary after all Block 5 scenarios (CVR Cube v3).
+ * Block5SimulationSummaryPage — the results page: after all six scenarios, before the feedback.
  *
- * Shows the two headline measures (graded VCI + Stability) and the average
- * Performance, then a per-scenario recap with the 4-level alignment label and the
- * CVR outcome (whether the participant kept a misaligned choice after seeing the
- * recontextualized vignette).
+ * REDESIGNED 29 SEPTEMBER 2026 (the researcher's request and plan answers "Q1-A, Q2-A, Q3-A, Q4-yes", with his
+ * wording notes). Written for somebody who knows nothing about how the study was built: no "Block 5", no "VCI"
+ * without a plain name beside it.
+ *   1. "What your results show": what the study measured about them, and how (the first parts measured their values,
+ *      the six scenarios their choices, the scores compare the two) - worded for somebody who has just FINISHED.
+ *   2. Their major scores in three colored families (colors by family, never red-to-green grading: "Q2-A"):
+ *      value alignment (VCI, VCI_all: did your choices match your values?), stability (Stability, Stability_all: did
+ *      your values stay the same, before the scenarios and after?), performance (how good were the outcomes?). A
+ *      "not tested" note under a stability number that no moment tested ("Q4").
+ *   3. Their four values before and after the scenarios, which is what stability watches.
+ *   4. The "One last step" card (Block5FeedbackNudge.tsx).
+ *   5. Every scenario's choice with its label, fit and badges, as a compact grid ("Q3-A"): two rows instead of six
+ *      tall boxes.
+ *   6. What they will see after the feedback: the charts moved to the thank-you page (JourneyTabs, "Q1-A").
+ * The charts button and the charts view are gone from this page.
  */
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import {
-  Badge, Box, Button, Grid, Heading, HStack, Icon, Separator, Stack, Text, VStack,
+  Badge, Box, Button, Center, Grid, Heading, HStack, Icon, SimpleGrid, Stack, Text, VStack,
 } from "@chakra-ui/react";
-import { LuCheck, LuArrowRight, LuChartColumn, LuTrendingUp, LuScale, LuTarget, LuRotateCcw, LuLayers } from "react-icons/lu";
+import {
+  LuArrowRight, LuChartColumn, LuCheck, LuCompass, LuEye, LuRotateCcw, LuRoute, LuScale, LuSparkles, LuTarget, LuTrendingUp,
+} from "react-icons/lu";
+import type { ReactNode } from "react";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL } from "./block5CVR";
+import { computeStabilityAll } from "./block5StabilityAll";
+import { ROLE_BADGE } from "./block5RoleWords";
 import { POLICY_DIM_KEYS } from "./block5Types";
-import type { AlignmentLevel, Block5Results, Block5ScenarioResult } from "./block5Types";
-import { Block5VisualizationsView } from "./Block5VisualizationsView";
+import type { AlignmentLevel, Block5Results, Block5ScenarioResult, Block5UserProfile, StakePosition } from "./block5Types";
 import { FeedbackBar, LastStepCard } from "./Block5FeedbackNudge";
-import { noteChartsOpened, noteFeedbackButton, type FeedbackButton } from "./resultsPageRecord";
-import { useScrollToTop } from "./useScrollToTop";
+import { noteFeedbackButton, type FeedbackButton } from "./resultsPageRecord";
 
 interface Props {
   results: Block5Results;
-  /** Advance to the post-experiment feedback page (the finish/reset now lives after feedback). */
+  /** Advance to the post-experiment feedback page. */
   onContinueToFeedback: () => void;
 }
 
@@ -56,29 +70,24 @@ function ruleTitle(scenarioId: string, optionId: string): string {
     ?? optionId;
 }
 
-/** Plain-English note for a scenario, based on alignment + CVR outcome. */
+/** Plain-English note for a scenario, based on alignment + reflection outcome. */
 function scenarioNote(sr: Block5ScenarioResult): string {
   /*
-   * SCENARIO 6 IS NOT DESCRIBED BY HOW WELL IT FIT.
-   *
-   * Every sentence below is a verdict on the participant's choice against their own values, which
-   * is the raw material the MPF's guess was built from. Saying "this choice fit your earlier
-   * values" right under a badge reporting what the MPF expected reads as the software marking their
-   * answer twice over, which is the one impression this scenario must not leave.
-   *
-   * The sentence it gets instead describes what THEY did, not how well they scored.
+   * SCENARIO 6 IS NOT DESCRIBED BY HOW WELL IT FIT. Every other sentence is a verdict on the choice against the
+   * participant's own values, the raw material the software's guess was built from; right under a badge about the
+   * guess it would read as the software marking their answer twice. So it describes what THEY did.
    */
   const pt = sr.predictionTest;
   if (pt) {
     const after = afterTheGuess(pt);
     if (after === "changed") {
-      return `You first chose “${ruleTitle(sr.scenarioId, pt.firstChoiceOptionId)}”, saw what the MPF `
+      return `You first chose “${ruleTitle(sr.scenarioId, pt.firstChoiceOptionId)}”, saw what our software `
         + `expected, and then changed to “${ruleTitle(sr.scenarioId, pt.finalChoiceOptionId)}”.`;
     }
     if (after === "reconsidered") {
-      return "You saw what the MPF expected, went back to reconsider, and chose the same rule again.";
+      return "You saw what our software expected, went back to reconsider, and chose the same rule again.";
     }
-    return "You saw what the MPF expected of you, and kept the rule you had already chosen.";
+    return "You saw what our software expected of you, and kept the rule you had already chosen.";
   }
 
   const level = sr.alignmentLevel;
@@ -94,35 +103,223 @@ function scenarioNote(sr: Block5ScenarioResult): string {
     }
     return "This went against your usual values, and you chose to reconsider.";
   }
-  return "Your choice favored a different moral trade-off than your earlier profile predicted.";
+  return "Your choice favored a different moral trade-off than your earlier answers predicted.";
 }
 
-function MeasureCard({ icon, label, value, sub, hint, palette, wide = false }: {
-  icon: React.ReactNode; label: string; value: string; sub?: string; hint: string; palette: string;
-  /** Spans both columns: the last card of an odd number, so it never sits alone in a half row. */
-  wide?: boolean;
+/* ------------------------------------------------------------------ the score boxes */
+
+/** One score: its plain name, a big number in the family's color, its level word, a thin 0-100 bar. */
+function ScoreNumber({ label, code, value, level, palette, blindMark = false, note }: {
+  label: string; code: string; value: number; level?: string; palette: string; blindMark?: boolean; note?: string;
 }) {
+  const width = Math.max(2, Math.min(100, value));
   return (
-    <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm"
-      gridColumn={wide ? { md: "span 2" } : undefined}>
-      <HStack gap="2" mb="2">
-        <Icon color={`${palette}.500`}>{icon}</Icon>
-        <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider">{label}</Text>
-      </HStack>
-      <HStack align="baseline" gap="2">
-        <Heading size="2xl" color="fg">{value}</Heading>
-        {sub && <Badge variant="subtle" colorPalette={palette} rounded="md" px="2" fontSize="xs">{sub}</Badge>}
-      </HStack>
-      <Text fontSize="xs" color="fg.muted" mt="2" lineHeight="tall">{hint}</Text>
+    <Box flex="1" minW="0">
+      {/* Two lines, always, so the two numbers of a box stand level ("All 6 scenarios · VCI_all" on one line
+          wrapped in a narrow box and pushed its number down). */}
+      <Text fontSize="xs" color="fg.muted" fontWeight="medium" lineClamp={1}>{label}</Text>
+      <Text fontSize="2xs" color="fg.subtle">{code}</Text>
+      <Text fontSize={{ base: "3xl", md: "4xl" }} fontWeight="bold" color={`${palette}.fg`} lineHeight="1" mt="1.5"
+        letterSpacing="tight" style={{ fontVariantNumeric: "tabular-nums" }}>
+        {value}
+      </Text>
+      {level && (
+        <Badge mt="2" size="sm" variant="subtle" colorPalette={palette} rounded="md" px="2">{level}</Badge>
+      )}
+      <Box position="relative" mt="3">
+        <Box h="1.5" rounded="full" bg="bg.muted" overflow="hidden">
+          <Box h="full" rounded="full" bg={`${palette}.solid`} style={{ width: `${width}%` }} />
+        </Box>
+        {/* Where choosing at random lands, on the alignment scores. */}
+        {blindMark && (
+          <Box position="absolute" left="50%" top="-1" h="3.5" w="0.5" rounded="full" bg="fg.subtle"
+            title="50 = what choosing at random would give" />
+        )}
+      </Box>
+      {note && <Text fontSize="xs" color="fg.muted" mt="2" lineHeight="short">{note}</Text>}
     </Box>
   );
 }
 
+/** A family of scores: one color, one question, one plain explanation. */
+function ScoreFamily({ palette, icon, title, question, explain, children }: {
+  palette: string; icon: ReactNode; title: string; question: string; explain: ReactNode; children: ReactNode;
+}) {
+  return (
+    <Box rounded="2xl" borderWidth="1px" borderColor="border" bg="bg.panel" shadow="sm" overflow="hidden"
+      display="flex" flexDirection="column">
+      <Box h="1" bgGradient="to-r" gradientFrom={`${palette}.300`} gradientTo={`${palette}.600`} />
+      <Box flex="1" display="flex" flexDirection="column" px={{ base: "5", md: "6" }} py="5"
+        bgGradient="to-b" gradientFrom={`${palette}.subtle`} gradientTo="bg.panel">
+        <HStack gap="3" align="center">
+          <Center boxSize="9" rounded="xl" bg="bg.panel" color={`${palette}.fg`} borderWidth="1px" borderColor={`${palette}.muted`}
+            flexShrink={0}>
+            <Icon boxSize="4.5">{icon}</Icon>
+          </Center>
+          <Box minW="0">
+            <Text fontSize="md" fontWeight="semibold" color="fg" lineHeight="short">{title}</Text>
+            <Text fontSize="sm" color="fg.muted">{question}</Text>
+          </Box>
+        </HStack>
+        <HStack mt="5" gap="5" align="start">{children}</HStack>
+        <Text fontSize="xs" color="fg.muted" mt="auto" pt="4" lineHeight="tall">{explain}</Text>
+      </Box>
+    </Box>
+  );
+}
+
+/** The four values, strongest first, with their numbers: before the scenarios, and after them. */
+function ValuesBeforeAfter({ before, after }: { before: Block5UserProfile | undefined; after: Block5UserProfile }) {
+  const ranked = (p: Block5UserProfile) => p.dimensions
+    .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key))
+    .sort((a, b) => b.score - a.score);
+  const column = (title: string, p: Block5UserProfile) => (
+    <Box flex="1" minW="0">
+      <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="2">{title}</Text>
+      <Stack gap="1.5">
+        {ranked(p).map((d, i) => (
+          <HStack key={d.key} gap="2.5">
+            <Center boxSize="5" rounded="md" bg="purple.subtle" color="purple.fg" fontSize="2xs" fontWeight="bold" flexShrink={0}>
+              {i + 1}
+            </Center>
+            <Text fontSize="sm" color="fg" flex="1" minW="0" lineClamp={1}>{d.label}</Text>
+            <Text fontSize="sm" color="fg.muted" fontWeight="semibold" style={{ fontVariantNumeric: "tabular-nums" }}>
+              {Math.round(d.score)}
+            </Text>
+          </HStack>
+        ))}
+      </Stack>
+    </Box>
+  );
+  return (
+    <Box rounded="2xl" borderWidth="1px" borderColor="border" bg="bg.panel" px={{ base: "5", md: "6" }} py="5">
+      <Text fontSize="md" fontWeight="semibold" color="fg">Your four values, before and after the scenarios</Text>
+      <Text fontSize="sm" color="fg.muted" mb="4">
+        Stability watches this order. Your numbers moved when your choices told us something new about you.
+      </Text>
+      <Stack direction={{ base: "column", sm: "row" }} gap={{ base: "5", sm: "8" }} align={{ sm: "center" }}>
+        {before && column("Before", before)}
+        {before && (
+          <Icon boxSize="5" color="fg.subtle" display={{ base: "none", sm: "block" }}><LuArrowRight /></Icon>
+        )}
+        {column(before ? "After" : "Now", after)}
+      </Stack>
+    </Box>
+  );
+}
+
+/* ------------------------------------------------------------------ one scenario */
+
+/**
+ * ONE SCENARIO, AS A COMPACT CARD ("Q3-A"), HOLDING EVERYTHING THE OLD TALL BOX HELD (the researcher: "I like all
+ * the information in the current 'your choices, scenario by scenario' to have these information in the new cards
+ * style"): the scenario's title, the choice with its check mark, the alignment label, "Reflection shown" (was "CVR
+ * shown"), "Kept after reflection" and "Fit N" in that order, and the italic note. New: the scenario's number and
+ * the participant's place in it (ROLE_BADGE, the words the scenario page used).
+ *
+ * SCENARIO 6 GETS ITS OWN BADGES, and deliberately not the fit ones: the label and the fit score are the raw material
+ * the software's guess was built from, and printed right after the guess they read as the software marking the answer.
+ * When the participant changed their rule after the guess, the card shows BOTH picks: the guess is judged on the FIRST
+ * pick, so "Our software expected this" and "guessed right / wrong" sit under that pick, and the final rule gets its
+ * own percentage.
+ */
+function ScenarioTile({ sr, index }: { sr: Block5ScenarioResult; index: number }) {
+  const scenario = BLOCK5_SCENARIOS.find((s) => s.id === sr.scenarioId);
+  if (!scenario) return null;
+  const selectedOption = scenario.options.find((o) => o.id === sr.selectedOptionId);
+  const level = sr.alignmentLevel;
+  const pt = sr.predictionTest;
+  const isWish = sr.decisionRole === "recipient";
+  const role = scenario.stakePosition ? ROLE_BADGE[scenario.stakePosition as StakePosition] : null;
+  const changedRule = !!pt && afterTheGuess(pt) === "changed";
+  const pctOf = (p: number | undefined) => Math.round((p ?? 0) * 100);
+  const finalPct = pt
+    ? pctOf(pt.probabilityOfFinalChoice
+        ?? pt.shownProbabilities.find((o) => o.optionId === pt.finalChoiceOptionId)?.probability)
+    : 0;
+  /* The guess, judged on the first pick: what the software expected of it, and whether it was right. */
+  const guessBadges = pt && (
+    <HStack gap="1.5" wrap="wrap">
+      <Badge size="sm" variant="subtle" colorPalette="purple" rounded="md">
+        Our software expected this: {pctOf(pt.probabilityOfFirstChoice)}%
+      </Badge>
+      <Badge size="sm" variant="subtle" colorPalette={pt.predictionWasRight ? "green" : "orange"} rounded="md">
+        {pt.predictionWasRight ? "Our software guessed right" : "Our software guessed wrong"}
+      </Badge>
+    </HStack>
+  );
+
+  return (
+    <Box rounded="xl" borderWidth="1px" borderColor={pt ? "purple.muted" : "border"} bg="bg.panel" shadow="xs"
+      px="4" py="4" display="flex" flexDirection="column" gap="3">
+      <Box>
+        <HStack justify="space-between" gap="2" align="baseline">
+          <Text fontSize="2xs" fontWeight="bold" color={pt ? "purple.fg" : "fg.subtle"} textTransform="uppercase" letterSpacing="wider"
+            flexShrink={0}>
+            Scenario {index}
+          </Text>
+          {role && <Text fontSize="2xs" color="fg.muted" textAlign="right" lineClamp={1}>{role}</Text>}
+        </HStack>
+        <Text fontSize="md" fontWeight="semibold" color="fg" lineHeight="short" mt="1">{scenario.title}</Text>
+      </Box>
+
+      {changedRule && pt && (
+        <HStack gap="2" align="start">
+          <Icon boxSize="4" color="fg.subtle" mt="0.5" flexShrink={0}><LuRotateCcw /></Icon>
+          <VStack align="start" gap="1.5" minW="0">
+            <Box>
+              <Text fontSize="xs" color="fg.muted">Your first choice, before you saw the guess</Text>
+              <Text fontSize="sm" color="fg.muted" fontWeight="medium" lineHeight="short">
+                {ruleTitle(sr.scenarioId, pt.firstChoiceOptionId)}
+              </Text>
+            </Box>
+            {guessBadges}
+          </VStack>
+        </HStack>
+      )}
+
+      <HStack gap="2" align="start">
+        <Icon boxSize="4" color="green.500" mt="0.5" flexShrink={0}><LuCheck /></Icon>
+        <Box minW="0">
+          <Text fontSize="xs" color="fg.muted">{changedRule ? "Your final choice" : isWish ? "Your wish" : "Your choice"}</Text>
+          <Text fontSize="sm" color="fg" fontWeight="semibold" lineHeight="short">
+            {selectedOption?.title ?? sr.selectedOptionId}
+          </Text>
+        </Box>
+      </HStack>
+
+      {pt ? (
+        changedRule ? (
+          <HStack gap="1.5" wrap="wrap">
+            <Badge size="sm" variant="subtle" colorPalette="purple" rounded="md">Our software expected this: {finalPct}%</Badge>
+            <Badge size="sm" variant="subtle" colorPalette="blue" rounded="md">You changed after seeing the guess</Badge>
+          </HStack>
+        ) : guessBadges
+      ) : (
+        <HStack gap="1.5" wrap="wrap">
+          {level && (
+            <Badge size="sm" variant="subtle" colorPalette={LEVEL_PALETTE[level]} rounded="md">{ALIGNMENT_LABEL[level]}</Badge>
+          )}
+          {sr.cvrFired && (
+            <Badge size="sm" variant="subtle" colorPalette="orange" rounded="md">Reflection shown</Badge>
+          )}
+          {sr.cvrFired && (sr.cvrEndorsement === "strong" || sr.cvrEndorsement === "weak") && (
+            <Badge size="sm" variant="subtle" colorPalette="green" rounded="md">Kept after reflection</Badge>
+          )}
+          {typeof sr.matchScore === "number" && (
+            <Badge size="sm" variant="subtle" colorPalette="gray" rounded="md">Fit {sr.matchScore}</Badge>
+          )}
+        </HStack>
+      )}
+
+      <Text fontSize="xs" color="fg.muted" fontStyle="italic" lineHeight="short" mt="auto">{scenarioNote(sr)}</Text>
+    </Box>
+  );
+}
+
+/* ------------------------------------------------------------------ the page */
+
 export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: Props) {
-  /** When true, swap this summary for the full-screen "Your experiment in charts" view. */
-  const [showCharts, setShowCharts] = useState(false);
-  // Opening or closing the charts view starts at the top.
-  useScrollToTop(showCharts);
   /* The "One last step" card and the bottom button: the bottom bar shows only while neither is on
      screen (Block5FeedbackNudge.tsx). */
   const cardRef = useRef<HTMLDivElement>(null);
@@ -134,304 +331,153 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
     noteFeedbackButton(button);
     onContinueToFeedback();
   };
-  if (showCharts) {
-    return (
-      <Block5VisualizationsView
-        results={results}
-        onBack={() => setShowCharts(false)}
-        onContinueToFeedback={toFeedback}
-      />
-    );
-  }
-
-  // Only the 4 policy/value sensitivities (not the CVR-framing dimensions), strongest first.
-  const topDimensions = results.userProfile.dimensions
-    .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key))
-    .sort((a, b) => b.score - a.score);
 
   const vci = results.vci ?? 0;
-  /* VCI_all (28 September 2026): the same measure over all six scenarios, on the hidden running values
-     (block5VciAll.ts). Absent on a run finished before that date, and then its card is not drawn. */
   const vciAll = results.vciAll;
   const hasVciAll = typeof vciAll === "number";
   const stability = results.stability ?? 0;
-  /* Stability_all (29 September 2026): Stability over all six, on the running values (block5StabilityAll.ts). */
   const stabilityAll = results.stabilityAll;
   const hasStabilityAll = typeof stabilityAll === "number";
-  /*
-   * PERFORMANCE IS REPORTED AS A SHARE OF WHAT WAS AVAILABLE, not as the raw mean of the metrics.
-   *
-   * The raw mean spans only ~14 points across a whole session — a participant who takes the worst
-   * option in every scenario still scores 56 — so it reads as a percentage while behaving like a
-   * narrow band, and any equivalence test run against it is testing a window a third as wide as
-   * the entire scale. `performanceCaptured` is 0-100 by construction. The raw figure is still
-   * shown, in the hint, so nothing already collected becomes unreadable.
-   * See block5Performance.ts.
-   */
-  const performance = results.performance ?? 0;
+  /* "Not tested" ("Q4"): Stability counts only the moments a choice went against the best fit. */
+  const stabilityUntested = results.stabilityDetail?.conflictSteps === 0;
+  const stabilityAllUntested = hasStabilityAll && computeStabilityAll(results.scenarioResults)?.measured === false;
+  /* Performance is the share of the best outcome each scenario offered (block5Performance.ts), 0-100. */
   const captured = results.performanceCaptured;
-  const hasCaptured = typeof captured === "number";
+  const performance = typeof captured === "number" ? captured : (results.performance ?? 0);
+  const withCvr = results.scenarioResults.filter((r) => r.cvrFired).length;
+  const bothLenses = results.scenarioResults.filter((r) => r.cvrAltViewGenerated).length;
 
   return (
-    <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} pt={{ base: "8", md: "12" }} pb="24" display="flex" alignItems="flex-start" justifyContent="center">
-      <VStack gap="8" align="stretch" maxW="4xl" w="full" animationName="fade-in" animationDuration="moderate">
-        {/*
-          Header. It said "Complete" over "Main Simulation Complete" until 28 September 2026, and in the
-          previous experiment people took this page for the end and never gave feedback. It now says
-          the scenarios are done and one step is left (the researcher's plan; Block5FeedbackNudge.tsx).
-        */}
+    <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} pt={{ base: "8", md: "12" }} pb="24">
+      <VStack gap={{ base: "8", md: "10" }} align="stretch" maxW="6xl" mx="auto" animationName="fade-in" animationDuration="moderate">
+        {/* Header: the scenarios are done and one step is left (28 September 2026; Block5FeedbackNudge.tsx). */}
         <VStack gap="3" textAlign="center">
           <Badge colorPalette="pink" variant="subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="medium" px="3" py="1" rounded="md">
             Scenarios done · 1 step left
           </Badge>
-          <Heading size="2xl" color="fg" fontWeight="semibold">Here are your results</Heading>
-          <Text color="fg.muted" fontSize="lg" maxW="2xl" mx="auto">
-            How consistent your decisions were with your own moral values.
-          </Text>
+          <Heading size={{ base: "2xl", md: "3xl" }} color="fg" fontWeight="semibold" letterSpacing="tight">Here are your results</Heading>
         </VStack>
 
-        {/*
-          Headline measures. Since 28 September 2026 there are two consistency cards side by side (the
-          researcher's design): VCI over the four scenarios where the participant decided and knew their
-          position, and VCI_all over all six. Two columns from tablet width, so the pair reads as a pair
-          and every explanation keeps a readable line length (three or four across squeezed them).
-        */}
-        <Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap="4">
-          <MeasureCard icon={<LuTrendingUp />} palette="blue" label="Value Consistency (VCI)"
-            value={`${vci}`} sub={results.vciLevel ?? "—"}
-            hint="In the four scenarios where you made the decision and knew your position (scenarios 1-4): how closely your choices matched your own values. 100 means you chose the option that fit you best every time, and 50 is what choosing blindly would give. It is judged against your values as they stood at that moment. Your values update as you go, so a value you take on during the block counts from then on." />
-          {hasVciAll && (
-            <MeasureCard icon={<LuLayers />} palette="cyan" label="Value Consistency, all six (VCI_all)"
-              value={`${vciAll}`} sub={results.vciAllLevel ?? "—"}
-              hint="The same measure across all six scenarios, including the one where the decision was made for you (scenario 5) and the one where you did not know your position (scenario 6). 100 means the best fit every time, and 50 is what choosing blindly would give. It is judged against your values as they stood at each moment, and here they keep updating after every one of your choices, scenarios 5 and 6 included." />
-          )}
-          <MeasureCard icon={<LuScale />} palette="purple" label="Stability"
-            value={`${stability}`} sub={results.stabilityLevel ?? "—"}
-            hint="In the four scenarios where you made the decision (scenarios 1-4): whether the order of your priorities changed at the moments you chose against the option that fit you best. 100 means none of your four values traded places with another." />
-          {/* Stability_all (29 September 2026, the researcher's "Q3-recommended"): paired with Stability as VCI_all is
-              with VCI. Absent on a run finished before that date, and then Performance still closes the grid. */}
-          {hasStabilityAll && (
-            <MeasureCard icon={<LuLayers />} palette="purple" label="Stability, all six (Stability_all)"
-              value={`${stabilityAll}`} sub={results.stabilityAllLevel ?? "—"}
-              hint="The same measure across all six scenarios, including the one where the decision was made for you (scenario 5) and the one where you did not know your position (scenario 6). There it counts the moments you chose an option that was not one of the two that fit you best. 100 means none of your four values traded places with another." />
-          )}
-          <MeasureCard icon={<LuTarget />} palette="teal" wide={hasVciAll && hasStabilityAll}
-            label={hasCaptured ? "Performance taken" : "Performance"}
-            value={hasCaptured ? `${captured}` : `${performance}`}
-            sub={hasCaptured ? results.performanceCapturedLevel : undefined}
-            hint={hasCaptured
-              ? `Of the outcome quality each scenario actually put on the table, this is how much your choices took. 100 would mean you picked the strongest-performing option every time, 0 the weakest. (Raw metric average: ${performance}.)`
-              : "Average outcome quality of the policies you chose (separate from how well they matched your values)."} />
-        </Grid>
-
-        {/* The way on, right under the main scores ("Q1-A"): after them, so every participant sees
-            their results first, and long before the bottom of the page. */}
-        <LastStepCard ref={cardRef} onContinue={() => toFeedback("card_under_scores")} />
-
-        {/*
-          The two reflection lenses (Directness / Context) are reported here rather than folded
-          into Stability. They only move when a participant opens the second view, which is an
-          optional control — across six simulated behavior types they never moved once. Scoring
-          a variable that is frozen for most people would dilute the number without measuring
-          anything, whereas how often someone chose to look through both lenses genuinely varies.
-        */}
-        {(() => {
-          const withCvr = results.scenarioResults.filter((r) => r.cvrFired).length;
-          const bothLenses = results.scenarioResults.filter((r) => r.cvrAltViewGenerated).length;
-          /* Read from the run, never written as a number: the scenario deck is edited far more
-             often than this paragraph is re-read. */
-          const totalScenarios = results.scenarioResults.length;
-          if (withCvr === 0) return null;
-          return (
-            <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="5" py="4">
-              <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="1">
-                Looking at it two ways
-              </Text>
-              {/*
-                THE DENOMINATOR IS NAMED, NOT LEFT TO BE GUESSED.
-
-                This used to read "In 1 of 3 scenarios ...". Both numbers were correct — the
-                second view is only offered where the reflection fired, which is not every
-                situation — but a participant who has just played FIVE situations reads "of 3"
-                as a mistake in the software, and a researcher reading it over their shoulder
-                reads it as stale text. Saying how many were offered, out of how many there
-                were, removes the arithmetic the reader was being asked to do.
-              */}
-              <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-                {bothLenses === 0
-                  ? `In ${withCvr} of the ${totalScenarios} situations you were offered a second way of seeing your choice, and you stayed with the first view each time.`
-                  : `In ${withCvr} of the ${totalScenarios} situations you were offered a second way of seeing your choice. You generated it in ${bothLenses} of those, and compared both ways of seeing the same decision.`}
-              </Text>
-            </Box>
-          );
-        })()}
-
-        {/* See-your-journey-in-charts entry point */}
-        <Box textAlign="center">
-          <Button onClick={() => { noteChartsOpened(); setShowCharts(true); }} size="lg" colorPalette="purple" variant="outline"
-            rounded="xl" gap="2" px="7">
-            <Icon><LuChartColumn /></Icon>
-            View your results as charts
-          </Button>
-          {/*
-            NO NUMBER HERE, AND THAT IS THE FIX.
-
-            This promised "seven simple charts". The view holds seventeen chart cards, and how
-            many a given participant actually sees varies: several are conditional on what their
-            run contained — the money and trolley charts, the employer-values chart, the
-            scenario-5 wish chart. So there is no single true number to print, and the one that
-            was printed had been wrong for a long time without anybody noticing.
-
-            A count is the kind of detail that goes stale the moment a chart is added, and it
-            buys the reader nothing: they are about to see the charts. Describing what the charts
-            are ABOUT cannot rot in the same way.
-          */}
-          <Text fontSize="xs" color="fg.muted" mt="2">
-            See your full journey — your values, your choices, how consistent you were, and where
-            your time went.
-          </Text>
+        {/* 1 · What your results show, and how the study measured it (for somebody who has just finished). */}
+        <Box rounded="3xl" borderWidth="1px" borderColor="border" shadow="sm" overflow="hidden"
+          bgGradient="to-br" gradientFrom="blue.subtle" gradientVia="purple.subtle" gradientTo="teal.subtle">
+          <Box px={{ base: "5", md: "8" }} py={{ base: "6", md: "7" }}>
+            <Heading size="lg" color="fg" fontWeight="semibold">What your results show</Heading>
+            <Text color="fg.muted" fontSize={{ base: "sm", md: "md" }} lineHeight="tall" mt="2" maxW="4xl">
+              You have finished all six emergency scenarios. In the first parts of the study (found money, the
+              trolley, the AI workforce and the reflection), your answers showed what matters most to you, across four
+              values: <b>protecting the vulnerable</b>, <b>how many are helped</b>, <b>reducing harm</b> and <b>how much
+              is gained</b>. In the six scenarios you then made real choices. Your scores put the two side by side:
+              a mirror of how you decide, not a grade.
+            </Text>
+            <SimpleGrid columns={{ base: 1, md: 3 }} gap="3" mt="5">
+              {[
+                { icon: <LuCompass />, head: "What matters to you", sub: "measured in the first parts", palette: "blue" },
+                { icon: <LuRoute />, head: "What you chose", sub: "in the six scenarios", palette: "purple" },
+                { icon: <LuChartColumn />, head: "Your scores", sub: "the two, side by side", palette: "teal" },
+              ].map((step, i) => (
+                <HStack key={step.head} gap="3" bg="bg.panel" rounded="xl" px="4" py="3" borderWidth="1px" borderColor="border">
+                  <Center boxSize="8" rounded="lg" bg={`${step.palette}.subtle`} color={`${step.palette}.fg`} flexShrink={0}>
+                    <Icon boxSize="4">{step.icon}</Icon>
+                  </Center>
+                  <Box>
+                    <Text fontSize="sm" fontWeight="semibold" color="fg">{i + 1}. {step.head}</Text>
+                    <Text fontSize="xs" color="fg.muted">{step.sub}</Text>
+                  </Box>
+                </HStack>
+              ))}
+            </SimpleGrid>
+          </Box>
         </Box>
 
-        {/* Profile recap */}
-        <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" p={{ base: "5", md: "6" }}>
-          <Text fontSize="xs" fontWeight="semibold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="3">
-            Your value priorities (after this block)
+        {/* 2 · The major scores, in three families ("Q2-A": colors by family, never a red-to-green verdict). */}
+        <Box>
+          <Heading size="md" color="fg" fontWeight="semibold">Your scores</Heading>
+          <Text fontSize="sm" color="fg.muted" mt="1" mb="4">
+            In short: <b>alignment</b> looks at your choices, <b>stability</b> looks at your values themselves, and
+            {" "}<b>performance</b> looks at the results.
           </Text>
-          <HStack gap="3" wrap="wrap">
-            {topDimensions.map((d) => (
-              <Badge key={d.key} variant="subtle" colorPalette="blue" px="3" py="1" rounded="md" fontSize="xs">
-                {/* Display rounding only — see the same note in Block5PublicEmergencySimulation. */}
-                {d.label} ({Math.round(d.score)})
-              </Badge>
-            ))}
+          <Grid templateColumns={{ base: "1fr", lg: "repeat(3, 1fr)" }} gap="4">
+            <ScoreFamily palette="blue" icon={<LuTrendingUp />} title="Value alignment"
+              question="Did your choices match your values?"
+              explain={<>We call it your <b>value consistency</b> (VCI): how closely the options you chose matched what matters most to you. <b>100</b> = the option closest to your values every time; <b>50</b> (the small mark) = what choosing at random would give. “All 6” adds scenario 5, where the decision was made for you, and scenario 6, where you did not know your place.</>}>
+              <ScoreNumber label="Your 4 decisions" code="VCI" value={vci} level={results.vciLevel} palette="blue" blindMark />
+              {hasVciAll && (
+                <ScoreNumber label="All 6 scenarios" code="VCI_all" value={vciAll} level={results.vciAllLevel} palette="cyan" blindMark />
+              )}
+            </ScoreFamily>
+            <ScoreFamily palette="purple" icon={<LuScale />} title="Stability"
+              question="Did your values stay the same?"
+              explain={<>Compares who you were before the scenarios with who you became: at the moments you chose against what fit you best, did your four values keep their order? <b>100</b> = no two values swapped places.</>}>
+              <ScoreNumber label="Your 4 decisions" code="Stability" value={stability} level={results.stabilityLevel} palette="purple"
+                note={stabilityUntested ? "Not tested: you always chose one of your two best fits." : undefined} />
+              {hasStabilityAll && (
+                <ScoreNumber label="All 6 scenarios" code="Stability_all" value={stabilityAll} level={results.stabilityAllLevel} palette="purple"
+                  note={stabilityAllUntested ? "Not tested: you always chose one of your two best fits." : undefined} />
+              )}
+            </ScoreFamily>
+            <ScoreFamily palette="teal" icon={<LuTarget />} title="Performance"
+              question="How good were the outcomes?"
+              explain={<>How much of the best outcome each scenario offered your choices achieved. <b>100</b> = the strongest option every time; <b>0</b> = the weakest. It is separate from your values: an option can match you well and still work out less well.</>}>
+              <ScoreNumber label="Your 4 decisions" code="Performance" value={performance}
+                level={typeof captured === "number" ? results.performanceCapturedLevel : undefined} palette="teal" />
+            </ScoreFamily>
+          </Grid>
+        </Box>
+
+        {/* 3 · The four values, before and after: what stability watches (the researcher's note). */}
+        <ValuesBeforeAfter before={results.originalProfile} after={results.userProfile} />
+
+        {/* The way on, right under the scores ("Q1-A" of 28 September): every participant sees their results first,
+            and long before the bottom of the page. */}
+        <LastStepCard ref={cardRef} onContinue={() => toFeedback("card_under_scores")} />
+
+        {/* 4 · Every choice, as a compact grid ("Q3-A"). */}
+        <Box>
+          <Heading size="md" color="fg" fontWeight="semibold">Your choices, scenario by scenario</Heading>
+          <Text fontSize="sm" color="fg.muted" mt="1" mb="4">
+            The colored label says how well each choice matched your values; <b>Fit</b> says the same out of 100.
+          </Text>
+          {/* How often the reflection offered a second way of seeing a choice, with the count named. */}
+          {withCvr > 0 && (
+            <HStack gap="2.5" align="start" bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="lg" px="4" py="3" mb="4">
+              <Icon boxSize="4" color="fg.muted" mt="0.5"><LuEye /></Icon>
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+                {bothLenses === 0
+                  ? `In ${withCvr} of the ${results.scenarioResults.length} scenarios you were offered a second way of seeing your choice, and you stayed with the first view each time.`
+                  : `In ${withCvr} of the ${results.scenarioResults.length} scenarios you were offered a second way of seeing your choice. You opened it in ${bothLenses} of those, and compared both ways of seeing the same decision.`}
+              </Text>
+            </HStack>
+          )}
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap="4">
+            {results.scenarioResults.map((sr, i) => <ScenarioTile key={sr.scenarioId} sr={sr} index={i + 1} />)}
+          </SimpleGrid>
+        </Box>
+
+        {/* 5 · What comes after the feedback: the charts moved to the thank-you page ("Q1-A"). */}
+        <Box rounded="2xl" borderWidth="1px" borderStyle="dashed" borderColor="purple.muted" bg="bg.panel" px={{ base: "5", md: "6" }} py="5">
+          <HStack gap="3" align="start">
+            <Center boxSize="9" rounded="xl" bg="purple.subtle" color="purple.fg" flexShrink={0}>
+              <Icon boxSize="4.5"><LuSparkles /></Icon>
+            </Center>
+            <Box>
+              <Text fontSize="md" fontWeight="semibold" color="fg">After your feedback: your journey in pictures</Text>
+              <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="1">
+                It opens on the thank-you page, right after the feedback questions.
+              </Text>
+              <HStack gap="2" wrap="wrap" mt="3">
+                {["How your values moved", "Who carried the cost (the position effect)", "What our software predicted",
+                  "Your time and your first answers"].map((chip) => (
+                  <Badge key={chip} variant="outline" colorPalette="purple" rounded="full" px="2.5" py="0.5" fontSize="xs"
+                    fontWeight="medium">{chip}</Badge>
+                ))}
+              </HStack>
+            </Box>
           </HStack>
         </Box>
 
-        {/* Per-scenario panels */}
-        {results.scenarioResults.map((sr) => {
-          const scenario = BLOCK5_SCENARIOS.find((s) => s.id === sr.scenarioId);
-          if (!scenario) return null;
-          const selectedOption = scenario.options.find((o) => o.id === sr.selectedOptionId);
-          const level = sr.alignmentLevel;
-          const pt = sr.predictionTest;
-          /*
-           * SCENARIO 6, WHEN THE PARTICIPANT CHANGED THEIR RULE AFTER THE GUESS, SHOWS BOTH PICKS.
-           *
-           * The guess is judged on the FIRST pick - the one made before anything was suggested - so
-           * "MPF expected this" and "guessed right / wrong" belong under that pick. Printed under the
-           * final rule instead, as they were, a participant who switched read their first pick's
-           * percentage beside a rule it was never about. The final rule gets its own percentage.
-           *
-           * When they kept their first rule - or pressed "Change my answer" and came back to it - the
-           * two picks are the same rule and the panel is the single row it always was.
-           */
-          const changedRule = !!pt && afterTheGuess(pt) === "changed";
-          const pctOf = (p: number | undefined) => Math.round((p ?? 0) * 100);
-          const finalPct = pt
-            ? pctOf(pt.probabilityOfFinalChoice
-                ?? pt.shownProbabilities.find((o) => o.optionId === pt.finalChoiceOptionId)?.probability)
-            : 0;
-
-          return (
-            <Box key={sr.scenarioId} bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "6", md: "8" }} shadow="lg">
-              <Heading size="md" color="fg" mb="4">{scenario.title}</Heading>
-              <Stack gap="3">
-                {changedRule && pt && (
-                  <HStack gap="2" align="start">
-                    <Icon color="fg.subtle" mt="0.5"><LuRotateCcw /></Icon>
-                    <VStack align="start" gap="1.5">
-                      <Text fontSize="sm" color="fg.muted">Your first choice, before you saw the guess</Text>
-                      <Text fontSize="md" color="fg.muted" fontWeight="medium">
-                        {ruleTitle(sr.scenarioId, pt.firstChoiceOptionId)}
-                      </Text>
-                      <HStack gap="3" wrap="wrap">
-                        <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
-                          MPF expected this {pctOf(pt.probabilityOfFirstChoice)}%
-                        </Badge>
-                        <Badge variant="subtle" colorPalette={pt.predictionWasRight ? "green" : "orange"}
-                          rounded="md" px="2" fontSize="xs">
-                          {pt.predictionWasRight ? "The MPF guessed right" : "The MPF guessed wrong"}
-                        </Badge>
-                      </HStack>
-                    </VStack>
-                  </HStack>
-                )}
-
-                <HStack gap="2" align="start">
-                  <Icon color="green.400" mt="0.5"><LuCheck /></Icon>
-                  <VStack align="start" gap="0.5">
-                    <Text fontSize="sm" color="fg.muted">{changedRule ? "Your final choice" : "Your choice"}</Text>
-                    <Text fontSize="md" color="fg" fontWeight="medium">{selectedOption?.title ?? sr.selectedOptionId}</Text>
-                  </VStack>
-                </HStack>
-
-                {/*
-                  SCENARIO 6 GETS ITS OWN BADGES, and deliberately not the fit ones.
-
-                  The alignment tier and the "Fit 75" score are the raw material the MPF's guess was
-                  built from. Printing them immediately after a participant has been shown that
-                  guess reads as the software marking their answer, which is the one impression this
-                  scenario must not leave: it is a test of the MPF, not of them.
-
-                  The row stays, because the choice they made there is real and belongs in a summary
-                  of their choices. What it reports is what the GUESS did.
-                */}
-                {pt ? (
-                  changedRule ? (
-                    <HStack gap="3" wrap="wrap">
-                      <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
-                        MPF expected this {finalPct}%
-                      </Badge>
-                      <Badge variant="subtle" colorPalette="blue" rounded="md" px="2" fontSize="xs">
-                        You changed after seeing the guess
-                      </Badge>
-                    </HStack>
-                  ) : (
-                    <HStack gap="3" wrap="wrap">
-                      <Badge variant="subtle" colorPalette="purple" rounded="md" px="2" fontSize="xs">
-                        MPF expected this {pctOf(pt.probabilityOfFirstChoice)}%
-                      </Badge>
-                      <Badge variant="subtle" colorPalette={pt.predictionWasRight ? "green" : "orange"}
-                        rounded="md" px="2" fontSize="xs">
-                        {pt.predictionWasRight ? "The MPF guessed right" : "The MPF guessed wrong"}
-                      </Badge>
-                    </HStack>
-                  )
-                ) : (
-                <HStack gap="3" wrap="wrap">
-                  {level && (
-                    <Badge variant="subtle" colorPalette={LEVEL_PALETTE[level]} rounded="md" px="2" fontSize="xs">
-                      {ALIGNMENT_LABEL[level]}
-                    </Badge>
-                  )}
-                  {sr.cvrFired && (
-                    <Badge variant="subtle" colorPalette="orange" rounded="md" px="2" fontSize="xs">
-                      CVR shown
-                    </Badge>
-                  )}
-                  {sr.cvrFired && (sr.cvrEndorsement === "strong" || sr.cvrEndorsement === "weak") && (
-                    <Badge variant="subtle" colorPalette="green" rounded="md" px="2" fontSize="xs">
-                      Kept after reflection
-                    </Badge>
-                  )}
-                  {typeof sr.matchScore === "number" && (
-                    <Badge variant="subtle" colorPalette="gray" rounded="md" px="2" fontSize="xs">
-                      Fit {sr.matchScore}
-                    </Badge>
-                  )}
-                </HStack>
-                )}
-
-                <Text fontSize="sm" color="fg.muted" fontStyle="italic" mt="1">{scenarioNote(sr)}</Text>
-              </Stack>
-            </Box>
-          );
-        })}
-
-        <Separator borderColor="border.subtle" />
-
         <Box ref={bottomRef} textAlign="center" pb="4">
-          <Text color="fg.muted" fontSize="md" mb="6">
+          <Text color="fg.muted" fontSize="md" mb="5">
             One last step — please share your feedback on the experience.
           </Text>
           <Button onClick={() => toFeedback("bottom_of_results")} size="lg" colorPalette="pink" rounded="lg" px="8" gap="2">

@@ -205,7 +205,7 @@ SECTIONS = [
          "and ties: all in analysis.blocks_1_to_4_checks, with a copy in major_info_and_scores.", ["dbshape"], "(D52)"),
         ("Block 4 is read correctly.",
          "\"Would you approve the policy?\" before any voice and after each, with confidence first and last, appears "
-         "on the charts page in the words the participant saw.", ["journey"], "(J7)"),
+         "in the charts (the thank-you page's \"Your first answers\" tab) in the words the participant saw.", ["journey"], "(J7)"),
     ]),
     ("4. Block 5: the scores", [
         ("The fit score.",
@@ -220,7 +220,7 @@ SECTIONS = [
         ("Stability_all (all six scenarios).",
          "Stability's own rule over all six, on the running values: the four decisions count exactly as Stability does, "
          "the wish and the veil when the final choice was not one of the two best fits. It is never above Stability. "
-         "Shown beside Stability on the results page.", ["vciall", "dbshape", "journey"], "(A9-A11, D67, J11)"),
+         "Shown beside Stability in the results page's stability box.", ["vciall", "dbshape", "journey"], "(A9-A11, D67, J11)"),
         ("Top-value choices (saved, never shown).",
          "In how many of the six scenarios the final choice did most for the #1 value brought into Block 5, and for the #1 "
          "or #2. Blind choosing gives about 1.1 and 2.2 of 6; recounted by hand for every pretend participant.",
@@ -258,8 +258,8 @@ SECTIONS = [
          "The MPF section recomputes scenario 6 and must match what was shown; VCI_all rebuilds every running fit; the "
          "card order is rebuilt from its inputs.", ["dbshape"], "(D27, D53, D65)"),
         ("Which feedback button was used is saved.",
-         "analysis.results_page: the card, the bottom bar, or the bottom of the results or charts page, and whether the "
-         "charts were opened first.", ["dbshape"], "(D66)"),
+         "analysis.results_page: the card under the scores, the bottom bar, or the button at the bottom of the results "
+         "page, with every move and its time. No chart fields: the charts come after the feedback.", ["dbshape"], "(D66)"),
         ("One page shows every major score for every kind of pretend participant.",
          "docs/MAJOR_SCORES_DISTRIBUTION.md is written by npm run report:major-scores. Run it again after any change "
          "to an option number, a scoring rule, a step size, the planner or a scenario.", [], "a report, not a check"),
@@ -273,7 +273,14 @@ SECTIONS = [
         ("The results page leads on to the feedback.",
          "\"Scenarios done · 1 step left\", the \"One last step\" card, the slim bottom bar, and Feedback marked \"next\" "
          "in the progress bar (which slides to it on a phone).", ["journey"], "(J9)"),
-        ("The charts page matches the database.",
+        ("The results page speaks plainly and keeps every detail.",
+         "\"What your results show\", three colored score boxes (alignment, stability, performance) with \"Not tested\" "
+         "where nothing was tested, and every scenario as a compact card with its choice, label, Fit and reflection "
+         "badges. No block numbers, \"CVR\" or \"MPF\".", ["journey"], "(J11, J12)"),
+        ("The charts come after the feedback, in five tabs.",
+         "They are on the thank-you page only, and every chart sits in exactly one tab, so none can be lost.",
+         ["journey"], "(J12)"),
+        ("The charts match the database.",
          "All six scenarios, VCI and VCI_all, the veil as its own gray bar, and the software's predictions: every "
          "number is the one the database stores.", ["journey"], "(J1-J10)"),
         ("The reflection views and stories pass their checks.",
