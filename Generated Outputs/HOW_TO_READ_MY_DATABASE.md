@@ -1606,6 +1606,14 @@ db.participants.aggregate([
 
 ---
 
+## 10b. What the participant saw as "after" (since 30 September 2026)
+
+The results page's "Your four values, before and after the scenarios" card, the thank-you page's radar and its value line end at
+the RUNNING values after scenario 6 (`blocks.block5_emergency_scenarios.scenarioResults[5].running.valuesAfter`; also
+`analysis.alignment_records` → `running_values_after`), which include what the wish and the rule moved. The database's
+`analysis.value_profile_after_block5` is the STUDY's values after scenario 4, which the wish and the rule never move. Do not
+read one as the other; when describing what participants were shown, use the running values.
+
 ## 11. If a field is not where this document says
 
 Open `src/experiment/dbShape.ts` in the study's source. **Every rename between the study's internal

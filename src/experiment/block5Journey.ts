@@ -19,7 +19,60 @@
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { isPredictionTest } from "./block5CVR";
 import { profileDistance, type PositionKey } from "./block5Position";
-import type { Block5ScenarioResult, Block5UserProfile } from "./block5Types";
+import { POLICY_DIM_KEYS } from "./block5Types";
+import type { Block5PolicyDimKey, Block5ScenarioResult, Block5UserProfile } from "./block5Types";
+
+/* ------------------------------------------------------------------ the four values along the way */
+
+export type PolicyValues = Record<Block5PolicyDimKey, number>;
+
+export interface ValueJourney {
+  /** The four values before the scenarios. */
+  before: PolicyValues;
+  /** After each of the six scenarios, in order. */
+  afterEach: PolicyValues[];
+  /** After the last scenario: what "after the scenarios" means on every card that says it. */
+  after: PolicyValues;
+  /** True when the wish and the rule moved them too (the running values); false for a run saved before them. */
+  includesWishAndRule: boolean;
+}
+
+/**
+ * THE FOUR VALUES FROM BEFORE THE SCENARIOS TO AFTER THE LAST ONE (since 30 September 2026, the researcher: "scenarios
+ * 5 and 6 always straight line from scenario 4, whatever I chose in scenarios 5 and 6 ... which totally wrong").
+ *
+ * The value line used to draw the study's own values, which by design never move on the wish (scenario 5) or the rule
+ * behind the veil (scenario 6): Stability, the next scenario's cards and the database read those. So the last two steps
+ * were always flat, whatever was chosen. Since 28 September 2026 every result also carries the RUNNING values
+ * (block5VciAll.ts), which ARE the study's values through scenario 4 and ALSO move after the wish and the rule (the
+ * best fit moves nothing; any other pick raises the value where it beats the best fit most and lowers the value where
+ * the best fit beats it most). VCI_all and Stability_all are measured on them. This reads them, so every picture of
+ * "your values" moves where the participant's choices moved them, in all six scenarios, and agrees with Stability_all.
+ * The study's own values, and every score and stored number, are untouched.
+ *
+ * `after` is the last step. The radar's "after" shape and the results page's before/after card use it too, so the three
+ * never disagree. A run saved before the running values existed falls back to the study's snapshots (flat 5 and 6).
+ */
+export function valueJourney(
+  results: Block5ScenarioResult[], before: Block5UserProfile | undefined, studyAfter: Block5UserProfile,
+): ValueJourney {
+  const read = (p: Block5UserProfile | undefined): PolicyValues => {
+    const out = {} as PolicyValues;
+    for (const k of POLICY_DIM_KEYS) out[k] = p?.dimensions.find((d) => d.key === k)?.score ?? 0;
+    return out;
+  };
+  const start = read(before ?? studyAfter);
+  const includesWishAndRule = results.length > 0 && results.every((r) => !!r.running?.valuesAfter);
+  const afterEach: PolicyValues[] = [];
+  let last = start;
+  for (const r of results) {
+    const step = (includesWishAndRule ? r.running?.valuesAfter : r.policySnapshotAfter) ?? null;
+    last = step ? { ...last, ...step } : last;
+    afterEach.push(last);
+  }
+  const after = includesWishAndRule ? last : read(studyAfter);
+  return { before: start, afterEach, after, includesWishAndRule };
+}
 
 /** The five positions the deck puts a participant in, in the order they meet them. The legend reads this. */
 export const DECK_POSITIONS: PositionKey[] = BLOCK5_SCENARIOS

@@ -24,6 +24,7 @@
  *       scenario 6 as shown, the favourite = the best fit; scenario 6 a slate bar apart from the positions
  *   J11 the results page's scores: three families in order (alignment, stability, performance), each "all six"
  *       beside its "four decisions", the "not tested" notes; the top-value choices on no page
+ *   J13 the value line on the running values, moving in scenarios 5 and 6, with one shared "after" (30 September 2026)
  *   J12 the charts after the feedback (29 September 2026): none on the results page, the thank-you page's five
  *       tabs, every chart card in exactly one tab, and plain words on the results page
  *
@@ -395,6 +396,48 @@ console.log("===================================================================
   }
   gate("J12", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : `no charts on the results page; the thank-you page draws them in five tabs after the feedback; each of the ${keys.length} cards in exactly one tab; no block numbers, CVR or MPF on the results page`);
+}
+
+/* J13 — the four values along the way, the wish and the rule included (30 September 2026, the researcher: "scenarios 5
+   and 6 always straight line from scenario 4, whatever I chose ... totally wrong"). The line reads the running values:
+   the study's own values through scenario 4, then moved by the wish and the rule. The radar's "after" shape and the
+   results page's before/after card read the same last step. */
+{
+  const why = [];
+  let moved = 0, stillWhenBest = 0;
+  const near = (a, b) => POLICY.every((k) => Math.abs(a[k] - b[k]) < 0.011);
+  for (const [name, run] of RUNS) {
+    const last = run.results[run.results.length - 1];
+    const studyAfter = profileOf(last.policySnapshotAfter);
+    const vj = J.valueJourney(run.results, run.frozen, studyAfter);
+    if (!vj.includesWishAndRule || vj.afterEach.length !== 6) { why.push(`${name}: not six steps from the running values`); continue; }
+    if (!near(vj.before, Object.fromEntries(POLICY.map((k) => [k, run.frozen.dimensions.find((d) => d.key === k).score])))) why.push(`${name}: "before" is not the values brought into the scenarios`);
+    run.results.forEach((r, i) => {
+      if (i < 4 && !near(vj.afterEach[i], r.policySnapshotAfter)) why.push(`${name} S${i + 1}: a decision step is not the study's own values`);
+      if (!near(vj.afterEach[i], r.running.valuesAfter)) why.push(`${name} S${i + 1}: not the stored running values`);
+      if (i >= 4) {
+        const prev = vj.afterEach[i - 1];
+        if (!near(prev, vj.afterEach[i])) moved += 1;
+        if (r.running.level === "aligned") { if (near(prev, vj.afterEach[i])) stillWhenBest += 1; else why.push(`${name} S${i + 1}: the best fit moved the values`); }
+      }
+    });
+    if (!near(vj.after, vj.afterEach[5])) why.push(`${name}: "after" is not the last step`);
+    /* A run saved before the running values: the study's snapshots, flat wish and rule, the study's "after". */
+    const old = run.results.map(({ running: _r, ...rest }) => rest);
+    const o = J.valueJourney(old, run.frozen, studyAfter);
+    if (o.includesWishAndRule || !near(o.afterEach[4], o.afterEach[3]) || !near(o.afterEach[5], o.afterEach[3]) || !near(o.after, last.policySnapshotAfter)) why.push(`${name}: the fallback for an old record is wrong`);
+  }
+  /* Not vacuous: the pretend runs must move the values in the wish or the rule at least once. */
+  if (moved === 0) why.push("no pretend run moved its values in scenario 5 or 6, so the gate proves nothing");
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const view = src("Block5VisualizationsView.tsx"), page = src("Block5SimulationSummaryPage.tsx");
+  if (!view.includes("values: [journey.before[k], ...journey.afterEach.map((v) => v[k])]")) why.push("the value line does not read the journey");
+  if (!view.includes("values: POLICY_DIM_KEYS.map((k) => journey.after[k])")) why.push("the radar's after shape is not the last step");
+  if (/never do, so those last two steps are always flat/.test(view)) why.push("the card still says the wish and the rule never move the values");
+  if (!page.includes("valueJourney(results.scenarioResults, results.originalProfile, results.userProfile)")
+      || !/const after = journey\.after;\s/.test(page) || !page.includes('column(before ? "After" : "Now", after)')) why.push("the results page's before/after card is not the same after");
+  gate("J13", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : `the value line is the study's values through S4 and the stored running values in S5 and S6 (${moved} wish/rule steps moved, ${stillWhenBest} best-fit steps stayed still); the radar, the line and the results page share one "after"; an old record falls back to flat`);
 }
 
 console.log("");

@@ -30,8 +30,9 @@ import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL } from "./block5CVR";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { ROLE_BADGE } from "./block5RoleWords";
+import { valueJourney, type PolicyValues } from "./block5Journey";
 import { POLICY_DIM_KEYS } from "./block5Types";
-import type { AlignmentLevel, Block5Results, Block5ScenarioResult, Block5UserProfile, StakePosition } from "./block5Types";
+import type { AlignmentLevel, Block5Results, Block5ScenarioResult, StakePosition } from "./block5Types";
 import { FeedbackBar, LastStepCard } from "./Block5FeedbackNudge";
 import { noteFeedbackButton, type FeedbackButton } from "./resultsPageRecord";
 
@@ -168,12 +169,19 @@ function ScoreFamily({ palette, icon, title, question, explain, children }: {
   );
 }
 
-/** The four values, strongest first, with their numbers: before the scenarios, and after them. */
-function ValuesBeforeAfter({ before, after }: { before: Block5UserProfile | undefined; after: Block5UserProfile }) {
-  const ranked = (p: Block5UserProfile) => p.dimensions
-    .filter((d) => (POLICY_DIM_KEYS as string[]).includes(d.key))
+/**
+ * The four values, strongest first, with their numbers: before the scenarios, and after all six (since 30 September
+ * 2026 the wish and the rule included, the same "after" as the charts' value line and radar; valueJourney).
+ */
+function ValuesBeforeAfter({ results }: { results: Block5Results }) {
+  const labelOf = (k: string) => results.userProfile.dimensions.find((d) => d.key === k)?.label ?? k;
+  const journey = valueJourney(results.scenarioResults, results.originalProfile, results.userProfile);
+  const before = results.originalProfile ? journey.before : undefined;
+  const after = journey.after;
+  const ranked = (p: PolicyValues) => POLICY_DIM_KEYS
+    .map((k) => ({ key: k, label: labelOf(k), score: p[k] }))
     .sort((a, b) => b.score - a.score);
-  const column = (title: string, p: Block5UserProfile) => (
+  const column = (title: string, p: PolicyValues) => (
     <Box flex="1" minW="0">
       <Text fontSize="2xs" fontWeight="bold" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" mb="2">{title}</Text>
       <Stack gap="1.5">
@@ -426,7 +434,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
         </Box>
 
         {/* 3 · The four values, before and after: what stability watches (the researcher's note). */}
-        <ValuesBeforeAfter before={results.originalProfile} after={results.userProfile} />
+        <ValuesBeforeAfter results={results} />
 
         {/* The way on, right under the scores ("Q1-A" of 28 September): every participant sees their results first,
             and long before the bottom of the page. */}

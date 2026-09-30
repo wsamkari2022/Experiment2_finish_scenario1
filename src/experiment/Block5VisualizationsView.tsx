@@ -42,9 +42,10 @@ import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
 import {
-  DECK_POSITIONS, JOURNEY_TABS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, veilRow,
+  DECK_POSITIONS, JOURNEY_TABS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, valueJourney, veilRow,
   type JourneyTabKey,
 } from "./block5Journey";
+import { computeStabilityAll } from "./block5StabilityAll";
 import { buildMpfPercentages, buildMpfPredictions } from "./dbShape";
 import { buildTimingSummary } from "./telemetry";
 import {
@@ -150,6 +151,10 @@ export function Block5VisualizationsView({ results, tab }: Props) {
     r.decisionRole === "recipient" ? " wish" : isPredictionTest(r) ? " rule" : "";
   const before = results.originalProfile;
   const after = results.userProfile;
+  /* The four values along the way, the wish and the rule included (valueJourney, block5Journey.ts; since 30 September
+     2026). The line, the radar's "after" shape and the biggest-mover caption all read it, so they agree with each other,
+     with the results page and with Stability_all. `after` above stays the study's own values (the database's). */
+  const journey = valueJourney(allScenarios, before, after);
 
   const scenarioTitle = (id: string, i: number): string =>
     BLOCK5_SCENARIOS.find((s) => s.id === id)?.title ?? `Scenario ${i + 1}`;
@@ -162,7 +167,7 @@ export function Block5VisualizationsView({ results, tab }: Props) {
   const radarAxes = POLICY_DIM_KEYS.map((k) => VALUE_LABEL[k]);
   const radarSeries: RadarSeries[] = [];
   if (before) radarSeries.push({ name: "Before the scenarios", color: SERIES_COLORS[1], values: POLICY_DIM_KEYS.map((k) => scoreOf(before, k)) });
-  radarSeries.push({ name: "After the scenarios", color: SERIES_COLORS[4], dashed: true, values: POLICY_DIM_KEYS.map((k) => scoreOf(after, k)) });
+  radarSeries.push({ name: "After the scenarios", color: SERIES_COLORS[4], dashed: true, values: POLICY_DIM_KEYS.map((k) => journey.after[k]) });
   const stability = results.stability ?? null;
   /*
    * THE WORDS COME FROM stabilityLevel(), NOT FROM CUTOFFS WRITTEN HERE.
@@ -197,13 +202,27 @@ export function Block5VisualizationsView({ results, tab }: Props) {
      best fit in a decision met no reflection, so nothing was counted and 100 is a default, not a
      finding. The stored detail says which; an older record without it reads as tested. */
   const stabilityNotTested = results.stabilityDetail?.conflictSteps === 0;
+  /* Since 30 September 2026 the dashed shape is after all six scenarios, so Stability_all (all six) is named beside
+     Stability (the four decisions). */
+  /* The stored number first; a run finished before Stability_all was saved gets it from its own stored steps. */
+  const stabilityAllRead = journey.includesWishAndRule ? computeStabilityAll(allScenarios) : null;
+  const stabilityAll = typeof results.stabilityAll === "number" ? results.stabilityAll : (stabilityAllRead?.value ?? null);
+  const stabilityAllLevel = results.stabilityAllLevel ?? stabilityAllRead?.level ?? "";
+  const stabilityAllSentence = stabilityAll === null || !journey.includesWishAndRule ? null : (
+    <>
+      {" "}Over all six scenarios, your wish and your rule included: <b>Stability_all {stabilityAll}/100</b>
+      {stabilityAllRead?.measured === false
+        ? " (not tested: you always chose one of your two best fits)."
+        : ` (${stabilityAllLevel.toLowerCase()}).`}
+    </>
+  );
   const stabilityCaption = stability === null ? null : stabilityNotTested ? (
     <>
       Stability {stability}/100 — <b>not tested.</b> You never chose against the option that fit you best
       in a decision, so the reflection never ran and there was nothing to count: here 100 means “never
-      tested”, not “held when tested”. The two shapes can still differ a little, because keeping one of
-      your two best fits nudges your values. How well your choices matched your values is on the card
-      titled “How consistent your choices were”.
+      tested”, not “held when tested”. The two shapes can still differ: keeping one of your two best fits
+      nudges your values{journey.includesWishAndRule ? ", and so can your wish and your rule" : ""}. How well your choices matched your values is on the card
+      titled “How consistent your choices were”.{stabilityAllSentence}
     </>
   ) : (
     <>
@@ -215,7 +234,7 @@ export function Block5VisualizationsView({ results, tab }: Props) {
       It counts how often two of your four values traded places at the moments you chose against the
       option that fit you best: 100 means none did. Neither a high nor a low number is better than the
       other. How well your choices matched your values is a separate score, on the card titled “How
-      consistent your choices were”.
+      consistent your choices were”.{stabilityAllSentence}
     </>
   );
 
@@ -224,16 +243,18 @@ export function Block5VisualizationsView({ results, tab }: Props) {
   const evoSeries: LineSeries[] = POLICY_DIM_KEYS.map((k, idx) => ({
     name: VALUE_LABEL[k],
     color: SERIES_COLORS[idx],
-    values: [scoreOf(before, k), ...allScenarios.map((r) => r.policySnapshotAfter?.[k] ?? scoreOf(after, k))],
+    values: [journey.before[k], ...journey.afterEach.map((v) => v[k])],
   }));
   // biggest mover, for the caption
   let moverLabel = ""; let moverDelta = 0;
   for (const k of POLICY_DIM_KEYS) {
-    const d = Math.abs(scoreOf(after, k) - scoreOf(before, k));
+    const d = Math.abs(journey.after[k] - journey.before[k]);
     if (d > moverDelta) { moverDelta = d; moverLabel = VALUE_LABEL[k]; }
   }
   const evoCaption = moverDelta < 3
-    ? `Your four values held remarkably steady across your ${decisionCount} decisions.`
+    ? (journey.includesWishAndRule
+      ? `Your four values held remarkably steady across the ${allScenarios.length} scenarios.`
+      : `Your four values held remarkably steady across your ${decisionCount} decisions.`)
     : `“${moverLabel}” moved the most across the journey (by ${Math.round(moverDelta)} points).`;
 
   /* 7 · Line: how the two reflection views shifted across the journey. These only move when the
@@ -599,7 +620,7 @@ export function Block5VisualizationsView({ results, tab }: Props) {
         <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: "5", md: "6" }}>
           {/* 1 · Radar */}
           <ChartCard index={num("radar")} title="Your values: before and after the scenarios"
-            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from the first parts of the study); the <b>dashed</b> shape is where you ended after the scenarios. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> number below counts how often that happened when you chose against your best fit.</>}
+            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from the first parts of the study); the <b>dashed</b> shape is where you ended after {journey.includesWishAndRule ? <>all six scenarios, your wish and your rule included</> : <>the scenarios</>}. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> numbers below count how often that happened when you chose against your best fit.</>}
             caption={stabilityCaption}>
             <RadarChart axes={radarAxes} series={radarSeries} max={100} />
             <ChartLegend items={radarSeries.map((s) => ({ label: s.name, color: s.color, dashed: s.dashed }))} />
@@ -607,7 +628,9 @@ export function Block5VisualizationsView({ results, tab }: Props) {
 
           {/* 2 · Evolution line */}
           <ChartCard index={num("evolution")} title="How your four values shifted along the way"
-            howTo={<>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> the scenarios, then after each one. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you. Only your <b>four decisions</b> can move them: your wish (S5) and your rule behind the veil (S6) never do, so those last two steps are always flat.</>}
+            howTo={journey.includesWishAndRule
+              ? <>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> the scenarios, then after each one. A line climbs or dips where a choice moved you, and stays flat where it did not. Your <b>wish (S5)</b> and your <b>rule behind the veil (S6)</b> count too. In every scenario, choosing the option that already fit you best moves nothing; choosing another one raises the value it did more for than your best fit, and lowers the value it did less for.</>
+              : <>Follow each colored line left to right to see how that value rose or fell — from <b>before</b> the scenarios, then after each one. Lines that stay flat mean that value didn't change; lines that climb or dip show where a decision moved you. In this record only your <b>four decisions</b> moved them, so the last two steps are flat.</>}
             caption={evoCaption}>
             <LineChart xLabels={evoX} series={evoSeries} max={100} />
             <ChartLegend items={evoSeries.map((s) => ({ label: s.name, color: s.color }))} />

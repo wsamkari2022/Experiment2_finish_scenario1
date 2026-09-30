@@ -286,6 +286,10 @@ SECTIONS = [
         ("The charts come after the feedback, in five tabs.",
          "They are on the thank-you page only, and every chart sits in exactly one tab, so none can be lost.",
          ["journey"], "(J12)"),
+        ("The value line moves where the choices moved the values, in all six scenarios.",
+         "It follows the running values (the ones behind VCI_all and Stability_all), so the wish and the rule move it too; "
+         "the best fit moves nothing. The line, the radar and the results page's before/after card show one and the same "
+         "after.", ["journey"], "(J13)"),
         ("The charts match the database.",
          "All six scenarios, VCI and VCI_all, the veil as its own gray bar, and the software's predictions: every "
          "number is the one the database stores.", ["journey"], "(J1-J10)"),
