@@ -69,7 +69,7 @@ type Stage =
   /* Informed consent. A participant who has already agreed never returns here: the restored
      stage, or their directory entry, carries them past it. See getRestoredStage. */
   | "consent"
-  /* Age, gender and the email that lets a participant return. Follows consent, once. */
+  /* Age, gender, country (since 30 September 2026) and the email that lets a participant return. Follows consent, once. */
   | "demographics"
   | "money"
   | "transition_money_trolley"
@@ -592,7 +592,10 @@ export function ExperimentFlow() {
             }
             localStorage.setItem(
               STORAGE_KEY_DEMOGRAPHICS,
-              JSON.stringify({ email: entry.email, age: entry.age, gender: entry.gender }),
+              JSON.stringify({
+                email: entry.email, age: entry.age, gender: entry.gender,
+                ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+              }),
             );
             localStorage.setItem(STORAGE_KEY_STATUS, entry.status);
             /* Their own participant id, not a new one made by this browser (since 29 September 2026). It
@@ -645,6 +648,7 @@ export function ExperimentFlow() {
               sessionId: entry.sessionId,
               age: entry.age,
               gender: entry.gender,
+              ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
               stage: entry.stage,
               consent: entry.consent,
             });
@@ -715,6 +719,8 @@ export function ExperimentFlow() {
             sessionId: participantId,
             age: record.age,
             gender: record.gender,
+            country: record.country,
+            countryCode: record.countryCode,
             stage: "money",
             consent: readJson<{ agreed: boolean; timestamp: string; version: string }>(
               STORAGE_KEY_CONSENT,

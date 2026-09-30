@@ -132,6 +132,13 @@ app.post(
           participant_id: body.sessionId,
           age: body.age,
           gender: body.gender,
+          /* The country (since 30 September 2026), set ONLY when the page sent one: a resume from a browser that
+             does not know it must not overwrite a saved country with nothing. country_code is the ISO 3166-1
+             alpha-2 code, null for "Prefer not to say". */
+          ...(typeof body.country === "string" && body.country
+            ? { country: body.country.slice(0, 80),
+                country_code: typeof body.countryCode === "string" && /^[A-Z]{2}$/.test(body.countryCode) ? body.countryCode : null }
+            : {}),
           consent: body.consent ?? null,
           current_stage: body.stage ?? "money",
           /* `stage` is the app's word; `current_stage` says what it is to a reader. */

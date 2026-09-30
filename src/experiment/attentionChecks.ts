@@ -7,8 +7,8 @@
  * the number four." Where it sits and what it asks for are random per participant (the number only two, three,
  * four or five), and "if the user answers all the attention check questions correctly, they will be qualified for
  * compensation among other existing criteria". Plan answers: Q1 any place but the two deleted between-block pages,
- * Q2 yes (the consent page says so), Q3 A (the gift card only; whether a miss also leaves somebody out of the
- * analysis is decided later, in the freeze note), Q4 yes (two answer-pattern flags, for analysis only).
+ * Q2 yes (the consent page says so), Q3 A (the gift card only; on 30 September 2026 the researcher confirmed that all
+ * completed sessions are analysed), Q4 yes (two answer-pattern flags, for analysis only).
  *
  * THE THREE CHECKS, each drawn at random for each participant:
  *   colour  its own short screen after one of the four first parts (after Block 1, 2, 3 or 4)
@@ -302,8 +302,8 @@ export function buildAttentionSection(raw: unknown): Record<string, unknown> | n
       "Three very simple checks, each drawn at random for this participant: tap a named colour (after one of the four "
       + "first parts), tap a letter (between two scenarios), and 'Pick the number ...' on the 1-7 scale in the feedback. "
       + "passed_all is what the gift card needs (quality.passed_all_attention_checks); a check never reached counts as "
-      + "missed. Participants were never told whether they were right. Whether a miss also leaves somebody out of the "
-      + "analysis is NOT decided here: it is a freeze-note decision (the researcher's Q3-A, 29 September 2026).",
+      + "missed. Participants were never told whether they were right. A miss affects the gift card only: all completed "
+      + "sessions are analysed (the researcher, 30 September 2026).",
   };
 }
 

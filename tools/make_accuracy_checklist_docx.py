@@ -316,6 +316,10 @@ SECTIONS = [
          "All three by chance: about 1 in 112. A same-number answerer on 1, 6 or 7 always fails the feedback check; a "
          "diagonal clicker passes it about 1 time in 6. Two answer-pattern flags are saved for the analysis only.",
          ["attention"], "(T6, T7)"),
+        ("The country question finds a country from a few letters, and keeps it.",
+         "Names starting with the letters come first, then names with a word that starts with them, and other names work "
+         "(UK, USA, KSA, Holland; accents do not matter). Saved as country and country_code beside age and gender; a "
+         "resume that does not know it never erases it (tested live on a second copy of the server).", ["session"], "(C9)"),
         ("The two between-block pages are deleted, and their data still arrives.",
          "They were hidden and only computed. The same files are now made when Block 3 and Block 4 finish: for 300 "
          "pretend people the new code makes exactly what the pages made, and the database still receives "
@@ -362,9 +366,7 @@ OPEN = [
     ("The consent page now names the attention checks",
      "A new rule, \"Answer the quick attention checks as asked\", and the same words in the gift-card checkbox. Ask your "
      "ethics board whether this change to how the gift card is earned needs their approval before launch.", "Before launch"),
-    ("Does a missed attention check also leave somebody out of the analysis?",
-     "Your Q3-A: the checks decide the gift card only for now. Decide the analysis rule in the freeze note before the "
-     "data is opened.", "Before the data is opened"),
+
     ("The one-browser rule is only as strong as the email-and-age check",
      "Anyone who knows a participant's email and age can take their record, exactly as they could already continue "
      "their study. It stops accidents and casual misuse, not a determined attacker; there are no passwords.", "Known"),

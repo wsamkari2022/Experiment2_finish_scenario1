@@ -77,10 +77,9 @@ Scores stay between 0 and 100; a step past an edge is cut off and recorded. Test
 - Payment is decided separately by `quality.compensation_eligible` (completed, 35 active minutes or more, not
   straight-lined, fewer than 3 blocks under 30 seconds, and since 29 September 2026 all three attention checks right)
   and is never used as an analysis rule.
-- **OPEN, decide before the data is opened (the researcher's Q3-A, 29 September 2026): the attention checks**
-  (`analysis.attention_checks.passed_all`). Either (a) keep "no one who completed is removed" and add "without anyone
-  who missed an attention check" to the extra checks above, or (b) remove those who missed one from the main analysis
-  and show the full sample as the extra check. [ ] decided: ______ on ______
+- **The attention checks do not remove anybody from the analysis** (the researcher, 30 September 2026: "all completed
+  sessions will be included in the analysis"). A missed check affects the gift card only
+  (`quality.passed_all_attention_checks`). Any further analysis rule is the researcher's to decide after the experiment.
 
 ## 5. The hypotheses and their tests
 

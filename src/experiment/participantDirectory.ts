@@ -46,6 +46,10 @@ export interface DirectoryEntry {
   sessionId: string;
   age: number;
   gender: string;
+  /** Their country (English name, or "Prefer not to say"); since 30 September 2026, so optional. */
+  country?: string;
+  /** Its ISO 3166-1 alpha-2 code; null for "Prefer not to say". */
+  countryCode?: string | null;
   status: ParticipantStatus;
   /** The stage they last reached, so a return can resume exactly there. */
   stage: string;
@@ -99,6 +103,9 @@ export function upsertParticipant(input: {
   sessionId: string;
   age: number;
   gender: string;
+  /* Optional: a resume from a record that has no country must not erase one this browser already knows. */
+  country?: string;
+  countryCode?: string | null;
   stage: string;
   consent: DirectoryEntry["consent"];
 }): DirectoryEntry {
@@ -112,6 +119,9 @@ export function upsertParticipant(input: {
     sessionId: input.sessionId,
     age: input.age,
     gender: input.gender,
+    ...(input.country !== undefined
+      ? { country: input.country, countryCode: input.countryCode ?? null }
+      : existing?.country !== undefined ? { country: existing.country, countryCode: existing.countryCode ?? null } : {}),
     /* An existing status is never downgraded here. Someone who has finished stays finished. */
     status: existing?.status ?? STATUS_NOT_COMPLETED,
     stage: input.stage,

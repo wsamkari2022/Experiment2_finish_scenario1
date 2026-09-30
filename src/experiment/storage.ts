@@ -397,6 +397,9 @@ export function saveParticipant(input: {
   sessionId: string;
   age: number;
   gender: string;
+  /* Since 30 September 2026; optional so a resume without it never erases it (see upsertParticipant). */
+  country?: string;
+  countryCode?: string | null;
   stage: string;
   consent: DirectoryEntry["consent"];
 }): DirectoryEntry {

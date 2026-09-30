@@ -275,6 +275,55 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     gate("C8", why.length === 0, why.length ? why.join(" | ") : "Block 5 reads, saves and sends its progress and marks a restarted scenario; Blocks 2 and 3 save with an owner; the claim comes before any write or download; the lock screen comes before any page");
   }
 
+  /* C9 — THE COUNTRY (30 September 2026, the researcher's request): a list to type into, best matches first, and the
+     answer saved wherever age and gender are, never erased by a resume that does not know it. */
+  {
+    const why = [];
+    const C = B("countries.js");
+    const codes = C.COUNTRIES.map((c) => c.code), names = C.COUNTRIES.map((c) => C.foldText(c.name));
+    if (new Set(codes).size !== codes.length || codes.some((c) => !/^[A-Z]{2}$/.test(c))) why.push("a country code is repeated or malformed");
+    if (new Set(names).size !== names.length) why.push("a country name is repeated");
+    for (const gone of ["AQ", "BV", "HM", "GS", "UM", "IO", "TF"]) if (codes.includes(gone)) why.push(`an uninhabited place is listed (${gone})`);
+    for (const must of ["SA", "US", "GB", "IN", "CN", "EG", "AE", "PS", "XK", "TW"]) if (!codes.includes(must)) why.push(`${must} is missing`);
+    const names_ = (q) => C.matchCountries(q).map((m) => m.country.name);
+    /* "Sa": every name starting with Sa first, alphabetically, then names with a word starting with Sa. */
+    const sa = C.matchCountries("Sa");
+    const firstNotPrefix = sa.findIndex((m) => !C.foldText(m.country.name).startsWith("sa"));
+    const prefix = sa.slice(0, firstNotPrefix).map((m) => m.country.name);
+    if (!prefix.includes("Saudi Arabia") || prefix.length !== C.COUNTRIES.filter((c) => C.foldText(c.name).startsWith("sa")).length) why.push(`"Sa" does not list every name starting with Sa first: ${prefix.join(", ")}`);
+    if ([...prefix].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" })).join() !== prefix.join()) why.push("the Sa names are not in alphabetical order");
+    for (const w of ["El Salvador", "American Samoa", "Western Sahara"]) if (!sa.slice(firstNotPrefix).some((m) => m.country.name === w)) why.push(`"Sa" misses ${w} after the Sa names`);
+    const top = (q) => names_(q)[0];
+    const expect = { uk: "United Kingdom", usa: "United States", ksa: "Saudi Arabia", uae: "United Arab Emirates", turkey: "Türkiye",
+      sao: "São Tomé and Príncipe", "cote d": "Côte d'Ivoire", ivory: "Côte d'Ivoire", holland: "Netherlands", burma: "Myanmar",
+      "south af": "South Africa", "guinea b": "Guinea-Bissau", saudi: "Saudi Arabia", egypt: "Egypt", us: "United States", korea: "South Korea" };
+    for (const [q, name] of Object.entries(expect)) if (top(q) !== name) why.push(`"${q}" puts ${top(q)} first, not ${name}`);
+    if (C.matchCountries("").length !== C.COUNTRIES.length || C.matchCountries("zzq").length !== 0) why.push("an empty search is not the whole list, or nonsense matches something");
+    if (C.matchCountries("a").some((m) => !/(^| )a/.test(C.foldText(m.country.name)) && !(m.country.aka ?? []).some((a) => /(^| )a/.test(C.foldText(a))))) why.push("one letter matches the middle of names");
+    /* The bold part is exactly the typed letters, accents and apostrophes included. */
+    const hl = (q, name) => { const m = C.matchCountries(q).find((x) => x.country.name === name); return m?.highlight ? name.slice(...m.highlight) : null; };
+    if (hl("Sa", "Saudi Arabia") !== "Sa" || hl("sao", "São Tomé and Príncipe") !== "São" || hl("cote d", "Côte d'Ivoire") !== "Côte d"
+        || hl("sa", "El Salvador") !== "Sa" || hl("uk", "United Kingdom") !== null) why.push("the bold part is not the typed letters");
+    /* Saved wherever age and gender are, and a resume without it keeps it. */
+    store.clear();
+    const d = B("participantDirectory.js");
+    d.upsertParticipant({ email: "c9@example.test", sessionId: "s", age: 30, gender: "Female", country: "Saudi Arabia", countryCode: "SA", stage: "money", consent: null });
+    d.upsertParticipant({ email: "c9@example.test", sessionId: "s", age: 30, gender: "Female", stage: "product", consent: null });
+    const kept = d.lookupByEmail("c9@example.test");
+    if (kept.country !== "Saudi Arabia" || kept.countryCode !== "SA" || kept.stage !== "product") why.push("a resume without the country erased it in the browser");
+    const server = src("server/index.js").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (!/\.\.\.\(typeof body\.country === "string" && body\.country\s*\?\s*\{ country:/.test(server) || /^\s*country: body\.country,/m.test(server)) why.push("the server can overwrite a saved country with nothing");
+    const api = src("src/experiment/apiClient.ts");
+    if (!/\.\.\.\(entry\.country !== undefined \? \{ country: entry\.country/.test(api) || !/country_code/.test(api)) why.push("the API client does not send or read the country");
+    const page = src("src/experiment/DemographicPage.tsx"), flow2 = src("src/experiment/ExperimentFlow.tsx");
+    if (!page.includes("&& !countryError") || !page.includes("countryCode: country?.code ?? null") || !page.includes("<CountryField")) why.push("the page does not require and record the country");
+    if (!flow2.includes("country: record.country,") || (flow2.match(/entry\.country !== undefined/g) ?? []).length < 2) why.push("the flow does not save the country, or a resume drops it");
+    const field = src("src/experiment/CountryField.tsx");
+    if (!field.includes('details.reason === "input-change"') || !field.includes("PREFER_NOT_TO_SAY")) why.push("the field narrows on a pick, or offers no \"Prefer not to say\"");
+    gate("C9", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : `the country list (${C.COUNTRIES.length} places, codes unique): "Sa" lists every Sa name first then El Salvador and the other Sa words, other names and accents work (uk, usa, ksa, turkey, sao, cote d, holland ...), the typed letters are the bold part; saved with age and gender, never erased by a resume that does not know it`);
+  }
+
   console.log("");
   console.log("==============================================================================");
   if (fails) {

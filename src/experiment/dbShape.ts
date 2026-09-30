@@ -18,7 +18,8 @@
  * ============================================================================
  * WHAT A PARTICIPANT DOCUMENT LOOKS LIKE AFTERWARDS
  * ============================================================================
- *   participant_id, email, age, gender, status, current_stage, consent, timestamps
+ *   participant_id, email, age, gender, country, country_code (since 30 September 2026), status, current_stage, consent,
+ *   timestamps
  *   headline  { the few numbers an analyst actually asks for }
  *   blocks    { RAW answers only — what the person did }
  *   analysis  { COMPUTED results only — what the model made of it }

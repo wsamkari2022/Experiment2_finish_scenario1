@@ -2,7 +2,8 @@
  * DemographicPage.tsx — the second entry screen: who is taking part, and how to reach them.
  *
  * WHAT IT ASKS, AND WHAT IT DELIBERATELY DOES NOT
- * Age, gender, and email. That is all.
+ * Email, age, gender and country (country since 30 September 2026, the researcher's request; CountryField.tsx).
+ * That is all.
  *
  * The previous study's version also asked "Dealing with AI Systems" and "Experience with Moral
  * Reasoning" on five-point scales. Both are gone at the researcher's instruction. It is worth
@@ -44,6 +45,7 @@ import {
 } from "@chakra-ui/react";
 import { LuArrowRight, LuCheck, LuLock, LuMail } from "react-icons/lu";
 import { Field } from "@/components/ui/field";
+import { CountryField, type CountryValue } from "./CountryField";
 
 /** The gender choices, in the order they are shown. */
 const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"] as const;
@@ -58,6 +60,10 @@ export interface DemographicRecord {
   email: string;
   age: number;
   gender: Gender;
+  /** Their country, as its English name, or "Prefer not to say" (since 30 September 2026). */
+  country: string;
+  /** Its ISO 3166-1 alpha-2 code (XK for Kosovo); null for "Prefer not to say". */
+  countryCode: string | null;
   submittedAt: string;
 }
 
@@ -85,9 +91,10 @@ export function DemographicPage({
   const [email, setEmail] = useState(initialEmail);
   const [age, setAge] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
+  const [country, setCountry] = useState<CountryValue | null>(null);
 
   /** Which fields have been left once, so errors appear after the participant, not during. */
-  const [touched, setTouched] = useState<{ email?: boolean; age?: boolean }>({});
+  const [touched, setTouched] = useState<{ email?: boolean; age?: boolean; country?: boolean }>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const ageNumber = Number.parseInt(age, 10);
@@ -107,12 +114,14 @@ export function DemographicPage({
   }, [age, ageNumber]);
 
   const genderError = gender ? null : "Please choose one.";
-  const valid = !emailError && !ageError && !genderError;
+  const countryError = country ? null : "Please choose your country from the list, or “Prefer not to say”.";
+  const valid = !emailError && !ageError && !genderError && !countryError;
 
   /* An error is shown only once the participant has moved on from the field, or pressed Continue. */
   const showEmailError = (touched.email || submitAttempted) && emailError;
   const showAgeError = (touched.age || submitAttempted) && ageError;
   const showGenderError = submitAttempted && genderError;
+  const showCountryError = (touched.country || submitAttempted) && countryError;
 
   const handleSubmit = () => {
     setSubmitAttempted(true);
@@ -121,6 +130,8 @@ export function DemographicPage({
       email: email.trim().toLowerCase(),
       age: ageNumber,
       gender: gender as Gender,
+      country: country?.name ?? "",
+      countryCode: country?.code ?? null,
       submittedAt: new Date().toISOString(),
     });
   };
@@ -158,7 +169,7 @@ export function DemographicPage({
             A little about you
           </Heading>
           <Text fontSize="sm" color="fg.muted" maxW="md">
-            Three short questions. Your answers are stored with your results and reported only as
+            Four short questions. Your answers are stored with your results and reported only as
             group data.
           </Text>
         </VStack>
@@ -272,6 +283,23 @@ export function DemographicPage({
                 })}
               </HStack>
             </Field>
+
+            {/* COUNTRY (since 30 September 2026) */}
+            <Field
+              label="Country"
+              invalid={!!showCountryError}
+              errorText={showCountryError || undefined}
+              helperText="Type a few letters and pick it from the list."
+            >
+              <Box w="full">
+                <CountryField
+                  value={country}
+                  onChange={setCountry}
+                  onBlur={() => setTouched((t) => ({ ...t, country: true }))}
+                  invalid={!!showCountryError}
+                />
+              </Box>
+            </Field>
           </VStack>
         </Box>
 
@@ -296,7 +324,7 @@ export function DemographicPage({
           </Button>
           {!valid && (
             <Text fontSize="xs" color="fg.subtle" textAlign="center">
-              Please complete all three questions to continue.
+              Please complete all four questions to continue.
             </Text>
           )}
         </VStack>

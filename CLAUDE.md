@@ -572,7 +572,8 @@ but the insights and post-Block-4 pages ("delete them entirely ... if all the da
   changes), `quality.attention_checks_passed` / `passed_all_attention_checks`, a copy in `major_info_and_scores`, and
   (Q4) `analysis.feedback_answer_patterns` (longest run of one answer, share of steps of exactly one; for the analysis
   only, never for pay). `SHAPE_VERSION` "2026-09-29-attention-checks", `ATTENTION_VERSION` "2026-09-29-a".
-- **Q3-A:** whether a miss also leaves somebody out of the analysis is NOT decided; it goes in the freeze note.
+- **Q3-A, confirmed 30 September 2026:** a miss affects the gift card only; all completed sessions are analysed. Do not ask
+  the researcher analysis-rule questions: he decides them after the experiment.
 - **The consent page** gained the rule "Answer the quick attention checks as asked" and the same words in the gift-card
   checkbox (Q2). The researcher should ask the ethics board whether this change needs approval before launch.
 - **Chance:** a random clicker passes all three about 1 time in 112; a same-number answerer on 1, 6 or 7 always fails the
@@ -591,6 +592,33 @@ but the insights and post-Block-4 pages ("delete them entirely ... if all the da
   the colour check after Block 4 (answer saved with its seconds and one change), on to "The main study starts now"; the
   letter check before scenario 3 (a wrong pick saved, nothing said, not asked again after a refresh); the feedback row
   after the third tool row, the record without it; a phone layout without sideways scrolling.
+
+## The country question, since 30 September 2026
+
+The researcher: "a drop list of the country with ability to write some letters and the list will try to match what the
+user wrote ... smart and elegant", and then: no example in the box and no "the country you live in", "just the country".
+**Participants see it** (HOW_TO_ANALYZE 4.9). No score changed.
+
+- **"A little about you" asks four questions**; the fourth, **Country**, is one box (`CountryField.tsx`, Chakra's
+  Combobox: arrow keys, Enter, Escape and screen readers work). Placeholder "Start typing to search", hint "Type a few
+  letters and pick it from the list." Required; only a listed country or "Prefer not to say" (always last) can be chosen.
+- **The list and the matching** (`countries.ts`, pure): 243 inhabited countries and territories under common English
+  names with their ISO codes (Kosovo XK; uninhabited places left out), written out rather than taken from the browser so a
+  stored answer never depends on the browser. Order: a whole other name typed in full ("uk", "usa", "ksa", "uae"), then
+  names starting with the letters, then names with a word starting with them (El Salvador for "sa"), then other names
+  starting with them ("holland", "ivory", "turkey"), then the two-letter code, then (3+ letters) anywhere. Accents,
+  capitals, apostrophes and hyphens never matter. The typed letters are bold in each row; each row shows its code.
+- **Stored** as `country` and `country_code` on the participant document (top level, beside age and gender), carried by
+  the browser's directory, the API client and the resume. **The server sets them only when the page sends them**, so a
+  resume from a browser that does not know the country never erases it (MongoDB's `$set` would otherwise write null);
+  a malformed code is stored as null. Checked live on a second copy of the server: saved, kept through a resume without
+  it, "Prefer not to say" with a null code, a bad code refused.
+- **Checked:** `validate:session` C9 (the list, the ranking for "Sa" and 16 other searches, the bold part, the directory
+  keeping the country through a resume, the server and the client from the source); 6 deliberate breaks, 6 caught. Seen
+  in the browser on a computer and a phone, light and dark. Found on the way: the list was see-through (the page showed
+  behind it) until it got its own background, and a Windows tool had written the accent range as invisible characters
+  instead of `\u0300-\u036f` (it worked, but invisible characters in code are a trap; fixed and scanned for).
+- The consent page does not list the demographic fields one by one, so it did not change.
 
 ## The planner, revised 24 September 2026
 
@@ -977,7 +1005,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:dbshape` | What reaches MongoDB. 67 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6), VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65), which button took them from the results page to the feedback (D66), and Stability_all with the top-value choices, recounted by hand (D67). `--dump` writes a full simulated document |
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8); since 29 September 2026 Stability_all: its decisions' part equals Stability's swaps (A9), which steps count (A10), a best-fit picker 100 and not measured, the kinds in order (A11), the top-value choices recounted by hand (A12). Prints the echo and the screen-against-yardstick shares, and Stability / Stability_all / top-value choices by kind |
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12) |
-| `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8) |
+| `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 the country question: the list, the ranking, the bold part, and the country kept through a resume (C9) |
 | `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): every colour, letter, number, place and button order drawn about equally over 4,000 pretend participants, the number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |

@@ -122,6 +122,7 @@ correlating the two will produce impressive and meaningless results.
 | `participant_id` | Unique id for the run (a UUID). **The only id in the database.** |
 | `email` | The key. Lower-cased. Also how a participant returns to finish. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
+| `country`, `country_code` | Since 30 September 2026, from the demographic form's Country question: the English name as listed (e.g. "Saudi Arabia") and its ISO 3166-1 alpha-2 code ("SA"; Kosovo "XK"), or "Prefer not to say" with a null code. Group by `country_code`, never by the name. Absent on records made before that date. |
 | `status` | `"Study Not Completed"` or `"Study Completed"` — nothing else. |
 | `current_stage` | The screen they last reached, e.g. `money`, `block5`, `feedback`. |
 | `active_browser` | Since 29 September 2026: `{ id, claimed_at }`, the one browser allowed to write this record (a random id, naming nothing but that browser). The newest browser that passed the email-and-age check. Not data about the participant; never analyse it. |
@@ -1265,8 +1266,8 @@ is in `major_info_and_scores.attention_checks`.
 > **The feedback row is not feedback.** Its answer is kept here and never in `blocks.feedback_answers`, so it cannot move
 > a well-being score, a tool rating or `quality.straightlined_feedback`.
 
-> **Whether a miss also leaves somebody out of the ANALYSIS is not decided here** (the researcher's Q3-A, 29 September
-> 2026). Fix the rule in the freeze note before the data is opened.
+> **A miss does not leave anybody out of the analysis:** all completed sessions are analysed (the researcher, 30
+> September 2026). It affects the gift card only.
 
 ## 6q. `analysis.feedback_answer_patterns` — two answer-pattern flags (analysis only)
 

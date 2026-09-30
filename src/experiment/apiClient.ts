@@ -72,6 +72,10 @@ function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry |
     sessionId: String(doc.participant_id ?? doc.session_id ?? ""),
     age: Number(doc.age ?? 0),
     gender: String(doc.gender ?? ""),
+    /* Since 30 September 2026; absent on a record made before. */
+    ...(typeof doc.country === "string"
+      ? { country: doc.country, countryCode: typeof doc.country_code === "string" ? doc.country_code : null }
+      : {}),
     status: doc.status as DirectoryEntry["status"],
     stage: String(doc.current_stage ?? "money"),
     consent: (doc.consent as DirectoryEntry["consent"]) ?? null,
@@ -98,6 +102,8 @@ export const apiClient: RemoteBackend = {
         sessionId: entry.sessionId,
         age: entry.age,
         gender: entry.gender,
+        /* Sent only when known: the server keeps a saved country when none is sent. */
+        ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
         consent: entry.consent,
         stage: entry.stage,
       }),

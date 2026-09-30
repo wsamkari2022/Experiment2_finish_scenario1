@@ -16,6 +16,7 @@
     "../src/experiment/sessionGuard.ts",
     "../src/experiment/block5Progress.ts",
     "../src/experiment/attentionChecks.ts",
-    "../src/experiment/interBlockData.ts"
+    "../src/experiment/interBlockData.ts",
+    "../src/experiment/countries.ts"
   ]
 }
