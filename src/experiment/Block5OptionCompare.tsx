@@ -4,7 +4,8 @@
  * WHAT IT SHOWS
  * Two radar charts, the note that explains how to read them, and — since 23 September 2026 — the
  * Moral Commitment Function underneath both: the second chart in sentences, one option at a time
- * (not in scenario 6 since 27 September 2026; see `showMcf`).
+ * (not in scenario 6 since 27 September 2026; see `showMcf`). Scenario 6 also has no performance chart since
+ * 29 September 2026 (`showPerformance`): only the values chart.
  * See Block5MCFPanel. The order on the page is deliberate and was corrected on the same day: the
  * charts, then the note that explains the charts, then MCF. An explanation separated from the
  * thing it explains is not an explanation.
@@ -122,6 +123,11 @@ export function Block5OptionCompare({
      prediction test measures. The two charts stay (the researcher's choice), so the overlay still
      opens there; only the panel of readings is gone. validate:mcf gate M11 checks this source. */
   const showMcf = !isPredictionTest(scenario);
+  /* NO PERFORMANCE CHART IN SCENARIO 6 EITHER (29 September 2026, the researcher: "Scenario 6 should not have
+     performance radar chart"). Scenario 6 shows no performance numbers anywhere, and its four rules all score
+     50 on every measure, so the chart drew four identical flat shapes that meant nothing. The values chart
+     stays, alone and centred; the words around it say "the chart", not "both charts". validate:mcf M11. */
+  const showPerformance = !isPredictionTest(scenario);
   // Every option is visible on first open, so the participant sees the whole field at once
   // and narrows down from there rather than having to build the comparison up themselves.
   const [visibleOptionIds, setVisibleOptionIds] = useState<Set<string>>(
@@ -234,9 +240,10 @@ export function Block5OptionCompare({
               </HStack>
               <Heading size="md" color={pal.text}>{scenario.title}</Heading>
               <Text fontSize="sm" color={pal.textMuted} mt="1" lineHeight="tall">
-                All {options.length} options on the same two charts — what each one achieves, and
-                what each one prioritizes. Nothing here is a recommendation; every option stays
-                available to you.
+                {showPerformance
+                  ? `All ${options.length} options on the same two charts — what each one achieves, and what each one prioritizes.`
+                  : `All ${options.length} options on one chart — what each one prioritizes.`}
+                {" "}Nothing here is a recommendation; every option stays available to you.
               </Text>
             </Box>
             <Button aria-label="Close comparison" size="sm" variant="ghost" rounded="full"
@@ -253,7 +260,7 @@ export function Block5OptionCompare({
           <HStack justify="space-between" mb="2.5" gap="3" flexWrap="wrap">
             <Text fontSize="2xs" fontWeight="bold" color={pal.textMuted}
               textTransform="uppercase" letterSpacing="wider">
-              Tap an option to show or hide it on both charts
+              {showPerformance ? "Tap an option to show or hide it on both charts" : "Tap an option to show or hide it on the chart"}
             </Text>
             <Button size="2xs" variant="ghost" rounded="md" fontSize="2xs" color={pal.accent}
               _hover={{ bg: pal.cardBg }}
@@ -318,16 +325,19 @@ export function Block5OptionCompare({
               </Text>
             </Box>
           ) : (
-            <Grid templateColumns={{ base: "1fr", lg: "repeat(2, 1fr)" }} gap={{ base: "5", lg: "6" }}>
-              <ChartCard
-                pal={pal}
-                title="Performance impact"
-                help={CHART_HELP.performance}
-                axes={METRIC_KEYS.map((k) => METRIC_AXIS_LABEL[k])}
-                series={performanceSeries}
-                fillOpacity={fillOpacity}
-                showDots={showDots}
-              />
+            <Grid templateColumns={{ base: "1fr", lg: showPerformance ? "repeat(2, 1fr)" : "1fr" }} gap={{ base: "5", lg: "6" }}
+              maxW={showPerformance ? undefined : "2xl"} mx="auto">
+              {showPerformance && (
+                <ChartCard
+                  pal={pal}
+                  title="Performance impact"
+                  help={CHART_HELP.performance}
+                  axes={METRIC_KEYS.map((k) => METRIC_AXIS_LABEL[k])}
+                  series={performanceSeries}
+                  fillOpacity={fillOpacity}
+                  showDots={showDots}
+                />
+              )}
               <ChartCard
                 pal={pal}
                 title="The four value priorities"
@@ -383,7 +393,7 @@ export function Block5OptionCompare({
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">
                 The{" "}
                 <Key pal={pal} color={REFERENCE_SERIES_COLOR[pal.mode]}>dashed gray shape</Key>{" "}
-                on the right-hand chart is <Key pal={pal}>you</Key> — your own four value
+                on {showPerformance ? "the right-hand chart" : "the chart"} is <Key pal={pal}>you</Key> — your own four value
                 priorities. Wherever an option's corner falls short of your dashed line, that
                 option{" "}
                 <Key pal={pal} color={pal.costColor}>falls below where you stand</Key> on that value.

@@ -201,8 +201,11 @@ breaking the code on purpose.
 September 2026: "scenario 6 no MCF and no 'Your values in this scenario' section. Hide both"). There the
 four rules ARE the four values, so a reading told the participant which rule meets where they stand before
 they chose (74-84 in 100 readings of a rule that was not their best fit named exactly their best-fit rule),
-and the panel's four numbers, strongest first, pointed the same way. The two charts in the Compare overlay
-stay (the researcher's choice). Gate M11 (`validate:mcf`) reads the source; `analysis.mcf` rows carry
+and the panel's four numbers, strongest first, pointed the same way. The values chart in the Compare overlay
+stays (the researcher's choice); **since 29 September 2026 the performance chart does not** (the researcher: "Scenario 6
+should not have performance radar chart"): scenario 6 shows no performance numbers anywhere, and its four rules all
+score 50, so the chart drew four identical flat shapes (`showPerformance` in Block5OptionCompare.tsx; the overlay then
+says "one chart"). Gate M11 (`validate:mcf`) reads the source; `analysis.mcf` rows carry
 `could_be_opened_in_this_scenario` (false in scenario 6; gate D64, `SHAPE_VERSION`
 "2026-09-27-mcf-not-in-scenario-6").
 
@@ -930,7 +933,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
-| `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence and tag it can produce (M1-M7); since 27 September 2026 also that every size word matches its gap (M8), the "because you hold it more strongly" reason is said exactly when it should be and is true (M9), every reading names all four values once in the participant's order (M10), and scenario 6 renders neither the MCF nor "Your values in this scenario" (M11) |
+| `validate:mcf` | The Moral Commitment Function: the decomposition, the swaps, and every sentence and tag it can produce (M1-M7); since 27 September 2026 also that every size word matches its gap (M8), the "because you hold it more strongly" reason is said exactly when it should be and is true (M9), every reading names all four values once in the participant's order (M10), and scenario 6 renders neither the MCF nor "Your values in this scenario" (M11; since 29 September 2026 nor the Compare overlay's performance chart) |
 | `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3× after Fix 6, 5.4× after Fix 7); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |

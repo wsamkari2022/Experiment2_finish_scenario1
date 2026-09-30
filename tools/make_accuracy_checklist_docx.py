@@ -268,8 +268,9 @@ SECTIONS = [
         ("The MCF never gives a verdict or a number.",
          f"{MCF_SENTENCES} it can produce are generated and checked: no \"aligned\", \"best fit\" or \"should\", "
          "no digits, and every size word matches its gap.", ["mcf"], ""),
-        ("Scenario 6 has no MCF and no \"Your values in this scenario\" panel.",
-         "So the prediction test cannot become \"pick your value\".", ["mcf"], "(M11)"),
+        ("Scenario 6 has no MCF, no \"Your values in this scenario\" panel, and no performance chart.",
+         "So the prediction test cannot become \"pick your value\"; and its rules all score 50, so a performance chart "
+         "would show four identical flat shapes.", ["mcf"], "(M11)"),
         ("The results page leads on to the feedback.",
          "\"Scenarios done · 1 step left\", the \"One last step\" card, the slim bottom bar, and Feedback marked \"next\" "
          "in the progress bar (which slides to it on a phone).", ["journey"], "(J9)"),

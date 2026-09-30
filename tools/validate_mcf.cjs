@@ -308,6 +308,11 @@ let m11 = true;
   if (!/\{showMcf && \(\s*<Box mt="6">\s*<Block5MCFPanel/.test(compare)) m11 = false;
   if (!sim.includes("const showValuesPanel = !isPredictionTest(scenario);")) m11 = false;
   if (!/\{showValuesPanel && \(\s*<Box ref=\{valuesRef\}/.test(sim)) m11 = false;
+  /* Nor the performance chart (29 September 2026, the researcher): its four rules all score 50, so it drew
+     four identical flat shapes. The chart is drawn once, behind a flag that is false in the prediction test. */
+  if (!compare.includes("const showPerformance = !isPredictionTest(scenario);")) m11 = false;
+  if (count(compare, 'title="Performance impact"') !== 1
+      || !/\{showPerformance && \(\s*<ChartCard\s+pal=\{pal\}\s+title="Performance impact"/.test(compare)) m11 = false;
 }
 
 /* M6 — same inputs, same output, every time. */
@@ -340,7 +345,7 @@ gate("M9", m9, m9 ? `"because you hold it more strongly" appears exactly when th
                   : `"Most of all" or its reason is wrong: ${problems.filter((x) => x.startsWith("M9")).slice(0, 2).join(" | ")}`);
 gate("M10", m10, m10 ? "every reading names each of the four values once, and its rows follow the participant's own order"
                      : `a reading leaves a value out or names it twice: ${problems.filter((x) => x.startsWith("M10")).slice(0, 1).join("")}`);
-gate("M11", m11, "scenario 6 renders neither the MCF nor \"Your values in this scenario\"; each panel is rendered in one place only");
+gate("M11", m11, "scenario 6 renders neither the MCF, \"Your values in this scenario\" nor the performance chart; each is rendered in one place only");
 
 if (process.argv.includes("--show") && sample.length) {
   const s = sample[0];
