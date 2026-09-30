@@ -1250,18 +1250,20 @@ about 2.7 of 6, because the best fit balances all four values. A copy of the cou
 
 ## 6p. `analysis.attention_checks` — three simple checks
 
-Added **29 September 2026** (the researcher's request). Three very simple questions, each drawn at random for each
-participant and saved once, so a refresh or another device shows the same one in the same place:
+Added **29 September 2026** (the researcher's request); the two checks inside the study **revised 30 September 2026**
+(a named colour and a letter became questions about what was just finished, in the researcher's approved words). The
+answer order, and the feedback row's place and number, are drawn once per participant and saved, so a refresh or another
+device shows the same:
 
 | Check | Where | What it asks |
 |---|---|---|
-| `colour` | its own screen after Block 1, 2, 3 or 4 | "Please tap the green circle." (4 named colours, random order) |
-| `letter` | its own screen after scenario 2, 3, 4 or 5 | "Please tap the letter R." (K, M, R, T in random order) |
+| `after_block3` | its own screen right after Block 3 (the AI workforce), before Block 4 | "What was the part you just finished about?" Right: "Deciding whether to approve an AI system that affects workers' jobs"; the other three are from outside the study; random order |
+| `after_scenario3` | its own screen right after scenario 3 (the cancer treatment), before scenario 4 | "What was the scenario you just finished about?" Right: "Sharing out a limited cancer treatment"; three from outside the study; random order |
 | `number` | one row in the feedback, after any row of "The tools & the experiment design" or "How this experience was for you" | "This question is just to check your attention. Pick the number four." (two, three, four or five; the 1-7 scale) |
 
 Participants were told it is an attention check and never whether they were right. `passed_all` (all three right) is
 what the gift card needs (`quality.passed_all_attention_checks`); `passed_count`, `answered_count`, `misses` (in words)
-and `checks[]`: `where_it_was_shown`, `asked_for`, `right_answer`, `options_in_the_order_shown`, `answer`, `correct`,
+and `checks[]`: `where_it_was_shown`, `asked`, `right_answer`, `options_in_the_order_shown`, `answer`, `correct`,
 `seconds_to_answer` (null for the feedback row, which is not timed), `times_changed`, `answered_at`. A copy of the verdict
 is in `major_info_and_scores.attention_checks`.
 
@@ -1466,9 +1468,9 @@ specific answer.
 > fault — and every fast reader had been collecting two free strikes against a threshold of three.
 > This makes eligibility slightly more generous, never less. Both pages were deleted on 29 September 2026.
 
-> The colour attention check's own screen (stage `attention_check`) can never appear in `rushed_blocks` either: it is
-> answered in seconds by design. Each missed check, a check never reached, or no attention file at all adds its own line
-> to `reasons` (e.g. "missed the colour check (asked for green, picked blue)").
+> The attention check's own screen after Block 3 (stage `attention_check`) can never appear in `rushed_blocks` either: it
+> is answered in seconds by design. Each missed check, a check never reached, or no attention file at all adds its own
+> line to `reasons` (e.g. `missed the check after Block 3 (the right answer was "...", picked "...")`).
 
 ---
 

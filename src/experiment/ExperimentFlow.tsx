@@ -33,7 +33,7 @@ import { AdaptiveStakeholderReflectionBlock } from "./AdaptiveStakeholderReflect
 import type { Block4CompletionPayload } from "./AdaptiveStakeholderReflectionBlock";
 import { deriveAndSaveInsights, saveFinalAnalysis, type InsightsPayload } from "./interBlockData";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
-import { readAttention, type ColourSlot } from "./attentionChecks";
+import { readAttention } from "./attentionChecks";
 import { TRANSITION_TARGET, isTransition, stageToSave } from "./flowStages";
 import { Block5IntroPage } from "./Block5IntroPage";
 import { Block5PublicEmergencySimulation } from "./Block5PublicEmergencySimulation";
@@ -88,8 +88,8 @@ type Stage =
   | "transition_block5_summary"
   | "block5_summary"
   | "feedback"
-  /* The colour attention check's own screen, after one of the four first parts (since 29 September 2026;
-     attentionChecks.ts). Not a block: never timed, never counted as a rushed block. */
+  /* The attention check's own screen right after Block 3 (since 29 September 2026; a question about the part just
+     finished since 30 September 2026; attentionChecks.ts). Not a block: never timed, never counted as a rushed block. */
   | "attention_check";
 
 /** Lookup set used to detect whether the current stage is a transient spinner. */
@@ -101,13 +101,8 @@ const STAGES_WITH_TRANSITION: Stage[] = [
   "transition_block5_summary",
 ];
 
-/** Where the flow goes after the colour check, by the place it was drawn for (attentionChecks.ts). */
-const AFTER_COLOUR_CHECK: Record<ColourSlot, Stage> = {
-  after_block1: "transition_money_trolley",
-  after_block2: "transition_trolley_product",
-  after_block3: "transition_product_block4",
-  after_block4: "transition_block4_block5",
-};
+/** Where the flow goes after the attention check that follows Block 3 (attentionChecks.ts). */
+const AFTER_ATTENTION_CHECK: Stage = "transition_product_block4";
 
 /**
  * A browser that stopped on one of the two deleted pages opens on the stage that followed it. Only a test run can
@@ -203,7 +198,7 @@ function getRestoredStage(): Stage {
  * Stage transitions:
  *   money → (transition) → trolley → (transition) → product →
  *   (transition) → block4 → (transition) → block5_intro → block5 → results → feedback
- * with the colour attention check's screen after one of the four first parts (attentionChecks.ts).
+ * with the attention check's screen right after Block 3 (attentionChecks.ts).
  */
 export function ExperimentFlow() {
   /**
@@ -442,23 +437,22 @@ export function ExperimentFlow() {
   useScrollToTop(stage);
 
   /**
-   * After one of the four first parts: the colour attention check when it was drawn for this place and is not
-   * answered yet, otherwise straight on (attentionChecks.ts).
+   * After Block 3: the attention check about the part just finished, unless it is answered already, then on towards
+   * Block 4 (attentionChecks.ts; its place is fixed since 30 September 2026).
    */
-  const goOnAfter = useCallback((slot: ColourSlot, next: Stage) => {
-    const attention = readAttention();
-    setStage(attention.plan.colour.slot === slot && !attention.answers.colour ? "attention_check" : next);
+  const goOnAfterBlock3 = useCallback(() => {
+    setStage(readAttention().answers.after_block3 ? AFTER_ATTENTION_CHECK : "attention_check");
   }, []);
 
   /** Called when Block 1 completes; moves to the transition spinner before Block 2. */
   const handleMoneyContinue = useCallback((_results: MoneyBlockResults) => {
-    goOnAfter("after_block1", "transition_money_trolley");
-  }, [goOnAfter]);
+    setStage("transition_money_trolley");
+  }, []);
 
   /** Called when Block 2 completes; moves to the transition spinner before Block 3. */
   const handleTrolleyContinue = useCallback((_results: TrolleyBlockResults) => {
-    goOnAfter("after_block2", "transition_trolley_product");
-  }, [goOnAfter]);
+    setStage("transition_trolley_product");
+  }, []);
 
   /**
    * Called when Block 3 completes. Derives what Blocks 4 and 5 are built from and writes the same two files the
@@ -468,9 +462,9 @@ export function ExperimentFlow() {
     (_results: AIWorkforceBlockResults) => {
       const payload = deriveAndSaveInsights(participantId);
       if (payload) setInsights(payload);
-      goOnAfter("after_block3", "transition_product_block4");
+      goOnAfterBlock3();
     },
-    [participantId, goOnAfter],
+    [participantId, goOnAfterBlock3],
   );
 
   /**
@@ -499,9 +493,9 @@ export function ExperimentFlow() {
       } catch {
         // Storage failures are logged nowhere and blocked nothing, by design.
       }
-      goOnAfter("after_block4", "transition_block4_block5");
+      setStage("transition_block4_block5");
     },
-    [insights, participantId, goOnAfter],
+    [insights, participantId],
   );
 
   /** Intro page -> the scenarios themselves. A button, not a timer: the page is meant to be read. */
@@ -784,18 +778,16 @@ export function ExperimentFlow() {
   }
 
   /*
-   * The colour attention check (since 29 September 2026; attentionChecks.ts). Its own screen, with no progress
-   * bar: it is not a part of the study. Where it leads is worked out from the place it was drawn for, so a refresh
-   * or another device lands back here and goes on to the same place; once answered it is never shown again.
+   * The attention check right after Block 3 (since 29 September 2026; a question about the part just finished since
+   * 30 September 2026; attentionChecks.ts). Its own screen, with no progress bar: it is not a part of the study. A
+   * refresh or another device lands back here and goes on to Block 4; once answered it is never shown again.
    */
   if (stage === "attention_check") {
-    const attention = readAttention();
-    const next = AFTER_COLOUR_CHECK[attention.plan.colour.slot];
-    if (attention.answers.colour) {
-      setStage(next);
+    if (readAttention().answers.after_block3) {
+      setStage(AFTER_ATTENTION_CHECK);
       return null;
     }
-    return <AttentionCheckScreen check="colour" onDone={() => setStage(next)} />;
+    return <AttentionCheckScreen check="after_block3" onDone={() => setStage(AFTER_ATTENTION_CHECK)} />;
   }
 
   if (stage === "block4" && insights) {

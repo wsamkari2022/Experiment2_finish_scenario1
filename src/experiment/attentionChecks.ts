@@ -1,35 +1,35 @@
 /**
- * attentionChecks.ts — three very simple attention checks (since 29 September 2026).
+ * attentionChecks.ts — three very simple attention checks (since 29 September 2026; the two in the study revised on
+ * 30 September 2026).
  *
- * THE RESEARCHER'S REQUEST. "A very simple and obvious question that tests the user's attention to the color,
- * number or a letter during the experiment", and in the feedback "a question in between the design or learning
- * insight questions (not among the CVR or APA questions)": "This question is just to check your attention. Pick
- * the number four." Where it sits and what it asks for are random per participant (the number only two, three,
- * four or five), and "if the user answers all the attention check questions correctly, they will be qualified for
- * compensation among other existing criteria". Plan answers: Q1 any place but the two deleted between-block pages,
- * Q2 yes (the consent page says so), Q3 A (the gift card only; on 30 September 2026 the researcher confirmed that all
- * completed sessions are analysed), Q4 yes (two answer-pattern flags, for analysis only).
+ * THE RESEARCHER'S REQUEST. Simple attention checks during the study, plus a feedback row, "This question is just to
+ * check your attention. Pick the number four." (the number only two, three, four or five, at a random place among the
+ * design or learning-insight questions, never among the CVR or APA questions); all of them answered as asked is needed
+ * for compensation, among the other rules. Plan answers of 29 September: Q2 yes (the consent page says so), Q3 A (the
+ * gift card only; all completed sessions are analysed), Q4 yes (two answer-pattern flags, for analysis only).
  *
- * THE THREE CHECKS, each drawn at random for each participant:
- *   colour  its own short screen after one of the four first parts (after Block 1, 2, 3 or 4)
- *   letter  its own short screen between two scenarios (after scenario 2, 3, 4 or 5)
- *   number  one rating row in the feedback, in "the tools & the experiment design" or "learning insight &
- *           well-being", never the first row of a section and never among the reflection (CVR) or clarification
- *           (APA) questions
- * The colour and the letter are one of four, shown as four buttons in a random order; each colour button carries
- * its name, so a colour-blind participant can pass by reading. Any pick continues, and nobody is told whether
- * they were right: telling them would teach them to watch for checks.
+ * REVISED 30 SEPTEMBER 2026 (the researcher: a colour question is unfair to colour-blind people, and "tap the letter K"
+ * shows that somebody is there, not that they read). The colour and letter checks became ONE question each about what
+ * the participant has just finished, in the words the researcher approved (#3 and #6 of the eight drafted; "I approve
+ * these only ... so I will have three attention check questions"):
+ *   after_block3     its own short screen right after Block 3 (the AI workforce), before Block 4
+ *   after_scenario3  its own short screen right after scenario 3 (the cancer treatment), before scenario 4
+ *   number           one rating row in the feedback, as before (random place, random number)
+ * Each topic question asks only the part's MAIN TOPIC and offers four answers: the right one and three from outside the
+ * study, all written the same way, in a random order per participant. Because each question is about one part, its
+ * place is fixed. Any pick continues, and nobody is told whether they were right: telling them would teach them to
+ * watch for checks. Words only, so it is fair to colour-blind people.
  *
- * THE PLAN IS DRAWN ONCE AND SAVED. The first read makes it from a hash of the participant's session id and
- * email, and saves it in `vrds_attention_checks`, which travels between browsers (RESUME_FILES). So a refresh, or
- * another device, shows the same check in the same place, and an answered check is never asked again. A file made
- * for another email is replaced, so a second person on the same computer gets their own checks.
+ * THE PLAN IS DRAWN ONCE AND SAVED. The first read makes it from a hash of the participant's session id and email (the
+ * answer orders and the feedback row's number and place) and saves it in `vrds_attention_checks`, which travels between
+ * browsers (RESUME_FILES). So a refresh, or another device, shows the same check the same way, and an answered check is
+ * never asked again. A file made for another email, or under an older version, is replaced.
  *
- * WHAT IT FEEDS. `analysis.attention_checks` (every check, what was asked, the button order, the answer, right or
+ * WHAT IT FEEDS. `analysis.attention_checks` (every check, what was asked, the answer order, the answer, right or
  * wrong), `quality.passed_all_attention_checks` (the gift card needs all three, with a reason per miss) and a copy in
- * `major_info_and_scores`. The feedback check's answer is kept HERE, never in the feedback record, so it cannot move
- * a well-being score, a tool rating or the "same answer to every rating" flag. `analysis.feedback_answer_patterns`
- * (Q4) is built from the feedback record and is never used for pay. Checked by `npm run validate:attention`.
+ * `major_info_and_scores`. The feedback check's answer is kept HERE, never in the feedback record, so it cannot move a
+ * well-being score, a tool rating or the "same answer to every rating" flag. `analysis.feedback_answer_patterns` (Q4) is
+ * built from the feedback record and is never used for pay. Checked by `npm run validate:attention`.
  */
 
 import { SESSION_ID_KEY } from "./session";
@@ -39,43 +39,50 @@ import {
 } from "./feedbackTypes";
 
 export const ATTENTION_KEY = "vrds_attention_checks";
-/** Move whenever the checks, their places or their scoring change; stamped on every saved file. */
-export const ATTENTION_VERSION = "2026-09-29-a";
-/** The flow stage of the colour check's own screen. Not a block: never timed, never called rushed. */
+/** Move whenever the checks, their places or their scoring change; stamped on every saved file. A file under another
+ *  version is drawn again (no real data existed when it moved). */
+export const ATTENTION_VERSION = "2026-09-30-topics";
+/** The flow stage of the Block 3 check's own screen. Not a block: never timed, never called rushed. */
 export const ATTENTION_STAGE = "attention_check";
 /** The feedback page's answer code for the number check. Not a feedback question: never in the feedback record. */
 export const ATTENTION_FEEDBACK_CODE = "ATTN_number";
 
-export type AttentionCheckId = "colour" | "letter" | "number";
-export const ATTENTION_CHECK_IDS: AttentionCheckId[] = ["colour", "letter", "number"];
+export type TopicCheckId = "after_block3" | "after_scenario3";
+export type AttentionCheckId = TopicCheckId | "number";
+export const ATTENTION_CHECK_IDS: AttentionCheckId[] = ["after_block3", "after_scenario3", "number"];
 
-export const COLOURS = [
-  { key: "orange", name: "Orange", swatch: "#f97316" },
-  { key: "blue", name: "Blue", swatch: "#3b82f6" },
-  { key: "green", name: "Green", swatch: "#22c55e" },
-  { key: "purple", name: "Purple", swatch: "#a855f7" },
-] as const;
-export type ColourKey = (typeof COLOURS)[number]["key"];
+/** After how many finished scenarios the scenario check appears (then scenario 4 opens). */
+export const SCENARIO_CHECK_AFTER = 3;
 
-/** Four letters that no font draws alike. */
-export const LETTERS = ["K", "M", "R", "T"] as const;
-export type Letter = (typeof LETTERS)[number];
+/**
+ * The two topic questions, word for word as the researcher approved them on 30 September 2026 (#3 and #6). Do not
+ * edit a word without the researcher: validate:attention holds them to this text.
+ */
+export const TOPIC_CHECKS: Record<TopicCheckId, { question: string; right: string; wrong: [string, string, string]; where: string }> = {
+  after_block3: {
+    question: "What was the part you just finished about?",
+    right: "Deciding whether to approve an AI system that affects workers' jobs",
+    wrong: [
+      "Deciding whether to repaint a school's classrooms",
+      "Deciding which player should captain a team",
+      "Deciding where to put a new flower garden",
+    ],
+    where: "its own screen right after the AI-workforce part (Block 3), before Block 4",
+  },
+  after_scenario3: {
+    question: "What was the scenario you just finished about?",
+    right: "Sharing out a limited cancer treatment",
+    wrong: [
+      "Sharing out prizes at a school quiz",
+      "Sharing out rooms in a holiday house",
+      "Sharing out plots in a community garden",
+    ],
+    where: "its own screen right after scenario 3 (the cancer treatment), before scenario 4",
+  },
+};
 
 export const NUMBER_TARGETS = [2, 3, 4, 5] as const;
 export const NUMBER_WORDS: Record<number, string> = { 2: "two", 3: "three", 4: "four", 5: "five" };
-
-/** After which first part the colour check appears. */
-export const COLOUR_SLOTS = ["after_block1", "after_block2", "after_block3", "after_block4"] as const;
-export type ColourSlot = (typeof COLOUR_SLOTS)[number];
-export const COLOUR_SLOT_WORDS: Record<ColourSlot, string> = {
-  after_block1: "after the found-money part (Block 1)",
-  after_block2: "after the trolley part (Block 2)",
-  after_block3: "after the AI-workforce part (Block 3)",
-  after_block4: "after the reflection part (Block 4)",
-};
-
-/** After how many finished scenarios the letter check appears (then the next scenario opens). */
-export const LETTER_SLOTS = [2, 3, 4, 5] as const;
 
 /** The three rating lists the number check may sit in. */
 export type NumberList = "tools" | "wellbeing_a" | "wellbeing_b";
@@ -95,8 +102,9 @@ export const NUMBER_SLOTS: { list: NumberList; after: number }[] = (["tools", "w
   .flatMap((list) => Array.from({ length: NUMBER_LIST_LENGTHS[list] }, (_, i) => ({ list, after: i + 1 })));
 
 export interface AttentionPlan {
-  colour: { slot: ColourSlot; target: ColourKey; options: ColourKey[] };
-  letter: { afterScenarios: number; target: Letter; options: Letter[] };
+  /** The four answers of each topic question, in the order this participant sees them. */
+  after_block3: { options: string[] };
+  after_scenario3: { options: string[] };
   number: { list: NumberList; after: number; target: number; word: string };
 }
 
@@ -104,7 +112,7 @@ export interface AttentionAnswer {
   answer: string | number;
   correct: boolean;
   answeredAt: string;
-  /** From the check appearing to Continue (colour, letter); null for the feedback row, which is not timed. */
+  /** From the check appearing to Continue (the topic questions); null for the feedback row, which is not timed. */
   secondsToAnswer: number | null;
   /** How many times the pick changed before it was kept. */
   timesChanged: number;
@@ -121,9 +129,8 @@ export interface AttentionFile {
 /**
  * FNV-1a, 32-bit, then a finishing mix: the same on every machine. The mix matters. FNV-1a's lowest bits barely
  * change between seeds that differ only in their last characters, and "one of four" reads exactly those bits:
- * without the mix, 4,000 pretend participants were only ever asked for two of the four colours, letters and
- * numbers (validate:attention T1 caught it). The mix is MurmurHash3's finaliser, which spreads every input bit
- * over every output bit.
+ * without the mix, 4,000 pretend participants were only ever given two of four choices (validate:attention T1 caught
+ * it). The mix is MurmurHash3's finaliser, which spreads every input bit over every output bit.
  */
 function fnv1a(text: string): number {
   let h = 0x811c9dc5;
@@ -147,21 +154,15 @@ function shuffled<T extends string>(items: readonly T[], seed: string, what: str
   return [...items].sort((a, b) => fnv1a(`${seed}#${what}#${a}`) - fnv1a(`${seed}#${what}#${b}`) || (a < b ? -1 : 1));
 }
 
+const answersOf = (id: TopicCheckId) => [TOPIC_CHECKS[id].right, ...TOPIC_CHECKS[id].wrong];
+
 /** The whole plan from one seed: pure, so the checks can hold it to its rules over thousands of seeds. */
 export function planAttentionChecks(seed: string): AttentionPlan {
   const slot = pick(NUMBER_SLOTS, seed, "number-place");
   const target = pick(NUMBER_TARGETS, seed, "number");
   return {
-    colour: {
-      slot: pick(COLOUR_SLOTS, seed, "colour-place"),
-      target: pick(COLOURS.map((c) => c.key), seed, "colour"),
-      options: shuffled(COLOURS.map((c) => c.key), seed, "colour-order"),
-    },
-    letter: {
-      afterScenarios: pick(LETTER_SLOTS, seed, "letter-place"),
-      target: pick(LETTERS, seed, "letter"),
-      options: shuffled(LETTERS, seed, "letter-order"),
-    },
+    after_block3: { options: shuffled(answersOf("after_block3"), seed, "block3-order") },
+    after_scenario3: { options: shuffled(answersOf("after_scenario3"), seed, "scenario3-order") },
     number: { list: slot.list, after: slot.after, target, word: NUMBER_WORDS[target] },
   };
 }
@@ -180,7 +181,8 @@ function currentOwner(): string {
 
 function isFile(value: unknown): value is AttentionFile {
   const f = value as AttentionFile | null;
-  return !!f && typeof f === "object" && !!f.plan?.colour && !!f.plan?.letter && !!f.plan?.number
+  return !!f && typeof f === "object" && f.version === ATTENTION_VERSION
+    && Array.isArray(f.plan?.after_block3?.options) && Array.isArray(f.plan?.after_scenario3?.options) && !!f.plan?.number
     && typeof f.answers === "object" && f.answers !== null;
 }
 
@@ -207,9 +209,9 @@ export function isAttentionAnswered(id: AttentionCheckId): boolean {
   return !!readAttention().answers[id];
 }
 
-/** What each check asked for, as the answer that counts as right. */
+/** The answer that counts as right for each check. */
 export function attentionTarget(plan: AttentionPlan, id: AttentionCheckId): string | number {
-  return id === "colour" ? plan.colour.target : id === "letter" ? plan.letter.target : plan.number.target;
+  return id === "number" ? plan.number.target : TOPIC_CHECKS[id].right;
 }
 
 /** Saves one answer (the kept pick). Right or wrong is worked out here and never shown. */
@@ -237,10 +239,15 @@ export interface AttentionScore {
   misses: string[];
 }
 
+const CHECK_WORDS: Record<AttentionCheckId, string> = {
+  after_block3: "the check after Block 3",
+  after_scenario3: "the check after scenario 3",
+  number: "the feedback check",
+};
+
+/** What the check asked, in words, for the database and the pay reasons. */
 function asked(plan: AttentionPlan, id: AttentionCheckId): string {
-  if (id === "colour") return COLOURS.find((c) => c.key === plan.colour.target)?.name.toLowerCase() ?? plan.colour.target;
-  if (id === "letter") return plan.letter.target;
-  return plan.number.word;
+  return id === "number" ? `pick the number ${plan.number.word}` : TOPIC_CHECKS[id].question;
 }
 
 /** The verdict over all three. A check never reached counts as not passed. */
@@ -252,13 +259,13 @@ export function scoreAttention(raw: unknown): AttentionScore | null {
   for (const id of ATTENTION_CHECK_IDS) {
     const a = raw.answers[id];
     if (!a) {
-      misses.push(`did not answer the ${id} check`);
+      misses.push(`did not answer ${CHECK_WORDS[id]}`);
       continue;
     }
     answered += 1;
     const right = a.answer === attentionTarget(raw.plan, id);
     if (right) passed += 1;
-    else misses.push(`missed the ${id} check (asked for ${asked(raw.plan, id)}, picked ${a.answer})`);
+    else misses.push(`missed ${CHECK_WORDS[id]} (the right answer was "${attentionTarget(raw.plan, id)}", picked "${a.answer}")`);
   }
   return { passedAll: passed === ATTENTION_CHECK_IDS.length, passedCount: passed, answeredCount: answered, misses };
 }
@@ -274,7 +281,7 @@ export function buildAttentionSection(raw: unknown): Record<string, unknown> | n
     return {
       check: id,
       where_it_was_shown: where,
-      asked_for: asked(plan, id),
+      asked: asked(plan, id),
       right_answer: attentionTarget(plan, id),
       options_in_the_order_shown: options,
       answer: a?.answer ?? null,
@@ -292,18 +299,18 @@ export function buildAttentionSection(raw: unknown): Record<string, unknown> | n
     checks_asked: ATTENTION_CHECK_IDS.length,
     misses: score.misses,
     checks: [
-      row("colour", `its own screen ${COLOUR_SLOT_WORDS[plan.colour.slot]}`, plan.colour.options),
-      row("letter", `its own screen after scenario ${plan.letter.afterScenarios}, before scenario ${plan.letter.afterScenarios + 1}`,
-        plan.letter.options),
+      row("after_block3", TOPIC_CHECKS.after_block3.where, plan.after_block3.options),
+      row("after_scenario3", TOPIC_CHECKS.after_scenario3.where, plan.after_scenario3.options),
       row("number", `the feedback, in ${NUMBER_LIST_WORDS[plan.number.list]}, after rating row ${plan.number.after}`,
         [1, 2, 3, 4, 5, 6, 7]),
     ],
     how_to_read:
-      "Three very simple checks, each drawn at random for this participant: tap a named colour (after one of the four "
-      + "first parts), tap a letter (between two scenarios), and 'Pick the number ...' on the 1-7 scale in the feedback. "
-      + "passed_all is what the gift card needs (quality.passed_all_attention_checks); a check never reached counts as "
-      + "missed. Participants were never told whether they were right. A miss affects the gift card only: all completed "
-      + "sessions are analysed (the researcher, 30 September 2026).",
+      "Three very simple checks: what the part just finished was about (right after Block 3, the AI workforce), what the "
+      + "scenario just finished was about (right after scenario 3, the cancer treatment), each with four answers in a "
+      + "random order, and 'Pick the number ...' on the 1-7 scale at a random place in the feedback. passed_all is what "
+      + "the gift card needs (quality.passed_all_attention_checks); a check never reached counts as missed. Participants "
+      + "were never told whether they were right. A miss affects the gift card only: all completed sessions are analysed "
+      + "(the researcher, 30 September 2026).",
   };
 }
 

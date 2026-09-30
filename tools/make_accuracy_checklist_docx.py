@@ -139,7 +139,7 @@ SECTIONS = [
          "times on purpose; the rule still holds for any older ledger.", ["dbshape"], "(D1-D6)"),
         ("The gift card needs all three attention checks right.",
          "On top of the old rules (finished, 35 working minutes, not the same answer everywhere, fewer than 3 rushed "
-         "blocks). Each miss, and a check never reached, gives its own reason in quality.reasons; the colour check's "
+         "blocks). Each miss, and a check never reached, gives its own reason in quality.reasons; the check's own "
          "screen is never a rushed block.", ["attention"], "(T4)"),
     ]),
     ("2. Saving the data and moving between computers", [
@@ -309,16 +309,17 @@ SECTIONS = [
          "No type errors and no lint errors.", ["typecheck", "lint"], ""),
     ]),
     ("6b. The attention checks, and the two deleted pages", [
-        ("Three very simple attention checks, drawn at random for each person.",
-         "Tap a named colour (after one of the four first parts), tap a letter (between two scenarios), and \"Pick the "
-         "number four\" in the feedback (two, three, four or five). Over 4,000 pretend people every colour, letter, number, "
-         "place and button order comes up about 1 time in 4.", ["attention"], "(T1)"),
+        ("Three very simple attention checks, in your approved words.",
+         "\"What was the part you just finished about?\" right after Block 3, \"What was the scenario you just finished "
+         "about?\" right after scenario 3 (each: the right topic and three answers from outside the study, in a random "
+         "order), and \"Pick the number four\" in the feedback (two to five, random place). The words are held to the "
+         "approved text; over 4,000 pretend people each answer order and number comes up about equally.", ["attention"], "(T1)"),
         ("The same person always meets the same checks.",
          "Drawn once and saved; a refresh or another computer shows the same check in the same place, an answered one is "
          "never asked again, and a second person on the same computer gets their own.", ["attention"], "(T2)"),
         ("Right means exactly what was asked, and nobody is told.",
-         "The screens say it is an attention check, never say right or wrong, and let any pick continue; each colour "
-         "shows its name (fair to colour-blind people). Checked live in the browser, on a computer and a phone.",
+         "The screens say it is an attention check, never say right or wrong, and let any pick continue; words only, so "
+         "fair to colour-blind people. Checked live in the browser, on a computer and a phone.",
          ["attention"], "(T3, T8)"),
         ("The feedback check never touches a score.",
          "Its answer is saved with the checks, never in the feedback record, so no well-being score, tool rating or "

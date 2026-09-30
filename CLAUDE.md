@@ -567,12 +567,20 @@ getting their own; all checks right needed for compensation "among other existin
 but the insights and post-Block-4 pages ("delete them entirely ... if all the data are safe"), Q2 yes, Q3 A, Q4 yes.
 **Participants see it** (HOW_TO_ANALYZE 4.9). No score changed.
 
-- **Three checks, drawn at random per participant** (`attentionChecks.ts`, `planAttentionChecks`): a COLOUR on its own
-  screen (`AttentionCheckScreen.tsx`, flow stage `attention_check`) after Block 1, 2, 3 or 4; a LETTER on its own screen
-  between scenarios (after scenario 2, 3, 4 or 5; it restarts the next scenario's clock and telemetry); a NUMBER row in
-  the feedback, after any row of "The tools & the experiment design" or "How this experience was for you" (30 places,
-  never first in a section). Four options each, buttons in a random order, each colour button shows its name (fair to
-  colour-blind people). The screens say it is an attention check, never say right or wrong, and let any pick continue.
+- **Three checks** (`attentionChecks.ts`; revised 30 September 2026, the researcher: a colour question is unfair to
+  colour-blind people and "tap the letter K" shows somebody is there, not that they read; of eight drafted topic
+  questions he approved #3 and #6 only): a question about the PART JUST FINISHED on its own screen right after Block 3
+  (`AttentionCheckScreen.tsx`, flow stage `attention_check`: "What was the part you just finished about?", right answer
+  "Deciding whether to approve an AI system that affects workers' jobs"); the same kind of question right after scenario
+  3, before scenario 4 opens ("What was the scenario you just finished about?", "Sharing out a limited cancer
+  treatment"; it restarts scenario 4's clock and telemetry); and the NUMBER row in the feedback, unchanged (random place
+  among "The tools & the experiment design" and "How this experience was for you", 30 places, never first in a section;
+  random number two to five). Each topic question has the right answer and three from outside the study, written the
+  same way, in a random order per participant; the words live in `TOPIC_CHECKS` and T1 holds them to the approved text.
+  Their places are fixed (each asks about one part). Words only, so fair to colour-blind people. The screens say it is
+  an attention check, never say right or wrong, and let any pick continue. `ATTENTION_VERSION` "2026-09-30-topics"; a
+  file saved under another version is drawn again. (The first version, 29 September: a named colour after Block 1-4 and
+  a letter after scenario 2-5, each drawn at random.)
 - **Drawn once and saved** in `vrds_attention_checks` (with the owner email), which travels between browsers
   (RESUME_FILES): the same checks in the same places after a refresh or on another device; an answered check is never
   asked again; a second person on the same computer gets their own. The draw hashes the session id and the email;
@@ -581,7 +589,7 @@ but the insights and post-Block-4 pages ("delete them entirely ... if all the da
 - **The feedback row's answer never enters the feedback record** (saved to the attention file on submit), so no
   well-being score, tool rating or straightlining flag can move. The dev fill button answers it correctly.
 - **The gift card** (`quality`, `buildQuality`): `compensation_eligible` now also needs `passed_all_attention_checks`;
-  each miss, a check never reached, or no file gives its own reason. The colour check's stage is never a rushed block.
+  each miss, a check never reached, or no file gives its own reason. The check's own stage is never a rushed block.
   **Stored:** `analysis.attention_checks` (every check: where, asked for, button order, answer, right or wrong, seconds,
   changes), `quality.attention_checks_passed` / `passed_all_attention_checks`, a copy in `major_info_and_scores`, and
   (Q4) `analysis.feedback_answer_patterns` (longest run of one answer, share of steps of exactly one; for the analysis
@@ -602,10 +610,11 @@ but the insights and post-Block-4 pages ("delete them entirely ... if all the da
   the three completion screens.
 - **Checked:** `npm run validate:attention` (T1-T8 the checks, P1-P2 the deleted pages; in the chain before
   `validate:position`); 13 deliberate breaks, 13 caught (two gates were first too weak and were strengthened). Live in
-  the browser: pretend Blocks 1-3 answers, Block 4 clicked through, the three files and the participant record written,
-  the colour check after Block 4 (answer saved with its seconds and one change), on to "The main study starts now"; the
-  letter check before scenario 3 (a wrong pick saved, nothing said, not asked again after a refresh); the feedback row
-  after the third tool row, the record without it; a phone layout without sideways scrolling.
+  the browser: pretend Blocks 1-3 answers, Block 4 clicked through, the three files and the participant record written;
+  the feedback row after the third tool row, the record without it; a phone layout without sideways scrolling. After the
+  30 September revision: 8 more breaks, 8 caught (T2 was tightened so only the version stamp could catch an old file);
+  live, the Block 3 question led on to Block 4 with its answer saved, and the scenario-3 question took a wrong pick in
+  silence and opened scenario 4.
 
 ## The value line moves in scenarios 5 and 6, since 30 September 2026
 
@@ -1067,7 +1076,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8); since 29 September 2026 Stability_all: its decisions' part equals Stability's swaps (A9), which steps count (A10), a best-fit picker 100 and not measured, the kinds in order (A11), the top-value choices recounted by hand (A12). Prints the echo and the screen-against-yardstick shares, and Stability / Stability_all / top-value choices by kind |
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12) |
 | `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9) |
-| `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): every colour, letter, number, place and button order drawn about equally over 4,000 pretend participants, the number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
+| `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

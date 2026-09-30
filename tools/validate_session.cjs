@@ -358,8 +358,9 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     /* Every block saves what the next part needs BEFORE its pause begins. */
     const product = flow.slice(flow.indexOf("const handleProductContinue"), flow.indexOf("const handleBlock4Continue"));
     const block4 = flow.slice(flow.indexOf("const handleBlock4Continue"), flow.indexOf("const handleStartBlock5Scenarios"));
-    if (product.indexOf("deriveAndSaveInsights(") < 0 || product.indexOf("deriveAndSaveInsights(") > product.indexOf("goOnAfter(")) why.push("Block 3's files are not saved before its pause");
-    if (block4.indexOf("localStorage.setItem(STORAGE_KEY_BLOCK4") < 0 || block4.indexOf("saveFinalAnalysis(") > block4.indexOf("goOnAfter(")) why.push("Block 4's files are not saved before its pause");
+    if (product.indexOf("deriveAndSaveInsights(") < 0 || product.indexOf("goOnAfterBlock3()") < 0 || product.indexOf("deriveAndSaveInsights(") > product.indexOf("goOnAfterBlock3()")) why.push("Block 3's files are not saved before its pause");
+    if (block4.indexOf("localStorage.setItem(STORAGE_KEY_BLOCK4") < 0 || block4.indexOf('setStage("transition_block4_block5")') < 0
+        || block4.indexOf("saveFinalAnalysis(") > block4.indexOf('setStage("transition_block4_block5")')) why.push("Block 4's files are not saved before its pause");
     const b5 = src("src/experiment/Block5PublicEmergencySimulation.tsx");
     const iSave = b5.indexOf("localStorage.setItem(BLOCK5_RESULTS_KEY, JSON.stringify(finalResults));"), iDone = b5.indexOf("onComplete(finalResults);");
     if (!(iSave > 0 && iDone > iSave)) why.push("Block 5's results are not saved before its pause");
