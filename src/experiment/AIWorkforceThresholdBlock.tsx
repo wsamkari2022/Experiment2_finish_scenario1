@@ -849,6 +849,10 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue, owner }: 
             current={currentSubcontextIndex}
           />
 
+          {/* The title, the "Scenario N of 6" tag and the scenario panel sit close together (the researcher, 30 September
+              2026: "remove any extra spaces between the tags and the text"): 12px apart, like the title and the tag,
+              instead of the 32px between the page's other parts plus the panel's own top padding. */}
+          <VStack gap="3" align="stretch">
           <VStack gap="3" textAlign="center">
             <Heading
               size="xl"
@@ -894,7 +898,9 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue, owner }: 
             borderWidth="1px"
             borderColor="border.subtle"
             rounded="xl"
-            p={{ base: "5", md: "6" }}
+            px={{ base: "5", md: "6" }}
+            pt="3"
+            pb={{ base: "5", md: "6" }}
             minH="220px"
             key={`${state.currentGroupTypeIndex}-${state.currentGroupSizeIndex}-${transitionMessage ?? ""}`}
             animationName="fade-in"
@@ -929,6 +935,7 @@ export function AIWorkforceThresholdBlock({ participantId, onContinue, owner }: 
               </Box>
             )}
           </Box>
+          </VStack>
 
           <SimpleGrid columns={{ base: 1, md: 2 }} gap="4">
             {[

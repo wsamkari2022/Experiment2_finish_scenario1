@@ -324,6 +324,49 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
       : `the country list (${C.COUNTRIES.length} places, codes unique): "Sa" lists every Sa name first then El Salvador and the other Sa words, other names and accents work (uk, usa, ksa, turkey, sao, cote d, holland ...), the typed letters are the bold part; saved with age and gender, never erased by a resume that does not know it`);
   }
 
+  /* C10 — A REFRESH DURING THE PAUSE AFTER A BLOCK (30 September 2026, the checklist's "A refresh on the Block 2 or
+     Block 3 finished screen"). A pause is saved as the part it leads to the moment it starts, so a refresh there lands on
+     the next part, never back on the finished block (whose progress is already gone). */
+  {
+    const why = [];
+    const F = B("flowStages.js");
+    const flow = src("src/experiment/ExperimentFlow.tsx").replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const union = (flow.match(/type Stage =([\s\S]*?);/) ?? ["", ""])[1];
+    const stages = [...union.matchAll(/"([a-z0-9_]+)"/g)].map((m) => m[1]);
+    const listed = (flow.match(/const STAGES_WITH_TRANSITION: Stage\[\] = \[([\s\S]*?)\];/) ?? ["", ""])[1];
+    const transitions = [...listed.matchAll(/"([a-z0-9_]+)"/g)].map((m) => m[1]);
+    if (transitions.sort().join() !== Object.keys(F.TRANSITION_TARGET).sort().join()) why.push("the pauses listed in the flow and in flowStages.ts differ");
+    /* The route, written out here on its own, so a pause pointing at the wrong part (its own block, say) is caught. */
+    const ROUTE = { transition_money_trolley: "trolley", transition_trolley_product: "product", transition_product_block4: "block4",
+      transition_block4_block5: "block5_intro", transition_block5_summary: "block5_summary" };
+    if (JSON.stringify(F.TRANSITION_TARGET) !== JSON.stringify(ROUTE)) why.push("a pause does not lead to the part that follows it");
+    for (const [pause, target] of Object.entries(F.TRANSITION_TARGET)) {
+      if (!stages.includes(pause) || !stages.includes(target)) why.push(`${pause} -> ${target}: not a stage of the flow`);
+      if (F.isTransition(target)) why.push(`${pause} leads to another pause`);
+      if (F.stageToSave(pause) !== target) why.push(`${pause} is not saved as ${target}`);
+    }
+    for (const s of stages.filter((x) => !F.isTransition(x))) if (F.stageToSave(s) !== s) why.push(`${s} is not saved as itself`);
+    if (F.isTransition("toString") || F.isTransition(null) || F.isTransition("")) why.push("isTransition accepts something that is not a pause");
+    /* The flow: the saved stage is stageToSave(stage), never skipped for a pause; the same save not repeated for the same
+       participant; the auto-advance and the restore read the same targets. */
+    const effect = flow.slice(flow.indexOf("const lastSaved = useRef"), flow.indexOf("}, [stage, pendingEmail]);"));
+    if (!effect.includes("const saveAs = stageToSave(stage) as Stage;") || !effect.includes("localStorage.setItem(STORAGE_KEY_STAGE, saveAs);")
+        || !effect.includes("saveProgress(pendingEmail, saveAs);") || /STAGES_WITH_TRANSITION/.test(effect)) why.push("the flow does not save a pause as the part it leads to");
+    if (!effect.includes('const key = `${saveAs}|${pendingEmail ?? ""}`;')) why.push("the repeat-save guard ignores whose record it is");
+    if (!flow.includes("const next = isTransition(stage) ? (TRANSITION_TARGET[stage] as Stage) : undefined;")) why.push("the auto-advance does not read the same targets");
+    if (!flow.includes("if (isTransition(saved)) return stageToSave(saved) as Stage;") || /return "money";\s*\}\s*if \(DELETED_STAGE_NEXT/.test(flow)) why.push("a restored pause does not lead to the next part");
+    /* Every block saves what the next part needs BEFORE its pause begins. */
+    const product = flow.slice(flow.indexOf("const handleProductContinue"), flow.indexOf("const handleBlock4Continue"));
+    const block4 = flow.slice(flow.indexOf("const handleBlock4Continue"), flow.indexOf("const handleStartBlock5Scenarios"));
+    if (product.indexOf("deriveAndSaveInsights(") < 0 || product.indexOf("deriveAndSaveInsights(") > product.indexOf("goOnAfter(")) why.push("Block 3's files are not saved before its pause");
+    if (block4.indexOf("localStorage.setItem(STORAGE_KEY_BLOCK4") < 0 || block4.indexOf("saveFinalAnalysis(") > block4.indexOf("goOnAfter(")) why.push("Block 4's files are not saved before its pause");
+    const b5 = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const iSave = b5.indexOf("localStorage.setItem(BLOCK5_RESULTS_KEY, JSON.stringify(finalResults));"), iDone = b5.indexOf("onComplete(finalResults);");
+    if (!(iSave > 0 && iDone > iSave)) why.push("Block 5's results are not saved before its pause");
+    gate("C10", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : `every pause (${Object.keys(F.TRANSITION_TARGET).length}) is saved as the part it leads to the moment it starts, in the browser and on the server, and a restored pause leads there too; every block saves what the next part needs first; the same stage is not saved twice`);
+  }
+
   console.log("");
   console.log("==============================================================================");
   if (fails) {

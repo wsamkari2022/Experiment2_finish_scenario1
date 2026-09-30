@@ -34,6 +34,7 @@ import type { Block4CompletionPayload } from "./AdaptiveStakeholderReflectionBlo
 import { deriveAndSaveInsights, saveFinalAnalysis, type InsightsPayload } from "./interBlockData";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
 import { readAttention, type ColourSlot } from "./attentionChecks";
+import { TRANSITION_TARGET, isTransition, stageToSave } from "./flowStages";
 import { Block5IntroPage } from "./Block5IntroPage";
 import { Block5PublicEmergencySimulation } from "./Block5PublicEmergencySimulation";
 import { Block5SimulationSummaryPage } from "./Block5SimulationSummaryPage";
@@ -182,8 +183,9 @@ function getRestoredStage(): Stage {
       if (localStorage.getItem(STORAGE_KEY_CONSENT)) return "demographics";
       return "start";
     }
-    // Never restore to a transition stage — roll back one step
-    if (STAGES_WITH_TRANSITION.includes(saved as Stage)) return "money";
+    /* A pause is never restored as itself: it leads to the part after it (flowStages.ts). This used to send the
+       participant back to Block 1; since 30 September 2026 a pause is saved as that next part anyway. */
+    if (isTransition(saved)) return stageToSave(saved) as Stage;
     if (DELETED_STAGE_NEXT[saved]) return DELETED_STAGE_NEXT[saved];
     return saved ?? "money";
   } catch {
@@ -314,21 +316,30 @@ export function ExperimentFlow() {
     readJson<Block5Results>(BLOCK5_RESULTS_KEY),
   );
 
-  // Persist stage changes (skip transition stages so a refresh never lands on a spinner)
+  /*
+   * Persist stage changes. A PAUSE IS SAVED AS THE PART IT LEADS TO (since 30 September 2026; flowStages.ts): the flow
+   * used to save nothing for a pause, so during the 0.9 s after a block finished the saved stage still named that
+   * block, whose progress was already deleted, and a refresh then restarted it at its first question. The same stage is
+   * not saved twice in a row (the pause and the part after it save the same thing).
+   */
+  const lastSaved = useRef<string | null>(null);
   useEffect(() => {
-    if (STAGES_WITH_TRANSITION.includes(stage)) return;
+    const saveAs = stageToSave(stage) as Stage;
+    const key = `${saveAs}|${pendingEmail ?? ""}`;
+    if (lastSaved.current === key) return;
+    lastSaved.current = key;
     try {
-      localStorage.setItem(STORAGE_KEY_STAGE, stage);
+      localStorage.setItem(STORAGE_KEY_STAGE, saveAs);
     } catch {
       // ignore
     }
     /* Say so out loud, for the parts of the page that live ABOVE the flow and cannot be handed
        this state - today, the light/dark toggle, which stops asking for attention once the
        participant reaches Block 5. See stageSignal.ts. */
-    announceStage(stage);
+    announceStage(saveAs);
     /* Keep this login's row current, so a run abandoned mid-study still records where it got
        to and how long the sitting lasted. See sessionLog.ts. */
-    touchSession(stage);
+    touchSession(saveAs);
     /*
      * Mirror the stopping point into the participant directory as well.
      *
@@ -338,10 +349,10 @@ export function ExperimentFlow() {
      * what makes the resume accurate rather than approximate — a returning participant lands on
      * the screen they left, not back at the first block.
      */
-    if (pendingEmail && stage !== "start" && stage !== "consent" && stage !== "demographics") {
+    if (pendingEmail && saveAs !== "start" && saveAs !== "consent" && saveAs !== "demographics") {
       /* After every page: is this browser still the one holding the participant's record? */
       void checkActiveBrowser(pendingEmail);
-      saveProgress(pendingEmail, stage);
+      saveProgress(pendingEmail, saveAs);
       /*
        * And push whatever the blocks have written since the last screen.
        *
@@ -514,16 +525,9 @@ export function ExperimentFlow() {
     setStage("block5_summary");
   }, []);
 
-  // Auto-advance from each transition stage to its target stage after TRANSITION_MS.
+  // Auto-advance from each transition stage to its target stage after TRANSITION_MS (the targets: flowStages.ts).
   useEffect(() => {
-    const transitions: Partial<Record<Stage, Stage>> = {
-      transition_money_trolley: "trolley",
-      transition_trolley_product: "product",
-      transition_product_block4: "block4",
-      transition_block4_block5: "block5_intro",
-      transition_block5_summary: "block5_summary",
-    };
-    const next = transitions[stage];
+    const next = isTransition(stage) ? (TRANSITION_TARGET[stage] as Stage) : undefined;
     if (next) {
       const timer = setTimeout(() => setStage(next), TRANSITION_MS);
       return () => clearTimeout(timer);

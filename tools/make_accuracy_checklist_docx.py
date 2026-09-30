@@ -143,6 +143,10 @@ SECTIONS = [
          "screen is never a rushed block.", ["attention"], "(T4)"),
     ]),
     ("2. Saving the data and moving between computers", [
+        ("A refresh in the pause after a block never restarts that block.",
+         "The pause is saved as the part it leads to the moment it starts, in the browser and on the server, so a refresh, "
+         "a closed tab or a crash there opens the next part. This covers every block, Block 5 included. Tested live after "
+         "Block 4.", ["session"], "(C10)"),
         ("Nothing is lost when the server is down.",
          "Every answer is saved in the browser first and sent afterwards, in order. A write the server refuses is set "
          "aside and logged instead of blocking everything behind it, and every section the browser sends is one the "
@@ -378,10 +382,6 @@ OPEN = [
     ("The one-browser rule is only as strong as the email-and-age check",
      "Anyone who knows a participant's email and age can take their record, exactly as they could already continue "
      "their study. It stops accidents and casual misuse, not a determined attacker; there are no passwords.", "Known"),
-    ("A refresh on the Block 2 or Block 3 finished screen",
-     "Each block removes its progress when it finishes and shows a finished screen before moving on. A refresh on that "
-     "screen starts the block again (its results are already saved and would be answered again). Older than this work; "
-     "rare.", "Your choice"),
     ("Decisions still open (for you and your advisor)",
      "A3 (the card order read as a recommendation), A5 (your values drawn over the options), A9 (your value numbers on "
      "screen while choosing), B6 and E7 (difference scores against level scores), C2 and C8 (the thresholds' "
