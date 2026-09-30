@@ -65,6 +65,7 @@ import {
   BLOCKS_1_TO_4_KEYS,
   buildMcfSection,
   buildVciAllSection,
+  buildValueProfileByScenario,
   buildStabilityAllSection,
   buildTopValueChoicesSection,
   buildProfileChange,
@@ -697,6 +698,11 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
          (since 28 September 2026). See buildVciAllSection. */
       const vciAllSection = buildVciAllSection(translated);
       if (vciAllSection) sendOrQueue({ op: "saveSection", path: "analysis.vci_all", data: vciAllSection });
+
+      /* The profile after every scenario, tracked like VCI_all, in one place (since 30 September 2026, the
+         researcher's request). Database only. See buildValueProfileByScenario. */
+      const valueProfileSection = buildValueProfileByScenario(translated);
+      if (valueProfileSection) sendOrQueue({ op: "saveSection", path: "analysis.value_profile_by_scenario", data: valueProfileSection });
 
       /* Stability_all with every step, and the top-value choices (since 29 September 2026). */
       const stabilityAllSection = buildStabilityAllSection(translated);

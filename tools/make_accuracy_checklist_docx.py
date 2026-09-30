@@ -259,6 +259,10 @@ SECTIONS = [
         ("major_info_and_scores is an exact copy.",
          "Each line is made by the same code as the section it comes from, and the check compares every line with its "
          "source on every build.", ["dbshape"], "(D49)"),
+        ("The profile after every scenario is stored in one place.",
+         "analysis.value_profile_by_scenario: all seven values after each Block 5 scenario, tracked like VCI_all, with the "
+         "order of the four and what moved them; built from what was already saved, with a self-check. The study's own "
+         "list is kept as study_profile_by_scenario.", ["dbshape"], "(D68)"),
         ("The analysis sections check themselves.",
          "The MPF section recomputes scenario 6 and must match what was shown; VCI_all rebuilds every running fit; the "
          "card order is rebuilt from its inputs.", ["dbshape"], "(D27, D53, D65)"),

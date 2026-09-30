@@ -969,7 +969,8 @@ for (const [who, block5] of PEOPLE) {
 
   for (const [, block5] of PEOPLE) {
     const major = db.buildMajorScores(block5, timings, ledger, { dropped: 0, sessions: [] }, null);
-    const list = major.profile_by_scenario;
+    /* The STUDY's own four values per scenario (renamed from profile_by_scenario on 30 September 2026). */
+    const list = major.study_profile_by_scenario;
     if (!Array.isArray(list) || list.length !== block5.scenarioResults.length) { shapeRight = false; continue; }
 
     list.forEach((row, i) => {
@@ -1026,7 +1027,7 @@ for (const [who, block5] of PEOPLE) {
 
   const ok = shapeRight && mathRight && frozenRight && stillRight;
   gate("D51", ok,
-    ok ? `profile_by_scenario chains step to step, and the prediction test moves nothing  (`
+    ok ? `study_profile_by_scenario chains step to step, and the prediction test moves nothing  (`
          + `${rows} rows, worst arithmetic gap ${worst.toFixed(2)})`
        : `the per-scenario profile list is wrong: ${why.slice(0, 3).join(" | ")
           }${stillRight ? "" : "  <- a scenario that must not move the profile moved it"}`);
@@ -1323,9 +1324,9 @@ for (const [who, block5] of PEOPLE) {
     totalMs: 600000, byStage: { block5: 600000 }, sittings: 2, longestIdleMs: 0,
     firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: false, owner: "x@y.z",
   }, { dropped: 0, sessions: [] }, null);
-  const row5 = major.profile_by_scenario[i5];
+  const row5 = major.study_profile_by_scenario[i5];
   if (!/scenario 4 opened with/.test(row5.shown_and_scored_on)) why.push("the wish's profile row does not say it was shown on scenario 4's values");
-  if (JSON.stringify(row5.profile_it_was_shown_and_scored_on) !== JSON.stringify(major.profile_by_scenario[i4].profile_when_the_scenario_opened)) {
+  if (JSON.stringify(row5.profile_it_was_shown_and_scored_on) !== JSON.stringify(major.study_profile_by_scenario[i4].profile_when_the_scenario_opened)) {
     why.push("the wish was not shown on the values scenario 4 opened with");
   }
   if (JSON.stringify(major.vci.what_the_wish_changed_by_value) !== JSON.stringify(dvD.wish_minus_decision_by_value)) why.push("major_info_and_scores does not copy the wish's reading");
@@ -1752,6 +1753,94 @@ for (const [who, block5] of PEOPLE) {
     why.length === 0
       ? "analysis.results_page: the first and last button, how often they went to the feedback, every move with its time, an unknown or old chart-page button dropped, no chart fields, sent and carried to another machine"
       : `analysis.results_page is wrong: ${why.slice(0, 3).join(" | ")}`);
+}
+
+/* D68 - THE PROFILE AFTER EVERY SCENARIO, IN ONE PLACE (30 September 2026, the researcher's "Q1-A, Q2-yes"). The
+   values VCI_all tracks, all seven, per scenario: the study's own values through scenario 4, the saved running values
+   in 5 and 6, the other three from the study's snapshots, chained step to step, with the order of the four and what
+   moved them. Database only: checked here against the record itself, and against the major copy. */
+{
+  const why = [];
+  const P4 = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+  const O3 = ["directnessSensitivity", "contextSensitivity", "stakeholderPerspectiveShiftSensitivity"];
+  const r1 = (x) => Math.round(x * 10) / 10;
+  let moved56 = 0, still56 = 0, rowsSeen = 0;
+  for (const [who, block5] of PEOPLE) {
+    const sec = db.buildValueProfileByScenario(block5);
+    const res = block5.scenarioResults;
+    if (!sec || sec.by_scenario.length !== res.length) { why.push(`${who}: no table, or not one row per scenario`); continue; }
+    if (!sec.self_check.agrees || sec.self_check.saved_rows_compared_with_rebuilt !== res.length) why.push(`${who}: the self-check does not agree`);
+    const orig = Object.fromEntries([...P4, ...O3].map((k) => [k, r1(block5.originalProfile.dimensions.find((d) => d.key === k).score)]));
+    if (P4.concat(O3).some((k) => sec.before_block5[k] !== orig[k])) why.push(`${who}: before_block5 is not the values brought in`);
+    let prev = sec.before_block5;
+    sec.by_scenario.forEach((row, i) => {
+      rowsSeen += 1;
+      const r = res[i];
+      if (JSON.stringify(row.values_when_opened) !== JSON.stringify(prev)) why.push(`${who} S${i + 1}: does not open where the last step closed`);
+      for (const k of P4) {
+        if (Math.abs(row.values_after[k] - r1(r.running.valuesAfter[k])) > 0.051) why.push(`${who} S${i + 1}: ${k} is not the saved running value`);
+        if (i < 4 && Math.abs(row.values_after[k] - r1(r.policySnapshotAfter[k])) > 0.051) why.push(`${who} S${i + 1}: a decision is not the study's own values`);
+      }
+      for (const k of O3) {
+        const snap = k === "stakeholderPerspectiveShiftSensitivity" ? r.stakeholderSnapshotAfter : r.framingSnapshotAfter?.[k];
+        if (typeof snap === "number" && Math.abs(row.values_after[k] - r1(snap)) > 0.051) why.push(`${who} S${i + 1}: ${k} is not the study's snapshot`);
+        if (i >= 4 && row.change[k] !== 0) why.push(`${who} S${i + 1}: the wish or the rule moved ${k}`);
+      }
+      for (const k of Object.keys(row.values_after)) if (Math.abs(row.change[k] - r1(row.values_after[k] - row.values_when_opened[k])) > 0.051) why.push(`${who} S${i + 1}: change is not after minus opened`);
+      /* The order of the four: highest first, ties share a rank. */
+      const ord = row.order_of_the_four_after;
+      if (ord.length !== 4 || ord.some((o) => o.score !== row.values_after[o.value]
+          || o.rank !== 1 + P4.filter((w) => row.values_after[w] > row.values_after[o.value]).length)
+          || ord.some((o, j) => j > 0 && ord[j - 1].score < o.score)) why.push(`${who} S${i + 1}: the order of the four is wrong`);
+      if (i >= 4) {
+        const anyMove = P4.some((k) => row.change[k] !== 0);
+        if (anyMove) moved56 += 1; else still56 += 1;
+        if (r.running.level === "aligned" && anyMove) why.push(`${who} S${i + 1}: the best fit moved the values`);
+        if (anyMove !== /was not your best fit/.test(row.what_moved_it)) why.push(`${who} S${i + 1}: what_moved_it does not match what happened`);
+        if (JSON.stringify(row.moves) !== JSON.stringify(r.running.moves ?? [])) why.push(`${who} S${i + 1}: the moves are not the running rule's`);
+      }
+      prev = row.values_after;
+    });
+    if (JSON.stringify(sec.after_all_six_scenarios) !== JSON.stringify(prev)) why.push(`${who}: after_all_six_scenarios is not the last step`);
+    /* The major copy, and the study's own list beside it. */
+    const major = db.buildMajorScores(block5, null, null, null, null);
+    if (JSON.stringify(major.profile_by_scenario) !== JSON.stringify(sec.by_scenario)) why.push(`${who}: major_info_and_scores.profile_by_scenario is not the table`);
+    if (JSON.stringify(major.profile_now) !== JSON.stringify(sec.after_all_six_scenarios)) why.push(`${who}: profile_now is not the last step`);
+    if (!Array.isArray(major.study_profile_by_scenario) || major.study_profile_by_scenario.length !== res.length) why.push(`${who}: the study's own list is gone`);
+    /* A record made before the running values: rebuilt from the record, the same table. */
+    const old = { ...block5, scenarioResults: res.map(({ running: _r, ...rest }) => rest) };
+    const o = db.buildValueProfileByScenario(old);
+    if (!o || JSON.stringify(o.by_scenario.map((row) => row.values_after)) !== JSON.stringify(sec.by_scenario.map((row) => row.values_after))
+        || !o.by_scenario.every((row) => /rebuilt/.test(row.source))) why.push(`${who}: an older record is not rebuilt to the same table`);
+  }
+  /* The other three must come from the study's own snapshots. The pretend people never move them, so a record where
+     a reflection in scenario 2 did (directness +20, context -20, stakeholder +25) is made by hand: from S2 on the table
+     must carry the moved numbers, and the wish and the rule must leave them there. */
+  {
+    const moved3 = JSON.parse(JSON.stringify(PEOPLE[0][1]));
+    const o3 = (k) => r1(moved3.originalProfile.dimensions.find((d) => d.key === k).score);
+    moved3.scenarioResults.forEach((r, i) => {
+      if (i < 1) return;
+      r.framingSnapshotAfter = { directnessSensitivity: o3("directnessSensitivity") + 20, contextSensitivity: o3("contextSensitivity") - 20 };
+      r.stakeholderSnapshotAfter = o3("stakeholderPerspectiveShiftSensitivity") + 25;
+    });
+    const t3 = db.buildValueProfileByScenario(moved3);
+    const rowAt = (i, k) => t3.by_scenario[i].values_after[k];
+    if (rowAt(0, "directnessSensitivity") !== o3("directnessSensitivity")
+        || [1, 2, 3, 4, 5].some((i) => rowAt(i, "directnessSensitivity") !== o3("directnessSensitivity") + 20
+          || rowAt(i, "contextSensitivity") !== o3("contextSensitivity") - 20
+          || rowAt(i, "stakeholderPerspectiveShiftSensitivity") !== o3("stakeholderPerspectiveShiftSensitivity") + 25)
+        || t3.by_scenario[1].change.directnessSensitivity !== 20) why.push("the other three are not read from the study's snapshots");
+  }
+  /* A wrong saved value must be caught by the self-check. */
+  const tampered = JSON.parse(JSON.stringify(PEOPLE[0][1]));
+  tampered.scenarioResults[4].running.valuesAfter.gainResponsivenessSensitivity += 7;
+  if (db.buildValueProfileByScenario(tampered).self_check.agrees) why.push("a changed saved value passes the self-check");
+  if (db.buildValueProfileByScenario({ scenarioResults: [] }) !== null) why.push("no scenarios should give no table");
+  if (moved56 === 0) why.push("no pretend wish or rule moved the values, so the gate proves little");
+  gate("D68", why.length === 0, why.length === 0
+    ? `analysis.value_profile_by_scenario: ${rowsSeen} rows, seven values each, chained step to step; the study's values through S4, the saved running values in S5 and S6 (${moved56} moved, ${still56} still), the other three never moved there; the order of the four, what moved it, the self-check, the major copy and profile_now; an older record rebuilt to the same table`
+    : `the per-scenario profile table is wrong: ${why.slice(0, 3).join(" | ")}`);
 }
 
 console.log("");

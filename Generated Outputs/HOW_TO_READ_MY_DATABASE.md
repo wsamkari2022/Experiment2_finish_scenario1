@@ -201,16 +201,18 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 | `total_time` | Active minutes, timed-stage minutes, per-stage minutes, longest idle |
 | `visits` | Number of visits, logins, browsers used, whether they ever restored from another device |
 | `alignment_by_scenario` | One row per scenario: what they chose and its alignment label · `alignment_counts` totals the four labels |
-| `profile_before_block5`, `profile_now`, `profile_after_block5`, `profile_change_during_block5` | The three profiles and the movement between the first and last |
+| `profile_before_block5`, `profile_now`, `profile_after_block5`, `profile_change_during_block5` | The three profiles and the movement between the first and last. Since 30 September 2026 `profile_now` is the last row of `profile_by_scenario` (all seven values, after scenario 6, the wish and the rule included); `profile_after_block5` is the STUDY's values, which the wish and the rule never move |
+| `profile_by_scenario` | **Since 30 September 2026:** the participant's full profile after every scenario, tracked like VCI_all. A copy of `analysis.value_profile_by_scenario.by_scenario` (section 6r) |
+| `study_profile_by_scenario` | The STUDY's own four values per scenario (opened on, closed on, the difference), flat in scenarios 5 and 6 by design. It was called `profile_by_scenario` until 30 September 2026 |
 | `feedback` | The feedback answers, grouped as they were asked, each with its question text |
 | `company_stance_in_scenario_4` | **Since 25 September 2026.** What they did with it: "Took the company's values", "Split the difference" or "Held your own values". A copy of `analysis.position_effect.company_stance` |
 | `company_value_shown_in_scenarios_4_and_5` | **Since 25 September 2026.** The value the company card put first, in the card's words (for example "reducing harm"). A copy of `analysis.position_effect.company_value_shown` |
 | `blocks_1_to_4` | **Since 24 September 2026.** How Blocks 1-4 were answered: `said_yes_at_the_first_step_everywhere`, `answered_very_fast`, the values the scoring could not measure, and the ties a coin decided. A copy of `analysis.blocks_1_to_4_checks` (section 6i), checked by gate D52 |
 
-> ⚠️ **`profile_now` is shorter than the other two.** It carries the four policy values only,
-> because only those are snapshotted after each scenario. Directness, context and stakeholder are
-> in `profile_before_block5` and `profile_after_block5`, and their movement is in
-> `profile_change_during_block5`. The field says this itself, in `why_profile_now_is_shorter`.
+> ⚠️ **Two profiles live here since 30 September 2026.** `profile_by_scenario` and `profile_now` follow the values
+> VCI_all tracks (moved by the wish and the rule too); `study_profile_by_scenario` and `profile_after_block5` follow the
+> study's own values (never moved by the wish or the rule). Never mix them. `profile_now` carries all seven values
+> (it carried the four policy values only before).
 
 > ⚠️ **It is a copy, so it duplicates data.** That was the request, and it is stated here so
 > nobody counts the same answer twice: never average across this field and its sources together.
@@ -823,7 +825,7 @@ than repeated on all six rows.
    to fall short of. For a quantity on one scale for everybody use
    `points_short_of_what_they_asked_for`, the raw shortfall Σ (u/100) × max(0, u − f), saved since
    24 September 2026. For an older row, rebuild it: `u` from
-   `major_info_and_scores.profile_by_scenario[i].profile_when_the_scenario_opened`, `f` from the
+   `major_info_and_scores.study_profile_by_scenario[i].profile_when_the_scenario_opened`, `f` from the
    option's fingerprint (`tools/export_block5_content.cjs`). Before that date the shortfall was not
    saved anywhere, although earlier versions of this file said it was.
 
@@ -1279,6 +1281,32 @@ cut-off must be fixed before the data is opened.
 
 ---
 
+## 6r. `analysis.value_profile_by_scenario` — the profile after every scenario, in one place
+
+Added **30 September 2026** (the researcher's request: "store the user profile after each scenario in block 5 in one
+place in the database"). Database only: nothing in the study or on screen changed. It holds the participant's profile
+(all seven values) after every Block 5 scenario, tracked the way VCI_all tracks it: the study's own values through
+scenario 4, then also moved by the wish (scenario 5) and the rule behind the veil (scenario 6). These are the values the
+charts show. Every number was already saved (`scenarioResults[i].running.valuesAfter` and the study's per-scenario
+snapshots); this gathers them.
+
+| Field | What it holds |
+|---|---|
+| `before_block5`, `order_of_the_four_before` | The seven values brought into Block 5, and the four policy values ranked |
+| `by_scenario[]` | One row per scenario: `values_when_opened`, `values_after` and `change` (seven values each), `order_of_the_four_after` (ranked, ties share a rank), `same_as_the_study_values`, `what_moved_it` in words, `moves` (for a decision the study's own moves, for the wish and the rule the running rule's), `source` (saved, or rebuilt for a record made before 28 September 2026) |
+| `after_all_six_scenarios`, `order_of_the_four_after_all_six`, `change_over_block5` | Where the six scenarios left the participant, and the change from before Block 5 |
+| `self_check` | Each saved running value against the same value rebuilt from the record, and each decision against the study's own snapshot; `agrees` must be true |
+| `not_the_same_as`, `value_names`, `how_to_read`, `rule_version` | What it is not, the names of the seven values, how to read it, the running rule's version |
+
+> Directness, context and stakeholder come from the study's own snapshots: the rule behind VCI_all moves only the four
+> policy values, so those three are the same in both profiles at every step and never move in scenarios 5 and 6.
+
+> **Not the same as `analysis.value_profile_after_block5`** (the study's values, never moved by the wish or the rule).
+> Example from a test run: after scenario 6 this table reads vulnerable 70, helped 75, harm 69, gain 72; the study's
+> values read vulnerable 100, helped 75, harm 49, gain 52.
+
+---
+
 ## 7. `feedback_answers` — and why it is readable
 
 **Where:** `blocks.feedback_answers.feedback.<section>.<code>` (the whole feedback record is stored, so the answers
@@ -1610,7 +1638,8 @@ db.participants.aggregate([
 
 The results page's "Your four values, before and after the scenarios" card, the thank-you page's radar and its value line end at
 the RUNNING values after scenario 6 (`blocks.block5_emergency_scenarios.scenarioResults[5].running.valuesAfter`; also
-`analysis.alignment_records` → `running_values_after`), which include what the wish and the rule moved. The database's
+`analysis.alignment_records` → `running_values_after`; since 30 September 2026 all in one place in
+`analysis.value_profile_by_scenario`, section 6r), which include what the wish and the rule moved. The database's
 `analysis.value_profile_after_block5` is the STUDY's values after scenario 4, which the wish and the rule never move. Do not
 read one as the other; when describing what participants were shown, use the running values.
 

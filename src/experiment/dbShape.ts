@@ -86,7 +86,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-29-attention-checks";
+export const SHAPE_VERSION = "2026-09-30-value-profile-by-scenario";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1224,9 +1224,11 @@ function profileScenarioWasShownOn(
  * case: it is not SCORED, which does not by itself mean it moves nothing, so its row simply
  * reports what happened rather than asserting a rule.
  *
- * THESE ARE THE FOUR POLICY VALUES ONLY. Directness, context and stakeholder are not snapshotted
- * per scenario, because a scenario cannot move them a step at a time. They live in
- * `profile_before_block5` and `profile_after_block5`.
+ * THESE ARE THE FOUR POLICY VALUES ONLY, on the STUDY's values (flat in scenarios 5 and 6 by design). Since
+ * 30 September 2026 this list is `major_info_and_scores.study_profile_by_scenario`; `profile_by_scenario` there is
+ * the full profile tracked like VCI_all (buildValueProfileByScenario below). Directness, context and stakeholder ARE
+ * snapshotted per scenario (`framingSnapshotAfter`, `stakeholderSnapshotAfter`; an older note here said they were
+ * not): the table below carries them.
  */
 function buildProfileByScenario(block5: unknown): Record<string, unknown>[] | null {
   const results = resultsOf(block5);
@@ -1275,6 +1277,155 @@ function buildProfileByScenario(block5: unknown): Record<string, unknown>[] | nu
         : null,
     };
   });
+}
+
+/** The three values besides the four policy values, in the order the database lists them. */
+const OTHER_VALUE_KEYS = ["directnessSensitivity", "contextSensitivity", "stakeholderPerspectiveShiftSensitivity"] as const;
+const OTHER_VALUE_NAMES: Record<(typeof OTHER_VALUE_KEYS)[number], string> = {
+  directnessSensitivity: "Directness (the reflection's first lens)",
+  contextSensitivity: "Context (the reflection's second lens)",
+  stakeholderPerspectiveShiftSensitivity: "Stakeholder perspective",
+};
+
+/**
+ * THE PARTICIPANT'S PROFILE AFTER EVERY BLOCK 5 SCENARIO, IN ONE PLACE, TRACKED LIKE VCI_ALL (since 30 September 2026,
+ * the researcher's request and plan answers "Q1-A, Q2-yes": "store the user profile after each scenario in block 5 in
+ * one place in the database ... nothing in the study or what the participant sees will change").
+ *
+ * WHICH PROFILE. The one VCI_all and Stability_all are measured on, and the charts have shown since 30 September 2026:
+ * the study's own values through scenario 4, then ALSO moved by the wish (scenario 5) and the rule behind the veil
+ * (scenario 6) - the best fit moves nothing, any other pick +20 where it beats the best fit most and -15 where the best
+ * fit beats it most (block5VciAll.ts). The study's own values, which never move in scenarios 5 and 6 and drive the
+ * scoring and scenario 6's prediction, are untouched and stay in `analysis.value_profile_before_block5 / _after_block5`
+ * and `major_info_and_scores.study_profile_by_scenario`.
+ *
+ * ALL SEVEN VALUES. The four policy values come from each scenario's saved running values (`running.valuesAfter`), or,
+ * for a record made before 28 September 2026, from the same values rebuilt from the saved record (rebuildRunningFits).
+ * Directness, context and stakeholder come from the study's own per-scenario snapshots: the rule behind VCI_all moves
+ * only the four policy values, so these three are the same in both copies at every step.
+ *
+ * NOTHING NEW IS MEASURED. Every number here was already saved; this gathers it into one readable table. `self_check`
+ * compares the saved running values with the rebuilt ones, and scenarios 1-4 with the study's own snapshots.
+ */
+export function buildValueProfileByScenario(block5: unknown): Record<string, unknown> | null {
+  if (!block5 || typeof block5 !== "object") return null;
+  const b5 = block5 as Record<string, unknown>;
+  const results = resultsOf(block5);
+  const original = b5.originalProfile as Block5UserProfile | undefined;
+  if (!results.length || !original || !Array.isArray(original.dimensions)) return null;
+  const rebuilt = rebuildRunningFits(results, original);
+
+  type Seven = Record<string, number>;
+  const scoreIn = (p: Block5UserProfile, k: string) => p.dimensions.find((d) => d.key === k)?.score;
+  const beforeAll: Seven = {};
+  for (const k of [...POLICY_DIM_KEYS, ...OTHER_VALUE_KEYS]) beforeAll[k] = round1(scoreIn(original, k)) ?? 0;
+  const orderOfTheFour = (v: Seven) => {
+    const sorted = [...POLICY_DIM_KEYS].sort((a, b) => v[b] - v[a]);
+    return sorted.map((k) => ({
+      rank: 1 + sorted.filter((o) => v[o] > v[k]).length,
+      value: k,
+      name: POLICY_DIM_SHORT[k],
+      score: v[k],
+      tied: sorted.some((o) => o !== k && v[o] === v[k]),
+    }));
+  };
+  const diff = (a: Seven, b: Seven): Seven =>
+    Object.fromEntries(Object.keys(a).map((k) => [k, round1(a[k] - b[k]) ?? 0]));
+
+  const disagreements: string[] = [];
+  let compared = 0;
+  let complete = true;
+  let previous: Seven | null = beforeAll;
+  const rows = results.map((r, index) => {
+    const scenario = scenarioOf(r.scenarioId);
+    const role = r.decisionRole ?? "decider";
+    const stored = r.running ?? null;
+    const again = rebuilt[index];
+    if (stored && again) {
+      compared += 1;
+      const agree = POLICY_DIM_KEYS.every((k) => Math.abs((stored.valuesAfter?.[k] ?? NaN) - again.valuesAfter[k]) < 0.011);
+      if (!agree) disagreements.push(`scenario ${index + 1} (${r.scenarioId}): the saved and the rebuilt values differ`);
+    }
+    const used = stored ?? again;
+    if (!used || !previous) {
+      complete = false;
+      previous = null;
+      return { order_shown: index + 1, scenario_id: r.scenarioId ?? null, title: scenario?.title ?? null,
+        decision_role: role, values_when_opened: null, values_after: null, change: null, order_of_the_four_after: null,
+        what_moved_it: "not available: the record lacks what this step is built from", moves: [], source: "not available" };
+    }
+    const after: Seven = {};
+    for (const k of POLICY_DIM_KEYS) after[k] = round1(used.valuesAfter[k]) ?? 0;
+    const framing = r.framingSnapshotAfter as Record<string, number> | undefined;
+    for (const k of OTHER_VALUE_KEYS) {
+      const snap = k === "stakeholderPerspectiveShiftSensitivity" ? r.stakeholderSnapshotAfter : framing?.[k];
+      after[k] = typeof snap === "number" ? (round1(snap) ?? 0) : previous[k];
+    }
+    /* In scenarios 1-4 these ARE the study's values; the check says so row by row. */
+    const study = r.policySnapshotAfter as Record<string, number> | undefined;
+    const sameAsStudy = study ? POLICY_DIM_KEYS.every((k) => Math.abs((round1(study[k]) ?? NaN) - after[k]) < 0.051) : null;
+    if (role === "decider" && sameAsStudy === false) {
+      disagreements.push(`scenario ${index + 1} (${r.scenarioId}): a decision's values differ from the study's own`);
+    }
+    const opened = previous;
+    previous = after;
+    const moves = role === "decider" ? (r.valueMoves ?? []) : (used.moves ?? []);
+    const kind = role === "recipient" ? "wish" : role === "predicted" ? "rule" : "decision";
+    const whatMovedIt = role === "decider"
+      ? "your decision: the study's own update after it"
+      : (used.moves ?? []).length
+        ? `your ${kind} was not your best fit: +20 where it beat your best fit most, -15 where your best fit beat it most`
+        : `nothing: your ${kind} was your best fit on these values`;
+    return {
+      order_shown: index + 1,
+      scenario_id: r.scenarioId ?? null,
+      title: scenario?.title ?? null,
+      decision_role: role,
+      final_choice_option_id: r.selectedOptionId ?? null,
+      values_when_opened: opened,
+      values_after: after,
+      change: diff(after, opened),
+      order_of_the_four_after: orderOfTheFour(after),
+      same_as_the_study_values: sameAsStudy,
+      what_moved_it: whatMovedIt,
+      moves,
+      source: stored ? "saved when the choice was made" : "rebuilt from the saved record (made before 28 September 2026)",
+    };
+  });
+
+  const lastAfter = complete ? (rows[rows.length - 1].values_after as Seven) : null;
+  return {
+    what_this_is:
+      "The participant's profile (all seven values) after every Block 5 scenario, in the order shown: the values "
+      + "VCI_all and Stability_all are measured on and the charts show. They are the study's own values through "
+      + "scenario 4 and are also moved by the wish (scenario 5) and the rule behind the veil (scenario 6).",
+    not_the_same_as:
+      "analysis.value_profile_before_block5 / _after_block5 and major_info_and_scores.study_profile_by_scenario hold "
+      + "the STUDY's values, which never move in scenarios 5 and 6 (they drive the scoring and scenario 6's "
+      + "prediction). Both are right for what they are; never mix them.",
+    value_names: { ...POLICY_DIM_SHORT, ...OTHER_VALUE_NAMES },
+    rule_version: RUNNING_VERSION,
+    before_block5: beforeAll,
+    order_of_the_four_before: orderOfTheFour(beforeAll),
+    after_all_six_scenarios: lastAfter,
+    order_of_the_four_after_all_six: lastAfter ? orderOfTheFour(lastAfter) : null,
+    change_over_block5: lastAfter ? diff(lastAfter, beforeAll) : null,
+    by_scenario: rows,
+    self_check: {
+      saved_rows_compared_with_rebuilt: compared,
+      agrees: disagreements.length === 0,
+      disagreements,
+      how:
+        "Each saved running value is compared with the same value rebuilt from the record (rebuildRunningFits), and "
+        + "each decision's values with the study's own snapshot. If they ever disagree, one of them is wrong.",
+    },
+    how_to_read:
+      "by_scenario[i].values_when_opened is where scenario i+1 started, values_after where it left the participant, "
+      + "change the difference. order_of_the_four_after ranks the four policy values (ties share a rank). what_moved_it "
+      + "says why in words; moves lists each step (for a decision the study's own moves, for the wish and the rule the "
+      + "running rule's). Directness, context and stakeholder never move in scenarios 5 and 6. Nothing here was on "
+      + "screen as a number; the charts drew these values.",
+  };
 }
 
 /** The seven kinds of scenario-6 moment that survive into the database. See `what_they_did`. */
@@ -2756,10 +2907,16 @@ export function buildMajorScores(
      because during a run they are genuinely different things. */
   const results = resultsOf(block5);
   const last = results.length ? results[results.length - 1] : null;
-  const profileNow = last?.policySnapshotAfter
-    ? policyScoresOfProfile({ dimensions: Object.entries(last.policySnapshotAfter)
-        .map(([key, score]) => ({ key, score })) })
-    : (profiles?.before ?? null);
+  /* Since 30 September 2026 profile_by_scenario and profile_now follow the values VCI_all tracks (the researcher's
+     "Q2-yes"): buildValueProfileByScenario. The study's own list is study_profile_by_scenario. */
+  const valueProfile = buildValueProfileByScenario(block5);
+  const valueRows = Array.isArray(valueProfile?.by_scenario) ? (valueProfile.by_scenario as Record<string, unknown>[]) : [];
+  const latestRow = [...valueRows].reverse().find((row) => row.values_after);
+  const profileNow = (latestRow?.values_after as Record<string, number> | undefined)
+    ?? (last?.policySnapshotAfter
+      ? policyScoresOfProfile({ dimensions: Object.entries(last.policySnapshotAfter)
+          .map(([key, score]) => ({ key, score })) })
+      : (profiles?.before ?? null));
 
   const alignmentRows = Array.isArray(alignment?.by_scenario)
     ? (alignment.by_scenario as Record<string, unknown>[])
@@ -2960,11 +3117,17 @@ export function buildMajorScores(
     profile_now: profileNow,
     /* The same four values at EVERY step, which is the only form that shows movement. See
        buildProfileByScenario: one row per scenario, opened-on and closed-on, and the difference. */
-    profile_by_scenario: buildProfileByScenario(block5),
+    profile_by_scenario: valueProfile?.by_scenario ?? null,
+    /* The study's own four values per scenario, flat in scenarios 5 and 6 by design (the scoring's values). */
+    study_profile_by_scenario: buildProfileByScenario(block5),
     what_profile_by_scenario_is_for:
-      "profile_now is one closing figure, and a closing figure cannot show movement: somebody who "
+      "Since 30 September 2026 profile_by_scenario is the participant's full profile (seven values) after every "
+      + "scenario, tracked like VCI_all: the study's values through scenario 4, then also moved by the wish and the "
+      + "rule (a copy of analysis.value_profile_by_scenario.by_scenario). study_profile_by_scenario is the study's "
+      + "own four values, flat in scenarios 5 and 6, which the scoring uses. "
+      + "profile_now is one closing figure, and a closing figure cannot show movement: somebody who "
       + "never shifted and somebody who swung twice and came back finish on the same numbers. Each "
-      + "row here holds the four values the scenario OPENED on, the four it CLOSED on, and the "
+      + "row of study_profile_by_scenario holds the four values the scenario OPENED on, the four it CLOSED on, and the "
       + "difference. Alignment, MCF reading and prediction were built on "
       + "profile_it_was_shown_and_scored_on, which is the opening values everywhere except the wish: "
       + "since 25 September 2026 it uses the values its paired decision opened with. "
@@ -2973,15 +3136,14 @@ export function buildMajorScores(
     profile_after_block5: profiles?.after ?? null,
     profile_change_during_block5: profiles?.change ?? null,
     what_the_three_profiles_mean:
-      "before_block5 is the frozen profile built from Blocks 1 to 4. It never moves, and it is the "
-      + "only one alignment is ever judged against. profile_now is where things stand at the "
-      + "moment this record was written: during Block 5 that is the latest snapshot, and once the "
-      + "block is finished it says the same as after_block5. after_block5 is where they finished.",
+      "before_block5 is the frozen profile built from Blocks 1 to 4. It never moves. profile_now is where the "
+      + "values tracked like VCI_all stand at the moment this record was written: the latest row of "
+      + "profile_by_scenario, so once the block is finished it is the values after scenario 6, wish and rule "
+      + "included. after_block5 is the STUDY's values, which the wish and the rule never move, so the two differ "
+      + "whenever scenario 5 or 6 moved something.",
     why_profile_now_is_shorter:
-      "profile_now carries the FOUR policy values only, while the other two carry all seven. Only "
-      + "the four are snapshotted after each scenario, because only they are what a scenario can "
-      + "move a step at a time. Directness, context and stakeholder are in before_block5 and "
-      + "after_block5, and their movement is in profile_change_during_block5.",
+      "Since 30 September 2026 profile_now carries all seven values (it did carry the four policy values only). "
+      + "A record without the running values falls back to the four from the study's last snapshot.",
 
     /* 12 ----------------------------------------------------------------- feedback */
     feedback: (feedbackRecord?.feedback ?? null),
@@ -3026,7 +3188,8 @@ export function buildMajorScores(
       total_time: "active_time and timings",
       visits: "active_time.sittings and sessions",
       profiles: "analysis.value_profile_before_block5 / _after_block5 / _change",
-      profile_by_scenario:
+      profile_by_scenario: "analysis.value_profile_by_scenario.by_scenario (the values VCI_all tracks)",
+      study_profile_by_scenario:
         "blocks.block5_emergency_scenarios.scenarioResults[].policySnapshotAfter, read against the snapshot before it",
       blocks_1_to_4: "analysis.blocks_1_to_4_checks",
       attention_checks: "analysis.attention_checks (the verdict also in quality.passed_all_attention_checks)",
