@@ -355,8 +355,8 @@ Useful fields inside each `scenarioResults` entry:
 | `mpf_predictions_every_scenario` | The prediction function run over all six scenarios. **See section 6e, and read its warning first.** |
 | `card_order_by_scenario` | The card order in every scenario and what decided it. **See section 6j.** |
 | `value_moves_asked_for_and_made` | Every value move, as asked for and as made, and the ones cut off at 0 or 100. **See section 6k.** |
-| `post_block3_insights` | The value profile worked out from Blocks 1–3. Feeds Block 4. |
-| `post_block4_final_analysis` | The analysis produced after Block 4, including the threshold tree. |
+| `post_block3_insights` | The value profile worked out from Blocks 1–3. Feeds Block 4. Made when Block 3 finishes (since 29 September 2026 by `interBlockData.ts`; the hidden page that made it was deleted, the content is the same). |
+| `post_block4_final_analysis` | The analysis produced after Block 4, including the threshold tree. Made when Block 4 finishes (the same note). |
 | `participant_record` | A consolidated record of everything from Blocks 1–4, raw and derived together. Has its own `schemaVersion`. |
 
 `value_profile_change` is the direct answer to "did Block 5 move this person?". Without it you
@@ -1245,6 +1245,39 @@ about 2.7 of 6, because the best fit balances all four values. A copy of the cou
 
 ---
 
+## 6p. `analysis.attention_checks` — three simple checks
+
+Added **29 September 2026** (the researcher's request). Three very simple questions, each drawn at random for each
+participant and saved once, so a refresh or another device shows the same one in the same place:
+
+| Check | Where | What it asks |
+|---|---|---|
+| `colour` | its own screen after Block 1, 2, 3 or 4 | "Please tap the green circle." (4 named colours, random order) |
+| `letter` | its own screen after scenario 2, 3, 4 or 5 | "Please tap the letter R." (K, M, R, T in random order) |
+| `number` | one row in the feedback, after any row of "The tools & the experiment design" or "How this experience was for you" | "This question is just to check your attention. Pick the number four." (two, three, four or five; the 1-7 scale) |
+
+Participants were told it is an attention check and never whether they were right. `passed_all` (all three right) is
+what the gift card needs (`quality.passed_all_attention_checks`); `passed_count`, `answered_count`, `misses` (in words)
+and `checks[]`: `where_it_was_shown`, `asked_for`, `right_answer`, `options_in_the_order_shown`, `answer`, `correct`,
+`seconds_to_answer` (null for the feedback row, which is not timed), `times_changed`, `answered_at`. A copy of the verdict
+is in `major_info_and_scores.attention_checks`.
+
+> **The feedback row is not feedback.** Its answer is kept here and never in `blocks.feedback_answers`, so it cannot move
+> a well-being score, a tool rating or `quality.straightlined_feedback`.
+
+> **Whether a miss also leaves somebody out of the ANALYSIS is not decided here** (the researcher's Q3-A, 29 September
+> 2026). Fix the rule in the freeze note before the data is opened.
+
+## 6q. `analysis.feedback_answer_patterns` — two answer-pattern flags (analysis only)
+
+Added **29 September 2026** (the researcher's Q4). Over the feedback's 1-7 ratings in the order they were on screen (the
+attention row is not among them): `longest_run_of_the_same_answer` (e.g. 8 for eight 5s in a row), `most_common_answer`
+and `share_of_the_most_common_answer`, `share_of_steps_of_exactly_one` and `longest_run_of_steps_of_exactly_one` (1.0
+for a diagonal like 1,2,3,4,5,6,7,6,5). `used_for_pay` is always false: these never touch the gift-card verdict. Any
+cut-off must be fixed before the data is opened.
+
+---
+
 ## 7. `feedback_answers` — and why it is readable
 
 **Where:** `blocks.feedback_answers.feedback.<section>.<code>` (the whole feedback record is stored, so the answers
@@ -1387,7 +1420,8 @@ by nudging a mouse on one page. What they cannot fake is the *shape* of the run.
 | `scenarios_under_15_seconds` | Block 5 choices made without reading |
 | `straightlined_feedback` | The same rating to every question |
 | `longest_idle_minutes`, `sittings` | How the work was spread |
-| `compensation_eligible` | The verdict |
+| `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The three attention checks (since 29 September 2026; section 6p) |
+| `compensation_eligible` | The verdict: finished, 35 working minutes, not straightlined, fewer than 3 rushed blocks, **and all three attention checks right** (the last since 29 September 2026) |
 | `reasons` | **Why** it failed, in plain words |
 | `rule` | The rule that was applied, stored with the record |
 
@@ -1401,7 +1435,11 @@ specific answer.
 > Since 15 September 2026 the **insights** and **final analysis** pages cannot appear in
 > `rushed_blocks` or as `fastest_block`. They are pages to read, so taking them in quickly is not a
 > fault — and every fast reader had been collecting two free strikes against a threshold of three.
-> This makes eligibility slightly more generous, never less.
+> This makes eligibility slightly more generous, never less. Both pages were deleted on 29 September 2026.
+
+> The colour attention check's own screen (stage `attention_check`) can never appear in `rushed_blocks` either: it is
+> answered in seconds by design. Each missed check, a check never reached, or no attention file at all adds its own line
+> to `reasons` (e.g. "missed the colour check (asked for green, picked blue)").
 
 ---
 

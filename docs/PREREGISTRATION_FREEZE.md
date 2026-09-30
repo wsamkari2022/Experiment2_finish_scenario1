@@ -75,7 +75,12 @@ Scores stay between 0 and 100; a step past an edge is cut off and recorded. Test
   without predictions whose top-two separation is under 5 ("none").
 - **Stability** is analysed among `stability_was_measured` = true; the share never measured is reported.
 - Payment is decided separately by `quality.compensation_eligible` (completed, 35 active minutes or more, not
-  straight-lined, fewer than 3 blocks under 30 seconds) and is never used as an analysis rule.
+  straight-lined, fewer than 3 blocks under 30 seconds, and since 29 September 2026 all three attention checks right)
+  and is never used as an analysis rule.
+- **OPEN, decide before the data is opened (the researcher's Q3-A, 29 September 2026): the attention checks**
+  (`analysis.attention_checks.passed_all`). Either (a) keep "no one who completed is removed" and add "without anyone
+  who missed an attention check" to the extra checks above, or (b) remove those who missed one from the main analysis
+  and show the full sample as the extra check. [ ] decided: ______ on ______
 
 ## 5. The hypotheses and their tests
 

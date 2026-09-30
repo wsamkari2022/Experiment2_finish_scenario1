@@ -14,6 +14,10 @@
  *   4. MoralProfileInsightsPage      between Blocks 3 and 4  ("A brief look at your responses")
  *   5. FinalMoralAnalysisPage        between Blocks 4 and 5  (the full profile + threshold tree)
  *
+ * PAGES 4 AND 5 WERE DELETED ON 29 SEPTEMBER 2026 (the researcher's request). What they computed and saved now
+ * runs in interBlockData.ts, called by ExperimentFlow when Block 3 and Block 4 finish, and writes the same files;
+ * the reasons below are kept as their history. This switch now governs only the three completion screens.
+ *
  * ============================================================================
  * WHY THEY ARE HIDDEN
  * ============================================================================

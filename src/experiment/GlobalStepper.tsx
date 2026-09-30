@@ -71,9 +71,8 @@ const ALL_PHASES: Phase[] = [
   { label: "Found money", stages: ["money"] },
   { label: "Trolley", stages: ["trolley"] },
   { label: "AI workforce", stages: ["product"] },
-  { label: "Profile preview", stages: ["insights"], interstitial: true },
+  /* "Profile preview" (insights) and "Your profile" (final_analysis) were deleted on 29 September 2026. */
   { label: "Reflection", stages: ["block4"] },
-  { label: "Your profile", stages: ["final_analysis"], interstitial: true },
 ];
 
 /**

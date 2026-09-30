@@ -246,6 +246,16 @@ rows.append(("GROUP", "Open questions (optional)"))
 rows += [[o["text"], "Open text", ""] for o in OPEN]
 table(COLS, rows, WIDTHS)
 
+# --------------------------------------------------------------------------------------------- the attention check
+heading("The attention check (not a feedback question)")
+para("One more row appears in section 3 or 4, looking exactly like the rows around it. It is placed at random for each "
+     "participant (after any row of those two sections, never first), and the number is drawn at random from two, "
+     "three, four and five. It is not scored as feedback: its answer is kept with the study's two other attention "
+     "checks, and all three answered as asked are needed for the gift card (src/experiment/attentionChecks.ts).",
+     after=4).paragraph_format.keep_with_next = True
+table(COLS, [["This question is just to check your attention. Pick the number four.",
+              "1–7, same scale and labels as its neighbours; right = the number asked", ""]], WIDTHS)
+
 # --------------------------------------------------------------------------------------------- new questions
 doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 heading("5. Questions you would add")

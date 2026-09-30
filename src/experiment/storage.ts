@@ -76,6 +76,7 @@ import { ACTIVE_TIME_KEY } from "./activeTime";
 import { SESSION_LOG_KEY } from "./sessionLog";
 import { FEEDBACK_KEY } from "./feedbackTypes";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
+import { ATTENTION_KEY, buildFeedbackPatterns } from "./attentionChecks";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -728,6 +729,7 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
           aiWorkforce: readRaw(BLOCKS_1_TO_4_KEYS.aiWorkforce),
           participantRecord: readRaw(BLOCKS_1_TO_4_KEYS.participantRecord),
         },
+        readRaw(ATTENTION_KEY),
       );
       if (major) sendOrQueue({ op: "saveSection", path: "major_info_and_scores", data: major });
 
@@ -760,8 +762,14 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
       readKey(BLOCK5_RESULTS_KEY),
       readKey(FEEDBACK_KEY),
       localStorage.getItem("vrds_status") ?? "",
+      readKey(ATTENTION_KEY),
     );
     if (quality) sendOrQueue({ op: "saveSection", path: "quality", data: quality });
+
+    /* Two answer-pattern flags over the feedback ratings, for the analysis only and never for pay (the
+       researcher's Q4, 29 September 2026; attentionChecks.ts). */
+    const patterns = buildFeedbackPatterns(readKey(FEEDBACK_KEY));
+    if (patterns) sendOrQueue({ op: "saveSection", path: "analysis.feedback_answer_patterns", data: patterns });
 
     /* How Blocks 1-4 were answered (first-step yes, speed, values not measured, ties). Built here,
        not inside the Block 5 branch, because it exists as soon as Block 3 is done - long before

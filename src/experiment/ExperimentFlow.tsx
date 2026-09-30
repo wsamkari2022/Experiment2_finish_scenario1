@@ -29,16 +29,16 @@ import {
 import { MoneyThresholdBlock } from "./MoneyThresholdBlock";
 import { TrolleyThresholdBlock } from "./TrolleyThresholdBlock";
 import { AIWorkforceThresholdBlock } from "./AIWorkforceThresholdBlock";
-import { MoralProfileInsightsPage } from "./MoralProfileInsightsPage";
 import { AdaptiveStakeholderReflectionBlock } from "./AdaptiveStakeholderReflectionBlock";
 import type { Block4CompletionPayload } from "./AdaptiveStakeholderReflectionBlock";
-import { FinalMoralAnalysisPage } from "./FinalMoralAnalysisPage";
+import { deriveAndSaveInsights, saveFinalAnalysis, type InsightsPayload } from "./interBlockData";
+import { AttentionCheckScreen } from "./AttentionCheckScreen";
+import { readAttention, type ColourSlot } from "./attentionChecks";
 import { Block5IntroPage } from "./Block5IntroPage";
 import { Block5PublicEmergencySimulation } from "./Block5PublicEmergencySimulation";
 import { Block5SimulationSummaryPage } from "./Block5SimulationSummaryPage";
 import { UserFeedbackPage } from "./UserFeedbackPage";
 import { GlobalStepper } from "./GlobalStepper";
-import { SHOW_INTER_BLOCK_PAGES } from "./interBlockPages";
 import { InterBlockPause } from "./InterBlockPause";
 import { captureParticipantRecord } from "./participantRecord";
 import { getSessionId, SESSION_ID_KEY } from "./session";
@@ -56,12 +56,6 @@ import type { TrolleyBlockResults } from "./trolleyTypes";
 import type { MoneyBlockResults } from "./types";
 import type { AIWorkforceBlockResults } from "./aiWorkforceTypes";
 import { AI_WORKFORCE_RESULTS_KEY } from "./aiWorkforceTypes";
-import type { AIWorkforceAnalysis } from "./aiWorkforceAnalysis";
-import type { MoralProfile } from "./profileAnalysis";
-import type {
-  ScenarioContext,
-  SeedCase,
-} from "./scenarioSelection";
 
 /**
  * All stages in the experiment. "transition_*" stages render a loading spinner
@@ -82,36 +76,50 @@ type Stage =
   | "trolley"
   | "transition_trolley_product"
   | "product"
-  | "transition_product_insights"
-  | "insights"
-  | "transition_insights_block4"
+  /* The "insights" page after Block 3 and the "final_analysis" page after Block 4 were deleted on 29 September
+     2026 (the researcher's request). They had been hidden since September and only computed; that work now runs
+     in interBlockData.ts when Block 3 and Block 4 finish, so the same files reach the database. */
+  | "transition_product_block4"
   | "block4"
-  | "transition_block4_final"
-  | "final_analysis"
-  | "transition_final_block5"
+  | "transition_block4_block5"
   | "block5_intro"
   | "block5"
   | "transition_block5_summary"
   | "block5_summary"
-  | "feedback";
+  | "feedback"
+  /* The colour attention check's own screen, after one of the four first parts (since 29 September 2026;
+     attentionChecks.ts). Not a block: never timed, never counted as a rushed block. */
+  | "attention_check";
 
 /** Lookup set used to detect whether the current stage is a transient spinner. */
 const STAGES_WITH_TRANSITION: Stage[] = [
   "transition_money_trolley",
   "transition_trolley_product",
-  "transition_product_insights",
-  "transition_insights_block4",
-  "transition_block4_final",
-  "transition_final_block5",
+  "transition_product_block4",
+  "transition_block4_block5",
   "transition_block5_summary",
 ];
+
+/** Where the flow goes after the colour check, by the place it was drawn for (attentionChecks.ts). */
+const AFTER_COLOUR_CHECK: Record<ColourSlot, Stage> = {
+  after_block1: "transition_money_trolley",
+  after_block2: "transition_trolley_product",
+  after_block3: "transition_product_block4",
+  after_block4: "transition_block4_block5",
+};
+
+/**
+ * A browser that stopped on one of the two deleted pages opens on the stage that followed it. Only a test run can
+ * hold one (no real data exists); the files those pages wrote are made again by interBlockData.ts where needed.
+ */
+const DELETED_STAGE_NEXT: Record<string, Stage> = { insights: "block4", final_analysis: "block5_intro" };
 
 /** Pause (ms) shown on transition spinner screens before advancing. */
 const TRANSITION_MS = 900;
 /** localStorage key that persists the current non-transition stage across refreshes. Defined in
  *  stageSignal.ts, which is also where anything outside the flow reads it. */
 const STORAGE_KEY_STAGE = STAGE_STORAGE_KEY;
-/** localStorage key for the InsightsPayload forwarded from the Insights page to Block 4. */
+/** localStorage key for the InsightsPayload Blocks 4 and 5 are built from (written by interBlockData.ts). */
 const STORAGE_KEY_INSIGHTS = "experiment_flow_insights";
 /** localStorage key for the completed Block4CompletionPayload. */
 const STORAGE_KEY_BLOCK4 = "block4_reflection_results";
@@ -138,17 +146,6 @@ const STORAGE_KEY_STATUS = "vrds_status";
  * demographic form so the address is asked for once and confirmed rather than typed twice.
  */
 const STORAGE_KEY_PENDING_EMAIL = "vrds_pending_email";
-
-/**
- * Payload passed from MoralProfileInsightsPage to Block 4 and onwards.
- * Holds everything Block 4 and FinalMoralAnalysisPage need from Blocks 1–3.
- */
-interface InsightsPayload {
-  profile: MoralProfile;
-  seedCase: SeedCase;
-  scenarioContext: ScenarioContext;
-  analysis: AIWorkforceAnalysis | null;
-}
 
 /** Safely reads and parses a JSON value from localStorage; returns null on any failure. */
 function readJson<T>(key: string): T | null {
@@ -187,6 +184,7 @@ function getRestoredStage(): Stage {
     }
     // Never restore to a transition stage — roll back one step
     if (STAGES_WITH_TRANSITION.includes(saved as Stage)) return "money";
+    if (DELETED_STAGE_NEXT[saved]) return DELETED_STAGE_NEXT[saved];
     return saved ?? "money";
   } catch {
     return "start";
@@ -198,13 +196,12 @@ function getRestoredStage(): Stage {
  *
  * Manages which stage is currently shown, persists the stage in localStorage
  * so a browser refresh returns to the same block, and threads result data
- * (profile, seedCase, scenarioContext) from the Insights page through to
- * Block 4 and the Final Analysis page.
+ * (profile, seedCase, scenarioContext) from Blocks 1-3 through to Block 4 and Block 5.
  *
  * Stage transitions:
  *   money → (transition) → trolley → (transition) → product →
- *   (transition) → insights → (transition) → block4 →
- *   (transition) → final_analysis
+ *   (transition) → block4 → (transition) → block5_intro → block5 → results → feedback
+ * with the colour attention check's screen after one of the four first parts (attentionChecks.ts).
  */
 export function ExperimentFlow() {
   /**
@@ -302,11 +299,11 @@ export function ExperimentFlow() {
     }
   }, [pendingEmail, stage]);
 
-  /** Profile + seed case data produced by the Insights page; needed by Block 4. */
+  /** Profile + seed case data derived when Block 3 finishes (interBlockData.ts); needed by Blocks 4 and 5. */
   const [insights, setInsights] = useState<InsightsPayload | null>(() =>
     readJson<InsightsPayload>(STORAGE_KEY_INSIGHTS),
   );
-  /** Block 4 completion data; needed by FinalMoralAnalysisPage. */
+  /** Block 4 completion data; needed by Block 5. */
   const [block4Payload, setBlock4Payload] =
     useState<Block4CompletionPayload | null>(() =>
       readJson<Block4CompletionPayload>(STORAGE_KEY_BLOCK4),
@@ -433,36 +430,49 @@ export function ExperimentFlow() {
   // Every stage opens at the top of the page (not wherever the previous stage was scrolled).
   useScrollToTop(stage);
 
+  /**
+   * After one of the four first parts: the colour attention check when it was drawn for this place and is not
+   * answered yet, otherwise straight on (attentionChecks.ts).
+   */
+  const goOnAfter = useCallback((slot: ColourSlot, next: Stage) => {
+    const attention = readAttention();
+    setStage(attention.plan.colour.slot === slot && !attention.answers.colour ? "attention_check" : next);
+  }, []);
+
   /** Called when Block 1 completes; moves to the transition spinner before Block 2. */
   const handleMoneyContinue = useCallback((_results: MoneyBlockResults) => {
-    setStage("transition_money_trolley");
-  }, []);
+    goOnAfter("after_block1", "transition_money_trolley");
+  }, [goOnAfter]);
 
   /** Called when Block 2 completes; moves to the transition spinner before Block 3. */
   const handleTrolleyContinue = useCallback((_results: TrolleyBlockResults) => {
-    setStage("transition_trolley_product");
-  }, []);
+    goOnAfter("after_block2", "transition_trolley_product");
+  }, [goOnAfter]);
 
-  /** Called when Block 3 completes; moves to the transition spinner before Insights. */
+  /**
+   * Called when Block 3 completes. Derives what Blocks 4 and 5 are built from and writes the same two files the
+   * deleted "insights" page wrote (interBlockData.ts), then moves on towards Block 4.
+   */
   const handleProductContinue = useCallback(
     (_results: AIWorkforceBlockResults) => {
-      setStage("transition_product_insights");
+      const payload = deriveAndSaveInsights(participantId);
+      if (payload) setInsights(payload);
+      goOnAfter("after_block3", "transition_product_block4");
     },
-    [],
+    [participantId, goOnAfter],
   );
 
-  /** Called when the Insights page is dismissed; persists the payload and moves to Block 4. */
-  const handleInsightsContinue = useCallback((payload: InsightsPayload) => {
-    try {
-      localStorage.setItem(STORAGE_KEY_INSIGHTS, JSON.stringify(payload));
-    } catch {
-      // ignore
-    }
-    setInsights(payload);
-    setStage("transition_insights_block4");
-  }, []);
-
-  /** Called when Block 4 completes; persists the payload (carrying session_id) and moves on. */
+  /**
+   * Called when Block 4 completes. THE DATA HAND-OFF POINT.
+   *
+   * Persists Block 4's payload (carrying session_id), then writes the after-Block-4 analysis and threshold tree
+   * the deleted "final analysis" page used to write (interBlockData.ts), and only then assembles the whole
+   * participant record: everything Blocks 1-4 measure is final here, and nothing Block 5 does can change it. The
+   * order is the pages' order, so the record reads the analysis file exactly as it did before.
+   *
+   * The try/catch is deliberate. A failure to SAVE must never stop a participant from reaching Block 5 — their
+   * answers are already written under the per-block keys, so the record can be rebuilt later.
+   */
   const handleBlock4Continue = useCallback(
     (payload: Block4CompletionPayload) => {
       try {
@@ -471,34 +481,17 @@ export function ExperimentFlow() {
         // ignore
       }
       setBlock4Payload(payload);
-      setStage("transition_block4_final");
+      const profile = insights?.profile ?? readJson<InsightsPayload>(STORAGE_KEY_INSIGHTS)?.profile;
+      if (profile) saveFinalAnalysis(profile, payload.decisions);
+      try {
+        captureParticipantRecord(participantId);
+      } catch {
+        // Storage failures are logged nowhere and blocked nothing, by design.
+      }
+      goOnAfter("after_block4", "transition_block4_block5");
     },
-    [],
+    [insights, participantId, goOnAfter],
   );
-
-  /**
-   * Block 4 → Block 5 boundary. THE DATA HAND-OFF POINT.
-   *
-   * Everything Blocks 1-4 measure is final by the time this runs, and nothing Block 5 does can
-   * change it, so this is where the whole participant record is assembled into one document and
-   * stored. Today that means LocalStorage; participantRecord.ts documents the single-function
-   * change that turns it into a database write.
-   *
-   * Note this fires whether the Final Analysis page was shown or hidden: in hidden mode the page
-   * still mounts, still derives and persists the threshold tree, and then calls this itself.
-   *
-   * The try/catch is deliberate. A failure to SAVE must never stop a participant from reaching
-   * Block 5 — their answers are already written under the per-block keys, so the record can be
-   * rebuilt later from the same browser by calling buildParticipantRecord again.
-   */
-  const handleStartBlock5 = useCallback(() => {
-    try {
-      captureParticipantRecord(participantId);
-    } catch {
-      // Storage failures are logged nowhere and blocked nothing, by design.
-    }
-    setStage("transition_final_block5");
-  }, [participantId]);
 
   /** Intro page -> the scenarios themselves. A button, not a timer: the page is meant to be read. */
   const handleStartBlock5Scenarios = useCallback(() => {
@@ -526,10 +519,8 @@ export function ExperimentFlow() {
     const transitions: Partial<Record<Stage, Stage>> = {
       transition_money_trolley: "trolley",
       transition_trolley_product: "product",
-      transition_product_insights: "insights",
-      transition_insights_block4: "block4",
-      transition_block4_final: "final_analysis",
-      transition_final_block5: "block5_intro",
+      transition_product_block4: "block4",
+      transition_block4_block5: "block5_intro",
       transition_block5_summary: "block5_summary",
     };
     const next = transitions[stage];
@@ -782,18 +773,19 @@ export function ExperimentFlow() {
     );
   }
 
-  if (stage === "insights") {
-    return (
-      <>
-        {/* The stepper is suppressed while this page is hidden: it is sticky and would otherwise
-            appear over the pause spinner, showing a phase that is not in the visible bar. */}
-        {SHOW_INTER_BLOCK_PAGES && <GlobalStepper stage={stage} />}
-        <MoralProfileInsightsPage
-          participantId={participantId}
-          onContinue={handleInsightsContinue}
-        />
-      </>
-    );
+  /*
+   * The colour attention check (since 29 September 2026; attentionChecks.ts). Its own screen, with no progress
+   * bar: it is not a part of the study. Where it leads is worked out from the place it was drawn for, so a refresh
+   * or another device lands back here and goes on to the same place; once answered it is never shown again.
+   */
+  if (stage === "attention_check") {
+    const attention = readAttention();
+    const next = AFTER_COLOUR_CHECK[attention.plan.colour.slot];
+    if (attention.answers.colour) {
+      setStage(next);
+      return null;
+    }
+    return <AttentionCheckScreen check="colour" onDone={() => setStage(next)} />;
   }
 
   if (stage === "block4" && insights) {
@@ -807,21 +799,6 @@ export function ExperimentFlow() {
           seedCase={insights.seedCase}
           scenarioContext={insights.scenarioContext}
           onContinue={handleBlock4Continue}
-        />
-      </>
-    );
-  }
-
-  if (stage === "final_analysis" && insights && block4Payload) {
-    return (
-      <>
-        {/* Suppressed while hidden — see the note on the insights stage above. */}
-        {SHOW_INTER_BLOCK_PAGES && <GlobalStepper stage={stage} />}
-        <FinalMoralAnalysisPage
-          participantId={participantId}
-          profile={insights.profile}
-          block4={block4Payload}
-          onStartBlock5={handleStartBlock5}
         />
       </>
     );
@@ -925,13 +902,12 @@ export function ExperimentFlow() {
 
   // Fallback: if we're on a later stage but required data isn't in memory
   // (e.g., page refresh lost in-memory state), fall back gracefully
+  /* Block 4 without its payload in memory: derive it again from the saved Blocks 1-3 answers (what the deleted
+     "insights" page did on this path), or start again when those are missing too. */
   if (stage === "block4" && !insights) {
-    setStage("insights");
-    return null;
-  }
-
-  if (stage === "final_analysis" && (!insights || !block4Payload)) {
-    setStage("money");
+    const payload = deriveAndSaveInsights(participantId);
+    if (payload) setInsights(payload);
+    else setStage("money");
     return null;
   }
 

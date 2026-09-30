@@ -46,6 +46,8 @@ import { computeStabilityAll } from "./block5StabilityAll";
 import { ROLE_BADGE } from "./block5RoleWords";
 import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
 import { progressSaved } from "./sessionGuard";
+import { AttentionCheckScreen } from "./AttentionCheckScreen";
+import { readAttention } from "./attentionChecks";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
@@ -500,6 +502,15 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   // the decision logic or scoring). Reset for each new scenario in finalizeScenario.
   const telRef = useRef<TelemetryAccum | null>(null);
   if (telRef.current === null) telRef.current = newTelemetryAccum();
+
+  /*
+   * THE LETTER ATTENTION CHECK (since 29 September 2026; attentionChecks.ts). Its own screen after the scenario
+   * drawn for this participant (after scenario 2, 3, 4 or 5), before the next one opens. Answering it restarts the
+   * next scenario's clock and telemetry, so none of its seconds count towards a scenario. It is answered once: the
+   * answer is saved in the attention file, which travels between browsers, so a refresh never asks it twice.
+   */
+  const [letterAfter] = useState(() => readAttention().plan.letter.afterScenarios);
+  const [letterDone, setLetterDone] = useState(() => !!readAttention().answers.letter);
 
   // Each scenario opens at the top of the page.
   useScrollToTop(progress.currentScenarioIndex);
@@ -1660,6 +1671,16 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   }, [selectedOption, profile, scenario, q1Strong, stakeholderMoved, altViewGenerated, framingChoiceYes, commitChoice]);
 
   if (!scenario) return null;
+
+  if (!letterDone && progress.currentScenarioIndex === letterAfter) {
+    return (
+      <AttentionCheckScreen check="letter" onDone={() => {
+        telRef.current = newTelemetryAccum();
+        setProgress((p) => ({ ...p, scenarioStartTime: Date.now() }));
+        setLetterDone(true);
+      }} />
+    );
+  }
 
   /*
    * THE SCENE COMES BEFORE THE OPTIONS.

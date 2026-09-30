@@ -376,6 +376,10 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
                 <Rule title="Answer thoughtfully.">
                   Rushing through, or giving the same answer to every question, may not qualify.
                 </Rule>
+                {/* Since 29 September 2026 (the researcher's "Q2-yes"; attentionChecks.ts). */}
+                <Rule title="Answer the quick attention checks as asked.">
+                  A few simple questions only check that you are reading. Answer all of them as asked to qualify.
+                </Rule>
               </VStack>
             </Box>
 
@@ -526,8 +530,8 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
                 <Text as="span" fontWeight="bold">
                   {REQUIRED_ACTIVE_MINUTES} minutes of active work
                 </Text>{" "}
-                plus the feedback questions, that time counts only while I am actually working, and
-                that rushing may not qualify.
+                plus the feedback questions, that time counts only while I am actually working, that
+                rushing may not qualify, and that I must answer the attention checks as asked.
               </Text>
             </Checkbox>
           </Box>

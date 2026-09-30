@@ -57,6 +57,7 @@ import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { rebuildRunningFits, vciAllLevel, RUNNING_VERSION, VCI_ALL_LEVELS } from "./block5VciAll";
 import { computeStabilityAll, computeTopValueChoices, STABILITY_ALL_VERSION } from "./block5StabilityAll";
+import { ATTENTION_KEY, ATTENTION_STAGE, buildAttentionSection, scoreAttention } from "./attentionChecks";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
 import { deriveCompanyValues, analyseStance, STANCE_LABEL, STANCE_BAND } from "./block5Company";
@@ -84,7 +85,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-29-results-redesign";
+export const SHAPE_VERSION = "2026-09-29-attention-checks";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -129,6 +130,9 @@ export const SOURCE_MAP: SourceMapping[] = [
   /* Which "Continue to feedback" button was used, and whether the charts were opened first (since
      28 September 2026). See buildResultsPageSection. */
   { key: RESULTS_PAGE_KEY, path: "analysis.results_page", transform: buildResultsPageSection },
+  /* The three attention checks: what each asked, the answer, right or wrong, and the verdict (since 29 September
+     2026; attentionChecks.ts). The pay verdict reads the same file (buildQuality). */
+  { key: ATTENTION_KEY, path: "analysis.attention_checks", transform: buildAttentionSection },
 ];
 
 /** Each feedback button in words, for the reader of `analysis.results_page`. */
@@ -397,6 +401,9 @@ export const RESUME_FILES: string[] = [
   /* Which feedback button was used and whether the charts were opened (since 28 September 2026), so a
      participant who opens the charts on one machine and continues on another keeps one record. */
   RESULTS_PAGE_KEY,
+  /* The attention checks travel too (since 29 September 2026): the plan drawn once and the answers given, so a
+     participant who moves machine meets the same checks in the same places and is never asked one twice. */
+  ATTENTION_KEY,
 ];
 
 /** Reads every resume file present in this browser. Missing ones are simply left out. */
@@ -589,6 +596,9 @@ export function buildQuality(
   block5: unknown,
   feedbackRecord: unknown,
   status: string,
+  /* The attention file (since 29 September 2026). Optional so an older caller still works; without it the
+     checks read as not passed, which is the safe direction for a rule that can cost somebody payment. */
+  attention?: unknown,
 ): Record<string, unknown> | null {
   if (!activeLedger || typeof activeLedger !== "object") return null;
   const a = activeLedger as {
@@ -606,6 +616,8 @@ export function buildQuality(
    */
   const stageSeconds = Object.entries(a.byStage ?? {})
     .filter(([stage]) => !(UNTIMED_DISPLAY_STAGES as readonly string[]).includes(stage))
+    /* The colour attention check's own screen is answered in seconds by design: it is not a block. */
+    .filter(([stage]) => stage !== ATTENTION_STAGE)
     .map(([stage, ms]) => ({
       stage,
       seconds: Math.round(ms / 1000),
@@ -629,6 +641,9 @@ export function buildQuality(
   const activeMinutes = typeof a.totalMs === "number" ? Math.round((a.totalMs / 60000) * 10) / 10 : 0;
   const straightlined = isStraightlined(feedbackRecord);
   const completed = status === "Study Completed";
+  /* ALL THREE ATTENTION CHECKS RIGHT (the researcher's rule, 29 September 2026; attentionChecks.ts). */
+  const attentionScore = scoreAttention(attention);
+  const passedAttention = attentionScore?.passedAll ?? false;
 
   return {
     active_minutes: activeMinutes,
@@ -647,13 +662,18 @@ export function buildQuality(
 
     straightlined_feedback: straightlined,
 
+    attention_checks_asked: 3,
+    attention_checks_passed: attentionScore?.passedCount ?? 0,
+    passed_all_attention_checks: passedAttention,
+
     /*
      * The verdict, and the reason. Storing WHY it failed matters as much as the answer: a
      * participant who queries their payment deserves a specific reason, and "eligible: false" on
      * its own cannot give one.
      */
     compensation_eligible:
-      completed && activeMinutes >= REQUIRED_ACTIVE_MINUTES && !straightlined && rushedBlocks.length < 3,
+      completed && activeMinutes >= REQUIRED_ACTIVE_MINUTES && !straightlined && rushedBlocks.length < 3
+      && passedAttention,
     reasons: [
       ...(completed ? [] : ["did not finish the study"]),
       ...(activeMinutes >= REQUIRED_ACTIVE_MINUTES
@@ -661,9 +681,10 @@ export function buildQuality(
         : [`active time ${activeMinutes} min is under the ${REQUIRED_ACTIVE_MINUTES} min requirement`]),
       ...(straightlined ? ["gave the same answer to every feedback rating"] : []),
       ...(rushedBlocks.length >= 3 ? [`${rushedBlocks.length} blocks finished in under ${RUSHED_BLOCK_SECONDS}s`] : []),
+      ...(attentionScore ? attentionScore.misses : ["no attention checks on record"]),
     ],
     rule:
-      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, and fewer than 3 blocks were finished in under 30 seconds. Raw numbers above allow a different rule to be applied later.",
+      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, fewer than 3 blocks were finished in under 30 seconds, and all three attention checks were answered as asked (since 29 September 2026; analysis.attention_checks). Raw numbers above allow a different rule to be applied later.",
   };
 }
 
@@ -2703,6 +2724,8 @@ export function buildMajorScores(
   feedback: unknown,
   /* Optional so every older caller still works; without it the Blocks 1-4 room is simply null. */
   blocks1to4?: Blocks1to4Sources | null,
+  /* The attention file (since 29 September 2026); without it the room is null. */
+  attention?: unknown,
 ): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
 
@@ -2971,6 +2994,14 @@ export function buildMajorScores(
        cannot disagree; gate D52 checks it. */
     blocks_1_to_4: buildBlocks1to4Checks(blocks1to4),
 
+    /* 13b --------------------------------------------------------------- the attention checks */
+    /* The verdict of the three checks, lifted from analysis.attention_checks by the same builder (since
+       29 September 2026); the gift card needs passed_all. validate:attention T4 checks the copy. */
+    attention_checks: (() => {
+      const a = buildAttentionSection(attention);
+      return a ? { passed_all: a.passed_all, passed_count: a.passed_count, answered_count: a.answered_count, misses: a.misses } : null;
+    })(),
+
     /* 14 ----------------------------------------------------------------- the company's value */
     /* The value the company card put first in scenarios 4 and 5, in the card's own words (the
        researcher's request, 25 September 2026). Chosen per participant, so it must be read here. */
@@ -2997,6 +3028,7 @@ export function buildMajorScores(
       profile_by_scenario:
         "blocks.block5_emergency_scenarios.scenarioResults[].policySnapshotAfter, read against the snapshot before it",
       blocks_1_to_4: "analysis.blocks_1_to_4_checks",
+      attention_checks: "analysis.attention_checks (the verdict also in quality.passed_all_attention_checks)",
       company_value_shown_in_scenarios_4_and_5: "analysis.position_effect.company_value_shown",
       company_stance_in_scenario_4: "analysis.position_effect.company_stance",
       feedback: "blocks.feedback_answers",

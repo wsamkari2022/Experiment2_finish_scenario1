@@ -55,6 +55,7 @@ CHECKS = {
     "visits": "npm run validate:visits",
     "resume": "npm run validate:resume",
     "session": "npm run validate:session",
+    "attention": "npm run validate:attention",
     "mcf": "npm run validate:mcf",
     "prediction": "npm run validate:prediction",
     "build": "npm run build",
@@ -134,8 +135,12 @@ SECTIONS = [
          "with no verdict about the gift card. The database headline says which ledger its total comes from.",
          ["visits", "dbshape"], "(D33)"),
         ("Two reading pages have no page time of their own.",
-         "The insights page and the post-Block-4 profile page are left out of the per-page times on purpose (they "
-         "measure reading speed), but their minutes are still inside the total.", ["dbshape"], "(D1-D6)"),
+         "The insights page and the post-Block-4 profile page (both deleted on 29 September) were left out of the per-page "
+         "times on purpose; the rule still holds for any older ledger.", ["dbshape"], "(D1-D6)"),
+        ("The gift card needs all three attention checks right.",
+         "On top of the old rules (finished, 35 working minutes, not the same answer everywhere, fewer than 3 rushed "
+         "blocks). Each miss, and a check never reached, gives its own reason in quality.reasons; the colour check's "
+         "screen is never a rushed block.", ["attention"], "(T4)"),
     ]),
     ("2. Saving the data and moving between computers", [
         ("Nothing is lost when the server is down.",
@@ -291,6 +296,32 @@ SECTIONS = [
         ("The code is clean.",
          "No type errors and no lint errors.", ["typecheck", "lint"], ""),
     ]),
+    ("6b. The attention checks, and the two deleted pages", [
+        ("Three very simple attention checks, drawn at random for each person.",
+         "Tap a named colour (after one of the four first parts), tap a letter (between two scenarios), and \"Pick the "
+         "number four\" in the feedback (two, three, four or five). Over 4,000 pretend people every colour, letter, number, "
+         "place and button order comes up about 1 time in 4.", ["attention"], "(T1)"),
+        ("The same person always meets the same checks.",
+         "Drawn once and saved; a refresh or another computer shows the same check in the same place, an answered one is "
+         "never asked again, and a second person on the same computer gets their own.", ["attention"], "(T2)"),
+        ("Right means exactly what was asked, and nobody is told.",
+         "The screens say it is an attention check, never say right or wrong, and let any pick continue; each colour "
+         "shows its name (fair to colour-blind people). Checked live in the browser, on a computer and a phone.",
+         ["attention"], "(T3, T8)"),
+        ("The feedback check never touches a score.",
+         "Its answer is saved with the checks, never in the feedback record, so no well-being score, tool rating or "
+         "\"same answer everywhere\" flag can move. It sits only among the tools or the well-being questions, never first "
+         "in a section.", ["attention"], "(T5)"),
+        ("Clicking at random almost never passes.",
+         "All three by chance: about 1 in 112. A same-number answerer on 1, 6 or 7 always fails the feedback check; a "
+         "diagonal clicker passes it about 1 time in 6. Two answer-pattern flags are saved for the analysis only.",
+         ["attention"], "(T6, T7)"),
+        ("The two between-block pages are deleted, and their data still arrives.",
+         "They were hidden and only computed. The same files are now made when Block 3 and Block 4 finish: for 300 "
+         "pretend people the new code makes exactly what the pages made, and the database still receives "
+         "analysis.post_block3_insights and analysis.post_block4_final_analysis. Clicked through live from Block 4 to "
+         "the main study.", ["attention"], "(P1, P2)"),
+    ]),
     ("7. The scenarios and their option numbers", [
         ("Every option number the three blind raters questioned was reviewed.",
          "Fixes 6, 7, 7b and 7c; each changed number carries a comment quoting its card and the raters.",
@@ -324,10 +355,16 @@ OPEN = [
      "completed_at.", "Before launch"),
     ("One full click-through on the remote server",
      "A fresh email, on a computer and on a phone, from consent to the thank-you page.", "Before launch"),
-    ("The gift-card rule has no check of its own",
-     "quality.compensation_eligible is simple code (completed, at least 35 working minutes, feedback not all the same "
-     "answer, fewer than 3 blocks under 30 seconds), and only its rushed-block part is checked (D6). Look at "
-     "quality on one real finished record.", "At the click-through"),
+    ("Look at the gift-card verdict on one real record",
+     "Since 29 September the whole verdict is checked on hand-made records (T4: finished, 35 working minutes, not the "
+     "same answer everywhere, fewer than 3 rushed blocks, all three attention checks). Look at quality on one real "
+     "finished record.", "At the click-through"),
+    ("The consent page now names the attention checks",
+     "A new rule, \"Answer the quick attention checks as asked\", and the same words in the gift-card checkbox. Ask your "
+     "ethics board whether this change to how the gift card is earned needs their approval before launch.", "Before launch"),
+    ("Does a missed attention check also leave somebody out of the analysis?",
+     "Your Q3-A: the checks decide the gift card only for now. Decide the analysis rule in the freeze note before the "
+     "data is opened.", "Before the data is opened"),
     ("The one-browser rule is only as strong as the email-and-age check",
      "Anyone who knows a participant's email and age can take their record, exactly as they could already continue "
      "their study. It stops accidents and casual misuse, not a determined attacker; there are no passwords.", "Known"),
