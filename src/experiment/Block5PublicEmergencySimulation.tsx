@@ -4879,6 +4879,7 @@ function FlowOverlay({
             /* APA_Only: no view was seen, so the two-situations table must not appear (it shows after the context view). */
             lastLensSeen={reflectionSkipped ? null : lastLensSeen ?? coord.framing}
             freezeReflectionScores={reflectionSkipped}
+            straightToApa={reflectionSkipped}
             mode={mode}
           />
         )}
@@ -5276,7 +5277,7 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
   );
 }
 
-function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, lastLensSeen, freezeReflectionScores = false, mode }: {
+function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, lastLensSeen, freezeReflectionScores = false, straightToApa = false, mode }: {
   option: LabeledOption;
   profile: Block5UserProfile;
   scenario: Block5Scenario;
@@ -5295,6 +5296,8 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   lastLensSeen: CVRFraming | null;
   /** APA_Only (since 1 October 2026): no person spoke, so the stakeholder score is left as it is. */
   freezeReflectionScores?: boolean;
+  /** APA_Only (since 1 October 2026): the page opened straight after the choice, so it opens with its own sentence. */
+  straightToApa?: boolean;
   /** color mode — light/dark-aware surfaces + highlight colors. */
   mode: "light" | "dark";
 }) {
@@ -5481,9 +5484,20 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
           <MethodLogo method="apa" />
         </HStack>
         <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-          We noticed something worth a closer look — a couple of your choices point in different directions.
-          There are <b>no right or wrong answers</b> here; this step just helps the system represent your
-          priorities the way you truly mean them.
+          {/* APA_Only (since 1 October 2026, the researcher's words): no reflection came before this page, so it does not
+              say "a couple of your choices point in different directions". */}
+          {straightToApa ? (
+            <>
+              This step just helps the system represent your priorities the way you truly mean them. There are{" "}
+              <b>no right or wrong answers</b> here.
+            </>
+          ) : (
+            <>
+              We noticed something worth a closer look — a couple of your choices point in different directions.
+              There are <b>no right or wrong answers</b> here; this step just helps the system represent your
+              priorities the way you truly mean them.
+            </>
+          )}
         </Text>
       </Box>
 

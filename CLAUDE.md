@@ -137,6 +137,10 @@ unchanged. **Participants in condition 3 see it** (HOW_TO_ANALYZE 4.9).
   and its second-view sentence, the CVR feedback questions (`shouldShowCvrSection`), and the database's `cvr.fired` (beside
   the new `cvr.counted_as_a_stability_step`). No view, person or reflection answer is stored for these rows, and the APA
   record's `stakeholderInfluenced` is null.
+- **The APA page's opening sentence in APA_Only** (the researcher's words, the same day): "This step just helps the system
+  represent your priorities the way you truly mean them. There are **no right or wrong answers** here." No reflection came
+  before it, so it does not say "a couple of your choices point in different directions"; the other conditions keep that
+  sentence (`straightToApa` on APAPanel; N15 holds both).
 - **The results page says "Clarification shown" ("Q3-yes")** on those scenario cards, never "Reflection shown".
 - **Feedback (the researcher: "in APA_only, APA feedback question will appear but no CVR feedback questions"):** the APA
   questions appear after any APA visit; the CVR questions and the two-views questions never do (no reflection, no view).

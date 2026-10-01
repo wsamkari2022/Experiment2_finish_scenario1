@@ -575,6 +575,10 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(summary, /\{sr\.cvrFired && !reflectionWasShown\(sr\) && \(\s*<Badge[^>]*>Clarification shown<\/Badge>/, "no \"Clarification shown\" badge");
     need(summary, /const withCvr = results\.scenarioResults\.filter\(\(r\) => reflectionWasShown\(r\)\)\.length;/, "the second-view sentence counts APA_Only clarifications");
     need(fb, /some\(\(r\) => reflectionWasShown\(r\) \|\| \(r\.telemetry\?\.cvrVisits \?\? 0\) > 0\)/, "the CVR feedback questions would appear in APA_Only");
+    /* The opening sentence (the researcher's words, 1 October 2026): APA_Only's own, the old one everywhere else. */
+    need(sim, /straightToApa=\{reflectionSkipped\}/, "the APA page is not told it opened straight after the choice");
+    need(sim, /\{straightToApa \? \(\s*<>\s*This step just helps the system represent your priorities the way you truly mean them\. There are\{" "\}\s*<b>no right or wrong answers<\/b> here\.\s*<\/>\s*\) : \(\s*<>\s*We noticed something worth a closer look — a couple of your choices point in different directions\./,
+      "APA_Only's opening sentence is not the researcher's, or the other conditions lost theirs");
     /* The APA page itself is unchanged: its question, its logo, its list. */
     for (const keep of ["Which one value should the system give the most weight to for you?", "How sure are you about the value you picked?", '<MethodLogo method="apa" />', "Select as my final decision"]) {
       if (!sim.includes(keep)) why.push(`the APA page lost: ${keep}`);
