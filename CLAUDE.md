@@ -27,6 +27,16 @@ Two of those traps matter enough to repeat here:
 - **`headline` and `analysis` are derived from `blocks`.** Correlating a derived field with the raw
   field it came from is not a finding.
 
+## Prolific: planned, not built (since 1 October 2026)
+
+The study will be recruited on Prolific, but only AFTER the four conditions are built and tested (the researcher's
+order, 1 October 2026). The full plan - Prolific's rules with their sources, the answers for Prolific's study form,
+every place the email is the participant's key, the consent, demographics, completion-code and attention-check changes,
+the checks to add, the audit and the decisions still open - is `docs/PROLIFIC_CONVERSION_PLAN.md`. Read it before
+changing identity, consent, the demographic page, the thank-you page, attention checks or any payment wording, and
+build the conditions so they read "the participant's key" rather than the email. Never commit `Prolific docs/`: it
+holds the Prolific completion code.
+
 ## One folder, two environments (since 23 September 2026)
 
 **This folder is both the development copy and the production copy.** Work here. There is no second
