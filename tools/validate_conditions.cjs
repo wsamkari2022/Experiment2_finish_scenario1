@@ -543,6 +543,16 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     }
     const shown = [[{ cvrFired: true }, true], [{ cvrFired: true, reflectionShown: false }, false], [{ cvrFired: false }, false], [{}, false], [null, false]];
     for (const [r, want] of shown) if (CVR.reflectionWasShown(r) !== want) why.push(`reflectionWasShown(${JSON.stringify(r)}) is not ${want}`);
+    /* The box "serves X more than any of the other three" (1 October 2026) is true only without a tie at the top. */
+    const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
+    for (const sc of BLOCK5_SCENARIOS) {
+      if (!CVR.scenarioIsScored(sc)) continue;
+      for (const o of sc.options) {
+        const v = KEYS4.map((k) => o.fingerprint[k]).sort((x, y) => y - x);
+        if (v[0] === v[1]) why.push(`${sc.id} / ${o.id}: two values tie for the top, so "more than the other three" would be untrue`);
+        if (o.fingerprint[CVR.optionMainValue(o)] !== v[0]) why.push(`${o.id}: optionMainValue is not its strongest value`);
+      }
+    }
     /* Stability counts the APA_Only step (Q2-yes): the four values changed order there. */
     const orig = make(base);
     const row = { scenarioId: "chemical_plant_fire", decisionRole: "decider", cvrFired: true, reflectionShown: false,
@@ -579,6 +589,10 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(sim, /straightToApa=\{reflectionSkipped\}/, "the APA page is not told it opened straight after the choice");
     need(sim, /\{straightToApa \? \(\s*<>\s*This step just helps the system represent your priorities the way you truly mean them\. There are\{" "\}\s*<b>no right or wrong answers<\/b> here\.\s*<\/>\s*\) : \(\s*<>\s*We noticed something worth a closer look — a couple of your choices point in different directions\./,
       "APA_Only's opening sentence is not the researcher's, or the other conditions lost theirs");
+    /* The box naming the value the chosen option serves most: APA_Only only, the researcher's words, saved. */
+    need(sim, /\{straightToApa && \(\s*<Box[^>]*data-apa-main-value>\s*<Text[^>]*>\s*The option you chose serves \{vSpan\(optionMainValue\(option\), accent\)\} more than any of the other three values\./,
+      "no box naming the value the chosen option serves most, or not only in APA_Only");
+    need(sim, /\.\.\.\(apaOnlyCondition && originalOption \? \{ mainValueShown: optionMainValue\(originalOption\) \} : \{\}\)/, "the value the box named is not saved");
     /* The APA page itself is unchanged: its question, its logo, its list. */
     for (const keep of ["Which one value should the system give the most weight to for you?", "How sure are you about the value you picked?", '<MethodLogo method="apa" />', "Select as my final decision"]) {
       if (!sim.includes(keep)) why.push(`the APA page lost: ${keep}`);
@@ -597,6 +611,14 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (a?.cvr?.fired !== false || a?.cvr?.counted_as_a_stability_step !== true) why.push(`an APA_Only row reads ${JSON.stringify(a?.cvr && { fired: a.cvr.fired, counted: a.cvr.counted_as_a_stability_step })}`);
     if (b?.cvr?.fired !== true || b?.cvr?.counted_as_a_stability_step !== true) why.push("a reflection row no longer reads fired");
     if (a?.apa?.ran !== true || a?.apa?.the_stakeholder_influenced_them !== null) why.push("the APA_Only row's APA record is wrong");
+    /* The value the box named, and whether they named the same one. */
+    const told = db.buildAlignmentRecords({ scenarioResults: [
+      resultRow("chemical_plant_fire", { cvrFired: true, reflectionShown: false, apa: { confidence: 3, stakeholderInfluenced: null, prioritizedValue: "groupSizeSensitivity", originalOptionId: "y", mainValueShown: "groupSizeSensitivity" } }),
+      resultRow("wildfire_evacuation", { cvrFired: true, reflectionShown: false, apa: { confidence: 3, stakeholderInfluenced: null, prioritizedValue: "gainResponsivenessSensitivity", originalOptionId: "z", mainValueShown: "groupSizeSensitivity" } }),
+    ], originalProfile: { dimensions: [] } })?.by_scenario ?? [];
+    if (told[0]?.apa?.value_the_page_said_the_option_serves_most !== "groupSizeSensitivity" || told[0]?.apa?.named_the_value_the_page_said !== true
+        || told[1]?.apa?.named_the_value_the_page_said !== false || !told[0]?.apa?.value_the_page_said_the_option_serves_most_label) why.push("the value the box named is not read into the database");
+    if (b?.apa?.value_the_page_said_the_option_serves_most !== undefined && b?.apa?.ran) why.push("a row from another condition claims a box was shown");
     if (records?.totals?.times_reflection_fired !== 1) why.push(`times_reflection_fired counts the APA_Only step (${records?.totals?.times_reflection_fired})`);
     /* The headline: the three stabilities not measured in APA_Only, unchanged elsewhere. */
     const sens = { directness: { value: 100, level: "Held steady" }, context: { value: 100, level: "Held steady" }, stakeholder: { value: 100, level: "Held steady" } };
@@ -621,7 +643,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     /* Opened the APA page, went back, and chose a good fit: the APA questions still appear (a visit), the CVR ones never. */
     const bailed = { scenarioResults: [resultRow("wildfire_evacuation", { cvrFired: false, telemetry: tel(0, 1) })] };
     if (FB.shouldShowApaSection(bailed) !== true || FB.shouldShowCvrSection(bailed) !== false) why.push("an APA visit that went back is read wrongly");
-    if (db.SHAPE_VERSION !== "2026-10-01-apa-only") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
+    if (db.SHAPE_VERSION !== "2026-10-01-apa-only-main-value") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N16", "the database and the feedback: no reflection claimed, still a Stability step; APA questions, no CVR ones", why);
   }
 

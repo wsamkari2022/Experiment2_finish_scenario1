@@ -141,6 +141,14 @@ unchanged. **Participants in condition 3 see it** (HOW_TO_ANALYZE 4.9).
   represent your priorities the way you truly mean them. There are **no right or wrong answers** here." No reflection came
   before it, so it does not say "a couple of your choices point in different directions"; the other conditions keep that
   sentence (`straightToApa` on APAPanel; N15 holds both).
+- **A box naming the value the chosen option serves most** (the researcher's request, the same day: "this selected option
+  serves X value more than the rest of the other three values"), APA_Only only, right under the opening sentence: "The
+  option you chose serves *X* more than any of the other three values." X is `optionMainValue` (the value the APA list
+  groups options by), so somebody who wants to keep their option knows which value brings it into the list. No option in
+  the four decisions ties for its strongest value (N14 holds it), so the sentence is always true. Saved as
+  `apa.mainValueShown`; the database adds `value_the_page_said_the_option_serves_most` and `named_the_value_the_page_said`
+  (the obvious question: did the box steer the value they named?). `SHAPE_VERSION` "2026-10-01-apa-only-main-value".
+  Live: the sealed respirator's box said How much is gained; naming it listed the respirator itself; both saved.
 - **The results page says "Clarification shown" ("Q3-yes")** on those scenario cards, never "Reflection shown".
 - **Feedback (the researcher: "in APA_only, APA feedback question will appear but no CVR feedback questions"):** the APA
   questions appear after any APA visit; the CVR questions and the two-views questions never do (no reflection, no view).

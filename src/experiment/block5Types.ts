@@ -821,6 +821,8 @@ export interface APARecord {
   stakeholderInfluenced: boolean | null;
   prioritizedValue: Block5PolicyDimKey;
   originalOptionId: string;         // the misaligned option that triggered APA
+  /* APA_Only (since 1 October 2026): the value the page said that option serves most, more than the other three. */
+  mainValueShown?: Block5PolicyDimKey;
 }
 
 /** ---- Behavioral telemetry (additive; does NOT affect scoring) ---- */

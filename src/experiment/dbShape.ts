@@ -89,7 +89,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-01-apa-only";
+export const SHAPE_VERSION = "2026-10-01-apa-only-main-value";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -2088,6 +2088,11 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
             value_they_prioritized: r.apa.prioritizedValue,
             value_they_prioritized_label: POLICY_DIM_SHORT[r.apa.prioritizedValue],
             option_that_triggered_it: r.apa.originalOptionId,
+            /* APA_Only (since 1 October 2026): the page said which value the chosen option serves most, before the
+               question. Whether they then named that same value is the obvious thing to look at. null elsewhere. */
+            value_the_page_said_the_option_serves_most: r.apa.mainValueShown ?? null,
+            value_the_page_said_the_option_serves_most_label: r.apa.mainValueShown ? POLICY_DIM_SHORT[r.apa.mainValueShown] : null,
+            named_the_value_the_page_said: r.apa.mainValueShown ? r.apa.mainValueShown === r.apa.prioritizedValue : null,
           }
         : { ran: false },
 

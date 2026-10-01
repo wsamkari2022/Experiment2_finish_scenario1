@@ -853,6 +853,8 @@ scenario is still a Stability step, so its row has **`cvrFired: true` but `refle
 | `cvr.fired` | **false** - it says whether the reflection page was SHOWN (since 1 October 2026 it reads `reflectionShown`, which is absent and therefore "as cvrFired" in the other conditions) |
 | `cvr.counted_as_a_stability_step` | true for every APA visit (the researcher's choice), so Stability and Stability_all measure the APA moves |
 | `apa.the_stakeholder_influenced_them` | null (no person spoke) |
+| `apa.value_the_page_said_the_option_serves_most` (+ `_label`) | Since 1 October 2026: the page showed, before the question, "The option you chose serves X more than any of the other three values"; this is X (null in the other conditions) |
+| `apa.named_the_value_the_page_said` | Whether the value they then named was that same X. **Trap:** the box may steer the answer, and naming X is also the way to keep the chosen option (it is then in the list), so a high share here is expected and is not by itself evidence of a value |
 | `cvr` view and person fields | null (no view or person was shown) |
 
 The stakeholder, directness and context scores never move in APA_Only (the APA rule's automatic stakeholder move is off),

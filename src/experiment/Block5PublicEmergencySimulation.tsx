@@ -1615,6 +1615,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     const finalLabeled = labeled;
     const opt = finalLabeled.find((o) => o.id === payload.finalOption.id);
     if (!opt) return;
+    const originalOption = scenario.options.find((o) => o.id === payload.originalOptionId) ?? null;
     const origLabeled = labelOptions(scenario.options, userProfile);
     const origLevel = origLabeled.find((o) => o.id === opt.id)?.level;
     const alignedToOriginal = origLevel === "aligned" || origLevel === "weakly_aligned";
@@ -1676,6 +1677,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         stakeholderInfluenced: apaOnlyCondition ? null : payload.q2Influenced,
         prioritizedValue: payload.q3Value,
         originalOptionId: payload.originalOptionId,
+        /* APA_Only: the value the page said the chosen option serves most (the box under the opening sentence). */
+        ...(apaOnlyCondition && originalOption ? { mainValueShown: optionMainValue(originalOption) } : {}),
       },
       ...(apaOnlyCondition ? {} : { cvrStakeholderShown: cvrWho?.label }),
       telemetry: telRef.current
@@ -5500,6 +5503,22 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
           )}
         </Text>
       </Box>
+
+      {/*
+        APA_Only: WHICH VALUE THE CHOSEN OPTION SERVES MOST (the researcher's request, 1 October 2026: "this selected option
+        serves X value more than the rest of the other three values"). It is the value the option is built on
+        (optionMainValue, the same one the APA list below groups options by), so a participant who wants to keep their
+        option knows which value brings it into the list. No option in the four decisions has a tie for its strongest
+        value, so "more than any of the other three" is always true (validate:conditions N14 holds it). Which value it named
+        is saved (apa.mainValueShown), so the analysis can see whether people then named the same one.
+      */}
+      {straightToApa && (
+        <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3" data-apa-main-value>
+          <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+            The option you chose serves {vSpan(optionMainValue(option), accent)} more than any of the other three values.
+          </Text>
+        </Box>
+      )}
 
       {/*
         ══════════════════════════════════════════════════════════════════════════════════════

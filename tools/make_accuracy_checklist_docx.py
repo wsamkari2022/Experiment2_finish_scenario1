@@ -206,7 +206,7 @@ SECTIONS = [
          "study as CVR+APA.", ["conditions", "build"], "(N9, N12, N15)"),
         ("APA_Only: a misaligned choice opens the APA page at once.",
          "No reflection page and no person speaking; the APA page shows only its value question (no two-situations table, "
-         "no view question) and opens with your sentence. The stakeholder, directness and context scores never move (the APA rule's automatic stakeholder "
+         "no view question), opens with your sentence, and says which value the chosen option serves most. The stakeholder, directness and context scores never move (the APA rule's automatic stakeholder "
          "move is off there); each APA visit still counts for Stability; the results page says \"Clarification shown\"; the "
          "record says no reflection was shown; the feedback asks the APA questions, never the CVR ones. Checked live.", ["conditions"], "(N14, N15, N16)"),
         ("CVR_Only: a refusal opens the CVR Rejection page, not the APA page.",
