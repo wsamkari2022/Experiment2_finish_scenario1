@@ -860,6 +860,10 @@ export interface Block5ScenarioTelemetry {
   optionExpands: number;     // expanded an option card to read details
   cvrDwellMs: number;        // time reflecting inside the CVR vignette
   apaDwellMs: number;        // time reflecting inside the APA flow
+  /* The CVR Rejection page (condition 2, CVR_Only, since 1 October 2026), counted apart from the APA page so the APA
+     numbers keep meaning "the APA page". Optional: absent in the other conditions and on older rows. */
+  cvrRejectionVisits?: number;  // times the CVR Rejection page opened
+  cvrRejectionDwellMs?: number; // time on it
 
   /**
    * THE MORAL COMMITMENT FUNCTION, AS EXPOSURE RATHER THAN AS A SCORE.
@@ -923,6 +927,28 @@ export interface Block5ValueMove {
   why: string;
 }
 
+/**
+ * One visit to the CVR Rejection page (condition 2, CVR_Only, since 1 October 2026): which option was refused, what the
+ * participant had seen, and what moved. Only the first visit in a scenario moves anything (the researcher's "Q1-A").
+ */
+export interface CvrRejectionVisit {
+  optionId: string;
+  /** When the page opened (ISO time). */
+  at: string;
+  /** The view the reflection opened with, whether they opened the second one, and the one on screen when they left. */
+  firstViewShown: CVRFraming;
+  bothViewsSeen: boolean;
+  lastViewSeen: CVRFraming;
+  /** What they answered on the reflection ("would you still choose this?"), and whether the person speaking moved them. */
+  saidYesAtReflection: boolean | null;
+  personChangedTheirMind: boolean | null;
+  /** True on the visit that moved the values (the first in the scenario); later visits move nothing. */
+  movedValues: boolean;
+  moves: Block5ValueMove[];
+  /** Seconds on the page; null if the scenario ended without the button being pressed. */
+  seconds: number | null;
+}
+
 /** ---- Results ---- */
 export interface Block5ScenarioResult {
   scenarioId: string;
@@ -961,6 +987,8 @@ export interface Block5ScenarioResult {
    * best-fit pick, the wish, the prediction test).
    */
   valueMoves?: Block5ValueMove[];
+  /** Every visit to the CVR Rejection page in this scenario (condition 2, CVR_Only, since 1 October 2026). */
+  cvrRejections?: CvrRejectionVisit[];
   /**
    * The wish only (scenario 5), since 25 September 2026: the id of the decision scenario whose
    * OPENING values this row was shown and scored on (see profileShownIn in block5Mirror.ts).

@@ -185,6 +185,19 @@ export function currentCondition(): Condition | null {
   return file ? conditionByNumber(file.number) : null;
 }
 
+/**
+ * WHAT EACH CONDITION DOES DIFFERENTLY, one rule per task the researcher has given (the header says why they are added
+ * one at a time). Each takes the condition so a check can ask about any of the four; the study passes none and gets
+ * this participant's.
+ *
+ * CVR_Only (1 October 2026): somebody who refuses their choice after the reflection reaches the CVR Rejection page
+ * (no questions, one button back to all the options; the views and the person speaking move automatically) instead
+ * of the APA page.
+ */
+export function showsCvrRejectionPage(condition: Condition | null = currentCondition()): boolean {
+  return condition?.type === "CVR_Only";
+}
+
 /** The two fields the researcher asked for beside the demographic answers ("Condition number", "Condition type"). */
 export function conditionFields(file: ConditionFile | null): { conditionNumber: ConditionNumber; conditionType: ConditionType } | null {
   return file ? { conditionNumber: file.number, conditionType: file.type } : null;

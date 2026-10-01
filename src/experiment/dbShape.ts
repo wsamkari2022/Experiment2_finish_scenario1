@@ -87,7 +87,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-01-conditions";
+export const SHAPE_VERSION = "2026-10-01-cvr-rejection-page";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -1932,6 +1932,44 @@ export function buildCardOrderSection(block5: unknown): Record<string, unknown> 
   };
 }
 
+/**
+ * The CVR Rejection page in one scenario, for analysis.alignment_records (condition 2, CVR_Only, since 1 October 2026).
+ * `shown: false` everywhere else, including every scenario of the other three conditions. Only the first visit in a
+ * scenario moves anything (the researcher's "Q1-A"); every visit is listed.
+ */
+export function cvrRejectionRow(visits: unknown): {
+  shown: boolean; visits?: number; values_moved_on_the_first_visit?: boolean; moves?: unknown[]; every_visit?: unknown[];
+} {
+  const list = Array.isArray(visits) ? (visits as Record<string, unknown>[]) : [];
+  if (!list.length) return { shown: false };
+  const first = list.find((v) => v.movedValues === true) ?? null;
+  const moves = first && Array.isArray(first.moves) ? (first.moves as Record<string, unknown>[]) : [];
+  return {
+    shown: true,
+    visits: list.length,
+    values_moved_on_the_first_visit: !!first,
+    moves: moves.map((m) => ({
+      value: m.value ?? null,
+      value_name: VALUE_MOVE_NAMES[String(m.value)] ?? String(m.value),
+      asked_for: m.requested ?? null,
+      made: m.applied ?? null,
+      why: m.why ?? null,
+    })),
+    every_visit: list.map((v, i) => ({
+      visit: i + 1,
+      option_refused: v.optionId ?? null,
+      opened_at: v.at ?? null,
+      first_view_shown: v.firstViewShown ?? null,
+      saw_both_views: v.bothViewsSeen ?? null,
+      last_view_seen: v.lastViewSeen ?? null,
+      said_yes_at_the_reflection: v.saidYesAtReflection ?? null,
+      the_person_speaking_changed_their_mind: v.personChangedTheirMind ?? null,
+      moved_values: v.movedValues ?? null,
+      seconds_on_the_page: v.seconds ?? null,
+    })),
+  };
+}
+
 export function buildAlignmentRecords(block5: unknown): Record<string, unknown> | null {
   const results = resultsOf(block5);
   if (results.length === 0) return null;
@@ -2039,6 +2077,9 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
             option_that_triggered_it: r.apa.originalOptionId,
           }
         : { ran: false },
+
+      /* ---- The CVR Rejection page: condition 2 (CVR_Only) in place of APA, since 1 October 2026 ---- */
+      cvr_rejection_page: cvrRejectionRow(r.cvrRejections),
     };
   });
 
@@ -2094,6 +2135,8 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
         : null,
       times_reflection_fired: scored.filter((r) => r.cvr.fired).length,
       times_clarification_ran: scored.filter((r) => r.apa.ran).length,
+      /* Condition 2 (CVR_Only) only: scenarios where the CVR Rejection page opened at least once. */
+      times_cvr_rejection_page_shown: scored.filter((r) => r.cvr_rejection_page.shown).length,
       times_they_changed_their_choice: scored.filter((r) => r.cvr.changed_their_choice === true).length,
     },
   };

@@ -7,6 +7,8 @@
  *     MISALIGNED      → CVR vignette → "still choose this?"
  *                         YES → Q1 (value) + Q2 (stakeholder) → Confirm / Change my mind
  *                         NO  → APA value-clarification flow (Sections 1–4, all-or-nothing commit)
+ *                               (condition 2, CVR_Only, since 1 October 2026: the CVR Rejection page instead -
+ *                               no questions, one button back to all the options; CvrRejectionPanel)
  *
  * Alignment (v3.1): threshold-satisfaction — an option is only penalized when it falls
  * BELOW the participant's priority on a value; meeting/exceeding costs nothing. Bands
@@ -33,6 +35,7 @@ import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
   labelOptions, type LabeledOption, isMisaligned, cvrCoordinate,
   optionMetrics, applyEndorsementUpdatesWithMoves, applyKeepUpdatesWithMoves, applyApaUpdatesWithMoves, scenarioVciScore,
+  applyCvrRejectionUpdatesWithMoves,
   scenarioShowsPerformance,
   scenarioIsScored, isPredictionTest,
   performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
@@ -45,6 +48,7 @@ import { computeVciAll, runningStep } from "./block5VciAll";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { ROLE_BADGE } from "./block5RoleWords";
 import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
+import { showsCvrRejectionPage } from "./conditions";
 import { progressSaved } from "./sessionGuard";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
 import { SCENARIO_CHECK_AFTER, readAttention } from "./attentionChecks";
@@ -70,7 +74,7 @@ import {
   type PredictionTestRecord,
   type Block5UserProfile, type CVREndorsement, type Block5MetricProfile,
   type Block5PolicyDimKey, type CVRCoordinate, type WhoVariant,
-  type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome,
+  type Block5ScenarioTelemetry, type CVROutcome, type APAOutcome, type CvrRejectionVisit,
   type CVRLensBlock,
   type CVRFraming, type FramingAdjust, type StakePosition,
   BLOCK5_RESULTS_KEY,
@@ -122,7 +126,8 @@ interface ProgressState {
  * earlier would contaminate the one thing the scenario exists to measure: there would be no way to
  * tell a choice they made from a choice the guess suggested.
  */
-type FlowStep = "review" | "person" | "q1" | "apa" | "confirm" | "prediction";
+/* "cvr_rejection": the CVR Rejection page, condition 2 (CVR_Only) only, in place of "apa" (since 1 October 2026). */
+type FlowStep = "review" | "person" | "q1" | "apa" | "cvr_rejection" | "confirm" | "prediction";
 
 /**
  * A stable shuffle for one participant and one scenario.
@@ -355,6 +360,11 @@ interface TelemetryAccum {
   lastSelectedId: string | null;
   cvrShownAt: number | null; // timestamp the CVR vignette became visible (null when not showing)
   apaShownAt: number | null; // timestamp the APA panel opened (null when not open)
+  /* The CVR Rejection page (condition 2, CVR_Only, since 1 October 2026): visits, leaving it, time on it. */
+  cvrRejectionVisits: number;
+  cvrRejectionBackouts: number;
+  cvrRejectionDwellMs: number;
+  cvrRejectionShownAt: number | null;
 }
 
 function newTelemetryAccum(): TelemetryAccum {
@@ -368,6 +378,7 @@ function newTelemetryAccum(): TelemetryAccum {
        is either measured or it is an uncontrolled variable. */
     mcfReadingsOpened: 0, mcfRead: new Set(), mcfDwellMs: 0, mcfOpenedAt: null,
     distinct: new Set(), lastSelectedId: null, cvrShownAt: null, apaShownAt: null,
+    cvrRejectionVisits: 0, cvrRejectionBackouts: 0, cvrRejectionDwellMs: 0, cvrRejectionShownAt: null,
   };
 }
 
@@ -436,6 +447,8 @@ function buildScenarioTelemetry(
   // Defensively close any dwell timer left open (e.g. committed straight from a panel).
   if (t.cvrShownAt != null) cvrDwellMs += Math.max(0, now - t.cvrShownAt);
   if (t.apaShownAt != null) apaDwellMs += Math.max(0, now - t.apaShownAt);
+  const cvrRejectionDwellMs = t.cvrRejectionDwellMs
+    + (t.cvrRejectionShownAt != null ? Math.max(0, now - t.cvrRejectionShownAt) : 0);
   return {
     cvrTriggered: opts.cvrFired,
     apaTriggered: t.apaVisits > 0,
@@ -445,7 +458,9 @@ function buildScenarioTelemetry(
     apaOutcome: opts.apaOutcome,
     // Leaving the person-speaks page counts as a switch: the participant reached a decision point
     // and stepped away from it, which is the same behavior the other backout counters record.
-    numberOfSwitches: t.optionChanges + t.cvrBackouts + t.apaBackouts + t.personBackouts + t.finalDecisionChanges,
+    /* Leaving the CVR Rejection page (condition 2) is the same kind of step back as leaving the APA page. */
+    numberOfSwitches: t.optionChanges + t.cvrBackouts + t.apaBackouts + t.personBackouts + t.finalDecisionChanges
+      + t.cvrRejectionBackouts,
     initialSelections: t.distinct.size,
     optionChanges: t.optionChanges,
     cvrBackouts: t.cvrBackouts,
@@ -463,6 +478,8 @@ function buildScenarioTelemetry(
     compareChartsOpens: t.compareChartsOpens,
     cvrDwellMs,
     apaDwellMs,
+    /* Only where the page can open, so the other three conditions' rows keep their old shape. */
+    ...(t.cvrRejectionVisits > 0 ? { cvrRejectionVisits: t.cvrRejectionVisits, cvrRejectionDwellMs } : {}),
   };
 }
 
@@ -502,6 +519,19 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   // the decision logic or scoring). Reset for each new scenario in finalizeScenario.
   const telRef = useRef<TelemetryAccum | null>(null);
   if (telRef.current === null) telRef.current = newTelemetryAccum();
+
+  /*
+   * THE CVR REJECTION PAGE (condition 2, CVR_Only, since 1 October 2026; conditions.ts). In CVR_Only a refusal after the
+   * reflection opens this page instead of the APA page. The condition never changes during Block 5, so it is read once.
+   * The ref holds this scenario's visits and the moves made on the first one (the researcher's "Q1-A": once per
+   * scenario); finalizeScenario writes both into the scenario's row. It is keyed by the scenario, so a new scenario
+   * always starts clean, and it lives in memory only: a refresh restarts the scenario from the values it opened with,
+   * so a move is never counted twice.
+   */
+  const [cvrRejectionCondition] = useState<boolean>(() => showsCvrRejectionPage());
+  const rejectionRef = useRef<{
+    scenarioId: string | null; moved: boolean; moves: Block5ValueMove[]; visits: CvrRejectionVisit[]; openedAt: number | null;
+  }>({ scenarioId: null, moved: false, moves: [], visits: [], openedAt: null });
 
   /*
    * THE ATTENTION CHECK BETWEEN SCENARIOS (since 29 September 2026; since 30 September 2026 a question about the
@@ -1140,6 +1170,76 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       : null);
   }, [labeled, scenario, profile, logPred]);
 
+  /**
+   * WHERE A REFUSAL LEADS: the APA page, or in condition 2 (CVR_Only) the CVR Rejection page (since 1 October 2026).
+   *
+   * On the CVR Rejection page's FIRST visit in a scenario the views and the person speaking move at once, before the
+   * page is even drawn (applyCvrRejectionUpdatesWithMoves; the researcher's "Q1-A" once per scenario, "Q2-B" a view
+   * only when both were seen). They move the LIVE profile, so a second reflection in the same scenario already opens
+   * on the moved values - the researcher: "the changes will happen even if the user [is] still in the same
+   * scenario". The four policy values never move here, so no fit number, label or card order changes.
+   */
+  const openRefusalPage = useCallback((personMoved: boolean | null, saidYes: boolean | null) => {
+    const t = telRef.current;
+    const now = Date.now();
+    if (!cvrRejectionCondition || !scenario || !selectedOption) {
+      if (t) { t.apaVisits += 1; t.apaShownAt = now; }
+      setStep("apa");
+      return;
+    }
+    if (t) { t.cvrRejectionVisits += 1; t.cvrRejectionShownAt = now; }
+    if (rejectionRef.current.scenarioId !== scenario.id) {
+      rejectionRef.current = { scenarioId: scenario.id, moved: false, moves: [], visits: [], openedAt: null };
+    }
+    const rec = rejectionRef.current;
+    /* The view the reflection opened with, worked out exactly as the reflection worked it out (FlowOverlay). */
+    const firstView = cvrCoordinate(selectedOption, shownProfile).framing;
+    const lastView = lastLensSeen ?? firstView;
+    let moves: Block5ValueMove[] = [];
+    if (!rec.moved) {
+      const update = applyCvrRejectionUpdatesWithMoves(profile, {
+        stakeholderMoved: personMoved, bothViewsSeen: altViewGenerated, lastViewSeen: lastView,
+        stakesWeight: scenario.stakesWeight ?? 1,
+      });
+      moves = update.moves;
+      rec.moved = true;
+      rec.moves = update.moves;
+      setProgress((p) => ({ ...p, profile: update.profile }));
+    }
+    rec.visits.push({
+      optionId: selectedOption.id,
+      at: new Date(now).toISOString(),
+      firstViewShown: firstView,
+      bothViewsSeen: altViewGenerated,
+      lastViewSeen: lastView,
+      saidYesAtReflection: saidYes,
+      personChangedTheirMind: personMoved,
+      movedValues: moves.length > 0,
+      moves,
+      seconds: null,
+    });
+    rec.openedAt = now;
+    setStep("cvr_rejection");
+  }, [cvrRejectionCondition, scenario, selectedOption, shownProfile, lastLensSeen, profile, altViewGenerated]);
+
+  /** The CVR Rejection page's one button: back to all the options. Nothing to lose, so no warning. */
+  const handleRejectionBack = useCallback(() => {
+    const t = telRef.current;
+    const now = Date.now();
+    if (t) {
+      if (t.cvrRejectionShownAt != null) {
+        t.cvrRejectionDwellMs += Math.max(0, now - t.cvrRejectionShownAt);
+        t.cvrRejectionShownAt = null;
+      }
+      t.cvrRejectionBackouts += 1;
+    }
+    const rec = rejectionRef.current;
+    const last = rec.visits[rec.visits.length - 1];
+    if (last && last.seconds === null && rec.openedAt !== null) last.seconds = Math.round((now - rec.openedAt) / 100) / 10;
+    rec.openedAt = null;
+    resetFlow();
+  }, [resetFlow]);
+
   // --- CVR / APA telemetry handlers (wrap the existing step transitions; logic unchanged) ---
   /**
    * The participant's answer to the vignette. It does NOT go straight to the next page any more —
@@ -1168,9 +1268,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       setStep("person");
       return;
     }
-    if (t) { t.apaVisits += 1; t.apaShownAt = now; }
-    setStep("apa");
-  }, []);
+    openRefusalPage(null, false);
+  }, [openRefusalPage]);
 
   /**
    * The answer on the person-speaks page. `moved` is the whole stakeholder measurement: it is
@@ -1182,14 +1281,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    *   ends up refusing it           -> the APA flow
    */
   const handlePersonAnswer = useCallback((moved: boolean) => {
-    const t = telRef.current;
-    const now = Date.now();
     setStakeholderMoved(moved);
     const endsUpKeeping = cvrSaidYes ? !moved : moved;
     if (endsUpKeeping) { setStep("q1"); return; }
-    if (t) { t.apaVisits += 1; t.apaShownAt = now; }
-    setStep("apa");
-  }, [cvrSaidYes]);
+    openRefusalPage(moved, cvrSaidYes);
+  }, [cvrSaidYes, openRefusalPage]);
 
   const handlePersonBackout = useCallback(() => {
     const t = telRef.current;
@@ -1221,6 +1317,17 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
   // Records a finished scenario and advances (or completes Block 5). Shared by all paths.
   const finalizeScenario = useCallback((result: Block5ScenarioResult, nextProfile: Block5UserProfile) => {
+    /*
+     * THE CVR REJECTION PAGE'S RECORD (condition 2 only, since 1 October 2026). Its moves happened first, so they lead
+     * the scenario's list of value moves; every visit is kept. `nextProfile` already carries the moves, because every
+     * path builds it from the live profile they were applied to.
+     */
+    const rejected = rejectionRef.current;
+    if (rejected.scenarioId === result.scenarioId && rejected.visits.length > 0) {
+      result.valueMoves = [...rejected.moves, ...(result.valueMoves ?? [])];
+      result.cvrRejections = rejected.visits.map((v) => ({ ...v, moves: [...v.moves] }));
+    }
+    rejectionRef.current = { scenarioId: null, moved: false, moves: [], visits: [], openedAt: null };
     /*
       PLANNER LOG. Attached here because both result paths — a direct choice and an APA-committed
       choice — funnel through this one function, so neither can silently ship without it.
@@ -2151,6 +2258,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           onCvrBackout={handleCvrBackout}
           onApaBail={handleApaBail}
           onFinalDecisionChange={handleFinalDecisionChange}
+          onRejectionBack={handleRejectionBack}
           altViewGenerated={altViewGenerated}
           onAltGenerated={() => setAltViewGenerated(true)}
           lastLensSeen={lastLensSeen}
@@ -4251,7 +4359,7 @@ function FlowOverlay({
   option, profile, scenario, accent, whoVariant, step, setStep,
   tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, stakeholderMoved,
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
-  onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange,
+  onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange, onRejectionBack,
   cvrSaidYes, onPersonAnswer, onPersonBackout,
   altViewGenerated, onAltGenerated, lastLensSeen, onLensShown, framingChoiceYes, setFramingChoiceYes, mode,
   prediction, onOpenPrediction, predSoundsLike, setPredSoundsLike, predSurprised, setPredSurprised,
@@ -4277,6 +4385,8 @@ function FlowOverlay({
   // Telemetry wrappers for the CVR/APA transitions (observation only — same navigation).
   onCvrYes: () => void; onCvrNo: () => void; onCvrBackout: () => void;
   onApaBail: () => void; onFinalDecisionChange: () => void;
+  /** The CVR Rejection page's one button (condition 2, CVR_Only). */
+  onRejectionBack: () => void;
   /** which side they took on the vignette, and the answer on the person page. */
   cvrSaidYes: boolean | null;
   onPersonAnswer: (moved: boolean) => void;
@@ -4745,8 +4855,253 @@ function FlowOverlay({
             mode={mode}
           />
         )}
+
+        {/* Condition 2, CVR_Only (since 1 October 2026): in place of the APA page. */}
+        {step === "cvr_rejection" && (
+          <CvrRejectionPanel
+            option={option}
+            profile={profile}
+            scenario={scenario}
+            accent={accent}
+            mode={mode}
+            lastLensSeen={lastLensSeen ?? coord?.framing ?? null}
+            onBack={onRejectionBack}
+          />
+        )}
       </Box>
     </Box>
+  );
+}
+
+/* ---------------- Shared by the APA page and the CVR Rejection page ---------------- */
+
+/**
+ * THE TWO SITUATIONS SIDE BY SIDE (the "mirror table"), for somebody whose LAST view was the context one. Moved out of
+ * APAPanel on 1 October 2026, unchanged, so the APA page and the CVR Rejection page (condition 2) say it the same way.
+ */
+function SituationsTable({ scenario, accent, mode, lastLensSeen }: {
+  scenario: Block5Scenario; accent: string; mode: "light" | "dark"; lastLensSeen: CVRFraming | null;
+}) {
+  const marks = cvrMarks(mode);
+  const PURPLE = marks.w.color as string;
+  /**
+   * THE MIRROR TABLE'S ROWS, and whether this participant gets to see them.
+   *
+   * Only for somebody who ended on the CONTEXT lens: the table is the plain statement of the thing
+   * that lens leaves unsaid, and it is meaningless — worse, confusing — to anyone who never met
+   * the other world. See `lastLensSeen`.
+   */
+  const mirrorRows = getCVRMirror(scenario);
+  if (lastLensSeen !== "context" || mirrorRows.length === 0) return null;
+  /*
+   * THE MIRROR TABLE — shown only to participants whose LAST lens was the context one.
+
+   * THE COST IT PAYS BACK. The CVR vignette is forbidden from saying "same": it prints the
+  second world's numbers and leaves the participant to notice that they match their own. That
+  is deliberate, and it has a price - somebody who does not notice gets nothing from the
+  context lens at all. This table is where the noticing is finally made free, AFTER the choice
+  and the reflection are behind them, so it cannot steer either one.
+
+   * NOT SHOWN TO EVERYONE. Whoever ended on the directness lens never met the airport, and a
+  table comparing their district to a terminal they have not read would introduce a world
+  rather than reveal one.
+  */
+  return (
+        <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3.5">
+          <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider"
+            fontWeight="bold" mb="2.5">
+            The two situations you were shown
+          </Text>
+          <Box overflowX="auto">
+            <Box as="table" w="full" style={{ borderCollapse: "collapse" }}>
+              <Box as="thead">
+                <Box as="tr">
+                  <Box as="th" textAlign="left" pb="2" pr="3" borderBottomWidth="1px" borderColor="border">
+                    <Text fontSize="2xs" fontWeight="bold" color={accent} textTransform="uppercase" letterSpacing="wider">
+                      Where you decided
+                    </Text>
+                  </Box>
+                  <Box as="th" textAlign="left" pb="2" borderBottomWidth="1px" borderColor="border">
+                    <Text fontSize="2xs" fontWeight="bold" color={PURPLE} textTransform="uppercase" letterSpacing="wider">
+                      The other place
+                    </Text>
+                  </Box>
+                </Box>
+              </Box>
+              <Box as="tbody">
+                {mirrorRows.map((row) => (
+                  <Box as="tr" key={row.here}>
+                    <Box as="td" verticalAlign="top" py="1.5" pr="4" borderBottomWidth="1px" borderColor="border.subtle">
+                      <Text fontSize="xs" color="fg" lineHeight="tall">{renderCVRMarkup(row.here, marks)}</Text>
+                    </Box>
+                    <Box as="td" verticalAlign="top" py="1.5" borderBottomWidth="1px" borderColor="border.subtle">
+                      <Text fontSize="xs" color="fg" lineHeight="tall">{renderCVRMarkup(row.there, marks)}</Text>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+  );
+}
+
+/**
+ * HOW FAR THE OPTION FELL SHORT of what the participant's earlier answers asked for, and on which values. Moved out of
+ * APAPanel on 1 October 2026, unchanged, so the APA page and the CVR Rejection page (condition 2) say it the same way.
+ */
+function ShortfallNote({ option, profile, accent, mode }: {
+  option: LabeledOption; profile: Block5UserProfile; accent: string; mode: "light" | "dark";
+}) {
+  const marks = cvrMarks(mode);
+  const TEAL = marks.v.color as string;
+  /*
+   * ═════════════════════════════════════════════
+   * WHAT THIS PAGE MEASURES THE OPTION AGAINST, AND WHAT IT NO LONGER CLAIMS.
+   *
+   * GONE (17 September 2026): `served` and `sacrificed` — the option's strongest value and the one
+   * it most under-serves — and the sentence built on them, "this option delivers X and gives up Y".
+   * That sentence described a two-way trade, and the arithmetic does not have one. An option
+   * usually falls short on SEVERAL of the four values at once, and naming exactly one as the
+   * casualty made the other shortfalls invisible while asking the participant to defend a swap
+   * they never made.
+   *
+   * HERE INSTEAD: the total distance, and an honest count of how many values it fell short on.
+   * ═════════════════════════════════════════════
+   */
+
+  /**
+   * HOW FAR THIS OPTION LANDED FROM WHAT THEY ASKED FOR, in points.
+   *
+   * This is `policyAlignmentShortfall` — the UNCENSORED penalty: summed over the four values,
+   * (score / 100) × (score − what the option delivers), counting only the values the option falls
+   * BELOW. It is the same quantity the alignment score is built from, before that score is clamped
+   * into 0–100.
+   *
+   * THE SHORTFALL IS SHOWN AND THE FIT SCORE IS NOT, on the researcher's instruction. "Missed by
+   * 34" is a distance from their own stated values; "matched 66 out of 100" is a grade, with a
+   * ceiling to be measured against and a passing mark to be inferred. The project's standing rule
+   * is that no participant is shown an alignment verdict while they are still choosing, and a score
+   * out of 100 is a verdict wearing a number's clothes. The distance says what this cost them
+   * without ranking them.
+   *
+   * It is deliberately NOT stored from here — `analysis.alignment_records` computes it again from
+   * the same function, so the database never depends on what a screen happened to render.
+   */
+  const shortfallPoints = Math.round(policyAlignmentShortfall(option, profile));
+
+  /**
+   * WHICH values it fell short on — every one of them, not the worst one.
+   *
+   * The same test the shortfall uses: the participant's score for that value is above what the
+   * option delivers. Naming all of them is the correction to the old single-trade sentence; there
+   * are commonly two or three, and a participant told about one of three was told something true
+   * and badly incomplete.
+   */
+  const shortValues = (() => {
+    /*
+     * BIGGEST MISS FIRST (researcher, 18 September 2026). Each value is ranked by its own share of
+     * the total above — the same term `policyAlignmentShortfall` adds up — so the list reads in the
+     * order the points were lost, and the shares sum to the "missed by" number on screen.
+     */
+    const by = policyShortfallByValue(option, profile);
+    return POLICY_DIM_KEYS.filter((k) => by[k] > 0).sort((a, b) => by[b] - by[a]);
+  })();
+
+  const vSpan = (k: Block5PolicyDimKey, color: string) => (
+    <Text as="span" color={color} fontWeight="bold" fontStyle="italic">{VALUE_NAME[k]}</Text>
+  );
+  /*
+   * HOW FAR THIS OPTION FELL SHORT — the number, and which values it fell short on, in words.
+   *
+   * IT SHOWS THE SHORTFALL AND NOT THE FIT SCORE, on the researcher's instruction. "Missed by
+   * 34" is a distance; "matched 66 out of 100" is a verdict with a ceiling to be graded
+   * against, and the project's standing rule is that no participant is shown one of those while
+   * they are still choosing. The distance answers the question this page is actually asking -
+   * what did this cost you against what you asked for - without handing them a mark.
+   *
+   * THE VALUES ARE NAMED IN WORDS, not listed with their arithmetic, for the same reason.
+   */
+  return (
+      <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
+        <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+          Against what your earlier answers asked for, this option{" "}
+          <Text as="span" color="fg" fontWeight="bold">missed by {shortfallPoints} points</Text>
+          {shortValues.length === 0 ? (
+            <> in total. It met every one of your four values.</>
+          ) : (
+            <>
+              {" "}in total. It fell short on{" "}
+              <Text as="span" color="fg" fontWeight="bold">
+                {shortValues.length === 1 ? "one" : shortValues.length === 2 ? "two" : shortValues.length === 3 ? "three" : "all four"}
+              </Text>{" "}
+              of your four values — {shortValues.map((k, i) => (
+                <Text as="span" key={k}>
+                  {i > 0 && (i === shortValues.length - 1 ? " and " : ", ")}
+                  {/* ONE COLOR FOR ALL OF THEM: they are one kind of thing, the participant's own
+                      values that this option missed. The first used to be orange and the rest teal,
+                      and on the lens pages those two colors mean different things. */}
+                  {vSpan(k, TEAL)}
+                </Text>
+              ))}.
+            </>
+          )}
+        </Text>
+      </Box>
+  );
+}
+
+/* ---------------- The CVR Rejection page (condition 2, CVR_Only) ---------------- */
+
+/**
+ * CvrRejectionPanel — what condition 2 (CVR_Only) shows instead of the APA page (since 1 October 2026; the researcher's
+ * design). A participant reaches it when they chose an option, saw it again in the reflection (one or two views, and
+ * perhaps a person speaking), and said they would not choose it after all.
+ *
+ * It explains the way the APA page explains - the same opening idea, the two situations side by side for somebody who
+ * ended on the context view, and how far the option fell short - and then asks NOTHING ("No questions on this page"):
+ * no value to name, no "how sure", no "which view did more", no list of options. ONE button takes the participant back
+ * to all the options to choose again (no warning: there is nothing to lose).
+ *
+ * The views and the person speaking move when the page opens (the simulation does it, applyCvrRejectionUpdatesWithMoves;
+ * once per scenario), never here, and the page never mentions it: participants are never shown the scoring. No method
+ * logo (the researcher: "remove 'APA' logo from this page"): the logo ties a step to its feedback questions, and this
+ * page has none ("Q4-A"). The title is "A closer look at your choice" ("Q3-A"): "CVR Rejection page" is its name in the
+ * code and the data, never on screen.
+ */
+function CvrRejectionPanel({ option, profile, scenario, accent, mode, lastLensSeen, onBack }: {
+  option: LabeledOption;
+  profile: Block5UserProfile;
+  scenario: Block5Scenario;
+  accent: string;
+  mode: "light" | "dark";
+  lastLensSeen: CVRFraming | null;
+  onBack: () => void;
+}) {
+  return (
+    <Stack gap="4" data-cvr-rejection-page>
+      <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3">
+        <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider" fontWeight="bold" mb="1">
+          A closer look at your choice
+        </Text>
+        <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+          We noticed something worth a closer look. You chose this option, and then, after looking at it more closely,
+          you said you would not choose it. There are <b>no right or wrong answers</b>.
+        </Text>
+      </Box>
+
+      <SituationsTable scenario={scenario} accent={accent} mode={mode} lastLensSeen={lastLensSeen} />
+      <ShortfallNote option={option} profile={profile} accent={accent} mode={mode} />
+
+      <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+        You can go back to all the options and choose again. Every option stays available, including this one.
+      </Text>
+      <Box>
+        <Button size="sm" bg={accent} color="white" _hover={{ opacity: 0.9 }} rounded="lg" fontSize="xs" onClick={onBack}>
+          Go back to all options and choose again
+        </Button>
+      </Box>
+    </Stack>
   );
 }
 
@@ -4916,71 +5271,10 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
 }) {
   // Highlight colors for the value-name spans, tuned for the current modal background.
   const marks = cvrMarks(mode);
-  const TEAL = marks.v.color as string;     // the participant's leaning value
   const PURPLE = marks.w.color as string;   // the stakeholder
+  /* The shortfall's teal (the participant's own values) and the mirror table moved to ShortfallNote and
+     SituationsTable on 1 October 2026, shared with the CVR Rejection page. */
 
-  /*
-   * ═════════════════════════════════════════════
-   * WHAT THIS PAGE MEASURES THE OPTION AGAINST, AND WHAT IT NO LONGER CLAIMS.
-   *
-   * GONE (17 September 2026): `served` and `sacrificed` — the option's strongest value and the one
-   * it most under-serves — and the sentence built on them, "this option delivers X and gives up Y".
-   * That sentence described a two-way trade, and the arithmetic does not have one. An option
-   * usually falls short on SEVERAL of the four values at once, and naming exactly one as the
-   * casualty made the other shortfalls invisible while asking the participant to defend a swap
-   * they never made.
-   *
-   * HERE INSTEAD: the total distance, and an honest count of how many values it fell short on.
-   * ═════════════════════════════════════════════
-   */
-
-  /**
-   * HOW FAR THIS OPTION LANDED FROM WHAT THEY ASKED FOR, in points.
-   *
-   * This is `policyAlignmentShortfall` — the UNCENSORED penalty: summed over the four values,
-   * (score / 100) × (score − what the option delivers), counting only the values the option falls
-   * BELOW. It is the same quantity the alignment score is built from, before that score is clamped
-   * into 0–100.
-   *
-   * THE SHORTFALL IS SHOWN AND THE FIT SCORE IS NOT, on the researcher's instruction. "Missed by
-   * 34" is a distance from their own stated values; "matched 66 out of 100" is a grade, with a
-   * ceiling to be measured against and a passing mark to be inferred. The project's standing rule
-   * is that no participant is shown an alignment verdict while they are still choosing, and a score
-   * out of 100 is a verdict wearing a number's clothes. The distance says what this cost them
-   * without ranking them.
-   *
-   * It is deliberately NOT stored from here — `analysis.alignment_records` computes it again from
-   * the same function, so the database never depends on what a screen happened to render.
-   */
-  const shortfallPoints = Math.round(policyAlignmentShortfall(option, profile));
-
-  /**
-   * WHICH values it fell short on — every one of them, not the worst one.
-   *
-   * The same test the shortfall uses: the participant's score for that value is above what the
-   * option delivers. Naming all of them is the correction to the old single-trade sentence; there
-   * are commonly two or three, and a participant told about one of three was told something true
-   * and badly incomplete.
-   */
-  const shortValues = (() => {
-    /*
-     * BIGGEST MISS FIRST (researcher, 18 September 2026). Each value is ranked by its own share of
-     * the total above — the same term `policyAlignmentShortfall` adds up — so the list reads in the
-     * order the points were lost, and the shares sum to the "missed by" number on screen.
-     */
-    const by = policyShortfallByValue(option, profile);
-    return POLICY_DIM_KEYS.filter((k) => by[k] > 0).sort((a, b) => by[b] - by[a]);
-  })();
-
-  /**
-   * THE MIRROR TABLE'S ROWS, and whether this participant gets to see them.
-   *
-   * Only for somebody who ended on the CONTEXT lens: the table is the plain statement of the thing
-   * that lens leaves unsaid, and it is meaningless — worse, confusing — to anyone who never met
-   * the other world. See `lastLensSeen`.
-   */
-  const mirrorRows = getCVRMirror(scenario);
-  const showMirror = lastLensSeen === "context";
   /** Each value's meaning in THIS scenario, shown under its general definition. See `valueHere`. */
   const valueHere = getCVRValueHere(scenario);
 
@@ -5181,94 +5475,10 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
         ══════════════════════════════════════════════════════════════════════════════════════
       */}
 
-      {/*
-        THE MIRROR TABLE — shown only to participants whose LAST lens was the context one.
-
-        THE COST IT PAYS BACK. The CVR vignette is forbidden from saying "same": it prints the
-        second world's numbers and leaves the participant to notice that they match their own. That
-        is deliberate, and it has a price - somebody who does not notice gets nothing from the
-        context lens at all. This table is where the noticing is finally made free, AFTER the choice
-        and the reflection are behind them, so it cannot steer either one.
-
-        NOT SHOWN TO EVERYONE. Whoever ended on the directness lens never met the airport, and a
-        table comparing their district to a terminal they have not read would introduce a world
-        rather than reveal one.
-      */}
-      {showMirror && mirrorRows.length > 0 && (
-        <Box bg="bg.subtle" borderWidth="1px" borderColor="border" rounded="xl" px="4" py="3.5">
-          <Text fontSize="xs" color="fg.subtle" textTransform="uppercase" letterSpacing="wider"
-            fontWeight="bold" mb="2.5">
-            The two situations you were shown
-          </Text>
-          <Box overflowX="auto">
-            <Box as="table" w="full" style={{ borderCollapse: "collapse" }}>
-              <Box as="thead">
-                <Box as="tr">
-                  <Box as="th" textAlign="left" pb="2" pr="3" borderBottomWidth="1px" borderColor="border">
-                    <Text fontSize="2xs" fontWeight="bold" color={accent} textTransform="uppercase" letterSpacing="wider">
-                      Where you decided
-                    </Text>
-                  </Box>
-                  <Box as="th" textAlign="left" pb="2" borderBottomWidth="1px" borderColor="border">
-                    <Text fontSize="2xs" fontWeight="bold" color={PURPLE} textTransform="uppercase" letterSpacing="wider">
-                      The other place
-                    </Text>
-                  </Box>
-                </Box>
-              </Box>
-              <Box as="tbody">
-                {mirrorRows.map((row) => (
-                  <Box as="tr" key={row.here}>
-                    <Box as="td" verticalAlign="top" py="1.5" pr="4" borderBottomWidth="1px" borderColor="border.subtle">
-                      <Text fontSize="xs" color="fg" lineHeight="tall">{renderCVRMarkup(row.here, marks)}</Text>
-                    </Box>
-                    <Box as="td" verticalAlign="top" py="1.5" borderBottomWidth="1px" borderColor="border.subtle">
-                      <Text fontSize="xs" color="fg" lineHeight="tall">{renderCVRMarkup(row.there, marks)}</Text>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      )}
-
-      {/*
-        HOW FAR THIS OPTION FELL SHORT — the number, and which values it fell short on, in words.
-
-        IT SHOWS THE SHORTFALL AND NOT THE FIT SCORE, on the researcher's instruction. "Missed by
-        34" is a distance; "matched 66 out of 100" is a verdict with a ceiling to be graded
-        against, and the project's standing rule is that no participant is shown one of those while
-        they are still choosing. The distance answers the question this page is actually asking -
-        what did this cost you against what you asked for - without handing them a mark.
-
-        THE VALUES ARE NAMED IN WORDS, not listed with their arithmetic, for the same reason.
-      */}
-      <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3">
-        <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-          Against what your earlier answers asked for, this option{" "}
-          <Text as="span" color="fg" fontWeight="bold">missed by {shortfallPoints} points</Text>
-          {shortValues.length === 0 ? (
-            <> in total. It met every one of your four values.</>
-          ) : (
-            <>
-              {" "}in total. It fell short on{" "}
-              <Text as="span" color="fg" fontWeight="bold">
-                {shortValues.length === 1 ? "one" : shortValues.length === 2 ? "two" : shortValues.length === 3 ? "three" : "all four"}
-              </Text>{" "}
-              of your four values — {shortValues.map((k, i) => (
-                <Text as="span" key={k}>
-                  {i > 0 && (i === shortValues.length - 1 ? " and " : ", ")}
-                  {/* ONE COLOR FOR ALL OF THEM: they are one kind of thing, the participant's own
-                      values that this option missed. The first used to be orange and the rest teal,
-                      and on the lens pages those two colors mean different things. */}
-                  {vSpan(k, TEAL)}
-                </Text>
-              ))}.
-            </>
-          )}
-        </Text>
-      </Box>
+      {/* The two situations, and how far the option fell short: shared with the CVR Rejection page, so both say it the
+          same way (moved out of this page on 1 October 2026, unchanged). */}
+      <SituationsTable scenario={scenario} accent={accent} mode={mode} lastLensSeen={lastLensSeen} />
+      <ShortfallNote option={option} profile={profile} accent={accent} mode={mode} />
 
       {/*
         THE CONFIDENCE RATING BELONGS TO THIS QUESTION, NOT THE ONE ABOVE.

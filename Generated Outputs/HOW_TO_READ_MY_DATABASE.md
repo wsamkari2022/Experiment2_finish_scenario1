@@ -123,7 +123,7 @@ correlating the two will produce impressive and meaningless results.
 | `email` | The key. Lower-cased. Also how a participant returns to finish. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
 | `country`, `country_code` | Since 30 September 2026, from the demographic form's Country question: the English name as listed (e.g. "Saudi Arabia") and its ISO 3166-1 alpha-2 code ("SA"; Kosovo "XK"), or "Prefer not to say" with a null code. Group by `country_code`, never by the name. Absent on records made before that date. |
-| `condition_number`, `condition_type` | Since 1 October 2026: the participant's condition, 1-4 and its name - `1` "CVR+APA" (the full version), `2` "CVR_Only", `3` "APA_Only", `4` "Baseline". Set ONCE by the server when the record is made, never changed. **Every comparison between conditions groups by these.** Absent on records made before that date (they all ran the full version, condition 1). Until the researcher builds what each condition does differently, all four ran the same study: check the date in HOW_TO_ANALYZE 4.9 before comparing them. |
+| `condition_number`, `condition_type` | Since 1 October 2026: the participant's condition, 1-4 and its name - `1` "CVR+APA" (the full version), `2` "CVR_Only", `3` "APA_Only", `4` "Baseline". Set ONCE by the server when the record is made, never changed. **Every comparison between conditions groups by these.** Absent on records made before that date (they all ran the full version, condition 1). Each condition's difference is built one task at a time; until a condition's task was built it ran the same study as the others: check the dates in HOW_TO_ANALYZE 4.9 before comparing them (the first: condition 2's CVR Rejection page, 1 October 2026, section 6d). |
 | `condition_source` | How the condition was given: `landing_page` (by the count, the only kind counted for balance), `address` (a tester opened a condition's address on purpose) or `random_offline` (no server). **Treat `address` and `random_offline` as tests**: real participants arrive through the landing page. |
 | `condition_assigned_at` | When the landing page (or the address) gave it. |
 | `status` | `"Study Not Completed"` or `"Study Completed"` — nothing else. |
@@ -842,6 +842,25 @@ than repeated on all six rows.
    saved anywhere, although earlier versions of this file said it was.
 
 ---
+
+### The CVR Rejection page: condition 2 (CVR_Only) only, since 1 October 2026
+
+In condition 2 a refusal after the reflection opens the **CVR Rejection page** instead of the APA page: no question, one
+button back to all the options. So condition 2's rows have `apa.ran: false` everywhere, and **`cvr_rejection_page`** says
+what happened instead (`shown: false` on every other row and in every other condition):
+
+| Field | Meaning |
+|---|---|
+| `shown`, `visits` | Whether the page opened in this scenario, and how often (each refusal opens it again) |
+| `values_moved_on_the_first_visit`, `moves` | The page moves values ONCE per scenario, on its first visit, automatically: the person speaking +25 / -25 (their story changed the participant's mind / did not) and, only when both views were seen, the LAST view +20 (`contextSensitivity` or `directnessSensitivity`). Never the four policy values. The same moves lead the scenario's `valueMoves` with reasons starting "CVR Rejection page:" |
+| `every_visit[]` | Per visit: the option refused, when, the first view shown, whether both views were seen, the last view, the answer on the reflection, whether the person speaking changed their mind, whether this visit moved values, seconds on the page |
+
+`totals.times_cvr_rejection_page_shown` counts the scored scenarios where it opened. The raw records are
+`blocks.block5_emergency_scenarios.scenarioResults[].cvrRejections`, and each row's `telemetry` has `cvrRejectionVisits` and
+`cvrRejectionDwellMs` (absent in the other conditions). They are never counted as APA visits (`apaVisits` stays 0), so the
+APA feedback questions never appear for condition 2. **Traps:** the moves happen INSIDE the scenario, so a later reflection
+in the same scenario can open on another view or another kind of person; and a final choice's own moves (keep, confirm)
+are added on top.
 
 ## 6e. `analysis.mpf_predictions_every_scenario` — the predictor, run everywhere
 

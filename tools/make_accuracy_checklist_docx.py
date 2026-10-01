@@ -201,9 +201,15 @@ SECTIONS = [
          "The address shows the condition (?condition=CVR_APA, CVR_Only, APA_Only, Baseline). Opening one of those addresses "
          "yourself gives that condition and is never counted (your Q2-yes); /api/conditions/report shows the counts (Q3-yes).",
          ["conditions"], "(N3, N7)"),
-        ("All four conditions still run the same study.",
-         "What each condition does differently is built one task at a time, when you ask. Until then nothing in Block 5 "
-         "differs.", ["conditions", "build"], "(N9)"),
+        ("Each condition's difference is built one task at a time.",
+         "Built so far: CVR_Only's CVR Rejection page. The other three conditions run the same study as before.",
+         ["conditions", "build"], "(N9, N12)"),
+        ("CVR_Only: a refusal opens the CVR Rejection page, not the APA page.",
+         "\"A closer look at your choice\": the same explanation (the two situations, how far the option fell short), no "
+         "question, no APA logo, one button back to all the options. On its first visit in a scenario it moves the "
+         "person-speaking score +25 or -25 and, when both views were seen, the last view +20, inside the scenario; the four "
+         "values never move. Every visit and move is saved, apart from the APA numbers. Checked live, and condition 1 still "
+         "opens the APA page.", ["conditions"], "(N11, N12, N13)"),
     ]),
     ("3. Blocks 1-4: the seven value scores", [
         ("Every value can reach 100.",

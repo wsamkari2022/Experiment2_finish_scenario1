@@ -30,6 +30,17 @@
  *   N10 the database copy: major_info_and_scores.condition is the file's number, name, source and time, counted for
  *       balance only when the landing page gave it, null without a file, and named in where_each_number_lives
  *
+ * Condition 2, CVR_Only (since 1 October 2026; the researcher's answers Q1-A once per scenario, Q2-B a view only when
+ * both were seen, Q3-A the title, Q4-A no feedback questions, and no APA logo):
+ *   N11 the CVR Rejection page's moves: the person speaking +25 / -25 exactly as the APA page, the LAST view +20 and the
+ *       other untouched only when both views were seen, the four values never, every move recorded and adding up;
+ *       only condition 2 gets the page
+ *   N12 the page and the flow, from the source: condition 2's refusals open it and the others' still open APA; the
+ *       moves are made once per scenario on the live profile and saved with the scenario; its visits are never APA
+ *       visits; no question, no logo, one button, the approved words; the APA page still shows the same two parts
+ *   N13 the database: analysis.alignment_records carries every visit and the first visit's moves, "shown: false"
+ *       wherever the page never opened, and a count in the totals
+ *
  * Run:  npm run validate:conditions
  */
 const path = require("node:path");
@@ -358,8 +369,140 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
       const without = db.buildMajorScores(block5, null, null, null, null, null, null);
       if (without?.condition !== null) why.push("an older caller without the file did not get null");
     }
-    if (db.SHAPE_VERSION !== "2026-10-01-conditions") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N10", "major_info_and_scores.condition: a copy of the file, counted only from the landing page", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N11 */
+  {
+    const why = [];
+    const CVR = B("block5CVR.js");
+    const KEYS4 = ["vulnerabilityPrioritySensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "helpedResponsivenessSensitivity"];
+    const make = (scores) => ({
+      dimensions: Object.entries(scores).map(([key, score], i) => ({ key, score, rank: i + 1 })),
+    });
+    const base = {
+      vulnerabilityPrioritySensitivity: 70, groupSizeSensitivity: 55, gainResponsivenessSensitivity: 40,
+      helpedResponsivenessSensitivity: 60, directnessSensitivity: 50, contextSensitivity: 45,
+      stakeholderPerspectiveShiftSensitivity: 45,
+    };
+    const score = (prof, key) => prof.dimensions.find((d) => d.key === key)?.score;
+    const run = (opts, scores = base) => CVR.applyCvrRejectionUpdatesWithMoves(make(scores), opts);
+    const cases = [
+      ["moved, both views, last context", { stakeholderMoved: true, bothViewsSeen: true, lastViewSeen: "context" }, { stake: 70, ctx: 65, dir: 50 }],
+      ["not moved, both views, last directness", { stakeholderMoved: false, bothViewsSeen: true, lastViewSeen: "directness" }, { stake: 20, ctx: 45, dir: 70 }],
+      ["no person page (null), both views, last context", { stakeholderMoved: null, bothViewsSeen: true, lastViewSeen: "context" }, { stake: 20, ctx: 65, dir: 50 }],
+      ["moved, ONE view only (Q2-B)", { stakeholderMoved: true, bothViewsSeen: false, lastViewSeen: "directness" }, { stake: 70, ctx: 45, dir: 50 }],
+      ["not moved, one view only", { stakeholderMoved: false, bothViewsSeen: false, lastViewSeen: "context" }, { stake: 20, ctx: 45, dir: 50 }],
+    ];
+    for (const [label, opts, want] of cases) {
+      const out = run(opts);
+      const got = { stake: score(out.profile, "stakeholderPerspectiveShiftSensitivity"), ctx: score(out.profile, "contextSensitivity"), dir: score(out.profile, "directnessSensitivity") };
+      if (JSON.stringify(got) !== JSON.stringify(want)) why.push(`${label}: ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`);
+      for (const k of KEYS4) if (score(out.profile, k) !== base[k]) why.push(`${label}: the value ${k} moved`);
+      /* every move recorded, and they add up to the change */
+      for (const m of out.moves) {
+        if (score(out.profile, m.value) !== m.from + m.applied) why.push(`${label}: the record of ${m.value} does not add up`);
+        if (!/^CVR Rejection page: /.test(m.why)) why.push(`${label}: a move without its reason (${m.why})`);
+      }
+      const wantMoves = 1 + (opts.bothViewsSeen ? 1 : 0);
+      if (out.moves.length !== wantMoves) why.push(`${label}: ${out.moves.length} moves recorded, wanted ${wantMoves}`);
+    }
+    /* At an edge the cut is recorded, as every move is (24 September 2026). */
+    const edge = run({ stakeholderMoved: false, bothViewsSeen: true, lastViewSeen: "context" }, { ...base, stakeholderPerspectiveShiftSensitivity: 10, contextSensitivity: 95 });
+    const sm = edge.moves.find((m) => m.value === "stakeholderPerspectiveShiftSensitivity");
+    const cm = edge.moves.find((m) => m.value === "contextSensitivity");
+    if (sm?.requested !== -25 || sm?.applied !== -10 || cm?.requested !== 20 || cm?.applied !== 5) why.push(`the cut at the edges: ${JSON.stringify(edge.moves)}`);
+    /* The same sizes as the APA page's own person-speaking rule. */
+    const apa = CVR.applyApaUpdatesWithMoves(make(base), true, "groupSizeSensitivity", null, 1, 3);
+    const apaStake = apa.moves.find((m) => m.value === "stakeholderPerspectiveShiftSensitivity")?.requested;
+    if (apaStake !== 25) why.push(`the APA page's person-speaking move is ${apaStake}, the page copies 25`);
+    /* Only condition 2. */
+    const pages = C.CONDITIONS.map((c) => C.showsCvrRejectionPage(c));
+    if (JSON.stringify(pages) !== "[false,true,false,false]") why.push(`the page belongs to the conditions ${JSON.stringify(pages)}`);
+    if (C.showsCvrRejectionPage(null) !== false) why.push("a participant with no condition gets the page");
+    gate("N11", "CVR_Only's moves: person +25/-25, the last view +20 only when both were seen, values never", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N12 */
+  {
+    const why = [];
+    const sim = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const need = (re, what) => { if (!re.test(sim)) why.push(what); };
+    const body = (name) => {
+      const i = sim.indexOf(`function ${name}(`);
+      if (i < 0) return "";
+      /* Up to the next top-level function or comment: the next function's own notes are not this one's. */
+      const ends = ["\nfunction ", "\n/*"].map((m) => sim.indexOf(m, i + 10)).filter((n) => n > 0);
+      return sim.slice(i, ends.length ? Math.min(...ends) : undefined);
+    };
+    /* Where a refusal leads. */
+    need(/if \(!cvrRejectionCondition \|\| !scenario \|\| !selectedOption\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = now; \}\s*setStep\("apa"\);/, "the other conditions no longer open the APA page");
+    need(/const \[cvrRejectionCondition\] = useState<boolean>\(\(\) => showsCvrRejectionPage\(\)\);/, "the condition is not read");
+    if ((sim.match(/setStep\("apa"\)/g) ?? []).length !== 1) why.push("a refusal can still reach the APA page without passing the condition");
+    need(/openRefusalPage\(null, false\);/, "a refusal on the reflection page does not go through the condition");
+    need(/openRefusalPage\(moved, cvrSaidYes\);/, "a refusal after the person speaks does not go through the condition");
+    need(/if \(t\) \{ t\.cvrRejectionVisits \+= 1; t\.cvrRejectionShownAt = now; \}/, "its visits are not counted apart from APA's");
+    /* Once per scenario, on the live profile, before the page is drawn. */
+    need(/if \(!rec\.moved\) \{\s*const update = applyCvrRejectionUpdatesWithMoves\(profile, \{\s*stakeholderMoved: personMoved, bothViewsSeen: altViewGenerated, lastViewSeen: lastView,/, "the moves are not made once, from the live profile, with the views and the person");
+    need(/rec\.moved = true;[\s\S]{0,80}setProgress\(\(p\) => \(\{ \.\.\.p, profile: update\.profile \}\)\);/, "the moves do not reach the live profile at once");
+    need(/if \(rejectionRef\.current\.scenarioId !== scenario\.id\) \{\s*rejectionRef\.current = \{ scenarioId: scenario\.id, moved: false/, "a new scenario does not start the once-per-scenario rule again");
+    need(/const lastView = lastLensSeen \?\? firstView;/, "the last view is not the one on screen when they left");
+    /* Saved with the scenario. */
+    need(/result\.valueMoves = \[\.\.\.rejected\.moves, \.\.\.\(result\.valueMoves \?\? \[\]\)\];\s*result\.cvrRejections = rejected\.visits/, "the moves and the visits are not saved with the scenario");
+    need(/\.\.\.\(t\.cvrRejectionVisits > 0 \? \{ cvrRejectionVisits: t\.cvrRejectionVisits, cvrRejectionDwellMs \} : \{\}\)/, "the visits and seconds are not in the scenario's timing record");
+    /* The page. */
+    const page = body("CvrRejectionPanel");
+    if (!page) why.push("no CvrRejectionPanel");
+    for (const forbidden of ["QuestionCard", "ApaChoice", "MethodLogo", "setConfidence", "confirmBail", "onCommit"]) {
+      if (page.includes(forbidden)) why.push(`the page still has ${forbidden}`);
+    }
+    if ((page.match(/<Button\b/g) ?? []).length !== 1) why.push(`the page has ${(page.match(/<Button\b/g) ?? []).length} buttons, wanted one`);
+    for (const words of ["A closer look at your choice", "We noticed something worth a closer look. You chose this option, and then, after looking at it more closely",
+      "you said you would not choose it. There are <b>no right or wrong answers</b>.",
+      "You can go back to all the options and choose again. Every option stays available, including this one.",
+      "Go back to all options and choose again", "<SituationsTable", "<ShortfallNote", "onClick={onBack}"]) {
+      if (!page.includes(words)) why.push(`the page lacks: ${words}`);
+    }
+    const visible = page.split("return (")[1] ?? "";
+    if (/\b(CVR|APA|Rejection)\b/.test(visible.replace(/data-cvr-rejection-page/g, ""))) why.push("the page shows CVR, APA or Rejection to the participant");
+    need(/\{step === "cvr_rejection" && \(\s*<CvrRejectionPanel[\s\S]{0,300}onBack=\{onRejectionBack\}/, "the overlay does not draw the page");
+    /* The APA page is unchanged for the other conditions: its logo, its two shared parts, its questions. */
+    const apa = body("APAPanel");
+    for (const keep of ['<MethodLogo method="apa" />', "<SituationsTable", "<ShortfallNote", "Which one value should the system give the most weight to for you?"]) {
+      if (!apa.includes(keep)) why.push(`the APA page lost ${keep}`);
+    }
+    const shared = body("ShortfallNote") + body("SituationsTable");
+    for (const words of ["Against what your earlier answers asked for, this option", "missed by {shortfallPoints} points", "It met every one of your four values.",
+      "It fell short on", "The two situations you were shown", "Where you decided", "The other place"]) {
+      if (!shared.includes(words)) why.push(`the shared parts lost: ${words}`);
+    }
+    gate("N12", "the page and the flow: condition 2 only, once per scenario, no question, one button, APA unchanged", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N13 */
+  {
+    const why = [];
+    const move = (value, from, requested, applied, w) => ({ value, from, requested, applied, why: w });
+    const firstMoves = [
+      move("stakeholderPerspectiveShiftSensitivity", 45, -25, -25, "CVR Rejection page: the other person's story did not change their mind"),
+      move("contextSensitivity", 45, 20, 20, "CVR Rejection page: the last of the two views they saw"),
+    ];
+    const visit = (extra) => ({ optionId: "opt-a", at: "2026-10-01T10:00:00.000Z", firstViewShown: "directness", bothViewsSeen: true,
+      lastViewSeen: "context", saidYesAtReflection: false, personChangedTheirMind: false, movedValues: false, moves: [], seconds: 12.5, ...extra });
+    const row = db.cvrRejectionRow([visit({ movedValues: true, moves: firstMoves }), visit({ optionId: "opt-b", seconds: null })]);
+    if (row.shown !== true || row.visits !== 2 || row.values_moved_on_the_first_visit !== true) why.push(`the row reads ${JSON.stringify(row).slice(0, 160)}`);
+    if (row.moves?.length !== 2 || row.moves[0].made !== -25 || row.moves[1].value !== "contextSensitivity") why.push("the first visit's moves are wrong");
+    if (row.every_visit?.[1]?.option_refused !== "opt-b" || row.every_visit?.[1]?.moved_values !== false || row.every_visit?.[0]?.seconds_on_the_page !== 12.5) why.push("the visits are wrong");
+    if (JSON.stringify(db.cvrRejectionRow(undefined)) !== JSON.stringify({ shown: false }) || db.cvrRejectionRow([]).shown !== false) why.push("a scenario without the page does not read shown: false");
+    /* Through the real builder: one scenario with the page, one without. */
+    const resultRow = (id, extra) => ({ scenarioId: id, selectedOptionId: "x", selectedRank: 1, topRankedOptionId: "x", selectedWasTopCandidate: true, selectedWasCandidate: true, ...extra });
+    const block5 = { scenarioResults: [resultRow("chemical_plant_fire", { cvrRejections: [visit({ movedValues: true, moves: firstMoves })] }), resultRow("wildfire_evacuation", {})], originalProfile: { dimensions: [] } };
+    const records = db.buildAlignmentRecords(block5);
+    const rows = records?.by_scenario ?? [];
+    if (rows[0]?.cvr_rejection_page?.shown !== true || rows[1]?.cvr_rejection_page?.shown !== false) why.push(`alignment_records rows: ${JSON.stringify(rows.map((r) => r.cvr_rejection_page?.shown))}`);
+    if (typeof records?.totals?.times_cvr_rejection_page_shown !== "number") why.push("the totals do not count the page");
+    if (db.SHAPE_VERSION !== "2026-10-01-cvr-rejection-page") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
+    gate("N13", "the database: every visit and the first visit's moves per scenario, shown: false elsewhere", why);
   }
 
   const failed = results.filter((r) => !r.ok);

@@ -672,6 +672,52 @@ export function confidenceWeight(confidence: number): number {
 }
 
 /**
+ * THE CVR REJECTION PAGE'S MOVES — condition 2, CVR_Only, only (since 1 October 2026; the researcher's design).
+ *
+ * In CVR_Only a participant who refuses their choice after the reflection reaches the CVR Rejection page instead of
+ * the APA page. That page asks nothing, so it cannot move the profile by an answer; the researcher: "The two views or
+ * the person speaking should move automatically when the user reaches 'CVR Rejection page' ... the last seen view
+ * will move but the other view will not. The stakeholder sensitivity will move similar to the APA page but
+ * automatically. So the changes will happen even if the user [is] still in the same scenario."
+ *
+ *   - the person speaking: +25 when their story changed the participant's mind, -25 when it did not - the APA page's
+ *     own rule (applyApaUpdatesWithMoves), never scaled by a confidence answer there either;
+ *   - the views: +20 to the LAST view seen, nothing to the other - only when the participant saw BOTH views (his
+ *     "Q2-B", as the APA page moves a view only after both were seen). The full +20: the APA page scales it by its
+ *     "how sure are you" answer, and this page asks none;
+ *   - the four policy values: never. So no fit number, label, card order, VCI or four-value Stability can move.
+ *
+ * The caller applies it at most ONCE per scenario, on the first visit (his "Q1-A": the most the APA page can move in
+ * one scenario, so the conditions stay comparable).
+ */
+export function applyCvrRejectionUpdatesWithMoves(
+  profile: Block5UserProfile,
+  opts: {
+    /** Whether the person who spoke changed their mind; null (no person page) counts as "did not". */
+    stakeholderMoved: boolean | null;
+    /** Whether they opened the second view. */
+    bothViewsSeen: boolean;
+    /** The view on screen when they left the reflection. */
+    lastViewSeen: CVRFraming | null;
+    stakesWeight?: number;
+  },
+): ProfileUpdate {
+  const p = cloneProfile(profile);
+  const moves: Block5ValueMove[] = [];
+  const w = opts.stakesWeight ?? 1;
+  const moved = opts.stakeholderMoved === true;
+  bump(p, "stakeholderPerspectiveShiftSensitivity", (moved ? 25 : -25) * w, moves,
+    moved
+      ? "CVR Rejection page: the other person's story changed their mind"
+      : "CVR Rejection page: the other person's story did not change their mind");
+  if (opts.bothViewsSeen && opts.lastViewSeen) {
+    bump(p, framingSensitivityKey(opts.lastViewSeen), 20 * w, moves,
+      "CVR Rejection page: the last of the two views they saw");
+  }
+  return { profile: p, moves };
+}
+
+/**
  * THE APA CLARIFICATION — applied when a participant REFUSES their first choice after the vignette.
  *
  * ────────────────────────────────────────────────────────────────────────────
