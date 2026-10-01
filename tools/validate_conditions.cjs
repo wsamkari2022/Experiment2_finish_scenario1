@@ -41,6 +41,18 @@
  *   N13 the database: analysis.alignment_records carries every visit and the first visit's moves, "shown: false"
  *       wherever the page never opened, and a count in the totals
  *
+ * Condition 3, APA_Only (since 1 October 2026; the researcher's answers Q1-A the stakeholder, directness and context
+ * scores frozen, Q2-yes each APA visit a Stability step, Q3-yes "Clarification shown"):
+ *   N14 the rules: only condition 3 skips the reflection and freezes the three scores; the APA rule can leave the
+ *       stakeholder score alone and moves the four values exactly as before; "was the reflection shown" reads the new
+ *       flag; Stability counts an APA_Only step
+ *   N15 the flow, from the source: a misaligned choice opens the APA page at once (an APA visit, never a CVR one), the
+ *       page shows no table and no view question and leaves the stakeholder score, the row says no reflection was
+ *       shown and still counts for Stability, the results page says "Clarification shown", no CVR feedback questions
+ *   N16 the database: cvr.fired false with counted_as_a_stability_step true; the three stabilities "not measured" in
+ *       APA_Only and unchanged elsewhere; and the feedback (the researcher's words): the APA questions appear, the CVR and
+ *       two-views questions do not, also for an APA visit that went back
+ *
  * Run:  npm run validate:conditions
  */
 const path = require("node:path");
@@ -438,7 +450,10 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     /* Where a refusal leads. */
     need(/if \(!cvrRejectionCondition \|\| !scenario \|\| !selectedOption\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = now; \}\s*setStep\("apa"\);/, "the other conditions no longer open the APA page");
     need(/const \[cvrRejectionCondition\] = useState<boolean>\(\(\) => showsCvrRejectionPage\(\)\);/, "the condition is not read");
-    if ((sim.match(/setStep\("apa"\)/g) ?? []).length !== 1) why.push("a refusal can still reach the APA page without passing the condition");
+    /* Every route into the APA page passes the condition: the refusal route (here), and APA_Only's direct route, which
+       N15 checks and which is set aside before counting. */
+    const withoutApaOnly = sim.replace(/if \(misaligned && apaOnlyCondition\) \{[\s\S]*?return;\s*\}/, "");
+    if ((withoutApaOnly.match(/setStep\("apa"\)/g) ?? []).length !== 1) why.push("a refusal can still reach the APA page without passing the condition");
     need(/openRefusalPage\(null, false\);/, "a refusal on the reflection page does not go through the condition");
     need(/openRefusalPage\(moved, cvrSaidYes\);/, "a refusal after the person speaks does not go through the condition");
     need(/if \(t\) \{ t\.cvrRejectionVisits \+= 1; t\.cvrRejectionShownAt = now; \}/, "its visits are not counted apart from APA's");
@@ -501,8 +516,109 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const rows = records?.by_scenario ?? [];
     if (rows[0]?.cvr_rejection_page?.shown !== true || rows[1]?.cvr_rejection_page?.shown !== false) why.push(`alignment_records rows: ${JSON.stringify(rows.map((r) => r.cvr_rejection_page?.shown))}`);
     if (typeof records?.totals?.times_cvr_rejection_page_shown !== "number") why.push("the totals do not count the page");
-    if (db.SHAPE_VERSION !== "2026-10-01-cvr-rejection-page") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N13", "the database: every visit and the first visit's moves per scenario, shown: false elsewhere", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N14 */
+  {
+    const why = [];
+    const CVR = B("block5CVR.js");
+    const KEYS4 = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+    const make = (scores) => ({ dimensions: Object.entries(scores).map(([key, score], i) => ({ key, score, rank: i + 1 })) });
+    const base = { vulnerabilityProtectionSensitivity: 70, groupSizeSensitivity: 55, gainResponsivenessSensitivity: 40,
+      outcomeAggregationSensitivity: 60, directnessSensitivity: 50, contextSensitivity: 45, stakeholderPerspectiveShiftSensitivity: 45 };
+    const score = (prof, key) => prof.dimensions.find((d) => d.key === key)?.score;
+    for (const [c, skip] of C.CONDITIONS.map((c) => [c, c.type === "APA_Only"])) {
+      if (C.skipsCvrReflection(c) !== skip || C.freezesReflectionScores(c) !== skip) why.push(`${c.type}: skips ${C.skipsCvrReflection(c)}, freezes ${C.freezesReflectionScores(c)}`);
+    }
+    if (C.skipsCvrReflection(null) || C.freezesReflectionScores(null)) why.push("a participant with no condition skips the reflection");
+    for (const conf of [1, 3, 5]) {
+      const frozen = CVR.applyApaUpdatesWithMoves(make(base), false, "groupSizeSensitivity", null, 1, conf, false);
+      const usual = CVR.applyApaUpdatesWithMoves(make(base), false, "groupSizeSensitivity", null, 1, conf);
+      if (score(frozen.profile, "stakeholderPerspectiveShiftSensitivity") !== 45) why.push(`confidence ${conf}: the stakeholder score moved in APA_Only`);
+      if (frozen.moves.some((m) => m.value === "stakeholderPerspectiveShiftSensitivity")) why.push(`confidence ${conf}: a stakeholder move recorded in APA_Only`);
+      for (const k of KEYS4) if (score(frozen.profile, k) !== score(usual.profile, k)) why.push(`confidence ${conf}: ${k} moved differently`);
+      if (score(usual.profile, "stakeholderPerspectiveShiftSensitivity") !== 20) why.push(`confidence ${conf}: the usual APA rule no longer moves the stakeholder score -25`);
+      for (const k of ["directnessSensitivity", "contextSensitivity"]) if (score(frozen.profile, k) !== base[k]) why.push(`${k} moved`);
+    }
+    const shown = [[{ cvrFired: true }, true], [{ cvrFired: true, reflectionShown: false }, false], [{ cvrFired: false }, false], [{}, false], [null, false]];
+    for (const [r, want] of shown) if (CVR.reflectionWasShown(r) !== want) why.push(`reflectionWasShown(${JSON.stringify(r)}) is not ${want}`);
+    /* Stability counts the APA_Only step (Q2-yes): the four values changed order there. */
+    const orig = make(base);
+    const row = { scenarioId: "chemical_plant_fire", decisionRole: "decider", cvrFired: true, reflectionShown: false,
+      policySnapshotAfter: { vulnerabilityProtectionSensitivity: 60, groupSizeSensitivity: 85, gainResponsivenessSensitivity: 30, outcomeAggregationSensitivity: 50 } };
+    const stab = CVR.computeStability([row], orig);
+    if (stab.conflictSteps !== 1 || !(stab.swaps > 0)) why.push(`Stability did not count the APA_Only step: ${JSON.stringify({ steps: stab.conflictSteps, swaps: stab.swaps })}`);
+    gate("N14", "APA_Only's rules: condition 3 only, the stakeholder score left alone, values as before, a Stability step", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N15 */
+  {
+    const why = [];
+    const sim = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const summary = src("src/experiment/Block5SimulationSummaryPage.tsx");
+    const fb = src("src/experiment/feedbackTypes.ts");
+    const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
+    need(sim, /const \[apaOnlyCondition\] = useState<boolean>\(\(\) => skipsCvrReflection\(\)\);/, "the condition is not read");
+    need(sim, /if \(misaligned && apaOnlyCondition\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = Date\.now\(\); \}\s*setCvrWho\(null\);\s*setStep\("apa"\);\s*return;\s*\}\s*if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/, "a misaligned choice does not go straight to the APA page before any reflection is counted");
+    need(sim, /\{step === "apa" && coord && \(whoVariant \|\| reflectionSkipped\) && \(/, "the APA page needs a person to open");
+    need(sim, /lastLensSeen=\{reflectionSkipped \? null : lastLensSeen \?\? coord\.framing\}/, "the two-situations table could show without a view");
+    need(sim, /freezeReflectionScores=\{reflectionSkipped\}/, "the APA page is not told to leave the stakeholder score");
+    need(sim, /applyApaUpdatesWithMoves\(profile, stakeholderMoved === true, q3, framingAdjust, scenario\.stakesWeight \?\? 1, confidence \?\? 3,\s*!freezeReflectionScores\)/, "the APA page still moves the stakeholder score");
+    need(sim, /\? \{ reflectionShown: false, stakeholderGuided: null \}/, "the row does not say that no reflection was shown");
+    need(sim, /cvrFired: true,\s*alignedToOriginal/, "the APA row no longer counts as a Stability step");
+    need(sim, /const apaFramingFields: Partial<Block5ScenarioResult> = apaOnlyCondition \? \{\} :/, "view fields are stored although no view was shown");
+    need(sim, /cvrFired: !apaOnlyCondition,\s*cvrOutcome: apaOnlyCondition \? "none" : "went-to-APA",/, "the timing record says a reflection was shown");
+    need(sim, /stakeholderInfluenced: apaOnlyCondition \? null : payload\.q2Influenced,/, "the APA record claims a person spoke");
+    need(sim, /\.\.\.\(reflectionScoresFrozen \? \{ reflectionScoresFrozen: true \} : \{\}\),/, "the finished block does not say the three scores were frozen");
+    need(summary, /\{reflectionWasShown\(sr\) && \(\s*<Badge[^>]*>Reflection shown<\/Badge>/, "\"Reflection shown\" does not ask whether it was shown");
+    need(summary, /\{sr\.cvrFired && !reflectionWasShown\(sr\) && \(\s*<Badge[^>]*>Clarification shown<\/Badge>/, "no \"Clarification shown\" badge");
+    need(summary, /const withCvr = results\.scenarioResults\.filter\(\(r\) => reflectionWasShown\(r\)\)\.length;/, "the second-view sentence counts APA_Only clarifications");
+    need(fb, /some\(\(r\) => reflectionWasShown\(r\) \|\| \(r\.telemetry\?\.cvrVisits \?\? 0\) > 0\)/, "the CVR feedback questions would appear in APA_Only");
+    /* The APA page itself is unchanged: its question, its logo, its list. */
+    for (const keep of ["Which one value should the system give the most weight to for you?", "How sure are you about the value you picked?", '<MethodLogo method="apa" />', "Select as my final decision"]) {
+      if (!sim.includes(keep)) why.push(`the APA page lost: ${keep}`);
+    }
+    gate("N15", "APA_Only's flow: straight to APA, no table, no view question, honest row, Clarification shown", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N16 */
+  {
+    const why = [];
+    const resultRow = (id, extra) => ({ scenarioId: id, selectedOptionId: "x", selectedRank: 1, topRankedOptionId: "x", selectedWasTopCandidate: true, selectedWasCandidate: true, ...extra });
+    const apaOnlyRow = resultRow("chemical_plant_fire", { cvrFired: true, reflectionShown: false, apa: { confidence: 4, stakeholderInfluenced: null, prioritizedValue: "groupSizeSensitivity", originalOptionId: "y" } });
+    const cvrRow = resultRow("wildfire_evacuation", { cvrFired: true, cvrEndorsement: "strong" });
+    const records = db.buildAlignmentRecords({ scenarioResults: [apaOnlyRow, cvrRow], originalProfile: { dimensions: [] } });
+    const [a, b] = records?.by_scenario ?? [];
+    if (a?.cvr?.fired !== false || a?.cvr?.counted_as_a_stability_step !== true) why.push(`an APA_Only row reads ${JSON.stringify(a?.cvr && { fired: a.cvr.fired, counted: a.cvr.counted_as_a_stability_step })}`);
+    if (b?.cvr?.fired !== true || b?.cvr?.counted_as_a_stability_step !== true) why.push("a reflection row no longer reads fired");
+    if (a?.apa?.ran !== true || a?.apa?.the_stakeholder_influenced_them !== null) why.push("the APA_Only row's APA record is wrong");
+    if (records?.totals?.times_reflection_fired !== 1) why.push(`times_reflection_fired counts the APA_Only step (${records?.totals?.times_reflection_fired})`);
+    /* The headline: the three stabilities not measured in APA_Only, unchanged elsewhere. */
+    const sens = { directness: { value: 100, level: "Held steady" }, context: { value: 100, level: "Held steady" }, stakeholder: { value: 100, level: "Held steady" } };
+    const frozen = db.buildHeadline({ scenarioResults: [], sensitivityStability: sens, reflectionScoresFrozen: true }, null);
+    const usual = db.buildHeadline({ scenarioResults: [], sensitivityStability: sens }, null);
+    for (const k of ["directness", "context", "stakeholder"]) {
+      if (frozen?.[`${k}_stability_score`] !== null || frozen?.[`${k}_stability_label`] !== db.NOT_MEASURED_IN_APA_ONLY) why.push(`APA_Only's ${k} stability reads ${frozen?.[`${k}_stability_score`]} / ${frozen?.[`${k}_stability_label`]}`);
+      if (usual?.[`${k}_stability_score`] !== 100 || usual?.[`${k}_stability_label`] !== "Held steady") why.push(`another condition's ${k} stability changed`);
+    }
+    if (frozen?.reflection_scores_measured !== false || usual?.reflection_scores_measured !== true) why.push("reflection_scores_measured is wrong");
+    /* No CVR feedback questions for APA_Only, still for a reflection. */
+    const FB = B("feedbackTypes.js");
+    if (FB.shouldShowCvrSection({ scenarioResults: [apaOnlyRow] }) !== false) why.push("the CVR feedback questions appear in APA_Only");
+    if (FB.shouldShowCvrSection({ scenarioResults: [cvrRow] }) !== true) why.push("the CVR feedback questions no longer appear after a reflection");
+    /* The researcher (1 October 2026): "in APA_only, APA feedback question will appear but no CVR feedback questions". A
+       finished APA_Only block as the study saves it: no reflection visit anywhere, one APA visit. */
+    const tel = (cvrVisits, apaVisits) => ({ cvrVisits, apaVisits, cvrTriggered: cvrVisits > 0 });
+    const apaOnlyBlock = { totalCvrVisits: 0, totalApaVisits: 1, scenarioResults: [{ ...apaOnlyRow, telemetry: tel(0, 1) }] };
+    if (FB.shouldShowApaSection(apaOnlyBlock) !== true) why.push("the APA feedback questions do not appear in APA_Only");
+    if (FB.shouldShowCvrSection(apaOnlyBlock) !== false) why.push("the CVR feedback questions appear in a finished APA_Only block");
+    if (FB.usedDualPerspective(apaOnlyBlock) !== false) why.push("the two-views feedback questions appear in APA_Only");
+    /* Opened the APA page, went back, and chose a good fit: the APA questions still appear (a visit), the CVR ones never. */
+    const bailed = { scenarioResults: [resultRow("wildfire_evacuation", { cvrFired: false, telemetry: tel(0, 1) })] };
+    if (FB.shouldShowApaSection(bailed) !== true || FB.shouldShowCvrSection(bailed) !== false) why.push("an APA visit that went back is read wrongly");
+    if (db.SHAPE_VERSION !== "2026-10-01-apa-only") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
+    gate("N16", "the database and the feedback: no reflection claimed, still a Stability step; APA questions, no CVR ones", why);
   }
 
   const failed = results.filter((r) => !r.ok);

@@ -672,6 +672,18 @@ export function confidenceWeight(confidence: number): number {
 }
 
 /**
+ * WAS THE REFLECTION (CVR) PAGE SHOWN in this scenario? `cvrFired` answers "did this scenario count as a Stability step",
+ * and until 1 October 2026 the two were the same thing. In APA_Only the APA page opens without any reflection and still
+ * counts (the researcher's "Q2-yes"), so those rows carry `reflectionShown: false`. Every reader that means "the
+ * participant saw the reflection" - the results page's badge and sentence, the CVR feedback questions, the database's
+ * cvr.fired - asks this instead. A row without the field (every other condition, and older runs) reads as before.
+ */
+export function reflectionWasShown(r: { cvrFired?: boolean; reflectionShown?: boolean } | null | undefined): boolean {
+  if (!r) return false;
+  return r.reflectionShown ?? !!r.cvrFired;
+}
+
+/**
  * THE CVR REJECTION PAGE'S MOVES — condition 2, CVR_Only, only (since 1 October 2026; the researcher's design).
  *
  * In CVR_Only a participant who refuses their choice after the reflection reaches the CVR Rejection page instead of
@@ -782,6 +794,9 @@ export function applyApaUpdatesWithMoves(
   framingAdjust?: FramingAdjust | null,
   stakesWeight = 1,
   confidence = 3,
+  /* False in APA_Only (since 1 October 2026; conditions.ts): no person spoke, so there is nothing to learn the
+     stakeholder score from, and the -25 "did not move them" would be a move without evidence. */
+  moveStakeholder = true,
 ): ProfileUpdate {
   const p = cloneProfile(profile);
   const moves: Block5ValueMove[] = [];
@@ -814,11 +829,13 @@ export function applyApaUpdatesWithMoves(
    */
   // The stakeholder move is answered by a separate question and is NOT a matter of degree, so the
   // confidence rating attached to Q1 has no business scaling it.
-  bump(p, "stakeholderPerspectiveShiftSensitivity",
-    (stakeholderInfluenced ? 25 : -25) * stakesWeight, moves,
-    stakeholderInfluenced
-      ? "changed their mind: the other person's story moved them"
-      : "changed their mind: the other person's story did not move them");
+  if (moveStakeholder) {
+    bump(p, "stakeholderPerspectiveShiftSensitivity",
+      (stakeholderInfluenced ? 25 : -25) * stakesWeight, moves,
+      stakeholderInfluenced
+        ? "changed their mind: the other person's story moved them"
+        : "changed their mind: the other person's story did not move them");
+  }
   /*
    * THE PRIORITIZED VALUE: +30, AND THE OTHER THREE COME DOWN 10 EACH.
    *

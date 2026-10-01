@@ -843,6 +843,23 @@ than repeated on all six rows.
 
 ---
 
+### APA_Only (condition 3), since 1 October 2026: the APA page with no reflection before it
+
+In condition 3 a misaligned choice opens the APA page at once (no reflection page, no person speaking). Each such
+scenario is still a Stability step, so its row has **`cvrFired: true` but `reflectionShown: false`**. Read them as:
+
+| Field | In APA_Only |
+|---|---|
+| `cvr.fired` | **false** - it says whether the reflection page was SHOWN (since 1 October 2026 it reads `reflectionShown`, which is absent and therefore "as cvrFired" in the other conditions) |
+| `cvr.counted_as_a_stability_step` | true for every APA visit (the researcher's choice), so Stability and Stability_all measure the APA moves |
+| `apa.the_stakeholder_influenced_them` | null (no person spoke) |
+| `cvr` view and person fields | null (no view or person was shown) |
+
+The stakeholder, directness and context scores never move in APA_Only (the APA rule's automatic stakeholder move is off),
+so the headline writes their three stabilities as **null** with the label "Not measured in this condition" and
+`headline.reflection_scores_measured: false`. **Trap:** `totals.times_reflection_fired` counts shown reflections only;
+count APA_Only's steps with `counted_as_a_stability_step`.
+
 ### The CVR Rejection page: condition 2 (CVR_Only) only, since 1 October 2026
 
 In condition 2 a refusal after the reflection opens the **CVR Rejection page** instead of the APA page: no question, one

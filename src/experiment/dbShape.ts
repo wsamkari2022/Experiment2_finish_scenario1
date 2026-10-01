@@ -53,7 +53,9 @@ import { SESSION_LOG_KEY } from "./sessionLog";
 import { RESULTS_PAGE_KEY, FEEDBACK_BUTTONS, type FeedbackButton } from "./resultsPageRecord";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
-import { ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
+import {
+  ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, isPredictionTest, reflectionWasShown, resultCountsTowardsPerformance,
+} from "./block5CVR";
 import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
@@ -87,7 +89,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-01-cvr-rejection-page";
+export const SHAPE_VERSION = "2026-10-01-apa-only";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -950,6 +952,9 @@ function totalTimeMs(timings: unknown): number | null {
 }
 
 /** One of the three sensitivity stabilities off the stored Block 5 results, or null. */
+/** The label the three reflection-score stabilities carry in APA_Only, where nothing could move them. */
+export const NOT_MEASURED_IN_APA_ONLY = "Not measured in this condition (APA_Only: no reflection, no views, no person speaking)";
+
 function sensitivityStabilityOf(
   b5: Record<string, unknown>,
   which: "directness" | "context" | "stakeholder",
@@ -989,6 +994,8 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
 
   const totalMs = totalTimeMs(timings);
   const stabilitySteps = stabilityConflictStepsOf(b5);
+  /* APA_Only (since 1 October 2026): the stakeholder, directness and context scores were never shown or moved. */
+  const frozen = b5.reflectionScoresFrozen === true;
 
   return {
     /* "VCI" is the internal name. It measures how consistent the choices were, so that is what
@@ -1019,12 +1026,15 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
     stability_all_conflict_steps_counted: stabilityAllOf(b5)?.result?.conflictSteps ?? null,
     /* The three sensitivities each have their own: how far each traveled on its 0-100 scale.
        Null for a run recorded before 19 September 2026, or when a snapshot is missing. */
-    directness_stability_score: sensitivityStabilityOf(b5, "directness")?.value ?? null,
-    directness_stability_label: sensitivityStabilityOf(b5, "directness")?.level ?? null,
-    context_stability_score: sensitivityStabilityOf(b5, "context")?.value ?? null,
-    context_stability_label: sensitivityStabilityOf(b5, "context")?.level ?? null,
-    stakeholder_stability_score: sensitivityStabilityOf(b5, "stakeholder")?.value ?? null,
-    stakeholder_stability_label: sensitivityStabilityOf(b5, "stakeholder")?.level ?? null,
+    /* APA_Only (since 1 October 2026, the researcher's "Q1-A"): these three were never shown or moved, so their
+       stabilities measured nothing - null, with the reason as the label, never a 100 that would read "held". */
+    directness_stability_score: frozen ? null : sensitivityStabilityOf(b5, "directness")?.value ?? null,
+    directness_stability_label: frozen ? NOT_MEASURED_IN_APA_ONLY : sensitivityStabilityOf(b5, "directness")?.level ?? null,
+    context_stability_score: frozen ? null : sensitivityStabilityOf(b5, "context")?.value ?? null,
+    context_stability_label: frozen ? NOT_MEASURED_IN_APA_ONLY : sensitivityStabilityOf(b5, "context")?.level ?? null,
+    stakeholder_stability_score: frozen ? null : sensitivityStabilityOf(b5, "stakeholder")?.value ?? null,
+    stakeholder_stability_label: frozen ? NOT_MEASURED_IN_APA_ONLY : sensitivityStabilityOf(b5, "stakeholder")?.level ?? null,
+    reflection_scores_measured: !frozen,
     /* PERFORMANCE COUNTS THE FOUR DECISIONS ONLY (25 September 2026). Worked out again here from the
        saved rows rather than copied, so a record saved before that date - whose stored figure
        averaged the wish (scenario 5) and scenario 6's fixed 50 in with the decisions - reads by the
@@ -2031,7 +2041,10 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
 
       /* ---- CVR: the reflection that fires on a misaligned choice ---- */
       cvr: {
-        fired: r.cvrFired ?? false,
+        /* Whether the reflection page was SHOWN (reflectionWasShown). In APA_Only it never is, yet the APA visit still
+           counts for Stability: that is counted_as_a_stability_step (since 1 October 2026). */
+        fired: reflectionWasShown(r),
+        counted_as_a_stability_step: r.cvrFired ?? false,
         endorsement_after_reflection: r.cvrEndorsement ?? null,
         value_the_option_undercut: r.cvrCoordinate?.violatedKey ?? null,
         value_the_option_undercut_label: r.cvrCoordinate?.violatedKey

@@ -198,6 +198,23 @@ export function showsCvrRejectionPage(condition: Condition | null = currentCondi
   return condition?.type === "CVR_Only";
 }
 
+/*
+ * APA_Only (1 October 2026): a misaligned or strongly misaligned choice goes STRAIGHT to the APA page - no reflection
+ * (CVR) page and no person speaking - and the APA page shows only its value question (the two-situations table and the
+ * "which view did more" question need views, and none are shown). The researcher's answers: Q1-A the stakeholder,
+ * directness and context scores are left as Blocks 1-4 made them (nothing in this condition shows or learns them, so
+ * nothing moves them - not even the APA rule's automatic stakeholder move); Q2-yes each APA visit is a Stability step;
+ * Q3-yes the results page says "Clarification shown", never "Reflection shown".
+ */
+export function skipsCvrReflection(condition: Condition | null = currentCondition()): boolean {
+  return condition?.type === "APA_Only";
+}
+
+/** The stakeholder, directness and context scores never move in this condition (APA_Only, the researcher's "Q1-A"). */
+export function freezesReflectionScores(condition: Condition | null = currentCondition()): boolean {
+  return condition?.type === "APA_Only";
+}
+
 /** The two fields the researcher asked for beside the demographic answers ("Condition number", "Condition type"). */
 export function conditionFields(file: ConditionFile | null): { conditionNumber: ConditionNumber; conditionType: ConditionType } | null {
   return file ? { conditionNumber: file.number, conditionType: file.type } : null;

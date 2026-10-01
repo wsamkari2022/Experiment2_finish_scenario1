@@ -202,8 +202,13 @@ SECTIONS = [
          "yourself gives that condition and is never counted (your Q2-yes); /api/conditions/report shows the counts (Q3-yes).",
          ["conditions"], "(N3, N7)"),
         ("Each condition's difference is built one task at a time.",
-         "Built so far: CVR_Only's CVR Rejection page. The other three conditions run the same study as before.",
-         ["conditions", "build"], "(N9, N12)"),
+         "Built so far: CVR_Only's CVR Rejection page and APA_Only's straight-to-APA flow. Baseline still runs the same "
+         "study as CVR+APA.", ["conditions", "build"], "(N9, N12, N15)"),
+        ("APA_Only: a misaligned choice opens the APA page at once.",
+         "No reflection page and no person speaking; the APA page shows only its value question (no two-situations table, "
+         "no view question). The stakeholder, directness and context scores never move (the APA rule's automatic stakeholder "
+         "move is off there); each APA visit still counts for Stability; the results page says \"Clarification shown\"; the "
+         "record says no reflection was shown; the feedback asks the APA questions, never the CVR ones. Checked live.", ["conditions"], "(N14, N15, N16)"),
         ("CVR_Only: a refusal opens the CVR Rejection page, not the APA page.",
          "\"A closer look at your choice\": the same explanation (the two situations, how far the option fell short), no "
          "question, no APA logo, one button back to all the options. On its first visit in a scenario it moves the "

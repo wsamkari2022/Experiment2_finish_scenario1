@@ -27,7 +27,7 @@ import {
 } from "react-icons/lu";
 import type { ReactNode } from "react";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
-import { ALIGNMENT_LABEL } from "./block5CVR";
+import { ALIGNMENT_LABEL, reflectionWasShown } from "./block5CVR";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { ROLE_BADGE } from "./block5RoleWords";
 import { valueJourney, type PolicyValues } from "./block5Journey";
@@ -308,8 +308,12 @@ function ScenarioTile({ sr, index }: { sr: Block5ScenarioResult; index: number }
           {level && (
             <Badge size="sm" variant="subtle" colorPalette={LEVEL_PALETTE[level]} rounded="md">{ALIGNMENT_LABEL[level]}</Badge>
           )}
-          {sr.cvrFired && (
+          {reflectionWasShown(sr) && (
             <Badge size="sm" variant="subtle" colorPalette="orange" rounded="md">Reflection shown</Badge>
+          )}
+          {/* APA_Only (since 1 October 2026, the researcher's "Q3-yes"): the APA page opened with no reflection before it. */}
+          {sr.cvrFired && !reflectionWasShown(sr) && (
+            <Badge size="sm" variant="subtle" colorPalette="orange" rounded="md">Clarification shown</Badge>
           )}
           {sr.cvrFired && (sr.cvrEndorsement === "strong" || sr.cvrEndorsement === "weak") && (
             <Badge size="sm" variant="subtle" colorPalette="green" rounded="md">Kept after reflection</Badge>
@@ -352,7 +356,8 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
   /* Performance is the share of the best outcome each scenario offered (block5Performance.ts), 0-100. */
   const captured = results.performanceCaptured;
   const performance = typeof captured === "number" ? captured : (results.performance ?? 0);
-  const withCvr = results.scenarioResults.filter((r) => r.cvrFired).length;
+  /* The reflection actually shown (APA_Only's clarifications count as Stability steps but showed no second view). */
+  const withCvr = results.scenarioResults.filter((r) => reflectionWasShown(r)).length;
   const bothLenses = results.scenarioResults.filter((r) => r.cvrAltViewGenerated).length;
 
   return (

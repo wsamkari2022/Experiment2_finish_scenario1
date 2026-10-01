@@ -19,6 +19,7 @@
 
 import type { Block5Results } from "./block5Types";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
+import { reflectionWasShown } from "./block5CVR";
 import type { TimingSummary } from "./telemetry";
 import { buildTimingSummary } from "./telemetry";
 import type { ParticipantRecord } from "./participantRecord";
@@ -459,7 +460,8 @@ export interface FeedbackRecord {
 export function shouldShowCvrSection(results: Block5Results | null): boolean {
   if (!results) return false;
   if ((results.totalCvrVisits ?? 0) > 0) return true;
-  return results.scenarioResults.some((r) => r.cvrFired || (r.telemetry?.cvrVisits ?? 0) > 0);
+  /* reflectionWasShown, not cvrFired: an APA_Only clarification counts for Stability but showed no reflection. */
+  return results.scenarioResults.some((r) => reflectionWasShown(r) || (r.telemetry?.cvrVisits ?? 0) > 0);
 }
 
 /** Whether the dual-perspective questions should be shown (alt lens generated in any scenario). */
@@ -480,7 +482,7 @@ export function buildBlock5Summary(results: Block5Results | null): FeedbackBlock
     const t = r.telemetry;
     return {
       scenarioId: r.scenarioId,
-      cvrTriggered: t?.cvrTriggered ?? !!r.cvrFired,
+      cvrTriggered: t?.cvrTriggered ?? reflectionWasShown(r),
       apaTriggered: t?.apaTriggered ?? !!r.apa,
       cvrVisits: t?.cvrVisits ?? 0,
       apaVisits: t?.apaVisits ?? 0,

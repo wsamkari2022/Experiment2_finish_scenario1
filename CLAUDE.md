@@ -33,9 +33,10 @@ The researcher's design (his words): four conditions - **1 CVR+APA** (the curren
 **3 APA_Only**, **4 Baseline** (no CVR or APA). All four share Blocks 1-4 (building the profile) and differ from Block 5
 to the end. **What each condition does differently is built one task at a time**, when he gives it ("do this task to
 CVR_Only"); a condition without a built task runs exactly today's study. Built so far: **CVR_Only's CVR Rejection page**
-(the next section). Code that makes a condition differ reads `currentCondition()` through one rule per task in
-`conditions.ts` (`showsCvrRejectionPage`); a participant with no condition on record (a test run from before this date)
-counts as condition 1.
+and **APA_Only's straight-to-APA flow** (the next two sections); Baseline not yet. Code that makes a condition differ reads
+`currentCondition()` through one rule per task in `conditions.ts` (`showsCvrRejectionPage`, `skipsCvrReflection`,
+`freezesReflectionScores`); a participant with no condition on record (a test run from before this date) counts as
+condition 1.
 Plan answers "Q1-B, Q2-yes, Q3-yes". **Participants see it** (a one-second landing page; the address); HOW_TO_ANALYZE 4.9.
 
 - **The landing page** (`LandingPage.tsx`, flow stage `landing`, never saved as a stage): a browser without a
@@ -110,6 +111,44 @@ get the APA page, unchanged. **Participants in condition 2 see it** (HOW_TO_ANAL
   12 caught. Live in condition 2: the page as approved, two refusals in one scenario (the first moved, the second did not),
   the record above; and condition 1 still opened the APA page with its logo and question. `report:major-scores`: only the
   stamp changed (the pretend participants run the full version).
+
+## APA_Only: straight to the APA page, no reflection (since 1 October 2026)
+
+The researcher's task for **condition 3 (APA_Only)**: a misaligned or strongly misaligned choice opens the **APA page at
+once** - no reflection (CVR) page and no person speaking - and the APA page shows only its value question ("as it is now
+(without context view table, and without two view question)"). Plan answers "Q1-A, Q2-yes, Q3-yes". Conditions 1, 2 and 4
+unchanged. **Participants in condition 3 see it** (HOW_TO_ANALYZE 4.9).
+
+- **The flow** (`handleSelect` in Block5PublicEmergencySimulation.tsx): `skipsCvrReflection()` sends a misaligned choice
+  in a decision to step `apa` directly, counted as an APA visit (never a CVR one), with no person picked. The APA page is
+  unchanged (its logo, the "missed by N points" box, the value question with "How sure", the list of options built on that
+  value, the confirm); the two-situations table and the "which view did more" question cannot appear (no view was seen:
+  `lastLensSeen` is null). A good-fit choice works as today. To keep a misaligned option, a participant names the value it
+  is built on: it is then in the list.
+- **The stakeholder, directness and context scores are frozen ("Q1-A")**: nothing in this condition shows or learns them,
+  so nothing moves them. The APA rule moved the stakeholder score -25 automatically when no person had changed the
+  participant's mind; `applyApaUpdatesWithMoves(..., moveStakeholder)` now leaves it when told to (`freezeReflectionScores`
+  on the APA page), and the four values move exactly as before. The finished block carries `reflectionScoresFrozen: true`,
+  and the headline writes the three stabilities as null with the label "Not measured in this condition" and
+  `reflection_scores_measured: false` (never a 100 that would read "held").
+- **Each APA visit is a Stability step ("Q2-yes")**: the row keeps `cvrFired: true` (what Stability and Stability_all
+  count) and says honestly `reflectionShown: false`. **`cvrFired` now means "counted as a Stability step"; "was the
+  reflection SHOWN" is `reflectionWasShown(r)`** (block5CVR.ts), which every such reader uses: the results page's badges
+  and its second-view sentence, the CVR feedback questions (`shouldShowCvrSection`), and the database's `cvr.fired` (beside
+  the new `cvr.counted_as_a_stability_step`). No view, person or reflection answer is stored for these rows, and the APA
+  record's `stakeholderInfluenced` is null.
+- **The results page says "Clarification shown" ("Q3-yes")** on those scenario cards, never "Reflection shown".
+- **Feedback (the researcher: "in APA_only, APA feedback question will appear but no CVR feedback questions"):** the APA
+  questions appear after any APA visit; the CVR questions and the two-views questions never do (no reflection, no view).
+- `SHAPE_VERSION` "2026-10-01-apa-only".
+- **Checked:** `validate:conditions` N14 (the rules, the stakeholder score left alone at every confidence, the four values
+  as before, reflectionWasShown, Stability counting the step), N15 (the flow, the page, the honest row, the badge, no CVR
+  feedback questions, from the source), N16 (the database rows, the three stabilities, and the feedback: APA questions yes,
+  CVR and two-views questions no, also after an APA visit that went back); N12 was taught to set aside
+  APA_Only's own route into the APA page. 15 deliberate breaks, 15 caught. Live in condition 3: the sealed respirator opened
+  the APA page at once with no table and no view question; naming Reducing harm (sure 4) saved the four values' moves only
+  (+27, -9, -9, -9), the stakeholder, directness and context scores unchanged, `reflectionShown: false`, `cvrFired: true`,
+  reflection visits 0, APA visits 1. The test browser was restored from a page that does not run the study.
 
 ## Prolific: planned, not built (since 1 October 2026)
 
@@ -1171,7 +1210,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12) |
 | `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9) |
 | `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
-| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13) |
+| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

@@ -817,7 +817,8 @@ export interface APARecord {
    * behind it is different.
    */
   confidence: number;               // 1–5
-  stakeholderInfluenced: boolean;
+  /* null in APA_Only (since 1 October 2026): no person spoke before the APA page. */
+  stakeholderInfluenced: boolean | null;
   prioritizedValue: Block5PolicyDimKey;
   originalOptionId: string;         // the misaligned option that triggered APA
 }
@@ -987,6 +988,12 @@ export interface Block5ScenarioResult {
    * best-fit pick, the wish, the prediction test).
    */
   valueMoves?: Block5ValueMove[];
+  /**
+   * False when the APA page opened WITHOUT the reflection (APA_Only, since 1 October 2026): such a row still has
+   * `cvrFired: true`, because it counts as a Stability step (the researcher's "Q2-yes"). Absent everywhere else, which
+   * means "as cvrFired says". Read it through reflectionWasShown (block5CVR.ts).
+   */
+  reflectionShown?: boolean;
   /** Every visit to the CVR Rejection page in this scenario (condition 2, CVR_Only, since 1 October 2026). */
   cvrRejections?: CvrRejectionVisit[];
   /**
@@ -1351,6 +1358,9 @@ export interface SensitivityStabilities {
 }
 
 export interface Block5Results {
+  /* True in APA_Only (since 1 October 2026): the stakeholder, directness and context scores were never shown or moved,
+     so their stabilities measured nothing (the database writes them as not measured). */
+  reflectionScoresFrozen?: boolean;
   completed: boolean;
   completedAt: string;
   userProfile: Block5UserProfile;

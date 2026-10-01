@@ -9,6 +9,8 @@
  *                         NO  → APA value-clarification flow (Sections 1–4, all-or-nothing commit)
  *                               (condition 2, CVR_Only, since 1 October 2026: the CVR Rejection page instead -
  *                               no questions, one button back to all the options; CvrRejectionPanel)
+ *     condition 3, APA_Only (since 1 October 2026): MISALIGNED → straight to the APA page, no vignette and no person
+ *                               speaking; only the value question; the stakeholder and view scores never move
  *
  * Alignment (v3.1): threshold-satisfaction — an option is only penalized when it falls
  * BELOW the participant's priority on a value; meeting/exceeding costs nothing. Bands
@@ -48,7 +50,7 @@ import { computeVciAll, runningStep } from "./block5VciAll";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { ROLE_BADGE } from "./block5RoleWords";
 import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
-import { showsCvrRejectionPage } from "./conditions";
+import { freezesReflectionScores, showsCvrRejectionPage, skipsCvrReflection } from "./conditions";
 import { progressSaved } from "./sessionGuard";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
 import { SCENARIO_CHECK_AFTER, readAttention } from "./attentionChecks";
@@ -529,6 +531,13 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * so a move is never counted twice.
    */
   const [cvrRejectionCondition] = useState<boolean>(() => showsCvrRejectionPage());
+  /*
+   * APA_Only (condition 3, since 1 October 2026; conditions.ts): a misaligned choice opens the APA page directly, with
+   * no reflection and no person speaking, and the stakeholder, directness and context scores never move ("Q1-A"). The
+   * APA visit still counts as a Stability step ("Q2-yes": `cvrFired: true`), with `reflectionShown: false` on the row.
+   */
+  const [apaOnlyCondition] = useState<boolean>(() => skipsCvrReflection());
+  const [reflectionScoresFrozen] = useState<boolean>(() => freezesReflectionScores());
   const rejectionRef = useRef<{
     scenarioId: string | null; moved: boolean; moves: Block5ValueMove[]; visits: CvrRejectionVisit[]; openedAt: number | null;
   }>({ scenarioId: null, moved: false, moves: [], visits: [], openedAt: null });
@@ -1161,6 +1170,13 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
      * endorsement question, therefore no APA update, therefore no profile movement.
      */
     const misaligned = !!(scenario && opt && scenarioIsScored(scenario) && isMisaligned(opt.level));
+    /* APA_Only: no reflection, no person - the APA page at once, counted as an APA visit, never a CVR one. */
+    if (misaligned && apaOnlyCondition) {
+      if (t) { t.apaVisits += 1; t.apaShownAt = Date.now(); }
+      setCvrWho(null);
+      setStep("apa");
+      return;
+    }
     if (misaligned && t) {
       t.cvrVisits += 1;          // the CVR vignette is about to be shown
       t.cvrShownAt = Date.now(); // start CVR dwell timer
@@ -1168,7 +1184,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setCvrWho(misaligned && scenario && opt
       ? pickWhoVariant(scenario, cvrCoordinate(opt, profile).who)
       : null);
-  }, [labeled, scenario, profile, logPred]);
+  }, [labeled, scenario, profile, logPred, apaOnlyCondition]);
 
   /**
    * WHERE A REFUSAL LEADS: the APA page, or in condition 2 (CVR_Only) the CVR Rejection page (since 1 October 2026).
@@ -1416,6 +1432,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       // Both measured against the profile as it entered Block 5 — the Blocks 1-4 baseline.
       const stab = computeStability(nextResults, userProfile);
       const finalResults: Block5Results = {
+        /* APA_Only: the stakeholder, directness and context scores never moved, so their stabilities measured nothing. */
+        ...(reflectionScoresFrozen ? { reflectionScoresFrozen: true } : {}),
         completed: true,
         completedAt: new Date().toISOString(),
         userProfile: nextProfile,
@@ -1468,7 +1486,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setPreviewOptionId(null);
     setCompareChartsOpen(false);
     resetFlow();
-  }, [progress, userProfile, onComplete, resetFlow, plan, decisionProfile, labeled, owner, resumedAt]);
+  }, [progress, userProfile, onComplete, resetFlow, plan, decisionProfile, labeled, owner, resumedAt, reflectionScoresFrozen]);
 
   const commitChoice = useCallback((opt: LabeledOption, opts: {
     nextProfile: Block5UserProfile;
@@ -1603,10 +1621,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
     // Dual-perspective record (NO / APA path). The +20 itself is already baked into
     // payload.pendingProfile by APAPanel; here we just store what happened for analysis.
-    const apaFramingFields: Partial<Block5ScenarioResult> = {
+    // In APA_Only no view was shown at all, so nothing about views is stored.
+    const apaFramingFields: Partial<Block5ScenarioResult> = apaOnlyCondition ? {} : {
       cvrFramingShownFirst: payload.framingShownFirst,
     };
-    if (payload.altViewGenerated) {
+    if (payload.altViewGenerated && !apaOnlyCondition) {
       apaFramingFields.cvrAltViewGenerated = true;
       apaFramingFields.cvrFramingShownSecond = otherFraming(payload.framingShownFirst);
       if (payload.framingSelected) {
@@ -1638,10 +1657,12 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       fitShortfallsByOptionId: Object.fromEntries(finalLabeled.map((o) => [o.id, roundForRecord(o.matchShortfall)])),
       valueMoves: payload.pendingMoves,
       firstChoiceOptionId: progress.firstChoiceId ?? payload.originalOptionId,
-      postCVRChoiceOptionId: opt.id,
+      /* APA_Only: there was no reflection to come after, no answer on it, and no person speaking. The row still counts
+         for Stability (cvrFired, the researcher's "Q2-yes") and says plainly that no reflection was shown. */
+      ...(apaOnlyCondition
+        ? { reflectionShown: false, stakeholderGuided: null }
+        : { postCVRChoiceOptionId: opt.id, cvrEndorsement: "no" as const, stakeholderGuided: payload.q2Influenced }),
       cvrFired: true,
-      cvrEndorsement: "no",
-      stakeholderGuided: payload.q2Influenced,
       alignedToOriginal,
       decisionRole: scenario.decisionRole ?? "decider",
       introSeconds: introSecondsRef.current[scenario.id],
@@ -1652,21 +1673,22 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       metrics: optionMetrics(opt),
       apa: {
         confidence: payload.confidence,
-        stakeholderInfluenced: payload.q2Influenced,
+        stakeholderInfluenced: apaOnlyCondition ? null : payload.q2Influenced,
         prioritizedValue: payload.q3Value,
         originalOptionId: payload.originalOptionId,
       },
-      cvrStakeholderShown: cvrWho?.label,
+      ...(apaOnlyCondition ? {} : { cvrStakeholderShown: cvrWho?.label }),
       telemetry: telRef.current
         ? buildScenarioTelemetry(telRef.current, {
-            cvrFired: true,
-            cvrOutcome: "went-to-APA",
+            /* cvrTriggered means the vignette was SHOWN; in APA_Only it never is. */
+            cvrFired: !apaOnlyCondition,
+            cvrOutcome: apaOnlyCondition ? "none" : "went-to-APA",
             apaOutcome: "committed",
           })
         : undefined,
     };
     finalizeScenario(result, nextProfile);
-  }, [scenario, userProfile, labeled, expandedOptions, progress, cvrWho, finalizeScenario]);
+  }, [scenario, userProfile, labeled, expandedOptions, progress, cvrWho, finalizeScenario, apaOnlyCondition]);
 
   /*
    * THE PICK MADE BEFORE THE GUESS APPEARED.
@@ -2259,6 +2281,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           onApaBail={handleApaBail}
           onFinalDecisionChange={handleFinalDecisionChange}
           onRejectionBack={handleRejectionBack}
+          reflectionSkipped={apaOnlyCondition}
           altViewGenerated={altViewGenerated}
           onAltGenerated={() => setAltViewGenerated(true)}
           lastLensSeen={lastLensSeen}
@@ -4359,7 +4382,7 @@ function FlowOverlay({
   option, profile, scenario, accent, whoVariant, step, setStep,
   tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, stakeholderMoved,
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
-  onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange, onRejectionBack,
+  onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange, onRejectionBack, reflectionSkipped,
   cvrSaidYes, onPersonAnswer, onPersonBackout,
   altViewGenerated, onAltGenerated, lastLensSeen, onLensShown, framingChoiceYes, setFramingChoiceYes, mode,
   prediction, onOpenPrediction, predSoundsLike, setPredSoundsLike, predSurprised, setPredSurprised,
@@ -4387,6 +4410,8 @@ function FlowOverlay({
   onApaBail: () => void; onFinalDecisionChange: () => void;
   /** The CVR Rejection page's one button (condition 2, CVR_Only). */
   onRejectionBack: () => void;
+  /** APA_Only (condition 3): the APA page opens with no reflection, no person and no views before it. */
+  reflectionSkipped: boolean;
   /** which side they took on the vignette, and the answer on the person page. */
   cvrSaidYes: boolean | null;
   onPersonAnswer: (moved: boolean) => void;
@@ -4838,7 +4863,7 @@ function FlowOverlay({
           </Stack>
         )}
 
-        {step === "apa" && coord && whoVariant && (
+        {step === "apa" && coord && (whoVariant || reflectionSkipped) && (
           <APAPanel
             option={option}
             profile={profile}
@@ -4851,7 +4876,9 @@ function FlowOverlay({
             onFinalDecisionChange={onFinalDecisionChange}
             altViewGenerated={altViewGenerated}
             framingFirst={coord.framing}
-            lastLensSeen={lastLensSeen ?? coord.framing}
+            /* APA_Only: no view was seen, so the two-situations table must not appear (it shows after the context view). */
+            lastLensSeen={reflectionSkipped ? null : lastLensSeen ?? coord.framing}
+            freezeReflectionScores={reflectionSkipped}
             mode={mode}
           />
         )}
@@ -5249,7 +5276,7 @@ function ApaChoice({ selected, accent, onClick, compact, children }: {
   );
 }
 
-function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, lastLensSeen, mode }: {
+function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, onBail, onCommit, onFinalDecisionChange, altViewGenerated, framingFirst, lastLensSeen, freezeReflectionScores = false, mode }: {
   option: LabeledOption;
   profile: Block5UserProfile;
   scenario: Block5Scenario;
@@ -5264,8 +5291,10 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   /** dual-perspective: did the participant generate the other lens, and which lens was shown first. */
   altViewGenerated: boolean;
   framingFirst: CVRFraming;
-  /** the lens on screen when they left the vignette — decides whether the table shows. */
-  lastLensSeen: CVRFraming;
+  /** the lens on screen when they left the vignette — decides whether the table shows (null: no view was shown). */
+  lastLensSeen: CVRFraming | null;
+  /** APA_Only (since 1 October 2026): no person spoke, so the stakeholder score is left as it is. */
+  freezeReflectionScores?: boolean;
   /** color mode — light/dark-aware surfaces + highlight colors. */
   mode: "light" | "dark";
 }) {
@@ -5316,7 +5345,8 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
 
   const pendingUpdate = useMemo(
     () => (q3 !== null
-      ? applyApaUpdatesWithMoves(profile, stakeholderMoved === true, q3, framingAdjust, scenario.stakesWeight ?? 1, confidence ?? 3)
+      ? applyApaUpdatesWithMoves(profile, stakeholderMoved === true, q3, framingAdjust, scenario.stakesWeight ?? 1, confidence ?? 3,
+          !freezeReflectionScores)
       : { profile, moves: [] as Block5ValueMove[] }),
     /*
      * `confidence` MUST be listed here even though it is only read inside the call above.
@@ -5333,7 +5363,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
      * more: the only thing that moves the profile is the value the participant names. Leaving the
      * option in the list would recompute on a change that cannot alter the answer.
      */
-    [q3, confidence, stakeholderMoved, profile, framingAdjust, scenario],
+    [q3, confidence, stakeholderMoved, profile, framingAdjust, scenario, freezeReflectionScores],
   );
   const pending = pendingUpdate.profile;
 
