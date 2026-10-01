@@ -18,6 +18,7 @@
     "../src/experiment/attentionChecks.ts",
     "../src/experiment/interBlockData.ts",
     "../src/experiment/countries.ts",
-    "../src/experiment/flowStages.ts"
+    "../src/experiment/flowStages.ts",
+    "../src/experiment/conditions.ts"
   ]
 }

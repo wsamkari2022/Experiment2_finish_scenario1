@@ -56,6 +56,7 @@ CHECKS = {
     "resume": "npm run validate:resume",
     "session": "npm run validate:session",
     "attention": "npm run validate:attention",
+    "conditions": "npm run validate:conditions",
     "mcf": "npm run validate:mcf",
     "prediction": "npm run validate:prediction",
     "build": "npm run build",
@@ -186,6 +187,23 @@ SECTIONS = [
         ("The database password stays private.",
          "The .env file is never committed, and the server hides the password in its logs and on /api/health.",
          ["envignored"], ""),
+    ]),
+    ("2b. The four conditions and the landing page", [
+        ("Each new participant gets the condition with the fewest people.",
+         "The landing page asks the server, which counts finished people, people still working in the last 2 hours and "
+         "people who arrived in the last 30 minutes (your Q1-B), and gives the fewest; a tie is broken at random. 40 pretend "
+         "people arriving in the same moment end up 10 in each; live, 8 visitors gave 2 in each.", ["conditions"], "(N2, N3, N4)"),
+        ("A condition is saved once and never changes.",
+         "Saved beside the demographic answers (Condition number, Condition type) and on the participant record, which the "
+         "server sets only when it has none. A returning participant gets their own back, on any computer; an address naming "
+         "another condition is corrected.", ["conditions"], "(N6, N8, N9)"),
+        ("You can see and test each condition.",
+         "The address shows the condition (?condition=CVR_APA, CVR_Only, APA_Only, Baseline). Opening one of those addresses "
+         "yourself gives that condition and is never counted (your Q2-yes); /api/conditions/report shows the counts (Q3-yes).",
+         ["conditions"], "(N3, N7)"),
+        ("All four conditions still run the same study.",
+         "What each condition does differently is built one task at a time, when you ask. Until then nothing in Block 5 "
+         "differs.", ["conditions", "build"], "(N9)"),
     ]),
     ("3. Blocks 1-4: the seven value scores", [
         ("Every value can reach 100.",

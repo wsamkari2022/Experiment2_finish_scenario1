@@ -200,7 +200,12 @@ Waseem approved them (T1 holds them).
 
 ### F. The four conditions on Prolific
 
-To be designed first (the next task, 1 October 2026). For Prolific, recommended: ONE Prolific study; the study's
+**Built on 1 October 2026** (CLAUDE.md, "The four conditions and the landing page"): the landing page, the server's
+count, the set-once condition and the address. For Prolific: send everybody to ONE study link; the landing page gives
+the condition; `addressFor` keeps every other parameter (validate:conditions N7 tests a Prolific ID); the condition's
+`owner` and the arrival's `linked_email` become the Prolific ID instead of the email (section A's swap); and Prolific's
+time limit fits the counting rule (a person still working counts for 2 hours, about Prolific's limit at 50 minutes).
+The rest of this section was written before the landing page existed: For Prolific, recommended: ONE Prolific study; the study's
 server assigns the condition (the condition with the fewest people who finished or are still within the time
 limit; ties at random), saves it on the participant's record, and never changes it on a return. Benefits: one link,
 one set of codes, Prolific blocks second attempts, all conditions run at the same time with the same pool.

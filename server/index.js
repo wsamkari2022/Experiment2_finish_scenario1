@@ -12,6 +12,12 @@
  *   PATCH /api/participants/:email/complete  mark the study finished
  *   PATCH /api/participants/:email/section save one named section of the document
  *
+ * And, since 1 October 2026, the four conditions (server/conditions.js has the rule):
+ *   POST  /api/conditions/assign    the landing page asks which condition a new arrival gets
+ *   POST  /api/conditions/release   a returning participant had a condition already: forget the new arrival
+ *   GET   /api/conditions/counts    the counts, as data
+ *   GET   /api/conditions/report    the counts, as a small page for the researcher (refreshes every 30 s)
+ *
  * WRITES NEVER FAIL DESTRUCTIVELY
  * Every write is an upsert or a targeted $set. Nothing here deletes a participant or replaces a
  * whole document, so a stale or out-of-order request from a reconnecting browser cannot wipe
@@ -27,9 +33,12 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { connect, participants, DB_NAME, SAFE_MONGO_URL } from "./db.js";
+import { connect, participants, conditionArrivals, DB_NAME, SAFE_MONGO_URL } from "./db.js";
 import { mergeResumeState } from "./resumeMerge.js";
 import { browserVerdict, requestBrowser, REFUSED_BODY } from "./activeBrowser.js";
+import {
+  ARRIVAL_ID, assignCondition, conditionFieldsFrom, countReport, countReportHtml, mongoStore,
+} from "./conditions.js";
 
 const PORT = Number(process.env.PORT ?? 4000);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -156,6 +165,24 @@ app.post(
       },
       { upsert: true },
     );
+
+    /*
+     * THE CONDITION IS SET ONCE (since 1 October 2026; server/conditions.js). Only a record that has none takes one,
+     * so a later save - another browser, a resume, a page that knows a different condition - can never change it.
+     * And the landing page's arrival now belongs to this participant, so it is counted as their record from here on
+     * rather than as a fresh arrival.
+     */
+    const condition = conditionFieldsFrom(body);
+    if (condition) {
+      await participants().updateOne({ email, condition_type: { $exists: false } }, { $set: condition });
+      const arrivalId = body?.condition?.arrivalId;
+      if (typeof arrivalId === "string" && ARRIVAL_ID.test(arrivalId)) {
+        await conditionArrivals().updateOne(
+          { arrival_id: arrivalId, linked_email: null },
+          { $set: { linked_email: email, linked_at: now } },
+        );
+      }
+    }
 
     const doc = await participants().findOne({ email }, { projection: { _id: 0 } });
     res.json(doc);
@@ -315,6 +342,53 @@ app.patch(
       { $set: { [path]: req.body?.data ?? null, updated_at: new Date().toISOString() } },
     );
     res.json({ ok: true });
+  }),
+);
+
+/* ------------------------------------------------------------------------ conditions */
+
+/* A new arrival on the landing page: the condition with the fewest people (server/conditions.js). The same arrival id
+   always gets the same answer, so a refresh is never counted twice. */
+app.post(
+  "/api/conditions/assign",
+  route(async (req, res) => {
+    const arrivalId = String(req.body?.arrivalId ?? "");
+    if (!ARRIVAL_ID.test(arrivalId)) return res.status(400).json({ error: "a valid arrivalId is required" });
+    const given = await assignCondition({
+      arrivalId,
+      browser: requestBrowser(req),
+      store: mongoStore(participants(), conditionArrivals()),
+    });
+    res.json({ number: given.number, type: given.type, urlName: given.urlName, arrivalId, assignedAt: given.assignedAt });
+  }),
+);
+
+/* The arrival turned out to be somebody returning with a condition of their own: it stops counting at once. */
+app.post(
+  "/api/conditions/release",
+  route(async (req, res) => {
+    const arrivalId = String(req.body?.arrivalId ?? "");
+    if (!ARRIVAL_ID.test(arrivalId)) return res.status(400).json({ error: "a valid arrivalId is required" });
+    await conditionArrivals().updateOne(
+      { arrival_id: arrivalId, linked_email: null },
+      { $set: { released: true, released_at: new Date().toISOString() } },
+    );
+    res.json({ ok: true });
+  }),
+);
+
+/* The counts, for the researcher ("Q3-yes"): data, and a small page. Numbers only; no personal data. */
+app.get(
+  "/api/conditions/counts",
+  route(async (_req, res) => {
+    res.json(await countReport(participants(), conditionArrivals()));
+  }),
+);
+app.get(
+  "/api/conditions/report",
+  route(async (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.type("html").send(countReportHtml(await countReport(participants(), conditionArrivals())));
   }),
 );
 

@@ -27,6 +27,51 @@ Two of those traps matter enough to repeat here:
 - **`headline` and `analysis` are derived from `blocks`.** Correlating a derived field with the raw
   field it came from is not a finding.
 
+## The four conditions and the landing page (since 1 October 2026)
+
+The researcher's design (his words): four conditions - **1 CVR+APA** (the current, full version), **2 CVR_Only**,
+**3 APA_Only**, **4 Baseline** (no CVR or APA). All four share Blocks 1-4 (building the profile) and differ from Block 5
+to the end. **What each condition does differently is NOT built yet**: until he gives one task per condition ("do this
+task to CVR_Only"), all four run exactly today's study. Code that makes a condition differ reads `currentCondition()`
+(`conditions.ts`); a participant with no condition on record (a test run from before this date) counts as condition 1.
+Plan answers "Q1-B, Q2-yes, Q3-yes". **Participants see it** (a one-second landing page; the address); HOW_TO_ANALYZE 4.9.
+
+- **The landing page** (`LandingPage.tsx`, flow stage `landing`, never saved as a stage): a browser without a
+  condition sees "Preparing your study…" for about a second before the start screen. It asks the server
+  (`POST /api/conditions/assign`), which gives the condition with the FEWEST people and a tie at random
+  (`server/conditions.js`). **Who counts ("Q1-B"):** finished, plus still working (the record changed in the last 2
+  hours, `updated_at`), plus just arrived (given in the last 30 minutes, not yet at the demographic page, where the
+  record is first made). A drop-out stops counting after 2 hours, so the finished numbers come out equal. **One at a
+  time**: assignments run through `serially`, so two people in the same second never both get the same one. The
+  arrival id is saved before the request, so a refresh asks for the same arrival (`condition_arrivals`, unique).
+- **The address shows it** (`?condition=CVR_APA`, `CVR_Only`, `APA_Only`, `Baseline`; "+" would read as a space),
+  always the SAVED condition: an address naming another one is corrected. **A tester may open a condition's address
+  directly ("Q2-yes")**: saved with source `address` and never counted. No server: a random one, source
+  `random_offline`, never counted. Participants never see their condition on the page.
+- **Saved once, never changed.** The browser file `vrds_condition` (with `owner`, the email once known); the server sets
+  `condition_number`, `condition_type`, `condition_source`, `condition_assigned_at` on the participant document only
+  when it has none (`condition_type: { $exists: false }`), and links the landing page's arrival. A returning participant
+  on a new browser gets THEIR condition from the record and the new arrival is released (`/api/conditions/release`).
+  A second person on the same computer gets their own (`clearConditionFromAddress` first: the address still named the
+  first person's condition, and the landing page would have taken it as a tester's, uncounted - found on re-reading
+  and checked live). The file does NOT travel in `resume_state` (a new browser's
+  provisional condition would be merged over the saved one).
+- **"Condition number" and "condition type" beside the demographic data** (his request): `conditionNumber` and
+  `conditionType` in `vrds_demographics`, the four top-level fields above on the document, and a copy in
+  `major_info_and_scores.condition` (with `counted_for_balance`). `SHAPE_VERSION` "2026-10-01-conditions".
+- **The count page ("Q3-yes"):** `/api/conditions/report` (also `/api/conditions/counts` as data): counted now,
+  finished, working, just arrived, and every record ever by source; numbers only, refreshes every 30 seconds.
+- **The same list lives twice** (`src/experiment/conditions.ts` and `server/conditions.js`, which cannot import
+  TypeScript); N1 fails if they differ. `conditions.ts` is listed in `tools/tsconfig.dbshape.json`.
+- **Checked:** `npm run validate:conditions` (N1-N10, in the chain before `validate:position`); 14 deliberate breaks, 14
+  caught. Live against the local database: 8 new visitors gave 2 in each condition; a full enrolment saved the fields in
+  the demographic file and on the record and moved the person from "just arrived" to "working" without counting twice; the
+  same person on a cleared browser got their own condition back and the new arrival was released; a second person on the
+  same computer got a fresh, counted condition; an address naming
+  another condition was corrected; a tester's `?condition=APA_Only` was not counted; the count page showed it all.
+- **For Prolific later** (docs/PROLIFIC_CONVERSION_PLAN.md): the address keeps every other parameter when the condition is
+  written into it (N7 tests a Prolific ID), and the owner of the condition becomes the Prolific ID instead of the email.
+
 ## Prolific: planned, not built (since 1 October 2026)
 
 The study will be recruited on Prolific, but only AFTER the four conditions are built and tested (the researcher's
@@ -130,7 +175,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
 `validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED`
-(since 24 September 2026), `ALL DATABASE GATES PASSED`, `ALL VCI_ALL GATES PASSED`, `ALL JOURNEY GATES PASSED` (both since 28 September 2026), `ALL SESSION GATES PASSED` and `ALL ATTENTION GATES PASSED` (both since 29 September 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
+(since 24 September 2026), `ALL DATABASE GATES PASSED`, `ALL VCI_ALL GATES PASSED`, `ALL JOURNEY GATES PASSED` (both since 28 September 2026), `ALL SESSION GATES PASSED` and `ALL ATTENTION GATES PASSED` (both since 29 September 2026) and `ALL CONDITION GATES PASSED` (since 1 October 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
 until 26 September 2026 (it passes since Fix 6, see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
 above were never printed and four suites never ran. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
 a blocker, not a warning.
@@ -1087,6 +1132,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12) |
 | `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9) |
 | `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
+| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

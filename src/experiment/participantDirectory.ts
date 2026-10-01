@@ -37,6 +37,8 @@ export type ParticipantStatus = typeof STATUS_NOT_COMPLETED | typeof STATUS_COMP
  * Exported because anything that resets the app has to know to KEEP this. It outlives a single
  * run: it is the record of every person this machine has enrolled.
  */
+import type { SavedCondition } from "./conditions";
+
 export const PARTICIPANT_DIRECTORY_KEY = "vrds_local_participants";
 const DIRECTORY_KEY = PARTICIPANT_DIRECTORY_KEY;
 
@@ -50,6 +52,8 @@ export interface DirectoryEntry {
   country?: string;
   /** Its ISO 3166-1 alpha-2 code; null for "Prefer not to say". */
   countryCode?: string | null;
+  /** Their condition (since 1 October 2026; conditions.ts). Set once and never changed. */
+  condition?: SavedCondition | null;
   status: ParticipantStatus;
   /** The stage they last reached, so a return can resume exactly there. */
   stage: string;
@@ -106,6 +110,7 @@ export function upsertParticipant(input: {
   /* Optional: a resume from a record that has no country must not erase one this browser already knows. */
   country?: string;
   countryCode?: string | null;
+  condition?: SavedCondition | null;
   stage: string;
   consent: DirectoryEntry["consent"];
 }): DirectoryEntry {
@@ -122,6 +127,14 @@ export function upsertParticipant(input: {
     ...(input.country !== undefined
       ? { country: input.country, countryCode: input.countryCode ?? null }
       : existing?.country !== undefined ? { country: existing.country, countryCode: existing.countryCode ?? null } : {}),
+    /* The condition is set once: a saved one is never replaced (the server keeps the same rule). The arrival id is
+       not kept: it only travels with the save that makes the record (storage.saveParticipant). */
+    ...(existing?.condition
+      ? { condition: existing.condition }
+      : input.condition
+        ? { condition: { number: input.condition.number, type: input.condition.type, source: input.condition.source,
+            assignedAt: input.condition.assignedAt } }
+        : {}),
     /* An existing status is never downgraded here. Someone who has finished stays finished. */
     status: existing?.status ?? STATUS_NOT_COMPLETED,
     stage: input.stage,

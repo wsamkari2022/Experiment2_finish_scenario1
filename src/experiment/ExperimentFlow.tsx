@@ -8,6 +8,8 @@ import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
 import {
   claimThisBrowser,
   flushOutbox,
+  noRemoteBackend,
+  releaseConditionArrival,
   resetSyncState,
   restoreParticipantFiles,
   saveCompletion,
@@ -23,6 +25,11 @@ import {
   type LockReason,
 } from "./sessionGuard";
 import { SessionLockScreen } from "./SessionLockScreen";
+import { LandingPage } from "./LandingPage";
+import {
+  CONDITION_KEY, clearConditionFromAddress, conditionByNumber, conditionFields, makeConditionFile, readConditionFile,
+  savedFrom, showConditionInAddress, writeConditionFile, type ConditionFile,
+} from "./conditions";
 import {
   claimActiveClockFor, noteNewVisit, setActiveStage, startActiveClock, stopActiveClock,
 } from "./activeTime";
@@ -64,6 +71,9 @@ import { AI_WORKFORCE_RESULTS_KEY } from "./aiWorkforceTypes";
  * They are never persisted to localStorage so a page refresh lands cleanly.
  */
 type Stage =
+  /* The landing page (since 1 October 2026; LandingPage.tsx): a new browser gets one of the four conditions, the one
+     with the fewest people, before anything else. Never saved as a stage: a refresh there simply asks again. */
+  | "landing"
   /* Asks the email, and decides whether this is a new participant or a returning one. Seen only
      when the browser does not already recognise them. */
   | "start"
@@ -154,6 +164,24 @@ function readJson<T>(key: string): T | null {
   }
 }
 
+/** The three screens before the study proper: a browser on one of them without a condition sees the landing page. */
+const ENTRY_STAGES: string[] = ["start", "consent", "demographics"];
+
+/**
+ * Where the landing page leads: back to the entry screen this browser was on (a refresh, or a browser from before
+ * 1 October 2026 that had no condition yet), otherwise the start screen.
+ */
+function stageAfterLanding(): Stage {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_STAGE);
+    if (saved === "consent" || saved === "demographics") return saved;
+    if (!saved && localStorage.getItem(STORAGE_KEY_CONSENT)) return "demographics";
+  } catch {
+    /* ignore */
+  }
+  return "start";
+}
+
 /**
  * Returns the stage to restore on mount. Rolls back to "money" if localStorage
  * held a transition stage (spinners should never be the restored landing point).
@@ -175,9 +203,13 @@ function getRestoredStage(): Stage {
        *                           one on a machine with no history.
        */
       if (localStorage.getItem(STORAGE_KEY_DEMOGRAPHICS)) return "money";
+      /* No condition yet: the landing page first (since 1 October 2026), which then leads on (stageAfterLanding). */
+      if (!readConditionFile()) return "landing";
       if (localStorage.getItem(STORAGE_KEY_CONSENT)) return "demographics";
       return "start";
     }
+    /* Somebody still on the way in (start, consent, the form) with no condition: the landing page first. */
+    if (ENTRY_STAGES.includes(saved) && !readConditionFile()) return "landing";
     /* A pause is never restored as itself: it leads to the part after it (flowStages.ts). This used to send the
        participant back to Block 1; since 30 September 2026 a pause is saved as that next part anyway. */
     if (isTransition(saved)) return stageToSave(saved) as Stage;
@@ -211,6 +243,18 @@ export function ExperimentFlow() {
 
   /** Current stage; restored from localStorage so refresh resumes where the user left off. */
   const [stage, setStage] = useState<Stage>(getRestoredStage);
+
+  /* Where the landing page leads (since 1 October 2026): the start screen, or the entry screen a refresh left. */
+  const afterLanding = useRef<Stage>(stageAfterLanding());
+  const handleLandingReady = useCallback(() => {
+    setStage(afterLanding.current);
+  }, []);
+
+  /* The address always shows the saved condition (the researcher's request: he sees which one he is testing). An
+     address naming another condition is corrected: the saved one never changes. */
+  useEffect(() => {
+    showConditionInAddress(readConditionFile());
+  }, [stage]);
 
   /**
    * The participant's email once it is known — from the start screen, the demographic form, or a
@@ -319,6 +363,8 @@ export function ExperimentFlow() {
    */
   const lastSaved = useRef<string | null>(null);
   useEffect(() => {
+    /* The landing page is never saved: a refresh there asks again, with the same arrival id (LandingPage.tsx). */
+    if (stage === "landing") return;
     const saveAs = stageToSave(stage) as Stage;
     const key = `${saveAs}|${pendingEmail ?? ""}`;
     if (lastSaved.current === key) return;
@@ -404,6 +450,9 @@ export function ExperimentFlow() {
         syncResumeState(email);
         /* And, as the page opens: is this browser still the one holding the record? (sessionGuard.ts) */
         void checkActiveBrowser(email);
+      } else {
+        /* No server: the landing page stops waiting for one and picks a condition at random (since 1 October 2026). */
+        noRemoteBackend();
       }
     })();
     return () => {
@@ -423,7 +472,7 @@ export function ExperimentFlow() {
   }, []);
 
   useEffect(() => {
-    setActiveStage(stage === "start" ? "" : stage);
+    setActiveStage(stage === "start" || stage === "landing" ? "" : stage);
   }, [stage]);
 
   // Telemetry: time each content stage. Marks "start" when a stage renders and "end" when we
@@ -567,6 +616,10 @@ export function ExperimentFlow() {
     );
   }
 
+  if (stage === "landing") {
+    return <LandingPage onReady={handleLandingReady} />;
+  }
+
   if (stage === "start") {
     return (
       <StartScreen
@@ -577,12 +630,48 @@ export function ExperimentFlow() {
             /* Storage unavailable; the form will simply ask for the address again. */
           }
           setPendingEmail(email);
+          /*
+           * THE CONDITION BECOMES THIS PERSON'S (since 1 October 2026). A condition this browser holds for somebody
+           * else (a shared computer) is not theirs: it goes, and the landing page gives them their own before consent.
+           */
+          const file = readConditionFile();
+          if (file && file.owner && file.owner !== email.trim().toLowerCase()) {
+            try {
+              localStorage.removeItem(CONDITION_KEY);
+            } catch { /* ignore */ }
+            /* The address still names the first person's condition; without this the landing page would take it as a
+               tester's choice and never ask the server. */
+            clearConditionFromAddress();
+            afterLanding.current = "consent";
+            setStage("landing");
+            return;
+          }
+          if (file && !file.owner) writeConditionFile({ ...file, owner: email.trim().toLowerCase() });
           setStage("consent");
         }}
         onResume={(entry) => {
           /* Rebuild just enough local state for the study to continue, then jump to the stage
              they stopped on. On this machine that stage is usually already present; on a new
              machine the directory is the only thing that knows it. */
+          /*
+           * THEIR CONDITION IS THE ONE ON THEIR RECORD (since 1 October 2026; conditions.ts). The landing page gave this
+           * browser a new one a moment ago; it is replaced, and its arrival stops counting at once. A record from before
+           * conditions existed takes the one this browser holds (the server sets it only on a record that has none).
+           */
+          const owner = entry.email.trim().toLowerCase();
+          const provisional = readConditionFile();
+          const saved = entry.condition ? conditionByNumber(entry.condition.number) : null;
+          let condition: ConditionFile | null = null;
+          if (entry.condition && saved) {
+            condition = makeConditionFile(saved, entry.condition.source, null, owner, entry.condition.assignedAt);
+            if (provisional?.arrivalId && provisional.owner !== owner) releaseConditionArrival(provisional.arrivalId);
+          } else if (provisional && (!provisional.owner || provisional.owner === owner)) {
+            condition = { ...provisional, owner };
+          }
+          if (condition) {
+            writeConditionFile(condition);
+            showConditionInAddress(condition);
+          }
           try {
             localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, entry.email);
             if (entry.consent) {
@@ -593,6 +682,7 @@ export function ExperimentFlow() {
               JSON.stringify({
                 email: entry.email, age: entry.age, gender: entry.gender,
                 ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+                ...(conditionFields(condition) ?? {}),
               }),
             );
             localStorage.setItem(STORAGE_KEY_STATUS, entry.status);
@@ -647,6 +737,7 @@ export function ExperimentFlow() {
               age: entry.age,
               gender: entry.gender,
               ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+              condition: savedFrom(condition),
               stage: entry.stage,
               consent: entry.consent,
             });
@@ -704,8 +795,20 @@ export function ExperimentFlow() {
         initialEmail={pendingEmail ?? ""}
         emailLocked={!!pendingEmail}
         onSubmit={(record) => {
+          /*
+           * "CONDITION NUMBER" AND "CONDITION TYPE" BESIDE THE ANSWERS (the researcher's request, 1 October 2026). Saved,
+           * never asked: the participant does not see their condition. The browser's condition becomes theirs here if
+           * the start screen did not already make it so.
+           */
+          const owner = record.email.trim().toLowerCase();
+          let condition = readConditionFile();
+          if (condition && condition.owner && condition.owner !== owner) condition = null;
+          if (condition && !condition.owner) {
+            condition = { ...condition, owner };
+            writeConditionFile(condition);
+          }
           try {
-            localStorage.setItem(STORAGE_KEY_DEMOGRAPHICS, JSON.stringify(record));
+            localStorage.setItem(STORAGE_KEY_DEMOGRAPHICS, JSON.stringify({ ...record, ...(conditionFields(condition) ?? {}) }));
             localStorage.setItem(STORAGE_KEY_STATUS, STATUS_NOT_COMPLETED);
             localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, record.email);
           } catch {
@@ -719,6 +822,7 @@ export function ExperimentFlow() {
             gender: record.gender,
             country: record.country,
             countryCode: record.countryCode,
+            condition: savedFrom(condition),
             stage: "money",
             consent: readJson<{ agreed: boolean; timestamp: string; version: string }>(
               STORAGE_KEY_CONSENT,

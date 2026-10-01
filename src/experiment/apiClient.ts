@@ -18,6 +18,7 @@
 import type { RemoteBackend } from "./storage";
 import { browserId } from "./sessionLog";
 import type { DirectoryEntry } from "./participantDirectory";
+import { conditionByNumber, type AssignedCondition, type SavedCondition } from "./conditions";
 
 /** Same origin: Vite proxies /api to the API server in development. */
 const BASE = "/api";
@@ -76,6 +77,15 @@ function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry |
     ...(typeof doc.country === "string"
       ? { country: doc.country, countryCode: typeof doc.country_code === "string" ? doc.country_code : null }
       : {}),
+    /* Since 1 October 2026; absent on a record made before. */
+    ...(conditionByNumber(doc.condition_number)?.type === doc.condition_type
+      ? { condition: {
+          number: Number(doc.condition_number) as SavedCondition["number"],
+          type: doc.condition_type as SavedCondition["type"],
+          source: (doc.condition_source as SavedCondition["source"]) ?? "landing_page",
+          assignedAt: String(doc.condition_assigned_at ?? ""),
+        } }
+      : {}),
     status: doc.status as DirectoryEntry["status"],
     stage: String(doc.current_stage ?? "money"),
     consent: (doc.consent as DirectoryEntry["consent"]) ?? null,
@@ -104,6 +114,8 @@ export const apiClient: RemoteBackend = {
         gender: entry.gender,
         /* Sent only when known: the server keeps a saved country when none is sent. */
         ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+        /* The condition (since 1 October 2026): the server sets it only on a record that has none. */
+        ...(entry.condition ? { condition: entry.condition } : {}),
         consent: entry.consent,
         stage: entry.stage,
       }),
@@ -144,6 +156,20 @@ export const apiClient: RemoteBackend = {
       { method: "POST", body: JSON.stringify({ email }) },
     );
     return doc?.resume_state?.files ?? null;
+  },
+
+  async assignCondition(arrivalId): Promise<AssignedCondition> {
+    const given = await request<AssignedCondition>("/conditions/assign", {
+      method: "POST",
+      body: JSON.stringify({ arrivalId }),
+    });
+    const condition = conditionByNumber(given?.number);
+    if (!condition || condition.type !== given.type) throw new Error("the server named no known condition");
+    return { number: condition.number, type: condition.type, arrivalId, assignedAt: String(given.assignedAt ?? "") };
+  },
+
+  async releaseArrival(arrivalId) {
+    await request("/conditions/release", { method: "POST", body: JSON.stringify({ arrivalId }) });
   },
 
   async saveSection(path, data) {

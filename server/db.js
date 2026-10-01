@@ -49,10 +49,24 @@ export async function connect() {
     { key: { email: 1 }, name: "email_unique", unique: true },
     { key: { participant_id: 1 }, name: "participant_id_unique", unique: true },
     { key: { status: 1 }, name: "status" },
+    /* The condition counts read these (since 1 October 2026; server/conditions.js). */
+    { key: { condition_type: 1 }, name: "condition_type" },
+  ]);
+  /* The landing page's arrivals: one row per condition it gave, until the person reaches the demographic page
+     (linked_email) or turns out to be somebody returning (released). server/conditions.js has the rule. */
+  await db.collection("condition_arrivals").createIndexes([
+    { key: { arrival_id: 1 }, name: "arrival_id_unique", unique: true },
+    { key: { assigned_at: 1 }, name: "assigned_at" },
   ]);
 
   console.log(`[db] connected to ${SAFE_MONGO_URL} · database "${DB_NAME}"`);
   return db;
+}
+
+/** The landing page's arrivals (since 1 October 2026; server/conditions.js). */
+export function conditionArrivals() {
+  if (!db) throw new Error("connect() must be awaited before using the database");
+  return db.collection("condition_arrivals");
 }
 
 /** The participants collection: one document per person. */

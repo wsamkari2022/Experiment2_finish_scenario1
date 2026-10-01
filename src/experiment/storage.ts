@@ -78,6 +78,7 @@ import { SESSION_LOG_KEY } from "./sessionLog";
 import { FEEDBACK_KEY } from "./feedbackTypes";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import { ATTENTION_KEY, buildFeedbackPatterns } from "./attentionChecks";
+import { CONDITION_KEY, type AssignedCondition, type SavedCondition } from "./conditions";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -98,6 +99,10 @@ export interface RemoteBackend {
   claimBrowser(email: string, age: number): Promise<void>;
   /** Is this browser the one holding the participant's record? */
   isActiveBrowser(email: string): Promise<boolean>;
+  /** The landing page: which condition does this new arrival get? (since 1 October 2026; server/conditions.js) */
+  assignCondition?(arrivalId: string): Promise<AssignedCondition>;
+  /** The arrival was somebody returning with a condition of their own: stop counting it. */
+  releaseArrival?(arrivalId: string): Promise<void>;
 }
 
 /**
@@ -116,7 +121,39 @@ let remote: RemoteBackend | null = null;
  */
 export function setRemoteBackend(backend: RemoteBackend | null): void {
   remote = backend;
+  remoteKnown();
   if (backend) void flushOutbox();
+}
+
+/*
+ * WHETHER THERE IS A SERVER IS KNOWN A MOMENT AFTER THE PAGE OPENS (the health check in ExperimentFlow). The landing
+ * page needs the answer before it can ask for a condition, so it waits for it: setRemoteBackend, or noRemoteBackend
+ * when the check failed, ends the wait (since 1 October 2026).
+ */
+let remoteKnown: () => void = () => {};
+const remoteKnownPromise = new Promise<void>((resolve) => { remoteKnown = resolve; });
+export function noRemoteBackend(): void {
+  remoteKnown();
+}
+
+/**
+ * The landing page's question: which condition does this arrival get? Null when there is no server, or it did not
+ * answer; the page then picks at random and says so in the file (conditions.ts, source "random_offline").
+ */
+export async function requestCondition(arrivalId: string, waitMs = 6000): Promise<AssignedCondition | null> {
+  await Promise.race([remoteKnownPromise, new Promise((resolve) => setTimeout(resolve, waitMs))]);
+  if (!remote?.assignCondition) return null;
+  try {
+    return await remote.assignCondition(arrivalId);
+  } catch {
+    return null;
+  }
+}
+
+/** A returning participant brought their own condition: the landing page's arrival stops counting. Best effort. */
+export function releaseConditionArrival(arrivalId: string | null | undefined): void {
+  if (!arrivalId || !remote?.releaseArrival) return;
+  void remote.releaseArrival(arrivalId).catch(() => { /* it stops counting after 30 minutes anyway */ });
 }
 
 /** True when writes are also being sent to a server. */
@@ -401,11 +438,18 @@ export function saveParticipant(input: {
   /* Since 30 September 2026; optional so a resume without it never erases it (see upsertParticipant). */
   country?: string;
   countryCode?: string | null;
+  /* Since 1 October 2026 (conditions.ts). Set once, here and on the server; a later value never replaces it. */
+  condition?: SavedCondition | null;
   stage: string;
   consent: DirectoryEntry["consent"];
 }): DirectoryEntry {
   const entry = upsertParticipantLocal(input);
-  sendOrQueue({ op: "upsertParticipant", entry });
+  /* The arrival id travels with the save, so the server links the landing page's arrival to this person; the stored
+     entry keeps the condition without it. The condition sent is always the SAVED one, never a newer value. */
+  const sendEntry = entry.condition
+    ? { ...entry, condition: { ...entry.condition, arrivalId: input.condition?.arrivalId ?? null } }
+    : entry;
+  sendOrQueue({ op: "upsertParticipant", entry: sendEntry });
   return entry;
 }
 
@@ -739,6 +783,7 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
           participantRecord: readRaw(BLOCKS_1_TO_4_KEYS.participantRecord),
         },
         readRaw(ATTENTION_KEY),
+        readRaw(CONDITION_KEY),
       );
       if (major) sendOrQueue({ op: "saveSection", path: "major_info_and_scores", data: major });
 

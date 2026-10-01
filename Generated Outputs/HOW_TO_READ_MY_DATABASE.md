@@ -123,6 +123,9 @@ correlating the two will produce impressive and meaningless results.
 | `email` | The key. Lower-cased. Also how a participant returns to finish. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
 | `country`, `country_code` | Since 30 September 2026, from the demographic form's Country question: the English name as listed (e.g. "Saudi Arabia") and its ISO 3166-1 alpha-2 code ("SA"; Kosovo "XK"), or "Prefer not to say" with a null code. Group by `country_code`, never by the name. Absent on records made before that date. |
+| `condition_number`, `condition_type` | Since 1 October 2026: the participant's condition, 1-4 and its name - `1` "CVR+APA" (the full version), `2` "CVR_Only", `3` "APA_Only", `4` "Baseline". Set ONCE by the server when the record is made, never changed. **Every comparison between conditions groups by these.** Absent on records made before that date (they all ran the full version, condition 1). Until the researcher builds what each condition does differently, all four ran the same study: check the date in HOW_TO_ANALYZE 4.9 before comparing them. |
+| `condition_source` | How the condition was given: `landing_page` (by the count, the only kind counted for balance), `address` (a tester opened a condition's address on purpose) or `random_offline` (no server). **Treat `address` and `random_offline` as tests**: real participants arrive through the landing page. |
+| `condition_assigned_at` | When the landing page (or the address) gave it. |
 | `status` | `"Study Not Completed"` or `"Study Completed"` — nothing else. |
 | `current_stage` | The screen they last reached, e.g. `money`, `block5`, `feedback`. |
 | `active_browser` | Since 29 September 2026: `{ id, claimed_at }`, the one browser allowed to write this record (a random id, naming nothing but that browser). The newest browser that passed the email-and-age check. Not data about the participant; never analyse it. |
@@ -183,6 +186,14 @@ run can be followed across machines without reading UUIDs.
 
 ---
 
+### The `condition_arrivals` collection (since 1 October 2026)
+
+A second, small collection beside `participants`: one row per condition the landing page gave (`arrival_id`,
+`condition_number`, `condition_type`, `assigned_at`, `browser`, `linked_email` once the person reached the demographic
+page, `released` when they turned out to be somebody returning with a condition of their own). It exists only so the
+balance can count people who just arrived; it holds no answers. **Not data about participants; never analyse it.**
+The live counts are at `/api/conditions/report`.
+
 ## 3c. `major_info_and_scores` — every major score in one room
 
 Added **23 September 2026**, on request: the numbers that matter, gathered where somebody looking
@@ -193,6 +204,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 
 | Field | What it holds |
 |---|---|
+| `condition` | Since 1 October 2026: `condition_number`, `condition_type`, `source`, `counted_for_balance` (true only for `landing_page`) and `assigned_at`, copied from the browser's condition file (the same values as the document's top-level fields) |
 | `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them, and (since 25 September 2026) `what_the_wish_changed_by_value` and `what_the_wish_changed_in_words`, copied from `decided_versus_wished` |
 | `stability` | The score and label, plus the directness, context and stakeholder stabilities, and (since 26 September 2026) `was_measured`, `conflict_steps_counted` and `how_to_read_was_measured`, copied from the headline |
 | `performance` | `score`, `captured`, `captured_label`, and (since 25 September 2026) `what_the_wish_changed_in_performance_by_metric` and `..._in_words`, copied from `decided_versus_wished` |
@@ -1590,7 +1602,8 @@ db.participants.aggregate([
 
 ## 10. Traps — read this list before you conclude anything
 
-1. **Filter on `status`.** Unfinished runs have real but partial data.
+1. **Filter on `status`.** Unfinished runs have real but partial data. **And compare conditions by `condition_type`,
+   leaving out `condition_source` `address` and `random_offline` (tests).**
 2. **`headline` is copied, not independent.** Do not correlate `headline.consistency_score` with
    `blocks...vci` and report a finding. They are the same number.
 3. **`analysis` is derived from `blocks`.** Same trap, one level up.

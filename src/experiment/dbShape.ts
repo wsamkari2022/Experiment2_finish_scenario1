@@ -31,6 +31,7 @@
  */
 
 import { SESSION_KEY_RESULTS } from "./constants";
+import { conditionByNumber } from "./conditions";
 import { TROLLEY_RESULTS_STORAGE_KEY } from "./trolleyTypes";
 import { AI_WORKFORCE_RESULTS_KEY } from "./aiWorkforceTypes";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
@@ -86,7 +87,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-09-30-value-profile-by-scenario";
+export const SHAPE_VERSION = "2026-10-01-conditions";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -2868,6 +2869,26 @@ export function buildMcfSection(block5: unknown): Record<string, unknown> | null
  *
  * Null when Block 5 has not produced a record yet: there is nothing major to report before that.
  */
+/**
+ * The condition, as major_info_and_scores carries it (since 1 October 2026; conditions.ts): number, type, where it
+ * came from and when. Null without a valid file. `counted_for_balance` is true only for a condition the landing page
+ * gave: a condition taken from the address (a test) or chosen without a server is never counted by the landing page.
+ */
+export function conditionCopy(file: unknown): Record<string, unknown> | null {
+  if (!file || typeof file !== "object") return null;
+  const f = file as Record<string, unknown>;
+  const condition = conditionByNumber(f.number);
+  if (!condition || condition.type !== f.type) return null;
+  const source = typeof f.source === "string" ? f.source : null;
+  return {
+    condition_number: condition.number,
+    condition_type: condition.type,
+    source,
+    counted_for_balance: source === "landing_page",
+    assigned_at: typeof f.assignedAt === "string" ? f.assignedAt : null,
+  };
+}
+
 export function buildMajorScores(
   block5: unknown,
   timings: unknown,
@@ -2878,6 +2899,8 @@ export function buildMajorScores(
   blocks1to4?: Blocks1to4Sources | null,
   /* The attention file (since 29 September 2026); without it the room is null. */
   attention?: unknown,
+  /* The condition file (since 1 October 2026; conditions.ts); without it the room is null. */
+  condition?: unknown,
 ): Record<string, unknown> | null {
   if (!block5 || typeof block5 !== "object") return null;
 
@@ -3174,7 +3197,13 @@ export function buildMajorScores(
     company_stance_in_scenario_4:
       (buildCompanyStance(block5) as { stance_label?: string } | null)?.stance_label ?? null,
 
+    /* The participant's condition (since 1 October 2026): every comparison between conditions starts here. A copy of
+       the participant document's top-level fields, which the server set once. */
+    condition: conditionCopy(condition),
+
     where_each_number_lives: {
+      condition: "the participant document's condition_number, condition_type, condition_source and "
+        + "condition_assigned_at (set once by the server when the record was made; the browser file vrds_condition)",
       vci: "headline.consistency_score · headline.consistency_score_all_six · analysis.vci_all · analysis.position_effect.decided_versus_wished",
       stability: "headline.stability_score and the three sensitivity scores beside it; was_measured and "
         + "conflict_steps_counted from headline.stability_was_measured / stability_conflict_steps_counted "
