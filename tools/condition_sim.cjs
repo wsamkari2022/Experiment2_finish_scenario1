@@ -259,6 +259,9 @@ function runPersonIn(start, beh, run, trace = null) {
     vciAll: vciAll.value, vciAllLevel: vciAll.level,
     stability: stab.value, stabilityLevel: stab.level, measured: stab.conflictSteps > 0, conflictSteps: stab.conflictSteps,
     stabilityAll: stabAll.value, stabilityAllLevel: stabAll.level, stabilityAllMeasured: stabAll.measured,
+    /* Since 2 October 2026 Stability and Stability_all are the average of these two parts each (block5CVR.ts). */
+    stabilityOrder: stab.orderValue, stabilityDifference: stab.differenceValue,
+    stabilityAllOrder: stabAll.orderValue, stabilityAllDifference: stabAll.differenceValue,
     topValue: top.countTopValue, topOrSecond: top.countTopOrSecond,
     performance: Math.round(captured.reduce((a, b) => a + b, 0) / captured.length),
     stakeholder: frozenScores ? null : computeSensitivityStability(results, frozen).stakeholder?.value ?? null,

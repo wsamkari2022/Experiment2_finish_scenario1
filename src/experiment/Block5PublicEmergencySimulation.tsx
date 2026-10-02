@@ -43,7 +43,7 @@ import {
   performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
   cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall, policyShortfallByValue,
-  FIT_SCORE_SCALE, roundForRecord, scenarioCountsTowardsPerformance,
+  FIT_SCORE_SCALE, roundForRecord, scenarioCountsTowardsPerformance, STABILITY_VERSION,
 } from "./block5CVR";
 import { profileShownIn } from "./block5Mirror";
 import { computeVciAll, runningStep } from "./block5VciAll";
@@ -1457,11 +1457,18 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         scenarioResults: nextResults,
         vci: vci.value, vciLevel: vci.level,
         vciAll: vciAll.value, vciAllLevel: vciAll.level,
-        ...(stabilityAll ? { stabilityAll: stabilityAll.value, stabilityAllLevel: stabilityAll.level } : {}),
+        ...(stabilityAll ? {
+          stabilityAll: stabilityAll.value, stabilityAllLevel: stabilityAll.level,
+          valueOrderStabilityAll: stabilityAll.orderValue, valueDifferenceStabilityAll: stabilityAll.differenceValue,
+        } : {}),
+        /* Since 2 October 2026 Stability is the average of two parts, both saved under the researcher's names. */
         stability: stab.value, stabilityLevel: stab.level,
+        valueOrderStability: stab.orderValue, valueDifferenceStability: stab.differenceValue, stabilityVersion: STABILITY_VERSION,
         stabilityDetail: {
           swaps: stab.swaps, conflictSteps: stab.conflictSteps, swapsByScenario: stab.swapsByScenario,
           topValueBefore: stab.topValueBefore, topValueAfter: stab.topValueAfter,
+          orderValue: stab.orderValue, differenceValue: stab.differenceValue, averageMove: stab.averageMove,
+          movesAtCountedSteps: stab.movesAtCountedSteps,
         },
         sensitivityStability: computeSensitivityStability(nextResults, userProfile),
         performance: averagePerformance(nextResults),

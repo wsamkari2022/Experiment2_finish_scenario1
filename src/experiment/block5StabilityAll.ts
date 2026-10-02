@@ -19,6 +19,13 @@
  * Stability_all = 100 × (1 - min(1, swaps / 6)), Stability's own equation (`stabilityFromSwaps`) and level words.
  * So Stability_all is never above Stability, and equals it when neither scenario 5 nor 6 was counted.
  *
+ * SINCE 2 OCTOBER 2026, LIKE STABILITY, TWO PARTS AVERAGED (block5CVR.ts, "Stability has two parts"): the ORDER part is
+ * the equation above (so the order part is never above Stability's order part); the DIFFERENCE part is 100 - the
+ * average points the four running values moved at the counted steps, added up; Stability_all = their average, with
+ * Stability's level words and edges. Because a move in scenario 5 or 6 can bring a value back toward where it began,
+ * the combined Stability_all CAN now be a little above Stability (about 5 in 100 pretend runs); it equals Stability
+ * when neither scenario 5 nor 6 was counted.
+ *
  * TOP-VALUE CHOICES ("Q4-A": saved for the analysis, never shown). In how many of the six scenarios the final
  * choice was the option that does MOST for the participant's #1 value as they brought it into Block 5 (and, as a
  * second count, for their #1 or their #2). Ties at the top count for every tied option. This answers the second
@@ -36,10 +43,10 @@
 
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { POLICY_DIM_KEYS, type Block5PolicyDimKey, type Block5RunningFit, type Block5ScenarioResult, type Block5UserProfile } from "./block5Types";
-import { rankSwaps, stabilityFromSwaps, stabilityLevel } from "./block5CVR";
+import { combineStability, differenceStabilityFromMoves, rankSwaps, stabilityFromSwaps, stabilityLevel } from "./block5CVR";
 
 /** Stamped on the saved section. Move it whenever the rule of which steps count, or the equation, changes. */
-export const STABILITY_ALL_VERSION = "2026-09-29-a";
+export const STABILITY_ALL_VERSION = "2026-10-02-b";
 
 const isFit = (level: string | undefined) => level === "aligned" || level === "weakly_aligned";
 const isDecision = (r: Block5ScenarioResult) => (r.decisionRole ?? "decider") === "decider";
@@ -54,10 +61,19 @@ export interface StabilityAllStep {
   why: string;
   /** Pairs of values that traded places at this step (0 when not counted). */
   swaps: number;
+  /** Since 2 October 2026: the points each of the four running values moved at this step (empty when not counted). */
+  moves: Record<string, number>;
 }
 
 export interface StabilityAllResult {
+  /** 0-100. Since 2 October 2026 the average of the two parts below, as Stability. */
   value: number;
+  /** The order part (Value_Order_Stability_all): equation (3) over the counted steps' swaps. */
+  orderValue: number;
+  /** The difference part (Value_Difference_Stability_all): 100 - the average points the running values moved at them. */
+  differenceValue: number;
+  /** The average, over the four values, of the points moved at the counted steps (added up), one decimal. */
+  averageMove: number;
   level: string;
   swaps: number;
   conflictSteps: number;
@@ -78,6 +94,7 @@ export function computeStabilityAll(
 ): StabilityAllResult | null {
   if (results.length === 0 || runningFits.some((f) => !f)) return null;
   let swaps = 0;
+  const moved: Record<string, number> = Object.fromEntries(POLICY_DIM_KEYS.map((k) => [k, 0]));
   const steps: StabilityAllStep[] = results.map((r, i) => {
     const fit = runningFits[i] as Block5RunningFit;
     const decision = isDecision(r);
@@ -89,11 +106,25 @@ export function computeStabilityAll(
         : "the final choice was one of the two best fits: not counted");
     const s = counted ? rankSwaps(fit.valuesWhenOpened, fit.valuesAfter) : 0;
     swaps += s;
-    return { scenarioId: r.scenarioId, index: i + 1, kind, counted, why, swaps: s };
+    const moves: Record<string, number> = {};
+    if (counted) {
+      for (const k of POLICY_DIM_KEYS) {
+        const d = (fit.valuesAfter as Record<string, number>)[k] - (fit.valuesWhenOpened as Record<string, number>)[k];
+        moved[k] += d;
+        moves[k] = Math.round(d * 100) / 100;
+      }
+    }
+    return { scenarioId: r.scenarioId, index: i + 1, kind, counted, why, swaps: s, moves };
   });
-  const value = stabilityFromSwaps(swaps);
+  const orderValue = stabilityFromSwaps(swaps);
+  const differenceValue = differenceStabilityFromMoves(moved);
+  const value = combineStability(orderValue, differenceValue);
+  const averageMove = Math.round((POLICY_DIM_KEYS.reduce((a, k) => a + Math.abs(moved[k]), 0) / POLICY_DIM_KEYS.length) * 10) / 10;
   const conflictSteps = steps.filter((s) => s.counted).length;
-  return { value, level: stabilityLevel(value), swaps, conflictSteps, measured: conflictSteps > 0, steps, scenariosRead: results.length };
+  return {
+    value, orderValue, differenceValue, averageMove, level: stabilityLevel(value), swaps, conflictSteps,
+    measured: conflictSteps > 0, steps, scenariosRead: results.length,
+  };
 }
 
 /* ------------------------------------------------------------------ top-value choices */

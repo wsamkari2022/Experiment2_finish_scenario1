@@ -1,6 +1,6 @@
 # Major scores in the four conditions
 
-> **Generated** by `npm run report:major-scores` on 2026-10-01, from code version `703ab8b` plus changes not yet committed, together
+> **Generated** by `npm run report:major-scores` on 2026-10-02, from code version `8f6b216` plus changes not yet committed, together
 > with docs/MAJOR_SCORES_DISTRIBUTION.md. Do not edit this page by hand: change `tools/condition_sim.cjs` (the rules) or
 > `tools/report_conditions_page.cjs` (the page) and run the command again.
 
@@ -62,17 +62,17 @@ in that decision and its fit, the page they met and what they did there, the fin
 moved (vulnerable = protecting the vulnerable, harm = reducing harm, gained = how much is gained, helped = how many are
 helped). "Step" = counted for Stability.
 
-### Example 1: Always the worst fit (pretend person 18 of 2,000)
+### Example 1: Always the worst fit (pretend person 3 of 2,000)
 
 This person keeps a misfit in every decision, so it shows how each condition's own rule moves the values.
 
 | Decision | CVR+APA | APA_Only | Baseline (A) |
 |---|---|---|---|
-| 1. Six Hours to Clear the District | Carry the respirator to the patient it was kept for, and walk them out (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: vulnerable +30, gained −20, person speaking −25 · **step** | Carry the respirator to the patient it was kept for, and walk them out (Strongly misaligned)<br>→ APA page: named protecting the vulnerable, sure 5<br>moved: vulnerable +30, harm −10, gained −10, helped −10 · **step** | Carry the respirator to the patient it was kept for, and walk them out (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable +30, harm −15, gained −15, helped −15 · **step** |
-| 2. Eight Hours Ahead of the Fire | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: gained +30, helped −20, person speaking −25 · **step** | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ APA page: named how much is gained, sure 5<br>moved: vulnerable −10, harm −10, gained +22, helped −10 · **step** | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −15, harm −15, gained +27, helped −15 · **step** |
-| 3. Limited Cancer Treatment Allocation | Treat the 20 who are sickest (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: vulnerable +30, gained −20, person speaking −2 · **step** | Treat the 20 who are sickest (Strongly misaligned)<br>→ APA page: named protecting the vulnerable, sure 5<br>moved: vulnerable +30, harm −10, gained −10, helped −10 · **step** | Treat the 20 who are sickest (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable +30, harm −15, gained −15, helped −15 · **step** |
-| 4. The Care Visits You Have to Cut | Keep the town routes that pay, and drop the rural ones (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: vulnerable −20, gained +22 · **step** | Keep the town routes that pay, and drop the rural ones (Strongly misaligned)<br>→ APA page: named how much is gained, sure 5<br>moved: vulnerable −10, harm −10, gained +10, helped −10 · **step** | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −15, harm −15, gained −15, helped +30 · **step** |
-| **Scores** | VCI 10 · VCI_all 14 · Stability 0 (4 steps) · Stability_all 0 · performance 31 | VCI 10 · VCI_all 21 · Stability 50 (4 steps) · Stability_all 33 · performance 31 | VCI 10 · VCI_all 15 · Stability 17 (4 steps) · Stability_all 17 · performance 35 |
+| 1. Six Hours to Clear the District | Take the sealed respirator the clinic had reserved (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: vulnerable −20, gained +30, person speaking −3 · **step** | Take the sealed respirator the clinic had reserved (Strongly misaligned)<br>→ APA page: named how much is gained, sure 5<br>moved: vulnerable −10, harm −10, gained +30, helped −10 · **step** | Take the sealed respirator the clinic had reserved (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −15, harm −15, gained +30, helped −15 · **step** |
+| 2. Eight Hours Ahead of the Fire | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: vulnerable −20, gained +27 · **step** | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ APA page: named how much is gained, sure 5<br>moved: vulnerable −10, harm −10, gained +27, helped −10 · **step** | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −15, harm −15, gained +27, helped −15 · **step** |
+| 3. Limited Cancer Treatment Allocation | Treat the 20 who are sickest (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: vulnerable +30, gained −20 · **step** | Treat the 20 who are sickest (Strongly misaligned)<br>→ APA page: named protecting the vulnerable, sure 5<br>moved: vulnerable +27, harm −10, gained −10, helped −10 · **step** | Treat the 20 who are sickest (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable +30, harm −15, gained −15, helped −13 · **step** |
+| 4. The Care Visits You Have to Cut | Keep the town routes that pay, and drop the rural ones (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: vulnerable −20, gained +20 · **step** | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ APA page: named how many are helped, sure 5<br>moved: vulnerable −10, harm −10, gained −10, helped +30 · **step** | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −15, harm −15, gained −15, helped +30 · **step** |
+| **Scores** | VCI 10 · VCI_all 15 · Stability 39 (4 steps) · Stability_all 37 · performance 25 | VCI 10 · VCI_all 8 · Stability 53 (4 steps) · Stability_all 40 · performance 28 | VCI 10 · VCI_all 8 · Stability 48 (4 steps) · Stability_all 39 · performance 28 |
 
 ### Example 2: Corrected by APA (pretend person 1 of 2,000)
 
@@ -84,7 +84,7 @@ This person is tempted by a misfit in every decision and corrected, so it shows 
 | 2. Eight Hours Ahead of the Fire | Fill every seat in the car with neighbors who have none (Misaligned)<br>→ reflection, refused; APA page: named reducing harm, sure 4<br>→ final: Take your household's assigned place in the staged convoy (Aligned)<br>moved: gained −9, helped −9, person speaking +21 · **step** | Take your household to the concrete school on the hill (Misaligned)<br>→ reflection, refused; CVR Rejection page; chose again<br>→ final: Take your household's assigned place in the staged convoy (Aligned)<br>moved: person speaking +21 | Take your household to the concrete school on the hill (Misaligned)<br>→ confirmation page: Change my mind; then a good fit<br>→ final: Take your household's assigned place in the staged convoy (Aligned)<br>moved: nothing | Take your household to the concrete school on the hill (Misaligned)<br>→ confirmation page: Keep, sure 4<br>moved: harm +24, gained −9, helped −9 · **step** |
 | 3. Limited Cancer Treatment Allocation | Treat the 20 who others depend on (Misaligned)<br>→ reflection, refused; APA page: named reducing harm, sure 4<br>→ final: Draw the 20 names from the patients who cannot wait (Aligned)<br>moved: gained −9, helped −9 · **step** | Treat the 20 most likely to survive (Misaligned)<br>→ reflection, refused; CVR Rejection page; chose again<br>→ final: Draw the 20 names from the patients who cannot wait (Weakly aligned)<br>moved: harm +15, helped −15 | Treat the 20 most likely to survive (Misaligned)<br>→ confirmation page: Change my mind; then a good fit<br>→ final: Draw the 20 names from the patients who cannot wait (Weakly aligned)<br>moved: harm +15, helped −15 | Treat the 20 most likely to survive (Misaligned)<br>→ confirmation page: Keep, sure 4<br>moved: harm −9, gained −9, helped +10 · **step** |
 | 4. The Care Visits You Have to Cut | Keep every care visit, and cut the check-in visits (Strongly misaligned)<br>→ reflection, refused; APA page: named reducing harm, sure 4<br>→ final: Cut only where a family member can cover (Aligned)<br>moved: gained −9, helped −9 · **step** | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ reflection, refused; CVR Rejection page; chose again<br>→ final: Cut only where a family member can cover (Aligned)<br>moved: nothing | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ confirmation page: Change my mind; then a good fit<br>→ final: Cut only where a family member can cover (Aligned)<br>moved: nothing | Protect full visits for the clients with nobody else (Strongly misaligned)<br>→ confirmation page: Keep, sure 4<br>moved: vulnerable +27, harm −13.5, gained −13.5, helped −13.5 · **step** |
-| **Scores** | VCI 100 · VCI_all 68 · Stability 100 (4 steps) · Stability_all 83 · performance 81 | VCI 95 · VCI_all 65 · Stability 100 (0 steps) · Stability_all 67 · performance 81 | VCI 95 · VCI_all 65 · Stability 100 (0 steps) · Stability_all 67 · performance 81 | VCI 40 · VCI_all 28 · Stability 33 (4 steps) · Stability_all 0 · performance 53 |
+| **Scores** | VCI 100 · VCI_all 68 · Stability 89 (4 steps) · Stability_all 81 · performance 81 | VCI 95 · VCI_all 65 · Stability 100 (0 steps) · Stability_all 75 · performance 81 | VCI 95 · VCI_all 65 · Stability 100 (0 steps) · Stability_all 75 · performance 81 | VCI 40 · VCI_all 28 · Stability 56 (4 steps) · Stability_all 39 · performance 53 |
 
 ### Example 3: Random responder (pretend person 1 of 2,000)
 
@@ -96,7 +96,7 @@ This person answers at random, so it shows the two random-responder rules in APA
 | 2. Eight Hours Ahead of the Fire | Give your car seats to the two residents with walkers and wait for the lift bus (Misaligned)<br>→ reflection, refused; APA page: named how much is gained, sure 5<br>→ final: Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>moved: vulnerable −4, harm −10, gained +30, helped −10, person speaking −25 · **step** | Give your car seats to the two residents with walkers and wait for the lift bus (Misaligned)<br>→ APA page: named how much is gained, sure 5<br>→ final: Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>moved: vulnerable −4, harm −10, gained +30, helped −10 · **step** | Give your car seats to the two residents with walkers and wait for the lift bus (Misaligned)<br>→ APA page: named how much is gained, sure 5<br>→ final: Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>moved: vulnerable −4, harm −10, gained +30, helped −10 · **step** |
 | 3. Limited Cancer Treatment Allocation | Draw the 20 names from the patients who cannot wait (Misaligned)<br>→ reflection, refused; APA page: named how many are helped, sure 1<br>→ final: Treat the 20 most likely to survive (Weakly aligned)<br>moved: harm −6, gained −6, helped +18, person speaking −25 · **step** | Draw the 20 names from the patients who cannot wait (Misaligned)<br>→ APA page: named how many are helped, sure 1<br>→ final: Treat the 20 most likely to survive (Weakly aligned)<br>moved: harm −6, gained −6, helped +18 · **step** | Draw the 20 names from the patients who cannot wait (Misaligned)<br>→ APA page: named how many are helped, sure 1<br>→ final: Treat the 20 most likely to survive (Weakly aligned)<br>moved: harm −6, gained −6, helped +18 · **step** |
 | 4. The Care Visits You Have to Cut | Cut only where a family member can cover (Misaligned)<br>→ reflection; stood by it (strongly)<br>moved: harm +30, gained −20, person speaking +25 · **step** | Cut only where a family member can cover (Misaligned)<br>→ APA page: named how many are helped, sure 5<br>→ final: Keep every care visit, and cut the check-in visits (Weakly aligned)<br>moved: harm −10, gained −10 · **step** | Cut only where a family member can cover (Misaligned)<br>→ APA page: named reducing harm, sure 5<br>moved: harm +30, gained −10, helped −10 · **step** |
-| **Scores** | VCI 55 · VCI_all 53 · Stability 33 (3 steps) · Stability_all 33 · performance 24 | VCI 63 · VCI_all 55 · Stability 50 (3 steps) · Stability_all 33 · performance 41 | VCI 55 · VCI_all 53 · Stability 33 (3 steps) · Stability_all 17 · performance 24 |
+| **Scores** | VCI 55 · VCI_all 53 · Stability 63 (3 steps) · Stability_all 62 · performance 24 | VCI 63 · VCI_all 55 · Stability 69 (3 steps) · Stability_all 59 · performance 41 | VCI 55 · VCI_all 53 · Stability 63 (3 steps) · Stability_all 51 · performance 24 |
 
 ### Example 4: True to top value (pretend person 1 of 2,000)
 
@@ -108,7 +108,7 @@ This person always takes the option that serves their #1 value; sometimes that o
 | 2. Eight Hours Ahead of the Fire | Take your household to the concrete school on the hill (Weakly aligned)<br>→ confirmation page, a good fit<br>moved: gained −15 | Take your household to the concrete school on the hill (Weakly aligned)<br>→ confirmation page, a good fit<br>moved: gained −15 |
 | 3. Limited Cancer Treatment Allocation | Draw the 20 names from the patients who cannot wait (Aligned)<br>→ confirmation page, a good fit<br>moved: nothing | Draw the 20 names from the patients who cannot wait (Aligned)<br>→ confirmation page, a good fit<br>moved: nothing |
 | 4. The Care Visits You Have to Cut | Cut only where a family member can cover (Aligned)<br>→ confirmation page, a good fit<br>moved: nothing | Cut only where a family member can cover (Aligned)<br>→ confirmation page, a good fit<br>moved: nothing |
-| **Scores** | VCI 83 · VCI_all 88 · Stability 83 (1 step) · Stability_all 83 · performance 55 | VCI 83 · VCI_all 88 · Stability 100 (1 step) · Stability_all 100 · performance 55 |
+| **Scores** | VCI 83 · VCI_all 88 · Stability 87 (1 step) · Stability_all 87 · performance 55 | VCI 83 · VCI_all 88 · Stability 95 (1 step) · Stability_all 95 · performance 55 |
 
 ### Example 5: Flip-flopper (keeps) (pretend person 1 of 2,000)
 
@@ -120,7 +120,7 @@ This person takes a new value in every decision and keeps it, so it shows what e
 | 2. Eight Hours Ahead of the Fire | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: harm −20, gained +30, person speaking −25 · **step** | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ APA page: named how much is gained, sure 5<br>moved: vulnerable −10, harm −10, gained +30, helped −10 · **step** | Leave immediately on the main highway, before the staging starts (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −15, harm −15, gained +30, helped −15 · **step** |
 | 3. Limited Cancer Treatment Allocation | Draw the 20 names from the patients who cannot wait (Misaligned)<br>→ reflection; stood by it (strongly)<br>moved: harm +30, helped −20, person speaking −4 · **step** | Draw the 20 names from the patients who cannot wait (Misaligned)<br>→ APA page: named reducing harm, sure 5<br>moved: vulnerable −10, harm +30, gained −10, helped −10 · **step** | Draw the 20 names from the patients who cannot wait (Misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −10, harm +30, gained −10, helped −10 · **step** |
 | 4. The Care Visits You Have to Cut | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ reflection; stood by it (strongly)<br>moved: harm −20, helped +30 · **step** | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ APA page: named how many are helped, sure 5<br>moved: vulnerable −10, harm −10, gained −10, helped +30 · **step** | Shorten every visit so nobody is dropped (Strongly misaligned)<br>→ confirmation page: Keep, sure 5<br>moved: vulnerable −9, harm −15, gained −15, helped +30 · **step** |
-| **Scores** | VCI 20 · VCI_all 32 · Stability 0 (4 steps) · Stability_all 0 · performance 58 | VCI 20 · VCI_all 26 · Stability 33 (4 steps) · Stability_all 0 · performance 58 | VCI 20 · VCI_all 26 · Stability 33 (4 steps) · Stability_all 0 · performance 58 |
+| **Scores** | VCI 20 · VCI_all 32 · Stability 43 (4 steps) · Stability_all 41 · performance 58 | VCI 20 · VCI_all 26 · Stability 67 (4 steps) · Stability_all 46 · performance 58 | VCI 20 · VCI_all 26 · Stability 62 (4 steps) · Stability_all 44 · performance 58 |
 
 ## 1. VCI (the four decisions)
 
@@ -177,35 +177,74 @@ rule (scenario 6). Scenarios 5 and 6 are the same in every condition (no conditi
 
 ## 2. Stability (the four decisions)
 
-Whether the order of the four values held at the decisions that went against the best fit (100 = held, or never
-tested). In brackets: the share **not measured** (no decision counted, so 100 means "never tested").
+Whether the four values stayed the same at the decisions that went against the best fit (100 = they did, or never
+tested). Since 2 October 2026 it is the **average of two parts** (the researcher's names): **Value_Order_Stability**,
+whether their ORDER changed (pairs that swapped places), and **Value_Difference_Stability**, how far they MOVED there
+(100 minus the average points moved). In brackets: the share **not measured** (no decision counted, so 100 means
+"never tested").
 
 | Kind | CVR+APA | CVR_Only | APA_Only | APA_Only, random B | Baseline (A) | Baseline (B) | Largest change from CVR+APA |
 |---|---|---|---|---|---|---|---|
 | Always aligned | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | none |
 | Always weakly aligned | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | none |
 | Top-two mixer | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | 100 (100%) | none |
-| True to top value | 91 (38%) | 91 (38%) | 99 (38%) | 99 (38%) | 99 (38%) | 99 (38%) | +9 (APA_Only) |
-| Corrected by APA | 94 (0%) | 95 (67%) | 94 (0%) | 94 (0%) | 100 (67%) | 35 (0%) | −59 (Baseline (B)) |
-| Convert (keeps) | 56 (0%) | 56 (0%) | 71 (0%) | 71 (0%) | 71 (0%) | 71 (0%) | +16 (APA_Only) |
-| Convert (via APA) | 74 (1%) | 60 (1%) | 74 (1%) | 74 (1%) | 74 (1%) | 74 (1%) | −14 (CVR_Only) |
-| Performance chaser | 80 (26%) | 80 (26%) | 78 (26%) | 78 (26%) | 78 (26%) | 78 (26%) | −2 (Baseline (A)) |
-| Random responder | 57 (2%) | 59 (6%) | 67 (2%) | 64 (2%) | 67 (6%) | 67 (6%) | +9 (Baseline (A)) |
-| Flip-flopper (keeps) | 12 (0%) | 12 (0%) | 29 (0%) | 29 (0%) | 25 (0%) | 25 (0%) | +17 (APA_Only) |
-| Flip-flopper (via APA) | 29 (0%) | 12 (0%) | 29 (0%) | 29 (0%) | 25 (0%) | 25 (0%) | −17 (CVR_Only) |
-| Always the worst fit | 10 (0%) | 10 (0%) | 32 (0%) | 32 (0%) | 24 (0%) | 24 (0%) | +22 (APA_Only) |
+| True to top value | 92 (38%) | 92 (38%) | 96 (38%) | 96 (38%) | 96 (38%) | 96 (38%) | +4 (APA_Only) |
+| Corrected by APA | 84 (0%) | 96 (67%) | 84 (0%) | 84 (0%) | 98 (67%) | 57 (0%) | −28 (Baseline (B)) |
+| Convert (keeps) | 67 (0%) | 67 (0%) | 73 (0%) | 73 (0%) | 73 (0%) | 73 (0%) | +6 (APA_Only) |
+| Convert (via APA) | 76 (1%) | 70 (1%) | 76 (1%) | 76 (1%) | 75 (1%) | 75 (1%) | −6 (CVR_Only) |
+| Performance chaser | 86 (26%) | 86 (26%) | 82 (26%) | 82 (26%) | 82 (26%) | 82 (26%) | −4 (Baseline (A)) |
+| Random responder | 71 (2%) | 74 (6%) | 75 (2%) | 74 (2%) | 76 (6%) | 76 (6%) | +5 (Baseline (A)) |
+| Flip-flopper (keeps) | 47 (0%) | 47 (0%) | 60 (0%) | 60 (0%) | 56 (0%) | 56 (0%) | +13 (APA_Only) |
+| Flip-flopper (via APA) | 60 (0%) | 47 (0%) | 60 (0%) | 60 (0%) | 56 (0%) | 56 (0%) | −13 (CVR_Only) |
+| Always the worst fit | 44 (0%) | 44 (0%) | 53 (0%) | 53 (0%) | 47 (0%) | 47 (0%) | +9 (APA_Only) |
+
+### The two parts
+
+**The order part** (Value_Order_Stability; Stability's whole rule until 2 October 2026):
+
+| Kind | CVR+APA | CVR_Only | APA_Only | APA_Only, random B | Baseline (A) | Baseline (B) | Largest change from CVR+APA |
+|---|---|---|---|---|---|---|---|
+| Always aligned | 100 | 100 | 100 | 100 | 100 | 100 | none |
+| Always weakly aligned | 100 | 100 | 100 | 100 | 100 | 100 | none |
+| Top-two mixer | 100 | 100 | 100 | 100 | 100 | 100 | none |
+| True to top value | 91 | 91 | 99 | 99 | 99 | 99 | +9 (APA_Only) |
+| Corrected by APA | 94 | 95 | 94 | 94 | 100 | 35 | −59 (Baseline (B)) |
+| Convert (keeps) | 56 | 56 | 71 | 71 | 71 | 71 | +16 (APA_Only) |
+| Convert (via APA) | 74 | 60 | 74 | 74 | 74 | 74 | −14 (CVR_Only) |
+| Performance chaser | 80 | 80 | 78 | 78 | 78 | 78 | −2 (Baseline (A)) |
+| Random responder | 57 | 59 | 67 | 64 | 67 | 67 | +9 (Baseline (A)) |
+| Flip-flopper (keeps) | 12 | 12 | 29 | 29 | 25 | 25 | +17 (APA_Only) |
+| Flip-flopper (via APA) | 29 | 12 | 29 | 29 | 25 | 25 | −17 (CVR_Only) |
+| Always the worst fit | 10 | 10 | 32 | 32 | 24 | 24 | +22 (APA_Only) |
+
+**The difference part** (Value_Difference_Stability):
+
+| Kind | CVR+APA | CVR_Only | APA_Only | APA_Only, random B | Baseline (A) | Baseline (B) | Largest change from CVR+APA |
+|---|---|---|---|---|---|---|---|
+| Always aligned | 100 | 100 | 100 | 100 | 100 | 100 | none |
+| Always weakly aligned | 100 | 100 | 100 | 100 | 100 | 100 | none |
+| Top-two mixer | 100 | 100 | 100 | 100 | 100 | 100 | none |
+| True to top value | 93 | 93 | 91 | 91 | 91 | 91 | −2 (Baseline (A)) |
+| Corrected by APA | 75 | 96 | 75 | 75 | 96 | 78 | +22 (CVR_Only) |
+| Convert (keeps) | 78 | 78 | 74 | 74 | 73 | 73 | −5 (Baseline (A)) |
+| Convert (via APA) | 77 | 80 | 77 | 77 | 75 | 76 | +3 (CVR_Only) |
+| Performance chaser | 93 | 93 | 87 | 87 | 86 | 86 | −6 (Baseline (A)) |
+| Random responder | 85 | 87 | 84 | 84 | 84 | 84 | +2 (CVR_Only) |
+| Flip-flopper (keeps) | 82 | 82 | 90 | 90 | 87 | 87 | +8 (APA_Only) |
+| Flip-flopper (via APA) | 90 | 82 | 90 | 90 | 87 | 87 | −8 (CVR_Only) |
+| Always the worst fit | 78 | 78 | 75 | 75 | 68 | 68 | −10 (Baseline (A)) |
 
 **What it shows.**
 
-- **Stability DOES depend on the condition, even for the same behaviour.** The largest change under A is +22 points (Always the worst fit, APA_Only). The reason is the rules, not the people:
-  - after the reflection (CVR+APA, CVR_Only), keeping a misfit moves **two** values in opposite directions: +30 to the value the option serves and −20 to the value it gives up most. Both can pass other values, so several pairs change places;
-  - the APA page (APA_Only) and Baseline's Keep move **one** value up and the **other three down together** (−10 or −15 each). The three keep their order among themselves, so only the raised value can change places: fewer swaps, a higher Stability;
-  - Baseline's −15 for a strongly misaligned keep lets the raised value pass more values than the APA page's −10, so Baseline sits between the two.
+- **Stability still depends a little on the condition for the same behaviour, less than either part alone.** The largest change under A is +13 points (Corrected by APA, Baseline (A)); the order part alone moves up to +22 points (Always the worst fit, APA_Only), the difference part alone up to +22 points (Corrected by APA, CVR_Only). The reason is the rules, not the people, and the two parts lean opposite ways:
+  - **the order part** is higher in APA_Only and Baseline: after the reflection (CVR+APA, CVR_Only) keeping a misfit moves **two** values in opposite directions (+30 to the value the option serves, −20 to the value it gives up most), and both can pass other values; the APA page and Baseline's Keep move **one** value up and the **other three down together** (−10 or −15 each), so the three keep their order and fewer pairs swap;
+  - **the difference part** usually leans the other way: keeping a misfit adds up to more points in APA_Only and Baseline (+30 and 3 × −10 or −15, against +30 and −20), so the values end further from where they began. In Baseline (A) it is lower than in CVR+APA for True to top value, Convert (keeps), Convert (via APA), Performance chaser, Flip-flopper (via APA), Always the worst fit, and higher for Corrected by APA, Flip-flopper (keeps) (a new value each time spreads the moves so more of them cancel; a kind that goes back and takes a good fit in Baseline makes no move at all);
+  - averaged, the two partly cancel.
 - **"Not measured" also depends on the condition:** Corrected by APA is not measured in 0% of people in CVR+APA, but in 67% in CVR_Only and 67% in Baseline (A): going back and taking a good fit is not a Stability step, while an APA visit always is (your Q2-yes for APA_Only).
-- **Principle B:** Corrected by APA keeps a misfit in every decision in Baseline (B), so every decision is a step and Stability falls to 35.
+- **Principle B:** Corrected by APA keeps a misfit in every decision in Baseline (B), so every decision is a step and Stability falls to 57.
 
-**Example.** Example 1 (Always the worst fit) makes the same four choices in every column, yet Stability is CVR+APA 0, APA_Only 50, Baseline (A) 17. In their table, CVR+APA moves two values at each keep (+30 and −20, so both can cross other values); APA_Only and Baseline raise one value and lower the other three together (−10 or −15 each), and Baseline's bigger −15 lets the raised value cross more of them than APA_Only's −10.
-Example 4 (True to top value): Stability CVR+APA 83, Baseline (A) 100. When their #1 value's option is a misfit and they keep it, CVR+APA also lowers the value the option gives up most, which can swap two of their other values; Baseline raises the option's main value (usually their #1, already first) and lowers the other three together, which cannot change the order of those three.
+**Example.** Example 1 (Always the worst fit) makes the same four choices in every column, yet Stability is CVR+APA 39 (order 0, difference 78), APA_Only 53 (order 25, difference 80), Baseline (A) 48 (order 25, difference 71). In their table, CVR+APA moves two values at each keep (+30 and −20, so both can cross other values); APA_Only and Baseline raise one value and lower the other three together (−10 or −15 each), so fewer pairs swap and the order part is higher; how far the values end from where they began sets the difference part.
+Example 4 (True to top value): Stability CVR+APA 87, Baseline (A) 95. When their #1 value's option is a misfit and they keep it, CVR+APA also lowers the value the option gives up most, which can swap two of their other values; Baseline raises the option's main value (usually their #1, already first) and lowers the other three together, which cannot change the order of those three.
 
 ### 2a. Stability steps per person (of 4)
 
@@ -238,22 +277,22 @@ that refuse and then take a good fit lose their steps in CVR_Only and Baseline (
 |---|---|---|---|---|---|---|---|
 | Always aligned | 100 | 100 | 100 | 100 | 100 | 100 | none |
 | Always weakly aligned | 99 | 99 | 99 | 99 | 99 | 99 | none |
-| Top-two mixer | 96 | 96 | 96 | 96 | 96 | 96 | none |
-| True to top value | 89 | 89 | 99 | 99 | 99 | 99 | +10 (APA_Only) |
-| Corrected by APA | 71 | 65 | 71 | 71 | 70 | 16 | −55 (Baseline (B)) |
-| Convert (keeps) | 54 | 54 | 71 | 71 | 71 | 71 | +17 (Baseline (A)) |
-| Convert (via APA) | 74 | 59 | 74 | 74 | 74 | 74 | −15 (CVR_Only) |
-| Performance chaser | 69 | 69 | 70 | 70 | 70 | 70 | +1 (Baseline (A)) |
-| Random responder | 39 | 38 | 48 | 45 | 47 | 47 | +9 (APA_Only) |
-| Flip-flopper (keeps) | 3 | 3 | 13 | 13 | 10 | 10 | +9 (APA_Only) |
-| Flip-flopper (via APA) | 13 | 3 | 13 | 13 | 10 | 10 | −9 (CVR_Only) |
-| Always the worst fit | 3 | 3 | 11 | 11 | 9 | 9 | +8 (APA_Only) |
+| Top-two mixer | 97 | 97 | 97 | 97 | 97 | 97 | none |
+| True to top value | 91 | 91 | 95 | 95 | 95 | 95 | +4 (APA_Only) |
+| Corrected by APA | 77 | 76 | 77 | 77 | 79 | 48 | −29 (Baseline (B)) |
+| Convert (keeps) | 66 | 66 | 73 | 73 | 72 | 72 | +7 (APA_Only) |
+| Convert (via APA) | 75 | 69 | 75 | 75 | 75 | 75 | −6 (CVR_Only) |
+| Performance chaser | 80 | 80 | 78 | 78 | 78 | 78 | −2 (Baseline (A)) |
+| Random responder | 61 | 61 | 66 | 64 | 65 | 65 | +5 (APA_Only) |
+| Flip-flopper (keeps) | 41 | 41 | 49 | 49 | 47 | 47 | +7 (APA_Only) |
+| Flip-flopper (via APA) | 49 | 41 | 49 | 49 | 47 | 47 | −7 (CVR_Only) |
+| Always the worst fit | 40 | 40 | 43 | 43 | 41 | 41 | +4 (APA_Only) |
 
 **What it shows.** Stability's rule over all six scenarios (the wish and the rule count when the final choice was not one
 of the two best fits on the running values). Its decisions part is Stability's, so it moves with Stability for the same
 reasons; scenarios 5 and 6 add the same steps in every condition.
 
-**Example.** Example 5 (Flip-flopper (keeps)): Stability_all CVR+APA 0, APA_Only 0, Baseline (A) 0 (Stability CVR+APA 0, APA_Only 33, Baseline (A) 33).
+**Example.** Example 5 (Flip-flopper (keeps)): Stability_all CVR+APA 41, APA_Only 46, Baseline (A) 44 (Stability CVR+APA 43, APA_Only 67, Baseline (A) 62).
 
 ## 2c. Top-value choices (of 6; saved, never shown)
 
@@ -334,17 +373,17 @@ How often the first kind scores higher than the second when one person of each i
 
 | First kind | Second kind | CVR+APA | CVR_Only | APA_Only | APA_Only, random B | Baseline (A) | Baseline (B) |
 |---|---|---|---|---|---|---|---|
-| True to top value | Random responder | 0.92 / 0.84 | 0.89 / 0.81 | 0.87 / 0.92 | 0.92 / 0.93 | 0.90 / 0.90 | 0.90 / 0.90 |
-| Always aligned | Random responder | 1.00 / 0.94 | 1.00 / 0.92 | 1.00 / 0.93 | 1.00 / 0.94 | 1.00 / 0.91 | 1.00 / 0.91 |
-| Random responder | Flip-flopper (keeps) | 0.86 / 0.88 | 0.89 / 0.88 | 0.92 / 0.85 | 0.86 / 0.83 | 0.89 / 0.87 | 0.89 / 0.87 |
-| Convert (keeps) | Flip-flopper (keeps) | 0.94 / 0.89 | 0.94 / 0.89 | 0.95 / 0.90 | 0.95 / 0.90 | 0.97 / 0.93 | 0.97 / 0.93 |
-| Corrected by APA | Random responder | 0.96 / 0.88 | 0.94 / 0.86 | 0.94 / 0.85 | 0.96 / 0.86 | 0.95 / 0.91 | 0.08 / 0.19 |
-| Random responder | Always the worst fit | 1.00 / 0.90 | 1.00 / 0.90 | 1.00 / 0.85 | 1.00 / 0.82 | 1.00 / 0.89 | 1.00 / 0.89 |
+| True to top value | Random responder | 0.92 / 0.87 | 0.89 / 0.82 | 0.87 / 0.94 | 0.92 / 0.94 | 0.90 / 0.90 | 0.90 / 0.90 |
+| Always aligned | Random responder | 1.00 / 0.99 | 1.00 / 0.97 | 1.00 / 0.99 | 1.00 / 0.99 | 1.00 / 0.97 | 1.00 / 0.97 |
+| Random responder | Flip-flopper (keeps) | 0.86 / 0.89 | 0.89 / 0.89 | 0.92 / 0.80 | 0.86 / 0.78 | 0.89 / 0.84 | 0.89 / 0.84 |
+| Convert (keeps) | Flip-flopper (keeps) | 0.94 / 0.84 | 0.94 / 0.84 | 0.95 / 0.78 | 0.95 / 0.78 | 0.97 / 0.82 | 0.97 / 0.82 |
+| Corrected by APA | Random responder | 0.96 / 0.77 | 0.94 / 0.89 | 0.94 / 0.72 | 0.96 / 0.75 | 0.95 / 0.94 | 0.08 / 0.18 |
+| Random responder | Always the worst fit | 1.00 / 0.92 | 1.00 / 0.92 | 1.00 / 0.87 | 1.00 / 0.85 | 1.00 / 0.93 | 1.00 / 0.93 |
 
 **What it shows.**
 
 - **VCI separates a value-follower from a random person in every condition** (True to top value over Random responder: 0.87 to 0.92).
-- **Stability separates them by different amounts in different conditions** (True to top value over Random responder: CVR+APA 0.84, CVR_Only 0.81, APA_Only 0.92, APA_Only, random B 0.93, Baseline (A) 0.90, Baseline (B) 0.90), because each condition's rule moves the values differently (section 2). Compare Stability between kinds inside one condition; between conditions, read section 2 first.
+- **Stability separates them by different amounts in different conditions** (True to top value over Random responder: CVR+APA 0.87, CVR_Only 0.82, APA_Only 0.94, APA_Only, random B 0.94, Baseline (A) 0.90, Baseline (B) 0.90), because each condition's rule moves the values differently (section 2). Compare Stability between kinds inside one condition; between conditions, read section 2 first.
 - **Corrected by APA against the random responder** shows principle B again: Baseline (A) 0.95, Baseline (B) 0.08 on VCI.
 
 ## 5. What is the same in every condition
@@ -357,8 +396,23 @@ How often the first kind scores higher than the second when one person of each i
 ## 6. What this means for comparing the conditions
 
 1. **VCI, VCI_all, performance and the top-value choices are fair rulers between conditions** for the same behaviour: under principle A they move at most 1 point (VCI), 1 (VCI_all), 4 (performance) and 0.64 of 6 (top-value choices, Corrected by APA, who chooses again from all the options after going back). A difference between conditions in these scores comes from what people chose.
-2. **Stability is not a fair ruler between conditions on its own:** the same behaviour can score up to 22 points apart in two conditions (Always the worst fit: CVR+APA 10, APA_Only 32), from the value-move rules alone. Compare Stability inside a condition, or between conditions only against the gaps in section 2.
+2. **Stability is still not a perfectly fair ruler between conditions:** the same behaviour can score up to 13 points apart in two conditions (Corrected by APA: CVR+APA 84, Baseline (A) 98), from the value-move rules alone (each part alone: up to 22 and 22). Compare Stability inside a condition, or between conditions against the gaps in section 2.
 3. **The "random" line is different in each condition** (section 1): the pages themselves help a random person a little, by
    different amounts.
 4. **Principle B shows what a real correction effect looks like:** when the refusing kinds are not corrected, VCI falls by about 61 points for Corrected by APA. The study can see an effect of that size.
+
+## 7. Stability's level edges, derived again
+
+Each of the five words keeps today's meaning: a pretend participant sitting exactly on today's edge (no swap but tested,
+one, three, five swaps) is put on the new combined score, and the edge is where such people typically land (the
+median, over the four conditions). The command stops if an edge here is more than one point from the code's.
+
+| Level from | Today's edge | People exactly on it | Typical combined Stability | Typical Stability_all | The code's edge |
+|---|---|---|---|---|---|
+| Held steady | 0 swaps (tested) = 100 | 10093 | 94 | 94 | **94** |
+| Mostly steady | 1 swap = 83 | 8807 | 85 | 85 | **85** |
+| Shifted a little | 3 swaps = 50 | 7480 | 63 | 63 | **63** |
+| Shifted a lot | 5 swaps = 17 | 3951 | 49 | 48 | **49** |
+
+All kinds and the four conditions together, the share in each level: Stability Held steady 39% · Mostly steady 12% · Shifted a little 23% · Shifted a lot 12% · Changed substantially 14%; Stability_all Held steady 33% · Mostly steady 10% · Shifted a little 23% · Shifted a lot 10% · Changed substantially 25%.
 

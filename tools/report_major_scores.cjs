@@ -94,7 +94,7 @@ line("| Score | What it measures | What a fair or good value looks like |");
 line("|---|---|---|");
 line("| **VCI** (0-100) | How well the four decisions fit the participant's own values | Picking blindly gives 50; always the best fit gives 100; always the worst fit 10 |");
 line("| **VCI_all** (0-100, since 28 September 2026) | The same over all six scenarios - the four decisions, the wish and the veil (its final choice) - on hidden running values that also move after the wish and the veil | Blind 50; always the best fit 100; its level edges are its own (88.89 / 77.78 / 62.5 / 47.22 / 27.78), derived the same way as VCI's |");
-line("| **Stability** (0-100) | Whether the order of the four values changed when the participant went against their best fit | 100 = the order held, or it was never tested (see \"not measured\") |");
+line("| **Stability** (0-100) | Whether the four values stayed the same when the participant went against their best fit. Since 2 October 2026 the average of two parts: did their ORDER change (swaps), and how far did they MOVE | 100 = they held, or it was never tested (see \"not measured\"); levels at 94 / 85 / 63 / 49 |");
 line("| **Stability_all** (0-100, since 29 September 2026) | The same rule over all six scenarios, on the running values: the wish and the veil count when the final choice was not one of the two best fits | Never above Stability; 100 = the order held, or it was never tested |");
 line("| **Performance** (0-100, end of study) | How good the chosen options were, inside each scenario | 0 = the weakest option in every decision, 100 = the strongest; random choosing gives about 50 |");
 line("");
@@ -256,6 +256,8 @@ line("- **G5** (26 Sep 2026): the record says whether Stability measured anythin
 line("- **C7** (26 Sep 2026): the gap between the #1 and #2 values is saved. No score or card order changed.");
 line("- **B3** (26 Sep 2026): the step sizes were tested at half and double size; every conclusion held");
 line("  (docs/BLOCK5_STEP_SIZE_SENSITIVITY.md). Nothing in the study changed.");
+line("- **Stability from two parts** (2 Oct 2026): Stability and Stability_all are the average of the order part (the swaps, the");
+line("  whole rule until then) and a difference part (how far the four values moved at the counted steps); new level edges.");
 line("- **The four conditions** (1 Oct 2026): CVR_Only, APA_Only and Baseline differ from Block 5 on. Every number on THIS page");
 line("  is condition 1 (CVR+APA, the full version); the other three are on docs/MAJOR_SCORES_BY_CONDITION.md (section 9).");
 line("");
@@ -272,3 +274,6 @@ console.log(`  wrote ${path.relative(ROOT, OUT)} (${L.length} lines) from code $
 const byCondition = require("./report_conditions_page.cjs").writeConditionsPage({ root: ROOT, head, dirty, date, mainResults: res });
 console.log(`  wrote ${byCondition.file} (${byCondition.lines} lines); condition 1 against this page: ${byCondition.cond1Diff} differences`);
 if (byCondition.cond1Diff !== 0) { console.error("  CONDITION 1 DOES NOT REPRODUCE THIS PAGE - the condition simulation has drifted"); process.exit(1); }
+/* Since 2 October 2026: Stability's level edges, derived again from the same people (MAJOR_SCORES_BY_CONDITION.md section 7). */
+console.log(`  Stability's level edges derived again: ${byCondition.edges}`);
+if (!byCondition.edgesOk) { console.error("  STABILITY'S LEVEL EDGES HAVE DRIFTED - update COMBINED_STABILITY_EDGES in block5CVR.ts (and its docs)"); process.exit(1); }

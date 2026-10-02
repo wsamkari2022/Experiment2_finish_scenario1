@@ -263,15 +263,18 @@ SECTIONS = [
          "record and must agree with the saved one.", ["vciall", "dbshape"], "(D65)"),
         ("Stability_all (all six scenarios).",
          "Stability's own rule over all six, on the running values: the four decisions count exactly as Stability does, "
-         "the wish and the veil when the final choice was not one of the two best fits. It is never above Stability. "
+         "the wish and the veil when the final choice was not one of the two best fits; since 2 October 2026 two parts "
+         "averaged, like Stability (its order part is never above Stability's). "
          "Shown beside Stability in the results page's stability box.", ["vciall", "dbshape", "journey"], "(A9-A11, D67, J11)"),
         ("Top-value choices (saved, never shown).",
          "In how many of the six scenarios the final choice did most for the #1 value brought into Block 5, and for the #1 "
          "or #2. Blind choosing gives about 1.1 and 2.2 of 6; recounted by hand for every pretend participant.",
          ["vciall", "dbshape", "journey"], "(A12, D67, J11)"),
         ("Stability.",
-         "Counts how many pairs of values swapped places at the moments the person went against their best fit. It also "
-         "says whether it measured anything at all (stability_was_measured).", ["stability", "dbshape"], "(D62)"),
+         "Since 2 October 2026 the average of two parts, at the moments the person went against their best fit: how many "
+         "pairs of values swapped places (the order part) and how far the four values moved (the difference part, counted "
+         "steps only). The same five words on edges 94 / 85 / 63 / 49, re-derived from the pretend people on every report. "
+         "It also says whether it measured anything at all (stability_was_measured).", ["stability", "dbshape"], "(S9, S12-S15, D62, D69)"),
         ("Performance.",
          "The share of what each scenario offered that the choices took. Only the four decisions count: the wish "
          "(scenario 5) and the veil (scenario 6) are left out.", ["twins", "dbshape"], "(D57)"),
@@ -437,9 +440,11 @@ LIMITS = [
      "A wish for the decided option often scores higher on the running values (35 in 100), and 8 in 100 wishes for "
      "the best-looking card score below 100. You accepted both; they are stated."),
     ("Stability of 100 can mean \"never tested\".", "Use stability_was_measured, or report the groups apart."),
-    ("Stability is moved by each condition's own rules.",
-     "The same behaviour can score up to about 22 points apart between conditions (docs/MAJOR_SCORES_BY_CONDITION.md, "
-     "HOW_TO_ANALYZE 4.12); VCI moves about 1 point. Compare Stability inside a condition, or against that page's gaps."),
+    ("Stability is moved a little by each condition's own rules.",
+     "The same behaviour can score up to about 13 points apart between conditions (22 under the order rule alone; "
+     "docs/MAJOR_SCORES_BY_CONDITION.md, HOW_TO_ANALYZE 4.12); VCI moves about 1 point. Compare Stability inside a condition, "
+     "or against that page's gaps."),
+    ("Never correlate Stability with its two parts.", "It is their average (value_order_stability, value_difference_stability)."),
     ("Stability's level depends on the step sizes.", "Report Stability as group comparisons, never one person's level word."),
     ("The position headline cannot tell a real role-switcher from a random chooser.",
      "Report it as a description beside VCI, and lead with the scenario 4 / 5 pair."),

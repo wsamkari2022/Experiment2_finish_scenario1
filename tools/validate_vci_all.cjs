@@ -21,11 +21,13 @@
  *       opened with), and after a pick in the wish or the veil that is not the best fit the running
  *       values DO move, while the study's own values never do
  *   A9  STABILITY_ALL (since 29 September 2026, block5StabilityAll.ts): its four decisions count exactly the swaps
- *       Stability counts, so it is never above Stability and equals it when scenarios 5 and 6 add nothing
+ *       Stability counts, so its ORDER part is never above Stability's, and it equals Stability when scenarios 5 and 6
+ *       add nothing (since 2 October 2026 the combined score can be a little above Stability)
  *   A10 a decision counts exactly when the reflection ran; the wish and the veil exactly when the final choice was
  *       not one of the two best fits on the running values the scenario opened with
  *   A11 somebody who always takes their best fit scores 100 and "not measured"; the kinds keep their order
  *       (value followers above random choosers above flip-floppers)
+ *   A13 (since 2 October 2026) Stability_all's difference part and its average with the order part, recounted by hand
  *   A12 the top-value choices, recounted here by hand from the fingerprints for every pretend run; somebody true to
  *       their top value scores 6 of 6
  *
@@ -251,7 +253,8 @@ function run(start, beh) {
 
 /* ---------------------------------------------------------------- A9-A12: Stability_all and the top-value choices */
 {
-  let a9 = true, a10 = true, a11 = true, a12 = true, people = 0, raised = 0;
+  let a9 = true, a10 = true, a11 = true, a12 = true, a13 = true, people = 0, raised = 0, above = 0;
+  const why13 = [];
   const byKind = {};
   const why = [];
   for (const beh of Object.keys(POP.BEHAVIORS)) {
@@ -266,10 +269,28 @@ function run(start, beh) {
       /* A9 */
       const decisionSwaps = all.steps.filter((x) => x.kind === "decision").reduce((a, x) => a + x.swaps, 0);
       const extra = all.steps.filter((x) => x.kind !== "decision" && x.counted).length;
-      if (decisionSwaps !== st.swaps || all.value > st.value || (extra === 0 && all.value !== st.value)) {
-        a9 = false; if (why.length < 3) why.push(`A9 ${beh}: decisions ${decisionSwaps} vs Stability ${st.swaps}, ${all.value} vs ${st.value}`);
+      /* Since 2 October 2026 Stability and Stability_all each average an order part and a difference part: the ORDER
+         part of Stability_all is never above Stability's, and with nothing counted in 5 or 6 the two are equal. The
+         combined Stability_all can now be a little above Stability (a move in 5 or 6 back toward the start). */
+      if (decisionSwaps !== st.swaps || all.orderValue > st.orderValue || (extra === 0 && (all.value !== st.value || all.differenceValue !== st.differenceValue))) {
+        a9 = false; if (why.length < 3) why.push(`A9 ${beh}: decisions ${decisionSwaps} vs Stability ${st.swaps}, order ${all.orderValue} vs ${st.orderValue}, ${all.value} vs ${st.value}`);
       }
       if (all.value < st.value) raised += 1;
+      if (all.value > st.value) above += 1;
+      /* A13: the difference part and the combined score, recounted by hand from the running values */
+      {
+        const moved = Object.fromEntries(POLICY.map((k) => [k, 0]));
+        all.steps.forEach((x, i) => {
+          if (!x.counted) return;
+          const f = r.results[i].running;
+          for (const k of POLICY) moved[k] += f.valuesAfter[k] - f.valuesWhenOpened[k];
+        });
+        const diff = Math.round(100 - Math.min(100, POLICY.reduce((a, k) => a + Math.abs(moved[k]), 0) / 4));
+        const order = Math.round(100 * (1 - Math.min(1, all.swaps / 6)));
+        if (all.differenceValue !== diff || all.orderValue !== order || all.value !== Math.round((order + diff) / 2)) {
+          a13 = false; if (why13.length < 3) why13.push(`${beh}: ${all.orderValue}/${all.differenceValue}/${all.value} vs ${order}/${diff}/${Math.round((order + diff) / 2)} by hand`);
+        }
+      }
       /* A10 */
       all.steps.forEach((x, i) => {
         const res = r.results[i];
@@ -302,7 +323,9 @@ function run(start, beh) {
   if (!(k["True to top value"].stabAll > k["Random responder"].stabAll && k["Random responder"].stabAll > k["Flip-flopper (keeps)"].stabAll
       && k["Always aligned"].stabAll > k["Random responder"].stabAll)) a11 = false;
   gate("A9", a9, why.length ? why.join(" | ")
-    : `Stability_all's four decisions count exactly Stability's swaps; never above Stability, equal when scenarios 5 and 6 add nothing  (${people} pretend runs, ${raised} lowered by scenario 5 or 6)`);
+    : `Stability_all's four decisions count exactly Stability's swaps; its order part never above Stability's; equal to Stability when scenarios 5 and 6 add nothing  (${people} pretend runs, ${raised} lowered by scenario 5 or 6, ${above} a little above)`);
+  gate("A13", a13, why13.length ? why13.join(" | ")
+    : "Stability_all's difference part (the points the running values moved at the counted steps) and its average with the order part, recounted by hand for every pretend run");
   gate("A10", a10, "a decision counts exactly when the reflection ran; the wish and the veil exactly when the final choice was outside the two best fits");
   gate("A11", a11, "always the best fit: 100, not measured; value followers above random choosers above flip-floppers");
   gate("A12", a12, "the top-value choices equal a hand recount for every pretend run; true to their top value: 6 of 6");

@@ -241,8 +241,11 @@ These are copies, lifted to the top so you do not have to dig. The originals sta
 | `consistency_score_all_six` | Since **28 September 2026**. **VCI_all**: the same measure over all SIX scenarios (the four decisions, the wish, the veil's final choice), judged on hidden running values that also move after the wish and the veil. Shown to the participant beside VCI. It CONTAINS `consistency_score`'s four scenarios: never correlate the two. Every part: section 6l | 0–100, 50 = blind picking |
 | `consistency_label_all_six` | VCI_all's level, with its own derived edges: 88.89 / 77.78 / 62.5 / 47.22 / 27.78 (section 6l) | text |
 | `consistency_label` | One of six levels: Highly Consistent (90+), Mostly Consistent (80–89), Moderate (65–79), Low (50–64), Very Low (30–49), Highly Inconsistent (below 30) | text |
-| `stability_score` | Whether the ORDER of their four policy values changed when they went against their best fit: at each conflict step (a scenario where the reflection ran) it counts the pairs of values that traded places, a tie opening or closing as half, and scores 100 × (1 − swaps / 6). Method: `docs/BLOCK5_STABILITY_METHOD.md` in the code | 0–100, 100 = no two priorities traded places |
-| `stability_label` | Held steady (100), Mostly steady (83–99), Shifted a little (50–82), Shifted a lot (17–49), Changed substantially (0–16) | text |
+| `stability_score` | **Since 2 October 2026 the average of two parts (rows below):** whether the ORDER of the four values changed and how far they MOVED. The order part: whether the ORDER of their four policy values changed when they went against their best fit: at each conflict step (a scenario where the reflection ran) it counts the pairs of values that traded places, a tie opening or closing as half, and scores 100 × (1 − swaps / 6). Method: `docs/BLOCK5_STABILITY_METHOD.md` in the code | 0–100, 100 = no two priorities traded places |
+| `stability_label` | Since 2 October 2026: Held steady (94–100), Mostly steady (85–93), Shifted a little (63–84), Shifted a lot (49–62), Changed substantially (0–48). Before: 100 / 83–99 / 50–82 / 17–49 / 0–16 | text |
+| `value_order_stability`, `value_difference_stability` | **Since 2 October 2026** (the researcher's names): the two parts `stability_score` is the rounded average of. The order part is the swap rule described above; the difference part is 100 − the average, over the four values, of how many points each moved at the same conflict steps (added up). **Never correlate the score with either part.** Recounted from the rows for a record that did not save them | 0–100 each |
+| `stability_average_points_moved`, `stability_rule_version` | **Since 2 October 2026.** The average points the four values moved at the conflict steps (100 − this = the difference part), and the rule's stamp (`STABILITY_VERSION`; null on a run finished before) | 0–100; text |
+| `value_order_stability_all`, `value_difference_stability_all` | **Since 2 October 2026.** The same two parts for Stability_all (all six scenarios, running values) | 0–100 each |
 | `stability_all_score`, `stability_all_label`, `stability_all_was_measured`, `stability_all_conflict_steps_counted` | **Since 29 September 2026.** Stability_all: Stability's rule over all six scenarios on the running values (section 6n). It CONTAINS `stability_score` (never above it): compare the difference, never correlate. Shown on the results page | 0–100; text; true / false; 0–6 |
 | `stability_was_measured`, `stability_conflict_steps_counted` | **Since 26 September 2026.** Whether Stability counted anything: the number of conflict steps (scenarios where the participant went against their best fit and the reflection ran), and true when it is 1 or more. **false means the Stability score is 100 by default and measures nothing.** A copy of `blocks…stabilityDetail.conflictSteps`, so older finished records can be read the same way from there. null = no stored detail | true / false / null; 0–4 |
 | `directness_stability_score`, `directness_stability_label` | How far their directness sensitivity traveled on its 0–100 scale during Block 5, as 100 × (1 − distance / 100). Same five words as Stability. **Usually 100**: it moves only when the second lens was generated and answered | 0–100 |
@@ -260,6 +263,11 @@ These are copies, lifted to the top so you do not have to dig. The originals sta
 | `choice_switches` | How many times they changed their choice after reflecting | integer |
 | `total_time_minutes` | The sum of the **timed** stages. ⚠️ Not the whole study — see section 8 | minutes |
 | `total_time_minutes_covers` | A sentence saying exactly what that number includes, and which field to use instead for effort | — |
+
+> ⚠️ **Stability changed again on 2 October 2026 — do not pool runs across the change.** It became the average of the
+> order part below and a difference part, with new level edges (94 / 85 / 63 / 49); runs since carry
+> `stability_rule_version` "2026-10-02-order-and-difference". A run from before still has its order-only score in
+> `stability_score`; its parts are recounted from the rows into the two `value_…` fields.
 
 > ⚠️ **Stability changed on 19 September 2026 — do not pool runs across the change.** Before it,
 > `stability_score` measured how far the profile traveled (with a start-versus-end order check), over
@@ -332,7 +340,8 @@ data written before 11 September 2026.
 | `scenarioResults` | An array, one entry per situation. The heart of the dataset. |
 | `vci`, `vciLevel` | Consistency (also copied to `headline`) |
 | `stability`, `stabilityLevel` | Stability (also copied to `headline`) |
-| `stabilityDetail` | What Stability is made of: `swaps` (total, in halves), `conflictSteps`, `swapsByScenario` (the swaps at each conflict step), `topValueBefore`, `topValueAfter` |
+| `stabilityDetail` | What Stability is made of: `swaps` (total, in halves), `conflictSteps`, `swapsByScenario` (the swaps at each conflict step), `topValueBefore`, `topValueAfter`; since 2 October 2026 also `orderValue`, `differenceValue`, `averageMove` and `movesAtCountedSteps` (each value's points moved at the conflict steps, added up) |
+| `valueOrderStability`, `valueDifferenceStability`, `valueOrderStabilityAll`, `valueDifferenceStabilityAll`, `stabilityVersion` | Since 2 October 2026: the two parts of Stability and of Stability_all, and the rule's stamp |
 | `sensitivityStability` | `directness`, `context`, `stakeholder`, each `{ value, level, distance }` — the three sensitivity stabilities, with the points each traveled |
 | `performance`, `performanceCaptured` | Performance (also copied to `headline`) |
 | `userProfile` | Their value profile **after** Block 5 |

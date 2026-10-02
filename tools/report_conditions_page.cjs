@@ -12,6 +12,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const C = require("./condition_sim.cjs");
 const { KINDS } = require("./behavior_sim.cjs");
+const { COMBINED_STABILITY_EDGES } = require(path.join(__dirname, "..", ".sim-build", "block5CVR.js"));
 
 const RUNS = C.RUNS;
 const R = Object.fromEntries(RUNS.map((r) => [r.id, r]));
@@ -209,21 +210,39 @@ function writeConditionsPage({ root, head, dirty, date, mainResults }) {
   /* ---------------------------------------------------------------- 2. Stability */
   line("## 2. Stability (the four decisions)");
   line("");
-  line("Whether the order of the four values held at the decisions that went against the best fit (100 = held, or never");
-  line("tested). In brackets: the share **not measured** (no decision counted, so 100 means \"never tested\").");
+  line("Whether the four values stayed the same at the decisions that went against the best fit (100 = they did, or never");
+  line("tested). Since 2 October 2026 it is the **average of two parts** (the researcher's names): **Value_Order_Stability**,");
+  line("whether their ORDER changed (pairs that swapped places), and **Value_Difference_Stability**, how far they MOVED there");
+  line("(100 minus the average points moved). In brackets: the share **not measured** (no decision counted, so 100 means");
+  line("\"never tested\").");
   line("");
   table("stability", { extra: (run, k) => ` (${pct(notMeasured(run, k))})` });
   const sA = biggestA("stability");
+  const oA = biggestA("stabilityOrder"), dA = biggestA("stabilityDifference");
+  line("### The two parts");
+  line("");
+  line("**The order part** (Value_Order_Stability; Stability's whole rule until 2 October 2026):");
+  line("");
+  table("stabilityOrder");
+  line("**The difference part** (Value_Difference_Stability):");
+  line("");
+  table("stabilityDifference");
   line("**What it shows.**");
   line("");
-  line(`- **Stability DOES depend on the condition, even for the same behaviour.** The largest change under A is ${pts(sA.d)} (${sA.k}, ${R[sA.r].label}). The reason is the rules, not the people:`);
-  line("  - after the reflection (CVR+APA, CVR_Only), keeping a misfit moves **two** values in opposite directions: +30 to the value the option serves and −20 to the value it gives up most. Both can pass other values, so several pairs change places;");
-  line("  - the APA page (APA_Only) and Baseline's Keep move **one** value up and the **other three down together** (−10 or −15 each). The three keep their order among themselves, so only the raised value can change places: fewer swaps, a higher Stability;");
-  line("  - Baseline's −15 for a strongly misaligned keep lets the raised value pass more values than the APA page's −10, so Baseline sits between the two.");
+  line(`- **Stability still depends a little on the condition for the same behaviour, less than either part alone.** The largest change under A is ${pts(sA.d)} (${sA.k}, ${R[sA.r].label}); the order part alone moves up to ${pts(oA.d)} (${oA.k}, ${R[oA.r].label}), the difference part alone up to ${pts(dA.d)} (${dA.k}, ${R[dA.r].label}). The reason is the rules, not the people, and the two parts lean opposite ways:`);
+  line("  - **the order part** is higher in APA_Only and Baseline: after the reflection (CVR+APA, CVR_Only) keeping a misfit moves **two** values in opposite directions (+30 to the value the option serves, −20 to the value it gives up most), and both can pass other values; the APA page and Baseline's Keep move **one** value up and the **other three down together** (−10 or −15 each), so the three keep their order and fewer pairs swap;");
+  {
+    /* Which way the difference part leans, kind by kind (Baseline (A) against CVR+APA), from the numbers. */
+    const meets = KINDS.filter((k) => !NEVER_MISFIT.includes(k) && k !== "Random responder");
+    const lower = meets.filter((k) => m("Baseline", k, "stabilityDifference") < m("CVR_APA", k, "stabilityDifference") - 0.5);
+    const higher = meets.filter((k) => m("Baseline", k, "stabilityDifference") > m("CVR_APA", k, "stabilityDifference") + 0.5);
+    line(`  - **the difference part** usually leans the other way: keeping a misfit adds up to more points in APA_Only and Baseline (+30 and 3 × −10 or −15, against +30 and −20), so the values end further from where they began. In Baseline (A) it is lower than in CVR+APA for ${lower.length ? lower.join(", ") : "no kind"}${higher.length ? `, and higher for ${higher.join(", ")} (a new value each time spreads the moves so more of them cancel; a kind that goes back and takes a good fit in Baseline makes no move at all)` : ""};`);
+  }
+  line("  - averaged, the two partly cancel.");
   line(`- **\"Not measured\" also depends on the condition:** Corrected by APA is not measured in ${pct(notMeasured("CVR_APA", "Corrected by APA"))} of people in CVR+APA, but in ${pct(notMeasured("CVR_Only", "Corrected by APA"))} in CVR_Only and ${pct(notMeasured("Baseline", "Corrected by APA"))} in Baseline (A): going back and taking a good fit is not a Stability step, while an APA visit always is (your Q2-yes for APA_Only).`);
   line(`- **Principle B:** Corrected by APA keeps a misfit in every decision in Baseline (B), so every decision is a step and Stability falls to ${m("Baseline_B", "Corrected by APA", "stability").toFixed(0)}.`);
   line("");
-  { const ex = EXAMPLES[0]; line(`**Example.** Example ${ex.n} (${ex.kind}) makes the same four choices in every column, yet Stability is ${exLine(ex, "stability")}. In their table, CVR+APA moves two values at each keep (+30 and −20, so both can cross other values); APA_Only and Baseline raise one value and lower the other three together (−10 or −15 each), and Baseline's bigger −15 lets the raised value cross more of them than APA_Only's −10.`); }
+  { const ex = EXAMPLES[0]; const parts = ex.runs.map((r) => `${R[r].label} ${exScore(ex, r, "stability")} (order ${exScore(ex, r, "stabilityOrder")}, difference ${exScore(ex, r, "stabilityDifference")})`).join(", "); line(`**Example.** Example ${ex.n} (${ex.kind}) makes the same four choices in every column, yet Stability is ${parts}. In their table, CVR+APA moves two values at each keep (+30 and −20, so both can cross other values); APA_Only and Baseline raise one value and lower the other three together (−10 or −15 each)${["APA_Only", "Baseline"].every((r) => exScore(ex, r, "stabilityOrder") > exScore(ex, "CVR_APA", "stabilityOrder")) ? ", so fewer pairs swap and the order part is higher" : ""}; how far the values end from where they began sets the difference part.`); }
   { const ex = EXAMPLES[3]; line(`Example ${ex.n} (${ex.kind}): Stability ${exLine(ex, "stability")}. When their #1 value's option is a misfit and they keep it, CVR+APA also lowers the value the option gives up most, which can swap two of their other values; Baseline raises the option's main value (usually their #1, already first) and lowers the other three together, which cannot change the order of those three.`); }
   line("");
 
@@ -326,15 +345,46 @@ function writeConditionsPage({ root, head, dirty, date, mainResults }) {
   line("");
   const tA = biggestA("topValue");
   line(`1. **VCI, VCI_all, performance and the top-value choices are fair rulers between conditions** for the same behaviour: under principle A they move at most ${pts(Math.abs(vA.d)).slice(1)} (VCI), ${Math.abs(vaA.d).toFixed(0)} (VCI_all), ${Math.abs(biggestA("performance").d).toFixed(0)} (performance) and ${Math.abs(tA.d).toFixed(2)} of 6 (top-value choices, ${tA.k}, who chooses again from all the options after going back). A difference between conditions in these scores comes from what people chose.`);
-  line(`2. **Stability is not a fair ruler between conditions on its own:** the same behaviour can score up to ${Math.abs(sA.d).toFixed(0)} points apart in two conditions (${sA.k}: ${R.CVR_APA.label} ${m("CVR_APA", sA.k, "stability").toFixed(0)}, ${R[sA.r].label} ${m(sA.r, sA.k, "stability").toFixed(0)}), from the value-move rules alone. Compare Stability inside a condition, or between conditions only against the gaps in section 2.`);
+  line(`2. **Stability is still not a perfectly fair ruler between conditions:** the same behaviour can score up to ${Math.abs(sA.d).toFixed(0)} points apart in two conditions (${sA.k}: ${R.CVR_APA.label} ${m("CVR_APA", sA.k, "stability").toFixed(0)}, ${R[sA.r].label} ${m(sA.r, sA.k, "stability").toFixed(0)}), from the value-move rules alone (each part alone: up to ${Math.abs(oA.d).toFixed(0)} and ${Math.abs(dA.d).toFixed(0)}). Compare Stability inside a condition, or between conditions against the gaps in section 2.`);
   line("3. **The \"random\" line is different in each condition** (section 1): the pages themselves help a random person a little, by");
   line("   different amounts.");
   line(`4. **Principle B shows what a real correction effect looks like:** when the refusing kinds are not corrected, VCI falls by about ${Math.abs(m("Baseline_B", "Corrected by APA", "vci") - m("Baseline", "Corrected by APA", "vci")).toFixed(0)} points for Corrected by APA. The study can see an effect of that size.`);
   line("");
 
+  /* ---------------------------------------------------------------- 7. the level edges, derived again */
+  /* Stability's five words sit on COMBINED_STABILITY_EDGES (block5CVR.ts): each edge is where a pretend participant
+     sitting EXACTLY on today's edge (no swap but tested, one, three, five swaps) lands on the combined score - the median
+     over 2,000 profiles x 12 kinds x the four conditions (principle A). Derived again here on every run; the command stops
+     when an edge is more than one point from the code's. */
+  const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? (s[Math.floor((s.length - 1) / 2)] + s[Math.ceil((s.length - 1) / 2)]) / 2 : NaN; };
+  const pool = ["CVR_APA", "CVR_Only", "APA_Only", "Baseline"].flatMap((r) => KINDS.flatMap((k) => res[r][k]));
+  const edgeRows = COMBINED_STABILITY_EDGES.filter((e) => Number.isFinite(e.todaysEdgeInSwaps)).map((e) => {
+    const order = Math.round(100 * (1 - Math.min(1, e.todaysEdgeInSwaps / 6)));
+    const on = pool.filter((x) => x.stabilityOrder === order && (e.todaysEdgeInSwaps > 0 || x.measured));
+    const onAll = pool.filter((x) => x.stabilityAllOrder === order && (e.todaysEdgeInSwaps > 0 || x.stabilityAllMeasured));
+    return { e, order, n: on.length, med: median(on.map((x) => x.stability)), medAll: median(onAll.map((x) => x.stabilityAll)) };
+  });
+  const edgesOk = edgeRows.every((x) => Math.abs(x.med - x.e.from) <= 1);
+  line("## 7. Stability's level edges, derived again");
+  line("");
+  line("Each of the five words keeps today's meaning: a pretend participant sitting exactly on today's edge (no swap but tested,");
+  line("one, three, five swaps) is put on the new combined score, and the edge is where such people typically land (the");
+  line("median, over the four conditions). The command stops if an edge here is more than one point from the code's.");
+  line("");
+  line("| Level from | Today's edge | People exactly on it | Typical combined Stability | Typical Stability_all | The code's edge |");
+  line("|---|---|---|---|---|---|");
+  for (const x of edgeRows) line(`| ${x.e.label} | ${x.e.todaysEdgeInSwaps} swap${x.e.todaysEdgeInSwaps === 1 ? "" : "s"}${x.e.todaysEdgeInSwaps === 0 ? " (tested)" : ""} = ${x.order} | ${x.n} | ${x.med} | ${x.medAll} | **${x.e.from}**${Math.abs(x.med - x.e.from) <= 1 ? "" : " (DRIFTED)"} |`);
+  line("");
+  const shareLine = (key, levelKey) => {
+    const L5 = COMBINED_STABILITY_EDGES.map((e) => e.label);
+    return L5.map((l) => `${l} ${pct(pool.filter((x) => x[levelKey] === l).length / pool.length)}`).join(" · ");
+  };
+  line(`All kinds and the four conditions together, the share in each level: Stability ${shareLine("stability", "stabilityLevel")}; Stability_all ${shareLine("stabilityAll", "stabilityAllLevel")}.`);
+  line("");
+
   const OUT = path.join(root, "docs", "MAJOR_SCORES_BY_CONDITION.md");
   fs.writeFileSync(OUT, L.join("\n") + "\n");
-  return { file: path.relative(root, OUT), lines: L.length, cond1Diff };
+  return { file: path.relative(root, OUT), lines: L.length, cond1Diff, edgesOk, edges: edgeRows.map((x) => `${x.e.label} ${x.med} (code ${x.e.from})`).join(", ") };
 }
 
 module.exports = { writeConditionsPage };

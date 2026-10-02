@@ -799,7 +799,8 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const FB = B("feedbackTypes.js");
     const block = { totalCvrVisits: 0, totalApaVisits: 0, scenarioResults: [baseRow, fitRow] };
     if (FB.shouldShowCvrSection(block) !== false || FB.shouldShowApaSection(block) !== false || FB.usedDualPerspective(block) !== false) why.push("CVR, APA or two-views feedback questions appear in Baseline");
-    if (db.SHAPE_VERSION !== "2026-10-01-baseline") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
+    /* At least Baseline's stamp (versions are dated, so they sort): a later change may move it on, never back. */
+    if (!(db.SHAPE_VERSION >= "2026-10-01-baseline")) why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N19", "Baseline's database and feedback: baseline_confirm per row, no reflection or APA claimed, not measured, no CVR/APA questions", why);
   }
 

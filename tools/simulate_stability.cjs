@@ -9,9 +9,17 @@
  *           best every time hold steady, a flip-flopper does not, a thrasher scores below someone
  *           who changed once, a round trip is counted as the path it took
  *   S8      rankSwaps is the Kendall tau distance with a tie at one half
- *   S9      the five levels sit at 100 / 83 / 50 / 17 - one, three and five swaps
+ *   S9      today's edges (levelOnSwapEdges: the order part and the three sensitivities) sit at 100 / 83 / 50 / 17 -
+ *           one, three and five swaps; Stability's own edges (stabilityLevel, since 2 October 2026) at 94 / 85 / 63 / 49
  *   S10     only a decider scenario in which the reflection ran can add swaps
  *   S11     each sensitivity's stability is the distance it traveled on its 0-100 scale
+ * Since 2 October 2026 Stability is the average of two parts (block5CVR.ts, "Stability has two parts"):
+ *   S12     the ORDER part is today's rule exactly: equation (3) on the swaps
+ *   S13     the DIFFERENCE part, recounted here by hand: 100 - the average points the four values moved at the
+ *           conflict steps; keep steps never count (always the second best: 100 although the values moved)
+ *   S14     Stability = round((order + difference) / 2), and its words come from the combined edges
+ *   S15     a round trip cancels in the difference part but not in the order part, so the combined score still
+ *           puts the swinger below somebody who changed once
  *   A1-A6   the APA clarification moves the profile the way applyApaUpdates promises
  *
  * Imports the compiled modules rather than re-implementing the formulas: a simulator that carries
@@ -31,7 +39,8 @@ fs.writeFileSync(path.join(BUILD, "package.json"), JSON.stringify({ type: "commo
 const B = (f) => require(path.join(BUILD, f));
 
 const { labelOptions, applyKeepUpdates, applyEndorsementUpdates, applyApaUpdates, optionMainValue, scenarioIsScored,
-        computeStability, computeSensitivityStability, rankSwaps, stabilityLevel, STABILITY_FULL_REVERSAL } = B("block5CVR.js");
+        computeStability, computeSensitivityStability, rankSwaps, stabilityLevel, STABILITY_FULL_REVERSAL,
+        levelOnSwapEdges, COMBINED_STABILITY_EDGES } = B("block5CVR.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
 
 const POLICY = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity",
@@ -126,6 +135,7 @@ function run(name) {
     s: computeStability(results, original),
     sens: computeSensitivityStability(results, original),
     netSwaps: rankSwaps(policyOf(original), results[results.length - 1].policySnapshotAfter),
+    results, original,
   };
 }
 
@@ -136,7 +146,7 @@ const gate = (id, ok, msg) => {
 };
 
 console.log("\n=== STABILITY SIMULATION — synthetic participants through the real scoring code ===\n");
-console.log("  participant    stability  level                   swaps  conflicts  net swaps | directness  context  stakeholder");
+console.log("  participant    stability  level                   swaps  conflicts  net swaps | directness  context  stakeholder | order  difference");
 console.log("  " + "-".repeat(112));
 const out = {};
 Object.keys(PICKERS).forEach((n) => {
@@ -145,7 +155,8 @@ Object.keys(PICKERS).forEach((n) => {
   const v = (x) => (x ? String(x.value) : "—").padStart(6);
   console.log("  " + n.padEnd(14) + String(r.s.value).padStart(8) + "   " + r.s.level.padEnd(22) +
     String(r.s.swaps).padStart(6) + String(r.s.conflictSteps).padStart(10) + String(r.netSwaps).padStart(11) +
-    " |" + v(r.sens.directness) + "     " + v(r.sens.context) + "      " + v(r.sens.stakeholder));
+    " |" + v(r.sens.directness) + "     " + v(r.sens.context) + "      " + v(r.sens.stakeholder)
+    + "      |" + String(r.s.orderValue).padStart(6) + String(r.s.differenceValue).padStart(12));
 });
 
 console.log("\n--- gates ---");
@@ -186,14 +197,19 @@ gate("S7", out["Near-loyal"].s.value === 100 && out["Near-loyal"].s.conflictStep
     `rankSwaps is the Kendall tau distance, a tie at one half  (${wrong.length ? "wrong: " + wrong.map((c) => c[0]).join("; ") : `${cases.length} of ${cases.length} cases`})`);
 }
 
-/* S9 — the levels, at one, three and five swaps. */
+/* S9 — the levels. Today's edges at one, three and five swaps (the order part and the three sensitivities), and since
+   2 October 2026 Stability's own edges on the combined score. */
 {
   const cases = [[100, "Held steady"], [92, "Mostly steady"], [83, "Mostly steady"], [82, "Shifted a little"],
     [50, "Shifted a little"], [49, "Shifted a lot"], [17, "Shifted a lot"], [16, "Changed substantially"],
     [0, "Changed substantially"]];
-  const wrong = cases.filter(([v, l]) => stabilityLevel(v) !== l);
-  gate("S9", wrong.length === 0,
-    `levels at 100 / 83 / 50 / 17  (${wrong.length ? "misplaced: " + wrong.map((c) => c[0]).join(", ") : `${cases.length} of ${cases.length} scores land correctly`})`);
+  const wrong = cases.filter(([v, l]) => levelOnSwapEdges(v) !== l);
+  const combined = [[100, "Held steady"], [94, "Held steady"], [93, "Mostly steady"], [85, "Mostly steady"], [84, "Shifted a little"],
+    [63, "Shifted a little"], [62, "Shifted a lot"], [49, "Shifted a lot"], [48, "Changed substantially"], [0, "Changed substantially"]];
+  const wrongC = combined.filter(([v, l]) => stabilityLevel(v) !== l);
+  const edges = COMBINED_STABILITY_EDGES.map((e) => e.from).join(" / ");
+  gate("S9", wrong.length === 0 && wrongC.length === 0 && edges === "94 / 85 / 63 / 49 / 0",
+    `today's edges 100 / 83 / 50 / 17, Stability's 94 / 85 / 63 / 49  (${wrong.length || wrongC.length ? "misplaced: " + [...wrong, ...wrongC].map((c) => c[0]).join(", ") : `${cases.length + combined.length} scores land correctly`}; edges ${edges})`);
 }
 
 /* S10 — only a decider scenario in which the reflection ran can add swaps. A wish that moved (it
@@ -220,6 +236,34 @@ gate("S7", out["Near-loyal"].s.value === 100 && out["Near-loyal"].s.conflictStep
   gate("S11", sens.stakeholder.distance === 75 && sens.stakeholder.value === 25
     && sens.stakeholder.level === "Shifted a lot" && sens.directness.value === 100 && sens.context.value === 100,
     `stakeholder 45 -> 70 -> 45 -> 20 travels 75 points and scores 25; directness and context hold at 100  (${sens.stakeholder.distance}, ${sens.stakeholder.value}, ${sens.directness.value}, ${sens.context.value})`);
+}
+
+/* S12-S15 — the two parts (since 2 October 2026), for every scripted participant. */
+{
+  const why12 = [], why13 = [], why14 = [];
+  for (const [name, r] of Object.entries(out)) {
+    const s = r.s;
+    if (s.orderValue !== Math.round(100 * (1 - Math.min(1, s.swaps / STABILITY_FULL_REVERSAL)))) why12.push(`${name}: order ${s.orderValue} for ${s.swaps} swaps`);
+    /* the difference part by hand, from the rows */
+    let before = policyOf(r.original);
+    const moved = Object.fromEntries(POLICY.map((k) => [k, 0]));
+    for (const row of r.results) {
+      if (row.decisionRole === "decider" && row.cvrFired) for (const k of POLICY) moved[k] += row.policySnapshotAfter[k] - before[k];
+      before = row.policySnapshotAfter;
+    }
+    const diff = Math.round(100 - Math.min(100, POLICY.reduce((a, k) => a + Math.abs(moved[k]), 0) / 4));
+    if (s.differenceValue !== diff) why13.push(`${name}: difference ${s.differenceValue}, by hand ${diff}`);
+    if (s.value !== Math.round((s.orderValue + s.differenceValue) / 2) || s.level !== stabilityLevel(s.value)) why14.push(`${name}: ${s.value} "${s.level}" from ${s.orderValue} and ${s.differenceValue}`);
+  }
+  const near = out["Near-loyal"];
+  if (near.s.differenceValue !== 100 || near.netSwaps === 0) why13.push(`always the second best: difference ${near.s.differenceValue} (its values moved: ${near.netSwaps} net swaps)`);
+  gate("S12", why12.length === 0, why12.length ? why12.join("; ") : "the order part is today's rule exactly, for every participant");
+  gate("S13", why13.length === 0, why13.length ? why13.join("; ")
+    : `the difference part equals a hand recount for every participant; keep steps never count (always the second best ${near.s.differenceValue})`);
+  gate("S14", why14.length === 0, why14.length ? why14.join("; ") : "Stability is the rounded average of its two parts, with the combined edges' words");
+  const sw = out["Swinger"].s, cv = out["Convert"].s;
+  gate("S15", sw.differenceValue > sw.orderValue && sw.value < cv.value,
+    `a round trip cancels in the difference part only: swinger order ${sw.orderValue}, difference ${sw.differenceValue}, Stability ${sw.value} below the convert's ${cv.value}`);
 }
 
 /* ------------------------------------------------------------------------------------------

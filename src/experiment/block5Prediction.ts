@@ -48,7 +48,7 @@ import { optionMainValue, policyAlignmentScore, policyAlignmentShortfall, policy
  * or formula below changes, so a stored prediction can always be traced to the rule that produced
  * it. Predictions made under different versions must not be pooled.
  */
-export const PREDICTION_VERSION = "2026-09-19-e";
+export const PREDICTION_VERSION = "2026-10-02-f";
 
 /*
  * VERSION HISTORY. Predictions made under different versions must not be pooled.
@@ -80,6 +80,13 @@ export const PREDICTION_VERSION = "2026-09-19-e";
  *                 tied options. (2) Its Stability INPUT changed: Stability now counts swaps in the
  *                 order of the four policy values at the conflict steps (block5CVR.ts), so the
  *                 same run gives a different Stability, confidence and temperature.
+ *   2026-10-02-f  Nothing in this file changed. Its Stability INPUT did: Stability is now the average of
+ *                 the order part above and a difference part (how far the four values moved at the
+ *                 conflict steps; block5CVR.ts). Measured on the pretend participants of all four
+ *                 conditions: the option ranked first never changes (confidence cannot reorder), the
+ *                 average chance given to the person's own pick moves by at most 0.2 points, and a
+ *                 higher Stability marks a person the guess gets right more clearly (61% against 36% in
+ *                 CVR+APA, was 54% against 43%; never reversed in any condition).
  */
 
 /* ------------------------------------------------------------------ the confidence dial */

@@ -207,7 +207,8 @@ function ValuesBeforeAfter({ results }: { results: Block5Results }) {
     <Box rounded="2xl" borderWidth="1px" borderColor="border" bg="bg.panel" px={{ base: "5", md: "6" }} py="5">
       <Text fontSize="md" fontWeight="semibold" color="fg">Your four values, before and after the scenarios</Text>
       <Text fontSize="sm" color="fg.muted" mb="4">
-        Stability watches this order. Your numbers moved when your choices told us something new about you.
+        Stability watches this order, and how far the numbers moved. Your numbers moved when your choices told us
+        something new about you.
       </Text>
       <Stack direction={{ base: "column", sm: "row" }} gap={{ base: "5", sm: "8" }} align={{ sm: "center" }}>
         {before && column("Before", before)}
@@ -427,7 +428,7 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
             </ScoreFamily>
             <ScoreFamily palette="purple" icon={<LuScale />} title="Stability"
               question="Did your values stay the same?"
-              explain={<>Compares who you were before the scenarios with who you became: at the moments you chose against what fit you best, did your four values keep their order? <b>100</b> = no two values swapped places.</>}>
+              explain={<>Compares who you were before the scenarios with who you became, at the moments you chose against what fit you best. It looks at two things: did your four values keep their order, and how far did they move? <b>100</b> = no two values swapped places and none moved.</>}>
               <ScoreNumber label="Your 4 decisions" code="Stability" value={stability} level={results.stabilityLevel} palette="purple"
                 note={stabilityUntested ? "Not tested: you always chose one of your two best fits." : undefined} />
               {hasStabilityAll && (

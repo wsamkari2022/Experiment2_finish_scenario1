@@ -231,8 +231,9 @@ export function Block5VisualizationsView({ results, tab }: Props) {
         This is about whether the order of your priorities changed during the scenarios, not about
         whether you chose well.
       </b>{" "}
-      It counts how often two of your four values traded places at the moments you chose against the
-      option that fit you best: 100 means none did. Neither a high nor a low number is better than the
+      It looks at two things at the moments you chose against the option that fit you best: how often two
+      of your four values traded places, and how far your values moved. 100 means none traded places and none
+      moved. Neither a high nor a low number is better than the
       other. How well your choices matched your values is a separate score, on the card titled “How
       consistent your choices were”.{stabilityAllSentence}
     </>
@@ -620,7 +621,7 @@ export function Block5VisualizationsView({ results, tab }: Props) {
         <SimpleGrid columns={{ base: 1, lg: 2 }} gap={{ base: "5", md: "6" }}>
           {/* 1 · Radar */}
           <ChartCard index={num("radar")} title="Your values: before and after the scenarios"
-            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from the first parts of the study); the <b>dashed</b> shape is where you ended after {journey.includesWishAndRule ? <>all six scenarios, your wish and your rule included</> : <>the scenarios</>}. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> numbers below count how often that happened when you chose against your best fit.</>}
+            howTo={<>Each spoke is one of your four values, scored 0–100. The <b>solid</b> shape is where you started (from the first parts of the study); the <b>dashed</b> shape is where you ended after {journey.includesWishAndRule ? <>all six scenarios, your wish and your rule included</> : <>the scenarios</>}. When one value ends up above another that used to be above it, those two traded places — the <b>Stability</b> numbers below look at how often that happened, and how far your values moved, when you chose against your best fit.</>}
             caption={stabilityCaption}>
             <RadarChart axes={radarAxes} series={radarSeries} max={100} />
             <ChartLegend items={radarSeries.map((s) => ({ label: s.name, color: s.color, dashed: s.dashed }))} />

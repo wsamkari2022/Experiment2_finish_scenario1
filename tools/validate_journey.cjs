@@ -352,6 +352,14 @@ console.log("===================================================================
   /* The researcher's words: stability is who they were before the scenarios and who they became. */
   if (!/who you were before the scenarios with who you became/.test(page)) why.push("stability no longer says it compares who they were before and after");
   if (!sim.includes("computeStabilityAll(nextResults)") || !sim.includes("stabilityAll: stabilityAll.value")) why.push("the block does not save Stability_all when it finishes");
+  /* Since 2 October 2026 Stability has two parts: the page says it looks at both, and the block saves both, each for the
+     four decisions and for all six. */
+  if (!page.includes("It looks at two things: did your four values keep their order, and how far did they move?")
+      || !page.includes("Stability watches this order, and how far the numbers moved.")) why.push("the results page does not say Stability looks at the order AND how far the values moved");
+  if (!sim.includes("valueOrderStability: stab.orderValue, valueDifferenceStability: stab.differenceValue, stabilityVersion: STABILITY_VERSION")
+      || !sim.includes("valueOrderStabilityAll: stabilityAll.orderValue, valueDifferenceStabilityAll: stabilityAll.differenceValue")) why.push("the block does not save Stability's two parts");
+  const charts = src("Block5VisualizationsView.tsx");
+  if (!charts.includes("how often two\n      of your four values traded places, and how far your values moved") && !/how often two\s+of your four values traded places, and how far your values moved/.test(charts)) why.push("the charts' caption does not say Stability looks at both");
   const shown = fs.readdirSync(path.join(ROOT, "src", "experiment")).filter((f) => f.endsWith(".tsx"))
     .filter((f) => /computeTopValueChoices|top_value_choices|TopValueChoices/.test(src(f)));
   if (shown.length) why.push(`the top-value choices reach a page: ${shown.join(", ")}`);

@@ -1,6 +1,6 @@
 # Major scores by kind of participant
 
-> **Generated** by `npm run report:major-scores` on 2026-10-01, from code version `703ab8b` plus changes not yet committed.
+> **Generated** by `npm run report:major-scores` on 2026-10-02, from code version `8f6b216` plus changes not yet committed.
 > Do not edit this page by hand: change `tools/report_major_scores.cjs` and run it again. **Run it after every change**
 > to an option number, a scoring rule, a step size, the planner or a scenario, and commit the new page with the change.
 
@@ -30,7 +30,7 @@ can be compared fairly. The numbers are the same on every run, until the code ch
 |---|---|---|
 | **VCI** (0-100) | How well the four decisions fit the participant's own values | Picking blindly gives 50; always the best fit gives 100; always the worst fit 10 |
 | **VCI_all** (0-100, since 28 September 2026) | The same over all six scenarios - the four decisions, the wish and the veil (its final choice) - on hidden running values that also move after the wish and the veil | Blind 50; always the best fit 100; its level edges are its own (88.89 / 77.78 / 62.5 / 47.22 / 27.78), derived the same way as VCI's |
-| **Stability** (0-100) | Whether the order of the four values changed when the participant went against their best fit | 100 = the order held, or it was never tested (see "not measured") |
+| **Stability** (0-100) | Whether the four values stayed the same when the participant went against their best fit. Since 2 October 2026 the average of two parts: did their ORDER change (swaps), and how far did they MOVE | 100 = they held, or it was never tested (see "not measured"); levels at 94 / 85 / 63 / 49 |
 | **Stability_all** (0-100, since 29 September 2026) | The same rule over all six scenarios, on the running values: the wish and the veil count when the final choice was not one of the two best fits | Never above Stability; 100 = the order held, or it was never tested |
 | **Performance** (0-100, end of study) | How good the chosen options were, inside each scenario | 0 = the weakest option in every decision, 100 = the strongest; random choosing gives about 50 |
 
@@ -89,15 +89,15 @@ identical to `npm run report:vci` for every one of the 24,000 pretend people.
 | Always aligned | 100 | 100 | 100 | 100 | 100% | - | 100% | 0% | 0% | 0% | 0% |
 | Always weakly aligned | 100 | 100 | 100 | 100 | 100% | - | 100% | 0% | 0% | 0% | 0% |
 | Top-two mixer | 100 | 100 | 100 | 100 | 100% | - | 100% | 0% | 0% | 0% | 0% |
-| True to top value | 91 | 67 | 100 | 100 | 38% | 85 | 63% | 23% | 12% | 2% | 0% |
-| Corrected by APA | 94 | 75 | 100 | 100 | 0% | 94 | 51% | 36% | 13% | 0% | 0% |
-| Convert (keeps) | 56 | 17 | 58 | 83 | 0% | 56 | 5% | 25% | 39% | 24% | 8% |
-| Convert (via APA) | 74 | 50 | 75 | 100 | 1% | 74 | 19% | 26% | 54% | 1% | 0% |
-| Performance chaser | 80 | 50 | 83 | 100 | 26% | 73 | 41% | 26% | 24% | 8% | 2% |
-| Random responder | 57 | 8 | 67 | 100 | 2% | 57 | 11% | 20% | 39% | 19% | 10% |
-| Flip-flopper (keeps) | 12 | 0 | 0 | 42 | 0% | 12 | 0% | 1% | 9% | 22% | 68% |
-| Flip-flopper (via APA) | 29 | 0 | 33 | 67 | 0% | 29 | 0% | 4% | 25% | 38% | 33% |
-| Always the worst fit | 10 | 0 | 0 | 33 | 0% | 10 | 0% | 0% | 5% | 28% | 67% |
+| True to top value | 92 | 78 | 95 | 100 | 38% | 87 | 63% | 22% | 13% | 2% | 0% |
+| Corrected by APA | 84 | 78 | 85 | 89 | 0% | 84 | 0% | 61% | 39% | 0% | 0% |
+| Convert (keeps) | 67 | 43 | 69 | 86 | 0% | 67 | 4% | 15% | 47% | 17% | 16% |
+| Convert (via APA) | 76 | 59 | 76 | 93 | 1% | 75 | 9% | 19% | 52% | 20% | 1% |
+| Performance chaser | 86 | 66 | 89 | 100 | 26% | 82 | 41% | 27% | 25% | 6% | 2% |
+| Random responder | 71 | 46 | 74 | 93 | 2% | 71 | 9% | 14% | 48% | 17% | 12% |
+| Flip-flopper (keeps) | 47 | 38 | 43 | 62 | 0% | 47 | 0% | 0% | 10% | 18% | 73% |
+| Flip-flopper (via APA) | 60 | 43 | 59 | 76 | 0% | 60 | 0% | 1% | 44% | 39% | 16% |
+| Always the worst fit | 44 | 35 | 42 | 59 | 0% | 44 | 0% | 0% | 4% | 20% | 75% |
 
 ## 2b. Stability_all (all six scenarios)
 
@@ -109,17 +109,17 @@ the wish and the veil added. "Not measured" = no step counted in any of the six.
 | Kind | Mean | p10 | p50 | p90 | Stability_all - Stability (mean) | Not measured | Held steady | Mostly steady | Shifted a little | Shifted a lot | Changed substantially |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Always aligned | 100 | 100 | 100 | 100 | +0.0 | 100% | 100% | 0% | 0% | 0% | 0% |
-| Always weakly aligned | 99 | 100 | 100 | 100 | -1.3 | 95% | 95% | 3% | 2% | 0% | 0% |
-| Top-two mixer | 96 | 83 | 100 | 100 | -4.0 | 87% | 88% | 4% | 6% | 1% | 0% |
-| True to top value | 89 | 67 | 100 | 100 | -1.1 | 38% | 61% | 22% | 14% | 2% | 1% |
-| Corrected by APA | 71 | 42 | 75 | 100 | -22.2 | 0% | 11% | 35% | 36% | 18% | 0% |
-| Convert (keeps) | 54 | 17 | 58 | 83 | -1.3 | 0% | 5% | 24% | 38% | 24% | 9% |
-| Convert (via APA) | 74 | 50 | 75 | 100 | -0.6 | 1% | 18% | 27% | 54% | 2% | 0% |
-| Performance chaser | 69 | 8 | 83 | 100 | -10.6 | 24% | 34% | 21% | 23% | 11% | 11% |
-| Random responder | 39 | 0 | 33 | 83 | -18.5 | 0% | 4% | 10% | 33% | 24% | 28% |
-| Flip-flopper (keeps) | 3 | 0 | 0 | 17 | -8.2 | 0% | 0% | 0% | 2% | 9% | 89% |
-| Flip-flopper (via APA) | 13 | 0 | 0 | 50 | -16.3 | 0% | 0% | 1% | 10% | 25% | 65% |
-| Always the worst fit | 3 | 0 | 0 | 17 | -6.4 | 0% | 0% | 0% | 1% | 12% | 87% |
+| Always weakly aligned | 99 | 100 | 100 | 100 | -0.8 | 95% | 95% | 3% | 2% | 0% | 0% |
+| Top-two mixer | 97 | 87 | 100 | 100 | -2.6 | 87% | 88% | 4% | 6% | 1% | 0% |
+| True to top value | 91 | 78 | 95 | 100 | -0.7 | 38% | 60% | 22% | 15% | 2% | 1% |
+| Corrected by APA | 77 | 63 | 78 | 89 | -7.8 | 0% | 1% | 18% | 74% | 7% | 0% |
+| Convert (keeps) | 66 | 41 | 67 | 86 | -0.9 | 0% | 4% | 15% | 45% | 18% | 18% |
+| Convert (via APA) | 75 | 56 | 76 | 93 | -0.5 | 1% | 7% | 19% | 52% | 21% | 1% |
+| Performance chaser | 80 | 44 | 86 | 100 | -6.4 | 24% | 34% | 18% | 28% | 8% | 12% |
+| Random responder | 61 | 40 | 61 | 84 | -10.0 | 0% | 3% | 7% | 38% | 22% | 31% |
+| Flip-flopper (keeps) | 41 | 35 | 40 | 46 | -5.9 | 0% | 0% | 0% | 2% | 5% | 93% |
+| Flip-flopper (via APA) | 49 | 39 | 45 | 65 | -11.0 | 0% | 0% | 0% | 11% | 23% | 65% |
+| Always the worst fit | 40 | 33 | 39 | 46 | -4.6 | 0% | 0% | 0% | 1% | 7% | 93% |
 
 ## 2c. Top-value choices (saved, never shown)
 
@@ -170,11 +170,11 @@ half). 0.50 is a coin; 1.00 is always.
 
 | First kind | Second kind | VCI | Stability | Performance |
 |---|---|---|---|---|
-| True to top value | Random responder | 0.92 | 0.84 | 0.32 |
-| Random responder | Flip-flopper (keeps) | 0.86 | 0.88 | 0.68 |
-| Convert (keeps) | Random responder | 0.67 | 0.48 | 0.44 |
-| Convert (keeps) | Flip-flopper (keeps) | 0.94 | 0.89 | 0.61 |
-| Always aligned | Random responder | 1.00 | 0.94 | 0.70 |
+| True to top value | Random responder | 0.92 | 0.87 | 0.32 |
+| Random responder | Flip-flopper (keeps) | 0.86 | 0.89 | 0.68 |
+| Convert (keeps) | Random responder | 0.67 | 0.43 | 0.44 |
+| Convert (keeps) | Flip-flopper (keeps) | 0.94 | 0.84 | 0.61 |
+| Always aligned | Random responder | 1.00 | 0.99 | 0.70 |
 
 Read the Convert row as a known limit (audit G6): one honest change of mind scores about like random choosing on
 Stability. Stability's absolute level also depends on the step sizes (docs/BLOCK5_STEP_SIZE_SENSITIVITY.md); its
@@ -277,6 +277,8 @@ the Log, and the dated sections of CLAUDE.md):
 - **C7** (26 Sep 2026): the gap between the #1 and #2 values is saved. No score or card order changed.
 - **B3** (26 Sep 2026): the step sizes were tested at half and double size; every conclusion held
   (docs/BLOCK5_STEP_SIZE_SENSITIVITY.md). Nothing in the study changed.
+- **Stability from two parts** (2 Oct 2026): Stability and Stability_all are the average of the order part (the swaps, the
+  whole rule until then) and a difference part (how far the four values moved at the counted steps); new level edges.
 - **The four conditions** (1 Oct 2026): CVR_Only, APA_Only and Baseline differ from Block 5 on. Every number on THIS page
   is condition 1 (CVR+APA, the full version); the other three are on docs/MAJOR_SCORES_BY_CONDITION.md (section 9).
 

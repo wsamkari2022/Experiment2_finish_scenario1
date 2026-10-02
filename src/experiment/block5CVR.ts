@@ -1627,6 +1627,45 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
       half rather than being ignored or counted whole.
    ================================================================================================ */
 
+/* ================================================================================================
+   SINCE 2 OCTOBER 2026 STABILITY HAS TWO PARTS, AND THE SCORE IS THEIR AVERAGE
+   ================================================================================================
+   The researcher's decision ("1-A, counted steps only, keep today's edges but make sure the level is
+   distributed well"), after a study on the pretend participants of all four conditions
+   (docs/BLOCK5_STABILITY_METHOD.md section 12):
+
+     ORDER PART       Value_Order_Stability = equations (1) to (3) above, unchanged: the swaps.
+     DIFFERENCE PART  Value_Difference_Stability = round( 100 − the average, over the four values, of
+                      | the points that value moved at the conflict steps, added up | )
+                      Only the conflict steps count - the same steps as the order part - so keeping a
+                      fitting option (the model refining its estimate) is not change, as above.
+     STABILITY        round( (order part + difference part) / 2 )                    -> computeStability
+
+   WHY TWO PARTS. Each covers the other's blind spot, and the four conditions bias them in opposite
+   directions. The order part sees every change of direction but not how far values moved; the
+   difference part sees how far they ended from where they started but a back-and-forth cancels in it
+   (a participant who takes up a new value in every scenario scored ABOVE a one-time convert on the
+   difference alone, 82 against 75). Averaged, the flip-flopper stays below the convert (47 against 67),
+   and the gap between conditions for the same behaviour falls from 22 points to 13 (Stability_all: 17
+   to 7), because the order part scores APA_Only and Baseline higher (one value up, three down together:
+   fewer swaps) while the difference part scores them lower (more points moved in total).
+
+   THE LEVELS. The same five words. Each edge is where a pretend participant sitting EXACTLY on today's
+   edge lands on the new score: the median combined score of those with no swap (but tested), one swap,
+   three swaps and five swaps, over 2,000 profiles x 12 kinds x the four conditions: 94 / 85 / 63 / 49
+   (the same for Stability_all, to one point). With them the five levels hold about the same shares as
+   today's edges did on the order part (all kinds: 39 / 12 / 23 / 12 / 14 in 100, against 44 / 12 / 19 /
+   12 / 13); on today's edges the combined score would never reach "Changed substantially". `npm run
+   report:major-scores` derives the four edges again from the same people and stops if any is more than
+   one point from COMBINED_STABILITY_EDGES, so they cannot go stale silently. The three sensitivity
+   stabilities and the order part keep today's edges (levelOnSwapEdges).
+
+   "NOT TESTED" IS UNCHANGED: with no conflict step both parts are 100, so the score is 100.
+   ================================================================================================ */
+
+/** The rule behind `stability` and `stabilityAll`, stamped on every finished block since 2 October 2026. */
+export const STABILITY_VERSION = "2026-10-02-order-and-difference";
+
 /** Six: the number of pairs among the four policy values, and so a complete reversal of them. */
 export const STABILITY_FULL_REVERSAL = (POLICY_DIM_KEYS.length * (POLICY_DIM_KEYS.length - 1)) / 2;
 
@@ -1671,22 +1710,63 @@ const STABILITY_LEVELS: ReadonlyArray<{ label: string; mostSwaps: number }> = [
 ];
 
 /**
- * Plain words for a stability value, 0-100 - Stability itself, or any of the three sensitivity
- * stabilities. The edges are the swap bands put through equation (3): 100 / 83 / 50 / 17.
+ * Plain words on TODAY'S EDGES - the swap bands put through equation (3): 100 / 83 / 50 / 17. Used by the order part
+ * and by the three sensitivity stabilities (each one value moving on its own scale). Until 2 October 2026 this was
+ * `stabilityLevel`, the words of Stability itself.
  *
  * Deliberately NOT the VCI wording: this reports change, not fit. Presentation only - never fed
  * back into any calculation.
  */
-export function stabilityLevel(value0to100: number): string {
+export function levelOnSwapEdges(value0to100: number): string {
   for (const l of STABILITY_LEVELS) {
     if (value0to100 >= stabilityFromSwaps(l.mostSwaps)) return l.label;
   }
   return STABILITY_LEVELS[STABILITY_LEVELS.length - 1].label;
 }
 
+/**
+ * THE EDGES OF STABILITY AND STABILITY_ALL (since 2 October 2026): today's five words, each edge where a pretend
+ * participant sitting exactly on today's edge (no swap but tested, one, three, five swaps) lands on the combined score
+ * (see the header above; re-derived and checked by `npm run report:major-scores`).
+ */
+export const COMBINED_STABILITY_EDGES: ReadonlyArray<{ label: string; from: number; todaysEdgeInSwaps: number }> = [
+  { label: "Held steady", from: 94, todaysEdgeInSwaps: 0 },
+  { label: "Mostly steady", from: 85, todaysEdgeInSwaps: 1 },
+  { label: "Shifted a little", from: 63, todaysEdgeInSwaps: 3 },
+  { label: "Shifted a lot", from: 49, todaysEdgeInSwaps: 5 },
+  { label: "Changed substantially", from: 0, todaysEdgeInSwaps: Infinity },
+];
+
+/** Plain words for Stability and Stability_all, 0-100, on COMBINED_STABILITY_EDGES. */
+export function stabilityLevel(value0to100: number): string {
+  for (const l of COMBINED_STABILITY_EDGES) if (value0to100 >= l.from) return l.label;
+  return COMBINED_STABILITY_EDGES[COMBINED_STABILITY_EDGES.length - 1].label;
+}
+
+/** The difference part, Value_Difference_Stability: 100 − the average, over the four values, of how far each moved
+ *  (the moves at the counted steps, added up per value). 100 = no value moved; it falls a point for each point moved
+ *  on average. */
+export function differenceStabilityFromMoves(moves: Record<string, number>): number {
+  const avg = POLICY_DIM_KEYS.reduce((a, k) => a + Math.abs(moves[k] ?? 0), 0) / POLICY_DIM_KEYS.length;
+  return Math.round(100 - Math.min(100, avg));
+}
+
+/** Stability from its two parts: their average, rounded. */
+export function combineStability(orderPart: number, differencePart: number): number {
+  return Math.round((orderPart + differencePart) / 2);
+}
+
 export interface StabilityResult {
-  /** 0-100, equation (3) */
+  /** 0-100. Since 2 October 2026 the average of the two parts below (combineStability). */
   value: number;
+  /** Value_Order_Stability: equation (3), the swaps (since 2 October 2026 a part; until then the whole score). */
+  orderValue: number;
+  /** Value_Difference_Stability: differenceStabilityFromMoves over the moves at the conflict steps. */
+  differenceValue: number;
+  /** The average, over the four values, of how many points each moved at the conflict steps (added up), one decimal. */
+  averageMove: number;
+  /** Per value: the points it moved at the conflict steps, added up (signed). */
+  movesAtCountedSteps: Record<string, number>;
   level: string;
   /** S: total swaps across the conflict steps, in halves */
   swaps: number;
@@ -1712,7 +1792,8 @@ export function computeStability(
   originalProfile: Block5UserProfile | null | undefined,
 ): StabilityResult {
   const empty: StabilityResult = {
-    value: 0, level: "—", swaps: 0, conflictSteps: 0, swapsByScenario: [],
+    value: 0, orderValue: 0, differenceValue: 0, averageMove: 0, movesAtCountedSteps: {},
+    level: "—", swaps: 0, conflictSteps: 0, swapsByScenario: [],
     topValueBefore: "", topValueAfter: "",
   };
   if (!originalProfile || results.length === 0) return empty;
@@ -1722,6 +1803,8 @@ export function computeStability(
   let before = start;
   let swaps = 0;
   const swapsByScenario: StabilityResult["swapsByScenario"] = [];
+  /* The difference part (since 2 October 2026): the points each value moved at the same conflict steps, added up. */
+  const moved: Record<string, number> = Object.fromEntries(POLICY_DIM_KEYS.map((k) => [k, 0]));
   for (const r of results) {
     const after = r.policySnapshotAfter as Record<string, number> | undefined;
     if (!after) return empty;
@@ -1729,14 +1812,20 @@ export function computeStability(
       const s = rankSwaps(before, after);
       swaps += s;
       swapsByScenario.push({ scenarioId: r.scenarioId, swaps: s });
+      for (const k of POLICY_DIM_KEYS) moved[k] += after[k] - before[k];
     }
     before = after;
   }
 
-  const value = stabilityFromSwaps(swaps);
+  const orderValue = stabilityFromSwaps(swaps);
+  const differenceValue = differenceStabilityFromMoves(moved);
+  const value = combineStability(orderValue, differenceValue);
+  const averageMove = Math.round((POLICY_DIM_KEYS.reduce((a, k) => a + Math.abs(moved[k]), 0) / POLICY_DIM_KEYS.length) * 10) / 10;
   const top = (p: Record<string, number>) => [...POLICY_DIM_KEYS].sort((a, b) => p[b] - p[a])[0];
   return {
-    value, level: stabilityLevel(value), swaps, conflictSteps: swapsByScenario.length, swapsByScenario,
+    value, orderValue, differenceValue, averageMove,
+    movesAtCountedSteps: Object.fromEntries(POLICY_DIM_KEYS.map((k) => [k, Math.round(moved[k] * 100) / 100])),
+    level: stabilityLevel(value), swaps, conflictSteps: swapsByScenario.length, swapsByScenario,
     topValueBefore: top(start), topValueAfter: top(before),
   };
 }
@@ -1798,7 +1887,8 @@ export function computeSensitivityStability(
       prev = now;
     }
     const value = Math.round(100 * (1 - Math.min(1, distance / 100)));
-    return { value, level: stabilityLevel(value), distance: Math.round(distance * 10) / 10 };
+    /* Today's edges, as before: one value on its own scale (levelOnSwapEdges; the combined edges are Stability's). */
+    return { value, level: levelOnSwapEdges(value), distance: Math.round(distance * 10) / 10 };
   };
 
   return {

@@ -1397,10 +1397,19 @@ export interface Block5Results {
    *  Stability, with Stability's level words. Absent on a run finished before that date. */
   stabilityAll?: number;
   stabilityAllLevel?: string;
-  /** Stability, 0-100: how far the ORDER of the four policy values changed at the conflict steps.
-   *  See the Stability section of block5CVR.ts. */
+  /** Stability, 0-100. Since 2 October 2026 the average of two parts (block5CVR.ts, "Stability has two parts"): whether
+   *  the ORDER of the four policy values changed at the conflict steps, and how far they MOVED there. Until then the
+   *  order alone. Its level words sit on COMBINED_STABILITY_EDGES (94 / 85 / 63 / 49). */
   stability?: number;
   stabilityLevel?: string;
+  /** Since 2 October 2026, the researcher's names: the two parts Stability is the average of, and the same for
+   *  Stability_all (on the running values, all six scenarios). Absent on a run finished before that date. */
+  valueOrderStability?: number;
+  valueDifferenceStability?: number;
+  valueOrderStabilityAll?: number;
+  valueDifferenceStabilityAll?: number;
+  /** STABILITY_VERSION when the block finished (block5CVR.ts). */
+  stabilityVersion?: string;
   /**
    * What the Stability headline is made of, so analysis is not left with a single opaque score:
    * total swaps (in halves), how many decider scenarios were conflict steps, the swaps at each one,
@@ -1412,6 +1421,11 @@ export interface Block5Results {
     swapsByScenario: Array<{ scenarioId: string; swaps: number }>;
     topValueBefore: string;
     topValueAfter: string;
+    /* Since 2 October 2026: the two parts, the average points moved at the conflict steps, and each value's moves there. */
+    orderValue?: number;
+    differenceValue?: number;
+    averageMove?: number;
+    movesAtCountedSteps?: Record<string, number>;
   };
   /**
    * Directness, context and stakeholder, each with its own stability: the distance it traveled

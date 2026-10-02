@@ -56,7 +56,7 @@ const B = (f) => require(path.join(BUILD, f));
 
 const db = B("dbShape.js");
 const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
-const { labelOptions, computeVCI, computeStability, computeSensitivityStability } = B("block5CVR.js");
+const { labelOptions, computeVCI, computeStability, computeSensitivityStability, STABILITY_VERSION } = B("block5CVR.js");
 const { predictChoice, predictionConfidence, PREDICTION_VERSION } = B("block5Prediction.js");
 const { profileShownIn } = B("block5Mirror.js");
 const { runningStep, computeVciAll, vciAllLevel } = B("block5VciAll.js");
@@ -234,12 +234,18 @@ function makeParticipant(startScores, pick) {
     stability: stab.value, stabilityLevel: stab.level,
     /* Saved with the finished block since 29 September 2026, as the page does. */
     stabilityAll: stabAll.value, stabilityAllLevel: stabAll.level,
+    /* Since 2 October 2026 the two parts of each, as the page saves them. */
+    valueOrderStability: stab.orderValue, valueDifferenceStability: stab.differenceValue,
+    valueOrderStabilityAll: stabAll.orderValue, valueDifferenceStabilityAll: stabAll.differenceValue,
+    stabilityVersion: STABILITY_VERSION,
     /* The same detail the live page stores on completion (Block5PublicEmergencySimulation). Added to
        the pretend records on 26 September 2026 for gate D62: without it the fixture would be missing a
        field every real record carries. */
     stabilityDetail: {
       swaps: stab.swaps, conflictSteps: stab.conflictSteps, swapsByScenario: stab.swapsByScenario,
       topValueBefore: stab.topValueBefore, topValueAfter: stab.topValueAfter,
+      orderValue: stab.orderValue, differenceValue: stab.differenceValue, averageMove: stab.averageMove,
+      movesAtCountedSteps: stab.movesAtCountedSteps,
     },
     sensitivityStability: computeSensitivityStability(results, original),
   };
@@ -1647,18 +1653,28 @@ for (const [who, block5] of PEOPLE) {
     const major = db.buildMajorScores(block5, null, null, null, null);
     const rs = block5.scenarioResults;
     let total = 0, counted = 0;
+    const moved = {};
     rs.forEach((r, i) => {
       const decision = (r.decisionRole ?? "decider") === "decider";
       const shouldCount = decision ? !!r.cvrFired : !fit(r.running.level);
       const sw = shouldCount ? swapsBy(r.running.valuesWhenOpened, r.running.valuesAfter) : 0;
       total += sw; if (shouldCount) counted += 1;
+      if (shouldCount) for (const k of Object.keys(r.running.valuesAfter)) moved[k] = (moved[k] ?? 0) + r.running.valuesAfter[k] - r.running.valuesWhenOpened[k];
       const row = section.by_scenario[i];
       if (row.counted_as_a_conflict_step !== shouldCount || row.swaps !== sw) why.push(`${who}: scenario ${i + 1} counted ${row.counted_as_a_conflict_step}/${row.swaps}, by hand ${shouldCount}/${sw}`);
     });
-    const byHand = Math.round(100 * (1 - Math.min(1, total / 6)));
+    /* Since 2 October 2026: the order part (the swaps) and the difference part (the points moved), averaged. */
+    const orderByHand = Math.round(100 * (1 - Math.min(1, total / 6)));
+    const diffByHand = Math.round(100 - Math.min(100, Object.values(moved).reduce((a, d) => a + Math.abs(d), 0) / 4));
+    const byHand = Math.round((orderByHand + diffByHand) / 2);
     if (section.stability_all !== byHand || section.swaps_counted !== total || section.conflict_steps_counted !== counted) why.push(`${who}: ${section.stability_all} vs ${byHand} by hand`);
-    if (section.self_check.matches_the_saved_stability_all !== true || section.self_check.decisions_part_equals_stability_swaps !== true) why.push(`${who}: self_check ${JSON.stringify(section.self_check)}`);
-    if (section.stability_all > block5.stability) why.push(`${who}: Stability_all above Stability`);
+    if (section.value_order_stability_all !== orderByHand || section.value_difference_stability_all !== diffByHand) why.push(`${who}: parts ${section.value_order_stability_all}/${section.value_difference_stability_all} vs ${orderByHand}/${diffByHand} by hand`);
+    if (section.self_check.matches_the_saved_stability_all !== true || section.self_check.decisions_part_equals_stability_swaps !== true
+        || section.self_check.is_the_average_of_its_two_parts !== true) why.push(`${who}: self_check ${JSON.stringify(section.self_check)}`);
+    /* The ORDER part is never above Stability's order part (the combined score can be, since 2 October 2026). */
+    if (section.value_order_stability_all > block5.valueOrderStability) why.push(`${who}: Stability_all's order part above Stability's`);
+    if (head.value_order_stability_all !== orderByHand || head.value_difference_stability_all !== diffByHand
+        || major.stability.all_six_scenarios_value_order_stability !== orderByHand || major.stability.all_six_scenarios_value_difference_stability !== diffByHand) why.push(`${who}: the parts in the headline or the copy differ`);
     if (head.stability_all_score !== byHand || head.stability_all_was_measured !== (counted > 0) || head.stability_all_conflict_steps_counted !== counted) why.push(`${who}: headline ${head.stability_all_score}/${head.stability_all_was_measured}`);
     if (major.stability.all_six_scenarios_score !== head.stability_all_score || major.stability.all_six_scenarios_was_measured !== head.stability_all_was_measured) why.push(`${who}: the copy differs`);
     /* the top-value choices, by hand */
@@ -1699,8 +1715,51 @@ for (const [who, block5] of PEOPLE) {
     if (major.stability.was_measured !== false || major.stability.all_six_scenarios_was_measured !== true) why.push(`${who}: the copy's flags ${major.stability.was_measured}/${major.stability.all_six_scenarios_was_measured}, want false/true`);
   }
   gate("D67", why.length === 0, why.length === 0
-    ? "Stability_all: every step counted or not by the rule, every swap and the score recounted by hand, never above Stability, the self-check, the headline and the copy; top-value choices recounted from the fingerprints; a record without running fits rebuilt to the same score"
+    ? "Stability_all: every step counted or not by the rule, every swap, every point moved, both parts and the score recounted by hand, the order part never above Stability's, the self-check, the headline and the copy; top-value choices recounted from the fingerprints; a record without running fits rebuilt to the same score"
     : `Stability_all or the top-value choices are wrong: ${why.slice(0, 3).join(" | ")}`);
+}
+
+/* D69 - STABILITY'S TWO PARTS (2 October 2026, the researcher's "1-A, counted steps only, keep today's edges ... distributed
+   well"). Recounted by hand from each record's rows: the order part (swaps at the conflict steps), the difference part
+   (100 - the average points the four values moved there, added up per value), Stability = their rounded average; then
+   the headline (score, both parts, the average points moved, the rule's stamp), the copy in major_info_and_scores, and a
+   record that saved no parts (recounted from its rows to the same numbers). */
+{
+  const why = [];
+  const sign = (x) => (x > 0 ? 1 : x < 0 ? -1 : 0);
+  const keys = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+  for (const [who, block5] of PEOPLE) {
+    let before = Object.fromEntries(keys.map((k) => [k, block5.originalProfile.dimensions.find((d) => d.key === k).score]));
+    let swaps = 0;
+    const moved = Object.fromEntries(keys.map((k) => [k, 0]));
+    for (const r of block5.scenarioResults) {
+      const after = r.policySnapshotAfter;
+      if ((r.decisionRole ?? "decider") === "decider" && r.cvrFired) {
+        for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) {
+          const x = sign(before[keys[i]] - before[keys[j]]), y = sign(after[keys[i]] - after[keys[j]]);
+          if (x * y < 0) swaps += 1; else if (x !== y) swaps += 0.5;
+        }
+        for (const k of keys) moved[k] += after[k] - before[k];
+      }
+      before = after;
+    }
+    const order = Math.round(100 * (1 - Math.min(1, swaps / 6)));
+    const avgMove = keys.reduce((a, k) => a + Math.abs(moved[k]), 0) / 4;
+    const diff = Math.round(100 - Math.min(100, avgMove));
+    const value = Math.round((order + diff) / 2);
+    const head = db.buildHeadline(block5, null);
+    const major = db.buildMajorScores(block5, null, null, null, null);
+    if (block5.stability !== value || head.stability_score !== value) why.push(`${who}: Stability ${block5.stability}/${head.stability_score}, by hand ${value}`);
+    if (head.value_order_stability !== order || head.value_difference_stability !== diff) why.push(`${who}: parts ${head.value_order_stability}/${head.value_difference_stability}, by hand ${order}/${diff}`);
+    if (Math.abs(head.stability_average_points_moved - Math.round(avgMove * 10) / 10) > 1e-9 || head.stability_rule_version !== STABILITY_VERSION) why.push(`${who}: average moved ${head.stability_average_points_moved} vs ${avgMove}, stamp ${head.stability_rule_version}`);
+    if (major.stability.value_order_stability !== order || major.stability.value_difference_stability !== diff) why.push(`${who}: the copy's parts differ`);
+    const bare = { ...block5, valueOrderStability: undefined, valueDifferenceStability: undefined, stabilityVersion: undefined };
+    const h2 = db.buildHeadline(bare, null);
+    if (h2.value_order_stability !== order || h2.value_difference_stability !== diff || h2.stability_rule_version !== null) why.push(`${who}: a record without saved parts reads ${h2.value_order_stability}/${h2.value_difference_stability}`);
+  }
+  gate("D69", why.length === 0, why.length === 0
+    ? "Stability: the order part, the difference part and their average recounted by hand from every record's rows; the headline, the average points moved, the stamp and the copy; a record without saved parts recounted"
+    : `Stability's two parts are wrong: ${why.slice(0, 3).join(" | ")}`);
 }
 
 /* D66 - WHICH BUTTON TOOK THEM TO THE FEEDBACK (28 September 2026, the researcher's plan "Q5-yes"). The results

@@ -4,8 +4,12 @@
 **Authority:** the code. The Stability section of `src/experiment/block5CVR.ts` is the specification;
 this page restates it for reading away from the code. If the two ever disagree, the code is right
 and this page is stale.
-**Checked by:** `npm run validate:stability` (gates S1–S11) and `npm run report:stability` (every
+**Checked by:** `npm run validate:stability` (gates S1–S15) and `npm run report:stability` (every
 measured figure below).
+
+> **Since 2 October 2026 Stability has two parts** (section 12). Sections 1 to 11 describe what is now the ORDER part,
+> Value_Order_Stability, unchanged; the score itself is the average of that part and a DIFFERENCE part, with new level edges.
+> The figures in section 7 are the order part's.
 
 ---
 
@@ -271,3 +275,65 @@ the list of steps grows:
   the level depends on the step sizes (section 8, R7).
 - **Beside it, never shown:** the top-value choices (`analysis.top_value_choices`): how often the final choice did most for
   the #1 value brought into Block 5 (blind 1.08 of 6), and for the #1 or #2 (blind 2.17).
+
+## 12. Since 2 October 2026: two parts, averaged
+
+The researcher asked whether Stability could compare the values brought into Block 5 with the values after it, so that it
+would not depend on whether one value goes down alone or the other three go down together. His decision, after the studies
+below: "1-A, counted steps only, keep today's edges but make sure the level is distributed well".
+
+```
+(4) Moves     m_k = Σ ( value k after − value k before )        over the same conflict steps as (2), per value
+(5) Difference part   Value_Difference_Stability = round( 100 − (|m_1| + |m_2| + |m_3| + |m_4|) / 4 )
+(6) Order part        Value_Order_Stability = equation (3), unchanged
+(7) Stability         round( (order part + difference part) / 2 )
+```
+
+| Code | Equation |
+|---|---|
+| `differenceStabilityFromMoves(moves)` | (5) |
+| `combineStability(order, difference)` | (7) |
+| `computeStability` / `computeStabilityAll` | (4) to (7), returning `orderValue`, `differenceValue`, `averageMove` |
+| `COMBINED_STABILITY_EDGES`, `stabilityLevel` | the levels below; `levelOnSwapEdges` keeps today's (order part, three sensitivities) |
+
+**Why not the difference alone.** Before against after cannot see a back-and-forth: a participant who takes up a new value
+in every scenario ends near where they began. On the pretend participants the difference alone scored that flip-flopper ABOVE a
+one-time convert (82 against 75; the convert scored higher only 27 times in 100), counted keeping a second-best fit as change
+(83 instead of 100, the same as a random person), and scored somebody who keeps naming their #1 value below a random person
+(their order never changed; the value just rose). It is also section 4's distance in a new form. Averaged with the order part,
+which sees every change of direction, these do not survive: the flip-flopper 47 against the convert's 67.
+
+**Why both.** The four conditions bias the two parts in opposite directions. The order part is higher in APA_Only and Baseline
+(one value up and three down together: fewer swaps); the difference part is usually lower there (more points moved in total).
+Averaged they partly cancel: the largest gap between conditions for the same behaviour falls from 22 points to 13 (Stability_all
+17 to about 7; docs/MAJOR_SCORES_BY_CONDITION.md section 2).
+
+**The levels.** The same five words. Each edge is where a pretend participant sitting exactly on today's edge lands on the new
+score (the median over 2,000 profiles x 12 kinds x the four conditions):
+
+| Level | Today's edge (order part) | New edge (combined) |
+|---|---|---|
+| Held steady | 0 swaps (tested) | 94 |
+| Mostly steady | 1 swap (83) | 85 |
+| Shifted a little | 3 swaps (50) | 63 |
+| Shifted a lot | 5 swaps (17) | 49 |
+| Changed substantially | below | below 49 |
+
+The five levels then hold 39 / 12 / 23 / 12 / 14 in 100 (all kinds, all four conditions), against 44 / 12 / 19 / 12 / 13 for
+the order rule on today's edges. `npm run report:major-scores` derives them again on every run and stops if one drifts by more
+than a point.
+
+**How it behaves** (condition 1, 2,000 pretend people of each kind; Stability / Stability_all): always the best fit 100 / 100;
+true to their top value 92 / 91; corrected by APA 84 / 77; performance chaser 86 / 80; changes value once through APA 76 / 75,
+by keeping 67 / 66; random 71 / 61; a new value every scenario through APA 60 / 49, by keeping 47 / 41; always the worst fit 44 /
+40. The convert scores above the flip-flopper 84 times in 100 (order rule 89), a value follower above a random person 87
+(84), corrected by APA above a random person 77 (88).
+
+**The prediction** (`PREDICTION_VERSION` "2026-10-02-f") reads the combined score. The option it puts first cannot change; the
+average chance it gives the person's own scenario-6 pick moves by at most 0.2 points; and a higher Stability marks a person it
+guesses right more clearly: CVR+APA 61% against 36% for the people above and below the middle (order rule 54% against 43%),
+never worse in any condition.
+
+**Limits.** Stability_all can now be a little above Stability (about 5 in 100 runs), when scenario 5 or 6 moves a value back
+toward where it began; its order part never is. The difference part still reads the study's own step sizes (section 4 point 2),
+so compare groups. Never correlate Stability with either part.

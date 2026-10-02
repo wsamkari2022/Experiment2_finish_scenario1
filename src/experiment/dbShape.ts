@@ -55,7 +55,7 @@ import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
 import {
   ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, isPredictionTest, reflectionWasShown, resultCountsTowardsPerformance,
-  confidenceWeight, roundForRecord,
+  confidenceWeight, roundForRecord, computeStability, STABILITY_VERSION,
 } from "./block5CVR";
 import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
@@ -90,7 +90,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-01-baseline";
+export const SHAPE_VERSION = "2026-10-02-stability-two-parts";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -982,6 +982,18 @@ function sensitivityStabilityOf(
  * Block 5 since 8 September 2026 (Block5PublicEmergencySimulation, on completion). Nothing is recomputed,
  * so no score can change. null = a record without that detail (unfinished, or written before it existed).
  */
+const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+/** Stability recounted from the saved rows (since 2 October 2026), for its parts on a run that did not save them, and
+    for the average points moved. Null without rows or the profile brought into Block 5. */
+function stabilityRecount(b5: Record<string, unknown>): ReturnType<typeof computeStability> | null {
+  const results = resultsOf(b5);
+  const original = b5.originalProfile as Block5UserProfile | undefined;
+  if (!results.length || !original) return null;
+  const s = computeStability(results, original);
+  return s.level === "—" ? null : s;
+}
+
 function stabilityConflictStepsOf(b5: Record<string, unknown>): number | null {
   const detail = b5.stabilityDetail as { conflictSteps?: unknown } | undefined;
   return detail && typeof detail.conflictSteps === "number" ? detail.conflictSteps : null;
@@ -1009,9 +1021,16 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
        that date (analysis.vci_all rebuilds it from the saved record). */
     consistency_score_all_six: b5.vciAll ?? null,
     consistency_label_all_six: b5.vciAllLevel ?? null,
-    /* Stability is the four policy values only: swaps in their order at the conflict steps. */
+    /* Stability is the four policy values only. Since 2 October 2026 it is the AVERAGE of two parts, both beside it
+       (the researcher's names): the order part (swaps at the conflict steps, Stability's rule until that date) and the
+       difference part (100 - the average points the four values moved at those steps). Never correlate the score with
+       either part: it is made of them. A run without the saved parts gets them recounted from its rows. */
     stability_score: b5.stability ?? null,
     stability_label: b5.stabilityLevel ?? null,
+    value_order_stability: num(b5.valueOrderStability) ?? stabilityRecount(b5)?.orderValue ?? null,
+    value_difference_stability: num(b5.valueDifferenceStability) ?? stabilityRecount(b5)?.differenceValue ?? null,
+    stability_average_points_moved: stabilityRecount(b5)?.averageMove ?? null,
+    stability_rule_version: typeof b5.stabilityVersion === "string" ? b5.stabilityVersion : null,
     /* WAS STABILITY MEASURED AT ALL? (since 26 September 2026, audit G5). true = at least one conflict
        step was counted; false = none, so the score above is 100 by default and measures nothing; null =
        no stored detail. Read beside the score, never instead of it: filter on it before averaging
@@ -1023,6 +1042,9 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
        anything is worked out from the rows. It CONTAINS stability_score: compare the difference, never correlate. */
     stability_all_score: b5.stabilityAll ?? stabilityAllOf(b5)?.result?.value ?? null,
     stability_all_label: b5.stabilityAllLevel ?? stabilityAllOf(b5)?.result?.level ?? null,
+    /* Since 2 October 2026, as Stability: its two parts. */
+    value_order_stability_all: num(b5.valueOrderStabilityAll) ?? stabilityAllOf(b5)?.result?.orderValue ?? null,
+    value_difference_stability_all: num(b5.valueDifferenceStabilityAll) ?? stabilityAllOf(b5)?.result?.differenceValue ?? null,
     stability_all_was_measured: stabilityAllOf(b5)?.result?.measured ?? null,
     stability_all_conflict_steps_counted: stabilityAllOf(b5)?.result?.conflictSteps ?? null,
     /* The three sensitivities each have their own: how far each traveled on its 0-100 scale.
@@ -2720,13 +2742,19 @@ export function buildStabilityAllSection(block5: unknown): Record<string, unknow
   const stability = typeof b5.stability === "number" ? b5.stability : null;
   return {
     what_this_is:
-      "Stability's own rule over all six scenarios: at the moments the participant went against their best fit, how "
-      + "many pairs of their four values traded places, on the hidden running values behind VCI_all. Scenarios 1-4 "
-      + "count exactly as Stability does (a decision where the reflection ran); scenarios 5 and 6 count when the final "
-      + "choice was not one of the two best fits (no reflection runs there). 100 = no pair traded places.",
+      "Stability's own rule over all six scenarios, on the hidden running values behind VCI_all: at the moments the "
+      + "participant went against their best fit, how many pairs of their four values traded places (the order part) and "
+      + "how far the four values moved (the difference part); since 2 October 2026 the score is the average of the two. "
+      + "Scenarios 1-4 count exactly as Stability does (a decision where the reflection ran); scenarios 5 and 6 count "
+      + "when the final choice was not one of the two best fits (no reflection runs there). 100 = no pair traded places "
+      + "and no value moved.",
     rule_version: STABILITY_ALL_VERSION,
+    stability_rule_version: STABILITY_VERSION,
     stability_all: s.value,
     stability_all_label: s.level,
+    value_order_stability_all: s.orderValue,
+    value_difference_stability_all: s.differenceValue,
+    average_points_moved_at_the_counted_steps: s.averageMove,
     stability_scenarios_1_to_4: stability,
     stability_all_minus_stability: stability === null ? null : s.value - stability,
     was_measured: s.measured,
@@ -2740,15 +2768,19 @@ export function buildStabilityAllSection(block5: unknown): Record<string, unknow
       counted_as_a_conflict_step: x.counted,
       why: x.why,
       swaps: x.swaps,
+      points_moved: x.counted ? x.moves : null,
     })),
     self_check: {
       matches_the_saved_stability_all: typeof b5.stabilityAll === "number" ? b5.stabilityAll === s.value : null,
+      is_the_average_of_its_two_parts: s.value === Math.round((s.orderValue + s.differenceValue) / 2),
       decisions_part_equals_stability_swaps:
         typeof detail?.swaps === "number" ? detail.swaps === decisionSwaps : null,
     },
     how_to_read:
-      "stability_all is never above stability_scenarios_1_to_4 and equals it when neither scenario 5 nor 6 was counted: "
-      + "it CONTAINS Stability, so never correlate the two - compare stability_all_minus_stability. was_measured false "
+      "stability_all equals stability_scenarios_1_to_4 when neither scenario 5 nor 6 was counted. Its ORDER part is never "
+      + "above Stability's, but since 2 October 2026 the combined score can be a little above Stability, when a move in "
+      + "scenario 5 or 6 brought a value back toward where it began. It CONTAINS Stability, so never correlate the two - "
+      + "compare stability_all_minus_stability. was_measured false "
       + "means no step counted, so 100 means 'never tested', not 'held'. Steps in scenarios 5 and 6 are smaller "
       + "(+20 / -15) than a reflection's, and scenario 5 is judged on the running values after scenario 4's choice "
       + "(VCI_all's 'echo'). Like Stability, its absolute level depends on the step sizes: compare groups.",
@@ -3079,10 +3111,13 @@ export function buildMajorScores(
     /* 2 ------------------------------------------------------------------ stability */
     stability: {
       what_it_is:
-        "Whether the ORDER of the four policy values changed when the participant went against "
-        + "their best fit. Counted as swaps at the conflict steps, never as distance travelled.",
+        "Whether the four policy values stayed the same when the participant went against their best fit. Since 2 "
+        + "October 2026 the average of two parts: whether their ORDER changed (swaps at the conflict steps) and how far "
+        + "they MOVED there. Both parts are beside it; never correlate the score with either.",
       score: headline?.stability_score ?? null,
       label: headline?.stability_label ?? null,
+      value_order_stability: headline?.value_order_stability ?? null,
+      value_difference_stability: headline?.value_difference_stability ?? null,
       /* Copied from the headline (since 26 September 2026, audit G5): whether the score measured
          anything. A 100 with was_measured false means no reflection ever ran. */
       was_measured: headline?.stability_was_measured ?? null,
@@ -3094,6 +3129,8 @@ export function buildMajorScores(
       /* Stability_all (since 29 September 2026), copied from the headline. Shown beside Stability. */
       all_six_scenarios_score: headline?.stability_all_score ?? null,
       all_six_scenarios_label: headline?.stability_all_label ?? null,
+      all_six_scenarios_value_order_stability: headline?.value_order_stability_all ?? null,
+      all_six_scenarios_value_difference_stability: headline?.value_difference_stability_all ?? null,
       all_six_scenarios_was_measured: headline?.stability_all_was_measured ?? null,
       all_six_scenarios_conflict_steps_counted: headline?.stability_all_conflict_steps_counted ?? null,
       how_to_read_all_six:
