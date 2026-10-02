@@ -593,6 +593,11 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(sim, /\{straightToApa && \(\s*<Box[^>]*data-apa-main-value>\s*<Text[^>]*>\s*The option you chose serves \{vSpan\(optionMainValue\(option\), accent\)\} more than any of the other three values\./,
       "no box naming the value the chosen option serves most, or not only in APA_Only");
     need(sim, /\.\.\.\(apaOnlyCondition && originalOption \? \{ mainValueShown: optionMainValue\(originalOption\) \} : \{\}\)/, "the value the box named is not saved");
+    /* No "Go back and clear your answers?" warning in APA_Only (the researcher, 1 October 2026); still in the others. */
+    need(sim, /const leave = \(\) => \(straightToApa \? onBail\(\) : setConfirmBail\(true\)\);/, "APA_Only still shows the warning, or the others lost it");
+    if ((sim.match(/onClick=\{\(\) => setConfirmBail\(true\)\}/g) ?? []).length !== 0) why.push("a back button still opens the warning in every condition");
+    if ((sim.match(/onClick=\{leave\}/g) ?? []).length !== 2) why.push("the two back buttons do not both go through the rule");
+    if (!sim.includes("Go back and clear your answers?")) why.push("the other conditions lost the warning");
     /* The APA page itself is unchanged: its question, its logo, its list. */
     for (const keep of ["Which one value should the system give the most weight to for you?", "How sure are you about the value you picked?", '<MethodLogo method="apa" />', "Select as my final decision"]) {
       if (!sim.includes(keep)) why.push(`the APA page lost: ${keep}`);

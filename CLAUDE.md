@@ -149,6 +149,10 @@ unchanged. **Participants in condition 3 see it** (HOW_TO_ANALYZE 4.9).
   `apa.mainValueShown`; the database adds `value_the_page_said_the_option_serves_most` and `named_the_value_the_page_said`
   (the obvious question: did the box steer the value they named?). `SHAPE_VERSION` "2026-10-01-apa-only-main-value".
   Live: the sealed respirator's box said How much is gained; naming it listed the respirator itself; both saved.
+- **No "Go back and clear your answers?" warning in APA_Only** (the researcher: "remove the warning ... it will go back the
+  all options immediately without the warning message"): both back buttons ("Take me back to all options" and "None of
+  these - take me back to all options") leave at once (`leave` in APAPanel). The other conditions keep the warning. N15;
+  2 breaks, 2 caught; live: straight back to the six options.
 - **The results page says "Clarification shown" ("Q3-yes")** on those scenario cards, never "Reflection shown".
 - **Feedback (the researcher: "in APA_only, APA feedback question will appear but no CVR feedback questions"):** the APA
   questions appear after any APA visit; the CVR questions and the two-views questions never do (no reflection, no view).

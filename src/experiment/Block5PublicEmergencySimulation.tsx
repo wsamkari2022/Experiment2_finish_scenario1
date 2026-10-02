@@ -5322,6 +5322,9 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   const [section4, setSection4] = useState<LabeledOption | null>(null);
   // When true, show the "you'll lose your answers" warning instead of leaving immediately.
   const [confirmBail, setConfirmBail] = useState(false);
+  /* Going back to all the options. APA_Only (the researcher, 1 October 2026: "remove the warning") leaves at once; the
+     other conditions still ask "Go back and clear your answers?" first. */
+  const leave = () => (straightToApa ? onBail() : setConfirmBail(true));
 
   // The +20 to the lens that changed their mind — only when generated AND answered. Pending until commit.
   const framingAdjust = useMemo<FramingAdjust | null>(
@@ -5443,7 +5446,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
                 </Box>
               ))}
             </Stack>
-            <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" alignSelf="start" fontSize="xs" onClick={() => setConfirmBail(true)}>
+            <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" alignSelf="start" fontSize="xs" onClick={leave}>
               None of these — take me back to all options
             </Button>
           </Stack>
@@ -5622,7 +5625,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
             {unanswered} question{unanswered === 1 ? "" : "s"} left to answer
           </Text>
         )}
-        <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" fontSize="xs" onClick={() => setConfirmBail(true)}>
+        <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" fontSize="xs" onClick={leave}>
           Take me back to all options
         </Button>
       </HStack>
