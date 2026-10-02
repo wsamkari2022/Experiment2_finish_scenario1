@@ -1,6 +1,6 @@
 # Major scores by kind of participant
 
-> **Generated** by `npm run report:major-scores` on 2026-10-01, from code version `3c01e4a` plus changes not yet committed.
+> **Generated** by `npm run report:major-scores` on 2026-10-01, from code version `703ab8b` plus changes not yet committed.
 > Do not edit this page by hand: change `tools/report_major_scores.cjs` and run it again. **Run it after every change**
 > to an option number, a scoring rule, a step size, the planner or a scenario, and commit the new page with the change.
 
@@ -277,5 +277,13 @@ the Log, and the dated sections of CLAUDE.md):
 - **C7** (26 Sep 2026): the gap between the #1 and #2 values is saved. No score or card order changed.
 - **B3** (26 Sep 2026): the step sizes were tested at half and double size; every conclusion held
   (docs/BLOCK5_STEP_SIZE_SENSITIVITY.md). Nothing in the study changed.
+- **The four conditions** (1 Oct 2026): CVR_Only, APA_Only and Baseline differ from Block 5 on. Every number on THIS page
+  is condition 1 (CVR+APA, the full version); the other three are on docs/MAJOR_SCORES_BY_CONDITION.md (section 9).
 
 When a new change is made, add one line here (in `tools/report_major_scores.cjs`) and run the generator again.
+
+## 9. The four conditions
+
+This page is condition 1 (CVR+APA). **docs/MAJOR_SCORES_BY_CONDITION.md**, written by the same command, lets the same
+pretend people through all four conditions (two versions of Baseline and of APA_Only's random responder, as the
+researcher asked on 1 October 2026), with an explanation and an example after every table.

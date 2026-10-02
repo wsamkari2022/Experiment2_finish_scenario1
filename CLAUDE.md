@@ -206,6 +206,29 @@ sure" question, his idea) and "Q2-yes". Conditions 1-3 unchanged. **Participants
   0); no reflection or APA visit; in scenario 2 a good fit still read "This option fits your earlier priorities" with no
   question, and "Change my mind" moved nothing. The test browser was restored from a page that does not run the study.
 
+## The major scores in the four conditions (since 1 October 2026)
+
+The researcher's request: the same major-scores page for all four conditions, "after APA_Only and Baseline are built", with
+"your explanations and examples after each table". `npm run report:major-scores` now also writes
+**docs/MAJOR_SCORES_BY_CONDITION.md**: the 2,000 pretend people x 12 kinds of docs/MAJOR_SCORES_DISTRIBUTION.md through each
+condition (`tools/condition_sim.cjs`), with six columns: the four conditions plus the two extra versions he asked for
+("Q1: A and B", "Q3: A and B"; Q2-yes the "How sure" answers):
+
+- **Principle A** ("the same person, a different page"): each kind makes its condition-1 choices; only the page and its moves
+  change. **Principle B** ("the pages change behaviour"): a refusal needs a page that asks the person to think again, so in
+  Baseline (B) the three refusing kinds keep their first pick (B = A in CVR_Only and APA_Only).
+- **Random responder in APA_Only:** A every answer random; B half the time names the box's value and keeps its own option.
+- **Checks in the generator:** condition 1 reproduces the main page person by person (0 differences, or the command fails);
+  the three kinds that never pick a misfit are identical in all six columns; each B column changes only the kinds it should.
+  CVR_Only reproduces the scratch figures of 1 October 2026 person by person (0 differences, checked once).
+- **What it found** (HOW_TO_ANALYZE 4.12): VCI, VCI_all, performance and the top-value choices compare fairly between
+  conditions (at most about 1 point for VCI); **Stability does not on its own** (up to 22 points for the same behaviour,
+  because keeping a misfit after the reflection moves two values while the APA page and Baseline's Keep move one up and the
+  rest down together); "not measured" and the random line differ by condition; principle B shows that a real correction
+  effect moves VCI by about 60 points for a tempted person.
+- After every table the page explains what it shows and why, with an example from five traced pretend people (each shown
+  decision by decision in the columns that matter for it). Every number and every "larger / smaller" in that text is computed.
+
 ## Prolific: planned, not built (since 1 October 2026)
 
 The study will be recruited on Prolific, but only AFTER the four conditions are built and tested (the researcher's
@@ -1274,7 +1297,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:profile` | The Blocks 1-4 scoring that feeds Block 5 (`thresholdTree.ts`, `sensitivityCalibration.ts`). Until 24 September 2026 no check ran it at all |
 | `calibration:regenerate` / `calibration:check` | The recipe for the common ruler's tables. Regenerate after any raw-formula change; the check (also gate K1) fails if the tables and the formulas disagree |
 | `validate:position` | The position effect: a choice must move the fit number at least 3× more than the menu does. **Passes since 26 September 2026** (3.3× after Fix 6, 5.4× after Fix 7); it failed on purpose before (2.9×), which is why it still runs LAST in the chain |
-| `report:major-scores` | Writes docs/MAJOR_SCORES_DISTRIBUTION.md: VCI, VCI_all (section 1b, since 28 September 2026), Stability (with "not measured"), Stability_all and the top-value choices (sections 2b and 2c, since 29 September 2026), end-of-study performance and the separations for all twelve kinds of pretend participant, plus the card-order overlap, the position ratios and the prediction calibration, stamped with the code version. **Run it after every change** (since 26 September 2026) |
+| `report:major-scores` | Writes docs/MAJOR_SCORES_DISTRIBUTION.md and, since 1 October 2026, docs/MAJOR_SCORES_BY_CONDITION.md (the same pretend people in all four conditions, rules in `tools/condition_sim.cjs`, page in `tools/report_conditions_page.cjs`; it stops if condition 1 does not reproduce the main page person by person). The main page: VCI, VCI_all (section 1b, since 28 September 2026), Stability (with "not measured"), Stability_all and the top-value choices (sections 2b and 2c, since 29 September 2026), end-of-study performance and the separations for all twelve kinds of pretend participant, plus the card-order overlap, the position ratios and the prediction calibration, stamped with the code version. **Run it after every change** (since 26 September 2026) |
 | `report:step-sensitivity` | Audit B3: every value step at half and double size, all together and one family at a time, through the real code (`tools/step_scale_hook.cjs` scales `bump()`; the source is not touched). Every conclusion holds; Stability's absolute level does not (random choosers 36-77; the APA cap scales with the APA steps since 27 September 2026). Write-up: docs/BLOCK5_STEP_SIZE_SENSITIVITY.md |
 | `report:planner` | Planner against a weighting planner, on MADE-UP value scores — understates the overlap; use `report:planner-overlap` for the real figure |
 | `report:planner-overlap` | How often the first card is also the best-fit card, with pretend participants answering Blocks 1-4 (real code end to end): 50-62 in 100 steady, 41-52 random, chance about 17 (26 September 2026, after Fix 7). Since 26 September 2026 also how close each person's #1 and #2 values are (16 in 100 steady within 5 points; audit C7) |

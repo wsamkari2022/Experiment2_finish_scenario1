@@ -437,6 +437,9 @@ LIMITS = [
      "A wish for the decided option often scores higher on the running values (35 in 100), and 8 in 100 wishes for "
      "the best-looking card score below 100. You accepted both; they are stated."),
     ("Stability of 100 can mean \"never tested\".", "Use stability_was_measured, or report the groups apart."),
+    ("Stability is moved by each condition's own rules.",
+     "The same behaviour can score up to about 22 points apart between conditions (docs/MAJOR_SCORES_BY_CONDITION.md, "
+     "HOW_TO_ANALYZE 4.12); VCI moves about 1 point. Compare Stability inside a condition, or against that page's gaps."),
     ("Stability's level depends on the step sizes.", "Report Stability as group comparisons, never one person's level word."),
     ("The position headline cannot tell a real role-switcher from a random chooser.",
      "Report it as a description beside VCI, and lead with the scenario 4 / 5 pair."),

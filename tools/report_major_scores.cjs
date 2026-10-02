@@ -18,6 +18,9 @@
  *   Section 5      the text of `npm run report:planner-overlap` (pretend people who answer Blocks 1-4).
  *   Section 6      the ratio lines of `npm run validate:position`.
  *   Section 7      the summary and calibration of `npm run validate:prediction`.
+ *   Section 9      a pointer to docs/MAJOR_SCORES_BY_CONDITION.md, which this run also writes (tools/report_conditions_page.cjs,
+ *                  the rules in tools/condition_sim.cjs): the same pretend people in each of the four conditions, since
+ *                  1 October 2026.
  * Seeded throughout: the same code gives the same page (only the date and version line change).
  */
 const path = require("node:path");
@@ -33,7 +36,7 @@ const { VCI_ALL_LEVELS } = require(path.join(ROOT, ".sim-build", "block5VciAll.j
 /* ------------------------------------------------------------------ the version line */
 const git = (args) => { try { return execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim(); } catch { return null; } };
 const head = git(["rev-parse", "--short", "HEAD"]) ?? "unknown";
-const dirty = (git(["status", "--porcelain"]) ?? "").split("\n").filter((l) => l.trim() && !l.includes("MAJOR_SCORES_DISTRIBUTION.md")).length > 0;
+const dirty = (git(["status", "--porcelain"]) ?? "").split("\n").filter((l) => l.trim() && !l.includes("MAJOR_SCORES_DISTRIBUTION.md") && !l.includes("MAJOR_SCORES_BY_CONDITION.md")).length > 0;
 const today = new Date();
 const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
@@ -253,8 +256,19 @@ line("- **G5** (26 Sep 2026): the record says whether Stability measured anythin
 line("- **C7** (26 Sep 2026): the gap between the #1 and #2 values is saved. No score or card order changed.");
 line("- **B3** (26 Sep 2026): the step sizes were tested at half and double size; every conclusion held");
 line("  (docs/BLOCK5_STEP_SIZE_SENSITIVITY.md). Nothing in the study changed.");
+line("- **The four conditions** (1 Oct 2026): CVR_Only, APA_Only and Baseline differ from Block 5 on. Every number on THIS page");
+line("  is condition 1 (CVR+APA, the full version); the other three are on docs/MAJOR_SCORES_BY_CONDITION.md (section 9).");
 line("");
 line("When a new change is made, add one line here (in `tools/report_major_scores.cjs`) and run the generator again.");
+line("");
+line("## 9. The four conditions");
+line("");
+line("This page is condition 1 (CVR+APA). **docs/MAJOR_SCORES_BY_CONDITION.md**, written by the same command, lets the same");
+line("pretend people through all four conditions (two versions of Baseline and of APA_Only's random responder, as the");
+line("researcher asked on 1 October 2026), with an explanation and an example after every table.");
 
 fs.writeFileSync(OUT, L.join("\n") + "\n");
 console.log(`  wrote ${path.relative(ROOT, OUT)} (${L.length} lines) from code ${head}${dirty ? " + uncommitted changes" : ""}`);
+const byCondition = require("./report_conditions_page.cjs").writeConditionsPage({ root: ROOT, head, dirty, date, mainResults: res });
+console.log(`  wrote ${byCondition.file} (${byCondition.lines} lines); condition 1 against this page: ${byCondition.cond1Diff} differences`);
+if (byCondition.cond1Diff !== 0) { console.error("  CONDITION 1 DOES NOT REPRODUCE THIS PAGE - the condition simulation has drifted"); process.exit(1); }
