@@ -1,6 +1,6 @@
 # Major scores by kind of participant
 
-> **Generated** by `npm run report:major-scores` on 2026-10-02, from code version `8f6b216` plus changes not yet committed.
+> **Generated** by `npm run report:major-scores` on 2026-10-02, from code version `07ff7a5` plus changes not yet committed.
 > Do not edit this page by hand: change `tools/report_major_scores.cjs` and run it again. **Run it after every change**
 > to an option number, a scoring rule, a step size, the planner or a scenario, and commit the new page with the change.
 

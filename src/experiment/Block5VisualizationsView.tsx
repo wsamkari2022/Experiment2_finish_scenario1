@@ -185,9 +185,10 @@ export function Block5VisualizationsView({ results, tab }: Props) {
   /*
    * WHY THE SENTENCE ABOUT WHAT THIS MEASURES IS NOT DECORATION.
    *
-   * Stability is DESCRIPTIVE, not an achievement. It reports whether the ORDER of the participant's
-   * priorities changed at the moments they chose against their best fit, and a bare number out of
-   * 100 is read as a grade by everyone who sees one. A participant who changed their mind once, for
+   * Stability is DESCRIPTIVE, not an achievement. It reports whether the participant's four values stayed the same at
+   * the moments they chose against their best fit - since 2 October 2026 two things averaged: whether their ORDER
+   * changed and how far they MOVED (block5CVR.ts) - and a bare number out of 100 is read as a grade by everyone who
+   * sees one. A participant who changed their mind once, for
    * good reasons, scores lower than one who never did - and must not read that as failing.
    *
    * It also does not promise that the two shapes on the radar match. Keeping a fitting option

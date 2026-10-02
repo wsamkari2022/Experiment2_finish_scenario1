@@ -274,6 +274,7 @@ console.log(`  wrote ${path.relative(ROOT, OUT)} (${L.length} lines) from code $
 const byCondition = require("./report_conditions_page.cjs").writeConditionsPage({ root: ROOT, head, dirty, date, mainResults: res });
 console.log(`  wrote ${byCondition.file} (${byCondition.lines} lines); condition 1 against this page: ${byCondition.cond1Diff} differences`);
 if (byCondition.cond1Diff !== 0) { console.error("  CONDITION 1 DOES NOT REPRODUCE THIS PAGE - the condition simulation has drifted"); process.exit(1); }
+if (byCondition.partsDiff !== 0) { console.error(`  STABILITY IS NOT THE AVERAGE OF ITS TWO PARTS for ${byCondition.partsDiff} pretend people`); process.exit(1); }
 /* Since 2 October 2026: Stability's level edges, derived again from the same people (MAJOR_SCORES_BY_CONDITION.md section 7). */
 console.log(`  Stability's level edges derived again: ${byCondition.edges}`);
 if (!byCondition.edgesOk) { console.error("  STABILITY'S LEVEL EDGES HAVE DRIFTED - update COMBINED_STABILITY_EDGES in block5CVR.ts (and its docs)"); process.exit(1); }

@@ -13,6 +13,11 @@ paper, with the field for each, the test, and the hypotheses to freeze first.
 effect were absent. Most of the traps below are cases where the absent-effect version and the
 present-effect version produce the same number.
 
+> **Updated 2 October 2026.** The study now has **four conditions** (1 October 2026), and **section 9** says what
+> differs between them, what each records and how to analyse them. **Stability** is now the average of two parts (its
+> order and how far the values moved; sections 3 and 4.12), and a four-condition audit corrected what a few rows record
+> (4.9, 9.6).
+
 > **Updated 15 September 2026.** Three new things can be analyzed that could not be before:
 > **`analysis.alignment_records`** (the fit and both reflection steps, one row per scenario),
 > **`analysis.position_effect.between_scenarios`** (every scenario against every other one), and
@@ -42,6 +47,10 @@ in every way and has its own section below.
 The block's designed manipulation is **who carries the cost** (`stakePosition`), and it is the only
 thing deliberately varied across the five emergency scenarios.
 
+**Since 1 October 2026 there is a second manipulation, between participants: the condition.** Each participant is in
+one of four (`condition_type`: CVR+APA, CVR_Only, APA_Only, Baseline). They share Blocks 1-4 and differ only in what
+happens after a choice that goes against the participant's best fit in scenarios 1-4. Section 9 has the full table.
+
 ---
 
 ## 2. Choosing your sample
@@ -63,6 +72,10 @@ Then decide, in advance and in writing, what to do about `quality`:
 | `quality.scenarios_under_15_seconds` | Scenarios clicked through |
 | `quality.compensation_eligible` | The combined verdict |
 
+**Group every comparison by `condition_type`** (section 9.2). `condition_source` says how the condition was given:
+`landing_page` (the balanced count), `address` (a tester who opened a condition on purpose) or `random_offline` (no
+server). A record with no condition was made before 1 October 2026 and ran condition 1.
+
 **`compensation_eligible` is a payment decision, not an analysis decision.** Do not silently use it
 as an exclusion rule. Decide your own criteria, state them, and report how many participants each
 one removed. A paper that reports one N and no exclusion table invites the question of what was
@@ -76,6 +89,8 @@ dropped.
 |---|---|---|
 | **VCI (consistency)** | Did your choices match your values, judged as they stood at the time? | `headline.consistency_score` |
 | **Stability** | Did your values stay the same when you went against your best fit? Since 2 October 2026 the average of two parts: did their order change, and how far did they move | `headline.stability_score` (parts: `value_order_stability`, `value_difference_stability`) |
+| **Condition** | Which version of Block 5 did this participant meet? | `condition_type` (section 9) |
+| **The condition's own page** | Did they meet it, and what did they do there? | `analysis.alignment_records.by_scenario[i]`: `cvr`, `apa`, `cvr_rejection_page`, `baseline_confirm`; `telemetry` (9.3) |
 | **Performance** | How much outcome quality did your **decisions** capture? Scenarios 1-4 only since 25 September 2026: a wish decides nothing, and scenario 6 scores 50 for every rule | `headline.performance_captured` |
 | **Position effect** | Did you choose differently depending on who carried the cost? | `analysis.position_effect` |
 | **Position, pair by pair** | How far apart were these two particular choices — alone against with dependents, say? | `analysis.position_effect.between_scenarios` |
@@ -327,6 +342,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 29 September 2026 | A refresh, or a new browser or device, now continues Block 5 at the unfinished scenario (it restarted at scenario 1) and continues Blocks 2 and 3 where they stopped (Block 2 restarted). A half-done Block 5 scenario starts again and its row carries `restartedAfterLeaving`. A browser or tab that is no longer the participant's shows "This study is open somewhere else" / "open in another tab" and stops. No score changes |
 | 29 September 2026 | The results page shows a Stability_all card beside Stability (Stability over all six scenarios), and the Stability card now says it covers scenarios 1-4. Performance spans the full width under the four. No other score or screen changes |
 | 29 September 2026 | The results page is redesigned, and the charts move after the feedback. The results page opens with "What your results show" (what the first parts measured, what the six scenarios measured, and that the scores compare the two), then shows the scores in three colored boxes: value alignment (VCI and VCI_all, "We call it your value consistency"), stability (Stability and Stability_all, "who you were before the scenarios with who you became", with "Not tested" when no moment tested it) and performance. Then come the four values before and after the scenarios, the "One last step" card, every scenario as a compact card (its title, the place the participant stood, the choice, the label, "Reflection shown" instead of "CVR shown", "Kept after reflection", Fit, and the note; scenario 6 says "our software" instead of "the MPF"), and a note naming what the thank-you page will show. The "View your results as charts" button is gone: the charts are on the thank-you page, after the feedback, in five tabs ("Your values", "Your choices", "Who carried the cost", "Our predictions", "Your first answers"). A feedback answer can therefore no longer follow a look at the charts. `analysis.results_page` lost its chart fields. No score changes |
+| 2 October 2026 | **The four-condition audit:** a scenario card now says "Reflection shown" when the reflection was shown and the participant then went back to a good fit (most often condition 2, after the CVR Rejection page); in condition 3 a card says "Clarification shown" also when the participant went back from the APA page to a good fit, and a misfit confirmed on that page reads "This went against your usual values. The clarification page opened, and this is the option you confirmed there." (it said "you chose to reconsider", which was untrue there). A second view opened before going back now counts for the two-views feedback questions and the results page's sentence about it. Nothing else on screen changed; in the data, `cvr.fired` and `telemetry.cvrTriggered` are true on those rows, and Baseline's page visits are counted (9.3, 9.6) |
 | 2 October 2026 | **Stability and Stability_all, every condition:** the score is now the average of the old swap count (the order part) and how far the four values moved at the same steps (the difference part), with the same five words on new edges (94 / 85 / 63 / 49), so participants see different Stability numbers and often a different level word. The results page's stability box says "It looks at two things: did your four values keep their order, and how far did they move? 100 = no two values swapped places and none moved."; the before-and-after card "Stability watches this order, and how far the numbers moved."; the charts' caption and radar note say the same. The scenario-6 prediction reads the new score (its chances sharpen or flatten slightly; the option it puts first never changes) |
 | 1 October 2026 | **Condition 4 (Baseline) only:** a misaligned choice opens the confirmation page a good fit gets (no reflection, no person, no APA page), with its own first sentence, "Before you confirm, take a moment with what this option gives up." (a good fit still reads "This option fits your earlier priorities"), and "How sure are you about this choice?" (1-5), needed before keeping it. Keeping it moves the four values: +30 to the value the option serves most and -10 (misaligned) or -15 (strongly misaligned) to each other one, all x 0.6-1.0 by "how sure"; each such keep counts as a Stability step; the stakeholder, directness and context scores never move; the results page shows no reflection badge and says "This went against your usual values, and you kept it."; no CVR or APA feedback questions. Until this row, Baseline ran the full version (condition 1). Conditions 1, 2 and 3 unchanged |
 | 1 October 2026 | **Condition 3 (APA_Only) only:** a misaligned choice opens the APA page at once: no reflection page and no person speaking; the APA page shows only its value question (with "How sure"), the options built on that value and the confirm (no two-situations table, no "which view" question), and opens with its own sentence: "This step just helps the system represent your priorities the way you truly mean them. There are no right or wrong answers here." Under it, a box: "The option you chose serves X more than any of the other three values" (X saved as apa.mainValueShown); going back to all the options needs no confirmation (no "Go back and clear your answers?" warning) The stakeholder, directness and context scores never move; each APA visit counts as a Stability step; the results page says "Clarification shown"; the feedback asks the APA questions but never the CVR or two-views questions. Conditions 1, 2 and 4 unchanged |
@@ -368,7 +384,8 @@ pretend people through all four, and finds (figures of 1 October 2026; the page 
   difference part, which the conditions usually push the other way, and the gap is 13 points (Stability_all about 7).
   Still compare Stability inside a condition, or between conditions against the gaps on that page.
 - **"Not measured" depends on the condition too.** Going back and taking a good fit (CVR_Only, Baseline) is not a Stability
-  step; an APA visit always is (APA_Only). So the share with `stability_was_measured: false` differs by design.
+  step; a choice confirmed on the APA page always is (APA_Only). So the share with `stability_was_measured: false`
+  differs by design. Section 9.4 has the whole comparison table.
 - **The random line differs:** a random chooser's VCI is about 57 in CVR+APA, 60 in CVR_Only and Baseline, and 57-63 in
   APA_Only, because each page changes what a random person ends with. Do not use 50 as "chance" for any condition.
 - **The stakeholder, directness and context stabilities** exist only in CVR+APA and CVR_Only ("not measured" in the other
@@ -553,6 +570,7 @@ points. False means the recomputation has drifted and the whole section is suspe
 | Accuracy × self-recognition, 2×2 or scatter | The interesting MPF result | Neither axis means much alone |
 | Choice by display position in scenario 6 | The order-effect check | A flat line here is a result worth reporting |
 | Time per stage | Where the session went | Scenario 6 *is* included in the time chart, unlike every other chart |
+| The conditions | Five figures for comparing them | Section 9.7 |
 
 **Two rules for every figure in this study.**
 
@@ -575,6 +593,8 @@ differ without checking what changed.**
 | (none) | **The document carries no stamp of the study code's version**: `SHAPE_VERSION` lives only in the browser's sync state (found 27 September 2026; an earlier version of this table listed a `shapeVersion` field that does not exist). Date records by `completed_at` against the dated tables (4.9, CLAUDE.md) |
 | `calibrationVersion` | The common ruler that makes the seven sensitivities comparable |
 | `analysis.scenario6_mpf_test.rule_version` | The MPF prediction rule |
+| `headline.stability_rule_version` | Since 2 October 2026: the Stability rule (the order part and the difference part averaged); absent before |
+| `condition_type`, `condition_source` | Since 1 October 2026: the condition and how it was given (section 9) |
 | `blocks.feedback_answers.schemaVersion` | Which feedback questions existed |
 | `consent.version` | Which consent text they agreed to |
 
@@ -582,7 +602,9 @@ These commands regenerate the study's own figures from the real scoring code:
 
 ```bash
 npm run validate:block5       # the scoring model: champions, domination, CVR content, planner
-npm run validate:stability    # Stability (swaps) and the three sensitivity stabilities
+npm run validate:stability    # Stability (its order part, its difference part, their average) and the three sensitivity stabilities
+npm run validate:conditions   # the four conditions: the balance, every condition's page, what each records
+npm run report:major-scores   # every major score by kind of pretend participant, and the same people in all four conditions
 npm run validate:prediction    # the MPF: seven gates plus a calibration study
 npm run report:stability      # Stability by kind of participant, and swaps against distance
 ```
@@ -615,3 +637,141 @@ State these in the limitations section rather than waiting to be asked.
    no role appears twice, so the check that separates them cannot run (4.4).
 9. **A close #1 and #2 value decides the card order as firmly as a clear one** (audit C7): the gap is
    saved; in pretend participants about 16 in 100 are within 5 points (4.7).
+10. **The conditions act only on the participants who choose against their best fit**, and only at those moments: a
+    participant who always chooses a good fit meets the same study in all four (9.1).
+11. **Stability is not perfectly comparable between conditions**: the conditions move values by different rules, so the
+    same behaviour can score up to about 13 points apart (9.4, docs/MAJOR_SCORES_BY_CONDITION.md).
+
+---
+
+## 9. The four conditions: what differs, what is recorded, and how to analyse them
+
+Since 1 October 2026 every participant is in one of four conditions. This section is everything an analyst needs to
+compare them. The design, in the researcher's words: four conditions that share Blocks 1-4 and differ from Block 5 to
+the end - **1 CVR+APA** (the full version), **2 CVR_Only**, **3 APA_Only**, **4 Baseline** (no CVR or APA).
+
+### 9.1 What differs, and what does not
+
+Blocks 1-4, the wish (scenario 5), the rule (scenario 6), the card order, the scores' rules, the results page's layout
+and the feedback page are the same in all four. **Only what happens after a misaligned or strongly misaligned choice in
+one of the four decisions (scenarios 1-4) differs.** A good-fit choice gets the same confirmation page everywhere.
+
+| | 1 CVR+APA | 2 CVR_Only | 3 APA_Only | 4 Baseline |
+|---|---|---|---|---|
+| **A misfit opens** | the reflection (two views), then the person speaking | the same | the APA page at once (no reflection, no person), with its own opening sentence and a box naming the value the option serves most | the confirmation page a good fit gets, with its own first sentence and "How sure are you about this choice?" |
+| **Keeping the misfit moves** | +30 to the value it serves, −20 to the value it gives up most, person ±25 | the same | naming the option's own value on the APA page: +30 × sure to it, −10 × sure to each other value | "Keep": +30 × sure to the value it serves most, −10 (misaligned) or −15 (strongly misaligned) × sure to each other value |
+| **Refusing / going back** | the APA page: name a value, how sure, pick from its list (+30 × sure, −10 × sure each, person ±25, the view that moved them +20 × sure) | the CVR Rejection page: no question, one button back; first visit in a scenario moves the person score ±25 and the last view +20 (only if both views were seen); then they choose again | "Take me back to all options" (no warning) | "Change my mind" |
+| **A Stability step** | a misfit kept after the reflection, or a choice confirmed on the APA page | a misfit kept after the reflection | a choice confirmed on the APA page | a misfit kept on the confirmation page |
+| **Stakeholder, directness, context stabilities** | measured | measured | **not measured** (never shown, never moved) | **not measured** |
+| **Feedback: CVR questions** | after a reflection | after a reflection | never | never |
+| **Feedback: APA questions** | after an APA page | never | after an APA page | never |
+| **Feedback: two-views questions** | after a second view was opened | the same | never | never |
+| **Results page card** | "Reflection shown", "Kept after reflection" | "Reflection shown", "Kept after reflection" | "Clarification shown"; a confirmed misfit's note: "The clarification page opened, and this is the option you confirmed there." | no badge; a kept misfit's note: "This went against your usual values, and you kept it." |
+
+**The single most important fact for the analysis:** a participant who never chooses a misfit in scenarios 1-4 meets
+exactly the same study in all four conditions. The conditions can only act on the people who choose against their best
+fit, and only at those moments. Count, per condition, how many participants ever met their condition's page (9.3)
+before reading any difference between conditions as the pages' effect.
+
+### 9.2 Who is in which condition, and how they got there
+
+| Field | What it says |
+|---|---|
+| `condition_number`, `condition_type` | 1-4 and its name (`CVR+APA`, `CVR_Only`, `APA_Only`, `Baseline`). Set ONCE by the server, never changed; also beside the demographic answers (`blocks…vrds_demographics.conditionNumber` / `conditionType`) |
+| `condition_source` | `landing_page` (the server's balanced count gave it), `address` (somebody opened `?condition=...` on purpose: a tester), `random_offline` (no server; local testing). Only `landing_page` is counted for balance |
+| `condition_assigned_at` | When it was given |
+| `major_info_and_scores.condition` | A copy, with `counted_for_balance` |
+
+A record without these fields was made before 1 October 2026 and ran condition 1. The landing page gives the condition
+with the fewest people (finished, plus still working in the last 2 hours, plus arrived in the last 30 minutes), so the
+finished numbers come out about equal; the live counts are at `/api/conditions/report`.
+
+### 9.3 What each condition's page records
+
+Everything below is per scenario, in `analysis.alignment_records.by_scenario[i]` (field dictionary:
+HOW_TO_READ_MY_DATABASE.md) and in the raw row's `telemetry` (`blocks.block5_emergency_scenarios.scenarioResults[i]`).
+
+| What you want | Field | Conditions |
+|---|---|---|
+| Was the reflection shown in this scenario? | `cvr.fired` (since the audit of 2 October 2026 also when the participant then went back to a good fit) | 1, 2 |
+| Did this scenario count for Stability? | `cvr.counted_as_a_stability_step` | all |
+| What happened on the APA page | `apa` (`ran`, the value named, how sure; in 3 also `value_the_page_said_the_option_serves_most` and `named_the_value_the_page_said`) | 1, 3 |
+| Every CVR Rejection page visit, and the moves of the first | `cvr_rejection_page` (`shown`, `visits`, `every_visit[]`: option refused, views seen, the reflection answer, whether the person moved them, seconds) | 2 |
+| Baseline's page | `baseline_confirm` (`kept`, `how_sure_1_to_5`, the steps asked for, `page_opened_times`, `changed_their_mind_times`) | 4 |
+| How often each page opened, and was left | `telemetry.cvrVisits`, `apaVisits`, `cvrRejectionVisits`, `baselineConfirmVisits`, `baselineConfirmBackouts`, `cvrBackouts`, `apaBackouts` | as the page exists |
+| Was the second view opened (at any point) | `cvr.second_lens_was_generated` (since the audit: also a view opened before going back), `telemetry.secondViewOpened` | 1, 2 |
+| Did the participant end on a different option than their first pick | `cvr.changed_their_choice` (first pick against final) | all |
+| Every value move, with its reason in words | `analysis.value_moves_asked_for_and_made` (reasons "CVR Rejection page: ...", "Baseline confirm: ...", "changed their mind: ...") | all |
+
+Per participant: the totals in `analysis.alignment_records.totals` (`times_reflection_fired`, `times_clarification_ran`,
+`times_cvr_rejection_page_shown`, `times_kept_misaligned_on_the_baseline_confirm_page`,
+`times_the_baseline_confirm_page_opened`), and the feedback record's Block 5 summary, which carries each scenario's
+`cvrVisits`, `apaVisits`, `cvrRejectionVisits`, `baselineConfirmVisits` and `secondViewOpened`.
+
+### 9.4 Which measures compare fairly between conditions
+
+`docs/MAJOR_SCORES_BY_CONDITION.md` (written by `npm run report:major-scores`) lets the same 2,000 pretend people x 12
+kinds of chooser through all four conditions, so any difference there comes from the conditions' own rules, not from
+behaviour. Read it before comparing real conditions. In short (figures of 2 October 2026):
+
+| Measure | Fair between conditions? | Why |
+|---|---|---|
+| VCI, VCI_all | **Yes** - the same behaviour moves at most about 1 point | They read the choices, and the choices are what the conditions change |
+| Performance, top-value choices | **Yes** - at most about 4 points / 0.6 of 6, only where a final choice is made differently | They read the final choices only |
+| Stability, Stability_all | **Mostly** - up to 13 points (Stability) and about 7 (Stability_all) for the same behaviour | The conditions move values by different rules. Since 2 October 2026 Stability averages an order part (higher in 3 and 4) with a difference part (usually lower there), which halves the gap; compare against the gaps on that page (4.12) |
+| The three sensitivity stabilities | **Only 1 against 2** | "Not measured" in 3 and 4 |
+| "Not measured" share of Stability | **No, by design** | Going back to a good fit is not a step (2, 4); a choice confirmed on the APA page always is (3) |
+| A random chooser's VCI | **Differs**: about 57 (1), 60 (2, 4), 57-63 (3) | Each page changes what a random person ends with; never use 50 as "chance" here |
+| Card order, the position check | **Identical** | They read the values brought into Block 5, which Blocks 1-4 make the same way everywhere |
+| The scenario-6 prediction | Its favourite works the same; its confidence follows VCI and Stability | (5.4) |
+
+### 9.5 Analyses that answer the condition questions
+
+These are the analyses the design supports. Which ones go into the paper, and with which exclusion rules, is the
+researcher's decision after the experiment.
+
+1. **Who met their condition's page.** Per condition: how many participants ever opened it, how many times, and what
+   they did there (kept / went back / named which value). Without this, a null difference cannot be told from a page
+   nobody met.
+2. **VCI and VCI_all by condition** - distributions, not only means, each against its own condition's random line
+   (9.4). The cleanest comparison of whether the pages change how well choices follow values.
+3. **Stability by condition, with its two parts** (`value_order_stability`, `value_difference_stability`): report the
+   parts beside the score, filter on or split by `stability_was_measured`, and read any difference against the
+   mechanical gap on the conditions page. **Never correlate Stability with either part** (it is their average).
+4. **Changing the choice after the page.** `cvr.changed_their_choice` and first-against-final pick, per condition and
+   per scenario: how often each page led to a different option, and whether that option fit better (its label).
+5. **How sure, where it is asked** (conditions 1 and 3 on the APA page, 4 on the confirmation page): its distribution,
+   and whether surer people moved further (it scales the moves).
+6. **APA_Only's box** (`named_the_value_the_page_said`): how often people named the value the box showed. **Trap:**
+   naming it is also how a participant keeps their own option, so a high share is expected and is not, on its own,
+   evidence of a value.
+7. **Feedback by condition.** Compare only the questions every condition could see (the design and experience
+   sections); the CVR questions compare 1 with 2, the APA questions 1 with 3; Baseline answers neither.
+8. **The prediction by condition** (scenario 6): accuracy and calibration per condition (5.4), knowing its confidence
+   reads VCI and Stability.
+
+### 9.6 Traps that belong to the conditions
+
+- **"Was the reflection shown" and "did it count for Stability" are two different fields** (`cvr.fired`,
+  `cvr.counted_as_a_stability_step`). APA_Only and Baseline have Stability steps with no reflection; conditions 1 and 2
+  have reflections that were followed by a good fit and so are not steps.
+- **Records made before the audit (2 October 2026)** read `cvr.fired: false` when the reflection was shown and the
+  participant then went back to a good fit (most often condition 2), did not keep a second view opened before going back,
+  and did not count Baseline's page. Date records by `completed_at`.
+- **Records made before 2 October 2026** have Stability as the order part alone; `headline.stability_rule_version`
+  says which rule made the score. Do not pool.
+- **CVR_Only's page moves the person score inside the scenario**, so a second reflection in the same scenario opens on
+  moved values.
+- **Baseline's strongly misaligned keep lowers the four values overall** (+30, three times −15): compare their ORDER
+  across conditions, not their sum.
+- **`condition_source: "address"`** marks a tester who opened a condition on purpose.
+
+### 9.7 Figures worth building for the conditions
+
+| Figure | What it shows | Watch out for |
+|---|---|---|
+| VCI by condition, distributions side by side | Whether the pages change how well choices follow values | Draw each condition's own random line (9.4) |
+| Stability by condition, with its order and difference parts | Which part moves | Draw the mechanical gap from the conditions page as a reference band |
+| A funnel per condition: chose a misfit → page opened → kept / went back → final label | What people did at their condition's page | One funnel per condition; the pages differ, so do not stack them |
+| "How sure" by condition (APA page against Baseline's page) | Whether the two "how sure" questions are answered alike | Different pages ask it after different things |
+| APA_Only: named value against the box's value | How often the box was followed | Naming it is also the way to keep the option (9.5) |

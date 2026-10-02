@@ -857,7 +857,8 @@ export type APAOutcome = "committed" | "exited" | "none";
  * pure observation counters + timestamps — they never change the decision logic or scoring.
  */
 export interface Block5ScenarioTelemetry {
-  cvrTriggered: boolean;     // the chosen path showed a CVR vignette at least once
+  cvrTriggered: boolean;     // a CVR vignette was shown in this scenario (since the audit of 2 October 2026 also when
+                             // the participant then went back to a good fit; before, only the final path's)
   apaTriggered: boolean;     // the APA panel opened at least once
   cvrVisits: number;         // times the CVR vignette was shown (incl. re-entries)
   apaVisits: number;         // times the APA panel opened
@@ -880,6 +881,10 @@ export interface Block5ScenarioTelemetry {
      numbers keep meaning "the APA page". Optional: absent in the other conditions and on older rows. */
   cvrRejectionVisits?: number;  // times the CVR Rejection page opened
   cvrRejectionDwellMs?: number; // time on it
+  /* The four-condition audit, 2 October 2026. Absent when false / zero. */
+  secondViewOpened?: boolean;        // the second view was opened at some point in this scenario (any page, any path)
+  baselineConfirmVisits?: number;    // condition 4: times a misaligned choice opened the confirmation page with "How sure"
+  baselineConfirmBackouts?: number;  // condition 4: times "Change my mind" left that page
 
   /**
    * THE MORAL COMMITMENT FUNCTION, AS EXPOSURE RATHER THAN AS A SCORE.

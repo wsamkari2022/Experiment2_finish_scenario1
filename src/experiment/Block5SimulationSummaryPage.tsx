@@ -16,6 +16,19 @@
  *      tall boxes.
  *   6. What they will see after the feedback: the charts moved to the thank-you page (JourneyTabs, "Q1-A").
  * The charts button and the charts view are gone from this page.
+ *
+ * WHAT A SCENARIO CARD SAYS, CONDITION BY CONDITION (conditions.ts; the four-condition audit, 2 October 2026)
+ *   "Reflection shown"      the reflection was shown in that scenario (conditions 1 and 2), also when the participant then
+ *                           went back to a good fit (reflectionWasShown)
+ *   "Clarification shown"   the APA page opened with no reflection before it (condition 3), also when they went back
+ *   "Kept after reflection" a misfit kept after the reflection (conditions 1 and 2)
+ *   the note under the card a good fit: "This choice fit your earlier values."; a misfit kept after the reflection: how
+ *                           strongly; a misfit confirmed on condition 3's page: "The clarification page opened, and this
+ *                           is the option you confirmed there."; a misfit kept on condition 4's page: "...and you kept
+ *                           it."; a misfit reached through the APA page after a refusal (condition 1): "you chose to
+ *                           reconsider". Baseline shows no reflection badge: nothing extra was shown.
+ * STABILITY'S BOX says it looks at two things (since 2 October 2026): whether the four values kept their order and how far
+ * they moved - the two parts the score is the average of (block5CVR.ts).
  */
 
 import { useMemo, useRef } from "react";
@@ -29,6 +42,7 @@ import type { ReactNode } from "react";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, reflectionWasShown } from "./block5CVR";
 import { computeStabilityAll } from "./block5StabilityAll";
+import { secondViewWasOpened } from "./feedbackTypes";
 import { ROLE_BADGE } from "./block5RoleWords";
 import { valueJourney, type PolicyValues } from "./block5Journey";
 import { POLICY_DIM_KEYS } from "./block5Types";
@@ -94,6 +108,11 @@ function scenarioNote(sr: Block5ScenarioResult): string {
   const level = sr.alignmentLevel;
   if (level === "aligned" || level === "weakly_aligned") {
     return "This choice fit your earlier values.";
+  }
+  /* APA_Only (the audit, 2 October 2026): the clarification page opened at once, with no reflection before it, so the
+     participant never "chose to reconsider" (the sentence below); they confirmed this option on that page. */
+  if (sr.apa && !reflectionWasShown(sr)) {
+    return "This went against your usual values. The clarification page opened, and this is the option you confirmed there.";
   }
   /* Baseline (since 1 October 2026): kept on the confirmation page, with no reflection before it. */
   if (sr.baselineConfirm) {
@@ -319,7 +338,9 @@ function ScenarioTile({ sr, index }: { sr: Block5ScenarioResult; index: number }
           {/* APA_Only (since 1 October 2026, the researcher's "Q3-yes"): the APA page opened with no reflection before it.
               Only when the APA page ran: Baseline's misaligned keep is also a Stability step with no reflection, and there
               nothing extra was shown, so it gets no badge. */}
-          {sr.cvrFired && !reflectionWasShown(sr) && !!sr.apa && (
+          {/* The audit, 2 October 2026: also when the clarification page opened and the participant went back to a good
+              fit (no APA record then, but an APA visit). */}
+          {!reflectionWasShown(sr) && (!!sr.apa || (sr.telemetry?.apaVisits ?? 0) > 0) && (
             <Badge size="sm" variant="subtle" colorPalette="orange" rounded="md">Clarification shown</Badge>
           )}
           {sr.cvrFired && (sr.cvrEndorsement === "strong" || sr.cvrEndorsement === "weak") && (
@@ -365,7 +386,8 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
   const performance = typeof captured === "number" ? captured : (results.performance ?? 0);
   /* The reflection actually shown (APA_Only's clarifications count as Stability steps but showed no second view). */
   const withCvr = results.scenarioResults.filter((r) => reflectionWasShown(r)).length;
-  const bothLenses = results.scenarioResults.filter((r) => r.cvrAltViewGenerated).length;
+  /* The audit, 2 October 2026: a second view opened before going back counts too (usedDualPerspective's rule). */
+  const bothLenses = results.scenarioResults.filter((r) => secondViewWasOpened(r)).length;
 
   return (
     <Box minH="100dvh" bg="bg" px={{ base: "4", md: "6" }} pt={{ base: "8", md: "12" }} pb="24">

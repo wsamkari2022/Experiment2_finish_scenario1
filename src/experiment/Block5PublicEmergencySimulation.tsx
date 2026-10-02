@@ -1,16 +1,41 @@
 /**
- * Block5PublicEmergencySimulation — Main simulation block for Block 5 (CVR Cube v3.1).
+ * Block5PublicEmergencySimulation — Block 5, the six scenarios (CVR Cube v3.1, then the dated changes below and in
+ * CLAUDE.md).
  *
- * Flow per scenario (see Scenario 1 Master Spec):
- *   pick an option (none hidden) → see its consequences →
- *     ALIGNED/WEAKLY  → soft reconsideration (tap the trade-off) → Keep / Change my mind
- *     MISALIGNED      → CVR vignette → "still choose this?"
- *                         YES → Q1 (value) + Q2 (stakeholder) → Confirm / Change my mind
- *                         NO  → APA value-clarification flow (Sections 1–4, all-or-nothing commit)
- *                               (condition 2, CVR_Only, since 1 October 2026: the CVR Rejection page instead -
- *                               no questions, one button back to all the options; CvrRejectionPanel)
- *     condition 3, APA_Only (since 1 October 2026): MISALIGNED → straight to the APA page, no vignette and no person
- *                               speaking; only the value question; the stakeholder and view scores never move
+ * FLOW PER SCENARIO
+ *   pick an option (none hidden; the cards start folded, in the planner's order) -> its consequences ->
+ *     a GOOD FIT (Aligned / Weakly aligned), or any choice in scenario 5 (a wish) or 6 (a rule):
+ *         the confirmation page (step "review"): tap the trade-off -> "Keep this choice" / "Change my mind" (scenario 6
+ *         shows the prediction first). Keeping moves the profile by the keep rule (applyKeepUpdates: a best fit moves
+ *         nothing, a second-best +20 / -15); scenarios 5 and 6 move only the hidden running values (block5VciAll.ts).
+ *     a MISFIT (Misaligned / Strongly misaligned) in a decision (scenarios 1-4): what opens depends on the participant's
+ *     condition (conditions.ts has the full table):
+ *       1 CVR+APA   the reflection (CVRReveal: the vignette, its two views) -> "still choose this?" -> the person
+ *                   speaking (PersonSpeaksPage) -> keeping: "how strongly" and the endorsement update
+ *                   (handleConfirmEndorsement); refusing: the APA page (APAPanel: name a value, how sure, pick from the
+ *                   options built on it; handleApaCommit)
+ *       2 CVR_Only  the same reflection and person -> refusing: the CVR Rejection page (openRefusalPage,
+ *                   CvrRejectionPanel: no question, one button back to all the options; the person score and the last
+ *                   view move once per scenario, on the live profile)
+ *       3 APA_Only  the APA page at once (handleSelect -> step "apa"): no reflection, no person, its own opening
+ *                   sentence, a box naming the value the option serves most, no warning on going back; the person,
+ *                   directness and context scores never move
+ *       4 Baseline  the confirmation page with its own first sentence and "How sure?" (FlowOverlay confirmOnly);
+ *                   "Keep" moves the four values (handleKeep -> applyBaselineConfirmUpdatesWithMoves); "Change my
+ *                   mind" goes back (handleChangeMyMind counts it)
+ *   Every path ends in commitChoice (the keep paths) or handleApaCommit (the APA paths), and both end in
+ *   finalizeScenario, which adds what every row needs (the planner log, the company's value, the running values, the
+ *   value snapshots Stability reads) and saves the progress.
+ *
+ * WHAT A ROW SAYS ABOUT THE PAGES (block5Types.ts; dbShape.ts reads them into analysis.alignment_records)
+ *   cvrFired         counted as a Stability step: the final choice went against the best fit after the condition's page
+ *   reflectionShown  the reflection was shown at some point in this scenario - since the audit of 2 October 2026 also
+ *                    when the participant then went back to a good fit (read it through reflectionWasShown)
+ *   apa              the APA page's answers (conditions 1 and 3); cvrRejections every CVR Rejection page visit
+ *                    (condition 2); baselineConfirm the kept misfit and its "How sure" (condition 4)
+ *   valueMoves       every move the scenario's rules asked for and made, with the reason in words
+ *   telemetry        each page's visits, back-outs and seconds: cvrVisits, apaVisits, cvrRejectionVisits,
+ *                    baselineConfirmVisits and baselineConfirmBackouts, secondViewOpened, numberOfSwitches, ...
  *
  * Alignment (v3.1): threshold-satisfaction — an option is only penalized when it falls
  * BELOW the participant's priority on a value; meeting/exceeding costs nothing. Bands
@@ -22,8 +47,10 @@
  * explaining how it works, and each option has a "Preview impact" button that projects
  * the new overall (also shown inline on the card).
  *
- * Refresh (issue 3): Block 5 does not resume mid-block; it clears its progress key on
- * mount and always starts at Scenario 1, preserving the Blocks 1–4 profile.
+ * RESUMING (since 29 September 2026; block5Progress.ts). After every finished scenario the progress (the finished rows,
+ * the values, the hidden running values) is saved and sent to the server; a refresh or another browser opens at the
+ * START of the unfinished scenario, built from the saved values, so its cards, order and fit numbers are the same. (Until
+ * that date Block 5 cleared its progress and always restarted at scenario 1.)
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -368,6 +395,13 @@ interface TelemetryAccum {
   cvrRejectionBackouts: number;
   cvrRejectionDwellMs: number;
   cvrRejectionShownAt: number | null;
+  /* The four-condition audit, 2 October 2026. Whether the second view was opened at any point in this scenario (the
+     row's own view fields describe only the reflection on the FINAL choice, so a second view opened before going back
+     was lost); and Baseline's own page (condition 4): how often a misaligned choice opened the confirmation page with
+     "How sure", and how often "Change my mind" left it - the counts every other condition keeps for its page. */
+  secondViewOpened: boolean;
+  baselineConfirmVisits: number;
+  baselineConfirmBackouts: number;
 }
 
 function newTelemetryAccum(): TelemetryAccum {
@@ -382,6 +416,7 @@ function newTelemetryAccum(): TelemetryAccum {
     mcfReadingsOpened: 0, mcfRead: new Set(), mcfDwellMs: 0, mcfOpenedAt: null,
     distinct: new Set(), lastSelectedId: null, cvrShownAt: null, apaShownAt: null,
     cvrRejectionVisits: 0, cvrRejectionBackouts: 0, cvrRejectionDwellMs: 0, cvrRejectionShownAt: null,
+    secondViewOpened: false, baselineConfirmVisits: 0, baselineConfirmBackouts: 0,
   };
 }
 
@@ -453,7 +488,9 @@ function buildScenarioTelemetry(
   const cvrRejectionDwellMs = t.cvrRejectionDwellMs
     + (t.cvrRejectionShownAt != null ? Math.max(0, now - t.cvrRejectionShownAt) : 0);
   return {
-    cvrTriggered: opts.cvrFired,
+    /* "The vignette was shown in this scenario" (the audit, 2 October 2026): also when the participant then went back and
+       the final choice was a good fit, which `opts.cvrFired` (the final path) does not see. */
+    cvrTriggered: opts.cvrFired || t.cvrVisits > 0,
     apaTriggered: t.apaVisits > 0,
     cvrVisits: t.cvrVisits,
     apaVisits: t.apaVisits,
@@ -462,8 +499,9 @@ function buildScenarioTelemetry(
     // Leaving the person-speaks page counts as a switch: the participant reached a decision point
     // and stepped away from it, which is the same behavior the other backout counters record.
     /* Leaving the CVR Rejection page (condition 2) is the same kind of step back as leaving the APA page. */
+    /* Leaving Baseline's confirmation page with "Change my mind" (condition 4) is the same kind of step back. */
     numberOfSwitches: t.optionChanges + t.cvrBackouts + t.apaBackouts + t.personBackouts + t.finalDecisionChanges
-      + t.cvrRejectionBackouts,
+      + t.cvrRejectionBackouts + t.baselineConfirmBackouts,
     initialSelections: t.distinct.size,
     optionChanges: t.optionChanges,
     cvrBackouts: t.cvrBackouts,
@@ -483,6 +521,9 @@ function buildScenarioTelemetry(
     apaDwellMs,
     /* Only where the page can open, so the other three conditions' rows keep their old shape. */
     ...(t.cvrRejectionVisits > 0 ? { cvrRejectionVisits: t.cvrRejectionVisits, cvrRejectionDwellMs } : {}),
+    ...(t.secondViewOpened ? { secondViewOpened: true } : {}),
+    ...(t.baselineConfirmVisits > 0
+      ? { baselineConfirmVisits: t.baselineConfirmVisits, baselineConfirmBackouts: t.baselineConfirmBackouts } : {}),
   };
 }
 
@@ -1188,8 +1229,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       setStep("apa");
       return;
     }
-    /* Baseline: no reflection and no APA page - the confirmation page ("review", set above), with "How sure?". */
+    /* Baseline: no reflection and no APA page - the confirmation page ("review", set above), with "How sure?". Counted,
+       as every other condition counts its page (the audit, 2 October 2026). */
     if (misaligned && baselineCondition) {
+      if (t) t.baselineConfirmVisits += 1;
       setCvrWho(null);
       return;
     }
@@ -1342,6 +1385,18 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     }
     resetFlow();
   }, [resetFlow]);
+
+  /**
+   * "CHANGE MY MIND" on a confirmation page. On Baseline's page for a misaligned choice (condition 4) it is counted, as
+   * leaving every other condition's page is (the audit, 2 October 2026); everywhere else it only goes back, as before.
+   */
+  const handleChangeMyMind = useCallback(() => {
+    const t = telRef.current;
+    if (t && baselineCondition && scenario && selectedOption && scenarioIsScored(scenario) && isMisaligned(selectedOption.level)) {
+      t.baselineConfirmBackouts += 1;
+    }
+    resetFlow();
+  }, [baselineCondition, scenario, selectedOption, resetFlow]);
 
   const handleFinalDecisionChange = useCallback(() => {
     if (telRef.current) telRef.current.finalDecisionChanges += 1;
@@ -1589,6 +1644,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       firstChoiceOptionId: progress.firstChoiceId ?? opt.id,
       postCVRChoiceOptionId: opt.id,
       cvrFired: cvrRan,
+      /* WAS THE REFLECTION SHOWN IN THIS SCENARIO (the audit, 2 October 2026)? Also when the participant then went back -
+         from the reflection, the person page, the APA page or condition 2's CVR Rejection page - and the final choice was
+         a good fit: `cvrFired` (the final path) is false there, and the row used to read "no reflection shown". */
+      reflectionShown: (telRef.current?.cvrVisits ?? 0) > 0,
       ...(opts.baselineConfirm ? { reflectionShown: false, baselineConfirm: opts.baselineConfirm } : {}),
       cvrEndorsement: opts.endorsement,
       cvrCoordinate: coord,
@@ -2318,7 +2377,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           onLogPred={logPred}
           onConfirmEndorsement={handleConfirmEndorsement}
           onApaCommit={handleApaCommit}
-          onChangeMyMind={resetFlow}
+          onChangeMyMind={handleChangeMyMind}
           cvrSaidYes={cvrSaidYes}
           onPersonAnswer={handlePersonAnswer}
           onPersonBackout={handlePersonBackout}
@@ -2333,7 +2392,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           baselineSure={baselineSure}
           setBaselineSure={setBaselineSure}
           altViewGenerated={altViewGenerated}
-          onAltGenerated={() => setAltViewGenerated(true)}
+          onAltGenerated={() => { setAltViewGenerated(true); if (telRef.current) telRef.current.secondViewOpened = true; }}
           lastLensSeen={lastLensSeen}
           onLensShown={setLastLensSeen}
           framingChoiceYes={framingChoiceYes}

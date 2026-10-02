@@ -46,6 +46,12 @@ function writeConditionsPage({ root, head, dirty, date, mainResults }) {
   const sameEverywhere = KINDS.filter((k) => RUNS.every((r) => res[r.id][k].every((x, i) => ["vci", "vciAll", "stability", "stabilityAll", "performance", "topValue"]
     .every((key) => x[key] === res.CVR_APA[k][i][key]))));
   const identical = (a, b, k) => res[a][k].every((x, i) => KEYS.every((key) => x[key] === res[b][k][i][key]));
+  /* Since 2 October 2026: Stability and Stability_all are the average of their two parts, for every person in every column. */
+  let partsDiff = 0;
+  for (const r of RUNS) for (const k of KINDS) for (const x of res[r.id][k]) {
+    if (x.stability !== Math.round((x.stabilityOrder + x.stabilityDifference) / 2)
+        || x.stabilityAll !== Math.round((x.stabilityAllOrder + x.stabilityAllDifference) / 2)) partsDiff += 1;
+  }
 
   /* ---------------------------------------------------------------- the example people */
   /** The first of the 2,000 for whom this kind shows the difference its example is about (the first person otherwise). */
@@ -117,6 +123,7 @@ function writeConditionsPage({ root, head, dirty, date, mainResults }) {
   line("");
   line(`- **Condition 1 is today's study:** the CVR+APA column was compared with docs/MAJOR_SCORES_DISTRIBUTION.md person by person, for all ${KINDS.length * mainResults[KINDS[0]].length} pretend people: **${cond1Diff} differences**.`);
   line(`- **Kinds that score the same in all six columns, person by person:** ${sameEverywhere.length ? sameEverywhere.join(", ") : "none"}. They never pick a misfit, so no condition's own page ever opens for them.`);
+  line(`- **Stability and Stability_all are the average of their two parts for every person in every column** (since 2 October 2026): **${partsDiff} differences**.`);
   line(`- **APA_Only, random B changes only the random responder:** ${KINDS.filter((k) => k !== "Random responder").every((k) => identical("APA_Only", "APA_Only_RB", k)) ? "checked, every other kind is identical" : "NOT TRUE - another kind differs"}.`);
   line(`- **Baseline (B) changes only the three refusing kinds:** ${KINDS.filter((k) => !C.REFUSERS.includes(k)).every((k) => identical("Baseline", "Baseline_B", k)) ? "checked, every other kind is identical" : "NOT TRUE - another kind differs"}.`);
   line("- **Draws:** every kind meets the same random draws in every column, so its first pick in scenario 1 is the same; later");
@@ -239,7 +246,7 @@ function writeConditionsPage({ root, head, dirty, date, mainResults }) {
     line(`  - **the difference part** usually leans the other way: keeping a misfit adds up to more points in APA_Only and Baseline (+30 and 3 × −10 or −15, against +30 and −20), so the values end further from where they began. In Baseline (A) it is lower than in CVR+APA for ${lower.length ? lower.join(", ") : "no kind"}${higher.length ? `, and higher for ${higher.join(", ")} (a new value each time spreads the moves so more of them cancel; a kind that goes back and takes a good fit in Baseline makes no move at all)` : ""};`);
   }
   line("  - averaged, the two partly cancel.");
-  line(`- **\"Not measured\" also depends on the condition:** Corrected by APA is not measured in ${pct(notMeasured("CVR_APA", "Corrected by APA"))} of people in CVR+APA, but in ${pct(notMeasured("CVR_Only", "Corrected by APA"))} in CVR_Only and ${pct(notMeasured("Baseline", "Corrected by APA"))} in Baseline (A): going back and taking a good fit is not a Stability step, while an APA visit always is (your Q2-yes for APA_Only).`);
+  line(`- **\"Not measured\" also depends on the condition:** Corrected by APA is not measured in ${pct(notMeasured("CVR_APA", "Corrected by APA"))} of people in CVR+APA, but in ${pct(notMeasured("CVR_Only", "Corrected by APA"))} in CVR_Only and ${pct(notMeasured("Baseline", "Corrected by APA"))} in Baseline (A): going back and taking a good fit is not a Stability step, while a choice confirmed on the APA page always is (your Q2-yes for APA_Only).`);
   line(`- **Principle B:** Corrected by APA keeps a misfit in every decision in Baseline (B), so every decision is a step and Stability falls to ${m("Baseline_B", "Corrected by APA", "stability").toFixed(0)}.`);
   line("");
   { const ex = EXAMPLES[0]; const parts = ex.runs.map((r) => `${R[r].label} ${exScore(ex, r, "stability")} (order ${exScore(ex, r, "stabilityOrder")}, difference ${exScore(ex, r, "stabilityDifference")})`).join(", "); line(`**Example.** Example ${ex.n} (${ex.kind}) makes the same four choices in every column, yet Stability is ${parts}. In their table, CVR+APA moves two values at each keep (+30 and −20, so both can cross other values); APA_Only and Baseline raise one value and lower the other three together (−10 or −15 each)${["APA_Only", "Baseline"].every((r) => exScore(ex, r, "stabilityOrder") > exScore(ex, "CVR_APA", "stabilityOrder")) ? ", so fewer pairs swap and the order part is higher" : ""}; how far the values end from where they began sets the difference part.`); }
@@ -384,7 +391,7 @@ function writeConditionsPage({ root, head, dirty, date, mainResults }) {
 
   const OUT = path.join(root, "docs", "MAJOR_SCORES_BY_CONDITION.md");
   fs.writeFileSync(OUT, L.join("\n") + "\n");
-  return { file: path.relative(root, OUT), lines: L.length, cond1Diff, edgesOk, edges: edgeRows.map((x) => `${x.e.label} ${x.med} (code ${x.e.from})`).join(", ") };
+  return { file: path.relative(root, OUT), lines: L.length, cond1Diff, partsDiff, edgesOk, edges: edgeRows.map((x) => `${x.e.label} ${x.med} (code ${x.e.from})`).join(", ") };
 }
 
 module.exports = { writeConditionsPage };

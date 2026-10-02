@@ -9,10 +9,62 @@
  *   3  APA_Only
  *   4  Baseline  no CVR and no APA
  *
- * WHAT EACH CONDITION DOES DIFFERENTLY IS NOT BUILT YET. On the researcher's instruction the four run the same study
- * until he gives one task per condition ("do this task to CVR_Only"). Code that later makes a condition behave
- * differently reads `currentCondition()`. A participant with no condition on record (a test run from before this
- * date) is treated as condition 1, the full version, which is what everybody saw before.
+ * WHAT EACH CONDITION DOES DIFFERENTLY (built on 1 October 2026, one task at a time, each on the researcher's approved
+ * plan; `npm run validate:conditions` N11-N20 stand over it). Blocks 1-4, the wish (scenario 5), the rule (scenario 6),
+ * the scores' rules, the results page's layout and the feedback page are the SAME in all four. Only what happens after a
+ * MISALIGNED or STRONGLY MISALIGNED choice in one of the four decisions (scenarios 1-4) differs; a good fit gets the same
+ * confirmation page everywhere.
+ *
+ *   condition   the page a misfit opens                  keeping the misfit moves            refusing / going back
+ *   ---------   --------------------------------------   ---------------------------------   ---------------------------
+ *   1 CVR+APA   the reflection (CVR vignette, two         the endorsement: +30 to the value   refusing opens the APA page:
+ *               views), then the person speaking          the option serves, -20 to the one   name a value, how sure, pick
+ *                                                         it gives up most, person ±25        from its list (+30 x sure to
+ *                                                                                             the value named, -10 x sure
+ *                                                                                             to each other, person ±25,
+ *                                                                                             the view that moved them +20)
+ *   2 CVR_Only  the same reflection and person            the same endorsement                refusing opens the CVR
+ *                                                                                             Rejection page: no question,
+ *                                                                                             one button back; on its first
+ *                                                                                             visit in a scenario the person
+ *                                                                                             score ±25 and the last view
+ *                                                                                             +20 (only if both were seen)
+ *   3 APA_Only  the APA page at once: no reflection, no   naming the value the option is      "Take me back to all options"
+ *               person; its own opening sentence; a box   built on (the box names it): +30 x  (no warning)
+ *               naming the value the option serves most   sure / -10 x sure; the person
+ *                                                         score never moves
+ *   4 Baseline  the confirmation page a good fit gets,    Keep: +30 x sure to the value the   "Change my mind"
+ *               with its own first sentence and "How      option serves most, -10 (misaligned)
+ *               sure are you about this choice?"          or -15 (strongly) x sure to the
+ *                                                         other three
+ *
+ * WHAT IS THE SAME, AND WHAT THAT MEANS FOR THE ANALYSIS
+ *   - A STABILITY STEP is a decision whose final choice went against the best fit after the condition's page
+ *     (`cvrFired` on the row): kept after the reflection (1, 2), a choice confirmed on the APA page (1 after a refusal,
+ *     3), kept on the confirmation page (4); going back to a good fit is not a step. Whether a REFLECTION was shown is a separate flag (`reflectionShown`, read through
+ *     reflectionWasShown in block5CVR.ts), and since the audit of 2 October 2026 it is also true when the participant saw
+ *     the reflection and then went back to a good fit.
+ *   - Stability and Stability_all are the average of an order part and a difference part (block5CVR.ts, since 2 October
+ *     2026), the same rule in every condition. docs/MAJOR_SCORES_BY_CONDITION.md shows what the conditions' own value
+ *     moves do to them for the same behaviour (up to 13 points for Stability; VCI about 1).
+ *   - The stakeholder, directness and context scores move only on the reflection pages, so their stabilities are "not
+ *     measured" in 3 and 4 (freezesReflectionScores).
+ *   - The feedback's CVR questions appear only after a reflection (1, 2), the APA questions only after an APA page
+ *     (1, 3), the two-views questions only after a second view was opened (1, 2); Baseline sees none of the three.
+ *   - Every condition's page is counted in the scenario's timing record: cvrVisits / apaVisits (1), cvrVisits /
+ *     cvrRejectionVisits (2), apaVisits (3), baselineConfirmVisits / baselineConfirmBackouts (4).
+ *
+ * WHERE EACH DIFFERENCE LIVES. One rule per task below, read once per Block 5 by Block5PublicEmergencySimulation:
+ *   showsCvrRejectionPage      condition 2   openRefusalPage, CvrRejectionPanel, handleRejectionBack
+ *   skipsCvrReflection         condition 3   handleSelect (straight to step "apa"), APAPanel straightToApa, handleApaCommit
+ *   confirmsMisalignedChoices  condition 4   handleSelect (stays on "review"), FlowOverlay confirmOnly, handleKeep,
+ *                                            handleChangeMyMind
+ *   freezesReflectionScores    conditions 3, 4   APAPanel freezeReflectionScores, finalResults.reflectionScoresFrozen
+ * The rows each path saves: CLAUDE.md (the four condition sections); how to analyse them: HOW_TO_ANALYZE_MY_DATA.md
+ * section 9; the same pretend people through all four: docs/MAJOR_SCORES_BY_CONDITION.md (tools/condition_sim.cjs).
+ *
+ * A participant with no condition on record (a test run from before 1 October 2026) is treated as condition 1, the
+ * full version, which is what everybody saw before.
  *
  * HOW A PARTICIPANT GETS ONE. The landing page (LandingPage.tsx) asks the server, which counts each condition in
  * the database and gives the one with the fewest people (server/conditions.js has the rule; the researcher's answer

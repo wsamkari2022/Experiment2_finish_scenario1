@@ -28,6 +28,25 @@
  * The split between `blocks` and `analysis` is the important one. Raw answers can never be
  * recovered if lost; computed results can always be recalculated from them. Mixing the two in one
  * box is what makes a dataset hard to trust, because you cannot tell which is which.
+ *
+ * ============================================================================
+ * THE FOUR CONDITIONS IN THE DOCUMENT (since 1 October 2026; conditions.ts has the design)
+ * ============================================================================
+ *   condition_number, condition_type, condition_source, condition_assigned_at   top level, set ONCE by the server
+ *   major_info_and_scores.condition       a copy, with counted_for_balance (true only when the landing page gave it)
+ *   analysis.alignment_records.by_scenario[i], for every condition:
+ *       cvr.fired                         the reflection was SHOWN in that scenario (reflectionWasShown; since the audit
+ *                                         of 2 October 2026 also when the participant then went back to a good fit)
+ *       cvr.counted_as_a_stability_step   the row's cvrFired: what Stability and Stability_all count
+ *       apa                               the APA page (conditions 1 and 3; in 3 with the value the box named)
+ *       cvr_rejection_page                condition 2's page: every visit and the first visit's moves
+ *       baseline_confirm                  condition 4's page: kept, how sure, the steps asked for, how often it opened
+ *                                         and how often "Change my mind" left it
+ *     and the totals count each (times_reflection_fired, times_clarification_ran, times_cvr_rejection_page_shown,
+ *     times_kept_misaligned_on_the_baseline_confirm_page, times_the_baseline_confirm_page_opened)
+ *   headline: the three sensitivity stabilities are null, "Not measured in this condition", in conditions 3 and 4
+ *   Stability (headline, major_info_and_scores.stability, analysis.stability_all): the same two-part rule in every
+ *   condition, with both parts beside the score (value_order_stability, value_difference_stability, and _all)
  */
 
 import { SESSION_KEY_RESULTS } from "./constants";
@@ -42,6 +61,7 @@ import {
   DUAL_VIEW_QUESTIONS,
   TOOL_CLOSERS,
   TOOL_RATINGS,
+  secondViewWasOpened,
 } from "./feedbackTypes";
 import { TELEMETRY_KEY, UNTIMED_DISPLAY_STAGES } from "./telemetry";
 import { PARTICIPANT_RECORD_KEY } from "./participantRecord";
@@ -90,7 +110,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-02-stability-two-parts";
+export const SHAPE_VERSION = "2026-10-02-condition-audit";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -2008,11 +2028,19 @@ export function cvrRejectionRow(visits: unknown): {
  * strongly misaligned choice kept on the confirmation page, with no reflection and no APA page. `kept: false` everywhere
  * else. The moves themselves are in the row's valueMoves (reasons "Baseline confirm: ...").
  */
-export function baselineConfirmRow(rec: unknown): {
+export function baselineConfirmRow(rec: unknown, telemetry?: unknown): {
   kept: boolean; how_sure_1_to_5?: number | null; weight_from_how_sure?: number | null; value_raised?: string | null;
   value_raised_label?: string | null; step_up?: number | null; step_down_for_each_other_value?: number | null;
+  page_opened_times?: number; changed_their_mind_times?: number;
 } {
-  if (!rec || typeof rec !== "object") return { kept: false };
+  /* The four-condition audit, 2 October 2026: how often the page opened and "Change my mind" left it, as the other
+     conditions count their pages (absent on rows without the page, and on rows saved before that date). */
+  const tel = (telemetry && typeof telemetry === "object" ? telemetry : {}) as Record<string, unknown>;
+  const opened = typeof tel.baselineConfirmVisits === "number" ? tel.baselineConfirmVisits : 0;
+  const visits = opened > 0
+    ? { page_opened_times: opened, changed_their_mind_times: typeof tel.baselineConfirmBackouts === "number" ? tel.baselineConfirmBackouts : 0 }
+    : {};
+  if (!rec || typeof rec !== "object") return { kept: false, ...visits };
   const r = rec as Record<string, unknown>;
   const sure = typeof r.confidence === "number" ? r.confidence : null;
   const w = sure === null ? null : confidenceWeight(sure);
@@ -2020,6 +2048,7 @@ export function baselineConfirmRow(rec: unknown): {
   const key = typeof r.valueRaised === "string" ? r.valueRaised : null;
   return {
     kept: true,
+    ...visits,
     how_sure_1_to_5: sure,
     weight_from_how_sure: w,
     value_raised: key,
@@ -2103,7 +2132,8 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
         lens: r.cvrCoordinate?.framing ?? null,
         whose_view_was_shown: r.cvrCoordinate?.who ?? null,
         stakeholder_text_shown: r.cvrStakeholderShown ?? null,
-        second_lens_was_generated: r.cvrAltViewGenerated ?? false,
+        /* Since the four-condition audit (2 October 2026) also a second view opened before going back (secondViewWasOpened). */
+        second_lens_was_generated: secondViewWasOpened(r),
         lens_shown_first: r.cvrFramingShownFirst ?? null,
         lens_the_participant_picked: r.cvrFramingSelected ?? null,
         what_picking_it_meant: r.cvrFramingSelectedRole ?? null,
@@ -2150,7 +2180,7 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       cvr_rejection_page: cvrRejectionRow(r.cvrRejections),
 
       /* ---- Baseline (condition 4, since 1 October 2026): a misaligned choice kept on the confirmation page ---- */
-      baseline_confirm: baselineConfirmRow(r.baselineConfirm),
+      baseline_confirm: baselineConfirmRow(r.baselineConfirm, r.telemetry),
     };
   });
 
@@ -2210,6 +2240,8 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       times_cvr_rejection_page_shown: scored.filter((r) => r.cvr_rejection_page.shown).length,
       /* Condition 4 (Baseline) only: misaligned choices kept on the confirmation page (each a Stability step). */
       times_kept_misaligned_on_the_baseline_confirm_page: scored.filter((r) => r.baseline_confirm.kept).length,
+      /* Condition 4 only (the audit, 2 October 2026): scenarios where that page opened at least once. */
+      times_the_baseline_confirm_page_opened: scored.filter((r) => (r.baseline_confirm.page_opened_times ?? 0) > 0).length,
       times_they_changed_their_choice: scored.filter((r) => r.cvr.changed_their_choice === true).length,
     },
   };

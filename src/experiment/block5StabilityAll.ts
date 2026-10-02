@@ -31,9 +31,11 @@
  * second count, for their #1 or their #2). Ties at the top count for every tied option. This answers the second
  * half of the researcher's question directly; it looks at the top value only, so it is not VCI.
  *
- * Measured on 2,000 pretend participants of each kind (real code): Stability -> Stability_all, the value
- * followers 100 -> 100 and 90.5 -> 89.4, random responders 57.5 -> 39, flip-floppers 11.7 -> 3.4; top-value picks
- * of six: true to their top value 6, best-fit pickers 2.7, random 1.2.
+ * Measured on 2,000 pretend participants of each kind (real code, condition 1). Under the order rule alone (29 September
+ * 2026): Stability -> Stability_all, the value followers 100 -> 100 and 90.5 -> 89.4, random responders 57.5 -> 39,
+ * flip-floppers 11.7 -> 3.4. With the two parts averaged (since 2 October 2026): best-fit pickers 100 -> 100, true to
+ * their top value 92 -> 91, random responders 71 -> 61, flip-floppers (keeping) 47 -> 41, always the worst fit 44 -> 40.
+ * Top-value picks of six: true to their top value 6, best-fit pickers 2.7, random 1.2.
  *
  * TRAPS: Stability_all contains Stability (never correlate them; compare the difference). Its absolute level
  * depends on the step sizes, like Stability's. Scenario 5 has VCI_all's "echo": it is shown on scenario 4's

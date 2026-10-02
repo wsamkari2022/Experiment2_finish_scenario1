@@ -49,6 +49,10 @@
  *   N15 the flow, from the source: a misaligned choice opens the APA page at once (an APA visit, never a CVR one), the
  *       page shows no table and no view question and leaves the stakeholder score, the row says no reflection was
  *       shown and still counts for Stability, the results page says "Clarification shown", no CVR feedback questions
+ *   N20 (the four-condition audit, 2 October 2026) a reflection shown and then left for a good fit is recorded as shown
+ *       (row, timing, database), a second view opened before going back is kept (the two-views questions, the results
+ *       page), APA_Only's results note and badge are true, Baseline's own page is counted like every other condition's
+ *       page, and the feedback summary carries the CVR Rejection page and Baseline's page
  *   N16 the database: cvr.fired false with counted_as_a_stability_step true; the three stabilities "not measured" in
  *       APA_Only and unchanged elsewhere; and the feedback (the researcher's words): the APA questions appear, the CVR and
  *       two-views questions do not, also for an APA visit that went back
@@ -584,7 +588,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const fb = src("src/experiment/feedbackTypes.ts");
     const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
     need(sim, /const \[apaOnlyCondition\] = useState<boolean>\(\(\) => skipsCvrReflection\(\)\);/, "the condition is not read");
-    need(sim, /if \(misaligned && apaOnlyCondition\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = Date\.now\(\); \}\s*setCvrWho\(null\);\s*setStep\("apa"\);\s*return;\s*\}\s*(?:\/\*[^*]*\*\/\s*if \(misaligned && baselineCondition\) \{\s*setCvrWho\(null\);\s*return;\s*\}\s*)?if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/, "a misaligned choice does not go straight to the APA page before any reflection is counted");
+    need(sim, /if \(misaligned && apaOnlyCondition\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = Date\.now\(\); \}\s*setCvrWho\(null\);\s*setStep\("apa"\);\s*return;\s*\}\s*(?:\/\*[^*]*\*\/\s*if \(misaligned && baselineCondition\) \{\s*(?:if \(t\) t\.baselineConfirmVisits \+= 1;\s*)?setCvrWho\(null\);\s*return;\s*\}\s*)?if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/, "a misaligned choice does not go straight to the APA page before any reflection is counted");
     /* (Baseline's own stop, N18, may sit between the two: it also returns before any reflection is counted.) */
     need(sim, /\{step === "apa" && coord && \(whoVariant \|\| reflectionSkipped\) && \(/, "the APA page needs a person to open");
     need(sim, /lastLensSeen=\{reflectionSkipped \? null : lastLensSeen \?\? coord\.framing\}/, "the two-situations table could show without a view");
@@ -597,7 +601,8 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(sim, /stakeholderInfluenced: apaOnlyCondition \? null : payload\.q2Influenced,/, "the APA record claims a person spoke");
     need(sim, /\.\.\.\(reflectionScoresFrozen \? \{ reflectionScoresFrozen: true \} : \{\}\),/, "the finished block does not say the three scores were frozen");
     need(summary, /\{reflectionWasShown\(sr\) && \(\s*<Badge[^>]*>Reflection shown<\/Badge>/, "\"Reflection shown\" does not ask whether it was shown");
-    need(summary, /\{sr\.cvrFired && !reflectionWasShown\(sr\) && !!sr\.apa && \(\s*<Badge[^>]*>Clarification shown<\/Badge>/, "no \"Clarification shown\" badge, or not only when the APA page ran");
+    /* Since the four-condition audit (2 October 2026): also when the clarification page opened and the person went back. */
+    need(summary, /\{!reflectionWasShown\(sr\) && \(!!sr\.apa \|\| \(sr\.telemetry\?\.apaVisits \?\? 0\) > 0\) && \(\s*<Badge[^>]*>Clarification shown<\/Badge>/, "no \"Clarification shown\" badge, or not only when the APA page opened without a reflection");
     need(summary, /const withCvr = results\.scenarioResults\.filter\(\(r\) => reflectionWasShown\(r\)\)\.length;/, "the second-view sentence counts APA_Only clarifications");
     need(fb, /some\(\(r\) => reflectionWasShown\(r\) \|\| \(r\.telemetry\?\.cvrVisits \?\? 0\) > 0\)/, "the CVR feedback questions would appear in APA_Only");
     /* The opening sentence (the researcher's words, 1 October 2026): APA_Only's own, the old one everywhere else. */
@@ -743,7 +748,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
     need(sim, /const \[baselineCondition\] = useState<boolean>\(\(\) => confirmsMisalignedChoices\(\)\);/, "the condition is not read");
     /* The flow: no reflection counted, no person picked, the confirmation page ("review", set before). */
-    need(sim, /setStep\("review"\);[\s\S]{0,4000}if \(misaligned && baselineCondition\) \{\s*setCvrWho\(null\);\s*return;\s*\}\s*if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/,
+    need(sim, /setStep\("review"\);[\s\S]{0,4000}if \(misaligned && baselineCondition\) \{\s*if \(t\) t\.baselineConfirmVisits \+= 1;\s*setCvrWho\(null\);\s*return;\s*\}\s*if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/,
       "a misaligned choice in Baseline does not stop at the confirmation page before any reflection is counted");
     if ((sim.match(/setBaselineSure\(null\);/g) ?? []).length !== 2) why.push("\"How sure\" is not cleared for every new choice and every way back");
     /* "Keep": the answer is needed, and the rule takes it. */
@@ -753,7 +758,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     /* The row: a Stability step, no reflection stored. */
     need(sim, /const reflectionRan = cvrRan && !opts\.baselineConfirm;\s*const coord = reflectionRan \? cvrCoordinate\(opt, profile\) : undefined;/, "a reflection coordinate is stored on Baseline's row");
     need(sim, /if \(reflectionRan\) \{\s*const shownFirst = chooseFraming\(profile\);/, "view fields are stored on Baseline's row");
-    need(sim, /cvrFired: cvrRan,\s*\.\.\.\(opts\.baselineConfirm \? \{ reflectionShown: false, baselineConfirm: opts\.baselineConfirm \} : \{\}\),/, "the row does not count as a Stability step, or does not say no reflection was shown");
+    need(sim, /cvrFired: cvrRan,[\s\S]{0,700}?reflectionShown: \(telRef\.current\?\.cvrVisits \?\? 0\) > 0,\s*\.\.\.\(opts\.baselineConfirm \? \{ reflectionShown: false, baselineConfirm: opts\.baselineConfirm \} : \{\}\),/, "the row does not count as a Stability step, or does not say no reflection was shown");
     need(sim, /cvrFired: reflectionRan,\s*cvrOutcome: !isMisaligned\(opt\.level\)/, "the timing record says a reflection was shown");
     /* The page. */
     need(sim, /confirmOnly=\{baselineCondition\}\s*baselineSure=\{baselineSure\}\s*setBaselineSure=\{setBaselineSure\}/, "the overlay is not told it is Baseline");
@@ -767,7 +772,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(sim, /disabled=\{!tradeoffAck \|\| \(baselineMisfit && baselineSure === null\)\}/, "\"Keep this choice\" works without the answer");
     /* The results page: no badge (nothing extra was shown), and a true note. */
     need(summary, /if \(sr\.baselineConfirm\) \{\s*return "This went against your usual values, and you kept it\.";\s*\}\s*if \(sr\.cvrFired\) \{/, "the results page's note says Baseline's keep was reconsidered");
-    need(summary, /\{sr\.cvrFired && !reflectionWasShown\(sr\) && !!sr\.apa && \(/, "Baseline's row would show \"Clarification shown\"");
+    need(summary, /\{!reflectionWasShown\(sr\) && \(!!sr\.apa \|\| \(sr\.telemetry\?\.apaVisits \?\? 0\) > 0\) && \(/, "Baseline's row would show \"Clarification shown\"");
     gate("N18", "Baseline's flow: the confirmation page, its own sentence, How sure needed, the rule on Keep, an honest row, no badge", why);
   }
 
@@ -802,6 +807,50 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     /* At least Baseline's stamp (versions are dated, so they sort): a later change may move it on, never back. */
     if (!(db.SHAPE_VERSION >= "2026-10-01-baseline")) why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N19", "Baseline's database and feedback: baseline_confirm per row, no reflection or APA claimed, not measured, no CVR/APA questions", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N20 */
+  {
+    const why = [];
+    const sim = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const summary = src("src/experiment/Block5SimulationSummaryPage.tsx");
+    const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
+    /* F1: a reflection shown, then left for a good fit, is recorded as shown - the row and the timing record. */
+    need(sim, /reflectionShown: \(telRef\.current\?\.cvrVisits \?\? 0\) > 0,/, "the row does not say the reflection was shown when the person went back to a good fit");
+    need(sim, /cvrTriggered: opts\.cvrFired \|\| t\.cvrVisits > 0,/, "the timing record says no reflection was shown when the person went back to a good fit");
+    /* F2: the second view, kept when the person goes back. */
+    need(sim, /onAltGenerated=\{\(\) => \{ setAltViewGenerated\(true\); if \(telRef\.current\) telRef\.current\.secondViewOpened = true; \}\}/, "opening the second view is not remembered for the scenario");
+    need(sim, /\.\.\.\(t\.secondViewOpened \? \{ secondViewOpened: true \} : \{\}\)/, "the timing record does not keep the second view");
+    need(summary, /const bothLenses = results\.scenarioResults\.filter\(\(r\) => secondViewWasOpened\(r\)\)\.length;/, "the results page's second-view sentence misses a view opened before going back");
+    /* F3 and F4: APA_Only's results note and badge. */
+    need(summary, /if \(sr\.apa && !reflectionWasShown\(sr\)\) \{\s*return "This went against your usual values\. The clarification page opened, and this is the option you confirmed there\.";/, "APA_Only's note still says the person chose to reconsider");
+    /* F5: Baseline's page, counted like every other condition's page. */
+    need(sim, /if \(misaligned && baselineCondition\) \{\s*if \(t\) t\.baselineConfirmVisits \+= 1;/, "Baseline's page is not counted when it opens");
+    need(sim, /if \(t && baselineCondition && scenario && selectedOption && scenarioIsScored\(scenario\) && isMisaligned\(selectedOption\.level\)\) \{\s*t\.baselineConfirmBackouts \+= 1;/, "\"Change my mind\" on Baseline's page is not counted");
+    need(sim, /onChangeMyMind=\{handleChangeMyMind\}/, "the confirmation page does not go through the counted \"Change my mind\"");
+    need(sim, /\+ t\.cvrRejectionBackouts \+ t\.baselineConfirmBackouts,/, "leaving Baseline's page is not a step back in numberOfSwitches");
+    /* The rules, run. */
+    const FB = B("feedbackTypes.js");
+    const tel = (x) => ({ cvrVisits: 0, apaVisits: 0, ...x });
+    const fitAfterRefusal = { scenarioId: "chemical_plant_fire", selectedOptionId: "x", selectedRank: 1, topRankedOptionId: "x", selectedWasTopCandidate: true,
+      selectedWasCandidate: true, decisionRole: "decider", cvrFired: false, reflectionShown: true, cvrEndorsement: "n/a",
+      cvrRejections: [{ optionId: "y", at: "2026-10-02T10:00:00.000Z", firstViewShown: "directness", bothViewsSeen: true, lastViewSeen: "context",
+        saidYesAtReflection: false, personChangedTheirMind: false, movedValues: true, moves: [], seconds: 4 }],
+      telemetry: tel({ cvrVisits: 1, cvrTriggered: true, cvrRejectionVisits: 1 }) };
+    const plain = { ...fitAfterRefusal, scenarioId: "wildfire_evacuation", reflectionShown: false, cvrRejections: undefined, telemetry: tel({}) };
+    if (!FB.secondViewWasOpened(fitAfterRefusal) || FB.secondViewWasOpened(plain)
+        || !FB.secondViewWasOpened({ ...plain, telemetry: tel({ secondViewOpened: true }) }) || !FB.usedDualPerspective({ scenarioResults: [plain, fitAfterRefusal] })) why.push("a second view opened before going back is not found");
+    const sum = FB.buildBlock5Summary({ scenarioResults: [fitAfterRefusal, { ...plain, telemetry: tel({ baselineConfirmVisits: 2, baselineConfirmBackouts: 1 }) }] });
+    if (sum.scenarios[0].cvrRejectionVisits !== 1 || sum.scenarios[1].baselineConfirmVisits !== 2 || sum.scenarios[0].secondViewOpened !== true) why.push(`the feedback summary misses a condition's page: ${JSON.stringify(sum.scenarios.map((x) => [x.cvrRejectionVisits, x.baselineConfirmVisits, x.secondViewOpened]))}`);
+    /* The database: shown, not a Stability step, the view kept; Baseline's page counted. */
+    const rows = db.buildAlignmentRecords({ scenarioResults: [fitAfterRefusal, { ...plain, telemetry: tel({ baselineConfirmVisits: 2, baselineConfirmBackouts: 2 }) }], originalProfile: { dimensions: [] } });
+    const [a, b] = rows?.by_scenario ?? [];
+    if (a?.cvr?.fired !== true || a?.cvr?.counted_as_a_stability_step !== false || a?.cvr?.second_lens_was_generated !== true || a?.cvr_rejection_page?.shown !== true) why.push(`a refusal followed by a good fit reads ${JSON.stringify(a?.cvr && { fired: a.cvr.fired, counted: a.cvr.counted_as_a_stability_step, second: a.cvr.second_lens_was_generated })}`);
+    if (b?.baseline_confirm?.kept !== false || b?.baseline_confirm?.page_opened_times !== 2 || b?.baseline_confirm?.changed_their_mind_times !== 2) why.push(`Baseline's page left twice reads ${JSON.stringify(b?.baseline_confirm)}`);
+    if (rows?.totals?.times_the_baseline_confirm_page_opened !== 1 || rows?.totals?.times_reflection_fired !== 1) why.push(`the totals: ${JSON.stringify(rows?.totals)}`);
+    if (JSON.stringify(db.baselineConfirmRow(undefined)) !== JSON.stringify({ kept: false })) why.push("a row without Baseline's page does not read kept: false alone");
+    if (!(db.SHAPE_VERSION >= "2026-10-02-condition-audit")) why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
+    gate("N20", "the audit: a reflection left for a good fit is shown, the second view kept, APA_Only's note and badge, Baseline's page counted, the feedback summary", why);
   }
 
   const failed = results.filter((r) => !r.ok);

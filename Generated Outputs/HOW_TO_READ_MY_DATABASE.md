@@ -790,7 +790,14 @@ later in section 6c; earlier runs used a different weighting and are not compara
 `whose_view_was_shown` · `stakeholder_text_shown` · `second_lens_was_generated` ·
 `lens_shown_first` · `lens_the_participant_picked` · `what_picking_it_meant` ·
 `sensitivity_change_committed` · `choice_before_reflection` · `choice_after_reflection` ·
-`changed_their_choice`
+`changed_their_choice` · `counted_as_a_stability_step` (since 1 October 2026)
+
+**Since the four-condition audit (2 October 2026):** `fired` is true whenever the reflection was SHOWN in the scenario,
+also when the participant then went back (from the reflection, the person page, the APA page or condition 2's CVR
+Rejection page) and the final choice was a good fit; before, such a row read false. `second_lens_was_generated` is true
+whenever the second view was opened in the scenario, also before going back. On those rows the view and person fields
+(`lens`, `whose_view_was_shown`, ...) stay null: they describe the reflection on the FINAL choice, and a good fit has none.
+`counted_as_a_stability_step` is what Stability counts; it is false on those rows.
 
 ### `apa` — the clarification when reflection did not settle it
 
@@ -852,6 +859,19 @@ than repeated on all six rows.
 
 ---
 
+### The four-condition audit (2 October 2026): what changed in the record
+
+An audit of all four conditions found rows that misdescribed what a participant saw. Fixed the same day (not pooled with
+earlier rows on these fields; every score is unchanged):
+
+| Field | Since 2 October 2026 | Before |
+|---|---|---|
+| `scenarioResults[].reflectionShown` (raw), `cvr.fired` | Set on every row: true whenever the reflection was shown in the scenario, also when the participant then went back to a good fit | Absent on most rows; read as `cvrFired`, so false on those rows |
+| `telemetry.cvrTriggered` | The same: a vignette was shown in this scenario | The final path's only |
+| `telemetry.secondViewOpened`, `cvr.second_lens_was_generated` | True when the second view was opened at any point in the scenario | Only on the reflection of the final choice |
+| `telemetry.baselineConfirmVisits`, `baselineConfirmBackouts`; `baseline_confirm.page_opened_times`, `changed_their_mind_times`; `totals.times_the_baseline_confirm_page_opened` | Condition 4's page counted, like every other condition's page; "Change my mind" there is a step back in `numberOfSwitches` | Not recorded |
+| The feedback record's `block5.scenarios[]` | Also `cvrRejectionVisits`, `baselineConfirmVisits`, `secondViewOpened` | Only the reflection and APA counts |
+
 ### Baseline (condition 4), since 1 October 2026: a misaligned choice kept on the confirmation page
 
 In condition 4 there is no reflection page and no APA page. A misaligned choice gets the same confirmation page a good fit
@@ -865,15 +885,16 @@ such keep is still a Stability step. Read its row as:
 | `baseline_confirm.how_sure_1_to_5`, `.weight_from_how_sure` | The answer, and the weight it gave (0.6 / 0.7 / 0.8 / 0.9 / 1.0) |
 | `baseline_confirm.value_raised` (+ `_label`) | The value the option serves most, the one raised |
 | `baseline_confirm.step_up`, `.step_down_for_each_other_value` | The steps asked for, before the 0-100 edges (what was made is in `value_moves_asked_for_and_made`) |
+| `baseline_confirm.page_opened_times`, `.changed_their_mind_times` | **Since the four-condition audit (2 October 2026):** how often a misaligned choice opened this page in the scenario, and how often "Change my mind" left it - also on a row where the final choice was a good fit (`kept: false`). Absent when the page never opened, and on rows saved before that date. The raw counts: `telemetry.baselineConfirmVisits`, `baselineConfirmBackouts` |
 | `cvr.fired` | **false** (no reflection was shown) |
-| `cvr.counted_as_a_stability_step` | **true**, so Stability and Stability_all measure the Baseline moves (the researcher's choice) |
+| `cvr.counted_as_a_stability_step` | **true** when the misfit was kept, so Stability and Stability_all measure the Baseline moves (the researcher's choice) |
 | `cvr.endorsement_after_reflection` | "n/a" |
 | `apa.ran` | false |
 
 The stakeholder, directness and context scores never move in Baseline, so the headline writes their stabilities as null
 with "Not measured in this condition" and `headline.reflection_scores_measured: false`, as in APA_Only. Count the steps with
 `totals.times_kept_misaligned_on_the_baseline_confirm_page` (or `counted_as_a_stability_step`), never
-`times_reflection_fired`. **Trap:** a strongly misaligned keep lowers the four values by 15 in total (+30, 3 x -15) at
+`times_reflection_fired`; `totals.times_the_baseline_confirm_page_opened` counts the scenarios where the page opened at all. **Trap:** a strongly misaligned keep lowers the four values by 15 in total (+30, 3 x -15) at
 "very sure", so the four values drift down a little over a run; compare their ORDER across conditions, not their sum.
 
 ### APA_Only (condition 3), since 1 October 2026: the APA page with no reflection before it
@@ -883,8 +904,8 @@ scenario is still a Stability step, so its row has **`cvrFired: true` but `refle
 
 | Field | In APA_Only |
 |---|---|
-| `cvr.fired` | **false** - it says whether the reflection page was SHOWN (since 1 October 2026 it reads `reflectionShown`, which is absent and therefore "as cvrFired" in the other conditions) |
-| `cvr.counted_as_a_stability_step` | true for every APA visit (the researcher's choice), so Stability and Stability_all measure the APA moves |
+| `cvr.fired` | **false** - it says whether the reflection page was SHOWN (it reads the row's `reflectionShown`; since the four-condition audit of 2 October 2026 every new row carries it, true whenever the reflection was shown in the scenario) |
+| `cvr.counted_as_a_stability_step` | true for every choice confirmed on the APA page (the researcher's choice), so Stability and Stability_all measure the APA moves; false when the participant went back from the APA page to a good fit (the card still says "Clarification shown") |
 | `apa.the_stakeholder_influenced_them` | null (no person spoke) |
 | `apa.value_the_page_said_the_option_serves_most` (+ `_label`) | Since 1 October 2026: the page showed, before the question, "The option you chose serves X more than any of the other three values"; this is X (null in the other conditions) |
 | `apa.named_the_value_the_page_said` | Whether the value they then named was that same X. **Trap:** the box may steer the answer, and naming X is also the way to keep the chosen option (it is then in the list), so a high share here is expected and is not by itself evidence of a value |
@@ -910,7 +931,10 @@ what happened instead (`shown: false` on every other row and in every other cond
 `totals.times_cvr_rejection_page_shown` counts the scored scenarios where it opened. The raw records are
 `blocks.block5_emergency_scenarios.scenarioResults[].cvrRejections`, and each row's `telemetry` has `cvrRejectionVisits` and
 `cvrRejectionDwellMs` (absent in the other conditions). They are never counted as APA visits (`apaVisits` stays 0), so the
-APA feedback questions never appear for condition 2. **Traps:** the moves happen INSIDE the scenario, so a later reflection
+APA feedback questions never appear for condition 2. **A refusal followed by a good fit** (the commonest path here): since
+the four-condition audit (2 October 2026) the row has `cvr.fired: true` (the reflection was shown) with
+`counted_as_a_stability_step: false`, and `cvr.second_lens_was_generated` is true when both views were seen before the
+refusal; before that date such a row read `fired: false`. **Traps:** the moves happen INSIDE the scenario, so a later reflection
 in the same scenario can open on another view or another kind of person; and a final choice's own moves (keep, confirm)
 are added on top.
 

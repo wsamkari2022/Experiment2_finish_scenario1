@@ -210,10 +210,15 @@ SECTIONS = [
          "it: +30 to the value the option serves most, -10 (misaligned) or -15 (strongly misaligned) to the others, all x 0.6-1.0 "
          "by how sure; a Stability step; the three reflection scores never move; no CVR or APA feedback questions. Checked live.",
          ["conditions"], "(N17, N18, N19)"),
+        ("The four-condition audit (2 October 2026): every condition records what the participant saw.",
+         "A reflection shown and then left for a good fit is recorded as shown (badge, database, timing); a second view "
+         "opened before going back is kept (the two-views questions, the results page); APA_Only's note and badge are true; "
+         "Baseline's confirmation page is counted like every other condition's page; the feedback summary carries each "
+         "condition's page. Checked live in CVR_Only, Baseline and a full APA_Only run.", ["conditions"], "(N15, N18, N20)"),
         ("APA_Only: a misaligned choice opens the APA page at once.",
          "No reflection page and no person speaking; the APA page shows only its value question (no two-situations table, "
          "no view question), opens with your sentence, says which value the chosen option serves most, and goes back to all the options without a warning. The stakeholder, directness and context scores never move (the APA rule's automatic stakeholder "
-         "move is off there); each APA visit still counts for Stability; the results page says \"Clarification shown\"; the "
+         "move is off there); each choice confirmed on the APA page still counts for Stability; the results page says \"Clarification shown\"; the "
          "record says no reflection was shown; the feedback asks the APA questions, never the CVR ones. Checked live.", ["conditions"], "(N14, N15, N16)"),
         ("CVR_Only: a refusal opens the CVR Rejection page, not the APA page.",
          "\"A closer look at your choice\": the same explanation (the two situations, how far the option fell short), no "

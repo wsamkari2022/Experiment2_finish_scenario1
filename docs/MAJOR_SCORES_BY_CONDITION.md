@@ -1,6 +1,6 @@
 # Major scores in the four conditions
 
-> **Generated** by `npm run report:major-scores` on 2026-10-02, from code version `8f6b216` plus changes not yet committed, together
+> **Generated** by `npm run report:major-scores` on 2026-10-02, from code version `07ff7a5` plus changes not yet committed, together
 > with docs/MAJOR_SCORES_DISTRIBUTION.md. Do not edit this page by hand: change `tools/condition_sim.cjs` (the rules) or
 > `tools/report_conditions_page.cjs` (the page) and run the command again.
 
@@ -48,6 +48,7 @@ A "misfit" is a misaligned or strongly misaligned choice in one of the four deci
 
 - **Condition 1 is today's study:** the CVR+APA column was compared with docs/MAJOR_SCORES_DISTRIBUTION.md person by person, for all 24000 pretend people: **0 differences**.
 - **Kinds that score the same in all six columns, person by person:** Always aligned, Always weakly aligned, Top-two mixer. They never pick a misfit, so no condition's own page ever opens for them.
+- **Stability and Stability_all are the average of their two parts for every person in every column** (since 2 October 2026): **0 differences**.
 - **APA_Only, random B changes only the random responder:** checked, every other kind is identical.
 - **Baseline (B) changes only the three refusing kinds:** checked, every other kind is identical.
 - **Draws:** every kind meets the same random draws in every column, so its first pick in scenario 1 is the same; later
@@ -240,7 +241,7 @@ whether their ORDER changed (pairs that swapped places), and **Value_Difference_
   - **the order part** is higher in APA_Only and Baseline: after the reflection (CVR+APA, CVR_Only) keeping a misfit moves **two** values in opposite directions (+30 to the value the option serves, −20 to the value it gives up most), and both can pass other values; the APA page and Baseline's Keep move **one** value up and the **other three down together** (−10 or −15 each), so the three keep their order and fewer pairs swap;
   - **the difference part** usually leans the other way: keeping a misfit adds up to more points in APA_Only and Baseline (+30 and 3 × −10 or −15, against +30 and −20), so the values end further from where they began. In Baseline (A) it is lower than in CVR+APA for True to top value, Convert (keeps), Convert (via APA), Performance chaser, Flip-flopper (via APA), Always the worst fit, and higher for Corrected by APA, Flip-flopper (keeps) (a new value each time spreads the moves so more of them cancel; a kind that goes back and takes a good fit in Baseline makes no move at all);
   - averaged, the two partly cancel.
-- **"Not measured" also depends on the condition:** Corrected by APA is not measured in 0% of people in CVR+APA, but in 67% in CVR_Only and 67% in Baseline (A): going back and taking a good fit is not a Stability step, while an APA visit always is (your Q2-yes for APA_Only).
+- **"Not measured" also depends on the condition:** Corrected by APA is not measured in 0% of people in CVR+APA, but in 67% in CVR_Only and 67% in Baseline (A): going back and taking a good fit is not a Stability step, while a choice confirmed on the APA page always is (your Q2-yes for APA_Only).
 - **Principle B:** Corrected by APA keeps a misfit in every decision in Baseline (B), so every decision is a step and Stability falls to 57.
 
 **Example.** Example 1 (Always the worst fit) makes the same four choices in every column, yet Stability is CVR+APA 39 (order 0, difference 78), APA_Only 53 (order 25, difference 80), Baseline (A) 48 (order 25, difference 71). In their table, CVR+APA moves two values at each keep (+30 and −20, so both can cross other values); APA_Only and Baseline raise one value and lower the other three together (−10 or −15 each), so fewer pairs swap and the order part is higher; how far the values end from where they began sets the difference part.

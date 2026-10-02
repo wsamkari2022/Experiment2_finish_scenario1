@@ -1510,7 +1510,9 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
    -----------------------
    When the participant went against their best fit, did the ORDER of their four policy values -
    which comes first, second, third and fourth - change? 100 means no two of their priorities ever
-   traded places.
+   traded places. SINCE 2 OCTOBER 2026 THAT IS THE ORDER PART: Stability also asks how far the four
+   values MOVED, and is the average of the two (equations (4) to (7) and the levels: "Stability has two
+   parts", below the known limits). Equations (1) to (3) and everything up to there are unchanged.
 
    It is a question about VALUES, not choices. VCI asks whether the choices fit the values as they
    stood; Stability asks whether the values themselves were reordered. A participant can choose
@@ -1538,7 +1540,8 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
 
      (2) Total swaps      S = Σ swaps_t over the conflict steps
 
-     (3) Stability        Stability = round( 100 × (1 − min(1, S / 6)) )         -> computeStability
+     (3) Order part       Value_Order_Stability = round( 100 × (1 − min(1, S / 6)) )   -> stabilityFromSwaps
+                          (until 2 October 2026 this was the whole of Stability)
                           6 is the number of pairs among four values: six swaps is as much
                           reordering as turning the four priorities completely upside down.
 
@@ -1550,7 +1553,9 @@ export function computeVCI(results: Block5ScenarioResult[]): { value: number; le
    step is 2 swaps. With no other conflict, Stability = round(100 × (1 − 2/6)) = 67, "Shifted a
    little".
 
-   THE LEVELS (stabilityLevel), set by the researcher by total swaps:
+   THE LEVELS ON TODAY'S EDGES (levelOnSwapEdges; until 2 October 2026 `stabilityLevel`), set by the researcher by
+   total swaps. Since that date they describe the order part and the three sensitivity stabilities; Stability's own
+   words sit on COMBINED_STABILITY_EDGES (94 / 85 / 63 / 49):
        Held steady             100      no two priorities traded places
        Mostly steady           83-99    more than none, at most one swap
        Shifted a little        50-82    more than one, at most three (one value climbing from last
@@ -1780,12 +1785,16 @@ export interface StabilityResult {
 }
 
 /**
- * Stability: equations (1) to (3) over the stored results, against the profile the participant
- * brought into Block 5.
+ * Stability over the stored results, against the profile the participant brought into Block 5 - since 2 October 2026
+ * the average of its two parts: the ORDER part, equations (1) to (3) (the swaps at the conflict steps), and the
+ * DIFFERENCE part, equations (4) and (5) (how far the four values moved at the same steps, added up per value). Both
+ * are returned (`orderValue`, `differenceValue`) beside the score, with the average points moved and each value's moves.
  *
- * Reads `policySnapshotAfter` on every result (the four values after that scenario's update) and
- * `cvrFired` to know which steps were conflicts. A record written before the snapshots existed
- * cannot be scored and returns the empty result rather than a guess.
+ * Reads `policySnapshotAfter` on every result (the four values after that scenario's update) and `cvrFired` to know
+ * which steps were conflicts - the same in all four conditions: a misfit kept after the reflection (1, 2), a choice
+ * confirmed on the APA page (1, 3), a misfit kept on Baseline's confirmation page (4). A keep step (a good fit), the wish and the rule never
+ * count in either part. A record written before the snapshots existed cannot be scored and returns the empty result
+ * rather than a guess.
  */
 export function computeStability(
   results: Block5ScenarioResult[],

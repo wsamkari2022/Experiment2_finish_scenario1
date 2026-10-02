@@ -17,7 +17,7 @@
  * database document, lives on that document, not here.
  */
 
-import type { Block5Results } from "./block5Types";
+import type { Block5Results, Block5ScenarioResult } from "./block5Types";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import { reflectionWasShown } from "./block5CVR";
 import type { TimingSummary } from "./telemetry";
@@ -395,6 +395,10 @@ export interface FeedbackScenarioTelemetry {
   cvrDwellMs: number;
   apaDwellMs: number;
   timeMs: number;
+  /* The four-condition audit, 2 October 2026: each condition's own page, so the feedback can be read beside it. */
+  cvrRejectionVisits: number;     // condition 2's CVR Rejection page
+  baselineConfirmVisits: number;  // condition 4's confirmation page for a misaligned choice
+  secondViewOpened: boolean;
 }
 
 export interface FeedbackBlock5Summary {
@@ -456,6 +460,12 @@ export interface FeedbackRecord {
   feedback: FeedbackAnswers;
 }
 
+/*
+ * WHICH REFLECTION SECTIONS EACH CONDITION CAN SEE (conditions.ts). The CVR questions need a reflection (conditions 1 and
+ * 2), the APA questions an APA page (1 and 3), the two-views questions a second view opened (1 and 2); a Baseline
+ * participant (4) sees none of the three, because none of those pages exists there. Condition 2's CVR Rejection page has
+ * no questions of its own ("Q4-A"). Each rule reads what was SHOWN, never what was counted for Stability.
+ */
 /** Whether the CVR feedback section should be shown (participant saw at least one CVR vignette). */
 export function shouldShowCvrSection(results: Block5Results | null): boolean {
   if (!results) return false;
@@ -466,7 +476,18 @@ export function shouldShowCvrSection(results: Block5Results | null): boolean {
 
 /** Whether the dual-perspective questions should be shown (alt lens generated in any scenario). */
 export function usedDualPerspective(results: Block5Results | null): boolean {
-  return !!results && results.scenarioResults.some((r) => r.cvrAltViewGenerated);
+  return !!results && results.scenarioResults.some((r) => secondViewWasOpened(r));
+}
+
+/**
+ * WAS THE SECOND VIEW OPENED IN THIS SCENARIO (the four-condition audit, 2 October 2026)? The row's own
+ * `cvrAltViewGenerated` describes only the reflection on the FINAL choice, so a second view opened before going back -
+ * most often in condition 2 (CVR_Only), where a refusal leads back to all the options - was lost, and the two-views
+ * questions could be skipped for somebody who had compared both views. Now also the timing record's `secondViewOpened`
+ * and any CVR Rejection page visit made after both views were seen.
+ */
+export function secondViewWasOpened(r: Block5ScenarioResult): boolean {
+  return !!r.cvrAltViewGenerated || !!r.telemetry?.secondViewOpened || !!r.cvrRejections?.some((v) => v.bothViewsSeen);
 }
 
 /** Whether the APA feedback section should be shown (the APA panel opened at least once). */
@@ -497,6 +518,9 @@ export function buildBlock5Summary(results: Block5Results | null): FeedbackBlock
       cvrDwellMs: t?.cvrDwellMs ?? 0,
       apaDwellMs: t?.apaDwellMs ?? 0,
       timeMs: r.timeMs ?? 0,
+      cvrRejectionVisits: t?.cvrRejectionVisits ?? (r.cvrRejections?.length ?? 0),
+      baselineConfirmVisits: t?.baselineConfirmVisits ?? (r.baselineConfirm ? 1 : 0),
+      secondViewOpened: secondViewWasOpened(r),
     };
   });
 

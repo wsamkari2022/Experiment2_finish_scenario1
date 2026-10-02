@@ -121,9 +121,10 @@ const TEMPERATURE_FLAT = 60;
  *
  *   VCI       did this person's past choices match their profile? A high VCI means the profile has
  *             been predicting them correctly all block, so it has earned confidence here.
- *   Stability did the order of their priorities hold when they went against their best fit? A
- *             profile whose priorities were reordered during Block 5 is a snapshot of someone who
- *             is changing, and is a weaker basis for a forecast.
+ *   Stability did their four values hold when they went against their best fit - their order, and
+ *             since 2 October 2026 also how far they moved (the average of the two)? A profile that
+ *             was reordered or moved during Block 5 is a snapshot of someone who is changing, and is a
+ *             weaker basis for a forecast. The same rule in all four conditions.
  *
  * EQUAL WEIGHTS ARE A DECLARED CHOICE, not neutrality. Nothing in the study measures whether
  * consistency or steadiness is the better predictor of a sixth choice, so any other weighting would
