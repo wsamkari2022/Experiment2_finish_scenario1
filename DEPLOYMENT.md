@@ -121,6 +121,10 @@ contains Windows-only files:
 - `node_modules/`
 - `dist/`
 - `.git/` (optional)
+- `Prolific docs/` — it holds the Prolific completion code. The server never needs it, and the code
+  must not sit on a machine that serves web pages. (Later, the code goes into the server's `.env`
+  only; see `docs/PROLIFIC_CONVERSION_PLAN.md`.)
+- `.sim-build/` (the checks' compiled copy; not needed on the server)
 
 The folder name contains spaces, so always quote it on the server, for example:
 
@@ -301,6 +305,41 @@ mongodb://vrds2_user:THE_PASSWORD_FROM_A3@localhost:27018/VRDS2?authSource=admin
 Port **27018** is your laptop's end of the tunnel; it arrives at 27017 on the server.
 
 If Compass stops responding, the tunnel has probably closed. Run step 1 again, then reconnect.
+
+---
+
+## Part G — Testing the four conditions on the server (since 2 October 2026)
+
+The version after 29 September 2026 adds the four conditions, a landing page that keeps them balanced, and new
+server routes (`/api/conditions/...`) and a new collection (`condition_arrivals`, made by the server when it starts).
+Nothing new goes into `.env`. Deploy it exactly as in Part D; `./build-and-run.sh` restarts the server (Node never
+reloads new code by itself).
+
+**What a test run looks like.** Open the site. For about a second it says "Preparing your study…", then the start
+screen opens and the address ends in `?condition=...` (the condition this browser was given). Use a **new email for
+every test run**, and a private window (or a browser you have not used for the study before), so no older test run is
+continued.
+
+**Two ways to test, and which one counts for balance:**
+
+| You open | What happens | Counted for balance? |
+|---|---|---|
+| The plain address | The landing page gives the condition with the fewest people, exactly as for a real participant | **Yes.** A finished run counts forever; an unfinished one for 2 hours |
+| The address plus `?condition=CVR_APA`, `CVR_Only`, `APA_Only` or `Baseline` | That condition, on purpose (saved with source `address`) | **No, never** |
+
+So test a particular condition with its address. A run started on the plain address is a real test of the landing page,
+but it stays in the counts. **Before the first real participant, the test records must be deleted or marked** (an open
+item in `docs/VRDS_Accuracy_Checklist.docx`), so the four counts start equal.
+
+**The count page:** `http://<your address>:4000/api/conditions/report` shows, per condition, who counts now (finished,
+working, just arrived) and every record ever by source. Numbers only, no emails.
+
+**Good to know while testing:**
+
+- The two development buttons (Reset, Fill feedback) are not in the server build, so every test is a full run.
+- The same email on a second browser asks for the email and age again and then takes the run over; the first browser
+  shows "This study is open somewhere else". That is the one-browser rule, not an error.
+- `/api/health` should show `"ok":true` and `"database":"VRDS2"`.
 
 ---
 

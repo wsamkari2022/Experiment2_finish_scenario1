@@ -303,7 +303,7 @@ condition work of 1 October, all fixed:
   `cvr.second_lens_was_generated` use it.
 - **F3 - APA_Only's note said "you chose to reconsider"** under a misfit confirmed on the APA page; the page opened by
   itself. Now "This went against your usual values. The clarification page opened, and this is the option you confirmed
-  there." (the researcher may reword it).
+  there." (the researcher kept these words, 2 October 2026: "A, keep it").
 - **F4 - APA_Only's "Clarification shown" badge** was missing when the participant went back from the APA page to a good
   fit; it now reads the APA visit too.
 - **F5 - Baseline's own page was not counted** anywhere (every other condition counts its page). Now
