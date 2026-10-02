@@ -331,15 +331,19 @@ So test a particular condition with its address. A run started on the plain addr
 but it stays in the counts. **Before the first real participant, the test records must be deleted or marked** (an open
 item in `docs/VRDS_Accuracy_Checklist.docx`), so the four counts start equal.
 
-**The count page:** `http://<your address>:4000/api/conditions/report` shows, per condition, who counts now (finished,
-working, just arrived) and every record ever by source. Numbers only, no emails.
+**The count page:** the address participants open, with `/api/conditions/report` after it, **without `:4000`**:
+`https://moonlander.fit.edu/api/conditions/report` (checked 2 October 2026). Port 4000 is the server's inside door; from
+outside it is closed and the browser waits until it gives up ("took too long to respond"). On the server itself (over
+SSH) the same numbers come from `curl -s http://localhost:4000/api/conditions/counts`. The page shows, per condition, who
+counts now (finished, working, just arrived) and every record ever by source. Numbers only, no emails.
 
 **Good to know while testing:**
 
 - The two development buttons (Reset, Fill feedback) are not in the server build, so every test is a full run.
 - The same email on a second browser asks for the email and age again and then takes the run over; the first browser
   shows "This study is open somewhere else". That is the one-browser rule, not an error.
-- `/api/health` should show `"ok":true` and `"database":"VRDS2"`.
+- `https://moonlander.fit.edu/api/health` should show `"ok":true` and `"database":"VRDS2"`.
+- Opening the count page or the health page never gives anybody a condition; only the study's own address does.
 
 ---
 
