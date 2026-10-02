@@ -95,6 +95,10 @@ function scenarioNote(sr: Block5ScenarioResult): string {
   if (level === "aligned" || level === "weakly_aligned") {
     return "This choice fit your earlier values.";
   }
+  /* Baseline (since 1 October 2026): kept on the confirmation page, with no reflection before it. */
+  if (sr.baselineConfirm) {
+    return "This went against your usual values, and you kept it.";
+  }
   if (sr.cvrFired) {
     if (sr.cvrEndorsement === "strong") {
       return "This went against your usual values, but you firmly stood by it after seeing it up close — recorded as a genuine value.";
@@ -311,8 +315,10 @@ function ScenarioTile({ sr, index }: { sr: Block5ScenarioResult; index: number }
           {reflectionWasShown(sr) && (
             <Badge size="sm" variant="subtle" colorPalette="orange" rounded="md">Reflection shown</Badge>
           )}
-          {/* APA_Only (since 1 October 2026, the researcher's "Q3-yes"): the APA page opened with no reflection before it. */}
-          {sr.cvrFired && !reflectionWasShown(sr) && (
+          {/* APA_Only (since 1 October 2026, the researcher's "Q3-yes"): the APA page opened with no reflection before it.
+              Only when the APA page ran: Baseline's misaligned keep is also a Stability step with no reflection, and there
+              nothing extra was shown, so it gets no badge. */}
+          {sr.cvrFired && !reflectionWasShown(sr) && !!sr.apa && (
             <Badge size="sm" variant="subtle" colorPalette="orange" rounded="md">Clarification shown</Badge>
           )}
           {sr.cvrFired && (sr.cvrEndorsement === "strong" || sr.cvrEndorsement === "weak") && (

@@ -55,6 +55,7 @@ import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { predictChoice, predictionConfidence, PREDICTION_VERSION } from "./block5Prediction";
 import {
   ALIGNMENT_LABEL, FIT_SCORE_SCALE, averagePerformance, isPredictionTest, reflectionWasShown, resultCountsTowardsPerformance,
+  confidenceWeight, roundForRecord,
 } from "./block5CVR";
 import { overallCaptured, capturedLabel } from "./block5Performance";
 import { mcfForScenario, MCF_VERSION } from "./block5MCF";
@@ -89,7 +90,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-01-apa-only-main-value";
+export const SHAPE_VERSION = "2026-10-01-baseline";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -952,8 +953,8 @@ function totalTimeMs(timings: unknown): number | null {
 }
 
 /** One of the three sensitivity stabilities off the stored Block 5 results, or null. */
-/** The label the three reflection-score stabilities carry in APA_Only, where nothing could move them. */
-export const NOT_MEASURED_IN_APA_ONLY = "Not measured in this condition (APA_Only: no reflection, no views, no person speaking)";
+/** The label the three reflection-score stabilities carry in APA_Only and Baseline, where nothing could move them. */
+export const NOT_MEASURED_IN_THIS_CONDITION = "Not measured in this condition (no reflection, no views, no person speaking)";
 
 function sensitivityStabilityOf(
   b5: Record<string, unknown>,
@@ -1029,11 +1030,11 @@ export function buildHeadline(block5: unknown, timings: unknown): Record<string,
     /* APA_Only (since 1 October 2026, the researcher's "Q1-A"): these three were never shown or moved, so their
        stabilities measured nothing - null, with the reason as the label, never a 100 that would read "held". */
     directness_stability_score: frozen ? null : sensitivityStabilityOf(b5, "directness")?.value ?? null,
-    directness_stability_label: frozen ? NOT_MEASURED_IN_APA_ONLY : sensitivityStabilityOf(b5, "directness")?.level ?? null,
+    directness_stability_label: frozen ? NOT_MEASURED_IN_THIS_CONDITION : sensitivityStabilityOf(b5, "directness")?.level ?? null,
     context_stability_score: frozen ? null : sensitivityStabilityOf(b5, "context")?.value ?? null,
-    context_stability_label: frozen ? NOT_MEASURED_IN_APA_ONLY : sensitivityStabilityOf(b5, "context")?.level ?? null,
+    context_stability_label: frozen ? NOT_MEASURED_IN_THIS_CONDITION : sensitivityStabilityOf(b5, "context")?.level ?? null,
     stakeholder_stability_score: frozen ? null : sensitivityStabilityOf(b5, "stakeholder")?.value ?? null,
-    stakeholder_stability_label: frozen ? NOT_MEASURED_IN_APA_ONLY : sensitivityStabilityOf(b5, "stakeholder")?.level ?? null,
+    stakeholder_stability_label: frozen ? NOT_MEASURED_IN_THIS_CONDITION : sensitivityStabilityOf(b5, "stakeholder")?.level ?? null,
     reflection_scores_measured: !frozen,
     /* PERFORMANCE COUNTS THE FOUR DECISIONS ONLY (25 September 2026). Worked out again here from the
        saved rows rather than copied, so a record saved before that date - whose stored figure
@@ -1980,6 +1981,33 @@ export function cvrRejectionRow(visits: unknown): {
   };
 }
 
+/**
+ * Baseline's confirm in one scenario, for analysis.alignment_records (condition 4, since 1 October 2026): a misaligned or
+ * strongly misaligned choice kept on the confirmation page, with no reflection and no APA page. `kept: false` everywhere
+ * else. The moves themselves are in the row's valueMoves (reasons "Baseline confirm: ...").
+ */
+export function baselineConfirmRow(rec: unknown): {
+  kept: boolean; how_sure_1_to_5?: number | null; weight_from_how_sure?: number | null; value_raised?: string | null;
+  value_raised_label?: string | null; step_up?: number | null; step_down_for_each_other_value?: number | null;
+} {
+  if (!rec || typeof rec !== "object") return { kept: false };
+  const r = rec as Record<string, unknown>;
+  const sure = typeof r.confidence === "number" ? r.confidence : null;
+  const w = sure === null ? null : confidenceWeight(sure);
+  const down = typeof r.stepDownForTheOtherThree === "number" ? r.stepDownForTheOtherThree : null;
+  const key = typeof r.valueRaised === "string" ? r.valueRaised : null;
+  return {
+    kept: true,
+    how_sure_1_to_5: sure,
+    weight_from_how_sure: w,
+    value_raised: key,
+    value_raised_label: key ? POLICY_DIM_SHORT[key as Block5PolicyDimKey] ?? key : null,
+    /* Before the 0-100 edges cut anything (the moves list says what was made). */
+    step_up: w === null ? null : roundForRecord(30 * w),
+    step_down_for_each_other_value: w === null || down === null ? null : roundForRecord(down * w),
+  };
+}
+
 export function buildAlignmentRecords(block5: unknown): Record<string, unknown> | null {
   const results = resultsOf(block5);
   if (results.length === 0) return null;
@@ -2098,6 +2126,9 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
 
       /* ---- The CVR Rejection page: condition 2 (CVR_Only) in place of APA, since 1 October 2026 ---- */
       cvr_rejection_page: cvrRejectionRow(r.cvrRejections),
+
+      /* ---- Baseline (condition 4, since 1 October 2026): a misaligned choice kept on the confirmation page ---- */
+      baseline_confirm: baselineConfirmRow(r.baselineConfirm),
     };
   });
 
@@ -2155,6 +2186,8 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       times_clarification_ran: scored.filter((r) => r.apa.ran).length,
       /* Condition 2 (CVR_Only) only: scenarios where the CVR Rejection page opened at least once. */
       times_cvr_rejection_page_shown: scored.filter((r) => r.cvr_rejection_page.shown).length,
+      /* Condition 4 (Baseline) only: misaligned choices kept on the confirmation page (each a Stability step). */
+      times_kept_misaligned_on_the_baseline_confirm_page: scored.filter((r) => r.baseline_confirm.kept).length,
       times_they_changed_their_choice: scored.filter((r) => r.cvr.changed_their_choice === true).length,
     },
   };

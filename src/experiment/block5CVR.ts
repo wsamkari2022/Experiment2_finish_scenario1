@@ -674,7 +674,8 @@ export function confidenceWeight(confidence: number): number {
 /**
  * WAS THE REFLECTION (CVR) PAGE SHOWN in this scenario? `cvrFired` answers "did this scenario count as a Stability step",
  * and until 1 October 2026 the two were the same thing. In APA_Only the APA page opens without any reflection and still
- * counts (the researcher's "Q2-yes"), so those rows carry `reflectionShown: false`. Every reader that means "the
+ * counts (the researcher's "Q2-yes"), and in Baseline a misaligned choice kept on the confirmation page counts too (his
+ * "Q2-yes" again), so those rows carry `reflectionShown: false`. Every reader that means "the
  * participant saw the reflection" - the results page's badge and sentence, the CVR feedback questions, the database's
  * cvr.fired - asks this instead. A row without the field (every other condition, and older runs) reads as before.
  */
@@ -727,6 +728,48 @@ export function applyCvrRejectionUpdatesWithMoves(
       "CVR Rejection page: the last of the two views they saw");
   }
   return { profile: p, moves };
+}
+
+/**
+ * BASELINE'S CONFIRM — condition 4, Baseline, only (since 1 October 2026; the researcher's design).
+ *
+ * Baseline has no reflection (CVR) and no APA page. A misaligned or strongly misaligned choice gets the same
+ * confirmation page a good fit gets, plus "How sure are you about this choice?" (1-5), and keeping it moves the four
+ * values the way the APA page's confirm does - the researcher: "+30 for the top value of the selected option and -10
+ * for all other values if it is a misaligned and -15 for strongly misaligned", with a confidence level "like (+18 to
+ * +30)" ("scale all moves"):
+ *   the value the option serves most (optionMainValue)   +30 x w
+ *   each of the other three                              -10 x w (misaligned), -15 x w (strongly misaligned)
+ * w = stakesWeight x confidenceWeight(sure), the APA page's own weight (sure 1-5 -> 0.6-1.0), so +18 to +30, and -6 to
+ * -10 or -9 to -15. A strongly misaligned keep is not zero-sum (+30 in, 3 x -15 out): his design, and every move is
+ * recorded. The stakeholder, directness and context scores never move (nothing in Baseline shows them). A good fit
+ * moves nothing here: the keep rule (applyKeepUpdatesWithMoves) handles it, as in every condition.
+ */
+export function applyBaselineConfirmUpdatesWithMoves(
+  profile: Block5UserProfile,
+  option: Block5ScenarioOption,
+  level: AlignmentLevel,
+  stakesWeight = 1,
+  confidence = 3,
+): ProfileUpdate {
+  const p = cloneProfile(profile);
+  const moves: Block5ValueMove[] = [];
+  if (!isMisaligned(level)) return { profile: p, moves };
+  const w = stakesWeight * confidenceWeight(confidence);
+  const served = optionMainValue(option);
+  const down = baselineStepDown(level);
+  const kind = level === "strongly_misaligned" ? "a strongly misaligned" : "a misaligned";
+  bump(p, served, 30 * w, moves, `Baseline confirm: kept ${kind} option; the value it serves most`);
+  for (const k of POLICY_DIM_KEYS) {
+    if (k !== served) bump(p, k, -down * w, moves, `Baseline confirm: kept ${kind} option; another of the four values`);
+  }
+  recompute(p);
+  return { profile: p, moves };
+}
+
+/** The step down for each of the other three values on Baseline's confirm, before the sureness weight. */
+export function baselineStepDown(level: AlignmentLevel): number {
+  return level === "strongly_misaligned" ? 15 : 10;
 }
 
 /**

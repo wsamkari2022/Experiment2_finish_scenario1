@@ -202,8 +202,14 @@ SECTIONS = [
          "yourself gives that condition and is never counted (your Q2-yes); /api/conditions/report shows the counts (Q3-yes).",
          ["conditions"], "(N3, N7)"),
         ("Each condition's difference is built one task at a time.",
-         "Built so far: CVR_Only's CVR Rejection page and APA_Only's straight-to-APA flow. Baseline still runs the same "
-         "study as CVR+APA.", ["conditions", "build"], "(N9, N12, N15)"),
+         "Built: CVR_Only's CVR Rejection page, APA_Only's straight-to-APA flow and Baseline's confirmation page, so all four "
+         "conditions now differ from Block 5 on.", ["conditions", "build"], "(N9, N12, N15, N18)"),
+        ("Baseline: a misaligned choice gets the confirmation page, and keeping it moves the values.",
+         "No reflection, no person, no APA page. The page says \"Before you confirm, take a moment with what this option gives "
+         "up.\" (a good fit keeps \"fits your earlier priorities\") and asks \"How sure are you about this choice?\". Keeping "
+         "it: +30 to the value the option serves most, -10 (misaligned) or -15 (strongly misaligned) to the others, all x 0.6-1.0 "
+         "by how sure; a Stability step; the three reflection scores never move; no CVR or APA feedback questions. Checked live.",
+         ["conditions"], "(N17, N18, N19)"),
         ("APA_Only: a misaligned choice opens the APA page at once.",
          "No reflection page and no person speaking; the APA page shows only its value question (no two-situations table, "
          "no view question), opens with your sentence, says which value the chosen option serves most, and goes back to all the options without a warning. The stakeholder, directness and context scores never move (the APA rule's automatic stakeholder "

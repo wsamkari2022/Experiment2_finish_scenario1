@@ -32,10 +32,10 @@ Two of those traps matter enough to repeat here:
 The researcher's design (his words): four conditions - **1 CVR+APA** (the current, full version), **2 CVR_Only**,
 **3 APA_Only**, **4 Baseline** (no CVR or APA). All four share Blocks 1-4 (building the profile) and differ from Block 5
 to the end. **What each condition does differently is built one task at a time**, when he gives it ("do this task to
-CVR_Only"); a condition without a built task runs exactly today's study. Built so far: **CVR_Only's CVR Rejection page**
-and **APA_Only's straight-to-APA flow** (the next two sections); Baseline not yet. Code that makes a condition differ reads
-`currentCondition()` through one rule per task in `conditions.ts` (`showsCvrRejectionPage`, `skipsCvrReflection`,
-`freezesReflectionScores`); a participant with no condition on record (a test run from before this date) counts as
+CVR_Only"); a condition without a built task runs exactly today's study. Built: **CVR_Only's CVR Rejection page**,
+**APA_Only's straight-to-APA flow** and **Baseline's confirmation page** (the next three sections), so all four now differ.
+Code that makes a condition differ reads `currentCondition()` through one rule per task in `conditions.ts`
+(`showsCvrRejectionPage`, `skipsCvrReflection`, `confirmsMisalignedChoices`, `freezesReflectionScores`); a participant with no condition on record (a test run from before this date) counts as
 condition 1.
 Plan answers "Q1-B, Q2-yes, Q3-yes". **Participants see it** (a one-second landing page; the address); HOW_TO_ANALYZE 4.9.
 
@@ -165,6 +165,46 @@ unchanged. **Participants in condition 3 see it** (HOW_TO_ANALYZE 4.9).
   the APA page at once with no table and no view question; naming Reducing harm (sure 4) saved the four values' moves only
   (+27, -9, -9, -9), the stakeholder, directness and context scores unchanged, `reflectionShown: false`, `cvrFired: true`,
   reflection visits 0, APA visits 1. The test browser was restored from a page that does not run the study.
+
+## Baseline: the confirmation page for a misaligned choice (since 1 October 2026)
+
+The researcher's task for **condition 4 (Baseline)**, which has no reflection (CVR) and no APA page: "when the user selects a
+misaligned or strong misaligned option, the user will see the confirmation page similar to the aligned or weakly aligned
+option but the values will moves if the user confirms ... +30 for the top value of the selected option and -10 for all other
+values if it is a misaligned and -15 for strongly misaligned". Plan answers "Q1-B" (the sentence), "scale all moves" (a "How
+sure" question, his idea) and "Q2-yes". Conditions 1-3 unchanged. **Participants in condition 4 see it** (HOW_TO_ANALYZE 4.9).
+
+- **The page** (`handleSelect`; the overlay's confirmation page with `confirmOnly`): a misaligned choice in a decision opens
+  the confirmation page a good fit gets - no reflection, no person, no APA page, never counted as a reflection visit - with
+  two differences: its first sentence is "Before you confirm, take a moment with what this option gives up."
+  (`BASELINE_MISFIT_INTRO`; "This option fits your earlier priorities" would be untrue; a good fit keeps it, "Q1-B"), and
+  "How sure are you about this choice?" 1-5 (the APA page's buttons), needed before "Keep this choice" works. "Change my
+  mind" goes back and moves nothing. Scenarios 5 and 6 are unchanged (no reflection ran there anyway).
+- **The moves on "Keep"** (`applyBaselineConfirmUpdatesWithMoves` in block5CVR.ts): +30 x w to the value the option serves
+  most (`optionMainValue`; no option ties for its top value, N14), -10 x w (misaligned) or -15 x w (strongly misaligned) to
+  each of the other three; w = the APA page's own sureness weight, 0.6-1.0, so +18 to +30, -6 to -10, -9 to -15. A strongly
+  misaligned keep is not zero-sum (+30 in, -45 out): his design, every move recorded. A good fit uses the keep rule, as in
+  every condition.
+- **The stakeholder, directness and context scores never move** (`freezesReflectionScores` is now APA_Only and Baseline):
+  the headline writes their stabilities as null, "Not measured in this condition" (`NOT_MEASURED_IN_THIS_CONDITION`; it was
+  `NOT_MEASURED_IN_APA_ONLY`, whose words named APA_Only).
+- **Each such keep is a Stability step ("Q2-yes")**: the row has `cvrFired: true`, `reflectionShown: false`, no reflection
+  coordinate or views, a timing record that says no reflection was shown, `baselineConfirm` (`confidence`, `valueRaised`,
+  `stepDownForTheOtherThree`), and `valueMoves` with reasons "Baseline confirm: ...".
+- **The results page:** no badge on those cards ("Clarification shown" now needs the APA page to have run, `!!sr.apa`), and the
+  note "This went against your usual values, and you kept it." (the old fallback would have said "you chose to reconsider").
+- **Feedback:** no CVR, APA or two-views questions (none of those pages ran).
+- **Database:** every `analysis.alignment_records` row has `baseline_confirm` (`kept`, how sure, its weight, the value raised,
+  the step up and the step down; `kept: false` elsewhere), and the totals `times_kept_misaligned_on_the_baseline_confirm_page`.
+  `SHAPE_VERSION` "2026-10-01-baseline".
+- **Checked:** `validate:conditions` N17 (the rule at every sureness and both levels, the researcher's ranges, a good fit
+  nothing, the edges recorded, a Stability step), N18 (the flow, the page, the honest row, the results page, from the
+  source), N19 (the database, "not measured", no CVR or APA feedback questions); N14 and N15 adjusted for the new route. 16
+  deliberate breaks, 16 caught. Live in condition 4: the sealed respirator (strongly misaligned for that test profile)
+  opened the confirmation page with the new sentence and "How sure"; "Keep" stayed locked until it was answered; at sure 4
+  How much is gained went 52 -> 79 (+27) and each other value -13.5; directness, context and stakeholder unchanged (10, 8,
+  0); no reflection or APA visit; in scenario 2 a good fit still read "This option fits your earlier priorities" with no
+  question, and "Change my mind" moved nothing. The test browser was restored from a page that does not run the study.
 
 ## Prolific: planned, not built (since 1 October 2026)
 
@@ -1226,7 +1266,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12) |
 | `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9) |
 | `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
-| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16) |
+| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

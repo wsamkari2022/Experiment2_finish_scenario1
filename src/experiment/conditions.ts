@@ -210,9 +210,20 @@ export function skipsCvrReflection(condition: Condition | null = currentConditio
   return condition?.type === "APA_Only";
 }
 
-/** The stakeholder, directness and context scores never move in this condition (APA_Only, the researcher's "Q1-A"). */
+/*
+ * Baseline (1 October 2026): no reflection and no APA page. A misaligned or strongly misaligned choice gets the same
+ * confirmation page a good fit gets, with its own first sentence ("Q1-B": "This option fits your earlier priorities"
+ * would be untrue) and "How sure are you about this choice?"; keeping it moves the four values the way the APA page's
+ * confirm does (applyBaselineConfirmUpdatesWithMoves in block5CVR.ts). Each such keep is a Stability step ("Q2-yes").
+ */
+export function confirmsMisalignedChoices(condition: Condition | null = currentCondition()): boolean {
+  return condition?.type === "Baseline";
+}
+
+/** The stakeholder, directness and context scores never move in this condition: nothing in it shows or learns them
+    (APA_Only, the researcher's "Q1-A"; Baseline, which has no reflection and no APA page at all). */
 export function freezesReflectionScores(condition: Condition | null = currentCondition()): boolean {
-  return condition?.type === "APA_Only";
+  return condition?.type === "APA_Only" || condition?.type === "Baseline";
 }
 
 /** The two fields the researcher asked for beside the demographic answers ("Condition number", "Condition type"). */

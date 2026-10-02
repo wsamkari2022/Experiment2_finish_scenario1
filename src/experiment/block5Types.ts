@@ -825,6 +825,19 @@ export interface APARecord {
   mainValueShown?: Block5PolicyDimKey;
 }
 
+/**
+ * Baseline (condition 4, since 1 October 2026): a misaligned or strongly misaligned choice kept on the confirmation page.
+ * No reflection and no APA page ran; the four values moved by applyBaselineConfirmUpdatesWithMoves (block5CVR.ts).
+ */
+export interface BaselineConfirmRecord {
+  /** "How sure are you about this choice?", 1-5; it scales every move (0.6-1.0, the APA page's weight). */
+  confidence: number;
+  /** The value the option serves most (optionMainValue): +30 x the weight. */
+  valueRaised: Block5PolicyDimKey;
+  /** The step down for each of the other three before the weight: 10 (misaligned) or 15 (strongly misaligned). */
+  stepDownForTheOtherThree: number;
+}
+
 /** ---- Behavioral telemetry (additive; does NOT affect scoring) ---- */
 
 /** How a scenario's CVR step ended (final committed path). */
@@ -991,13 +1004,16 @@ export interface Block5ScenarioResult {
    */
   valueMoves?: Block5ValueMove[];
   /**
-   * False when the APA page opened WITHOUT the reflection (APA_Only, since 1 October 2026): such a row still has
-   * `cvrFired: true`, because it counts as a Stability step (the researcher's "Q2-yes"). Absent everywhere else, which
-   * means "as cvrFired says". Read it through reflectionWasShown (block5CVR.ts).
+   * False when the APA page opened WITHOUT the reflection (APA_Only, since 1 October 2026), or a misaligned choice was
+   * kept on Baseline's confirmation page (same date): such a row still has `cvrFired: true`, because it counts as a
+   * Stability step (the researcher's "Q2-yes", both times). Absent everywhere else, which means "as cvrFired says". Read
+   * it through reflectionWasShown (block5CVR.ts).
    */
   reflectionShown?: boolean;
   /** Every visit to the CVR Rejection page in this scenario (condition 2, CVR_Only, since 1 October 2026). */
   cvrRejections?: CvrRejectionVisit[];
+  /** Baseline (condition 4, since 1 October 2026): a misaligned choice kept on the confirmation page, and its sureness. */
+  baselineConfirm?: BaselineConfirmRecord;
   /**
    * The wish only (scenario 5), since 25 September 2026: the id of the decision scenario whose
    * OPENING values this row was shown and scored on (see profileShownIn in block5Mirror.ts).
@@ -1360,8 +1376,8 @@ export interface SensitivityStabilities {
 }
 
 export interface Block5Results {
-  /* True in APA_Only (since 1 October 2026): the stakeholder, directness and context scores were never shown or moved,
-     so their stabilities measured nothing (the database writes them as not measured). */
+  /* True in APA_Only and Baseline (since 1 October 2026): the stakeholder, directness and context scores were never shown
+     or moved, so their stabilities measured nothing (the database writes them as not measured). */
   reflectionScoresFrozen?: boolean;
   completed: boolean;
   completedAt: string;

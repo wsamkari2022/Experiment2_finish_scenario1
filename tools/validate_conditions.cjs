@@ -53,6 +53,19 @@
  *       APA_Only and unchanged elsewhere; and the feedback (the researcher's words): the APA questions appear, the CVR and
  *       two-views questions do not, also for an APA visit that went back
  *
+ * Condition 4, Baseline (since 1 October 2026; the researcher's design "+30 for the top value of the selected option and
+ * -10 for all other values if it is a misaligned and -15 for strongly misaligned", his answers Q1-B the sentence, "scale
+ * all moves" by how sure, Q2-yes a Stability step):
+ *   N17 the rule: only condition 4 confirms misaligned choices (and it freezes the three reflection scores); +30 to the
+ *       option's top value and -10 / -15 to each other value, x 0.6-1.0 by "How sure" (+18 to +30, -6 to -10, -9 to
+ *       -15); a good fit nothing; the three reflection scores never; cut at 0 and 100 and recorded; a Stability step
+ *   N18 the flow and the page, from the source: a misaligned choice in condition 4 opens the confirmation page (no
+ *       reflection counted), its own first sentence and the usual one for a good fit, "How sure" asked and needed, the
+ *       rule used on "Keep", the row says no reflection was shown and still counts; the results page: no badge, its own
+ *       note
+ *   N19 the database and the feedback: baseline_confirm on each row (kept: false elsewhere) and its count; cvr.fired
+ *       false, still a Stability step, no APA; the three stabilities "not measured"; no CVR, APA or two-views questions
+ *
  * Run:  npm run validate:conditions
  */
 const path = require("node:path");
@@ -529,7 +542,8 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
       outcomeAggregationSensitivity: 60, directnessSensitivity: 50, contextSensitivity: 45, stakeholderPerspectiveShiftSensitivity: 45 };
     const score = (prof, key) => prof.dimensions.find((d) => d.key === key)?.score;
     for (const [c, skip] of C.CONDITIONS.map((c) => [c, c.type === "APA_Only"])) {
-      if (C.skipsCvrReflection(c) !== skip || C.freezesReflectionScores(c) !== skip) why.push(`${c.type}: skips ${C.skipsCvrReflection(c)}, freezes ${C.freezesReflectionScores(c)}`);
+      /* Baseline freezes the three scores too (since 1 October 2026, N17); only APA_Only skips the reflection. */
+      if (C.skipsCvrReflection(c) !== skip || C.freezesReflectionScores(c) !== (skip || c.type === "Baseline")) why.push(`${c.type}: skips ${C.skipsCvrReflection(c)}, freezes ${C.freezesReflectionScores(c)}`);
     }
     if (C.skipsCvrReflection(null) || C.freezesReflectionScores(null)) why.push("a participant with no condition skips the reflection");
     for (const conf of [1, 3, 5]) {
@@ -570,7 +584,8 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const fb = src("src/experiment/feedbackTypes.ts");
     const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
     need(sim, /const \[apaOnlyCondition\] = useState<boolean>\(\(\) => skipsCvrReflection\(\)\);/, "the condition is not read");
-    need(sim, /if \(misaligned && apaOnlyCondition\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = Date\.now\(\); \}\s*setCvrWho\(null\);\s*setStep\("apa"\);\s*return;\s*\}\s*if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/, "a misaligned choice does not go straight to the APA page before any reflection is counted");
+    need(sim, /if \(misaligned && apaOnlyCondition\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = Date\.now\(\); \}\s*setCvrWho\(null\);\s*setStep\("apa"\);\s*return;\s*\}\s*(?:\/\*[^*]*\*\/\s*if \(misaligned && baselineCondition\) \{\s*setCvrWho\(null\);\s*return;\s*\}\s*)?if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/, "a misaligned choice does not go straight to the APA page before any reflection is counted");
+    /* (Baseline's own stop, N18, may sit between the two: it also returns before any reflection is counted.) */
     need(sim, /\{step === "apa" && coord && \(whoVariant \|\| reflectionSkipped\) && \(/, "the APA page needs a person to open");
     need(sim, /lastLensSeen=\{reflectionSkipped \? null : lastLensSeen \?\? coord\.framing\}/, "the two-situations table could show without a view");
     need(sim, /freezeReflectionScores=\{reflectionSkipped\}/, "the APA page is not told to leave the stakeholder score");
@@ -582,7 +597,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(sim, /stakeholderInfluenced: apaOnlyCondition \? null : payload\.q2Influenced,/, "the APA record claims a person spoke");
     need(sim, /\.\.\.\(reflectionScoresFrozen \? \{ reflectionScoresFrozen: true \} : \{\}\),/, "the finished block does not say the three scores were frozen");
     need(summary, /\{reflectionWasShown\(sr\) && \(\s*<Badge[^>]*>Reflection shown<\/Badge>/, "\"Reflection shown\" does not ask whether it was shown");
-    need(summary, /\{sr\.cvrFired && !reflectionWasShown\(sr\) && \(\s*<Badge[^>]*>Clarification shown<\/Badge>/, "no \"Clarification shown\" badge");
+    need(summary, /\{sr\.cvrFired && !reflectionWasShown\(sr\) && !!sr\.apa && \(\s*<Badge[^>]*>Clarification shown<\/Badge>/, "no \"Clarification shown\" badge, or not only when the APA page ran");
     need(summary, /const withCvr = results\.scenarioResults\.filter\(\(r\) => reflectionWasShown\(r\)\)\.length;/, "the second-view sentence counts APA_Only clarifications");
     need(fb, /some\(\(r\) => reflectionWasShown\(r\) \|\| \(r\.telemetry\?\.cvrVisits \?\? 0\) > 0\)/, "the CVR feedback questions would appear in APA_Only");
     /* The opening sentence (the researcher's words, 1 October 2026): APA_Only's own, the old one everywhere else. */
@@ -630,7 +645,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const frozen = db.buildHeadline({ scenarioResults: [], sensitivityStability: sens, reflectionScoresFrozen: true }, null);
     const usual = db.buildHeadline({ scenarioResults: [], sensitivityStability: sens }, null);
     for (const k of ["directness", "context", "stakeholder"]) {
-      if (frozen?.[`${k}_stability_score`] !== null || frozen?.[`${k}_stability_label`] !== db.NOT_MEASURED_IN_APA_ONLY) why.push(`APA_Only's ${k} stability reads ${frozen?.[`${k}_stability_score`]} / ${frozen?.[`${k}_stability_label`]}`);
+      if (frozen?.[`${k}_stability_score`] !== null || frozen?.[`${k}_stability_label`] !== db.NOT_MEASURED_IN_THIS_CONDITION) why.push(`APA_Only's ${k} stability reads ${frozen?.[`${k}_stability_score`]} / ${frozen?.[`${k}_stability_label`]}`);
       if (usual?.[`${k}_stability_score`] !== 100 || usual?.[`${k}_stability_label`] !== "Held steady") why.push(`another condition's ${k} stability changed`);
     }
     if (frozen?.reflection_scores_measured !== false || usual?.reflection_scores_measured !== true) why.push("reflection_scores_measured is wrong");
@@ -648,8 +663,144 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     /* Opened the APA page, went back, and chose a good fit: the APA questions still appear (a visit), the CVR ones never. */
     const bailed = { scenarioResults: [resultRow("wildfire_evacuation", { cvrFired: false, telemetry: tel(0, 1) })] };
     if (FB.shouldShowApaSection(bailed) !== true || FB.shouldShowCvrSection(bailed) !== false) why.push("an APA visit that went back is read wrongly");
-    if (db.SHAPE_VERSION !== "2026-10-01-apa-only-main-value") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N16", "the database and the feedback: no reflection claimed, still a Stability step; APA questions, no CVR ones", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N17 */
+  {
+    const why = [];
+    const CVR = B("block5CVR.js");
+    const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
+    const KEYS4 = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+    const OTHER3 = ["directnessSensitivity", "contextSensitivity", "stakeholderPerspectiveShiftSensitivity"];
+    const make = (scores) => ({ dimensions: Object.entries(scores).map(([key, score], i) => ({ key, score, rank: i + 1 })) });
+    const score = (prof, key) => prof.dimensions.find((d) => d.key === key)?.score;
+    const close = (a, b) => Math.abs(a - b) < 1e-6;
+    /* Which condition does what: Baseline alone confirms misaligned choices; the others' rules are unchanged. */
+    for (const c of C.CONDITIONS) {
+      if (C.confirmsMisalignedChoices(c) !== (c.type === "Baseline")) why.push(`${c.type}: confirmsMisalignedChoices is ${C.confirmsMisalignedChoices(c)}`);
+      if (C.freezesReflectionScores(c) !== (c.type === "APA_Only" || c.type === "Baseline")) why.push(`${c.type}: freezesReflectionScores is ${C.freezesReflectionScores(c)}`);
+      if (C.skipsCvrReflection(c) !== (c.type === "APA_Only") || C.showsCvrRejectionPage(c) !== (c.type === "CVR_Only")) why.push(`${c.type}: another condition's rule changed`);
+    }
+    if (C.confirmsMisalignedChoices(null) || C.freezesReflectionScores(null)) why.push("a participant with no condition is treated as Baseline");
+    /* The rule, at every answer and both levels, on a real option. */
+    const base = { vulnerabilityProtectionSensitivity: 50, groupSizeSensitivity: 50, gainResponsivenessSensitivity: 50,
+      outcomeAggregationSensitivity: 50, directnessSensitivity: 50, contextSensitivity: 45, stakeholderPerspectiveShiftSensitivity: 45 };
+    const option = BLOCK5_SCENARIOS[0].options[0];
+    const served = CVR.optionMainValue(option);
+    const other = KEYS4.find((k) => k !== served);
+    const weight = { 1: 0.6, 2: 0.7, 3: 0.8, 4: 0.9, 5: 1.0 };
+    for (const [level, down] of [["misaligned", 10], ["strongly_misaligned", 15]]) {
+      for (const sure of [1, 2, 3, 4, 5]) {
+        const u = CVR.applyBaselineConfirmUpdatesWithMoves(make(base), option, level, 1, sure);
+        for (const k of KEYS4) {
+          const want = 50 + (k === served ? 30 : -down) * weight[sure];
+          if (!close(score(u.profile, k), want)) why.push(`${level}, sure ${sure}: ${k} is ${score(u.profile, k)}, wanted ${want}`);
+        }
+        for (const k of OTHER3) if (score(u.profile, k) !== base[k]) why.push(`${level}, sure ${sure}: ${k} moved`);
+        if (u.moves.length !== 4 || !u.moves.every((m) => /^Baseline confirm: /.test(m.why))) why.push(`${level}, sure ${sure}: the moves are not the four, with their reason`);
+      }
+    }
+    /* The ends of the ranges the researcher named: +18 to +30, and -6 to -10 or -9 to -15. */
+    const at = (level, sure, k) => score(CVR.applyBaselineConfirmUpdatesWithMoves(make(base), option, level, 1, sure).profile, k) - 50;
+    for (const [got, want, what] of [[at("misaligned", 1, served), 18, "+30 at sure 1"], [at("strongly_misaligned", 5, served), 30, "+30 at sure 5"],
+      [at("misaligned", 1, other), -6, "-10 at sure 1"], [at("misaligned", 5, other), -10, "-10 at sure 5"],
+      [at("strongly_misaligned", 1, other), -9, "-15 at sure 1"], [at("strongly_misaligned", 5, other), -15, "-15 at sure 5"]]) {
+      if (!close(got, want)) why.push(`${what} gives ${got}, wanted ${want}`);
+    }
+    if (CVR.baselineStepDown("misaligned") !== 10 || CVR.baselineStepDown("strongly_misaligned") !== 15) why.push("the step down is not 10 and 15");
+    /* A good fit moves nothing through this rule (the keep rule handles it, as everywhere). */
+    for (const level of ["aligned", "weakly_aligned"]) {
+      const u = CVR.applyBaselineConfirmUpdatesWithMoves(make(base), option, level, 1, 5);
+      if (u.moves.length || KEYS4.some((k) => score(u.profile, k) !== 50)) why.push(`a ${level} choice moved values`);
+    }
+    /* The edges: cut at 100 and 0, both recorded, and the record adds up to the real change. */
+    const edge = { ...base, [served]: 95, [other]: 5 };
+    const eu = CVR.applyBaselineConfirmUpdatesWithMoves(make(edge), option, "strongly_misaligned", 1, 5);
+    const ms = eu.moves.find((m) => m.value === served), mo = eu.moves.find((m) => m.value === other);
+    if (score(eu.profile, served) !== 100 || ms?.requested !== 30 || ms?.applied !== 5) why.push(`the top edge: ${JSON.stringify(ms)}`);
+    if (score(eu.profile, other) !== 0 || mo?.requested !== -15 || mo?.applied !== -5) why.push(`the bottom edge: ${JSON.stringify(mo)}`);
+    for (const k of KEYS4) {
+      const made = eu.moves.filter((m) => m.value === k).reduce((a, m) => a + m.applied, 0);
+      if (Math.abs(made - (score(eu.profile, k) - edge[k])) > 0.02) why.push(`${k}: the record does not add up to the change`);
+    }
+    /* A Stability step (Q2-yes), and no reflection shown. */
+    const orig = make({ vulnerabilityProtectionSensitivity: 70, groupSizeSensitivity: 55, gainResponsivenessSensitivity: 40, outcomeAggregationSensitivity: 60 });
+    const row = { scenarioId: "chemical_plant_fire", decisionRole: "decider", cvrFired: true, reflectionShown: false,
+      baselineConfirm: { confidence: 4, valueRaised: "gainResponsivenessSensitivity", stepDownForTheOtherThree: 10 },
+      policySnapshotAfter: { vulnerabilityProtectionSensitivity: 61, groupSizeSensitivity: 46, gainResponsivenessSensitivity: 67, outcomeAggregationSensitivity: 51 } };
+    const stab = CVR.computeStability([row], orig);
+    if (stab.conflictSteps !== 1 || !(stab.swaps > 0)) why.push(`Stability did not count Baseline's step: ${JSON.stringify({ steps: stab.conflictSteps, swaps: stab.swaps })}`);
+    if (CVR.reflectionWasShown(row) !== false) why.push("Baseline's row reads as a shown reflection");
+    gate("N17", "Baseline's rule: condition 4 only; +30 / -10 or -15, x how sure (0.6-1.0); a good fit nothing; edges; a Stability step", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N18 */
+  {
+    const why = [];
+    const sim = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const summary = src("src/experiment/Block5SimulationSummaryPage.tsx");
+    const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
+    need(sim, /const \[baselineCondition\] = useState<boolean>\(\(\) => confirmsMisalignedChoices\(\)\);/, "the condition is not read");
+    /* The flow: no reflection counted, no person picked, the confirmation page ("review", set before). */
+    need(sim, /setStep\("review"\);[\s\S]{0,4000}if \(misaligned && baselineCondition\) \{\s*setCvrWho\(null\);\s*return;\s*\}\s*if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/,
+      "a misaligned choice in Baseline does not stop at the confirmation page before any reflection is counted");
+    if ((sim.match(/setBaselineSure\(null\);/g) ?? []).length !== 2) why.push("\"How sure\" is not cleared for every new choice and every way back");
+    /* "Keep": the answer is needed, and the rule takes it. */
+    need(sim, /const baselineMisfit = baselineCondition && !!scenario && scenarioIsScored\(scenario\) && isMisaligned\(selectedOption\.level\);\s*if \(baselineMisfit && baselineSure === null\) return;/, "a misaligned choice can be kept without \"How sure\"");
+    need(sim, /\? applyBaselineConfirmUpdatesWithMoves\(\s*profile, selectedOption, selectedOption\.level, scenario\?\.stakesWeight \?\? 1, baselineConfirm\.confidence,\s*\)/, "\"Keep\" does not use Baseline's rule with the answer");
+    need(sim, /valueRaised: optionMainValue\(selectedOption\), stepDownForTheOtherThree: baselineStepDown\(selectedOption\.level\)/, "the record does not name the value raised and the step");
+    /* The row: a Stability step, no reflection stored. */
+    need(sim, /const reflectionRan = cvrRan && !opts\.baselineConfirm;\s*const coord = reflectionRan \? cvrCoordinate\(opt, profile\) : undefined;/, "a reflection coordinate is stored on Baseline's row");
+    need(sim, /if \(reflectionRan\) \{\s*const shownFirst = chooseFraming\(profile\);/, "view fields are stored on Baseline's row");
+    need(sim, /cvrFired: cvrRan,\s*\.\.\.\(opts\.baselineConfirm \? \{ reflectionShown: false, baselineConfirm: opts\.baselineConfirm \} : \{\}\),/, "the row does not count as a Stability step, or does not say no reflection was shown");
+    need(sim, /cvrFired: reflectionRan,\s*cvrOutcome: !isMisaligned\(opt\.level\)/, "the timing record says a reflection was shown");
+    /* The page. */
+    need(sim, /confirmOnly=\{baselineCondition\}\s*baselineSure=\{baselineSure\}\s*setBaselineSure=\{setBaselineSure\}/, "the overlay is not told it is Baseline");
+    need(sim, /const baselineMisfit = confirmOnly && misaligned;/, "the overlay does not know a Baseline misfit");
+    need(sim, /\{step === "review" && \(!misaligned \|\| confirmOnly\) && !isRecipient && \(/, "the confirmation page does not open for a Baseline misfit");
+    need(sim, /\{step === "review" && misaligned && !confirmOnly && story/, "the reflection could open in Baseline");
+    need(sim, /\{baselineMisfit \? BASELINE_MISFIT_INTRO : copy\.fitsIntro\}/, "the misfit does not get its own first sentence");
+    need(sim, /const BASELINE_MISFIT_INTRO = "Before you confirm, take a moment with what this option gives up\.";/, "the misfit's sentence is not the approved one");
+    need(sim, /fitsIntro: "This option fits your earlier priorities\. Before you confirm, take a moment with what it gives up\.",/, "a good fit lost its sentence");
+    need(sim, /\{baselineMisfit && \(\s*<HStack[^>]*data-baseline-sure>\s*<Text[^>]*>How sure are you about this choice\?<\/Text>\s*\{\[1, 2, 3, 4, 5\]\.map/, "no \"How sure\" question, or not only for a Baseline misfit");
+    need(sim, /disabled=\{!tradeoffAck \|\| \(baselineMisfit && baselineSure === null\)\}/, "\"Keep this choice\" works without the answer");
+    /* The results page: no badge (nothing extra was shown), and a true note. */
+    need(summary, /if \(sr\.baselineConfirm\) \{\s*return "This went against your usual values, and you kept it\.";\s*\}\s*if \(sr\.cvrFired\) \{/, "the results page's note says Baseline's keep was reconsidered");
+    need(summary, /\{sr\.cvrFired && !reflectionWasShown\(sr\) && !!sr\.apa && \(/, "Baseline's row would show \"Clarification shown\"");
+    gate("N18", "Baseline's flow: the confirmation page, its own sentence, How sure needed, the rule on Keep, an honest row, no badge", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N19 */
+  {
+    const why = [];
+    const resultRow = (id, extra) => ({ scenarioId: id, selectedOptionId: "x", selectedRank: 1, topRankedOptionId: "x", selectedWasTopCandidate: true, selectedWasCandidate: true, ...extra });
+    const rec = (sure, down) => ({ confidence: sure, valueRaised: "gainResponsivenessSensitivity", stepDownForTheOtherThree: down });
+    const r1 = db.baselineConfirmRow(rec(3, 10));
+    if (r1.kept !== true || r1.how_sure_1_to_5 !== 3 || Math.abs(r1.weight_from_how_sure - 0.8) > 1e-9 || r1.step_up !== 24 || r1.step_down_for_each_other_value !== 8
+        || r1.value_raised !== "gainResponsivenessSensitivity" || !r1.value_raised_label) why.push(`the row reads ${JSON.stringify(r1)}`);
+    const r2 = db.baselineConfirmRow(rec(1, 15));
+    if (r2.step_up !== 18 || r2.step_down_for_each_other_value !== 9) why.push(`sure 1, strongly misaligned reads ${JSON.stringify(r2)}`);
+    if (JSON.stringify(db.baselineConfirmRow(undefined)) !== JSON.stringify({ kept: false })) why.push("a row without it does not read kept: false");
+    const baseRow = resultRow("chemical_plant_fire", { cvrFired: true, reflectionShown: false, cvrEndorsement: "n/a", baselineConfirm: rec(4, 15),
+      telemetry: { cvrVisits: 0, apaVisits: 0, cvrTriggered: false } });
+    const fitRow = resultRow("wildfire_evacuation", { cvrFired: false, cvrEndorsement: "n/a" });
+    const records = db.buildAlignmentRecords({ scenarioResults: [baseRow, fitRow], originalProfile: { dimensions: [] } });
+    const [a, b] = records?.by_scenario ?? [];
+    if (a?.baseline_confirm?.kept !== true || b?.baseline_confirm?.kept !== false) why.push(`baseline_confirm on the rows: ${JSON.stringify([a?.baseline_confirm?.kept, b?.baseline_confirm?.kept])}`);
+    if (a?.cvr?.fired !== false || a?.cvr?.counted_as_a_stability_step !== true || a?.apa?.ran !== false || a?.cvr_rejection_page?.shown !== false) why.push("Baseline's row claims a reflection, APA or the Rejection page, or is not a Stability step");
+    if (records?.totals?.times_kept_misaligned_on_the_baseline_confirm_page !== 1 || records?.totals?.times_reflection_fired !== 0) why.push(`the totals: ${JSON.stringify(records?.totals)}`);
+    /* The three stabilities are "not measured" for a finished Baseline block (reflectionScoresFrozen). */
+    const sens = { directness: { value: 100, level: "Held steady" }, context: { value: 100, level: "Held steady" }, stakeholder: { value: 100, level: "Held steady" } };
+    const head = db.buildHeadline({ scenarioResults: [baseRow], sensitivityStability: sens, reflectionScoresFrozen: true }, null);
+    if (head?.directness_stability_label !== db.NOT_MEASURED_IN_THIS_CONDITION || head?.reflection_scores_measured !== false) why.push("the three stabilities are not \"not measured\" in Baseline");
+    if (/APA_Only/.test(db.NOT_MEASURED_IN_THIS_CONDITION)) why.push("the \"not measured\" label names APA_Only, so it is untrue in Baseline");
+    /* The feedback: no reflection and no APA page ran, so none of their questions. */
+    const FB = B("feedbackTypes.js");
+    const block = { totalCvrVisits: 0, totalApaVisits: 0, scenarioResults: [baseRow, fitRow] };
+    if (FB.shouldShowCvrSection(block) !== false || FB.shouldShowApaSection(block) !== false || FB.usedDualPerspective(block) !== false) why.push("CVR, APA or two-views feedback questions appear in Baseline");
+    if (db.SHAPE_VERSION !== "2026-10-01-baseline") why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
+    gate("N19", "Baseline's database and feedback: baseline_confirm per row, no reflection or APA claimed, not measured, no CVR/APA questions", why);
   }
 
   const failed = results.filter((r) => !r.ok);

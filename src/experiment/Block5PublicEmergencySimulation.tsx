@@ -37,7 +37,7 @@ import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import {
   labelOptions, type LabeledOption, isMisaligned, cvrCoordinate,
   optionMetrics, applyEndorsementUpdatesWithMoves, applyKeepUpdatesWithMoves, applyApaUpdatesWithMoves, scenarioVciScore,
-  applyCvrRejectionUpdatesWithMoves,
+  applyCvrRejectionUpdatesWithMoves, applyBaselineConfirmUpdatesWithMoves, baselineStepDown,
   scenarioShowsPerformance,
   scenarioIsScored, isPredictionTest,
   performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
@@ -50,7 +50,7 @@ import { computeVciAll, runningStep } from "./block5VciAll";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { ROLE_BADGE } from "./block5RoleWords";
 import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
-import { freezesReflectionScores, showsCvrRejectionPage, skipsCvrReflection } from "./conditions";
+import { confirmsMisalignedChoices, freezesReflectionScores, showsCvrRejectionPage, skipsCvrReflection } from "./conditions";
 import { progressSaved } from "./sessionGuard";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
 import { SCENARIO_CHECK_AFTER, readAttention } from "./attentionChecks";
@@ -82,6 +82,7 @@ import {
   BLOCK5_RESULTS_KEY,
   type Block5MethodKind,
   type Block5ValueMove,
+  type BaselineConfirmRecord,
 } from "./block5Types";
 import { plannerRank, PLANNER_VERSION, type PlannerResult } from "./block5Planner";
 import { deriveDecisionProfile, type DecisionProfile } from "./block5Thresholds";
@@ -537,6 +538,14 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    * APA visit still counts as a Stability step ("Q2-yes": `cvrFired: true`), with `reflectionShown: false` on the row.
    */
   const [apaOnlyCondition] = useState<boolean>(() => skipsCvrReflection());
+  /*
+   * BASELINE (condition 4, since 1 October 2026; conditions.ts): no reflection and no APA page. A misaligned choice gets
+   * the confirmation page a good fit gets, with its own first sentence and "How sure are you about this choice?"
+   * (`baselineSure`); keeping it moves the four values (applyBaselineConfirmUpdatesWithMoves) and counts as a Stability
+   * step (the researcher's "Q2-yes": `cvrFired: true`, `reflectionShown: false`).
+   */
+  const [baselineCondition] = useState<boolean>(() => confirmsMisalignedChoices());
+  const [baselineSure, setBaselineSure] = useState<number | null>(null);
   const [reflectionScoresFrozen] = useState<boolean>(() => freezesReflectionScores());
   const rejectionRef = useRef<{
     scenarioId: string | null; moved: boolean; moves: Block5ValueMove[]; visits: CvrRejectionVisit[]; openedAt: number | null;
@@ -988,6 +997,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setStep(null);
     setTradeoffAck(false);
     setQ1Strong(null);
+    setBaselineSure(null);
     setAltViewGenerated(false);
     setLastLensSeen(null);
     setFramingChoiceYes(null);
@@ -1150,6 +1160,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setStep("review");
     setTradeoffAck(false);
     setQ1Strong(null);
+    setBaselineSure(null);        // Baseline's "How sure?" is asked again for every choice
     setAltViewGenerated(false);   // a fresh CVR starts with only the first lens
     setLastLensSeen(null);        // and with no lens read yet
     setFramingChoiceYes(null);
@@ -1177,6 +1188,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       setStep("apa");
       return;
     }
+    /* Baseline: no reflection and no APA page - the confirmation page ("review", set above), with "How sure?". */
+    if (misaligned && baselineCondition) {
+      setCvrWho(null);
+      return;
+    }
     if (misaligned && t) {
       t.cvrVisits += 1;          // the CVR vignette is about to be shown
       t.cvrShownAt = Date.now(); // start CVR dwell timer
@@ -1184,7 +1200,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setCvrWho(misaligned && scenario && opt
       ? pickWhoVariant(scenario, cvrCoordinate(opt, profile).who)
       : null);
-  }, [labeled, scenario, profile, logPred, apaOnlyCondition]);
+  }, [labeled, scenario, profile, logPred, apaOnlyCondition, baselineCondition]);
 
   /**
    * WHERE A REFUSAL LEADS: the APA page, or in condition 2 (CVR_Only) the CVR Rejection page (since 1 October 2026).
@@ -1497,6 +1513,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     stakeholderGuided: boolean | null;
     /** Scenario 6 only. */
     predictionTest?: PredictionTestRecord;
+    /** Baseline only: a misaligned choice kept on the confirmation page (no reflection ran). */
+    baselineConfirm?: BaselineConfirmRecord;
   }) => {
     if (!scenario) return;
 
@@ -1516,12 +1534,15 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
      * A measure can survive a wrong pixel. It cannot survive data that misdescribes what occurred.
      */
     const cvrRan = scenarioIsScored(scenario) && isMisaligned(opt.level);
-    const coord = cvrRan ? cvrCoordinate(opt, profile) : undefined;
+    /* Baseline: the misaligned keep is a Stability step (cvrRan, the researcher's "Q2-yes"), but no reflection was shown,
+       so nothing about a reflection - its coordinate, its views, its timing - is stored. */
+    const reflectionRan = cvrRan && !opts.baselineConfirm;
+    const coord = reflectionRan ? cvrCoordinate(opt, profile) : undefined;
 
     // Dual-perspective record (YES / keep path). Only populated when a reflection actually ran, and
     // the selection/−20 only when the participant generated the other lens and answered the question.
     const framingFields: Partial<Block5ScenarioResult> = {};
-    if (cvrRan) {
+    if (reflectionRan) {
       const shownFirst = chooseFraming(profile);
       framingFields.cvrFramingShownFirst = shownFirst;
       if (altViewGenerated) {
@@ -1561,6 +1582,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       firstChoiceOptionId: progress.firstChoiceId ?? opt.id,
       postCVRChoiceOptionId: opt.id,
       cvrFired: cvrRan,
+      ...(opts.baselineConfirm ? { reflectionShown: false, baselineConfirm: opts.baselineConfirm } : {}),
       cvrEndorsement: opts.endorsement,
       cvrCoordinate: coord,
       stakeholderGuided: opts.stakeholderGuided,
@@ -1576,7 +1598,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       cvrStakeholderShown: cvrWho?.label,
       telemetry: telRef.current
         ? buildScenarioTelemetry(telRef.current, {
-            cvrFired: cvrRan,
+            /* cvrTriggered means the vignette was SHOWN; on Baseline's confirm it never is. */
+            cvrFired: reflectionRan,
             cvrOutcome: !isMisaligned(opt.level)
               ? "none"
               : opts.endorsement === "strong"
@@ -1720,11 +1743,25 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
      * A WISH TEACHES THE PROFILE NOTHING. In a recipient scenario the profile is carried through
      * untouched, so the profile - and Stability, which reads it - moves only on actual decisions.
      */
+    /*
+     * BASELINE: A MISALIGNED CHOICE KEPT ON THE CONFIRMATION PAGE moves the four values the way the APA page's confirm
+     * does: +30 to the value it serves most, -10 (misaligned) or -15 (strongly misaligned) to each of the other three,
+     * all scaled by "How sure?" (applyBaselineConfirmUpdatesWithMoves). The page will not keep it without that answer.
+     */
+    const baselineMisfit = baselineCondition && !!scenario && scenarioIsScored(scenario) && isMisaligned(selectedOption.level);
+    if (baselineMisfit && baselineSure === null) return;
+    const baselineConfirm: BaselineConfirmRecord | undefined = baselineMisfit && baselineSure !== null
+      ? { confidence: baselineSure, valueRaised: optionMainValue(selectedOption), stepDownForTheOtherThree: baselineStepDown(selectedOption.level) }
+      : undefined;
     const update = scenario && !scenarioIsScored(scenario)
       ? { profile, moves: [] as Block5ValueMove[] }
-      : applyKeepUpdatesWithMoves(
-          profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1, scenario?.options ?? [],
-        );
+      : baselineConfirm
+        ? applyBaselineConfirmUpdatesWithMoves(
+            profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1, baselineConfirm.confidence,
+          )
+        : applyKeepUpdatesWithMoves(
+            profile, selectedOption, selectedOption.level, scenario?.stakesWeight ?? 1, scenario?.options ?? [],
+          );
     const nextProfile = update.profile;
 
     /*
@@ -1775,10 +1812,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       };
     }
     commitChoice(selectedOption, {
-      nextProfile, valueMoves: update.moves, endorsement: "n/a", stakeholderGuided: null, predictionTest,
+      nextProfile, valueMoves: update.moves, endorsement: "n/a", stakeholderGuided: null, predictionTest, baselineConfirm,
     });
   }, [selectedOption, profile, scenario, commitChoice, prediction, predFirstChoiceId,
-      predSoundsLike, predSurprised, progress.scenarioStartTime, displayOptions]);
+      predSoundsLike, predSurprised, progress.scenarioStartTime, displayOptions, baselineCondition, baselineSure]);
 
   const handleConfirmEndorsement = useCallback(() => {
     // stakeholderMoved replaces the old "did hearing this influence you?" answer. It is set on
@@ -2285,6 +2322,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           onFinalDecisionChange={handleFinalDecisionChange}
           onRejectionBack={handleRejectionBack}
           reflectionSkipped={apaOnlyCondition}
+          confirmOnly={baselineCondition}
+          baselineSure={baselineSure}
+          setBaselineSure={setBaselineSure}
           altViewGenerated={altViewGenerated}
           onAltGenerated={() => setAltViewGenerated(true)}
           lastLensSeen={lastLensSeen}
@@ -2338,6 +2378,13 @@ function pinnedValuesHeight(values: HTMLElement | null): number {
  * missed string: five places saying "wish" and one saying "choose" reads as a bug to a participant
  * and, worse, quietly restores the sense of agency the scenario exists to remove.
  */
+/*
+ * BASELINE'S FIRST SENTENCE for a misaligned choice (condition 4, since 1 October 2026; the researcher's "Q1-B"). The
+ * confirmation page's usual sentence says the option "fits your earlier priorities", which is true only for a good fit,
+ * the only kind that reached this page before Baseline. A good fit keeps it.
+ */
+const BASELINE_MISFIT_INTRO = "Before you confirm, take a moment with what this option gives up.";
+
 const DECISION_COPY = {
   decider: {
     cardAction: "Choose this option",
@@ -4386,6 +4433,7 @@ function FlowOverlay({
   tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, stakeholderMoved,
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
   onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange, onRejectionBack, reflectionSkipped,
+  confirmOnly, baselineSure, setBaselineSure,
   cvrSaidYes, onPersonAnswer, onPersonBackout,
   altViewGenerated, onAltGenerated, lastLensSeen, onLensShown, framingChoiceYes, setFramingChoiceYes, mode,
   prediction, onOpenPrediction, predSoundsLike, setPredSoundsLike, predSurprised, setPredSurprised,
@@ -4415,6 +4463,8 @@ function FlowOverlay({
   onRejectionBack: () => void;
   /** APA_Only (condition 3): the APA page opens with no reflection, no person and no views before it. */
   reflectionSkipped: boolean;
+  /** Baseline (condition 4): a misaligned choice gets the confirmation page, with "How sure?" (its answer). */
+  confirmOnly: boolean; baselineSure: number | null; setBaselineSure: (n: number) => void;
   /** which side they took on the vignette, and the answer on the person page. */
   cvrSaidYes: boolean | null;
   onPersonAnswer: (moved: boolean) => void;
@@ -4439,6 +4489,9 @@ function FlowOverlay({
    * Both places now ask `scenarioIsScored` first, so they cannot disagree again.
    */
   const misaligned = scenarioIsScored(scenario) && isMisaligned(option.level);
+  /* Baseline (condition 4): no reflection; a misaligned choice gets the confirmation page below, with its own first
+     sentence and "How sure are you about this choice?". */
+  const baselineMisfit = confirmOnly && misaligned;
 
   /*
    * The trade this option makes, for the confirm question — the same two values the APA page names
@@ -4679,16 +4732,36 @@ function FlowOverlay({
           </Stack>
         )}
 
-        {step === "review" && !misaligned && !isRecipient && (
+        {step === "review" && (!misaligned || confirmOnly) && !isRecipient && (
           <Stack gap="4">
             {/* The verdict badge is not shown here either -- same reason. */}
+            {/* Baseline: "fits your earlier priorities" would be untrue for a misaligned choice, so it gets its own sentence
+                (the researcher's "Q1-B"; a good fit keeps the usual one). */}
             <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              {copy.fitsIntro}
+              {baselineMisfit ? BASELINE_MISFIT_INTRO : copy.fitsIntro}
             </Text>
             <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
               <Text fontSize="xs" color="fg.subtle" mb="1">What this trades away</Text>
               <Text fontSize="sm" color="fg.muted">{option.givesUp ?? option.consequence}</Text>
             </Box>
+            {/* Baseline: how sure they are scales every move on "Keep" (0.6-1.0, the APA page's own weight), so it is
+                asked before the choice can be kept. The same buttons and words as the APA page's question. */}
+            {baselineMisfit && (
+              <HStack gap="2" wrap="wrap" data-baseline-sure>
+                <Text fontSize="xs" color="fg.muted" fontWeight="medium">How sure are you about this choice?</Text>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Button key={n} minW="9" h="9" px="0" rounded="lg" fontSize="sm" fontWeight="semibold"
+                    borderWidth="1px" borderColor="border" bg="bg.subtle" color="fg"
+                    _hover={{ bg: "bg.muted" }}
+                    style={baselineSure === n ? {
+                      background: accent, borderColor: accent, color: onAccentText(accent),
+                      boxShadow: `0 4px 12px ${accent}66`,
+                    } : undefined}
+                    onClick={() => setBaselineSure(n)}>{n}</Button>
+                ))}
+                <Text fontSize="2xs" color="fg.subtle">(1 = not sure · 5 = very sure)</Text>
+              </HStack>
+            )}
             <Button size="sm" variant="outline" alignSelf="start"
               borderColor={tradeoffAck ? accent : "border.emphasized"} color={tradeoffAck ? accent : "fg.muted"}
               bg={tradeoffAck ? "bg.subtle" : "transparent"} rounded="lg" onClick={() => setTradeoffAck(!tradeoffAck)} gap="2" fontSize="xs">
@@ -4703,7 +4776,7 @@ function FlowOverlay({
               */}
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg"
                 onClick={prediction && !predAnswered ? onOpenPrediction : onKeep}
-                disabled={!tradeoffAck} fontSize="xs">
+                disabled={!tradeoffAck || (baselineMisfit && baselineSure === null)} fontSize="xs">
                 {copy.commit}
               </Button>
               <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">
@@ -4732,7 +4805,7 @@ function FlowOverlay({
           />
         )}
 
-        {step === "review" && misaligned && story && altStory && framingFirst && (
+        {step === "review" && misaligned && !confirmOnly && story && altStory && framingFirst && (
           <CVRReveal
             onLensShown={onLensShown}
             story={story}
