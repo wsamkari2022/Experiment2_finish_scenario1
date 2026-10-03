@@ -33,9 +33,12 @@ The researcher's design (his words): four conditions - **1 CVR+APA** (the curren
 **3 APA_Only**, **4 Baseline** (no CVR or APA). All four share Blocks 1-4 (building the profile) and differ from Block 5
 to the end. **What each condition does differently is built one task at a time**, when he gives it ("do this task to
 CVR_Only"); a condition without a built task runs exactly today's study. Built: **CVR_Only's CVR Rejection page**,
-**APA_Only's straight-to-APA flow** and **Baseline's confirmation page** (the next three sections), so all four now differ.
+**APA_Only's straight-to-APA flow** and **Baseline's confirmation page** (the next three sections), so all four now differ;
+since 3 October 2026 also **Baseline's cards without the fit score and the ranking reasons, with one confirmation page for
+every choice** (its own section below).
 Code that makes a condition differ reads `currentCondition()` through one rule per task in `conditions.ts`
-(`showsCvrRejectionPage`, `skipsCvrReflection`, `confirmsMisalignedChoices`, `freezesReflectionScores`); a participant with no condition on record (a test run from before this date) counts as
+(`showsCvrRejectionPage`, `skipsCvrReflection`, `confirmsMisalignedChoices`, `freezesReflectionScores`, and since 3 October
+2026 `hidesFitAndRankingReasons`, `confirmsEveryChoiceAlike`); a participant with no condition on record (a test run from before this date) counts as
 condition 1.
 Plan answers "Q1-B, Q2-yes, Q3-yes". **Participants see it** (a one-second landing page; the address); HOW_TO_ANALYZE 4.9.
 
@@ -178,7 +181,8 @@ sure" question, his idea) and "Q2-yes". Conditions 1-3 unchanged. **Participants
 - **The page** (`handleSelect`; the overlay's confirmation page with `confirmOnly`): a misaligned choice in a decision opens
   the confirmation page a good fit gets - no reflection, no person, no APA page, never counted as a reflection visit - with
   two differences: its first sentence is "Before you confirm, take a moment with what this option gives up."
-  (`BASELINE_MISFIT_INTRO`; "This option fits your earlier priorities" would be untrue; a good fit keeps it, "Q1-B"), and
+  (`BASELINE_CONFIRM_INTRO`, called `BASELINE_MISFIT_INTRO` until 3 October 2026; "This option fits your earlier
+  priorities" would be untrue; "Q1-B" - since 3 October 2026 a good fit gets this page too, see the next section), and
   "How sure are you about this choice?" 1-5 (the APA page's buttons), needed before "Keep this choice" works. "Change my
   mind" goes back and moves nothing. Scenarios 5 and 6 are unchanged (no reflection ran there anyway).
 - **The moves on "Keep"** (`applyBaselineConfirmUpdatesWithMoves` in block5CVR.ts): +30 x w to the value the option serves
@@ -282,6 +286,56 @@ answers: "1-A" (one combined score shown and used by the prediction, both parts 
   record without saved parts); `validate:vciall` A9 (the order part never above) and new A13 (Stability_all's difference part by
   hand); `validate:journey` J11 (the words, both parts saved); the report's edge check. 11 deliberate breaks, 11 caught.
   Method: docs/BLOCK5_STABILITY_METHOD.md section 12.
+
+## Baseline: no fit score, no ranking reasons, one confirmation page (since 3 October 2026)
+
+The researcher's second task for **condition 4 (Baseline)**, from his advisor: do not "show the alignment score or ranking
+reasoning in the baseline condition only", and give "the aligned and weakly aligned option ... similar confirmation with
+confident level question and same as misaligned and strongly misaligned confirmation message". Plan answers "Q1-A" (hide
+the whole values part of the card), "Q2-A" (a good fit's "How sure" is recorded only) and "Q3-yes" (the three new
+sentences). Conditions 1-3 unchanged. **Participants in condition 4 see it** (HOW_TO_ANALYZE 4.9). This is audit Fix 1's
+card part (A1, A2, A8), for Baseline only; the other conditions keep Fix 1 for later.
+
+- **Two rules** (`conditions.ts`): `hidesFitAndRankingReasons` and `confirmsEveryChoiceAlike`, Baseline only; a participant
+  with no condition is condition 1.
+- **The open card** (`OptionCard`, `showValueReasons`): the whole "Ranked N - why" values part is not drawn - the title,
+  "Beat N of the other options", "Most often decided on", "Against ...", the trade line, the limit line and its label, and
+  "Matches your earlier answers: N out of 100". "How it performs" stays, without the rule above it. The card ORDER, its
+  numbers 1-6, "Compare all options" with the MCF and "Your values in this scenario" are unchanged.
+- **Three sentences** (the approved words): under the performance bars "All of this is outcome quality - how well an option
+  works. It does not tell you how well an option fits your values." (`fitLineOnCards`; it pointed at the fit line); the
+  page before Block 5, section 6, "Your earlier answers measured four values. You will see your number for each one beside
+  every situation." (was "Each option will show you how closely it matches them."); the wish page (scenario 5) "Before you
+  confirm, take a moment with what this option gives up." (was "This is close to what you said matters most...", the fit
+  in words; `hideWishFit`).
+- **One confirmation page** (`askHowSureOnEveryChoice`, `baselineAsk` in FlowOverlay): every choice in scenarios 1-4 opens
+  the same page - the same sentence and "How sure are you about this choice?", needed before "Keep" - so the page no longer
+  tells the participant which kind of choice it was. A misfit's answer scales its moves as before; **a good fit's is recorded
+  only** (`howSureOnConfirm`): the keep rule moves the values exactly as in the other conditions, and keeping a good fit is
+  never a Stability step. Scenarios 5 and 6 ask no "How sure" (nothing there is scaled).
+- **Saved:** every row `fitAndReasonsShown` (false in Baseline and in scenario 6; added in finalizeScenario), and in Baseline
+  `howSureOnConfirm` for every choice kept in a decision; the timing record counts a good fit's page apart
+  (`baselineGoodFitConfirmVisits` / `Backouts`, never in `numberOfSwitches`, as in no other condition), so
+  `baselineConfirmVisits` keeps its meaning (a misfit's page). Database: `fit_line_and_ranking_reasons_shown` on every
+  `analysis.alignment_records` row (an older row without the flag reads true except in scenario 6),
+  `baseline_confirm.how_sure_on_the_confirmation_page_1_to_5`, `good_fit_page_opened_times`,
+  `good_fit_changed_their_mind_times`, the totals `times_a_good_fit_was_kept_on_the_baseline_confirm_page` and
+  `times_the_fit_line_and_ranking_reasons_were_hidden`; the feedback summary's `baselineGoodFitConfirmVisits`.
+  `SHAPE_VERSION` "2026-10-03-baseline-no-fit".
+- **For the analysis:** since this date Baseline differs from the other three for EVERY participant (the cards), not only
+  for those who choose a misfit, so a difference between Baseline and condition 1 mixes two things: the missing reflection
+  and APA pages, and the missing fit line and reasons (HOW_TO_ANALYZE 9.1, 9.6). No score's rule changed:
+  `report:major-scores` changed only its stamp.
+- **Checked:** `validate:conditions` N21 (new; the rules, the whole values part behind one switch and nothing of it outside,
+  the approved words, the page, a good fit's answer recorded only, the counts apart and never switches, every row, the
+  database, the totals and the feedback summary), N17 (the two rules Baseline's only), N18 (the page for every choice), N15
+  and N18 taught the one new counting line; 12 deliberate breaks, 12 caught. Live in condition 4 (on the local test browser,
+  restored exactly afterwards): the page before Block 5 and the note under the bars said the new words; all six open cards in
+  scenario 1 showed only "How it performs"; a best fit's page had the sentence and "How sure", "Keep" locked until answered,
+  "Change my mind" then a keep at sure 4 saved howSureOnConfirm 4, no moves, not a Stability step, the page opened 2 times
+  and left 1, no switch; a strongly misaligned choice in scenario 2 opened the same page and moved +24 / -12 x3 at sure 3;
+  scenarios 3 and 4 saved the same way; the wish page said the new sentence with no "How sure". Condition 1 unchanged: the
+  fit line and "Ranked N - why" on all six cards, a good fit's "fits your earlier priorities", no "How sure", the old note.
 
 ## The four-condition audit (2 October 2026)
 
@@ -1385,7 +1439,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12) |
 | `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9) |
 | `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
-| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20) |
+| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20); since 3 October 2026 Baseline's cards without the fit line and the ranking reasons, and one confirmation page with "How sure" for every choice (N21) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

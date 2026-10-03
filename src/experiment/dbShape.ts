@@ -41,9 +41,13 @@
  *       apa                               the APA page (conditions 1 and 3; in 3 with the value the box named)
  *       cvr_rejection_page                condition 2's page: every visit and the first visit's moves
  *       baseline_confirm                  condition 4's page: kept, how sure, the steps asked for, how often it opened
- *                                         and how often "Change my mind" left it
+ *                                         and how often "Change my mind" left it; since 3 October 2026 also a GOOD
+ *                                         FIT's "How sure" there (how_sure_on_the_confirmation_page_1_to_5, recorded
+ *                                         only) and its page counts (good_fit_page_opened_times, ...)
+ *       fit_line_and_ranking_reasons_shown  false in condition 4 (since 3 October 2026) and in scenario 6
  *     and the totals count each (times_reflection_fired, times_clarification_ran, times_cvr_rejection_page_shown,
- *     times_kept_misaligned_on_the_baseline_confirm_page, times_the_baseline_confirm_page_opened)
+ *     times_kept_misaligned_on_the_baseline_confirm_page, times_the_baseline_confirm_page_opened,
+ *     times_a_good_fit_was_kept_on_the_baseline_confirm_page, times_the_fit_line_and_ranking_reasons_were_hidden)
  *   headline: the three sensitivity stabilities are null, "Not measured in this condition", in conditions 3 and 4
  *   Stability (headline, major_info_and_scores.stability, analysis.stability_all): the same two-part rule in every
  *   condition, with both parts beside the score (value_order_stability, value_difference_stability, and _all)
@@ -110,7 +114,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-02-condition-audit";
+export const SHAPE_VERSION = "2026-10-03-baseline-no-fit";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -2027,19 +2031,38 @@ export function cvrRejectionRow(visits: unknown): {
  * Baseline's confirm in one scenario, for analysis.alignment_records (condition 4, since 1 October 2026): a misaligned or
  * strongly misaligned choice kept on the confirmation page, with no reflection and no APA page. `kept: false` everywhere
  * else. The moves themselves are in the row's valueMoves (reasons "Baseline confirm: ...").
+ *
+ * SINCE 3 OCTOBER 2026 a GOOD FIT opens the same page in Baseline, with "How sure" (conditions.ts, confirmsEveryChoiceAlike).
+ * `kept` still means a MISFIT kept (each a Stability step); a good fit kept there has `kept: false` and
+ * `how_sure_on_the_confirmation_page_1_to_5` (recorded only: nothing it moves), and its page counts are
+ * `good_fit_page_opened_times` / `good_fit_changed_their_mind_times`. `how_sure_on_the_confirmation_page_1_to_5` is on a
+ * kept misfit too (the same number as how_sure_1_to_5), so one field holds the answer for every Baseline choice.
  */
-export function baselineConfirmRow(rec: unknown, telemetry?: unknown): {
+export function baselineConfirmRow(rec: unknown, telemetry?: unknown, howSureOnConfirm?: unknown): {
   kept: boolean; how_sure_1_to_5?: number | null; weight_from_how_sure?: number | null; value_raised?: string | null;
   value_raised_label?: string | null; step_up?: number | null; step_down_for_each_other_value?: number | null;
   page_opened_times?: number; changed_their_mind_times?: number;
+  how_sure_on_the_confirmation_page_1_to_5?: number;
+  good_fit_page_opened_times?: number; good_fit_changed_their_mind_times?: number;
 } {
   /* The four-condition audit, 2 October 2026: how often the page opened and "Change my mind" left it, as the other
      conditions count their pages (absent on rows without the page, and on rows saved before that date). */
   const tel = (telemetry && typeof telemetry === "object" ? telemetry : {}) as Record<string, unknown>;
   const opened = typeof tel.baselineConfirmVisits === "number" ? tel.baselineConfirmVisits : 0;
-  const visits = opened > 0
-    ? { page_opened_times: opened, changed_their_mind_times: typeof tel.baselineConfirmBackouts === "number" ? tel.baselineConfirmBackouts : 0 }
-    : {};
+  const goodOpened = typeof tel.baselineGoodFitConfirmVisits === "number" ? tel.baselineGoodFitConfirmVisits : 0;
+  const visits = {
+    ...(opened > 0
+      ? { page_opened_times: opened, changed_their_mind_times: typeof tel.baselineConfirmBackouts === "number" ? tel.baselineConfirmBackouts : 0 }
+      : {}),
+    ...(goodOpened > 0
+      ? {
+          good_fit_page_opened_times: goodOpened,
+          good_fit_changed_their_mind_times:
+            typeof tel.baselineGoodFitConfirmBackouts === "number" ? tel.baselineGoodFitConfirmBackouts : 0,
+        }
+      : {}),
+    ...(typeof howSureOnConfirm === "number" ? { how_sure_on_the_confirmation_page_1_to_5: howSureOnConfirm } : {}),
+  };
   if (!rec || typeof rec !== "object") return { kept: false, ...visits };
   const r = rec as Record<string, unknown>;
   const sure = typeof r.confidence === "number" ? r.confidence : null;
@@ -2083,6 +2106,12 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
 
       chosen_option_id: r.selectedOptionId ?? null,
       chosen_option_title: chosen?.title ?? null,
+
+      /* Could the open option cards show the fit line ("Matches your earlier answers: N out of 100") and the planner's
+         reasons for each card's place, while the participant chose? False in Baseline since 3 October 2026 (conditions.ts,
+         hidesFitAndRankingReasons) and always in scenario 6. A row saved before that date has no flag: it was true except
+         in scenario 6, which is what is written here. */
+      fit_line_and_ranking_reasons_shown: r.fitAndReasonsShown ?? role !== "predicted",
 
       /* ---- alignment ---- */
       alignment_label: level ? ALIGNMENT_LABEL[level] : null,
@@ -2179,8 +2208,9 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       /* ---- The CVR Rejection page: condition 2 (CVR_Only) in place of APA, since 1 October 2026 ---- */
       cvr_rejection_page: cvrRejectionRow(r.cvrRejections),
 
-      /* ---- Baseline (condition 4, since 1 October 2026): a misaligned choice kept on the confirmation page ---- */
-      baseline_confirm: baselineConfirmRow(r.baselineConfirm, r.telemetry),
+      /* ---- Baseline (condition 4, since 1 October 2026): a misaligned choice kept on the confirmation page; since
+              3 October 2026 also "How sure" for a good fit kept there ---- */
+      baseline_confirm: baselineConfirmRow(r.baselineConfirm, r.telemetry, r.howSureOnConfirm),
     };
   });
 
@@ -2242,6 +2272,12 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
       times_kept_misaligned_on_the_baseline_confirm_page: scored.filter((r) => r.baseline_confirm.kept).length,
       /* Condition 4 only (the audit, 2 October 2026): scenarios where that page opened at least once. */
       times_the_baseline_confirm_page_opened: scored.filter((r) => (r.baseline_confirm.page_opened_times ?? 0) > 0).length,
+      /* Condition 4 only (since 3 October 2026): good fits kept on the same page, with "How sure" (recorded only). */
+      times_a_good_fit_was_kept_on_the_baseline_confirm_page: scored.filter(
+        (r) => !r.baseline_confirm.kept && r.baseline_confirm.how_sure_on_the_confirmation_page_1_to_5 !== undefined,
+      ).length,
+      /* Since 3 October 2026: decisions whose open cards showed no fit line and no ranking reasons (Baseline). */
+      times_the_fit_line_and_ranking_reasons_were_hidden: scored.filter((r) => !r.fit_line_and_ranking_reasons_shown).length,
       times_they_changed_their_choice: scored.filter((r) => r.cvr.changed_their_choice === true).length,
     },
   };

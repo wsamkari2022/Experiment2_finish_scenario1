@@ -1,6 +1,6 @@
 # Major scores in the four conditions
 
-> **Generated** by `npm run report:major-scores` on 2026-10-02, from code version `07ff7a5` plus changes not yet committed, together
+> **Generated** by `npm run report:major-scores` on 2026-10-03, from code version `48fc2d1` plus changes not yet committed, together
 > with docs/MAJOR_SCORES_DISTRIBUTION.md. Do not edit this page by hand: change `tools/condition_sim.cjs` (the rules) or
 > `tools/report_conditions_page.cjs` (the page) and run the command again.
 

@@ -9,11 +9,12 @@
  *   3  APA_Only
  *   4  Baseline  no CVR and no APA
  *
- * WHAT EACH CONDITION DOES DIFFERENTLY (built on 1 October 2026, one task at a time, each on the researcher's approved
- * plan; `npm run validate:conditions` N11-N20 stand over it). Blocks 1-4, the wish (scenario 5), the rule (scenario 6),
- * the scores' rules, the results page's layout and the feedback page are the SAME in all four. Only what happens after a
- * MISALIGNED or STRONGLY MISALIGNED choice in one of the four decisions (scenarios 1-4) differs; a good fit gets the same
- * confirmation page everywhere.
+ * WHAT EACH CONDITION DOES DIFFERENTLY (built from 1 October 2026, one task at a time, each on the researcher's approved
+ * plan; `npm run validate:conditions` N11-N21 stand over it). Blocks 1-4, the rule (scenario 6), the scores' rules, the
+ * results page's layout and the feedback page are the SAME in all four. Only what happens after a
+ * MISALIGNED or STRONGLY MISALIGNED choice in one of the four decisions (scenarios 1-4) differs - except Baseline, which
+ * since 3 October 2026 also hides the fit line and the ranking reasons on the cards and gives a good fit the same
+ * confirmation page as a misfit (see below).
  *
  *   condition   the page a misfit opens                  keeping the misfit moves            refusing / going back
  *   ---------   --------------------------------------   ---------------------------------   ---------------------------
@@ -33,10 +34,15 @@
  *               person; its own opening sentence; a box   built on (the box names it): +30 x  (no warning)
  *               naming the value the option serves most   sure / -10 x sure; the person
  *                                                         score never moves
- *   4 Baseline  the confirmation page a good fit gets,    Keep: +30 x sure to the value the   "Change my mind"
- *               with its own first sentence and "How      option serves most, -10 (misaligned)
- *               sure are you about this choice?"          or -15 (strongly) x sure to the
- *                                                         other three
+ *   4 Baseline  the confirmation page with "Before you    Keep: +30 x sure to the value the   "Change my mind"
+ *               confirm, take a moment with what this     option serves most, -10 (misaligned)
+ *               option gives up." and "How sure are you   or -15 (strongly) x sure to the
+ *               about this choice?" - since 3 October     other three
+ *               2026 the SAME page for every choice
+ *
+ * BASELINE ALSO DIFFERS BEFORE ANY CHOICE (since 3 October 2026, hidesFitAndRankingReasons): its open option cards show
+ * no fit line and no planner reasons, and every decision's confirmation page is the same for a good fit and a misfit
+ * (confirmsEveryChoiceAlike; a good fit's "How sure" is recorded only). Conditions 1-3 show both, as before.
  *
  * WHAT IS THE SAME, AND WHAT THAT MEANS FOR THE ANALYSIS
  *   - A STABILITY STEP is a decision whose final choice went against the best fit after the condition's page
@@ -52,13 +58,18 @@
  *   - The feedback's CVR questions appear only after a reflection (1, 2), the APA questions only after an APA page
  *     (1, 3), the two-views questions only after a second view was opened (1, 2); Baseline sees none of the three.
  *   - Every condition's page is counted in the scenario's timing record: cvrVisits / apaVisits (1), cvrVisits /
- *     cvrRejectionVisits (2), apaVisits (3), baselineConfirmVisits / baselineConfirmBackouts (4).
+ *     cvrRejectionVisits (2), apaVisits (3), baselineConfirmVisits / baselineConfirmBackouts (4, a misfit's page) and,
+ *     since 3 October 2026, baselineGoodFitConfirmVisits / baselineGoodFitConfirmBackouts (4, the same page for a good fit).
  *
  * WHERE EACH DIFFERENCE LIVES. One rule per task below, read once per Block 5 by Block5PublicEmergencySimulation:
  *   showsCvrRejectionPage      condition 2   openRefusalPage, CvrRejectionPanel, handleRejectionBack
  *   skipsCvrReflection         condition 3   handleSelect (straight to step "apa"), APAPanel straightToApa, handleApaCommit
  *   confirmsMisalignedChoices  condition 4   handleSelect (stays on "review"), FlowOverlay confirmOnly, handleKeep,
  *                                            handleChangeMyMind
+ *   hidesFitAndRankingReasons  condition 4   OptionCard showValueReasons, the performance panel's note, the wish page's
+ *                                            sentence (FlowOverlay), Block5IntroPage section 6, the row's fitAndReasonsShown
+ *   confirmsEveryChoiceAlike   condition 4   FlowOverlay askHowSure, handleKeep (howSureOnConfirm), handleSelect and
+ *                                            handleChangeMyMind (the good-fit counts)
  *   freezesReflectionScores    conditions 3, 4   APAPanel freezeReflectionScores, finalResults.reflectionScoresFrozen
  * The rows each path saves: CLAUDE.md (the four condition sections); how to analyse them: HOW_TO_ANALYZE_MY_DATA.md
  * section 9; the same pretend people through all four: docs/MAJOR_SCORES_BY_CONDITION.md (tools/condition_sim.cjs).
@@ -269,6 +280,31 @@ export function skipsCvrReflection(condition: Condition | null = currentConditio
  * confirm does (applyBaselineConfirmUpdatesWithMoves in block5CVR.ts). Each such keep is a Stability step ("Q2-yes").
  */
 export function confirmsMisalignedChoices(condition: Condition | null = currentCondition()): boolean {
+  return condition?.type === "Baseline";
+}
+
+/*
+ * Baseline, the second task (3 October 2026; the researcher, from his advisor: "doesn't want to show the alignment score
+ * or ranking reasoning in the baseline condition only", plan answers "Q1-A, Q2-A, Q3-yes"). While choosing, the open
+ * option card shows no fit line ("Matches your earlier answers: N out of 100") and none of the planner's reasons for its
+ * place ("Ranked N - why": beat N of the others, decided on X, against Y, the trade line, the limit line and its label);
+ * "How it performs" stays. The sentences that pointed at that line are reworded (the performance panel's note, the page
+ * before Block 5, section 6), and the wish page (scenario 5) drops its "close to what you said matters most" sentence.
+ * The card ORDER and its numbers 1-6, "Compare all options" with the MCF, "Your values in this scenario" and the results
+ * page after all choices are unchanged. This is Fix 1's card part (audit A1, A2, A8), for Baseline only.
+ */
+export function hidesFitAndRankingReasons(condition: Condition | null = currentCondition()): boolean {
+  return condition?.type === "Baseline";
+}
+
+/*
+ * Baseline, the same task: EVERY choice in a decision (scenarios 1-4) opens the same confirmation page - the sentence
+ * "Before you confirm, take a moment with what this option gives up." and "How sure are you about this choice?" - so the
+ * page itself no longer tells the participant whether the choice fits (a good fit used to read "This option fits your
+ * earlier priorities" and had no question). On a good fit the answer is RECORDED ONLY ("Q2-A"): the keep rule moves the
+ * values exactly as in the other three conditions, and keeping a good fit is never a Stability step.
+ */
+export function confirmsEveryChoiceAlike(condition: Condition | null = currentCondition()): boolean {
   return condition?.type === "Baseline";
 }
 

@@ -69,6 +69,13 @@
  *       note
  *   N19 the database and the feedback: baseline_confirm on each row (kept: false elsewhere) and its count; cvr.fired
  *       false, still a Stability step, no APA; the three stabilities "not measured"; no CVR, APA or two-views questions
+ *   N21 (since 3 October 2026; "Q1-A, Q2-A, Q3-yes") Baseline hides the fit line and the ranking reasons and confirms
+ *       every choice alike: the two rules are Baseline's only; the open card's whole values part (the title, every reason
+ *       line, the limit label, the fit line) sits behind one switch and "How it performs" stays; the performance note,
+ *       the page before Block 5 and the wish page say the approved words; every decision's confirmation page has the same
+ *       sentence and "How sure", needed before "Keep"; a good fit's answer is recorded only (the keep rule, never a
+ *       Stability step); the good-fit page counts are apart and never switches; every row says whether the fit and the
+ *       reasons could be shown; the database, the totals and the feedback summary read all of it
  *
  * Run:  npm run validate:conditions
  */
@@ -588,8 +595,9 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const fb = src("src/experiment/feedbackTypes.ts");
     const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
     need(sim, /const \[apaOnlyCondition\] = useState<boolean>\(\(\) => skipsCvrReflection\(\)\);/, "the condition is not read");
-    need(sim, /if \(misaligned && apaOnlyCondition\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = Date\.now\(\); \}\s*setCvrWho\(null\);\s*setStep\("apa"\);\s*return;\s*\}\s*(?:\/\*[^*]*\*\/\s*if \(misaligned && baselineCondition\) \{\s*(?:if \(t\) t\.baselineConfirmVisits \+= 1;\s*)?setCvrWho\(null\);\s*return;\s*\}\s*)?if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/, "a misaligned choice does not go straight to the APA page before any reflection is counted");
-    /* (Baseline's own stop, N18, may sit between the two: it also returns before any reflection is counted.) */
+    need(sim, /if \(misaligned && apaOnlyCondition\) \{\s*if \(t\) \{ t\.apaVisits \+= 1; t\.apaShownAt = Date\.now\(\); \}\s*setCvrWho\(null\);\s*setStep\("apa"\);\s*return;\s*\}\s*(?:\/\*[^*]*\*\/\s*if \(misaligned && baselineCondition\) \{\s*(?:if \(t\) t\.baselineConfirmVisits \+= 1;\s*)?setCvrWho\(null\);\s*return;\s*\}\s*)?(?:\/\*[^*]*\*\/\s*if \(howSureOnEveryChoice && scenario && opt && scenarioIsScored\(scenario\) && t\) t\.baselineGoodFitConfirmVisits \+= 1;\s*)?if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/, "a misaligned choice does not go straight to the APA page before any reflection is counted");
+    /* (Baseline's own stop, N18, may sit between the two: it also returns before any reflection is counted; and since 3
+       October 2026 Baseline's good-fit count, N21, which only counts and never returns.) */
     need(sim, /\{step === "apa" && coord && \(whoVariant \|\| reflectionSkipped\) && \(/, "the APA page needs a person to open");
     need(sim, /lastLensSeen=\{reflectionSkipped \? null : lastLensSeen \?\? coord\.framing\}/, "the two-situations table could show without a view");
     need(sim, /freezeReflectionScores=\{reflectionSkipped\}/, "the APA page is not told to leave the stakeholder score");
@@ -687,6 +695,10 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
       if (C.freezesReflectionScores(c) !== (c.type === "APA_Only" || c.type === "Baseline")) why.push(`${c.type}: freezesReflectionScores is ${C.freezesReflectionScores(c)}`);
       if (C.skipsCvrReflection(c) !== (c.type === "APA_Only") || C.showsCvrRejectionPage(c) !== (c.type === "CVR_Only")) why.push(`${c.type}: another condition's rule changed`);
     }
+    for (const c of C.CONDITIONS) {
+      if (C.hidesFitAndRankingReasons(c) !== (c.type === "Baseline") || C.confirmsEveryChoiceAlike(c) !== (c.type === "Baseline")) why.push(`${c.type}: Baseline's second task's rules are wrong for it`);
+    }
+    if (C.hidesFitAndRankingReasons(null) || C.confirmsEveryChoiceAlike(null)) why.push("a participant with no condition loses the fit line or gets How sure on every choice");
     if (C.confirmsMisalignedChoices(null) || C.freezesReflectionScores(null)) why.push("a participant with no condition is treated as Baseline");
     /* The rule, at every answer and both levels, on a real option. */
     const base = { vulnerabilityProtectionSensitivity: 50, groupSizeSensitivity: 50, gainResponsivenessSensitivity: 50,
@@ -748,11 +760,11 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
     need(sim, /const \[baselineCondition\] = useState<boolean>\(\(\) => confirmsMisalignedChoices\(\)\);/, "the condition is not read");
     /* The flow: no reflection counted, no person picked, the confirmation page ("review", set before). */
-    need(sim, /setStep\("review"\);[\s\S]{0,4000}if \(misaligned && baselineCondition\) \{\s*if \(t\) t\.baselineConfirmVisits \+= 1;\s*setCvrWho\(null\);\s*return;\s*\}\s*if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/,
+    need(sim, /setStep\("review"\);[\s\S]{0,4000}if \(misaligned && baselineCondition\) \{\s*if \(t\) t\.baselineConfirmVisits \+= 1;\s*setCvrWho\(null\);\s*return;\s*\}\s*(?:\/\*[^*]*\*\/\s*if \(howSureOnEveryChoice && scenario && opt && scenarioIsScored\(scenario\) && t\) t\.baselineGoodFitConfirmVisits \+= 1;\s*)?if \(misaligned && t\) \{\s*t\.cvrVisits \+= 1;/,
       "a misaligned choice in Baseline does not stop at the confirmation page before any reflection is counted");
     if ((sim.match(/setBaselineSure\(null\);/g) ?? []).length !== 2) why.push("\"How sure\" is not cleared for every new choice and every way back");
     /* "Keep": the answer is needed, and the rule takes it. */
-    need(sim, /const baselineMisfit = baselineCondition && !!scenario && scenarioIsScored\(scenario\) && isMisaligned\(selectedOption\.level\);\s*if \(baselineMisfit && baselineSure === null\) return;/, "a misaligned choice can be kept without \"How sure\"");
+    need(sim, /const baselineMisfit = baselineCondition && !!scenario && scenarioIsScored\(scenario\) && isMisaligned\(selectedOption\.level\);[\s\S]{0,400}?const asksHowSure = baselineMisfit \|\| \(howSureOnEveryChoice && !!scenario && scenarioIsScored\(scenario\)\);\s*if \(asksHowSure && baselineSure === null\) return;/, "a misaligned choice can be kept without \"How sure\"");
     need(sim, /\? applyBaselineConfirmUpdatesWithMoves\(\s*profile, selectedOption, selectedOption\.level, scenario\?\.stakesWeight \?\? 1, baselineConfirm\.confidence,\s*\)/, "\"Keep\" does not use Baseline's rule with the answer");
     need(sim, /valueRaised: optionMainValue\(selectedOption\), stepDownForTheOtherThree: baselineStepDown\(selectedOption\.level\)/, "the record does not name the value raised and the step");
     /* The row: a Stability step, no reflection stored. */
@@ -761,15 +773,16 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(sim, /cvrFired: cvrRan,[\s\S]{0,700}?reflectionShown: \(telRef\.current\?\.cvrVisits \?\? 0\) > 0,\s*\.\.\.\(opts\.baselineConfirm \? \{ reflectionShown: false, baselineConfirm: opts\.baselineConfirm \} : \{\}\),/, "the row does not count as a Stability step, or does not say no reflection was shown");
     need(sim, /cvrFired: reflectionRan,\s*cvrOutcome: !isMisaligned\(opt\.level\)/, "the timing record says a reflection was shown");
     /* The page. */
-    need(sim, /confirmOnly=\{baselineCondition\}\s*baselineSure=\{baselineSure\}\s*setBaselineSure=\{setBaselineSure\}/, "the overlay is not told it is Baseline");
-    need(sim, /const baselineMisfit = confirmOnly && misaligned;/, "the overlay does not know a Baseline misfit");
+    need(sim, /confirmOnly=\{baselineCondition\}\s*askHowSureOnEveryChoice=\{howSureOnEveryChoice\}\s*hideWishFit=\{hideFitAndReasons\}\s*baselineSure=\{baselineSure\}\s*setBaselineSure=\{setBaselineSure\}/, "the overlay is not told it is Baseline");
+    need(sim, /const baselineAsk = confirmOnly && \(misaligned \|\| \(askHowSureOnEveryChoice && scenarioIsScored\(scenario\)\)\);/, "the overlay does not know a Baseline misfit");
     need(sim, /\{step === "review" && \(!misaligned \|\| confirmOnly\) && !isRecipient && \(/, "the confirmation page does not open for a Baseline misfit");
     need(sim, /\{step === "review" && misaligned && !confirmOnly && story/, "the reflection could open in Baseline");
-    need(sim, /\{baselineMisfit \? BASELINE_MISFIT_INTRO : copy\.fitsIntro\}/, "the misfit does not get its own first sentence");
-    need(sim, /const BASELINE_MISFIT_INTRO = "Before you confirm, take a moment with what this option gives up\.";/, "the misfit's sentence is not the approved one");
+    need(sim, /\{baselineAsk \? BASELINE_CONFIRM_INTRO : copy\.fitsIntro\}/, "the misfit does not get its own first sentence");
+    need(sim, /const BASELINE_CONFIRM_INTRO = "Before you confirm, take a moment with what this option gives up\.";/, "the misfit's sentence is not the approved one");
+    /* The other three conditions keep the good fit's usual sentence. */
     need(sim, /fitsIntro: "This option fits your earlier priorities\. Before you confirm, take a moment with what it gives up\.",/, "a good fit lost its sentence");
-    need(sim, /\{baselineMisfit && \(\s*<HStack[^>]*data-baseline-sure>\s*<Text[^>]*>How sure are you about this choice\?<\/Text>\s*\{\[1, 2, 3, 4, 5\]\.map/, "no \"How sure\" question, or not only for a Baseline misfit");
-    need(sim, /disabled=\{!tradeoffAck \|\| \(baselineMisfit && baselineSure === null\)\}/, "\"Keep this choice\" works without the answer");
+    need(sim, /\{baselineAsk && \(\s*<HStack[^>]*data-baseline-sure>\s*<Text[^>]*>How sure are you about this choice\?<\/Text>\s*\{\[1, 2, 3, 4, 5\]\.map/, "no \"How sure\" question, or not only in Baseline");
+    need(sim, /disabled=\{!tradeoffAck \|\| \(baselineAsk && baselineSure === null\)\}/, "\"Keep this choice\" works without the answer");
     /* The results page: no badge (nothing extra was shown), and a true note. */
     need(summary, /if \(sr\.baselineConfirm\) \{\s*return "This went against your usual values, and you kept it\.";\s*\}\s*if \(sr\.cvrFired\) \{/, "the results page's note says Baseline's keep was reconsidered");
     need(summary, /\{!reflectionWasShown\(sr\) && \(!!sr\.apa \|\| \(sr\.telemetry\?\.apaVisits \?\? 0\) > 0\) && \(/, "Baseline's row would show \"Clarification shown\"");
@@ -851,6 +864,82 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (JSON.stringify(db.baselineConfirmRow(undefined)) !== JSON.stringify({ kept: false })) why.push("a row without Baseline's page does not read kept: false alone");
     if (!(db.SHAPE_VERSION >= "2026-10-02-condition-audit")) why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N20", "the audit: a reflection left for a good fit is shown, the second view kept, APA_Only's note and badge, Baseline's page counted, the feedback summary", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N21 */
+  {
+    const why = [];
+    const sim = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const intro = src("src/experiment/Block5IntroPage.tsx");
+    const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
+    const count = (text, re) => (text.match(re) ?? []).length;
+    /* The two switches, read once, from Baseline's two rules. */
+    need(sim, /const \[hideFitAndReasons\] = useState<boolean>\(\(\) => hidesFitAndRankingReasons\(\)\);/, "the card switch is not read from hidesFitAndRankingReasons");
+    need(sim, /const \[howSureOnEveryChoice\] = useState<boolean>\(\(\) => confirmsEveryChoiceAlike\(\)\);/, "the confirmation switch is not read from confirmsEveryChoiceAlike");
+    /* Q1-A: the card's WHOLE values part is behind the switch, and nothing of it is drawn anywhere else. */
+    need(sim, /showValueReasons=\{!hideFitAndReasons\}/, "the cards are not told to hide the values part");
+    const open = sim.indexOf("{showValueReasons && (<>");
+    const close = open >= 0 ? sim.indexOf("</>)}", open) : -1;
+    const part = open >= 0 && close > open ? sim.slice(open, close) : "";
+    if (!part) why.push("the card's values part is not behind one switch");
+    for (const [token, what] of [["Ranked {explanation.rank} — why", "the \"Ranked N - why\" title"], ["explanation.winsLine", "\"Beat N of the other options\""],
+      ["explanation.decidedLine", "\"Most often decided on\""], ["explanation.referenceLine", "the \"Against ...\" line"], ["explanation.tradeLine", "the trade line"],
+      ["explanation.breachLine", "the limit line"], ["explanation.binLabel", "the limit label"], ["Matches your earlier answers: {option.matchScore} out of 100.", "the fit line"]]) {
+      if (!part.includes(token)) why.push(`${what} is not inside the switch`);
+      if (sim.split(token).length - 1 !== part.split(token).length - 1) why.push(`${what} is drawn somewhere outside the switch too`);
+    }
+    if (part.includes("How it performs")) why.push("\"How it performs\" is hidden with the values part");
+    need(sim, /\{explanation && showPerformance && \(showValueReasons \|\| explanation\.chips\.length > 0 \|\| !!standing\) && \(/, "the panel is not kept for \"How it performs\" alone");
+    need(sim, /<Box mt=\{showValueReasons \? "3" : "0"\} pt=\{showValueReasons \? "2\.5" : "0"\}\s*borderTopWidth=\{showValueReasons \? "1px" : "0"\}/, "\"How it performs\" keeps a rule above nothing");
+    /* Q3-yes, the three sentences, in the approved words; the other conditions keep theirs. */
+    need(sim, /fitLineOnCards=\{!hideFitAndReasons\}/, "the performance note is not told about the cards");
+    need(sim, /\{fitLineOnCards \? \([\s\S]{0,400}?on the line that reads <b>“Matches your earlier answers”<\/b>\.[\s\S]{0,200}?\) : \([\s\S]{0,200}?All of this is <b>outcome quality<\/b> — how well an option works\. It does not tell you\s+how well an option fits <b>your values<\/b>\./, "the performance note's words are not the approved ones");
+    need(intro, /const noFitOnCards = hidesFitAndRankingReasons\(\);/, "the page before Block 5 does not know the condition");
+    need(intro, /\{noFitOnCards\s*\? "Your earlier answers measured four values\. You will see your number for each one beside every situation\."\s*: "Your earlier answers measured four values\. Each option will show you how closely it matches them\."\}/, "section 6's words are not the approved ones");
+    need(sim, /\{hideWishFit \? BASELINE_CONFIRM_INTRO : WISH_FIT_SENTENCE\[option\.level\]\}/, "the wish page still says how close the wish is in Baseline");
+    if (count(sim, /WISH_FIT_SENTENCE\[/g) !== 1) why.push("the wish's fit sentence is drawn somewhere else too");
+    /* Part 2: every decision's confirmation page alike; a good fit's answer recorded only. */
+    need(sim, /const baselineConfirm: BaselineConfirmRecord \| undefined = baselineMisfit && baselineSure !== null/, "a good fit's answer would move the values by Baseline's misfit rule");
+    need(sim, /: applyKeepUpdatesWithMoves\(\s*profile, selectedOption, selectedOption\.level, scenario\?\.stakesWeight \?\? 1, scenario\?\.options \?\? \[\],\s*\)/, "a good fit's keep does not use the keep rule unchanged");
+    need(sim, /howSureOnConfirm: asksHowSure && baselineSure !== null \? baselineSure : undefined,/, "the answer is not saved");
+    need(sim, /\.\.\.\(opts\.howSureOnConfirm !== undefined \? \{ howSureOnConfirm: opts\.howSureOnConfirm \} : \{\}\),/, "the row does not carry the answer");
+    need(sim, /if \(howSureOnEveryChoice && scenario && opt && scenarioIsScored\(scenario\) && t\) t\.baselineGoodFitConfirmVisits \+= 1;/, "a good fit's page is not counted");
+    need(sim, /\} else if \(t && howSureOnEveryChoice && scenario && selectedOption && scenarioIsScored\(scenario\)\) \{[\s\S]{0,200}?t\.baselineGoodFitConfirmBackouts \+= 1;/, "leaving a good fit's page is not counted");
+    need(sim, /numberOfSwitches: t\.optionChanges \+ t\.cvrBackouts \+ t\.apaBackouts \+ t\.personBackouts \+ t\.finalDecisionChanges\s*\+ t\.cvrRejectionBackouts \+ t\.baselineConfirmBackouts,/, "numberOfSwitches changed");
+    need(sim, /result\.fitAndReasonsShown = !hideFitAndReasons && !!finalizedScenario && scenarioShowsPerformance\(finalizedScenario\);/, "a row does not say whether the fit and the reasons could be shown");
+    /* Run: the database rows, the totals, Stability, the feedback summary. */
+    const CVR = B("block5CVR.js");
+    const row = (id, extra) => ({ scenarioId: id, selectedOptionId: "x", selectedRank: 1, topRankedOptionId: "x", selectedWasTopCandidate: true,
+      selectedWasCandidate: true, decisionRole: "decider", cvrEndorsement: "n/a", ...extra });
+    const goodFit = row("chemical_plant_fire", { cvrFired: false, reflectionShown: false, howSureOnConfirm: 4, fitAndReasonsShown: false, alignmentLevel: "weakly_aligned",
+      telemetry: { cvrVisits: 0, apaVisits: 0, baselineGoodFitConfirmVisits: 2, baselineGoodFitConfirmBackouts: 1 } });
+    const misfit = row("wildfire_evacuation", { cvrFired: true, reflectionShown: false, howSureOnConfirm: 3, fitAndReasonsShown: false,
+      baselineConfirm: { confidence: 3, valueRaised: "gainResponsivenessSensitivity", stepDownForTheOtherThree: 10 },
+      telemetry: { cvrVisits: 0, apaVisits: 0, baselineConfirmVisits: 1, baselineConfirmBackouts: 0 } });
+    const oldRow = row("cancer_treatment_allocation", { cvrFired: false });
+    const oldVeil = row("veil_rule", { cvrFired: false, decisionRole: "predicted" });
+    const recs = db.buildAlignmentRecords({ scenarioResults: [goodFit, misfit, oldRow, oldVeil], originalProfile: { dimensions: [] } });
+    const [g, m, o, v] = recs?.by_scenario ?? [];
+    const bg = g?.baseline_confirm ?? {};
+    if (bg.kept !== false || bg.how_sure_on_the_confirmation_page_1_to_5 !== 4 || bg.good_fit_page_opened_times !== 2 || bg.good_fit_changed_their_mind_times !== 1
+        || "how_sure_1_to_5" in bg) why.push(`a good fit kept on Baseline's page reads ${JSON.stringify(bg)}`);
+    if (g?.cvr?.counted_as_a_stability_step !== false || g?.cvr?.fired !== false) why.push("a good fit kept on Baseline's page reads as a Stability step or a reflection");
+    if (m?.baseline_confirm?.kept !== true || m?.baseline_confirm?.how_sure_on_the_confirmation_page_1_to_5 !== m?.baseline_confirm?.how_sure_1_to_5) why.push(`a kept misfit's two "how sure" fields disagree: ${JSON.stringify(m?.baseline_confirm)}`);
+    if (g?.fit_line_and_ranking_reasons_shown !== false || m?.fit_line_and_ranking_reasons_shown !== false || o?.fit_line_and_ranking_reasons_shown !== true
+        || v?.fit_line_and_ranking_reasons_shown !== false) why.push(`fit_line_and_ranking_reasons_shown: ${JSON.stringify([g, m, o, v].map((r) => r?.fit_line_and_ranking_reasons_shown))}`);
+    const tot = recs?.totals ?? {};
+    if (tot.times_a_good_fit_was_kept_on_the_baseline_confirm_page !== 1 || tot.times_kept_misaligned_on_the_baseline_confirm_page !== 1
+        || tot.times_the_fit_line_and_ranking_reasons_were_hidden !== 2) why.push(`the totals: ${JSON.stringify(tot)}`);
+    /* A good fit's "How sure" never makes a Stability step. */
+    const orig = { dimensions: [["vulnerabilityProtectionSensitivity", 70], ["groupSizeSensitivity", 55], ["gainResponsivenessSensitivity", 40], ["outcomeAggregationSensitivity", 60]].map(([key, score], i) => ({ key, score, rank: i + 1 })) };
+    const st = CVR.computeStability([{ ...goodFit, policySnapshotAfter: { vulnerabilityProtectionSensitivity: 70, groupSizeSensitivity: 55, gainResponsivenessSensitivity: 60, outcomeAggregationSensitivity: 45 } }], orig);
+    if (st.conflictSteps !== 0) why.push(`a good fit kept with "How sure" was counted as ${st.conflictSteps} Stability step(s)`);
+    /* The feedback summary. */
+    const FB = B("feedbackTypes.js");
+    const sum = FB.buildBlock5Summary({ scenarioResults: [goodFit, misfit] });
+    if (sum.scenarios[0].baselineGoodFitConfirmVisits !== 2 || sum.scenarios[1].baselineGoodFitConfirmVisits !== 0 || sum.scenarios[1].baselineConfirmVisits !== 1) why.push(`the feedback summary: ${JSON.stringify(sum.scenarios.map((x) => [x.baselineConfirmVisits, x.baselineGoodFitConfirmVisits]))}`);
+    if (!(db.SHAPE_VERSION >= "2026-10-03-baseline-no-fit")) why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
+    gate("N21", "Baseline: no fit line or ranking reasons on the cards, the approved words, one confirmation page with How sure (a good fit's recorded only), every row and total", why);
   }
 
   const failed = results.filter((r) => !r.ok);

@@ -53,6 +53,7 @@ import {
   type Block5MetricKey,
 } from "./block5Types";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
+import { hidesFitAndRankingReasons } from "./conditions";
 
 /**
  * How many situations the participant is about to face, spelled out.
@@ -504,6 +505,8 @@ function ValueChip({ name, meaning, higher }: { name: string; meaning: string; h
 }
 
 export function Block5IntroPage({ onStart }: { onStart: () => void }) {
+  /* Baseline (since 3 October 2026; conditions.ts): its option cards show no fit line, so section 6 must not promise one. */
+  const noFitOnCards = hidesFitAndRankingReasons();
   const { colorMode } = useColorMode();
   /* MetricStandingBar resolves its own colors per mode; this page has no Block5Palette. */
   const meterMode = colorMode === "dark" ? "dark" : "light";
@@ -1029,11 +1032,17 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           WHAT WE ALREADY KNOW — naming the four values does two things: it tells the participant
           their earlier answers were used for something, and it introduces the exact four words
           they are about to meet on every option card.
+
+          ITS SECOND SENTENCE DEPENDS ON THE CONDITION (since 3 October 2026). In Baseline the cards show no fit line
+          (conditions.ts, hidesFitAndRankingReasons), so "Each option will show you how closely it matches them" would
+          promise something that never appears; there it points at the values numbers instead (the researcher's
+          "Q3-yes"). This is the sentence audit Fix 1 reserved for rewording when the fit line comes off the cards.
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
           <SectionHeading n={6} icon={<LuLayers />} title="What we already know about you">
-            Your earlier answers measured four values. Each option will show you how closely it
-            matches them.
+            {noFitOnCards
+              ? "Your earlier answers measured four values. You will see your number for each one beside every situation."
+              : "Your earlier answers measured four values. Each option will show you how closely it matches them."}
           </SectionHeading>
           <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr" }} gap="3">
             {POLICY_DIM_KEYS.map((k) => (

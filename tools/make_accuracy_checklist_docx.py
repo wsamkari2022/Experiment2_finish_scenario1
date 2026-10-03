@@ -206,10 +206,16 @@ SECTIONS = [
          "conditions now differ from Block 5 on.", ["conditions", "build"], "(N9, N12, N15, N18)"),
         ("Baseline: a misaligned choice gets the confirmation page, and keeping it moves the values.",
          "No reflection, no person, no APA page. The page says \"Before you confirm, take a moment with what this option gives "
-         "up.\" (a good fit keeps \"fits your earlier priorities\") and asks \"How sure are you about this choice?\". Keeping "
+         "up.\" and asks \"How sure are you about this choice?\" (since 3 October 2026 a good fit gets the same page). Keeping "
          "it: +30 to the value the option serves most, -10 (misaligned) or -15 (strongly misaligned) to the others, all x 0.6-1.0 "
          "by how sure; a Stability step; the three reflection scores never move; no CVR or APA feedback questions. Checked live.",
          ["conditions"], "(N17, N18, N19)"),
+        ("Baseline: no fit score and no ranking reasons on the cards, and one confirmation page for every choice.",
+         "Since 3 October 2026 (your advisor's request; Q1-A, Q2-A, Q3-yes). Baseline's open cards show only \"How it performs\": "
+         "no \"Matches your earlier answers\", no \"Ranked N - why\". The note under the bars, the page before the main study and "
+         "the wish page say the approved words. Every choice in scenarios 1-4 opens the same page with \"How sure\"; a good fit's "
+         "answer is saved and moves nothing. Every row says whether the fit could be shown. Checked live in Baseline and in "
+         "condition 1 (unchanged).", ["conditions"], "(N17, N18, N21)"),
         ("The four-condition audit (2 October 2026): every condition records what the participant saw.",
          "A reflection shown and then left for a good fit is recorded as shown (badge, database, timing); a second view "
          "opened before going back is kept (the two-views questions, the results page); APA_Only's note and badge are true; "
@@ -403,7 +409,7 @@ SECTIONS = [
 
 OPEN = [
     ("Fix 1, the very last fix before launch",
-     "The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
+     "Done for Baseline on 3 October 2026; conditions 1-3 still wait. The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
      "page compares the wish with \"what you said matters most\", and the intro page says \"Each option will show you "
      "how closely it matches them\". CLAUDE.md's \"no verdict or arithmetic is shown\" becomes true only after it. "
      "(Audit A1, A2, A6, A8.)", "Before launch, last"),
@@ -449,6 +455,9 @@ LIMITS = [
      "The same behaviour can score up to about 13 points apart between conditions (22 under the order rule alone; "
      "docs/MAJOR_SCORES_BY_CONDITION.md, HOW_TO_ANALYZE 4.12); VCI moves about 1 point. Compare Stability inside a condition, "
      "or against that page's gaps."),
+    ("Baseline differs for everybody since 3 October 2026.",
+     "Its cards show no fit line and no ranking reasons, so a Baseline difference mixes the missing reflection and APA pages "
+     "with the missing card information (HOW_TO_ANALYZE 9.1, 9.6). Comparisons among conditions 1-3 are not affected."),
     ("Never correlate Stability with its two parts.", "It is their average (value_order_stability, value_difference_stability)."),
     ("Stability's level depends on the step sizes.", "Report Stability as group comparisons, never one person's level word."),
     ("The position headline cannot tell a real role-switcher from a random chooser.",

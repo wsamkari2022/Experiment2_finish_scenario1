@@ -13,6 +13,10 @@ paper, with the field for each, the test, and the hypotheses to freeze first.
 effect were absent. Most of the traps below are cases where the absent-effect version and the
 present-effect version produce the same number.
 
+> **Updated 3 October 2026.** **Baseline** (condition 4) now hides the fit score and the ranking reasons on its option
+> cards and gives every choice the same confirmation page with "How sure", so it differs from the other three for every
+> participant, not only after a misfit (4.9, 9.1, 9.6).
+
 > **Updated 2 October 2026.** The study now has **four conditions** (1 October 2026), and **section 9** says what
 > differs between them, what each records and how to analyse them. **Stability** is now the average of two parts (its
 > order and how far the values moved; sections 3 and 4.12), and a four-condition audit corrected what a few rows record
@@ -344,6 +348,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 29 September 2026 | The results page is redesigned, and the charts move after the feedback. The results page opens with "What your results show" (what the first parts measured, what the six scenarios measured, and that the scores compare the two), then shows the scores in three colored boxes: value alignment (VCI and VCI_all, "We call it your value consistency"), stability (Stability and Stability_all, "who you were before the scenarios with who you became", with "Not tested" when no moment tested it) and performance. Then come the four values before and after the scenarios, the "One last step" card, every scenario as a compact card (its title, the place the participant stood, the choice, the label, "Reflection shown" instead of "CVR shown", "Kept after reflection", Fit, and the note; scenario 6 says "our software" instead of "the MPF"), and a note naming what the thank-you page will show. The "View your results as charts" button is gone: the charts are on the thank-you page, after the feedback, in five tabs ("Your values", "Your choices", "Who carried the cost", "Our predictions", "Your first answers"). A feedback answer can therefore no longer follow a look at the charts. `analysis.results_page` lost its chart fields. No score changes |
 | 2 October 2026 | **The four-condition audit:** a scenario card now says "Reflection shown" when the reflection was shown and the participant then went back to a good fit (most often condition 2, after the CVR Rejection page); in condition 3 a card says "Clarification shown" also when the participant went back from the APA page to a good fit, and a misfit confirmed on that page reads "This went against your usual values. The clarification page opened, and this is the option you confirmed there." (it said "you chose to reconsider", which was untrue there). A second view opened before going back now counts for the two-views feedback questions and the results page's sentence about it. Nothing else on screen changed; in the data, `cvr.fired` and `telemetry.cvrTriggered` are true on those rows, and Baseline's page visits are counted (9.3, 9.6) |
 | 2 October 2026 | **Stability and Stability_all, every condition:** the score is now the average of the old swap count (the order part) and how far the four values moved at the same steps (the difference part), with the same five words on new edges (94 / 85 / 63 / 49), so participants see different Stability numbers and often a different level word. The results page's stability box says "It looks at two things: did your four values keep their order, and how far did they move? 100 = no two values swapped places and none moved."; the before-and-after card "Stability watches this order, and how far the numbers moved."; the charts' caption and radar note say the same. The scenario-6 prediction reads the new score (its chances sharpen or flatten slightly; the option it puts first never changes) |
+| 3 October 2026 | **Baseline only (condition 4): no fit score and no ranking reasons while choosing, and one confirmation page for every choice.** The open option cards no longer show "Matches your earlier answers: N out of 100" or the "Ranked N - why" reasons (beat N of the others, decided on X, against Y, the trade line, the limit line and its label); "How it performs" stays. The note under the performance bars now ends "It does not tell you how well an option fits your values."; the page before Block 5, section 6, says "You will see your number for each one beside every situation."; the wish page (scenario 5) says "Before you confirm, take a moment with what this option gives up." instead of how close the wish is to what they said matters most. Every choice in scenarios 1-4 opens the same confirmation page with that sentence and "How sure are you about this choice?" (a good fit used to read "This option fits your earlier priorities" with no question). A good fit's "How sure" is recorded only. Conditions 1-3 unchanged. **From this date Baseline differs for every participant, not only after a misfit** (9.1, 9.6) |
 | 1 October 2026 | **Condition 4 (Baseline) only:** a misaligned choice opens the confirmation page a good fit gets (no reflection, no person, no APA page), with its own first sentence, "Before you confirm, take a moment with what this option gives up." (a good fit still reads "This option fits your earlier priorities"), and "How sure are you about this choice?" (1-5), needed before keeping it. Keeping it moves the four values: +30 to the value the option serves most and -10 (misaligned) or -15 (strongly misaligned) to each other one, all x 0.6-1.0 by "how sure"; each such keep counts as a Stability step; the stakeholder, directness and context scores never move; the results page shows no reflection badge and says "This went against your usual values, and you kept it."; no CVR or APA feedback questions. Until this row, Baseline ran the full version (condition 1). Conditions 1, 2 and 3 unchanged |
 | 1 October 2026 | **Condition 3 (APA_Only) only:** a misaligned choice opens the APA page at once: no reflection page and no person speaking; the APA page shows only its value question (with "How sure"), the options built on that value and the confirm (no two-situations table, no "which view" question), and opens with its own sentence: "This step just helps the system represent your priorities the way you truly mean them. There are no right or wrong answers here." Under it, a box: "The option you chose serves X more than any of the other three values" (X saved as apa.mainValueShown); going back to all the options needs no confirmation (no "Go back and clear your answers?" warning) The stakeholder, directness and context scores never move; each APA visit counts as a Stability step; the results page says "Clarification shown"; the feedback asks the APA questions but never the CVR or two-views questions. Conditions 1, 2 and 4 unchanged |
 | 1 October 2026 | **Condition 2 (CVR_Only) only:** a refusal after the reflection opens the CVR Rejection page ("A closer look at your choice") instead of the APA page: the same explanation (the two situations, how far the option fell short), no question, no APA logo, one button back to all the options. On its first visit in a scenario it moves the person-speaking score +25 / -25 and, when both views were seen, the last view +20, inside the scenario. Conditions 1, 3 and 4 unchanged |
@@ -652,12 +657,16 @@ the end - **1 CVR+APA** (the full version), **2 CVR_Only**, **3 APA_Only**, **4 
 
 ### 9.1 What differs, and what does not
 
-Blocks 1-4, the wish (scenario 5), the rule (scenario 6), the card order, the scores' rules, the results page's layout
-and the feedback page are the same in all four. **Only what happens after a misaligned or strongly misaligned choice in
-one of the four decisions (scenarios 1-4) differs.** A good-fit choice gets the same confirmation page everywhere.
+Blocks 1-4, the rule (scenario 6), the card order, the scores' rules, the results page's layout and the feedback page are
+the same in all four. **In conditions 1-3 only what happens after a misaligned or strongly misaligned choice in one of the
+four decisions (scenarios 1-4) differs.** **Baseline (4) also differs before any choice, since 3 October 2026:** its open
+option cards show no fit line and no ranking reasons, the wish page says no "close to what you said matters most", and
+every choice in a decision, good fit or not, opens the same confirmation page with "How sure".
 
 | | 1 CVR+APA | 2 CVR_Only | 3 APA_Only | 4 Baseline |
 |---|---|---|---|---|
+| **While choosing: the open card** | the fit line ("Matches your earlier answers: N out of 100") and the "Ranked N - why" reasons, then "How it performs" | the same | the same | **"How it performs" only** (since 3 October 2026) |
+| **A good fit opens** | the confirmation page: "This option fits your earlier priorities...", no question | the same | the same | **the same page as a misfit**: "Before you confirm...", and "How sure" (recorded only; since 3 October 2026) |
 | **A misfit opens** | the reflection (two views), then the person speaking | the same | the APA page at once (no reflection, no person), with its own opening sentence and a box naming the value the option serves most | the confirmation page a good fit gets, with its own first sentence and "How sure are you about this choice?" |
 | **Keeping the misfit moves** | +30 to the value it serves, −20 to the value it gives up most, person ±25 | the same | naming the option's own value on the APA page: +30 × sure to it, −10 × sure to each other value | "Keep": +30 × sure to the value it serves most, −10 (misaligned) or −15 (strongly misaligned) × sure to each other value |
 | **Refusing / going back** | the APA page: name a value, how sure, pick from its list (+30 × sure, −10 × sure each, person ±25, the view that moved them +20 × sure) | the CVR Rejection page: no question, one button back; first visit in a scenario moves the person score ±25 and the last view +20 (only if both views were seen); then they choose again | "Take me back to all options" (no warning) | "Change my mind" |
@@ -668,10 +677,13 @@ one of the four decisions (scenarios 1-4) differs.** A good-fit choice gets the 
 | **Feedback: two-views questions** | after a second view was opened | the same | never | never |
 | **Results page card** | "Reflection shown", "Kept after reflection" | "Reflection shown", "Kept after reflection" | "Clarification shown"; a confirmed misfit's note: "The clarification page opened, and this is the option you confirmed there." | no badge; a kept misfit's note: "This went against your usual values, and you kept it." |
 
-**The single most important fact for the analysis:** a participant who never chooses a misfit in scenarios 1-4 meets
-exactly the same study in all four conditions. The conditions can only act on the people who choose against their best
+**The single most important fact for the analysis:** among conditions 1-3, a participant who never chooses a misfit in
+scenarios 1-4 meets exactly the same study. Those three conditions can only act on the people who choose against their best
 fit, and only at those moments. Count, per condition, how many participants ever met their condition's page (9.3)
-before reading any difference between conditions as the pages' effect.
+before reading any difference between conditions as the pages' effect. **Baseline is different since 3 October 2026:
+everybody in it chooses without the fit line and the ranking reasons**, so a difference between Baseline and another
+condition can come from the missing reflection and APA pages, or from the missing fit line and reasons on the cards, or
+from both. The design does not separate the two; say so wherever Baseline is compared (9.6).
 
 ### 9.2 Who is in which condition, and how they got there
 
@@ -697,16 +709,19 @@ HOW_TO_READ_MY_DATABASE.md) and in the raw row's `telemetry` (`blocks.block5_eme
 | Did this scenario count for Stability? | `cvr.counted_as_a_stability_step` | all |
 | What happened on the APA page | `apa` (`ran`, the value named, how sure; in 3 also `value_the_page_said_the_option_serves_most` and `named_the_value_the_page_said`) | 1, 3 |
 | Every CVR Rejection page visit, and the moves of the first | `cvr_rejection_page` (`shown`, `visits`, `every_visit[]`: option refused, views seen, the reflection answer, whether the person moved them, seconds) | 2 |
-| Baseline's page | `baseline_confirm` (`kept`, `how_sure_1_to_5`, the steps asked for, `page_opened_times`, `changed_their_mind_times`) | 4 |
-| How often each page opened, and was left | `telemetry.cvrVisits`, `apaVisits`, `cvrRejectionVisits`, `baselineConfirmVisits`, `baselineConfirmBackouts`, `cvrBackouts`, `apaBackouts` | as the page exists |
+| Baseline's page | `baseline_confirm` (`kept`, `how_sure_1_to_5`, the steps asked for, `page_opened_times`, `changed_their_mind_times`; since 3 October 2026 `how_sure_on_the_confirmation_page_1_to_5` for EVERY choice kept there, good fit or not, and a good fit's page counts `good_fit_page_opened_times`, `good_fit_changed_their_mind_times`) | 4 |
+| Could the cards show the fit line and the ranking reasons? | `fit_line_and_ranking_reasons_shown` (false in Baseline since 3 October 2026, and always in scenario 6) | all |
+| How often each page opened, and was left | `telemetry.cvrVisits`, `apaVisits`, `cvrRejectionVisits`, `baselineConfirmVisits`, `baselineConfirmBackouts` (a misfit's page), `baselineGoodFitConfirmVisits`, `baselineGoodFitConfirmBackouts` (a good fit's, since 3 October 2026), `cvrBackouts`, `apaBackouts` | as the page exists |
 | Was the second view opened (at any point) | `cvr.second_lens_was_generated` (since the audit: also a view opened before going back), `telemetry.secondViewOpened` | 1, 2 |
 | Did the participant end on a different option than their first pick | `cvr.changed_their_choice` (first pick against final) | all |
 | Every value move, with its reason in words | `analysis.value_moves_asked_for_and_made` (reasons "CVR Rejection page: ...", "Baseline confirm: ...", "changed their mind: ...") | all |
 
 Per participant: the totals in `analysis.alignment_records.totals` (`times_reflection_fired`, `times_clarification_ran`,
 `times_cvr_rejection_page_shown`, `times_kept_misaligned_on_the_baseline_confirm_page`,
-`times_the_baseline_confirm_page_opened`), and the feedback record's Block 5 summary, which carries each scenario's
-`cvrVisits`, `apaVisits`, `cvrRejectionVisits`, `baselineConfirmVisits` and `secondViewOpened`.
+`times_the_baseline_confirm_page_opened`, and since 3 October 2026 `times_a_good_fit_was_kept_on_the_baseline_confirm_page`
+and `times_the_fit_line_and_ranking_reasons_were_hidden`), and the feedback record's Block 5 summary, which carries each
+scenario's `cvrVisits`, `apaVisits`, `cvrRejectionVisits`, `baselineConfirmVisits`, `baselineGoodFitConfirmVisits` and
+`secondViewOpened`.
 
 ### 9.4 Which measures compare fairly between conditions
 
@@ -716,7 +731,7 @@ behaviour. Read it before comparing real conditions. In short (figures of 2 Octo
 
 | Measure | Fair between conditions? | Why |
 |---|---|---|
-| VCI, VCI_all | **Yes** - the same behaviour moves at most about 1 point | They read the choices, and the choices are what the conditions change |
+| VCI, VCI_all | **Yes** - the same behaviour moves at most about 1 point | They read the choices, and the choices are what the conditions change. The pretend people choose the same with or without the fit line, so for Baseline this holds for the rules only: real people may choose differently without it (9.1) |
 | Performance, top-value choices | **Yes** - at most about 4 points / 0.6 of 6, only where a final choice is made differently | They read the final choices only |
 | Stability, Stability_all | **Mostly** - up to 13 points (Stability) and about 7 (Stability_all) for the same behaviour | The conditions move values by different rules. Since 2 October 2026 Stability averages an order part (higher in 3 and 4) with a difference part (usually lower there), which halves the gap; compare against the gaps on that page (4.12) |
 | The three sensitivity stabilities | **Only 1 against 2** | "Not measured" in 3 and 4 |
@@ -741,7 +756,9 @@ researcher's decision after the experiment.
 4. **Changing the choice after the page.** `cvr.changed_their_choice` and first-against-final pick, per condition and
    per scenario: how often each page led to a different option, and whether that option fit better (its label).
 5. **How sure, where it is asked** (conditions 1 and 3 on the APA page, 4 on the confirmation page): its distribution,
-   and whether surer people moved further (it scales the moves).
+   and whether surer people moved further (it scales the moves). In Baseline, since 3 October 2026, it is asked for EVERY
+   choice in a decision (`how_sure_on_the_confirmation_page_1_to_5`), so how sure people are can be compared between good
+   fits and misfits inside one condition; only a misfit's answer moves values.
 6. **APA_Only's box** (`named_the_value_the_page_said`): how often people named the value the box showed. **Trap:**
    naming it is also how a participant keeps their own option, so a high share is expected and is not, on its own,
    evidence of a value.
@@ -764,6 +781,13 @@ researcher's decision after the experiment.
   moved values.
 - **Baseline's strongly misaligned keep lowers the four values overall** (+30, three times −15): compare their ORDER
   across conditions, not their sum.
+- **Baseline differs for everybody since 3 October 2026** (no fit line, no ranking reasons, the same confirmation page for
+  every choice). A Baseline-against-condition-1 difference mixes the missing pages with the missing card information; the
+  design cannot separate them. Comparisons among conditions 1-3 are not affected.
+- **Baseline records before 3 October 2026** showed the fit line and the reasons and asked "How sure" only after a misfit;
+  `fit_line_and_ranking_reasons_shown` is absent on them (it reads true). Do not pool across the date.
+- **A good fit's "How sure" in Baseline moves nothing** (the keep rule, as everywhere); a misfit's scales its moves. Never
+  read a good fit's answer into the value moves.
 - **`condition_source: "address"`** marks a tester who opened a condition on purpose.
 
 ### 9.7 Figures worth building for the conditions
@@ -774,4 +798,5 @@ researcher's decision after the experiment.
 | Stability by condition, with its order and difference parts | Which part moves | Draw the mechanical gap from the conditions page as a reference band |
 | A funnel per condition: chose a misfit → page opened → kept / went back → final label | What people did at their condition's page | One funnel per condition; the pages differ, so do not stack them |
 | "How sure" by condition (APA page against Baseline's page) | Whether the two "how sure" questions are answered alike | Different pages ask it after different things |
+| Baseline: "How sure" for good fits against misfits (since 3 October 2026) | Whether people are less sure when they choose against their values, on an identical page | Only a misfit's answer moves values |
 | APA_Only: named value against the box's value | How often the box was followed | Naming it is also the way to keep the option (9.5) |

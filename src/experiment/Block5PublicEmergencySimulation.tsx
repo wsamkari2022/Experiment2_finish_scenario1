@@ -20,9 +20,13 @@
  *       3 APA_Only  the APA page at once (handleSelect -> step "apa"): no reflection, no person, its own opening
  *                   sentence, a box naming the value the option serves most, no warning on going back; the person,
  *                   directness and context scores never move
- *       4 Baseline  the confirmation page with its own first sentence and "How sure?" (FlowOverlay confirmOnly);
- *                   "Keep" moves the four values (handleKeep -> applyBaselineConfirmUpdatesWithMoves); "Change my
- *                   mind" goes back (handleChangeMyMind counts it)
+ *       4 Baseline  the confirmation page with "Before you confirm, take a moment with what this option gives up." and
+ *                   "How sure?" (FlowOverlay confirmOnly); "Keep" moves the four values (handleKeep ->
+ *                   applyBaselineConfirmUpdatesWithMoves); "Change my mind" goes back (handleChangeMyMind counts it).
+ *                   Since 3 October 2026 a GOOD FIT in a decision opens the very same page (askHowSure; its answer is
+ *                   recorded only, the keep rule moves as everywhere), and the open cards show no fit line and no
+ *                   "Ranked N - why" reasons (showValueReasons) - conditions.ts, hidesFitAndRankingReasons and
+ *                   confirmsEveryChoiceAlike
  *   Every path ends in commitChoice (the keep paths) or handleApaCommit (the APA paths), and both end in
  *   finalizeScenario, which adds what every row needs (the planner log, the company's value, the running values, the
  *   value snapshots Stability reads) and saves the progress.
@@ -33,9 +37,13 @@
  *                    when the participant then went back to a good fit (read it through reflectionWasShown)
  *   apa              the APA page's answers (conditions 1 and 3); cvrRejections every CVR Rejection page visit
  *                    (condition 2); baselineConfirm the kept misfit and its "How sure" (condition 4)
+ *   howSureOnConfirm condition 4 (since 3 October 2026): "How sure" for every choice kept on the confirmation page
+ *   fitAndReasonsShown  could the open cards show the fit line and the ranking reasons (false in condition 4 and in
+ *                    scenario 6; since 3 October 2026)
  *   valueMoves       every move the scenario's rules asked for and made, with the reason in words
  *   telemetry        each page's visits, back-outs and seconds: cvrVisits, apaVisits, cvrRejectionVisits,
- *                    baselineConfirmVisits and baselineConfirmBackouts, secondViewOpened, numberOfSwitches, ...
+ *                    baselineConfirmVisits and baselineConfirmBackouts (a misfit's page), baselineGoodFitConfirmVisits
+ *                    and baselineGoodFitConfirmBackouts (a good fit's), secondViewOpened, numberOfSwitches, ...
  *
  * Alignment (v3.1): threshold-satisfaction — an option is only penalized when it falls
  * BELOW the participant's priority on a value; meeting/exceeding costs nothing. Bands
@@ -77,7 +85,10 @@ import { computeVciAll, runningStep } from "./block5VciAll";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { ROLE_BADGE } from "./block5RoleWords";
 import { clearBlock5Progress, readBlock5Progress, saveBlock5Progress } from "./block5Progress";
-import { confirmsMisalignedChoices, freezesReflectionScores, showsCvrRejectionPage, skipsCvrReflection } from "./conditions";
+import {
+  confirmsEveryChoiceAlike, confirmsMisalignedChoices, freezesReflectionScores, hidesFitAndRankingReasons,
+  showsCvrRejectionPage, skipsCvrReflection,
+} from "./conditions";
 import { progressSaved } from "./sessionGuard";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
 import { SCENARIO_CHECK_AFTER, readAttention } from "./attentionChecks";
@@ -402,6 +413,11 @@ interface TelemetryAccum {
   secondViewOpened: boolean;
   baselineConfirmVisits: number;
   baselineConfirmBackouts: number;
+  /* Since 3 October 2026 a GOOD FIT opens the same page in condition 4 (conditions.ts, confirmsEveryChoiceAlike). Counted
+     apart, so the two above keep their meaning, and NOT added to numberOfSwitches: leaving a good fit's confirmation page
+     is not counted there in any other condition either. */
+  baselineGoodFitConfirmVisits: number;
+  baselineGoodFitConfirmBackouts: number;
 }
 
 function newTelemetryAccum(): TelemetryAccum {
@@ -417,6 +433,7 @@ function newTelemetryAccum(): TelemetryAccum {
     distinct: new Set(), lastSelectedId: null, cvrShownAt: null, apaShownAt: null,
     cvrRejectionVisits: 0, cvrRejectionBackouts: 0, cvrRejectionDwellMs: 0, cvrRejectionShownAt: null,
     secondViewOpened: false, baselineConfirmVisits: 0, baselineConfirmBackouts: 0,
+    baselineGoodFitConfirmVisits: 0, baselineGoodFitConfirmBackouts: 0,
   };
 }
 
@@ -524,6 +541,11 @@ function buildScenarioTelemetry(
     ...(t.secondViewOpened ? { secondViewOpened: true } : {}),
     ...(t.baselineConfirmVisits > 0
       ? { baselineConfirmVisits: t.baselineConfirmVisits, baselineConfirmBackouts: t.baselineConfirmBackouts } : {}),
+    ...(t.baselineGoodFitConfirmVisits > 0
+      ? {
+          baselineGoodFitConfirmVisits: t.baselineGoodFitConfirmVisits,
+          baselineGoodFitConfirmBackouts: t.baselineGoodFitConfirmBackouts,
+        } : {}),
   };
 }
 
@@ -587,6 +609,15 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
    */
   const [baselineCondition] = useState<boolean>(() => confirmsMisalignedChoices());
   const [baselineSure, setBaselineSure] = useState<number | null>(null);
+  /*
+   * BASELINE, THE SECOND TASK (since 3 October 2026; conditions.ts; the researcher's "Q1-A, Q2-A, Q3-yes"). The open cards
+   * show no fit line and no "Ranked N - why" reasons (`hideFitAndReasons`), and every choice in a decision opens the same
+   * confirmation page with "How sure" (`howSureOnEveryChoice`): before, only a misfit got the question and a good fit read
+   * "This option fits your earlier priorities", so the page itself told the participant which kind of choice it was. A good
+   * fit's answer is recorded only (`howSureOnConfirm`); the keep rule moves the values as in every other condition.
+   */
+  const [hideFitAndReasons] = useState<boolean>(() => hidesFitAndRankingReasons());
+  const [howSureOnEveryChoice] = useState<boolean>(() => confirmsEveryChoiceAlike());
   const [reflectionScoresFrozen] = useState<boolean>(() => freezesReflectionScores());
   const rejectionRef = useRef<{
     scenarioId: string | null; moved: boolean; moves: Block5ValueMove[]; visits: CvrRejectionVisit[]; openedAt: number | null;
@@ -1236,6 +1267,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       setCvrWho(null);
       return;
     }
+    /* Baseline, since 3 October 2026: a good fit in a decision opens the SAME page (sentence and "How sure"); counted apart. */
+    if (howSureOnEveryChoice && scenario && opt && scenarioIsScored(scenario) && t) t.baselineGoodFitConfirmVisits += 1;
     if (misaligned && t) {
       t.cvrVisits += 1;          // the CVR vignette is about to be shown
       t.cvrShownAt = Date.now(); // start CVR dwell timer
@@ -1243,7 +1276,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setCvrWho(misaligned && scenario && opt
       ? pickWhoVariant(scenario, cvrCoordinate(opt, profile).who)
       : null);
-  }, [labeled, scenario, profile, logPred, apaOnlyCondition, baselineCondition]);
+  }, [labeled, scenario, profile, logPred, apaOnlyCondition, baselineCondition, howSureOnEveryChoice]);
 
   /**
    * WHERE A REFUSAL LEADS: the APA page, or in condition 2 (CVR_Only) the CVR Rejection page (since 1 October 2026).
@@ -1394,9 +1427,12 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     const t = telRef.current;
     if (t && baselineCondition && scenario && selectedOption && scenarioIsScored(scenario) && isMisaligned(selectedOption.level)) {
       t.baselineConfirmBackouts += 1;
+    } else if (t && howSureOnEveryChoice && scenario && selectedOption && scenarioIsScored(scenario)) {
+      /* Baseline, since 3 October 2026: leaving the same page for a good fit, counted apart (never a switch). */
+      t.baselineGoodFitConfirmBackouts += 1;
     }
     resetFlow();
-  }, [baselineCondition, scenario, selectedOption, resetFlow]);
+  }, [baselineCondition, howSureOnEveryChoice, scenario, selectedOption, resetFlow]);
 
   const handleFinalDecisionChange = useCallback(() => {
     if (telRef.current) telRef.current.finalDecisionChanges += 1;
@@ -1415,6 +1451,13 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
       result.cvrRejections = rejected.visits.map((v) => ({ ...v, moves: [...v.moves] }));
     }
     rejectionRef.current = { scenarioId: null, moved: false, moves: [], visits: [], openedAt: null };
+    /*
+     * COULD THE OPEN CARDS SHOW THE FIT LINE AND THE RANKING REASONS (since 3 October 2026)? Never in Baseline
+     * (conditions.ts, hidesFitAndRankingReasons), never in scenario 6 (its cards have no "Ranked N - why" panel at all),
+     * otherwise yes. Here, where both result paths meet, so every row says it.
+     */
+    const finalizedScenario = BLOCK5_SCENARIOS.find((s) => s.id === result.scenarioId);
+    result.fitAndReasonsShown = !hideFitAndReasons && !!finalizedScenario && scenarioShowsPerformance(finalizedScenario);
     /*
       PLANNER LOG. Attached here because both result paths — a direct choice and an APA-committed
       choice — funnel through this one function, so neither can silently ship without it.
@@ -1564,7 +1607,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     setPreviewOptionId(null);
     setCompareChartsOpen(false);
     resetFlow();
-  }, [progress, userProfile, onComplete, resetFlow, plan, decisionProfile, labeled, owner, resumedAt, reflectionScoresFrozen]);
+  }, [progress, userProfile, onComplete, resetFlow, plan, decisionProfile, labeled, owner, resumedAt, reflectionScoresFrozen,
+      hideFitAndReasons]);
 
   const commitChoice = useCallback((opt: LabeledOption, opts: {
     nextProfile: Block5UserProfile;
@@ -1577,6 +1621,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     predictionTest?: PredictionTestRecord;
     /** Baseline only: a misaligned choice kept on the confirmation page (no reflection ran). */
     baselineConfirm?: BaselineConfirmRecord;
+    /** Baseline only (since 3 October 2026): "How sure" for any choice kept on its confirmation page in a decision. */
+    howSureOnConfirm?: number;
   }) => {
     if (!scenario) return;
 
@@ -1649,6 +1695,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
          a good fit: `cvrFired` (the final path) is false there, and the row used to read "no reflection shown". */
       reflectionShown: (telRef.current?.cvrVisits ?? 0) > 0,
       ...(opts.baselineConfirm ? { reflectionShown: false, baselineConfirm: opts.baselineConfirm } : {}),
+      /* Baseline (since 3 October 2026): its "How sure" for every choice kept on the confirmation page in a decision.
+         (fitAndReasonsShown is added in finalizeScenario, where the APA path meets this one.) */
+      ...(opts.howSureOnConfirm !== undefined ? { howSureOnConfirm: opts.howSureOnConfirm } : {}),
       cvrEndorsement: opts.endorsement,
       cvrCoordinate: coord,
       stakeholderGuided: opts.stakeholderGuided,
@@ -1815,7 +1864,10 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
      * all scaled by "How sure?" (applyBaselineConfirmUpdatesWithMoves). The page will not keep it without that answer.
      */
     const baselineMisfit = baselineCondition && !!scenario && scenarioIsScored(scenario) && isMisaligned(selectedOption.level);
-    if (baselineMisfit && baselineSure === null) return;
+    /* Baseline, since 3 October 2026: a good fit in a decision is asked "How sure" too; the answer is recorded only
+       (howSureOnConfirm) and the keep rule below moves the values exactly as in the other conditions ("Q2-A"). */
+    const asksHowSure = baselineMisfit || (howSureOnEveryChoice && !!scenario && scenarioIsScored(scenario));
+    if (asksHowSure && baselineSure === null) return;
     const baselineConfirm: BaselineConfirmRecord | undefined = baselineMisfit && baselineSure !== null
       ? { confidence: baselineSure, valueRaised: optionMainValue(selectedOption), stepDownForTheOtherThree: baselineStepDown(selectedOption.level) }
       : undefined;
@@ -1879,9 +1931,11 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
     }
     commitChoice(selectedOption, {
       nextProfile, valueMoves: update.moves, endorsement: "n/a", stakeholderGuided: null, predictionTest, baselineConfirm,
+      howSureOnConfirm: asksHowSure && baselineSure !== null ? baselineSure : undefined,
     });
   }, [selectedOption, profile, scenario, commitChoice, prediction, predFirstChoiceId,
-      predSoundsLike, predSurprised, progress.scenarioStartTime, displayOptions, baselineCondition, baselineSure]);
+      predSoundsLike, predSurprised, progress.scenarioStartTime, displayOptions, baselineCondition, baselineSure,
+      howSureOnEveryChoice]);
 
   const handleConfirmEndorsement = useCallback(() => {
     // stakeholderMoved replaces the old "did hearing this influence you?" answer. It is set on
@@ -2034,7 +2088,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         <Box ref={dashRef} position="sticky" top="2" zIndex="30" maxW="7xl" mx="auto" mb="6">
           <MetricsDashboard current={cumulative} projected={projected} previewTitle={previewOption?.title ?? null}
             accent={pal.accent} completedCount={progress.scenarioResults.length} pal={pal} scenarioId={scenario.id}
-            isWish={!scenarioCountsTowardsPerformance(scenario)} />
+            isWish={!scenarioCountsTowardsPerformance(scenario)} fitLineOnCards={!hideFitAndReasons} />
         </Box>
       )}
 
@@ -2333,6 +2387,7 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
                   hintDetails={expandedOptions.size === 0}
                   onSelect={() => handleSelect(opt.id)}
                   showPerformance={scenarioShowsPerformance(scenario)}
+                  showValueReasons={!hideFitAndReasons}
                   canPreview={scenarioCountsTowardsPerformance(scenario)}
                   isPreviewing={previewOptionId === opt.id} onPreview={() => togglePreview(opt.id)}
                   impact={previewOptionId === opt.id ? impactFor(opt) : null}
@@ -2389,6 +2444,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
           onRejectionBack={handleRejectionBack}
           reflectionSkipped={apaOnlyCondition}
           confirmOnly={baselineCondition}
+          askHowSureOnEveryChoice={howSureOnEveryChoice}
+          hideWishFit={hideFitAndReasons}
           baselineSure={baselineSure}
           setBaselineSure={setBaselineSure}
           altViewGenerated={altViewGenerated}
@@ -2445,11 +2502,12 @@ function pinnedValuesHeight(values: HTMLElement | null): number {
  * and, worse, quietly restores the sense of agency the scenario exists to remove.
  */
 /*
- * BASELINE'S FIRST SENTENCE for a misaligned choice (condition 4, since 1 October 2026; the researcher's "Q1-B"). The
- * confirmation page's usual sentence says the option "fits your earlier priorities", which is true only for a good fit,
- * the only kind that reached this page before Baseline. A good fit keeps it.
+ * BASELINE'S FIRST SENTENCE on its confirmation page (condition 4). Since 1 October 2026 for a misaligned choice (the
+ * researcher's "Q1-B": the usual sentence says the option "fits your earlier priorities", true only for a good fit).
+ * Since 3 October 2026 for EVERY choice in a decision and on the wish page too ("Q3-yes"), so no page in Baseline says,
+ * in words or by being different, whether a choice fits. It was called BASELINE_MISFIT_INTRO until then.
  */
-const BASELINE_MISFIT_INTRO = "Before you confirm, take a moment with what this option gives up.";
+const BASELINE_CONFIRM_INTRO = "Before you confirm, take a moment with what this option gives up.";
 
 const DECISION_COPY = {
   decider: {
@@ -2854,7 +2912,7 @@ export function ScenarioRoleCard({ scenario, pal, open = true, onToggle }: {
   );
 }
 
-function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal, scenarioId, isWish }: {
+function MetricsDashboard({ current, projected, previewTitle, accent, completedCount, pal, scenarioId, isWish, fitLineOnCards }: {
   current: Block5MetricProfile;
   projected: Block5MetricProfile | null;
   previewTitle: string | null;
@@ -2869,6 +2927,9 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
    * the page looks like scenario 4's, and one line says why nothing here will move them.
    */
   isWish: boolean;
+  /** False in Baseline (since 3 October 2026; conditions.ts, hidesFitAndRankingReasons): the open cards have no fit line,
+      so the note below must not point at one. */
+  fitLineOnCards: boolean;
 }) {
   /**
    * Definitions are shown UNDER each metric by default rather than hidden behind a hover.
@@ -3189,12 +3250,23 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
                   The one place their values are still reported to them is the quiet line at the foot
                   of an open card's values section, so that is what it names now, in the card's own
                   words.
+
+                  BASELINE HAS NO SUCH LINE (since 3 October 2026; conditions.ts, hidesFitAndRankingReasons),
+                  so there the sentence stops at what these bars are not - the wording of audit Fix 1's plan,
+                  approved by the researcher ("Q3-yes").
                 */}
-                <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">
-                  All of this is <b>outcome quality</b> — how well an option works. How well it
-                  matches <b>your values</b> is a separate thing entirely. You will find that inside
-                  an open card, on the line that reads <b>“Matches your earlier answers”</b>.
-                </Text>
+                {fitLineOnCards ? (
+                  <Text fontSize="xs" color={pal.textFaint} lineHeight="tall">
+                    All of this is <b>outcome quality</b> — how well an option works. How well it
+                    matches <b>your values</b> is a separate thing entirely. You will find that inside
+                    an open card, on the line that reads <b>“Matches your earlier answers”</b>.
+                  </Text>
+                ) : (
+                  <Text fontSize="xs" color={pal.textFaint} lineHeight="tall" data-no-fit-note>
+                    All of this is <b>outcome quality</b> — how well an option works. It does not tell you
+                    how well an option fits <b>your values</b>.
+                  </Text>
+                )}
               </VStack>
             )}
           </Box>
@@ -3254,7 +3326,7 @@ const EMPTY_FOLDS: ReadonlySet<string> = new Set();
 
 /* ---------------- Option card ---------------- */
 
-function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, methodLabel, copy, expanded, onToggle, folded, onFoldToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance, canPreview }: {
+function OptionCard({ option, profile, accent, pal, explanation, standing, scenarioId, methodLabel, copy, expanded, onToggle, folded, onFoldToggle, onSelect, isPreviewing, onPreview, impact, disabled, hintDetails, showPerformance, showValueReasons, canPreview }: {
   option: LabeledOption; profile: Block5UserProfile; accent: string; pal: Block5Palette;
   /** The scenario's own heading for the method box ("How you travel"). Absent hides the box. */
   methodLabel?: string;
@@ -3273,6 +3345,13 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
   isPreviewing: boolean; onPreview: () => void; impact: PreviewImpact | null; disabled: boolean;
   /** False in scenario 6: no performance exists there, so there is nothing to preview. */
   showPerformance: boolean;
+  /**
+   * False in Baseline (since 3 October 2026; conditions.ts, hidesFitAndRankingReasons; the researcher's "Q1-A"): the open
+   * card's "Ranked N - why" values part is not drawn at all - no "Beat N of the other options", no "Most often decided
+   * on", no "Against ...", no trade line, no limit line or its label, and no "Matches your earlier answers: N out of 100".
+   * "How it performs" stays, and so does the number 1-6 beside the title (the ORDER is the same in every condition).
+   */
+  showValueReasons: boolean;
   /**
    * False in the wish (scenario 5), since 25 September 2026: its pick is not averaged into the
    * performance bars, so a preview of how it would change them would be untrue. The option's own
@@ -3552,9 +3631,16 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
         the MPF's guess is built from - showing it beside the options and then showing the guess
         would be marking the participant's answer before they had given it.
       */}
-      {explanation && showPerformance && (
+      {/*
+        NOT IN BASELINE EITHER (since 3 October 2026; `showValueReasons`, conditions.ts hidesFitAndRankingReasons): the
+        researcher's advisor does not want the fit score or the ranking reasons shown there ("Q1-A"), so the whole values
+        part below - the title, every reason line, the limit label and the fit line - is left out, and only "How it
+        performs" is drawn, without the rule above it.
+      */}
+      {explanation && showPerformance && (showValueReasons || explanation.chips.length > 0 || !!standing) && (
         <Box mt="3" bg={pal.panelDeep} borderWidth="1px" borderColor={pal.separator}
-          rounded="xl" px={{ base: "3.5", md: "4" }} py="3">
+          rounded="xl" px={{ base: "3.5", md: "4" }} py="3" data-value-reasons={showValueReasons ? "1" : "0"}>
+          {showValueReasons && (<>
           <Text fontSize="2xs" fontWeight="bold" letterSpacing="widest" textTransform="uppercase"
             color={pal.textFaint} mb="2.5">
             Ranked {explanation.rank} — why
@@ -3615,9 +3701,11 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
               Matches your earlier answers: {option.matchScore} out of 100.
             </Text>
           </Stack>
+          </>)}
 
           {(explanation.chips.length > 0 || standing) && (
-            <Box mt="3" pt="2.5" borderTopWidth="1px" borderColor={pal.separator}>
+            <Box mt={showValueReasons ? "3" : "0"} pt={showValueReasons ? "2.5" : "0"}
+              borderTopWidth={showValueReasons ? "1px" : "0"} borderColor={pal.separator}>
               {/*
                 THE PERFORMANCE ROW IS ONE STEP LARGER THAN IT WAS, on the advisor's instruction.
 
@@ -4499,7 +4587,7 @@ function FlowOverlay({
   tradeoffAck, setTradeoffAck, q1Strong, setQ1Strong, stakeholderMoved,
   onKeep, onConfirmEndorsement, onApaCommit, onChangeMyMind,
   onCvrYes, onCvrNo, onCvrBackout, onApaBail, onFinalDecisionChange, onRejectionBack, reflectionSkipped,
-  confirmOnly, baselineSure, setBaselineSure,
+  confirmOnly, askHowSureOnEveryChoice, hideWishFit, baselineSure, setBaselineSure,
   cvrSaidYes, onPersonAnswer, onPersonBackout,
   altViewGenerated, onAltGenerated, lastLensSeen, onLensShown, framingChoiceYes, setFramingChoiceYes, mode,
   prediction, onOpenPrediction, predSoundsLike, setPredSoundsLike, predSurprised, setPredSurprised,
@@ -4531,6 +4619,12 @@ function FlowOverlay({
   reflectionSkipped: boolean;
   /** Baseline (condition 4): a misaligned choice gets the confirmation page, with "How sure?" (its answer). */
   confirmOnly: boolean; baselineSure: number | null; setBaselineSure: (n: number) => void;
+  /** Baseline, since 3 October 2026 (conditions.ts, confirmsEveryChoiceAlike): a GOOD FIT in a decision gets the same
+      page - the same first sentence and "How sure" - so the page no longer says which kind of choice it was. */
+  askHowSureOnEveryChoice: boolean;
+  /** Baseline, since 3 October 2026 (hidesFitAndRankingReasons): the wish page drops its "close to what you said matters
+      most" sentence (an alignment verdict) for the same first sentence. */
+  hideWishFit: boolean;
   /** which side they took on the vignette, and the answer on the person page. */
   cvrSaidYes: boolean | null;
   onPersonAnswer: (moved: boolean) => void;
@@ -4556,8 +4650,9 @@ function FlowOverlay({
    */
   const misaligned = scenarioIsScored(scenario) && isMisaligned(option.level);
   /* Baseline (condition 4): no reflection; a misaligned choice gets the confirmation page below, with its own first
-     sentence and "How sure are you about this choice?". */
-  const baselineMisfit = confirmOnly && misaligned;
+     sentence and "How sure are you about this choice?" - and since 3 October 2026 so does EVERY choice in a decision
+     (`askHowSureOnEveryChoice`), so a good fit's page is the same page. Scenarios 5 and 6 are not decisions: no question. */
+  const baselineAsk = confirmOnly && (misaligned || (askHowSureOnEveryChoice && scenarioIsScored(scenario)));
 
   /*
    * The trade this option makes, for the confirm question — the same two values the APA page names
@@ -4642,8 +4737,10 @@ function FlowOverlay({
           <Stack gap="4">
             {/* The verdict badge is not shown. See the note on the misaligned reflection page:
                 a tier label read before the trade-off is read answers the question for them. */}
-            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              {WISH_FIT_SENTENCE[option.level]}
+            {/* Baseline (since 3 October 2026): no "close to what you said matters most" - that is the fit, said in words
+                (audit A8) - but the same first sentence as its other confirmation pages ("Q3-yes"). */}
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall" data-wish-intro>
+              {hideWishFit ? BASELINE_CONFIRM_INTRO : WISH_FIT_SENTENCE[option.level]}
             </Text>
             <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
               <Text fontSize="xs" color="fg.subtle" mb="1">What this option gives up</Text>
@@ -4802,17 +4899,19 @@ function FlowOverlay({
           <Stack gap="4">
             {/* The verdict badge is not shown here either -- same reason. */}
             {/* Baseline: "fits your earlier priorities" would be untrue for a misaligned choice, so it gets its own sentence
-                (the researcher's "Q1-B"; a good fit keeps the usual one). */}
-            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              {baselineMisfit ? BASELINE_MISFIT_INTRO : copy.fitsIntro}
+                (the researcher's "Q1-B"); since 3 October 2026 a good fit gets the same one ("Q3-yes"), so the sentence no
+                longer tells the participant whether the choice fits. The other conditions keep the usual one. */}
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall" data-confirm-intro>
+              {baselineAsk ? BASELINE_CONFIRM_INTRO : copy.fitsIntro}
             </Text>
             <Box bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" rounded="xl" px="4" py="3">
               <Text fontSize="xs" color="fg.subtle" mb="1">What this trades away</Text>
               <Text fontSize="sm" color="fg.muted">{option.givesUp ?? option.consequence}</Text>
             </Box>
             {/* Baseline: how sure they are scales every move on "Keep" (0.6-1.0, the APA page's own weight), so it is
-                asked before the choice can be kept. The same buttons and words as the APA page's question. */}
-            {baselineMisfit && (
+                asked before the choice can be kept. The same buttons and words as the APA page's question. Since 3 October
+                2026 a good fit is asked too; there the answer is recorded only ("Q2-A": the keep rule moves as everywhere). */}
+            {baselineAsk && (
               <HStack gap="2" wrap="wrap" data-baseline-sure>
                 <Text fontSize="xs" color="fg.muted" fontWeight="medium">How sure are you about this choice?</Text>
                 {[1, 2, 3, 4, 5].map((n) => (
@@ -4842,7 +4941,7 @@ function FlowOverlay({
               */}
               <Button size="sm" bg="green.600" color="white" _hover={{ bg: "green.500" }} rounded="lg"
                 onClick={prediction && !predAnswered ? onOpenPrediction : onKeep}
-                disabled={!tradeoffAck || (baselineMisfit && baselineSure === null)} fontSize="xs">
+                disabled={!tradeoffAck || (baselineAsk && baselineSure === null)} fontSize="xs">
                 {copy.commit}
               </Button>
               <Button size="sm" variant="ghost" color="fg.muted" _hover={{ bg: "bg.subtle" }} rounded="lg" onClick={onChangeMyMind} fontSize="xs">

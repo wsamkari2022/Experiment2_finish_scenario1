@@ -874,6 +874,9 @@ earlier rows on these fields; every score is unchanged):
 
 ### Baseline (condition 4), since 1 October 2026: a misaligned choice kept on the confirmation page
 
+**Since 3 October 2026** Baseline's open option cards show no fit line and no ranking reasons, and EVERY choice in a decision
+opens the same confirmation page with "How sure" (a good fit's answer is recorded only); the rows below say which.
+
 In condition 4 there is no reflection page and no APA page. A misaligned choice gets the same confirmation page a good fit
 gets, plus "How sure are you about this choice?" (1-5); keeping it moves the four values: +30 x w to the value the option
 serves most, -10 x w (misaligned) or -15 x w (strongly misaligned) to each other value, w = 0.6-1.0 from "how sure". Each
@@ -886,15 +889,20 @@ such keep is still a Stability step. Read its row as:
 | `baseline_confirm.value_raised` (+ `_label`) | The value the option serves most, the one raised |
 | `baseline_confirm.step_up`, `.step_down_for_each_other_value` | The steps asked for, before the 0-100 edges (what was made is in `value_moves_asked_for_and_made`) |
 | `baseline_confirm.page_opened_times`, `.changed_their_mind_times` | **Since the four-condition audit (2 October 2026):** how often a misaligned choice opened this page in the scenario, and how often "Change my mind" left it - also on a row where the final choice was a good fit (`kept: false`). Absent when the page never opened, and on rows saved before that date. The raw counts: `telemetry.baselineConfirmVisits`, `baselineConfirmBackouts` |
+| `baseline_confirm.how_sure_on_the_confirmation_page_1_to_5` | **Since 3 October 2026:** "How sure" for EVERY choice kept on this page in a decision - a good fit too (`kept: false`; recorded only, it moves nothing) and a misfit (the same number as `how_sure_1_to_5`). The raw field: `howSureOnConfirm` on the row |
+| `baseline_confirm.good_fit_page_opened_times`, `.good_fit_changed_their_mind_times` | **Since 3 October 2026:** a GOOD FIT opens the same page; how often it did in the scenario, and how often "Change my mind" left it (never counted in `numberOfSwitches`, as in no other condition). Raw: `telemetry.baselineGoodFitConfirmVisits`, `baselineGoodFitConfirmBackouts` |
+| `fit_line_and_ranking_reasons_shown` | **false** since 3 October 2026: Baseline's open cards show no fit line and no "Ranked N - why" reasons (true in conditions 1-3, false in every condition's scenario 6; absent on older rows, read as true except in scenario 6). Raw: `fitAndReasonsShown` |
 | `cvr.fired` | **false** (no reflection was shown) |
-| `cvr.counted_as_a_stability_step` | **true** when the misfit was kept, so Stability and Stability_all measure the Baseline moves (the researcher's choice) |
+| `cvr.counted_as_a_stability_step` | **true** when the misfit was kept, so Stability and Stability_all measure the Baseline moves (the researcher's choice); **false** for a good fit kept on the same page |
 | `cvr.endorsement_after_reflection` | "n/a" |
 | `apa.ran` | false |
 
 The stakeholder, directness and context scores never move in Baseline, so the headline writes their stabilities as null
 with "Not measured in this condition" and `headline.reflection_scores_measured: false`, as in APA_Only. Count the steps with
 `totals.times_kept_misaligned_on_the_baseline_confirm_page` (or `counted_as_a_stability_step`), never
-`times_reflection_fired`; `totals.times_the_baseline_confirm_page_opened` counts the scenarios where the page opened at all. **Trap:** a strongly misaligned keep lowers the four values by 15 in total (+30, 3 x -15) at
+`times_reflection_fired`; `totals.times_the_baseline_confirm_page_opened` counts the scenarios where the page opened at all
+for a misfit; since 3 October 2026 `totals.times_a_good_fit_was_kept_on_the_baseline_confirm_page` counts the good fits kept
+there and `totals.times_the_fit_line_and_ranking_reasons_were_hidden` the decisions chosen without the fit line. **Trap:** a strongly misaligned keep lowers the four values by 15 in total (+30, 3 x -15) at
 "very sure", so the four values drift down a little over a run; compare their ORDER across conditions, not their sum.
 
 ### APA_Only (condition 3), since 1 October 2026: the APA page with no reflection before it

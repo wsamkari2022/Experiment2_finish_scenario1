@@ -885,6 +885,10 @@ export interface Block5ScenarioTelemetry {
   secondViewOpened?: boolean;        // the second view was opened at some point in this scenario (any page, any path)
   baselineConfirmVisits?: number;    // condition 4: times a misaligned choice opened the confirmation page with "How sure"
   baselineConfirmBackouts?: number;  // condition 4: times "Change my mind" left that page
+  /* Since 3 October 2026 (conditions.ts, confirmsEveryChoiceAlike) a GOOD FIT opens the same page in condition 4; counted
+     apart, so the two above keep their meaning (a misfit's page). Absent when zero. */
+  baselineGoodFitConfirmVisits?: number;   // condition 4: times a good fit opened the confirmation page with "How sure"
+  baselineGoodFitConfirmBackouts?: number; // condition 4: times "Change my mind" left it
 
   /**
    * THE MORAL COMMITMENT FUNCTION, AS EXPOSURE RATHER THAN AS A SCORE.
@@ -1019,6 +1023,20 @@ export interface Block5ScenarioResult {
   cvrRejections?: CvrRejectionVisit[];
   /** Baseline (condition 4, since 1 October 2026): a misaligned choice kept on the confirmation page, and its sureness. */
   baselineConfirm?: BaselineConfirmRecord;
+  /**
+   * Baseline (condition 4, since 3 October 2026): "How sure are you about this choice?" (1-5) on the confirmation page,
+   * for EVERY choice kept there in a decision - a good fit too (recorded only: the keep rule moves the values as in the
+   * other conditions) and a misfit (the same number as baselineConfirm.confidence, which scales its moves). Absent
+   * elsewhere: no other condition, and no wish or rule, asks it.
+   */
+  howSureOnConfirm?: number;
+  /**
+   * Since 3 October 2026: could this scenario's open option cards show the fit line ("Matches your earlier answers: N out
+   * of 100") and the planner's reasons for each card's place ("Ranked N - why")? False in Baseline
+   * (conditions.ts, hidesFitAndRankingReasons) and in scenario 6 (never shown there); true otherwise. Absent on rows saved
+   * before that date, where it was true except in scenario 6.
+   */
+  fitAndReasonsShown?: boolean;
   /**
    * The wish only (scenario 5), since 25 September 2026: the id of the decision scenario whose
    * OPENING values this row was shown and scored on (see profileShownIn in block5Mirror.ts).

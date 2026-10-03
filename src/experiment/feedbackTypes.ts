@@ -398,6 +398,8 @@ export interface FeedbackScenarioTelemetry {
   /* The four-condition audit, 2 October 2026: each condition's own page, so the feedback can be read beside it. */
   cvrRejectionVisits: number;     // condition 2's CVR Rejection page
   baselineConfirmVisits: number;  // condition 4's confirmation page for a misaligned choice
+  /* Since 3 October 2026 condition 4 shows the same page for a good fit; counted apart (conditions.ts). */
+  baselineGoodFitConfirmVisits: number;
   secondViewOpened: boolean;
 }
 
@@ -520,6 +522,7 @@ export function buildBlock5Summary(results: Block5Results | null): FeedbackBlock
       timeMs: r.timeMs ?? 0,
       cvrRejectionVisits: t?.cvrRejectionVisits ?? (r.cvrRejections?.length ?? 0),
       baselineConfirmVisits: t?.baselineConfirmVisits ?? (r.baselineConfirm ? 1 : 0),
+      baselineGoodFitConfirmVisits: t?.baselineGoodFitConfirmVisits ?? (r.howSureOnConfirm !== undefined && !r.baselineConfirm ? 1 : 0),
       secondViewOpened: secondViewWasOpened(r),
     };
   });
