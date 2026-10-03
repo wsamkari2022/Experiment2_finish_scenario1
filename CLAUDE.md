@@ -305,7 +305,8 @@ card part (A1, A2, A8), for Baseline only; the other conditions keep Fix 1 for l
 - **Three sentences** (the approved words): under the performance bars "All of this is outcome quality - how well an option
   works. It does not tell you how well an option fits your values." (`fitLineOnCards`; it pointed at the fit line); the
   page before Block 5, section 6, "Your earlier answers measured four values. You will see your number for each one beside
-  every situation." (was "Each option will show you how closely it matches them."); the wish page (scenario 5) "Before you
+  every situation." (was "Each option will show you how closely it matches them."; scenario 6 has no values panel, so
+  "every" is a little broad - the researcher kept the words as they are, "B", 3 October 2026); the wish page (scenario 5) "Before you
   confirm, take a moment with what this option gives up." (was "This is close to what you said matters most...", the fit
   in words; `hideWishFit`).
 - **One confirmation page** (`askHowSureOnEveryChoice`, `baselineAsk` in FlowOverlay): every choice in scenarios 1-4 opens
