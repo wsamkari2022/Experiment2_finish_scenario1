@@ -3118,11 +3118,20 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
         ═══════════════════════════════════════════════════════════════════════════════════════
       */}
       {/* Shown even when the panel is minimized: it is the one fact about these bars that changes
-          in this scenario. */}
+          in this scenario.
+
+          IN THE SCENARIO'S OWN COLOR, NOT IN MUTED GREY (the researcher, 3 October 2026; all four
+          conditions - this line is the same in each). It was the faintest text in the panel, so a
+          participant could read the bars as moving with their wish. Now it is the accent of the
+          "Overall" badge beside it, semibold, on a light tint of the same color, with the info mark. */}
       {isWish && (
-        <Text fontSize="xs" color={pal.textMuted} mb="3" lineHeight="tall">
-          This is a wish, so it does not change these bars.
-        </Text>
+        <HStack gap="2" mb="3" px="3" py="2" rounded="lg" borderWidth="1px" align="center" data-wish-note
+          style={{ borderColor: `${accent}66`, background: `${accent}1A` }}>
+          <Icon boxSize="4" flexShrink={0} style={{ color: accent }}><LuInfo /></Icon>
+          <Text fontSize="sm" fontWeight="semibold" lineHeight="short" style={{ color: accent }}>
+            This is a wish, so it does not change these bars.
+          </Text>
+        </HStack>
       )}
       {!minimized && (isPreview ? (
         /* The second sentence exists so the automatic clear reads as a rule rather than a glitch.

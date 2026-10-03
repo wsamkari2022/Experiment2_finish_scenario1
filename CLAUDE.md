@@ -649,7 +649,8 @@ more, and the study reads, value by value, which value rose.
   is worked out again from the rows, so old records follow the same rule.
 - **Participants see it:** no "Preview impact" on scenario 5's cards; the side-panel sentence drops
   its preview half; the performance bars carry one line, "This is a wish, so it does not change these
-  bars." The results page stars scenario 5's performance bar ("Scenario 5 *", explained in the
+  bars." (since 3 October 2026, the researcher's request, in all four conditions: in the scenario's own color, semibold, in
+  a lightly tinted box with the info mark - it was the faintest grey text in the panel; `data-wish-note`). The results page stars scenario 5's performance bar ("Scenario 5 *", explained in the
   sentence under the chart: the label column is too narrow for more) and leaves it out of the average.
 - **Scenario 5 is shown and scored on the values scenario 4 OPENED with** (`profileShownIn` in
   block5Mirror.ts), on screen and in the saved numbers; the live profile is still the one updated,
