@@ -39,7 +39,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuArrowRight, LuCircleCheck, LuMail, LuTriangleAlert } from "react-icons/lu";
+import { LuArrowRight, LuCircleCheck, LuMail, LuSparkles, LuTriangleAlert } from "react-icons/lu";
 import { Field } from "@/components/ui/field";
 import { STATUS_COMPLETED, type DirectoryEntry } from "./participantDirectory";
 import { findParticipant } from "./storage";
@@ -131,23 +131,52 @@ export function StartScreen({
         animationName="fade-in"
         animationDuration="moderate"
       >
-        <VStack gap="2" textAlign="center">
-          <Text
+        {/*
+          THE WELCOME (since 3 October 2026, the researcher: "write a brief welcoming the user and show my study name
+          'Human-AI Moral Value Decision-making Study' so the first page will a little bit nicer and not crowded and
+          professional"; every condition sees this page). The study's name is the page's heading; a short welcome under
+          it says what the study is about in the consent page's own terms (moral choices where every option costs
+          something, a computer system that supports without pushing) and nothing the consent page does not say. The
+          welcome is shown only while the email is asked for: a returning participant gets "Welcome back" in the card.
+          "Start or continue" and its instruction moved INTO the card, so the page reads welcome first, task second.
+          The study name on the consent page ("Study Title") and in the browser tab are separate decisions.
+        */}
+        <VStack gap="3" textAlign="center" px={{ base: "1", md: "2" }}>
+          <HStack
+            gap="1.5"
+            px="3"
+            py="1"
+            rounded="full"
+            bg="bg.muted"
+            color="fg.muted"
             fontSize="xs"
-            fontWeight="bold"
-            color="fg.subtle"
-            textTransform="uppercase"
+            fontWeight="semibold"
             letterSpacing="wider"
+            textTransform="uppercase"
           >
-            Human-AI Moral Value Study
-          </Text>
-          <Heading size={{ base: "xl", md: "2xl" }} color="fg" letterSpacing="tight">
-            {mode.kind === "finished" ? "You have already finished" : "Start or continue"}
+            <Icon boxSize="3.5">
+              <LuSparkles />
+            </Icon>
+            Welcome
+          </HStack>
+          <Heading
+            as="h1"
+            size={{ base: "2xl", md: "3xl" }}
+            color="fg"
+            letterSpacing="tight"
+            lineHeight="short"
+            data-study-name
+          >
+            {/* Two unbreakable halves, so the name never splits at a hyphen ("Decision-" / "making"): it reads
+                "Human-AI Moral Value" / "Decision-making Study" when it needs two lines, and one line when it fits. */}
+            <Text as="span" whiteSpace="nowrap">Human-AI Moral Value</Text>{" "}
+            <Text as="span" whiteSpace="nowrap">Decision-making Study</Text>
           </Heading>
           {mode.kind === "askEmail" && (
-            <Text fontSize="sm" color="fg.muted" maxW="sm">
-              Enter your email to begin. If you have started before, this is how we find where you
-              stopped.
+            <Text fontSize={{ base: "sm", md: "md" }} color="fg.muted" lineHeight="tall" maxW="md" data-welcome>
+              Thank you for your interest in this study. It explores how people make moral choices when every
+              option has a cost, and how a computer system can support those choices without telling you what to
+              choose. There are no right or wrong answers.
             </Text>
           )}
         </VStack>
@@ -158,7 +187,22 @@ export function StartScreen({
           borderColor="border"
           rounded="2xl"
           p={{ base: "5", md: "6" }}
+          shadow="sm"
         >
+          {/* -------------------------------------------- THE CARD'S OWN TITLE (moved here 3 October 2026) */}
+          {mode.kind !== "verify" && (
+            <VStack align="start" gap="1" mb="5">
+              <Heading as="h2" size="md" color="fg" letterSpacing="tight">
+                {mode.kind === "finished" ? "You have already finished" : "Start or continue"}
+              </Heading>
+              {mode.kind === "askEmail" && (
+                <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+                  Enter your email to begin. If you have started before, this is how we find where you
+                  stopped.
+                </Text>
+              )}
+            </VStack>
+          )}
           {/* ---------------------------------------------------------------- ASK FOR EMAIL */}
           {mode.kind === "askEmail" && (
             <VStack align="stretch" gap="5">

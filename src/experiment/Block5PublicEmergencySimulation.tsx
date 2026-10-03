@@ -3043,8 +3043,15 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
       rounded="2xl" p={minimized ? { base: "3", md: "3.5" } : { base: "4", md: "5" }}
       style={{ boxShadow: pal.dashShadow }} transition="border-color 0.2s ease, padding 0.2s ease">
       {!minimized && (
-      <HStack justify="space-between" mb="2" wrap="wrap" gap="2">
-        <HStack gap="2" minW="0" flex="1">
+      /*
+        THE TITLE AND THE CONTROLS NEVER SIT ON TOP OF EACH OTHER (fixed 3 October 2026, the researcher's phone
+        screenshot). The title used to be `flex="1"` (a basis of 0) beside controls that could shrink, so on a 375px
+        phone the row never wrapped: the title folded into five lines and "Hide definitions" overflowed its own button
+        onto it. Now the title asks for 14rem before it shares the row and the controls keep their size, so on a narrow
+        screen the controls drop to their own line, at the right; on a wide one nothing moves.
+      */
+      <HStack justify="space-between" mb="2" wrap="wrap" gap="2" data-dash-title-row>
+        <HStack gap="2" minW="0" flex="1 1 14rem">
           <Icon color={accent} flexShrink={0}>{isPreview ? <LuEye /> : <LuGauge />}</Icon>
           {isPreview ? (
             /*
@@ -3072,7 +3079,7 @@ function MetricsDashboard({ current, projected, previewTitle, accent, completedC
               its own chevron, so a second control for the same thing in the title row was one
               control too many — and the one further from what it opened. */}
         </HStack>
-        <HStack gap="2">
+        <HStack gap="2" flexShrink={0} ms="auto">
           {isPreview && overallDelta !== 0 && (
             <Badge bg="transparent" borderWidth="1px" rounded="md" px="2" fontSize="2xs" fontWeight="bold"
               color={overallDelta > 0 ? pos : neg} borderColor={overallDelta > 0 ? pos : neg}>

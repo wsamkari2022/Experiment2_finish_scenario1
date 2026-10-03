@@ -27,6 +27,10 @@
  *   J13 the value line on the running values, moving in scenarios 5 and 6, with one shared "after" (30 September 2026)
  *   J12 the charts after the feedback (29 September 2026): none on the results page, the thank-you page's five
  *       tabs, every chart card in exactly one tab, and plain words on the results page
+ *   J14 (3 October 2026) the first page: the study's name as its heading, never split at a hyphen, the welcome only
+ *       while the email is asked for, "Start or continue" inside the card, the email check unchanged; and the
+ *       performance panel's title row on a phone: the title asks for room before sharing the row and the controls
+ *       keep their size, so they drop to their own line instead of covering the title
  *
  * Run:  npm run validate:journey
  */
@@ -446,6 +450,37 @@ console.log("===================================================================
       || !/const after = journey\.after;\s/.test(page) || !page.includes('column(before ? "After" : "Now", after)')) why.push("the results page's before/after card is not the same after");
   gate("J13", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : `the value line is the study's values through S4 and the stored running values in S5 and S6 (${moved} wish/rule steps moved, ${stillWhenBest} best-fit steps stayed still); the radar, the line and the results page share one "after"; an old record falls back to flat`);
+}
+
+/* ------------------------------------------------------------------------------------------- J14 */
+{
+  const why = [];
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const start = src("StartScreen.tsx"), sim = src("Block5PublicEmergencySimulation.tsx");
+  /* The first page: the researcher's study name, as the heading, in two halves that never break at a hyphen. */
+  if (!/<Heading\s+as="h1"[\s\S]{0,300}?data-study-name\s*>[\s\S]{0,400}?<Text as="span" whiteSpace="nowrap">Human-AI Moral Value<\/Text>\{" "\}\s*<Text as="span" whiteSpace="nowrap">Decision-making Study<\/Text>\s*<\/Heading>/.test(start)) why.push("the study's name is not the page's heading in two unbreakable halves");
+  if (/>\s*Human-AI Moral Value Study\s*</.test(start)) why.push("the old short name is still on the first page");
+  /* The welcome: only while the email is asked for, in the approved spirit (the consent page's terms, no promises). */
+  const welcome = start.match(/\{mode\.kind === "askEmail" && \(\s*<Text[^>]*data-welcome>([\s\S]*?)<\/Text>/);
+  if (!welcome) why.push("no welcome, or not only while the email is asked for");
+  else {
+    const words = welcome[1].replace(/\s+/g, " ").trim();
+    for (const must of ["Thank you for your interest in this study.", "without telling you what to choose", "There are no right or wrong answers."]) {
+      if (!words.includes(must)) why.push(`the welcome lost "${must}"`);
+    }
+    if (/gift card|email|Prolific|\$|minutes/i.test(words)) why.push("the welcome promises or asks something (gift card, email, time)");
+  }
+  /* "Start or continue" moved into the card; the email step itself unchanged. */
+  if (!/\{mode\.kind !== "verify" && \(\s*<VStack[^>]*>\s*<Heading as="h2"[^>]*>\s*\{mode\.kind === "finished" \? "You have already finished" : "Start or continue"\}/.test(start)) why.push("\"Start or continue\" is not the card's own title");
+  for (const [needle, what] of [["const entry = await findParticipant(email);", "the lookup"], ["onNewParticipant(email.trim().toLowerCase());", "a new address"],
+    ["if (given !== mode.entry.age) {", "the age check"], ['helperText="Used only to save your place and to send your gift card when you finish."', "the email's helper text"]]) {
+    if (!start.includes(needle)) why.push(`the email step changed: ${what}`);
+  }
+  /* The panel's title row on a phone. */
+  if (!/<HStack justify="space-between" mb="2" wrap="wrap" gap="2" data-dash-title-row>\s*<HStack gap="2" minW="0" flex="1 1 14rem">/.test(sim)) why.push("the panel title can still squeeze to nothing beside its controls");
+  if (!/<HStack gap="2" flexShrink=\{0\} ms="auto">\s*\{isPreview && overallDelta !== 0 && \(/.test(sim)) why.push("the panel's controls can still shrink over the title");
+  gate("J14", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : "the first page shows the study's name (never split at a hyphen) and the welcome while the email is asked for, \"Start or continue\" in the card, the email step unchanged; the panel's controls drop to their own line on a phone");
 }
 
 console.log("");

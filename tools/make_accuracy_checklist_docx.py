@@ -327,6 +327,11 @@ SECTIONS = [
          "to an option number, a scoring rule, a step size, the planner or a scenario.", [], "a report, not a check"),
     ]),
     ("6. What participants see", [
+        ("The first page welcomes the participant and names the study; the performance panel fits a phone.",
+         "Since 3 October 2026, in every condition: \"Human-AI Moral Value Decision-making Study\" as the heading (never split "
+         "at a hyphen), a three-sentence welcome while the email is asked for, \"Start or continue\" in the card, the email "
+         "step unchanged. On a phone the performance panel's buttons sit on their own line instead of covering its title. "
+         "Checked live on a computer and a phone, light and dark.", ["journey"], "(J14)"),
         ("The MCF never gives a verdict or a number.",
          f"{MCF_SENTENCES} it can produce are generated and checked: no \"aligned\", \"best fit\" or \"should\", "
          "no digits, and every size word matches its gap.", ["mcf"], ""),
