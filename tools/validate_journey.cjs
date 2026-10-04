@@ -27,7 +27,7 @@
  *   J13 the value line on the running values, moving in scenarios 5 and 6, with one shared "after" (30 September 2026)
  *   J12 the charts after the feedback (29 September 2026): none on the results page, the thank-you page's five
  *       tabs, every chart card in exactly one tab, and plain words on the results page
- *   J14 (3 October 2026) the first page: the study's name as its heading, never split at a hyphen, the welcome only
+ *   J14 (3 October 2026) the first page: the study's name as its heading (and, since 4 October, in the browser tab), never split at a hyphen, the welcome only
  *       while the email is asked for, "Start or continue" inside the card, the email check unchanged; and the
  *       performance panel's title row on a phone: the title asks for room before sharing the row and the controls
  *       keep their size, so they drop to their own line instead of covering the title
@@ -460,6 +460,9 @@ console.log("===================================================================
   /* The first page: the researcher's study name, as the heading, in two halves that never break at a hyphen. */
   if (!/<Heading\s+as="h1"[\s\S]{0,300}?data-study-name\s*>[\s\S]{0,400}?<Text as="span" whiteSpace="nowrap">Human-AI Moral Value<\/Text>\{" "\}\s*<Text as="span" whiteSpace="nowrap">Decision-making Study<\/Text>\s*<\/Heading>/.test(start)) why.push("the study's name is not the page's heading in two unbreakable halves");
   if (/>\s*Human-AI Moral Value Study\s*</.test(start)) why.push("the old short name is still on the first page");
+  /* The browser tab says the same name (since 4 October 2026, the researcher's "A"). */
+  const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  if (!html.includes("<title>Human-AI Moral Value Decision-making Study</title>")) why.push("the browser tab does not carry the study's name");
   /* The welcome: only while the email is asked for, in the approved spirit (the consent page's terms, no promises). */
   const welcome = start.match(/\{mode\.kind === "askEmail" && \(\s*<Text[^>]*data-welcome>([\s\S]*?)<\/Text>/);
   if (!welcome) why.push("no welcome, or not only while the email is asked for");

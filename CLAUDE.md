@@ -353,8 +353,9 @@ no stored field and no rule changed.
   The welcome shows only while the email is asked for (a returning participant gets "Welcome back" in the card; a finished
   one "You have already finished"). "Start or continue" and its instruction moved INTO the card, as its title. The email
   step itself (the lookup, the age check, the finished message, the helper text) is unchanged. The old eyebrow said
-  "Human-AI Moral Value Study"; **the consent page's "Study Title" still says that, and the browser tab says "Moral
-  Decision-Making Study"** - both left for the researcher (the consent wording may need the ethics board).
+  "Human-AI Moral Value Study"; **the consent page's "Study Title" still says that** (left for the ethics board). **The
+  browser tab** said "Moral Decision-Making Study" and carries the new name since 4 October 2026 (the researcher's "A":
+  the tab only; `index.html`, held by J14).
 - **The performance panel's title row** (`MetricsDashboard`, every scenario, every condition): the title was `flex="1"`
   beside controls that could shrink, so on a 375px phone the row never wrapped - the title folded into five lines and
   "Hide definitions" overflowed its button onto it (the researcher's screenshot). Now the title asks for 14rem before it

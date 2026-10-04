@@ -65,7 +65,7 @@ The full table, with a reason and a tag per item, is `Prolific docs/Prolific_New
 | Item | Answer |
 |---|---|
 | 1.1 Data collection | External study link |
-| 2.1 Study name | "Moral Decision-Making Study" (same as the browser tab) - Waseem's choice open |
+| 2.1 Study name | "Human-AI Moral Value Decision-making Study" (the first page and the browser tab since 4 October 2026; the consent page's "Study Title" still says "Human-AI Moral Value Study") - Waseem's choice open |
 | 2.2 Internal name | "VRDS Exp 2 - PILOT (10)" and "VRDS Exp 2 - MAIN (160)", two separate Prolific studies |
 | 2.3 Description | Draft in section 6 |
 | 2.4 Label | Decision making |
@@ -295,7 +295,8 @@ direct identifiers only; low risk). Prolific's pages may change before the conve
 
 ## 8. Decisions still open (ask only these)
 
-1. Study name: "Moral Decision-Making Study" (recommended) or a neutral name.
+1. Study name: "Human-AI Moral Value Decision-making Study" (recommended: the first page and the browser tab say it since
+   4 October 2026) or a neutral name.
 2. Devices: computer only (recommended), computer and tablet, or all.
 3. Content warning: "Sensitive topics" (recommended) or None.
 4. Country: US only (recommended; the study uses dollars) or US, UK, Canada, Australia, Ireland.
