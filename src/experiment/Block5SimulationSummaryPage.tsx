@@ -43,19 +43,27 @@
  *     alignment box now says how a choice earns its points (the colored labels on the scenario cards below), which is
  *     why 57 is low. Until this date the families' colors carried no verdict (29 September, "Q2-A"); the score NUMBERS
  *     keep their family colors, the level badges and bars now carry the traffic light.
+ *   - THE ⓘ BESIDE EVERY LEVEL BADGE (the same day; "Q1-A, Q2-A, Q3-A, Q4-yes"; LevelInfo): it opens that score's level
+ *     ladder - every level's badge, range and a few words, the participant's own level marked "you are here" - so a
+ *     reader who takes 50 for "medium" sees where 50 really falls on this scale (a line spelling out what a 50 means was
+ *     drafted and removed at the researcher's request the same day). A tap or a click opens it everywhere, a hover too on a computer (a phone has no hover); ✕, a tap outside or Escape
+ *     closes it. Nothing about it is recorded, and the words come from block5LevelScale.ts (levelMeaning, SCALE_NAME).
  */
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Badge, Box, Button, Center, Grid, Heading, HStack, Icon, SimpleGrid, Stack, Text, VStack,
+  Badge, Box, Button, Center, Grid, Heading, HStack, Icon, SimpleGrid, Stack, Text, VStack, chakra,
 } from "@chakra-ui/react";
 import {
-  LuArrowRight, LuCheck, LuEye, LuEyeOff, LuHeartHandshake, LuRotateCcw, LuScale, LuSparkles, LuTarget, LuTrendingUp,
+  LuArrowRight, LuCheck, LuEye, LuEyeOff, LuHeartHandshake, LuInfo, LuRotateCcw, LuScale, LuSparkles, LuTarget, LuTrendingUp,
 } from "react-icons/lu";
 import type { ReactNode } from "react";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, labelWeight, reflectionWasShown } from "./block5CVR";
-import { TRAFFIC_LIGHT, levelCaption, levelOf, type LevelBand, type ScoreScale } from "./block5LevelScale";
+import {
+  SCALE_NAME, TRAFFIC_LIGHT, levelCaption, levelMeaning, levelOf, type LevelBand, type ScoreScale,
+} from "./block5LevelScale";
+import { PopoverArrow, PopoverBody, PopoverCloseTrigger, PopoverContent, PopoverRoot, PopoverTrigger } from "@/components/ui/popover";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { secondViewWasOpened } from "./feedbackTypes";
 import { ROLE_BADGE } from "./block5RoleWords";
@@ -169,6 +177,85 @@ function LevelBar({ bands, index, value }: { bands: LevelBand[]; index: number; 
   );
 }
 
+/**
+ * THE ⓘ AND ITS PANEL (since 4 October 2026; see the header). A real button, so a keyboard opens it and a screen reader
+ * names it. Tap or click opens and closes it on every device ("Q1-A"); on a computer a hover opens it as well and leaving
+ * closes it again, unless the participant clicked, which pins it open. Drawn in the badge's own color, right after it
+ * ("Q2-A"). The panel is built only when first opened (lazyMount).
+ */
+function LevelInfo({ scale, value, label, bands, index }: {
+  scale: ScoreScale; value: number; label: string; bands: LevelBand[]; index: number;
+}) {
+  const [open, setOpen] = useState(false);
+  /* How it is open: "hover" closes when the pointer leaves; "click" stays until ✕, a tap outside, Escape or a click. */
+  const mode = useRef<"hover" | "click" | null>(null);
+  const pressing = useRef(false);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const cancelClose = () => { if (closeTimer.current !== undefined) { window.clearTimeout(closeTimer.current); closeTimer.current = undefined; } };
+  const hoverIn = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse") return;
+    cancelClose();
+    if (!open) { mode.current = "hover"; setOpen(true); }
+  };
+  const hoverOut = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse" || mode.current !== "hover") return;
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => { if (mode.current === "hover") { mode.current = null; setOpen(false); } }, 220);
+  };
+  useEffect(() => () => cancelClose(), []);
+  const tone = bands[index].tone;
+  const ladder = [...bands].map((b, i) => ({ ...b, mine: i === index })).reverse();
+  return (
+    <PopoverRoot open={open} lazyMount positioning={{ placement: "bottom-start", gutter: 10 }}
+      onOpenChange={(e) => {
+        /* A click on a panel the hover opened pins it, instead of closing it under the pointer. */
+        if (!e.open && pressing.current && mode.current === "hover") { mode.current = "click"; return; }
+        mode.current = e.open ? "click" : null;
+        setOpen(e.open);
+      }}>
+      <PopoverTrigger asChild>
+        <chakra.button type="button" display="inline-flex" alignItems="center" justifyContent="center" boxSize="6" rounded="full"
+          flexShrink={0} cursor="pointer" aria-label={`What the ${SCALE_NAME[scale]} levels mean`} data-level-info={scale}
+          transition="transform 0.15s ease" _hover={{ transform: "scale(1.08)" }}
+          _focusVisible={{ outline: "2px solid", outlineColor: "colorPalette.focusRing", outlineOffset: "2px" }}
+          style={{ background: tone.bg, color: tone.fg, boxShadow: `0 2px 8px ${tone.bg}40` }}
+          onPointerDown={() => { pressing.current = true; window.setTimeout(() => { pressing.current = false; }, 400); }}
+          onPointerEnter={hoverIn} onPointerLeave={hoverOut}>
+          <Icon boxSize="3.5"><LuInfo /></Icon>
+        </chakra.button>
+      </PopoverTrigger>
+      <PopoverContent w="min(360px, calc(100vw - 32px))" rounded="xl" shadow="lg" borderWidth="1px" borderColor="border"
+        onPointerEnter={(e) => { if (e.pointerType === "mouse") cancelClose(); }} onPointerLeave={hoverOut}>
+        <PopoverArrow />
+        <PopoverBody p="4" data-level-info-panel={scale}>
+          <PopoverCloseTrigger />
+          <Text fontSize="md" fontWeight="semibold" color="fg" pe="8" lineHeight="short">What your {value} means</Text>
+          <Text fontSize="2xs" color="fg.subtle" mt="0.5">{SCALE_NAME[scale]} · {label.toLowerCase()}</Text>
+          <Grid mt="3.5" templateColumns="auto auto minmax(0, 1fr)" columnGap="2.5" rowGap="2" alignItems="center">
+            {ladder.map((b) => {
+              const meaning = levelMeaning(scale, b.label);
+              return (
+                <Box key={b.label} display="contents" data-ladder-row={b.mine ? "mine" : undefined}>
+                  <Box justifySelf="start" px="2.5" py="0.5" rounded="full" fontSize="2xs" fontWeight="semibold" lineHeight="1.7"
+                    whiteSpace="nowrap"
+                    style={{ background: b.tone.bg, color: b.tone.fg, outline: b.mine ? `2px solid ${b.tone.bg}` : undefined, outlineOffset: "2px" }}>
+                    {b.label}
+                  </Box>
+                  <Text fontSize="xs" color={b.mine ? "fg" : "fg.muted"} fontWeight={b.mine ? "semibold" : "normal"}
+                    style={{ fontVariantNumeric: "tabular-nums" }}>{b.lo}–{b.hi}</Text>
+                  <Text fontSize="xs" color={b.mine ? "fg" : "fg.muted"} fontWeight={b.mine ? "semibold" : "normal"} lineHeight="short">
+                    {meaning}{b.mine && <>{meaning ? " · " : ""}<Text as="span" color="fg" fontWeight="bold">you are here</Text></>}
+                  </Text>
+                </Box>
+              );
+            })}
+          </Grid>
+        </PopoverBody>
+      </PopoverContent>
+    </PopoverRoot>
+  );
+}
+
 /** One score: its plain name, a big number in the family's color, its level as a traffic-light badge, its level bar. */
 function ScoreNumber({ label, code, value, level, palette, scale, note }: {
   label: string; code: string; value: number; level?: string; palette: string; scale: ScoreScale; note?: string;
@@ -187,11 +274,15 @@ function ScoreNumber({ label, code, value, level, palette, scale, note }: {
       </Text>
       {/* The level, in its traffic-light color ("Q1-B", 4 October 2026); the same color lights its piece of the bar. */}
       {level && (
-        <Box display="inline-flex" alignItems="center" mt="2" px="2.5" py="0.5" rounded="full" fontSize="xs"
-          fontWeight="semibold" lineHeight="1.6" data-level-badge={tone.name}
-          style={{ background: tone.bg, color: tone.fg, boxShadow: `0 2px 10px ${tone.bg}40` }}>
-          {level}
-        </Box>
+        <HStack gap="1.5" mt="2" align="center">
+          <Box display="inline-flex" alignItems="center" px="2.5" py="0.5" rounded="full" fontSize="xs"
+            fontWeight="semibold" lineHeight="1.6" data-level-badge={tone.name}
+            style={{ background: tone.bg, color: tone.fg, boxShadow: `0 2px 10px ${tone.bg}40` }}>
+            {level}
+          </Box>
+          {/* The ⓘ right after the badge ("Q2-A"): this score's level ladder and what 50 means here. */}
+          <LevelInfo scale={scale} value={value} label={label} bands={bands} index={index} />
+        </HStack>
       )}
       <LevelBar bands={bands} index={index} value={value} />
       <Text fontSize="2xs" color="fg.muted" mt="1" style={{ fontVariantNumeric: "tabular-nums" }} data-level-caption>

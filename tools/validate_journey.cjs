@@ -32,6 +32,10 @@
  *       level a traffic-light badge on a level bar built from the code's own level edges (every whole score 0-100 lands in
  *       the band its own level word names), every badge readable (4.5 : 1), the points each label earns from labelWeight,
  *       and no "random = 50" mark and no 1-2-3 strip
+ *   J16 (4 October 2026) the ⓘ beside every level badge: a real button right after the badge, opened by a tap or a click
+ *       everywhere and by a hover only for a mouse (a click pins a hover-opened panel); its panel is the score's own level
+ *       ladder (the same bands as its bar), each level's badge, range and the approved few words, "you are here" on the
+ *       participant's level, the full name "Value Consistency Index"; no line about 50 (drafted and removed the same day)
  *   J14 (3 October 2026) the first page: the study's name as its heading (and, since 4 October, in the browser tab), never split at a hyphen, the welcome only
  *       while the email is asked for, "Start or continue" inside the card, the email check unchanged; and the
  *       performance panel's title row on a phone: the title asks for room before sharing the row and the controls
@@ -557,6 +561,43 @@ console.log("===================================================================
   if (badges.join("|") !== "Deciding alone|Deciding for your household|Deciding for other people|Deciding inside your employer's rules") why.push("the scenario badges changed; reword the scenarios box");
   gate("J15", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : "the first box teaches alignment (choice by choice) and stability (before and after); the scenarios box sits above the scores; each level a traffic-light badge on a bar of the code's own levels (every whole score 0-100 checked), every badge readable, the points from labelWeight (100/80/50/10); no random mark, no 1-2-3 strip");
+}
+
+/* ------------------------------------------------------------------------------------------- J16 */
+{
+  const why = [];
+  const L = require(path.join(BUILD, "block5LevelScale.js"));
+  /* The approved few words (the researcher's "Q4-yes"), one per level; performance's level words speak for themselves. */
+  const WORDS = {
+    "Highly Consistent": "Mostly your best fit", "Mostly Consistent": "About your second-best fit",
+    "Moderate": "Between a good fit and a poor one", "Low": "Often against your values", "Very Low": "Mostly against your values",
+    "Highly Inconsistent": "Usually the worst fit for you", "Held steady": "Kept their order", "Mostly steady": "About one swap",
+    "Shifted a little": "A few swaps", "Shifted a lot": "Many swaps", "Changed substantially": "Near a full reversal",
+  };
+  for (const scale of ["vci", "vciAll", "stability", "performance"]) {
+    for (const b of L.levelBands(scale)) {
+      const want = scale === "performance" ? "" : WORDS[b.label];
+      if (want === undefined) why.push(`${scale}: no approved words for "${b.label}"`);
+      else if (L.levelMeaning(scale, b.label) !== want) why.push(`${scale} "${b.label}" reads "${L.levelMeaning(scale, b.label)}"`);
+    }
+  }
+  if (L.SCALE_NAME.vci !== "Value Consistency Index" || L.SCALE_NAME.vciAll !== "Value Consistency Index") why.push("the panel does not name the Value Consistency Index in full");
+  if (typeof L.fiftyNote === "function") why.push("the line about 50 came back (the researcher removed it)");
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const page = src("Block5SimulationSummaryPage.tsx");
+  /* Right after the badge ("Q2-A"), on every score that shows a level. */
+  if (!/data-level-badge=\{tone\.name\}[\s\S]{0,260}?\{level\}\s*<\/Box>\s*\{\/\*[^*]*\*\/\}\s*<LevelInfo scale=\{scale\} value=\{value\} label=\{label\} bands=\{bands\} index=\{index\} \/>/.test(page)) why.push("the ⓘ is not right after the level badge, or does not get the score's own bands");
+  /* A real button with a name; tap or click everywhere; hover only for a mouse; a click pins a hover-opened panel. */
+  if (!page.includes('<chakra.button type="button"') || !page.includes("aria-label={`What the ${SCALE_NAME[scale]} levels mean`}")) why.push("the ⓘ is not a named button");
+  if (!page.includes('<PopoverRoot open={open} lazyMount') || !page.includes("<PopoverTrigger asChild>")) why.push("the panel does not open from the button (tap or click)");
+  if ((page.match(/if \(e\.pointerType !== "mouse"/g) ?? []).length < 2) why.push("a hover opens or closes the panel for touch as well as for a mouse");
+  if (!page.includes('if (!e.open && pressing.current && mode.current === "hover") { mode.current = "click"; return; }')) why.push("a click on a hover-opened panel would close it under the pointer");
+  /* The ladder: the same bands as the bar, highest first, the participant's level marked. */
+  if (!page.includes("const ladder = [...bands].map((b, i) => ({ ...b, mine: i === index })).reverse();")) why.push("the ladder is not the score's own bands");
+  if (!page.includes(">you are here</Text>") || !page.includes("What your {value} means") || !page.includes("{levelMeaning(scale, b.label)}".replace("{levelMeaning(scale, b.label)}", "levelMeaning(scale, b.label)"))) why.push("the panel lost its title, its words or \"you are here\"");
+  if (/data-fifty-note|A 50 is what you get|not the middle/.test(page)) why.push("the line about 50 is still drawn");
+  gate("J16", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : "an ⓘ right after every level badge, a named button opened by tap or click (hover only for a mouse; a click pins it); its panel is the score's own level ladder with the approved words and \"you are here\", the Value Consistency Index in full; no line about 50");
 }
 
 console.log("");

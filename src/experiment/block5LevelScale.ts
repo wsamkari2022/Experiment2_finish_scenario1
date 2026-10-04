@@ -96,3 +96,41 @@ export function levelCaption(bands: LevelBand[], index: number): string {
     ? `This level: ${band.lo}–${band.hi} · next at ${next.lo}`
     : `This level: ${band.lo}–${band.hi} · top level`;
 }
+
+/* ======================================================================================================================
+ * THE ⓘ PANEL (since 4 October 2026, the researcher: "an information icon so that when the user hovers over it, the
+ * table's information appears ... because our numbers has different meaning from universal scale when 50 means Medium
+ * score"; plan answers "Q1-A, Q2-A, Q3-A, Q4-yes"). Beside every level badge on the results page sits a small ⓘ that opens
+ * this score's level ladder: each level's badge, range and a few words, the participant's own level marked "you are
+ * here". The ladder itself shows where 50 falls; a separate line on what a 50 means was drafted and removed at the
+ * researcher's request the same day. Everything below is read by Block5SimulationSummaryPage's LevelInfo and checked by
+ * J16.
+ * ==================================================================================================================== */
+
+/** What each level means, in a few words (the researcher's "Q4-yes" on the sketch). Performance's own words say it. */
+const MEANING: Record<string, string> = {
+  "Highly Consistent": "Mostly your best fit",
+  "Mostly Consistent": "About your second-best fit",
+  "Moderate": "Between a good fit and a poor one",
+  "Low": "Often against your values",
+  "Very Low": "Mostly against your values",
+  "Highly Inconsistent": "Usually the worst fit for you",
+  "Held steady": "Kept their order",
+  "Mostly steady": "About one swap",
+  "Shifted a little": "A few swaps",
+  "Shifted a lot": "Many swaps",
+  "Changed substantially": "Near a full reversal",
+};
+
+/** The few words beside a level in the panel; empty for performance, whose level words already say what happened. */
+export function levelMeaning(scale: ScoreScale, label: string): string {
+  return scale === "performance" ? "" : MEANING[label] ?? "";
+}
+
+/** The panel's subtitle: the score's full name ("Value Consistency Index", the researcher's name for the VCI). */
+export const SCALE_NAME: Record<ScoreScale, string> = {
+  vci: "Value Consistency Index",
+  vciAll: "Value Consistency Index",
+  stability: "Stability",
+  performance: "Performance",
+};
