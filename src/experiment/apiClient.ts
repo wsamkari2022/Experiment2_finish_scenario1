@@ -77,6 +77,8 @@ function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry |
     ...(typeof doc.country === "string"
       ? { country: doc.country, countryCode: typeof doc.country_code === "string" ? doc.country_code : null }
       : {}),
+    /* Since 4 October 2026; absent on a record made before. */
+    ...(typeof doc.english_first_language === "boolean" ? { englishFirstLanguage: doc.english_first_language } : {}),
     /* Since 1 October 2026; absent on a record made before. */
     ...(conditionByNumber(doc.condition_number)?.type === doc.condition_type
       ? { condition: {
@@ -114,6 +116,8 @@ export const apiClient: RemoteBackend = {
         gender: entry.gender,
         /* Sent only when known: the server keeps a saved country when none is sent. */
         ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+        /* Sent only when known, like the country (since 4 October 2026). */
+        ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
         /* The condition (since 1 October 2026): the server sets it only on a record that has none. */
         ...(entry.condition ? { condition: entry.condition } : {}),
         consent: entry.consent,

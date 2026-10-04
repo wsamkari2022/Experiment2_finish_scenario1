@@ -383,6 +383,10 @@ SECTIONS = [
          "All three by chance: about 1 in 112. A same-number answerer on 1, 6 or 7 always fails the feedback check; a "
          "diagonal clicker passes it about 1 time in 6. Two answer-pattern flags are saved for the analysis only.",
          ["attention"], "(T6, T7)"),
+        ("The demographic page asks whether English is the first language, and asks \"Where are you from?\".",
+         "Since 4 October 2026, in every condition: Yes / No, required with no default, saved as english_first_language "
+         "(true / false) beside age, gender and country, and never erased by a resume that does not know it. Tested live "
+         "on a second copy of the new server: saved, kept through a resume, fits a phone.", ["session"], "(C11)"),
         ("The country question finds a country from a few letters, and keeps it.",
          "Names starting with the letters come first, then names with a word that starts with them, and other names work "
          "(UK, USA, KSA, Holland; accents do not matter). Saved as country and country_code beside age and gender; a "

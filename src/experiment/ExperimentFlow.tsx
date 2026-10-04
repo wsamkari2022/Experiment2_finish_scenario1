@@ -682,6 +682,7 @@ export function ExperimentFlow() {
               JSON.stringify({
                 email: entry.email, age: entry.age, gender: entry.gender,
                 ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+                ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
                 ...(conditionFields(condition) ?? {}),
               }),
             );
@@ -737,6 +738,7 @@ export function ExperimentFlow() {
               age: entry.age,
               gender: entry.gender,
               ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+              ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
               condition: savedFrom(condition),
               stage: entry.stage,
               consent: entry.consent,
@@ -822,6 +824,7 @@ export function ExperimentFlow() {
             gender: record.gender,
             country: record.country,
             countryCode: record.countryCode,
+            englishFirstLanguage: record.englishFirstLanguage,
             condition: savedFrom(condition),
             stage: "money",
             consent: readJson<{ agreed: boolean; timestamp: string; version: string }>(

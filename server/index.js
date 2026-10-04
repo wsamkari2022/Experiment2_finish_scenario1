@@ -148,6 +148,9 @@ app.post(
             ? { country: body.country.slice(0, 80),
                 country_code: typeof body.countryCode === "string" && /^[A-Z]{2}$/.test(body.countryCode) ? body.countryCode : null }
             : {}),
+          /* "Is English your first language?" (since 4 October 2026), set ONLY when the page sent a true or false, for the
+             same reason as the country; anything else is ignored. */
+          ...(typeof body.englishFirstLanguage === "boolean" ? { english_first_language: body.englishFirstLanguage } : {}),
           consent: body.consent ?? null,
           current_stage: body.stage ?? "money",
           /* `stage` is the app's word; `current_stage` says what it is to a reader. */

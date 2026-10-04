@@ -438,6 +438,8 @@ export function saveParticipant(input: {
   /* Since 30 September 2026; optional so a resume without it never erases it (see upsertParticipant). */
   country?: string;
   countryCode?: string | null;
+  /* Since 4 October 2026; optional for the same reason as the country. */
+  englishFirstLanguage?: boolean;
   /* Since 1 October 2026 (conditions.ts). Set once, here and on the server; a later value never replaces it. */
   condition?: SavedCondition | null;
   stage: string;

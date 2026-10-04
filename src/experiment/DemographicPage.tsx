@@ -2,8 +2,9 @@
  * DemographicPage.tsx — the second entry screen: who is taking part, and how to reach them.
  *
  * WHAT IT ASKS, AND WHAT IT DELIBERATELY DOES NOT
- * Email, age, gender and country (country since 30 September 2026, the researcher's request; CountryField.tsx).
- * That is all.
+ * Email, age, gender, country (since 30 September 2026, the researcher's request; CountryField.tsx; asked as "Where are you
+ * from?" since 4 October 2026, it was "Country") and "Is English your first language?" (Yes / No, since 4 October 2026,
+ * the researcher's request; every condition sees this page). That is all.
  *
  * The previous study's version also asked "Dealing with AI Systems" and "Experience with Moral
  * Reasoning" on five-point scales. Both are gone at the researcher's instruction. It is worth
@@ -51,6 +52,9 @@ import { CountryField, type CountryValue } from "./CountryField";
 const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"] as const;
 export type Gender = (typeof GENDER_OPTIONS)[number];
 
+/** "Is English your first language?" - the researcher's two answers, in his order (since 4 October 2026). */
+const ENGLISH_OPTIONS = [{ label: "Yes", value: true }, { label: "No", value: false }] as const;
+
 /** The lowest age this study may enrol. Matches the consent document. */
 const MIN_AGE = 18;
 const MAX_AGE = 120;
@@ -64,6 +68,8 @@ export interface DemographicRecord {
   country: string;
   /** Its ISO 3166-1 alpha-2 code (XK for Kosovo); null for "Prefer not to say". */
   countryCode: string | null;
+  /** "Is English your first language?": true = Yes, false = No (since 4 October 2026). */
+  englishFirstLanguage: boolean;
   submittedAt: string;
 }
 
@@ -92,6 +98,8 @@ export function DemographicPage({
   const [age, setAge] = useState("");
   const [gender, setGender] = useState<Gender | "">("");
   const [country, setCountry] = useState<CountryValue | null>(null);
+  /** null until answered: the question has no default, so nobody is counted as "Yes" by not touching it. */
+  const [englishFirst, setEnglishFirst] = useState<boolean | null>(null);
 
   /** Which fields have been left once, so errors appear after the participant, not during. */
   const [touched, setTouched] = useState<{ email?: boolean; age?: boolean; country?: boolean }>({});
@@ -115,13 +123,15 @@ export function DemographicPage({
 
   const genderError = gender ? null : "Please choose one.";
   const countryError = country ? null : "Please choose your country from the list, or “Prefer not to say”.";
-  const valid = !emailError && !ageError && !genderError && !countryError;
+  const englishError = englishFirst === null ? "Please choose Yes or No." : null;
+  const valid = !emailError && !ageError && !genderError && !countryError && !englishError;
 
   /* An error is shown only once the participant has moved on from the field, or pressed Continue. */
   const showEmailError = (touched.email || submitAttempted) && emailError;
   const showAgeError = (touched.age || submitAttempted) && ageError;
   const showGenderError = submitAttempted && genderError;
   const showCountryError = (touched.country || submitAttempted) && countryError;
+  const showEnglishError = submitAttempted && englishError;
 
   const handleSubmit = () => {
     setSubmitAttempted(true);
@@ -132,6 +142,7 @@ export function DemographicPage({
       gender: gender as Gender,
       country: country?.name ?? "",
       countryCode: country?.code ?? null,
+      englishFirstLanguage: englishFirst === true,
       submittedAt: new Date().toISOString(),
     });
   };
@@ -169,7 +180,7 @@ export function DemographicPage({
             A little about you
           </Heading>
           <Text fontSize="sm" color="fg.muted" maxW="md">
-            Four short questions. Your answers are stored with your results and reported only as
+            Five short questions. Your answers are stored with your results and reported only as
             group data.
           </Text>
         </VStack>
@@ -284,9 +295,10 @@ export function DemographicPage({
               </HStack>
             </Field>
 
-            {/* COUNTRY (since 30 September 2026) */}
+            {/* COUNTRY (since 30 September 2026; asked as "Where are you from?" since 4 October 2026 - it was "Country").
+                The answer and its field names are unchanged (country, country_code). */}
             <Field
-              label="Country"
+              label="Where are you from?"
               invalid={!!showCountryError}
               errorText={showCountryError || undefined}
               helperText="Type a few letters and pick it from the list."
@@ -299,6 +311,47 @@ export function DemographicPage({
                   invalid={!!showCountryError}
                 />
               </Box>
+            </Field>
+
+            {/* ENGLISH AS A FIRST LANGUAGE (since 4 October 2026, the researcher: "Is English your first language?"
+                Yes/No). Required, with no default, and drawn like the gender buttons so the page has one way to pick. */}
+            <Field
+              label="Is English your first language?"
+              invalid={!!showEnglishError}
+              errorText={showEnglishError || undefined}
+            >
+              <HStack gap="2" w="full" data-english-first>
+                {ENGLISH_OPTIONS.map((option) => {
+                  const selected = englishFirst === option.value;
+                  return (
+                    <Button
+                      key={option.label}
+                      size="sm"
+                      variant="outline"
+                      rounded="lg"
+                      fontSize="xs"
+                      fontWeight="semibold"
+                      flex={{ base: "1 1 0", sm: "0 0 auto" }}
+                      minW={{ sm: "24" }}
+                      borderWidth={selected ? "2px" : "1px"}
+                      borderColor={selected ? "green.solid" : "border.emphasized"}
+                      bg={selected ? "green.subtle" : "transparent"}
+                      color={selected ? "green.fg" : "fg.muted"}
+                      _hover={{ borderColor: selected ? "green.solid" : "border.emphasized", bg: selected ? "green.subtle" : "bg.subtle" }}
+                      gap="1.5"
+                      aria-pressed={selected}
+                      onClick={() => setEnglishFirst(option.value)}
+                    >
+                      {selected && (
+                        <Icon boxSize="3.5">
+                          <LuCheck />
+                        </Icon>
+                      )}
+                      {option.label}
+                    </Button>
+                  );
+                })}
+              </HStack>
             </Field>
           </VStack>
         </Box>
@@ -324,7 +377,7 @@ export function DemographicPage({
           </Button>
           {!valid && (
             <Text fontSize="xs" color="fg.subtle" textAlign="center">
-              Please complete all four questions to continue.
+              Please complete all five questions to continue.
             </Text>
           )}
         </VStack>

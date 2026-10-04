@@ -28,6 +28,10 @@
  *       after every scenario and marks a restarted scenario; Blocks 2 and 3 save with an owner and restore
  *       only for it; the flow claims the browser before it writes or downloads anything, shows the lock
  *       screen before any page, and asks "am I still active?" on opening and after every page
+ *   C11 (since 4 October 2026) "Is English your first language?": asked on the demographic page as Yes / No, required,
+ *       with no default; saved as true / false beside age, gender and country - in the browser's directory, the
+ *       demographic file, the API client and the server - and, like the country, never erased by a resume that does
+ *       not know it; the country is asked as "Where are you from?"
  *
  * Run:  npm run validate:session
  */
@@ -366,6 +370,41 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!(iSave > 0 && iDone > iSave)) why.push("Block 5's results are not saved before its pause");
     gate("C10", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : `every pause (${Object.keys(F.TRANSITION_TARGET).length}) is saved as the part it leads to the moment it starts, in the browser and on the server, and a restored pause leads there too; every block saves what the next part needs first; the same stage is not saved twice`);
+  }
+
+  /* C11 - "IS ENGLISH YOUR FIRST LANGUAGE?" AND "WHERE ARE YOU FROM?" (4 October 2026, the researcher). */
+  {
+    const why = [];
+    const page = src("src/experiment/DemographicPage.tsx"), flow = src("src/experiment/ExperimentFlow.tsx");
+    /* The page: the researcher's words, Yes then No, required, no default, recorded as true / false. */
+    if (!page.includes('label="Is English your first language?"')) why.push("the question is not on the page in his words");
+    if (!page.includes('const ENGLISH_OPTIONS = [{ label: "Yes", value: true }, { label: "No", value: false }] as const;')) why.push("the answers are not Yes then No");
+    if (!page.includes("const [englishFirst, setEnglishFirst] = useState<boolean | null>(null);")) why.push("the question has a default answer");
+    if (!page.includes("&& !englishError;") || !page.includes('const englishError = englishFirst === null ? "Please choose Yes or No." : null;')) why.push("the page can be sent without an answer");
+    if (!page.includes("englishFirstLanguage: englishFirst === true,")) why.push("the answer is not recorded as true / false");
+    if (!page.includes('label="Where are you from?"') || page.includes('label="Country"')) why.push("the country is not asked as \"Where are you from?\"");
+    if (!page.includes("Five short questions.") || !page.includes("Please complete all five questions to continue.") || /all four questions|Four short questions/.test(page)) why.push("the page still counts four questions");
+    /* The browser's directory: saved, and a resume without it keeps it (as the country). */
+    store.clear();
+    const d = B("participantDirectory.js");
+    d.upsertParticipant({ email: "c11@example.test", sessionId: "s", age: 30, gender: "Female", country: "Canada", countryCode: "CA", englishFirstLanguage: false, stage: "money", consent: null });
+    d.upsertParticipant({ email: "c11@example.test", sessionId: "s", age: 30, gender: "Female", stage: "product", consent: null });
+    const kept = d.lookupByEmail("c11@example.test");
+    if (kept.englishFirstLanguage !== false || kept.stage !== "product") why.push(`a resume without the answer erased it in the browser (${JSON.stringify(kept.englishFirstLanguage)})`);
+    d.upsertParticipant({ email: "c11@example.test", sessionId: "s", age: 30, gender: "Female", englishFirstLanguage: true, stage: "product", consent: null });
+    if (d.lookupByEmail("c11@example.test").englishFirstLanguage !== true) why.push("a new answer does not replace the old one");
+    /* The flow: the new participant's save, the demographic file and both resume paths carry it. */
+    if (!flow.includes("englishFirstLanguage: record.englishFirstLanguage,")) why.push("the flow does not save the answer");
+    if ((flow.match(/\.\.\.\(typeof entry\.englishFirstLanguage === "boolean" \? \{ englishFirstLanguage: entry\.englishFirstLanguage \} : \{\}\),/g) ?? []).length !== 2) why.push("a resume drops the answer");
+    /* The API client sends it only when known and reads it back; the server sets it only for a true or false. */
+    const api = src("src/experiment/apiClient.ts");
+    if (!api.includes('...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),')
+        || !api.includes('...(typeof doc.english_first_language === "boolean" ? { englishFirstLanguage: doc.english_first_language } : {}),')) why.push("the API client does not send or read the answer");
+    const server = src("server/index.js").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (!server.includes('...(typeof body.englishFirstLanguage === "boolean" ? { english_first_language: body.englishFirstLanguage } : {}),')
+        || /^\s*english_first_language: body\./m.test(server)) why.push("the server can erase or garble the answer");
+    gate("C11", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : "\"Is English your first language?\" asked as Yes / No, required with no default, saved as true / false with age, gender and country, never erased by a resume that does not know it; the country asked as \"Where are you from?\"; the page counts five questions");
   }
 
   console.log("");

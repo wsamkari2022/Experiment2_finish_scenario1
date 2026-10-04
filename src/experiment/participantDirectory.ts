@@ -52,6 +52,8 @@ export interface DirectoryEntry {
   country?: string;
   /** Its ISO 3166-1 alpha-2 code; null for "Prefer not to say". */
   countryCode?: string | null;
+  /** "Is English your first language?" true = Yes, false = No; since 4 October 2026, so optional. */
+  englishFirstLanguage?: boolean;
   /** Their condition (since 1 October 2026; conditions.ts). Set once and never changed. */
   condition?: SavedCondition | null;
   status: ParticipantStatus;
@@ -110,6 +112,8 @@ export function upsertParticipant(input: {
   /* Optional: a resume from a record that has no country must not erase one this browser already knows. */
   country?: string;
   countryCode?: string | null;
+  /* Optional for the same reason as the country (since 4 October 2026). */
+  englishFirstLanguage?: boolean;
   condition?: SavedCondition | null;
   stage: string;
   consent: DirectoryEntry["consent"];
@@ -127,6 +131,9 @@ export function upsertParticipant(input: {
     ...(input.country !== undefined
       ? { country: input.country, countryCode: input.countryCode ?? null }
       : existing?.country !== undefined ? { country: existing.country, countryCode: existing.countryCode ?? null } : {}),
+    ...(typeof input.englishFirstLanguage === "boolean"
+      ? { englishFirstLanguage: input.englishFirstLanguage }
+      : typeof existing?.englishFirstLanguage === "boolean" ? { englishFirstLanguage: existing.englishFirstLanguage } : {}),
     /* The condition is set once: a saved one is never replaced (the server keeps the same rule). The arrival id is
        not kept: it only travels with the save that makes the record (storage.saveParticipant). */
     ...(existing?.condition

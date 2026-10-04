@@ -94,8 +94,9 @@ export function CountryField({ value, onChange, onBlur, invalid }: {
           color="fg.subtle" display="flex" zIndex="1">
           <Icon boxSize="4"><LuGlobe /></Icon>
         </Box>
+        {/* A screen reader hears the question the page shows (since 4 October 2026 "Where are you from?"; it was "Country"). */}
         <Combobox.Input placeholder="Start typing to search" ps="9" rounded="lg" color="fg" onBlur={onBlur}
-          autoComplete="off" aria-label="Country" />
+          autoComplete="off" aria-label="Where are you from?" />
         <Combobox.IndicatorGroup>
           <Combobox.ClearTrigger />
           <Combobox.Trigger />

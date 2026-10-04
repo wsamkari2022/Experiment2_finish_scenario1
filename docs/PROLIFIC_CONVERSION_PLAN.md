@@ -160,7 +160,9 @@ The ethics board must approve the new consent text BEFORE launch (recruitment, p
 
 ### C. The demographic page (`src/experiment/DemographicPage.tsx`)
 
-- Remove the email field (and `looksLikeEmail`, the `emailLocked` path, the "Four short questions" header becomes three).
+- Remove the email field (and `looksLikeEmail`, the `emailLocked` path, the "Five short questions" header becomes four).
+  Since 4 October 2026 the page also asks "Is English your first language?" (`english_first_language`) and asks the
+  country as "Where are you from?"; Prolific's own export has a "first language" field, so the two can be compared.
 - Recommended: keep age, gender and country. Reasons: short; the database is complete on its own; returned people
   appear as "CONSENT REVOKED" in Prolific's file; comparing with Prolific's file is a free quality check.
 - The 18-or-older check stays.
