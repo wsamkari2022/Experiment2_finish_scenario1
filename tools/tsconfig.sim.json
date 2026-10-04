@@ -26,6 +26,8 @@
     "../src/experiment/block5VciAll.ts",
     "../src/experiment/block5StabilityAll.ts",
     "../src/experiment/block5Journey.ts",
+    "../src/experiment/block5LevelScale.ts",
+    "../src/experiment/block5RoleWords.ts",
     "../src/experiment/block5Types.ts",
     "../src/experiment/block5CVRContent.ts",
     "../src/experiment/blocksLegacyMethodology.ts",

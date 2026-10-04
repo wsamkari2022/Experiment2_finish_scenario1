@@ -27,6 +27,11 @@
  *   J13 the value line on the running values, moving in scenarios 5 and 6, with one shared "after" (30 September 2026)
  *   J12 the charts after the feedback (29 September 2026): none on the results page, the thank-you page's five
  *       tabs, every chart card in exactly one tab, and plain words on the results page
+ *   J15 (4 October 2026) the results page explains itself: the three scores taught in the first box (alignment choice by
+ *       choice, stability before and after), the box on "Your 4 decisions" and "All 6 scenarios" above the scores, each
+ *       level a traffic-light badge on a level bar built from the code's own level edges (every whole score 0-100 lands in
+ *       the band its own level word names), every badge readable (4.5 : 1), the points each label earns from labelWeight,
+ *       and no "random = 50" mark and no 1-2-3 strip
  *   J14 (3 October 2026) the first page: the study's name as its heading (and, since 4 October, in the browser tab), never split at a hyphen, the welcome only
  *       while the email is asked for, "Start or continue" inside the card, the email check unchanged; and the
  *       performance panel's title row on a phone: the title asks for room before sharing the row and the controls
@@ -353,12 +358,13 @@ console.log("===================================================================
   /* Q4: "not tested" when no moment tested the values. */
   if (!page.includes("results.stabilityDetail?.conflictSteps === 0") || !page.includes("computeStabilityAll(results.scenarioResults)?.measured === false")
       || !/note=\{stabilityUntested \?/.test(page) || !/note=\{stabilityAllUntested \?/.test(page)) why.push('the "not tested" notes are missing or read the wrong thing');
-  /* The researcher's words: stability is who they were before the scenarios and who they became. */
-  if (!/who you were before the scenarios with who you became/.test(page)) why.push("stability no longer says it compares who they were before and after");
+  /* The researcher's words: stability is who they were before the main study and how far they moved (reworded 4 October
+     2026: "who was the user before the main study and how far off the user now after finish the main study"). */
+  if (!/Who you were before the main study/.test(page)) why.push("stability no longer says it compares who they were before and after");
   if (!sim.includes("computeStabilityAll(nextResults)") || !sim.includes("stabilityAll: stabilityAll.value")) why.push("the block does not save Stability_all when it finishes");
   /* Since 2 October 2026 Stability has two parts: the page says it looks at both, and the block saves both, each for the
      four decisions and for all six. */
-  if (!page.includes("It looks at two things: did your four values keep their order, and how far did they move?")
+  if (!page.includes("did your four values keep their order, and how far did they move?")
       || !page.includes("Stability watches this order, and how far the numbers moved.")) why.push("the results page does not say Stability looks at the order AND how far the values moved");
   if (!sim.includes("valueOrderStability: stab.orderValue, valueDifferenceStability: stab.differenceValue, stabilityVersion: STABILITY_VERSION")
       || !sim.includes("valueOrderStabilityAll: stabilityAll.orderValue, valueDifferenceStabilityAll: stabilityAll.differenceValue")) why.push("the block does not save Stability's two parts");
@@ -484,6 +490,73 @@ console.log("===================================================================
   if (!/<HStack gap="2" flexShrink=\{0\} ms="auto">\s*\{isPreview && overallDelta !== 0 && \(/.test(sim)) why.push("the panel's controls can still shrink over the title");
   gate("J14", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : "the first page shows the study's name (never split at a hyphen) and the welcome while the email is asked for, \"Start or continue\" in the card, the email step unchanged; the panel's controls drop to their own line on a phone");
+}
+
+/* ------------------------------------------------------------------------------------------- J15 */
+{
+  const why = [];
+  const L = require(path.join(BUILD, "block5LevelScale.js"));
+  const CVR = require(path.join(BUILD, "block5CVR.js"));
+  const VA = require(path.join(BUILD, "block5VciAll.js"));
+  const P = require(path.join(BUILD, "block5Performance.js"));
+  /* The bands are the code's own levels: every whole score lands in the band its own level word names. */
+  const levelFn = { vci: CVR.consistencyLevel, vciAll: VA.vciAllLevel, stability: CVR.stabilityLevel, performance: P.capturedLabel };
+  for (const [scale, fn] of Object.entries(levelFn)) {
+    const bands = L.levelBands(scale);
+    if (bands[0].lo !== 0 || bands[bands.length - 1].hi !== 100) why.push(`${scale}: the bands do not run 0-100`);
+    for (let i = 1; i < bands.length; i++) if (bands[i].lo !== bands[i - 1].hi + 1) why.push(`${scale}: a gap or overlap at ${bands[i].lo}`);
+    for (let v = 0; v <= 100; v++) {
+      const { index } = L.levelOf(scale, v, fn(v));
+      const byValue = bands.findIndex((b) => v >= b.lo && v <= b.hi);
+      if (bands[index].label !== fn(v) || index !== byValue) { why.push(`${scale} ${v}: the bar says ${bands[byValue]?.label}, the level word ${fn(v)}`); break; }
+    }
+    /* The traffic light ("Q1-B"): the top band green, the bottom band a red, each band its own color, best to worst. */
+    if (bands[bands.length - 1].tone.name !== "green" || !/red/.test(bands[0].tone.name)) why.push(`${scale}: the top is not green or the bottom not red`);
+    if (new Set(bands.map((b) => b.tone.name)).size !== bands.length) why.push(`${scale}: two levels share a color`);
+  }
+  /* The researcher's example: a 57 in VCI is "Low", 50-64, with "Moderate" next at 65. */
+  const ex = L.levelOf("vci", 57, CVR.consistencyLevel(57));
+  if (ex.bands[ex.index].label !== "Low" || L.levelCaption(ex.bands, ex.index) !== "This level: 50–64 · next at 65") why.push(`57 reads ${L.levelCaption(ex.bands, ex.index)}`);
+  /* Every badge readable: WCAG contrast of its text on its fill, at least 4.5 : 1. */
+  const lum = (hex) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  for (const t of L.TRAFFIC_LIGHT) {
+    const [a, b] = [lum(t.bg), lum(t.fg)].sort((x, y) => y - x);
+    const ratio = (a + 0.05) / (b + 0.05);
+    if (ratio < 4.5) why.push(`the ${t.name} badge's text is ${ratio.toFixed(2)} : 1`);
+  }
+  /* The points each label earns are labelWeight's, and the page prints them from it. */
+  const pts = ["aligned", "weakly_aligned", "misaligned", "strongly_misaligned"].map((l) => Math.round(100 * CVR.labelWeight(l)));
+  if (pts.join(",") !== "100,80,50,10") why.push(`the points are ${pts}`);
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const page = src("Block5SimulationSummaryPage.tsx");
+  if (!page.includes("{Math.round(100 * labelWeight(l))}") || !page.includes("<PointsLegend />")) why.push("the points are not printed from labelWeight");
+  /* No random mark, no 1-2-3 strip. */
+  if (/blindMark|what choosing at random would give|the small mark/.test(page)) why.push("the random mark is still on the page");
+  if (/measured in the first parts|the two, side by side/.test(page)) why.push("the 1-2-3 strip is still on the page");
+  /* The researcher (4 October 2026): VCI is named in full, "Value Consistency Index", and no page tells a participant what
+     random or blind choosing would score - the results page nor the charts after the feedback. */
+  const charts = src("Block5VisualizationsView.tsx");
+  if (!page.includes("We call it your <b>Value Consistency Index</b> (VCI).") || (charts.match(/<b>Value Consistency Index<\/b> \(VCI/g) ?? []).length !== 2) why.push("the VCI is not named in full on the results page and the charts");
+  if (/what choosing blindly gives|choosing at random would give/.test(charts)) why.push("the charts still tell the participant what blind choosing scores");
+  /* Each score: the traffic-light badge, the level bar and its caption, from block5LevelScale. */
+  if (!page.includes("const { bands, index } = levelOf(scale, value, level);") || !page.includes("<LevelBar bands={bands} index={index} value={value} />")
+      || !page.includes("{levelCaption(bands, index)}") || !page.includes("style={{ background: tone.bg, color: tone.fg")) why.push("a score is not drawn with its badge, bar and caption");
+  for (const sc of ['scale="vci"', 'scale="vciAll"', 'scale="performance"']) if (!page.includes(sc)) why.push(`no score uses ${sc}`);
+  if ((page.match(/scale="stability"/g) ?? []).length !== 2) why.push("Stability and Stability_all do not both use the stability levels");
+  /* The first box teaches; the scenarios box sits between it and the scores. */
+  for (const words of ["choice by choice", "before and after", "Each choice adds to this score, so it rose or fell with every scenario.",
+    "Who you were before the main study, and how far you moved by its end."]) if (!page.includes(words)) why.push(`the first box lost "${words}"`);
+  const iTeach = page.indexOf("data-results-teach"), iBox = page.indexOf("<ScenariosExplained />"), iScores = page.indexOf('<Heading size="md" color="fg" fontWeight="semibold">Your scores</Heading>');
+  if (!(iTeach > 0 && iBox > iTeach && iScores > iBox)) why.push("the scenarios box is not between the first box and the scores");
+  for (const words of ["Your 4 decisions and all 6 scenarios", "deciding alone, for your household, for other people, and inside your employer's rules",
+    "The same situation as scenario 4, but the decision was made for you.", "You set a rule before knowing who you would be.",
+    "Performance counts\n        your 4 decisions only"]) if (!page.includes(words)) why.push(`the scenarios box lost "${words.replace(/\n\s+/g, " ")}"`);
+  /* The places named are the badges each scenario wore. */
+  const R = require(path.join(BUILD, "block5RoleWords.js"));
+  const badges = ["self", "self_and_group", "others", "under_authority"].map((k) => R.ROLE_BADGE[k]);
+  if (badges.join("|") !== "Deciding alone|Deciding for your household|Deciding for other people|Deciding inside your employer's rules") why.push("the scenario badges changed; reword the scenarios box");
+  gate("J15", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : "the first box teaches alignment (choice by choice) and stability (before and after); the scenarios box sits above the scores; each level a traffic-light badge on a bar of the code's own levels (every whole score 0-100 checked), every badge readable, the points from labelWeight (100/80/50/10); no random mark, no 1-2-3 strip");
 }
 
 console.log("");

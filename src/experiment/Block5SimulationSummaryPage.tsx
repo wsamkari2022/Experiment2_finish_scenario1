@@ -29,6 +29,20 @@
  *                           reconsider". Baseline shows no reflection badge: nothing extra was shown.
  * STABILITY'S BOX says it looks at two things (since 2 October 2026): whether the four values kept their order and how far
  * they moved - the two parts the score is the average of (block5CVR.ts).
+ *
+ * REVISED 4 OCTOBER 2026 (the researcher; plan answers "Q1-B, Q2-A, Q3-yes", in every condition):
+ *   - "What your results show" TEACHES the three scores: alignment is built choice by choice (it rose or fell with every
+ *     scenario's choice), stability compares who they were before the main study with how far they moved by its end,
+ *     performance is the outcomes. The "1. What matters to you / 2. What you chose / 3. Your scores" strip is gone (his
+ *     advisor could not read it, "Q2-A").
+ *   - A new box above the scores, "Your 4 decisions and all 6 scenarios" (ScenariosExplained): what scenarios 1-4, the
+ *     wish (5) and the rule (6) are, and what each kind of score counts ("Q3-yes").
+ *   - Every level word is a traffic-light badge ("Q1-B": green high, yellow middle, orange and red low), and each thin bar
+ *     is the score's own LEVEL SCALE with the participant's level lit and its range under it (block5LevelScale.ts). The
+ *     "random = 50" mark is gone: a 57 sat above it and read "Low", and nobody knows what a random chooser is. The
+ *     alignment box now says how a choice earns its points (the colored labels on the scenario cards below), which is
+ *     why 57 is low. Until this date the families' colors carried no verdict (29 September, "Q2-A"); the score NUMBERS
+ *     keep their family colors, the level badges and bars now carry the traffic light.
  */
 
 import { useMemo, useRef } from "react";
@@ -36,11 +50,12 @@ import {
   Badge, Box, Button, Center, Grid, Heading, HStack, Icon, SimpleGrid, Stack, Text, VStack,
 } from "@chakra-ui/react";
 import {
-  LuArrowRight, LuChartColumn, LuCheck, LuCompass, LuEye, LuRotateCcw, LuRoute, LuScale, LuSparkles, LuTarget, LuTrendingUp,
+  LuArrowRight, LuCheck, LuEye, LuEyeOff, LuHeartHandshake, LuRotateCcw, LuScale, LuSparkles, LuTarget, LuTrendingUp,
 } from "react-icons/lu";
 import type { ReactNode } from "react";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
-import { ALIGNMENT_LABEL, reflectionWasShown } from "./block5CVR";
+import { ALIGNMENT_LABEL, labelWeight, reflectionWasShown } from "./block5CVR";
+import { TRAFFIC_LIGHT, levelCaption, levelOf, type LevelBand, type ScoreScale } from "./block5LevelScale";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { secondViewWasOpened } from "./feedbackTypes";
 import { ROLE_BADGE } from "./block5RoleWords";
@@ -132,11 +147,34 @@ function scenarioNote(sr: Block5ScenarioResult): string {
 
 /* ------------------------------------------------------------------ the score boxes */
 
-/** One score: its plain name, a big number in the family's color, its level word, a thin 0-100 bar. */
-function ScoreNumber({ label, code, value, level, palette, blindMark = false, note }: {
-  label: string; code: string; value: number; level?: string; palette: string; blindMark?: boolean; note?: string;
+/**
+ * THE LEVEL BAR (since 4 October 2026; block5LevelScale.ts). The 0-100 line cut into the score's own levels, each in its
+ * traffic-light color, the participant's level lit and the rest faint, and a ring at their number. It answers "why is
+ * 57 low?" by showing where 57 sits among the levels; the caption under it gives the level's range.
+ */
+function LevelBar({ bands, index, value }: { bands: LevelBand[]; index: number; value: number }) {
+  const at = Math.max(0, Math.min(100, value));
+  const lit = bands[index].tone.bg;
+  return (
+    <Box position="relative" h="3.5" mt="3" data-level-bar>
+      <HStack position="absolute" left="0" right="0" top="3px" h="2" gap="2px">
+        {bands.map((b, i) => (
+          <Box key={b.label} h="full" rounded="full" flex={`${b.hi - b.lo + 1} 1 0`} title={`${b.label}: ${b.lo}–${b.hi}`}
+            style={{ background: b.tone.bg, opacity: i === index ? 1 : 0.22, transition: "opacity 0.3s ease" }} />
+        ))}
+      </HStack>
+      <Box position="absolute" top="0" boxSize="3.5" rounded="full" bg="bg.panel" borderWidth="3px"
+        style={{ left: `calc(${at}% - 7px)`, borderColor: lit, boxShadow: `0 0 0 2px ${lit}33` }} />
+    </Box>
+  );
+}
+
+/** One score: its plain name, a big number in the family's color, its level as a traffic-light badge, its level bar. */
+function ScoreNumber({ label, code, value, level, palette, scale, note }: {
+  label: string; code: string; value: number; level?: string; palette: string; scale: ScoreScale; note?: string;
 }) {
-  const width = Math.max(2, Math.min(100, value));
+  const { bands, index } = levelOf(scale, value, level);
+  const tone = bands[index].tone;
   return (
     <Box flex="1" minW="0">
       {/* Two lines, always, so the two numbers of a box stand level ("All 6 scenarios · VCI_all" on one line
@@ -147,20 +185,100 @@ function ScoreNumber({ label, code, value, level, palette, blindMark = false, no
         letterSpacing="tight" style={{ fontVariantNumeric: "tabular-nums" }}>
         {value}
       </Text>
+      {/* The level, in its traffic-light color ("Q1-B", 4 October 2026); the same color lights its piece of the bar. */}
       {level && (
-        <Badge mt="2" size="sm" variant="subtle" colorPalette={palette} rounded="md" px="2">{level}</Badge>
-      )}
-      <Box position="relative" mt="3">
-        <Box h="1.5" rounded="full" bg="bg.muted" overflow="hidden">
-          <Box h="full" rounded="full" bg={`${palette}.solid`} style={{ width: `${width}%` }} />
+        <Box display="inline-flex" alignItems="center" mt="2" px="2.5" py="0.5" rounded="full" fontSize="xs"
+          fontWeight="semibold" lineHeight="1.6" data-level-badge={tone.name}
+          style={{ background: tone.bg, color: tone.fg, boxShadow: `0 2px 10px ${tone.bg}40` }}>
+          {level}
         </Box>
-        {/* Where choosing at random lands, on the alignment scores. */}
-        {blindMark && (
-          <Box position="absolute" left="50%" top="-1" h="3.5" w="0.5" rounded="full" bg="fg.subtle"
-            title="50 = what choosing at random would give" />
-        )}
-      </Box>
+      )}
+      <LevelBar bands={bands} index={index} value={value} />
+      <Text fontSize="2xs" color="fg.muted" mt="1" style={{ fontVariantNumeric: "tabular-nums" }} data-level-caption>
+        {levelCaption(bands, index)}
+      </Text>
       {note && <Text fontSize="xs" color="fg.muted" mt="2" lineHeight="short">{note}</Text>}
+    </Box>
+  );
+}
+
+/** How a decision earns its alignment points: the scenario cards' own labels and colors, the points from labelWeight. */
+function PointsLegend() {
+  const levels: AlignmentLevel[] = ["aligned", "weakly_aligned", "misaligned", "strongly_misaligned"];
+  return (
+    <HStack gap="1.5" wrap="wrap" mt="1.5" mb="1" data-points-legend>
+      {levels.map((l) => (
+        <Badge key={l} size="sm" variant="subtle" colorPalette={LEVEL_PALETTE[l]} rounded="md" px="2">
+          {ALIGNMENT_LABEL[l]} <Text as="span" fontWeight="bold" ms="1">{Math.round(100 * labelWeight(l))}</Text>
+        </Badge>
+      ))}
+    </HStack>
+  );
+}
+
+/**
+ * "YOUR 4 DECISIONS AND ALL 6 SCENARIOS" (since 4 October 2026, the researcher: "explain what '4 decisions' means and what
+ * '6 scenarios' means ... in a different box above the major scores"). Six numbered stops under two brackets - the
+ * decisions in the color of "Your 4 decisions" (blue, as VCI), the wish and the rule in the color of "All 6" (cyan, as
+ * VCI_all) - and one line for each kind. The places are the badges each scenario wore (ROLE_BADGE); every claim is the
+ * design's: scenario 5 is scenario 4 decided for them, scenario 6 a rule set before knowing who they would be, its
+ * guess shown after the choice; performance reads the decisions only.
+ */
+function ScenariosExplained() {
+  const stop = (n: number, palette: string, icon?: ReactNode) => (
+    <Center key={n} boxSize={{ base: "8", md: "9" }} rounded="full" bg={`${palette}.subtle`} color={`${palette}.fg`}
+      borderWidth="1px" borderColor={`${palette}.muted`} fontSize="sm" fontWeight="bold" flexShrink={0}
+      title={BLOCK5_SCENARIOS[n - 1]?.title}>
+      {icon ? <Icon boxSize="4">{icon}</Icon> : n}
+    </Center>
+  );
+  const row = (palette: string, tag: string, head: string, body: string) => (
+    <HStack align="start" gap="3">
+      <Box flexShrink={0} minW="12" textAlign="center" px="2" py="0.5" rounded="md" bg={`${palette}.subtle`} color={`${palette}.fg`}
+        fontSize="xs" fontWeight="bold">{tag}</Box>
+      <Text fontSize="sm" color="fg.muted" lineHeight="tall"><Text as="span" color="fg" fontWeight="semibold">{head}</Text> {body}</Text>
+    </HStack>
+  );
+  return (
+    <Box rounded="2xl" borderWidth="1px" borderColor="border" bg="bg.panel" shadow="sm" px={{ base: "5", md: "7" }} py={{ base: "5", md: "6" }}
+      data-scenarios-explained>
+      <Heading size="md" color="fg" fontWeight="semibold">Your 4 decisions and all 6 scenarios</Heading>
+      <Text fontSize="sm" color="fg.muted" mt="1">Most scores are counted two ways. Here is the difference.</Text>
+
+      {/* The six stops: 1-4 under one bracket, 5 and 6 beside them, one dashed bracket under all six. */}
+      <Box mt="5" maxW="xl" mx="auto">
+        <HStack gap={{ base: "2", md: "3" }} align="end">
+          <Box flex="4" minW="0">
+            <HStack justify="space-around">{[1, 2, 3, 4].map((n) => stop(n, "blue"))}</HStack>
+            <Box h="2.5" mx="3" mt="2" borderWidth="2px" borderTopWidth="0" borderColor="blue.solid" roundedBottom="md" />
+            <Text textAlign="center" fontSize="xs" fontWeight="bold" color="blue.fg" mt="1">Your 4 decisions</Text>
+          </Box>
+          <Box flex="1" minW="0" textAlign="center">
+            <Center>{stop(5, "cyan", <LuHeartHandshake />)}</Center>
+            <Text fontSize={{ base: "2xs", md: "xs" }} fontWeight="semibold" color="cyan.fg" mt="2" whiteSpace="nowrap">5 · Wish</Text>
+          </Box>
+          <Box flex="1" minW="0" textAlign="center">
+            <Center>{stop(6, "cyan", <LuEyeOff />)}</Center>
+            <Text fontSize={{ base: "2xs", md: "xs" }} fontWeight="semibold" color="cyan.fg" mt="2" whiteSpace="nowrap">6 · Rule</Text>
+          </Box>
+        </HStack>
+        <Box h="2.5" mx="3" mt="2.5" borderWidth="2px" borderTopWidth="0" borderStyle="dashed" borderColor="cyan.solid" roundedBottom="md" />
+        <Text textAlign="center" fontSize="xs" fontWeight="bold" color="cyan.fg" mt="1">All 6 scenarios</Text>
+      </Box>
+
+      <Stack gap="3" mt="5">
+        {row("blue", "1–4", "Your 4 decisions.",
+          "You made the choice yourself, and you knew where you stood: deciding alone, for your household, for other people, and inside your employer's rules.")}
+        {row("cyan", "5", "A wish.",
+          "The same situation as scenario 4, but the decision was made for you. You said what you hoped would be chosen.")}
+        {row("cyan", "6", "A rule.",
+          "You set a rule before knowing who you would be. Afterwards, our software showed what it had expected you to pick.")}
+      </Stack>
+      <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="4" pt="4" borderTopWidth="1px" borderColor="border">
+        <b>“Your 4 decisions”</b> counts scenarios 1–4. <b>“All 6 scenarios”</b> adds the wish and the rule, to show
+        whether you chose the same way when you were not the one deciding, or did not know your place. Performance counts
+        your 4 decisions only: a wish and a rule have no outcome of their own.
+      </Text>
     </Box>
   );
 }
@@ -400,69 +518,88 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
           <Heading size={{ base: "2xl", md: "3xl" }} color="fg" fontWeight="semibold" letterSpacing="tight">Here are your results</Heading>
         </VStack>
 
-        {/* 1 · What your results show, and how the study measured it (for somebody who has just finished). */}
+        {/* 1 · What your results show: the three scores TAUGHT (4 October 2026, the researcher: alignment changes with
+            every choice in every scenario; stability is who they were before the main study and how far they are from
+            it now). The "1-2-3" strip that stood here is gone ("Q2-A"): its three titles said nothing on their own. */}
         <Box rounded="3xl" borderWidth="1px" borderColor="border" shadow="sm" overflow="hidden"
-          bgGradient="to-br" gradientFrom="blue.subtle" gradientVia="purple.subtle" gradientTo="teal.subtle">
+          bgGradient="to-br" gradientFrom="blue.subtle" gradientVia="purple.subtle" gradientTo="teal.subtle" data-results-teach>
           <Box px={{ base: "5", md: "8" }} py={{ base: "6", md: "7" }}>
             <Heading size="lg" color="fg" fontWeight="semibold">What your results show</Heading>
             <Text color="fg.muted" fontSize={{ base: "sm", md: "md" }} lineHeight="tall" mt="2" maxW="4xl">
-              You have finished all six emergency scenarios. In the first parts of the study (found money, the
-              trolley, the AI workforce and the reflection), your answers showed what matters most to you, across four
-              values: <b>protecting the vulnerable</b>, <b>how many are helped</b>, <b>reducing harm</b> and <b>how much
-              is gained</b>. In the six scenarios you then made real choices. Your scores put the two side by side:
-              a mirror of how you decide, not a grade.
+              You have finished all six scenarios. The first parts of the study (found money, the trolley, the AI workforce
+              and the reflection) measured what matters most to you, across four values: <b>protecting the
+              vulnerable</b>, <b>how many are helped</b>, <b>reducing harm</b> and <b>how much is gained</b>. Your three
+              scores describe how your choices in the scenarios relate to those values. None of them is right or wrong.
             </Text>
             <SimpleGrid columns={{ base: 1, md: 3 }} gap="3" mt="5">
               {[
-                { icon: <LuCompass />, head: "What matters to you", sub: "measured in the first parts", palette: "blue" },
-                { icon: <LuRoute />, head: "What you chose", sub: "in the six scenarios", palette: "purple" },
-                { icon: <LuChartColumn />, head: "Your scores", sub: "the two, side by side", palette: "teal" },
-              ].map((step, i) => (
-                <HStack key={step.head} gap="3" bg="bg.panel" rounded="xl" px="4" py="3" borderWidth="1px" borderColor="border">
-                  <Center boxSize="8" rounded="lg" bg={`${step.palette}.subtle`} color={`${step.palette}.fg`} flexShrink={0}>
-                    <Icon boxSize="4">{step.icon}</Icon>
-                  </Center>
-                  <Box>
-                    <Text fontSize="sm" fontWeight="semibold" color="fg">{i + 1}. {step.head}</Text>
-                    <Text fontSize="xs" color="fg.muted">{step.sub}</Text>
-                  </Box>
-                </HStack>
+                { icon: <LuTrendingUp />, palette: "blue", head: "Value alignment", tag: "choice by choice",
+                  body: "In every scenario, the option you chose was compared with your four values. Each choice adds to this score, so it rose or fell with every scenario." },
+                { icon: <LuScale />, palette: "purple", head: "Stability", tag: "before and after",
+                  body: "Who you were before the main study, and how far you moved by its end. When a choice went against your values, your values were updated; stability shows whether they kept their order and how far they moved." },
+                { icon: <LuTarget />, palette: "teal", head: "Performance", tag: "the outcomes",
+                  body: "How well your choices worked out in each situation, whatever your values. A choice can fit you well and still work out less well." },
+              ].map((t) => (
+                <Box key={t.head} bg="bg.panel" rounded="xl" px="4" py="4" borderWidth="1px" borderColor="border"
+                  borderTopWidth="3px" borderTopColor={`${t.palette}.solid`}>
+                  <HStack gap="2.5">
+                    <Center boxSize="8" rounded="lg" bg={`${t.palette}.subtle`} color={`${t.palette}.fg`} flexShrink={0}>
+                      <Icon boxSize="4">{t.icon}</Icon>
+                    </Center>
+                    <Box minW="0">
+                      <Text fontSize="sm" fontWeight="semibold" color="fg" lineHeight="short">{t.head}</Text>
+                      <Text fontSize="2xs" fontWeight="bold" color={`${t.palette}.fg`} textTransform="uppercase" letterSpacing="wider">{t.tag}</Text>
+                    </Box>
+                  </HStack>
+                  <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="2.5">{t.body}</Text>
+                </Box>
               ))}
             </SimpleGrid>
           </Box>
         </Box>
 
+        {/* 1b · What "Your 4 decisions" and "All 6 scenarios" mean, right above the scores that use them. */}
+        <ScenariosExplained />
+
         {/* 2 · The major scores, in three families ("Q2-A": colors by family, never a red-to-green verdict). */}
         <Box>
-          <Heading size="md" color="fg" fontWeight="semibold">Your scores</Heading>
-          <Text fontSize="sm" color="fg.muted" mt="1" mb="4">
-            In short: <b>alignment</b> looks at your choices, <b>stability</b> looks at your values themselves, and
-            {" "}<b>performance</b> looks at the results.
-          </Text>
+          <HStack justify="space-between" align="end" wrap="wrap" gap="2" mb="4">
+            <Heading size="md" color="fg" fontWeight="semibold">Your scores</Heading>
+            {/* The traffic light's key ("Q1-B"): what the badge colors and the lit piece of each bar mean. */}
+            <HStack gap="3" fontSize="xs" color="fg.muted" data-level-legend>
+              <Text>Level:</Text>
+              {[[TRAFFIC_LIGHT[0], "high"], [TRAFFIC_LIGHT[2], "middle"], [TRAFFIC_LIGHT[4], "low"]].map(([t, w]) => (
+                <HStack key={(t as LevelBand["tone"]).name} gap="1.5">
+                  <Box boxSize="2.5" rounded="full" style={{ background: (t as LevelBand["tone"]).bg }} />
+                  <Text>{w as string}</Text>
+                </HStack>
+              ))}
+            </HStack>
+          </HStack>
           <Grid templateColumns={{ base: "1fr", lg: "repeat(3, 1fr)" }} gap="4">
             <ScoreFamily palette="blue" icon={<LuTrendingUp />} title="Value alignment"
               question="Did your choices match your values?"
-              explain={<>We call it your <b>value consistency</b> (VCI): how closely the options you chose matched what matters most to you. <b>100</b> = the option closest to your values every time; <b>50</b> (the small mark) = what choosing at random would give. “All 6” adds scenario 5, where the decision was made for you, and scenario 6, where you did not know your place.</>}>
-              <ScoreNumber label="Your 4 decisions" code="VCI" value={vci} level={results.vciLevel} palette="blue" blindMark />
+              explain={<>We call it your <b>Value Consistency Index</b> (VCI). Each decision earns points for how close the option you chose came to your values, with the same labels as your scenario cards below:<PointsLegend />Your score is the average, so it is high only when most choices were Aligned or Weakly aligned. “All 6” adds your wish and your rule.</>}>
+              <ScoreNumber label="Your 4 decisions" code="VCI" value={vci} level={results.vciLevel} palette="blue" scale="vci" />
               {hasVciAll && (
-                <ScoreNumber label="All 6 scenarios" code="VCI_all" value={vciAll} level={results.vciAllLevel} palette="cyan" blindMark />
+                <ScoreNumber label="All 6 scenarios" code="VCI_all" value={vciAll} level={results.vciAllLevel} palette="cyan" scale="vciAll" />
               )}
             </ScoreFamily>
             <ScoreFamily palette="purple" icon={<LuScale />} title="Stability"
               question="Did your values stay the same?"
-              explain={<>Compares who you were before the scenarios with who you became, at the moments you chose against what fit you best. It looks at two things: did your four values keep their order, and how far did they move? <b>100</b> = no two values swapped places and none moved.</>}>
+              explain={<>Who you were before the main study against who you are now, counted at the moments a choice went against your values: did your four values keep their order, and how far did they move? <b>100</b> = no two values swapped places and none moved.</>}>
               <ScoreNumber label="Your 4 decisions" code="Stability" value={stability} level={results.stabilityLevel} palette="purple"
-                note={stabilityUntested ? "Not tested: you always chose one of your two best fits." : undefined} />
+                scale="stability" note={stabilityUntested ? "Not tested: you always chose one of your two best fits." : undefined} />
               {hasStabilityAll && (
                 <ScoreNumber label="All 6 scenarios" code="Stability_all" value={stabilityAll} level={results.stabilityAllLevel} palette="purple"
-                  note={stabilityAllUntested ? "Not tested: you always chose one of your two best fits." : undefined} />
+                  scale="stability" note={stabilityAllUntested ? "Not tested: you always chose one of your two best fits." : undefined} />
               )}
             </ScoreFamily>
             <ScoreFamily palette="teal" icon={<LuTarget />} title="Performance"
               question="How good were the outcomes?"
               explain={<>How much of the best outcome each scenario offered your choices achieved. <b>100</b> = the strongest option every time; <b>0</b> = the weakest. It is separate from your values: an option can match you well and still work out less well.</>}>
               <ScoreNumber label="Your 4 decisions" code="Performance" value={performance}
-                level={typeof captured === "number" ? results.performanceCapturedLevel : undefined} palette="teal" />
+                level={typeof captured === "number" ? results.performanceCapturedLevel : undefined} palette="teal" scale="performance" />
             </ScoreFamily>
           </Grid>
         </Box>

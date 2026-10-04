@@ -341,6 +341,13 @@ SECTIONS = [
         ("The results page leads on to the feedback.",
          "\"Scenarios done · 1 step left\", the \"One last step\" card, the slim bottom bar, and Feedback marked \"next\" "
          "in the progress bar (which slides to it on a phone).", ["journey"], "(J9)"),
+        ("The results page explains itself.",
+         "Since 4 October 2026: the first box teaches alignment (choice by choice) and stability (before and after); a box "
+         "above the scores explains Your 4 decisions and All 6 scenarios; each level is a traffic-light badge on a bar split "
+         "into the score's own levels, with its range (\"This level: 50–64 · next at 65\"), so a 57 reads Low with its reason; "
+         "no random mark; every badge readable; the VCI named the Value Consistency Index. Every whole score 0-100 lands "
+         "in the band its own level word names.",
+         ["journey"], "(J15)"),
         ("The results page speaks plainly and keeps every detail.",
          "\"What your results show\", three colored score boxes (alignment, stability, performance) with \"Not tested\" "
          "where nothing was tested, and every scenario as a compact card with its choice, label, Fit and reflection "

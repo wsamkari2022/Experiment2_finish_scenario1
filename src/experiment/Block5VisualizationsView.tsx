@@ -1124,9 +1124,9 @@ export function Block5VisualizationsView({ results, tab }: Props) {
           {/* 4 · Consistency */}
           <ChartCard index={num("consistency")} title="How consistent your choices were"
             howTo={cons.vciAll !== null ? (
-              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b>. Your <b>four decisions</b> (S1–S4) make your <b>VCI</b> (the blue dashed line). <b>All six</b> make your <b>VCI_all</b> (the cyan dashed line), the average of these six points. For your wish (S5) and your rule (S6), your values are the ones that kept updating after every choice, your wish included — so those two points can differ from the fit on their cards. 50 is what choosing blindly gives.</>
+              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b>. Your <b>four decisions</b> (S1–S4) make your <b>Value Consistency Index</b> (VCI, the blue dashed line). <b>All six</b> make your <b>VCI_all</b> (the cyan dashed line), the average of these six points. For your wish (S5) and your rule (S6), your values are the ones that kept updating after every choice, your wish included — so those two points can differ from the fit on their cards.</>
             ) : (
-              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b> — your values update as you go, so a value you take on during the scenarios counts from then on. The <b>dashed line</b> is your VCI, across your four decisions.</>
+              <>Each point is one scenario, scored 0–100 for how well your choice matched your values <b>as they stood at that moment</b> — your values update as you go, so a value you take on during the scenarios counts from then on. The <b>dashed line</b> is your <b>Value Consistency Index</b> (VCI), across your four decisions.</>
             )}
             caption={consistencyCaption}>
             <LineChart xLabels={cons.points.map((pt) => `S${pt.index}${pt.kind === "wish" ? " wish" : pt.kind === "veil" ? " rule" : ""}`)}

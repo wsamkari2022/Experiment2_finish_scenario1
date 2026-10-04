@@ -232,11 +232,20 @@ export function overallCaptured(results: Block5ScenarioResult[]): number {
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
 }
 
+/**
+ * The performance levels, highest first: a score at or above `from` takes the label. One list, so the results page's
+ * level bar (block5LevelScale.ts, since 4 October 2026) draws exactly the edges capturedLabel uses.
+ */
+export const CAPTURED_LEVELS: ReadonlyArray<{ label: string; from: number }> = [
+  { label: "Took the strongest option available", from: 90 },
+  { label: "Took a strong option", from: 70 },
+  { label: "Took a middle option", from: 45 },
+  { label: "Took a weaker option", from: 20 },
+  { label: "Took the weakest option available", from: -Infinity },
+];
+
 /** Plain words for a captured score. Deliberately about the CHOICE, not about the person. */
 export function capturedLabel(v: number): string {
-  if (v >= 90) return "Took the strongest option available";
-  if (v >= 70) return "Took a strong option";
-  if (v >= 45) return "Took a middle option";
-  if (v >= 20) return "Took a weaker option";
-  return "Took the weakest option available";
+  for (const l of CAPTURED_LEVELS) if (v >= l.from) return l.label;
+  return CAPTURED_LEVELS[CAPTURED_LEVELS.length - 1].label;
 }
