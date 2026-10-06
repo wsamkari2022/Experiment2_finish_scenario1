@@ -252,14 +252,18 @@ export function ExperimentFlow() {
    * the university address got a condition counted among the university's people; if, before anybody was known, it
    * then arrives through Prolific's link, that condition is not theirs to keep: it goes, and the landing page gives one
    * counted among the Prolific people. (Its arrival stops counting after 30 minutes, as any unused arrival does.)
+   * BOTH WAYS since the audit of 6 October 2026: an unowned Prolific condition left on a shared computer is not the next
+   * student's either (they would have met a "paste your Prolific ID" box). The address's own ?condition= goes too, or
+   * the landing page would take it for a tester's choice.
    */
   useState(() => {
     const file = readConditionFile();
-    if (!browserParticipantKey() && file && !file.owner && file.recruitmentSource !== "prolific"
-        && doorFromAddress(window.location.pathname, window.location.search) === "prolific") {
+    if (!browserParticipantKey() && file && !file.owner
+        && (file.recruitmentSource ?? "university") !== doorFromAddress(window.location.pathname, window.location.search)) {
       try {
         localStorage.removeItem(CONDITION_KEY);
       } catch { /* ignore */ }
+      clearConditionFromAddress();
     }
     return null;
   });
@@ -731,7 +735,9 @@ export function ExperimentFlow() {
       const saved = entry.condition ? conditionByNumber(entry.condition.number) : null;
       let condition: ConditionFile | null = null;
       if (entry.condition && saved) {
-        condition = makeConditionFile(saved, entry.condition.source, null, owner, entry.condition.assignedAt);
+        /* With the person's own door (the audit of 6 October 2026: without it, a Prolific person who moved device was
+           copied into major_info_and_scores.condition as "university"). */
+        condition = makeConditionFile(saved, entry.condition.source, null, owner, entry.condition.assignedAt, keyDoor(owner));
         if (provisional?.arrivalId && provisional.owner !== owner) releaseConditionArrival(provisional.arrivalId);
       } else if (provisional && (!provisional.owner || provisional.owner === owner)) {
         condition = { ...provisional, owner };
@@ -837,9 +843,13 @@ export function ExperimentFlow() {
     /* The Prolific door's first page (the researcher's "2-A"): the ID from the link, Start, or Continue with no
        question ("1-A"). The university door's is unchanged. */
     if (door === "prolific") {
+      /* The ID from the link; failing that, the Prolific ID this browser already knows (the audit of 6 October 2026:
+         a returning person whose address had lost it was asked to paste their own ID). */
+      const linkParams = prolificParamsFrom(window.location.search);
+      const knownId = isProlificKey(pendingEmail) ? pendingEmail : null;
       return (
         <ProlificStartScreen
-          params={prolificParamsFrom(window.location.search)}
+          params={{ ...linkParams, pid: linkParams.pid ?? knownId }}
           onNewParticipant={onNewParticipant}
           onResume={onResume}
         />

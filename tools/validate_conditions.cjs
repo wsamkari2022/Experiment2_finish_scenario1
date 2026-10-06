@@ -397,7 +397,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(flow, /JSON\.stringify\(\{ \.\.\.record, \.\.\.\(conditionFields\(condition\) \?\? \{\}\) \}\)/, "the two fields are not saved beside the demographic answers");
     if ((flow.match(/condition: savedFrom\(condition\),/g) ?? []).length !== 2) why.push("the two saves do not both carry the condition");
     need(flow, /if \(provisional\?\.arrivalId && provisional\.owner !== owner\) releaseConditionArrival\(provisional\.arrivalId\);/, "a returning participant does not release the new arrival");
-    need(flow, /condition = makeConditionFile\(saved, entry\.condition\.source, null, owner, entry\.condition\.assignedAt\);/, "a returning participant does not keep their saved condition");
+    need(flow, /condition = makeConditionFile\(saved, entry\.condition\.source, null, owner, entry\.condition\.assignedAt, keyDoor\(owner\)\);/, "a returning participant does not keep their saved condition (with their own door)");
     need(flow, /showConditionInAddress\(readConditionFile\(\)\);\s*\}, \[stage\]\);/, "the address does not follow the saved condition");
     need(flow, /file\.owner && file\.owner !== email\.trim\(\)\.toLowerCase\(\)[\s\S]{0,400}clearConditionFromAddress\(\);[\s\S]{0,120}setStage\("landing"\)/, "a second person on the same computer does not get their own condition (the address must be cleared first)");
     need(flow, /stage === "start" \|\| stage === "landing" \? "" : stage/, "the landing page counts as working time");

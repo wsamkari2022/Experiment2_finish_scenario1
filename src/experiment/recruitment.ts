@@ -133,11 +133,8 @@ export function browserParticipantKey(): string | null {
   }
 }
 
-/** Sets another person's run aside when the link brings a different Prolific ID. True when it did. */
-export function makeRoomForAnotherProlificId(search: string): boolean {
-  const arriving = prolificParamsFrom(search).pid;
-  const held = browserParticipantKey();
-  if (!arriving || !held || held.trim().toLowerCase() === arriving) return false;
+/** Removes this browser's run (every file but the machine's: KEPT_WHEN_ANOTHER_PERSON_ARRIVES). */
+export function setAsideThisBrowsersRun(): void {
   try {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i += 1) {
@@ -148,7 +145,35 @@ export function makeRoomForAnotherProlificId(search: string): boolean {
   } catch {
     /* storage unavailable: nothing to set aside */
   }
+}
+
+/** Sets another person's run aside when the link brings a different Prolific ID. True when it did. */
+export function makeRoomForAnotherProlificId(search: string): boolean {
+  const arriving = prolificParamsFrom(search).pid;
+  const held = browserParticipantKey();
+  if (!arriving || !held || held.trim().toLowerCase() === arriving) return false;
+  setAsideThisBrowsersRun();
   return true;
+}
+
+/*
+ * "NOT YOU?" ON THE UNIVERSITY DOOR (the audit of 6 October 2026; the researcher's "4-Yes"). On a shared computer the
+ * browser reopens the first student's run, or their thank-you page, and the next student had no way to start. When a
+ * browser OPENS with a university run in it, NotYouLink shows whose it is (masked) and offers to start as someone else:
+ * the run is set aside like this (their answers stay on the server; they continue later with their email and age).
+ */
+
+/** The university door's key, partly hidden for a person who may not be its owner: "w•••@my.fit.edu". */
+export function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at < 1) return "•••";
+  return `${email[0]}•••${email.slice(at)}`;
+}
+
+/** The university run this browser holds when the page opens (an email key), or null (none, or a Prolific ID). */
+export function universityRunHeld(): string | null {
+  const key = browserParticipantKey();
+  return key && key.includes("@") && !isProlificKey(key) ? key : null;
 }
 
 /** The key a saved demographic record belongs to: its email (university door) or its Prolific ID. */

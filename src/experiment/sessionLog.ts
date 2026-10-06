@@ -231,6 +231,16 @@ export function markNextLoginAs(how: SessionStart): void {
   }
 }
 
+/** Is there such a note for this load (read without clearing it)? The "Not you?" strip uses it: a page reloaded right
+    after somebody proved who they are does not ask them "Not you?" (since 6 October 2026). */
+export function loginKindNoted(): boolean {
+  try {
+    return localStorage.getItem(LOGIN_KIND_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** Reads that note and clears it, so it can never describe a second load as well. */
 export function consumeLoginKind(): SessionStart | null {
   try {

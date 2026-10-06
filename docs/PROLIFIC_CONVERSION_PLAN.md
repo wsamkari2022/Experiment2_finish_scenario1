@@ -266,7 +266,10 @@ memory.
 2. The four conditions are built and tested.
 3. The conversion (A-G) is built and every check passes.
 4. The study opens from outside the university, on https, from the Prolific link.
-5. The test records are removed from the server database.
+5. The test records are removed from the server database - both doors. **The rule for every test run (both doors,
+   and Prolific's "Preview as participant"): open the study with `?condition=CVR_APA` (or `CVR_Only`, `APA_Only`,
+   `Baseline`) in the address, so the run is never counted for balance** (the audit of 6 October 2026: a Preview through
+   the plain Prolific link would count as a real Prolific participant). Delete or mark every test record before launch.
 6. Fix 1 (the option cards' fit numbers; kept for "just before real participants") is done.
 7. `docs/PREREGISTRATION_FREEZE.md` is final.
 8. The codes and links of both paths are in the server's `.env`; "Preview as participant" reached the end and went

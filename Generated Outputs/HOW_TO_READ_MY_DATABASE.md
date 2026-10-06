@@ -1735,7 +1735,11 @@ db.participants.aggregate([
 10. **`lowbuffer` / `highbuffer` are dead names.** If you see them, the data predates 11 Sept 2026.
 11. **Never use `timings` for effort.** It includes idle time. `active_time` is the real one.
 12. **Filter payment analyses on `quality.compensation_eligible`,** and read `quality.reasons`
-    before telling anyone why they did not qualify.
+    before telling anyone why they did not qualify. **University door only.** It is the $5 gift-card rule (35 working
+    minutes and the rest), and it is computed for every record - but for `recruitment_source: "prolific"` it decides
+    NOTHING: Prolific forbids refusing pay for too few minutes or for the researcher's own measures, and Prolific pay is
+    decided by the daily pay check (Step 5 of docs/PROLIFIC_CONVERSION_PLAN.md). Never withhold Prolific pay because this
+    field is false (the audit of 6 October 2026).
 13. **`resume_state` is not data.** If present, the participant is unfinished.
 14. **The two lifted scenarios are copies.** `blocks.block5_scenario_5_wish_on_the_receiving_end`
     and `blocks.block5_scenario_6_veil_of_ignorance` hold the same answers as the rows inside

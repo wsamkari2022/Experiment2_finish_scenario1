@@ -215,6 +215,10 @@ SECTIONS = [
          "when the server starts; tested on a copy with today's rule (every record kept). Without the swap the server could "
          "not start on such a database, which is why the swap is there. Back up the database before that deploy.",
          ["session", "load"], "(C13, L6)"),
+        ("A second student on a shared computer can start (\"Not you?\").",
+         "Since 6 October 2026 (your 4-Yes). When the university door opens with somebody's run in the browser, a small note "
+         "says \"This study is open for w•••@my.fit.edu. Not you?\" (the email partly hidden); after a confirmation the "
+         "browser forgets that run (it stays on the server) and the study starts afresh. Checked live.", ["session"], "(C14)"),
         ("The live landing page never gives a random condition.",
          "It asks the server up to four times with the same arrival id; if the server cannot be reached it says \"We could "
          "not reach the study\" with \"Try again\", which keeps the arrival id, so nobody is counted twice. Checked live with "
@@ -461,11 +465,12 @@ OPEN = [
      "Step 0 (many people at once) and Step 1 (the two doors and the Prolific ID). Still to build: steps 2-5 in "
      "docs/PROLIFIC_CONVERSION_PLAN.md section 1b (the Prolific door still shows the university consent page). Deploy "
      "after Step 4, with a database backup first (your 3-A).", "Before Prolific"),
-    ("A second student on a shared computer (the university door)",
-     "Found on 6 October 2026, not changed: on a shared lab computer the browser reopens the first student's run, or their "
-     "thank-you page, so a second student cannot start there. A private window (or their own device) works. A \"Not you? "
-     "Start as someone else\" button is your decision. (The Prolific door handles this: a different Prolific ID in the "
-     "link starts fresh.)", "Your choice"),
+    ("Anybody who knows a key can download that person's whole record (audit F2)",
+     "Found in the audit of 6 October 2026, older than the two doors: /api/participants/lookup returns the whole record "
+     "(every answer, and the age) to anyone who knows a participant's email or Prolific ID, so the \"email and age\" check "
+     "is weaker than it looks. Your 2-A: fix it as the next step, before Step 2 - the start page would learn only \"new, "
+     "unfinished or finished\", the server would check the age itself, and answers would come down only after that.",
+     "Before launch, next"),
     ("Fix 1, the very last fix before launch",
      "Done for Baseline on 3 October 2026; conditions 1-3 still wait. The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
      "page compares the wish with \"what you said matters most\", and the intro page says \"Each option will show you "
@@ -476,7 +481,8 @@ OPEN = [
     ("The test records in the remote database",
      "The database holds test runs, and a record carries no stamp of the code version. Decide before launch whether "
      "to delete them or mark them. When analysing, always filter on status \"Study Completed\" and date records by "
-     "completed_at.", "Before launch"),
+     "completed_at. The rule for every test run, both doors and Prolific's \"Preview as participant\": add "
+     "?condition=CVR_APA (or CVR_Only, APA_Only, Baseline) to the address, so it is never counted for balance.", "Before launch"),
     ("One full click-through on the remote server",
      "A fresh email, on a computer and on a phone, from consent to the thank-you page.", "Before launch"),
     ("Look at the gift-card verdict on one real record",

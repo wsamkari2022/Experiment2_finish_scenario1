@@ -604,7 +604,10 @@ export async function connectLate(backend: RemoteBackend, email: string | null):
     queue(item);
     retrySoon();
   }
-  if (email && entry?.status === "Study Completed") sendOrQueue({ op: "markCompleted", email });
+  /* Read AGAIN, after the wait: somebody who finished while the record was on its way is finished now (the audit of
+     6 October 2026; the entry read before the wait still said "not completed"). */
+  const now = email ? lookupByEmail(email) : null;
+  if (email && now?.status === "Study Completed") sendOrQueue({ op: "markCompleted", email });
 }
 
 /**

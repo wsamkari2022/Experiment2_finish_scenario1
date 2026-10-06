@@ -41,7 +41,12 @@
  *       API client sends it as prolificPid and the server stores it as prolific_pid with the door and Prolific's two
  *       ids; every queued save goes to the owner it was made for; a different Prolific ID in the link sets the other
  *       person's run aside and keeps the machine's files; the Prolific first page (the same welcome, the ID, no email,
- *       no question on a return); "A little about you" with four questions; the two database rules, swapped safely
+ *       no question on a return); "A little about you" with four questions; the two database rules, swapped safely;
+ *       and (the audit of 6 October 2026) a resumed person keeps their door, the first page uses the ID the browser
+ *       knows, and an unowned condition from the other door is dropped either way
+ *   C14 (the audit of 6 October 2026; the researcher's "4-Yes") "Not you?" on the university door: shown only when the
+ *       page opens with a university run, the email partly hidden, gone once the person moves on, a confirmation first,
+ *       then the run set aside (the machine's files kept) and the university door opened afresh
  *
  * Run:  npm run validate:session
  */
@@ -494,6 +499,14 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     await wait(40);
     if (!/^record sent done@example\.com \S+ \| record landed \| completed$/.test(log.join(" | "))) why.push(`a finished run sent: ${log.join(" | ")}`);
 
+    /* 3b. (the audit of 6 October 2026) Somebody who finishes WHILE the record is on its way: the completion still goes. */
+    offline("justdone@example.com", "feedback");
+    const joining = storage.connectLate(lateServer, "justdone@example.com");
+    storage.saveCompletion("justdone@example.com");
+    await joining;
+    await wait(40);
+    if (!log.includes("completed")) why.push(`a completion made during the late connection was not sent: ${log.join(" | ")}`);
+
     /* 4. Another browser holds the record: the page locks and nothing else is sent. */
     offline("other@example.com", "block1");
     recordRoute = "another";
@@ -615,7 +628,7 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
     if (!(flow.indexOf("useState(() => makeRoomForAnotherProlificId(window.location.search));") >= 0
         && flow.indexOf("useState(() => makeRoomForAnotherProlificId(") < flow.indexOf("useState<string>(() => getSessionId())"))) why.push("another person's run is not set aside before the page reads anything");
-    need(flow, /if \(door === "prolific"\) \{\s*return \(\s*<ProlificStartScreen\s+params=\{prolificParamsFrom\(window\.location\.search\)\}\s+onNewParticipant=\{onNewParticipant\}\s+onResume=\{onResume\}/, "the Prolific door does not open its own first page");
+    need(flow, /if \(door === "prolific"\) \{[\s\S]{0,500}?const linkParams = prolificParamsFrom\(window\.location\.search\);[\s\S]{0,200}?return \(\s*<ProlificStartScreen\s+params=\{\{ \.\.\.linkParams, pid: linkParams\.pid \?\? knownId \}\}\s+onNewParticipant=\{onNewParticipant\}\s+onResume=\{onResume\}/, "the Prolific door does not open its own first page");
     need(flow, /return <StartScreen onNewParticipant=\{onNewParticipant\} onResume=\{onResume\} \/>;/, "the university door's first page changed");
     need(flow, /askEmail=\{door !== "prolific"\}/, "the Prolific door's demographic page still asks the email");
     need(flow, /prolificPid: key, recruitmentSource: "prolific" as const/, "the Prolific record does not name its key truthfully");
@@ -631,7 +644,13 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     /* Found in the live check (6 October 2026): the page looked a person up before the server was known and called a
        finished person "new"; and an unowned university condition kept a Prolific arrival at the university's door. */
     need(pstart, /void whenServerKnown\(\)\.then\(\(\) => findParticipant\(pid\)\)/, "the Prolific first page looks a person up before it knows whether there is a server");
-    need(flow, /if \(!browserParticipantKey\(\) && file && !file\.owner && file\.recruitmentSource !== "prolific"\s*&& doorFromAddress\(window\.location\.pathname, window\.location\.search\) === "prolific"\) \{\s*try \{\s*localStorage\.removeItem\(CONDITION_KEY\);/, "an unowned condition from the university's door is kept by somebody arriving from Prolific");
+    /* The audit of 6 October 2026: both ways (an unowned Prolific condition is not the next student's either), and the
+       address's own ?condition= goes with it. */
+    need(flow, /if \(!browserParticipantKey\(\) && file && !file\.owner\s*&& \(file\.recruitmentSource \?\? "university"\) !== doorFromAddress\(window\.location\.pathname, window\.location\.search\)\) \{\s*try \{\s*localStorage\.removeItem\(CONDITION_KEY\);\s*\} catch \{ \/\* ignore \*\/ \}\s*clearConditionFromAddress\(\);/, "an unowned condition from the other door is kept (either way), or the address keeps naming it");
+    /* The audit: a resumed Prolific person's condition file keeps their door; the first page uses the ID this browser
+       knows when the link has lost it. */
+    need(flow, /makeConditionFile\(saved, entry\.condition\.source, null, owner, entry\.condition\.assignedAt, keyDoor\(owner\)\)/, "a resumed person's condition file loses their door (major_info_and_scores would say university)");
+    need(flow, /const knownId = isProlificKey\(pendingEmail\) \? pendingEmail : null;[\s\S]{0,200}params=\{\{ \.\.\.linkParams, pid: linkParams\.pid \?\? knownId \}\}/, "a returning Prolific person whose link lost the ID is asked to paste it although the browser knows it");
     need(flow, /: doorFromAddress\(window\.location\.pathname, window\.location\.search\) === "prolific"\s*\? "prolific"\s*: readConditionFile\(\)\?\.recruitmentSource \?\? "university";/, "the address does not decide the door before the condition file");
     /* 7. The database rule: one email, one Prolific ID, each on the records that have it; the old rule replaced first. */
     const db = src("server/db.js");
@@ -645,6 +664,44 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     need(server, /\.\.\.prolificIdsFrom\(body\),/, "the Prolific ids are not saved");
     gate("C13", why.length === 0, why.length ? why.slice(0, 5).join(" | ")
       : "the two doors: /prolific or a Prolific ID in the link opens the Prolific door; a Prolific ID is never an email (page and server agree), is sent as prolificPid and stored as prolific_pid with the door and Prolific's ids; every save goes to the owner it was made for; a different Prolific ID sets the other person's run aside (the machine's files kept); the Prolific first page has the same welcome, the ID, no email and no question for a return; four questions without the email; the database rules swapped safely");
+  }
+
+  /* ----------------------------------------------------------------------------------------- C14 */
+  {
+    const why = [];
+    const R = B("recruitment.js");
+    /* The email is partly hidden: the next student never sees the first one's full address. */
+    for (const [email, want] of [["waseem@my.fit.edu", "w•••@my.fit.edu"], ["a@b.co", "a•••@b.co"], ["nobody", "•••"]]) {
+      if (R.maskEmail(email) !== want) why.push(`${email} was shown as ${R.maskEmail(email)}`);
+    }
+    /* Only a UNIVERSITY run is offered (an email key); a Prolific ID never (its link already starts fresh). */
+    store.clear();
+    store.set("vrds_pending_email", "ana@my.fit.edu");
+    if (R.universityRunHeld() !== "ana@my.fit.edu") why.push("a university run in the browser is not offered");
+    store.set("vrds_pending_email", "5f8a3c2e9b1d4e6f7a8b9c0d");
+    if (R.universityRunHeld() !== null) why.push("a Prolific run is offered \"Not you?\"");
+    store.clear();
+    if (R.universityRunHeld() !== null) why.push("an empty browser is offered \"Not you?\"");
+    /* Starting as someone else sets the run aside and keeps the machine's files. */
+    const kept = ["vrds_local_participants", "vrds_outbox", "vrds_browser_id", "theme"];
+    const run = ["vrds_pending_email", "vrds_demographics", "experiment_flow_stage", "vrds_session_id", "vrds_condition", "vrds_status", "vrds_consent"];
+    for (const k of [...kept, ...run]) store.set(k, "x");
+    R.setAsideThisBrowsersRun();
+    if (run.some((k) => store.has(k)) || kept.some((k) => !store.has(k))) why.push(`after "Start as someone else": ${[...store.keys()].join(", ")}`);
+    store.clear();
+    /* The note, from the source: read when the page opens, gone when the person moves on or closes it, a confirmation
+       before anything is forgotten, then the plain university address; drawn on every page (App). */
+    const note = src("src/experiment/NotYouLink.tsx");
+    const need = (re, what) => { if (!re.test(note)) why.push(what); };
+    need(/const \[held\] = useState\(\(\) => \(loginKindNoted\(\) \? null : universityRunHeld\(\)\)\);/, "the note is not decided when the page opens, or asks \"Not you?\" right after somebody proved who they are");
+    need(/if \(readStage\(\) !== openedOn\) setHidden\(true\);/, "the note stays after the person moved on");
+    need(/\{maskEmail\(held\)\}/, "the note shows the full email");
+    need(/onClick=\{\(\) => setConfirming\(true\)\}/, "\"Not you?\" forgets the run without asking first");
+    need(/setAsideThisBrowsersRun\(\);\s*window\.location\.assign\(`\$\{window\.location\.origin\}\/`\);/, "starting as someone else does not set the run aside and open the university door afresh");
+    if (/[\w.-]+@[\w-]+\.\w{2,}/.test(note.replace(/w•••@my\.fit\.edu/g, ""))) why.push("the note carries a real email address");
+    if (!/<NotYouLink \/>/.test(src("src/App.tsx"))) why.push("the note is not on the page");
+    gate("C14", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : "\"Not you?\" on the university door: shown only when the page opens with a university run (never a Prolific one), the email partly hidden, gone once the person moves on or closes it, a confirmation first, then the run set aside (the machine's files kept) and the university door opened afresh");
   }
 
   console.log("");

@@ -562,9 +562,29 @@ after Step 4, with a database backup first). **Participants see it** (HOW_TO_ANA
   owner)`); a second person on a shared computer would have reused the first one's session id, refused by the unique
   `participant_id` rule - a DIFFERENT Prolific ID in the link now sets the other person's run aside before the page reads
   anything (`makeRoomForAnotherProlificId`; the machine's files, the list of people and the unsent saves stay).
-- **Noticed, not changed (an open item):** the university door has no way for a SECOND student on a shared computer to
-  start - the browser reopens the first student's run or thank-you page. A private window works; a "Not you?" button is
-  a decision for the researcher.
+- **"Not you?" on the university door** (the audit, the researcher's "4-Yes"; `NotYouLink.tsx` in App): on a shared
+  computer the browser reopened the first student's run or thank-you page and a second student could not start. When the
+  page OPENS with a university run in the browser, a thin strip at the top (above the progress bar, so it covers
+  nothing; floating at the bottom it covered Block 1's first button in the live check) says "This study is open for
+  w•••@my.fit.edu. Not you?" (`maskEmail`); it goes once the person moves to another page (the stage changes) or with ×.
+  "Not you?" asks to confirm, then `setAsideThisBrowsersRun()` (the rule a different Prolific ID uses: the machine's files,
+  the list of people and the unsent saves stay) and the plain university address opens afresh; the first student
+  continues later with their email and age. Not shown on the page that reloads right after somebody proved who they are
+  (`loginKindNoted()`, read before the flow clears it). Never in the Prolific door. Nothing recorded.
+- **The audit of 6 October 2026** (the researcher: "fully audit your work ... from several perspectives"): seven findings,
+  answers "1-Yes, 2-A, 3-Yes, 4-Yes". Fixed: a resumed Prolific person's condition file lost its door (F1; the record was
+  right, `major_info_and_scores.condition` said "university"); `quality.compensation_eligible` is documented as the
+  university gift-card rule, never a Prolific pay verdict (F3); the Prolific first page uses the ID the browser knows when
+  the link lost it (F4); `connectLate` reads the entry again after its wait, so a completion made meanwhile is sent (F5);
+  an unowned condition from the other door is dropped either way and the address forgets it (F6); every test run, also
+  Prolific's Preview, uses `?condition=` and test records are deleted before launch (F7, the launch list). **F2 is the
+  next step:** `/api/participants/lookup` returns the WHOLE record (answers, age) to anyone who knows a key, so "email and
+  age" is weaker than it looks and a Prolific ID alone opens a record; older than the doors. C12 and C13 extended, C14 new;
+  12 breaks, 12 caught. Live: the doors both ways, "Not you?" (start afresh, the first student's record intact, a new
+  session id, the first student back in with email and age), the strip gone on moving on, a resumed Prolific person's
+  condition file "prolific", a link without the ID recognised; three found and fixed in that check: the floating note
+  covered Block 1's first button (now a strip above the progress bar), it asked "Not you?" right after a sign-in, and a
+  phone broke the masked email mid-word.
 - **Not yet (Steps 2-5):** the Prolific consent page (the door still shows the university's, with the gift card), the
   second number row, the end page with the code and "Return to Prolific", the daily pay check. The visit log says
   `arrived_with_their_prolific_id` in the Prolific door. `SHAPE_VERSION` "2026-10-06-two-doors"

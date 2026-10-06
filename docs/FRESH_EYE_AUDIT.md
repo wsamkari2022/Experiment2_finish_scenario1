@@ -2038,3 +2038,14 @@ thesis says so.
   Prolific arrival at the university's door. C13 and N25 new, L5 and L6 in the load test; 17 breaks, 17 caught.
   Noticed, not changed: on a SHARED computer the university door has no way for a second student to start (the browser
   reopens the first one's run or thank-you page) - open item in the accuracy checklist.
+- **2026-10-06. The audit of Steps 0 and 1** (Waseem: "fully audit your work ... from several perspectives"). Seven
+  findings; his answers "1-Yes, 2-A, 3-Yes, 4-Yes". Fixed: F1 a resumed Prolific person's condition file lost its door
+  (major_info_and_scores said "university"); F3 `quality.compensation_eligible` documented as the university gift-card
+  rule, never a Prolific pay verdict; F4 the Prolific first page uses the ID the browser knows when the link lost it; F5
+  a completion made during a late connection is now sent; F6 an unowned condition from the other door is dropped either
+  way (and the address forgets it); F7 the test-run rule (`?condition=`, also for Prolific's Preview) in the launch list.
+  And "Not you?" on the university door for shared lab computers. C12, C13 extended, C14 new; 12 breaks, 12 caught.
+  The live check found three more in the new note, fixed: floating at the bottom it covered Block 1's first button (now
+  a strip above the progress bar), it asked "Not you?" right after a sign-in, and a phone broke the email mid-word.
+  F2 (any key opens the whole record through /api/participants/lookup; older than the doors) is the next step, planned
+  before Step 2.
