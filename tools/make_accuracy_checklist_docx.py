@@ -201,7 +201,8 @@ SECTIONS = [
          "400 pretend people arriving in bursts of 100, 100 and 200 in the same instant: 17,600 requests, none failed, every "
          "person saved with their own session id, exactly 25 per condition in every 100. The server now serves a crowd from one "
          "reading of the database: the slowest wait for a condition fell from 4.8 seconds to 0.14 (before, a third of each "
-         "burst waited past the page's 3 seconds and got an uncounted random condition).", ["conditions", "load"], "(N22, L1-L4)"),
+         "burst waited past the page's 3 seconds and got an uncounted random condition). Every person is counted exactly once "
+         "while their record is being made (a burst could end 26 / 24 before).", ["conditions", "load"], "(N22, N24, L1-L4)"),
         ("The live landing page never gives a random condition.",
          "It asks the server up to four times with the same arrival id; if the server cannot be reached it says \"We could "
          "not reach the study\" with \"Try again\", which keeps the arrival id, so nobody is counted twice. Checked live with "

@@ -53,13 +53,20 @@ export const conditionByType = (t) => CONDITIONS.find((c) => c.type === t) ?? nu
 
 /**
  * The counts, worked out from plain lists so the rule can be checked without a database.
- *   docs:     participant documents { condition_type, condition_source, status, updated_at }
- *   arrivals: landing-page arrivals { condition_type, assigned_at, linked_email, released }
+ *   docs:     participant documents { condition_type, condition_source, status, updated_at, condition_arrival_id }
+ *   arrivals: landing-page arrivals { arrival_id, condition_type, assigned_at, linked_email, released }
  * Returns, per condition type: { finished, working, arriving, counted }.
+ *
+ * EVERY PERSON ONCE (since 6 October 2026). A person moves from "just arrived" to "working" in two writes - the
+ * condition on their record, then the arrival marked as linked - and a count read between the two saw them twice (or,
+ * with the two collections read in the other order, not at all): in a burst of 100 the conditions could end 26 / 24.
+ * The record now carries its arrival id (condition_arrival_id, written WITH the condition), an arrival already on a
+ * record is never counted, and the turn reads the arrivals before the records, so every order of events counts once.
  */
 export function tally(docs, arrivals, now = Date.now()) {
   const workingSince = new Date(now - WORKING_WINDOW_MS).toISOString();
   const arrivedSince = new Date(now - ARRIVAL_WINDOW_MS).toISOString();
+  const onARecord = new Set((docs ?? []).map((d) => d?.condition_arrival_id).filter(Boolean));
   const out = {};
   for (const c of CONDITIONS) out[c.type] = { finished: 0, working: 0, arriving: 0, counted: 0 };
   for (const d of docs ?? []) {
@@ -70,7 +77,7 @@ export function tally(docs, arrivals, now = Date.now()) {
   }
   for (const a of arrivals ?? []) {
     const row = out[a?.condition_type];
-    if (!row || a.linked_email || a.released) continue;
+    if (!row || a.linked_email || a.released || onARecord.has(a.arrival_id)) continue;
     if (typeof a.assigned_at === "string" && a.assigned_at >= arrivedSince) row.arriving += 1;
   }
   for (const row of Object.values(out)) row.counted = row.finished + row.working + row.arriving;
@@ -149,10 +156,9 @@ async function serveTurn(group, store) {
   const fresh = ids.filter((id) => !found.has(id));
   if (fresh.length > 0) {
     const at = group[0].now();
-    const [docs, arrivals] = await Promise.all([
-      store.loadDocs(),
-      store.loadArrivals(new Date(at - ARRIVAL_WINDOW_MS).toISOString()),
-    ]);
+    /* Arrivals FIRST, then the records (see tally): never the two at once. */
+    const arrivals = await store.loadArrivals(new Date(at - ARRIVAL_WINDOW_MS).toISOString());
+    const docs = await store.loadDocs();
     const assignedAt = new Date(at).toISOString();
     for (const id of fresh) {
       const person = group.find((p) => p.arrivalId === id);
@@ -200,11 +206,15 @@ export function conditionFieldsFrom(body) {
   const c = conditionByNumber(sent.number);
   if (!c || c.type !== sent.type || !SOURCES.includes(sent.source)) return null;
   const assignedAt = typeof sent.assignedAt === "string" && sent.assignedAt ? sent.assignedAt.slice(0, 40) : null;
+  /* The landing page's arrival, written WITH the condition so a count never sees this person twice (tally). */
+  const arrivalId = sent.source === COUNTED_SOURCE && typeof sent.arrivalId === "string" && ARRIVAL_ID.test(sent.arrivalId)
+    ? sent.arrivalId : null;
   return {
     condition_number: c.number,
     condition_type: c.type,
     condition_source: sent.source,
     condition_assigned_at: assignedAt,
+    ...(arrivalId ? { condition_arrival_id: arrivalId } : {}),
   };
 }
 
@@ -219,7 +229,7 @@ export function mongoStore(participantsCollection, arrivalsCollection) {
     insertArrivals: (rows) => arrivalsCollection.insertMany(rows.map((row) => ({ ...row })), { ordered: true }),
     loadDocs: () => participantsCollection
       .find({ condition_type: { $exists: true } },
-        { projection: { _id: 0, condition_type: 1, condition_source: 1, status: 1, updated_at: 1 } })
+        { projection: { _id: 0, condition_type: 1, condition_source: 1, status: 1, updated_at: 1, condition_arrival_id: 1 } })
       .toArray(),
     loadArrivals: (sinceIso) => arrivalsCollection
       .find({ linked_email: null, released: { $ne: true }, assigned_at: { $gte: sinceIso } }, { projection: { _id: 0 } })
@@ -231,9 +241,9 @@ export function mongoStore(participantsCollection, arrivalsCollection) {
 /** Everything the count page shows: the counted numbers, plus every condition ever given, by source. */
 export async function countReport(participantsCollection, arrivalsCollection, now = Date.now()) {
   const store = mongoStore(participantsCollection, arrivalsCollection);
-  const [docs, arrivals, everyone] = await Promise.all([
+  const arrivals = await store.loadArrivals(new Date(now - ARRIVAL_WINDOW_MS).toISOString());
+  const [docs, everyone] = await Promise.all([
     store.loadDocs(),
-    store.loadArrivals(new Date(now - ARRIVAL_WINDOW_MS).toISOString()),
     participantsCollection
       .find({ condition_type: { $exists: true } }, { projection: { _id: 0, condition_type: 1, condition_source: 1, status: 1 } })
       .toArray(),

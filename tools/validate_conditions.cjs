@@ -86,6 +86,10 @@
  *   N23 the landing page asks up to four times (after 1, 2 and 4 seconds) with the same arrival id, a refusal only
  *       once; on the live site it never picks at random: it says the study could not be reached and offers "Try
  *       again", keeping the arrival id; after 8 seconds a line says it can take a few more seconds
+ *   N24 every person counted ONCE while their record is being made (the record's condition and the arrival's link are
+ *       two writes; a count read between them saw the person twice or not at all, and a burst could end 26 / 24 -
+ *       found when the load test ran on a busy machine): the record keeps its arrival id, a turn reads the arrivals
+ *       before the records, and in all six orders of the two writes and the two readings the person counts once
  *
  * Run:  npm run validate:conditions
  */
@@ -1075,6 +1079,52 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(/This can take a few more seconds\./, "no line for a slow answer");
     if (/\{[^}]*\.(type|urlName)\}/.test(landing.split("return (").slice(1).join(""))) why.push("the landing page shows the condition's name");
     gate("N23", "the landing page asks up to four times with the same arrival id (a refusal once); live it never picks at random, offers \"Try again\" and keeps the arrival id; a slow line after 8 seconds", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N24 */
+  {
+    const why = [];
+    const now = Date.parse("2026-10-06T12:00:00Z");
+    const ago = (min) => new Date(now - min * 60000).toISOString();
+    /* Between the two writes: the record has the condition and its arrival id, the arrival is not linked yet. */
+    const doc = { condition_type: "APA_Only", condition_source: "landing_page", status: "Study Not Completed", updated_at: ago(1), condition_arrival_id: "arrival-between-1" };
+    const arr = { arrival_id: "arrival-between-1", condition_type: "APA_Only", assigned_at: ago(1), linked_email: null, released: false };
+    if (S.tally([doc], [arr], now).APA_Only.counted !== 1) why.push(`a person between the two writes counted ${S.tally([doc], [arr], now).APA_Only.counted} times`);
+    /* An older record without the id still counts its linked arrival once, as before. */
+    const { condition_arrival_id: _drop, ...older } = doc;
+    if (S.tally([older], [{ ...arr, linked_email: "x@y.z" }], now).APA_Only.counted !== 1) why.push("an older record was not counted once");
+    /* The record keeps the arrival id: only from the landing page, only a well-formed one. */
+    const f = (cond) => S.conditionFieldsFrom({ condition: cond }) ?? {};
+    if (f({ number: 3, type: "APA_Only", source: "landing_page", arrivalId: "arrival-between-1" }).condition_arrival_id !== "arrival-between-1") why.push("the record does not keep its arrival id");
+    if ("condition_arrival_id" in f({ number: 3, type: "APA_Only", source: "address", arrivalId: "arrival-between-1" })) why.push("a tester's condition kept an arrival id");
+    if ("condition_arrival_id" in f({ number: 3, type: "APA_Only", source: "landing_page", arrivalId: "$bad id!" })) why.push("a malformed arrival id was kept");
+    /* Every order of the record's two writes (W1 the condition with its arrival id, W2 the arrival linked) around a
+       turn's two readings (R1 the arrivals, R2 the records): the person being saved is counted exactly once. */
+    for (const order of ["W1 W2 R1 R2", "W1 R1 W2 R2", "W1 R1 R2 W2", "R1 W1 W2 R2", "R1 W1 R2 W2", "R1 R2 W1 W2"]) {
+      const docs = [];
+      const arrivals = [{ arrival_id: "p-arrival-1", condition_type: "APA_Only", assigned_at: new Date().toISOString(), linked_email: null, released: false }];
+      const steps = order.split(" ");
+      const write = (from, to) => {
+        for (const step of steps.slice(from, to)) {
+          if (step === "W1") docs.push({ condition_type: "APA_Only", condition_source: "landing_page", status: "Study Not Completed", updated_at: new Date().toISOString(), condition_arrival_id: "p-arrival-1" });
+          if (step === "W2") arrivals[0].linked_email = "p@example.com";
+        }
+      };
+      const r1 = steps.indexOf("R1");
+      const r2 = steps.indexOf("R2");
+      const store = {
+        findArrival: async () => null,
+        loadArrivals: async () => { write(0, r1); return arrivals.map((a) => ({ ...a })); },
+        loadDocs: async () => { write(r1 + 1, r2); const snap = docs.map((d) => ({ ...d })); write(r2 + 1, steps.length); return snap; },
+        insertArrival: async () => {},
+      };
+      const got = await S.assignCondition({ arrivalId: `q-${steps.join("")}`, store });
+      if (got.counts?.APA_Only?.counted !== 1) why.push(`${order}: the person being saved was counted ${got.counts?.APA_Only?.counted} times`);
+    }
+    const server = src("server/conditions.js");
+    if (!/const arrivals = await store\.loadArrivals\(.*\);\s*const docs = await store\.loadDocs\(\);/.test(server)) why.push("a turn does not read the arrivals before the records");
+    if (!/condition_arrival_id: 1 \}/.test(server)) why.push("the store does not read each record's arrival id");
+    gate("N24", "every person counted once while their record is being made: the record keeps its arrival id, a turn reads arrivals then records, all six orders of events count once", why);
   }
 
   const failed = results.filter((r) => !r.ok);
