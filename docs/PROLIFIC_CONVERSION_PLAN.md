@@ -1,4 +1,8 @@
-# Prolific conversion plan (written 1 October 2026, NOT built)
+# Prolific conversion plan (written 1 October 2026, revised 6 October 2026; Step 0 built, the rest NOT built)
+
+> **6 October 2026: read section 1b first.** The researcher decided on TWO versions on one website (the email version
+> stays for FIT students and employees), NO pilot, and "Manually review" for every Prolific submission with a daily pay
+> check. Where the sections below still speak of a pilot, two completion paths or one version, section 1b wins.
 
 For Waseem, and for the Claude session that will build it later. Nothing in this file has been built. The study
 code stayed exactly as it was on 1 October 2026 (commit 7453ae9 and the docs commit that added this file).
@@ -38,6 +42,25 @@ against the code as it is then, because the four conditions will have added code
 - Code stays as it is until he asks for the conversion.
 
 ---
+
+## 1b. The decisions of 6 October 2026 (the researcher, after his advisor)
+
+| Question | Answer | What it means for the build |
+|---|---|---|
+| Two versions? | **Yes, "1-A": one website, two doors** | https://moonlander.fit.edu stays the email version exactly as it is (FIT students and employees, the $5 gift card, may come back another day); https://moonlander.fit.edu/prolific is the Prolific version (the Prolific ID from the link, no email). One server, one database; each record saves which door (`recruitment_source`: "university" / "prolific"). Every fix is made once |
+| Condition balance | **"2-A": each group on its own** | The landing page's count is done per `recruitment_source`, so 20 students land 5 / 5 / 5 / 5 even while Prolific fills fast |
+| Attention checks | **"3-B": the second "pick the number" row in the Prolific version only** | The university version keeps exactly today's three checks and its gift-card rule; the Prolific version adds a second number row (Prolific needs two failed valid checks before a rejection) |
+| Prolific demographic page | **"4-A": remove only the email** | Age, gender, "Where are you from?" and the English question stay |
+| `.gitignore` | **"5-yes"** | Done 6 October 2026: `Prolific docs/` is ignored (the code, and from launch the daily exports with emails) |
+| First Prolific batch | **"6-40"** | Open 40 places (about 10 per condition), check the data the next morning, then add the rest |
+| Pilot | **None** (budget) | Every participant's data is kept. Instead: Preview-as-participant runs, colleagues through the university door, and the first batch of 40 read before the rest opens |
+| Payment | **Every Prolific submission "Manually review"** | ONE completion code (the one Waseem has), action "Manually review", kept in the server's `.env` and shown by the server only after a saved completion. No automatic "Approve and pay" |
+| Daily pay check | **Claude, from exported files** | Every day Waseem exports the `participants` collection from Compass (JSON) and Prolific's submissions file (CSV) into `Prolific docs/daily/<date>/`; a tool (to build) sorts every Prolific ID into Pay / Look first / Not finished / Problem by Prolific's valid reasons only, with one comma-separated line for Prolific's bulk approve. Claude never holds the server's database password |
+| Many people at once | **Step 0, built 6 October 2026** | CLAUDE.md "Many people at once": grouped condition turns, a patient landing page that never picks at random on the live site, a live page that keeps looking for the server; `npm run test:load` |
+
+**Build order (one step at a time):** Step 0 (done) -> 1 the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 the Prolific consent page and the demographic page without the email -> 3 the second number row (Prolific only) -> 4 the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
+
+**Prolific's rules re-read 6 October 2026, unchanged:** at least $8 an hour ($12 recommended); two failed valid checks before a rejection in a study over 5 minutes; memory-recall checks are not valid; "too slow", the researcher's own measures and a wrong or missing code are not valid reasons; submissions not reviewed are approved automatically on day 21; a completion code can approve automatically (not used here); bulk approval takes a list of Prolific IDs.
 
 ## 2. Prolific's rules this plan rests on (read 1 October 2026)
 

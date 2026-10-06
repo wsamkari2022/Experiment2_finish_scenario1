@@ -136,17 +136,46 @@ export function noRemoteBackend(): void {
   remoteKnown();
 }
 
+const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/*
+ * HOW PATIENTLY THE PAGE LOOKS FOR THE SERVER (since 6 October 2026, the advisor's "multiple sessions safe").
+ * ExperimentFlow asks /api/health when the page opens. In development it asks once, as before: the researcher often
+ * tests without the server. On the live site one missed answer (a hiccup, a busy moment, the server restarting) used
+ * to leave the whole session in the browser only - nothing reached the database, and a paid participant could finish
+ * with no data. Now it asks again after 1, 2 and 4 seconds, then lets the landing page stop waiting, and goes on
+ * asking every 15 seconds until the server answers (then catchUpAfterLateStart sends what was missed).
+ */
+export function serverCheckPlan(live: boolean): { pausesMs: readonly number[]; thenEveryMs: number | null } {
+  return live ? { pausesMs: [1000, 2000, 4000], thenEveryMs: 15_000 } : { pausesMs: [], thenEveryMs: null };
+}
+
+/** The pauses before the landing page asks for a condition again (since 6 October 2026). */
+export const CONDITION_RETRY_PAUSES_MS: readonly number[] = [1000, 2000, 4000];
+
 /**
  * The landing page's question: which condition does this arrival get? Null when there is no server, or it did not
- * answer; the page then picks at random and says so in the file (conditions.ts, source "random_offline").
+ * answer; in development the page then picks at random and says so in the file (conditions.ts, "random_offline");
+ * on the live site it never does (LandingPage.tsx).
+ *
+ * ASKED UP TO FOUR TIMES (since 6 October 2026). One unanswered question used to mean a random, uncounted condition.
+ * Now a question that fails (no answer in time, the server busy or restarting) is asked again after 1, 2 and 4
+ * seconds, always with the SAME arrival id, so the server gives the answer it may already have made and nobody is
+ * counted twice. A refusal (4xx) is final: asking again cannot change it. With no server at all: null at once.
  */
-export async function requestCondition(arrivalId: string, waitMs = 6000): Promise<AssignedCondition | null> {
-  await Promise.race([remoteKnownPromise, new Promise((resolve) => setTimeout(resolve, waitMs))]);
-  if (!remote?.assignCondition) return null;
-  try {
-    return await remote.assignCondition(arrivalId);
-  } catch {
-    return null;
+export async function requestCondition(
+  arrivalId: string,
+  { waitMs = 6000, pausesMs = CONDITION_RETRY_PAUSES_MS }: { waitMs?: number; pausesMs?: readonly number[] } = {},
+): Promise<AssignedCondition | null> {
+  await Promise.race([remoteKnownPromise, pause(waitMs)]);
+  for (let attempt = 0; ; attempt += 1) {
+    if (!remote?.assignCondition) return null;
+    try {
+      return await remote.assignCondition(arrivalId);
+    } catch (error) {
+      if (isRefusal(error) || attempt >= pausesMs.length) return null;
+      await pause(pausesMs[attempt]);
+    }
   }
 }
 
@@ -349,15 +378,20 @@ export function flushOutbox(): Promise<void> {
     flushAgain = true;
     return flushing;
   }
+  let stopped = false;
   flushing = (async () => {
     do {
       flushAgain = false;
       for (let head = readOutbox()[0]; head; head = readOutbox()[0]) {
         const result = await send(head);
-        if (result === "retry") return;
+        if (result === "retry") {
+          stopped = true;
+          return;
+        }
         if (result === "locked") {
           /* Another browser holds the record: nothing here may be sent any more. */
           setOutboxAside();
+          stopped = true;
           return;
         }
         /* "sent" and "refused" both leave the queue; only one of them reached the database. */
@@ -366,6 +400,17 @@ export function flushOutbox(): Promise<void> {
     } while (flushAgain);
   })().finally(() => {
     flushing = null;
+    /*
+     * A REQUEST THAT CAME TOO LATE FOR THE LOOP (found 6 October 2026 by validate:session C12). The loop's last
+     * look at the queue and this line are a moment apart, and a save made in that moment was queued, asked for a
+     * flush, found this one still "running" and was left for the 15-second retry. It happened on EVERY page
+     * opening: the server is switched on (a flush starts and finds nothing) and the first syncs follow at once.
+     * Nothing was lost - the queue lives in the browser - but it arrived 15 seconds late. Now it goes round again.
+     */
+    if (flushAgain && !stopped) {
+      flushAgain = false;
+      void flushOutbox();
+    }
   });
   return flushing;
 }
@@ -493,6 +538,39 @@ export function syncResumeState(email: string | null): void {
     path: "resume_state",
     data: { files, updated_at: new Date().toISOString() },
   });
+}
+
+/**
+ * THE SERVER ANSWERED LATE (since 6 October 2026; see serverCheckPlan). While there was no server nothing was sent
+ * or queued, so the server may never have heard of this participant - and a block sent now would land on no record
+ * (the section route updates a record, it never creates one, and answers "ok" all the same). So the record is sent
+ * FIRST, and the backend is installed only once it has landed: until then no other save of this page can be sent
+ * ahead of it. The stage travels with the record; the completion follows if the study is already finished. The caller
+ * sends the blocks and the resume copy afterwards. A record the server could not take is the first thing in the
+ * queue, so everything after it waits behind it, in order.
+ */
+export async function connectLate(backend: RemoteBackend, email: string | null): Promise<void> {
+  const entry = email ? lookupByEmail(email) : null;
+  const item: OutboxItem | null = entry ? { op: "upsertParticipant", entry } : null;
+  let outcome: SendResult = "sent";
+  if (item) {
+    try {
+      await backend.upsertParticipant(item.entry);
+    } catch (error) {
+      outcome = isAnotherBrowser(error) ? "locked" : isRefusal(error) ? "refused" : "retry";
+      if (outcome === "refused") park(item, error);
+    }
+  }
+  setRemoteBackend(backend);
+  if (outcome === "locked") {
+    onLocked?.();
+    return;
+  }
+  if (outcome === "retry" && item) {
+    queue(item);
+    retrySoon();
+  }
+  if (email && entry?.status === "Study Completed") sendOrQueue({ op: "markCompleted", email });
 }
 
 /**

@@ -38,6 +38,7 @@
     "validate:attention": "node tools/validate_attention.cjs",
     "validate:conditions": "node tools/validate_conditions.cjs",
     "validate:visits": "node tools/simulate_visits.cjs",
+    "test:load": "node tools/load_test.mjs",
     "validate:resume": "node tools/validate_resume.mjs",
     "validate:mcf": "tsc -p tools/tsconfig.sim.json && node tools/validate_mcf.cjs",
     "report:planner": "node tools/planner_vs_weighting.cjs",

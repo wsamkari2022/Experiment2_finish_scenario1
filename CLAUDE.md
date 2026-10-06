@@ -48,12 +48,15 @@ Plan answers "Q1-B, Q2-yes, Q3-yes". **Participants see it** (a one-second landi
   (`server/conditions.js`). **Who counts ("Q1-B"):** finished, plus still working (the record changed in the last 2
   hours, `updated_at`), plus just arrived (given in the last 30 minutes, not yet at the demographic page, where the
   record is first made). A drop-out stops counting after 2 hours, so the finished numbers come out equal. **One at a
-  time**: assignments run through `serially`, so two people in the same second never both get the same one. The
-  arrival id is saved before the request, so a refresh asks for the same arrival (`condition_arrivals`, unique).
+  time**: assignments take turns, so two people in the same second never both get the same one (since 6 October 2026
+  everybody waiting when a turn starts is served from ONE reading of the database, still one after another; see "Many
+  people at once" below). The arrival id is saved before the request, so a refresh asks for the same arrival
+  (`condition_arrivals`, unique).
 - **The address shows it** (`?condition=CVR_APA`, `CVR_Only`, `APA_Only`, `Baseline`; "+" would read as a space),
   always the SAVED condition: an address naming another one is corrected. **A tester may open a condition's address
   directly ("Q2-yes")**: saved with source `address` and never counted. No server: a random one, source
-  `random_offline`, never counted. Participants never see their condition on the page.
+  `random_offline`, never counted - **in development only since 6 October 2026**; the live site never picks at random
+  (it offers "Try again"). Participants never see their condition on the page.
 - **Saved once, never changed.** The browser file `vrds_condition` (with `owner`, the email once known); the server sets
   `condition_number`, `condition_type`, `condition_source`, `condition_assigned_at` on the participant document only
   when it has none (`condition_type: { $exists: false }`), and links the landing page's arrival. A returning participant
@@ -464,7 +467,69 @@ restarts at scenario 1, wrong since 29 September), Block5SimulationSummaryPage.t
 conditions; HOW_TO_ANALYZE_MY_DATA.md has a new section 9 (the four conditions in full); HOW_TO_READ_MY_DATABASE.md "The
 four-condition audit".
 
+## Many people at once ("multiple sessions safe"), since 6 October 2026
+
+The researcher's advisor: what if 100 people enter at once - does each get a unique session id, and does the server
+spread them properly over the four conditions? Answered with a LOAD TEST of the real server (production mode, a
+throw-away local database): 400 pretend people in bursts of 100, 100 and 200 arriving in the same instant, each saving
+far more often than a real browser. Before the fix: 0 errors in 17,600 requests, 400 people saved with 400 different
+session ids, exactly 100 per condition - but the condition queue served one person per database reading, so 33 of 100
+(41, 67 of 200) waited longer than the page's 3 seconds, and the page then gave them a RANDOM, UNCOUNTED condition. Plan
+answer "implement Step 0". No score, stored field or screen of a working run changed.
+
+- **F2, the server** (`server/conditions.js`): still one after another, but everybody waiting when a turn starts is
+  served from ONE reading of the counts, each counted with the people before them in that turn (as if already stored),
+  and their arrivals stored in one insert (`findArrivals` / `insertArrivals` on the database store). Same rule, same
+  answers. **Trap found by the load test, not by the checks:** the route builds a new store object per request, so
+  grouping by object served everybody alone; the store now carries a `key` (its collections' names) and turns group by
+  key (`sameStore`). After: the slowest wait for a condition 0.14 s (was 4.8 s).
+- **F1, the landing page** (`LandingPage.tsx`, `requestCondition` in storage.ts): asks up to four times (after 1, 2 and
+  4 seconds) with the SAME arrival id (the server answers what it already made), a refusal (4xx) once; after 8 seconds
+  "This can take a few more seconds."; **on the live site never a random condition**: "We could not reach the study"
+  with "Try again", which reloads the page (the server check starts again at once) and keeps the arrival id.
+  `random_offline` is now development only.
+- **F3, the server check** (`serverCheckPlan` in storage.ts, ExperimentFlow): development asks `/api/health` once, as
+  before; the live site asks again after 1, 2 and 4 seconds, lets the landing page stop waiting, and then asks every 15
+  seconds until the server answers. One missed answer used to keep a whole session out of the database (a paid person
+  with no data). A server that answers LATE is installed by `connectLate`, which sends the participant's record FIRST
+  and installs the backend only once it has landed (the section route updates, never creates, and answers "ok" either
+  way), then the blocks, then the completion of a finished run; a record it cannot send waits first in the queue.
+- **Waiting limits** (apiClient.ts): a request is given up after 10 seconds (was 3; a busy server or a slow line
+  answers late but answers, and a large save on a slow line could be cut off on every retry); the server check 5.
+  A server that is really down still fails at once (the connection is refused, or nginx answers 502).
+- **An older bug, found by C12:** a save made right after a flush had looked at an empty queue was queued, found the
+  flush still "running" and waited for the 15-second retry - on EVERY page opening (switching the server on starts a
+  flush, the first syncs follow at once). Nothing was lost; it arrived 15 s late. `flushOutbox` now goes round again.
+- **`npm run test:load`** (`tools/load_test.mjs`, not in the chain: it needs MongoDB on this computer): starts the real
+  server itself on port 4100 against a database `vrds_load_test_<time>` (deleted at the end, whatever happens), sends
+  the three bursts and checks L1 no request refused or failed, L2 everybody saved with their own session id, every save
+  landed, everybody finished, L3 the conditions exactly even in every burst, L4 nobody waited 3 seconds for a condition.
+  After the fix: 17,600 requests, 0 errors, 25 / 25 / 25 / 25 per 100, slowest condition 0.14 s. Run it after any
+  change to the server or the landing page. The live server is another machine, so Prolific places open in batches too.
+- **Checked:** `validate:conditions` N22 (100 at once = one at a time person by person, from 1 reading instead of 100;
+  repeats in a burst; a new store object per request grouped by key; a failed turn never stops the next) and N23 (the
+  four questions, the refusal, the live page never random, "Try again" keeps the arrival id); `validate:session` C12 (the
+  plan, the late connection's order, the queue race, the 10 s / 5 s limits); 18 deliberate breaks, 18 caught (one only
+  after N22 compared bursts with repeats against one at a time; two for the key). Live, on the built site behind a
+  stand-in for the web server that could be switched to 502: a new visitor got a counted condition; with the server
+  down the page showed "We could not reach the study" after about 7 seconds and saved no condition; "Try again" with the
+  server back gave a counted condition under the same arrival id; a participant who went through the email, consent and
+  demographic pages while the server was down appeared in the database about 13 seconds after it came back, with
+  every answer, the condition and the stage. Throw-away databases dropped; the test browser's own address not used.
+- **Deploying:** restart the server (build-and-run.sh does): the grouped turns are server code.
+
 ## Prolific: planned, not built (since 1 October 2026)
+
+**Decided 6 October 2026** (the researcher, after his advisor): TWO versions on one website - the email version as it
+is for FIT students and employees at https://moonlander.fit.edu, and a Prolific version at
+https://moonlander.fit.edu/prolific ("1-A"); the conditions balanced within each group on its own ("2-A"); the second
+"pick the number" row in the Prolific version only ("3-B"); the Prolific demographic page without the email only
+("4-A"); `Prolific docs/` in .gitignore ("5-yes", done); the first Prolific batch 40 places ("6-40"). **No pilot**
+(budget: every participant's data is kept). **Every Prolific submission is "Manually review"** (one completion code,
+on the server only); every day the researcher exports the participants collection (Compass, JSON) and Prolific's
+submissions file into `Prolific docs/daily/`, and Claude says which Prolific IDs to pay, which to look at and which did
+not finish, by Prolific's own valid reasons only. Build order: Step 0 (done, above), then the two doors and the
+Prolific ID, the consent and demographic pages, the number row, the end page with the code, the daily pay check.
 
 The study will be recruited on Prolific, but only AFTER the four conditions are built and tested (the researcher's
 order, 1 October 2026). The full plan - Prolific's rules with their sources, the answers for Prolific's study form,
@@ -557,8 +622,8 @@ npm run server    # the API that writes to local MongoDB, on port 4000
 ```
 
 The study runs **without** the server — it then saves to the browser only, and nothing is queued.
-The server check happens once at page load, so if you start the API afterwards, **refresh the page**
-or that session stays local-only.
+In development the server check happens once at page load, so if you start the API afterwards, **refresh the page**
+or that session stays local-only. (The live site keeps asking until the server answers: "Many people at once".)
 
 ## Before changing anything
 
@@ -1548,9 +1613,10 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:dbshape` | What reaches MongoDB. 69 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6), VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65), which button took them from the results page to the feedback (D66), and Stability_all with the top-value choices, recounted by hand (D67), and the profile after every scenario tracked like VCI_all, in one place (D68, since 30 September 2026), and Stability's two parts recounted by hand (D69, since 2 October 2026). `--dump` writes a full simulated document |
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8); since 29 September 2026 Stability_all: its decisions' part equals Stability's swaps (A9), which steps count (A10), a best-fit picker 100 and not measured, the kinds in order (A11), the top-value choices recounted by hand (A12); since 2 October 2026 Stability_all's difference part recounted by hand (A13). Prints the echo and the screen-against-yardstick shares, and Stability / Stability_all / top-value choices by kind |
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12); since 4 October 2026 the results page explains itself: the scores taught, the 4-decisions / 6-scenarios box, traffic-light level badges on level bars built from the code's own levels, no random mark (J15); an ⓘ beside every level badge opening its own level ladder (J16); since 3 October 2026 the first page's study name and welcome, and the performance panel's title row on a phone (J14) |
-| `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9); since 4 October 2026 "Is English your first language?" (Yes / No, required, kept through a resume) and the country asked as "Where are you from?" (C11) |
+| `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9); since 4 October 2026 "Is English your first language?" (Yes / No, required, kept through a resume) and the country asked as "Where are you from?" (C11); since 6 October 2026 the server check (once in development, live again and again), a server that answers late getting the participant's record first, the queue that no longer leaves a save for the 15-second retry, and the 10 s / 5 s waiting limits (C12) |
 | `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2) |
-| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20); since 3 October 2026 Baseline's cards without the fit line and the ranking reasons, and one confirmation page with "How sure" for every choice (N21) |
+| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20); since 3 October 2026 Baseline's cards without the fit line and the ranking reasons, and one confirmation page with "How sure" for every choice (N21); since 6 October 2026 many people at once: a burst served from one reading in turns, person by person equal to one at a time (N22), and the landing page asking four times with one arrival id and never picking at random on the live site (N23) |
+| `test:load` | Many people at once, on the REAL server (since 6 October 2026; not in the chain: needs MongoDB on this computer). Starts `server/index.js` itself on port 4100 against a throw-away `vrds_load_test_<time>` database (always deleted), sends 100, 100 and 200 pretend people in the same instant and checks no request refused (L1), everybody saved with their own session id and every save landed (L2), the conditions exactly even in every burst (L3), nobody waited 3 s for a condition (L4). Run after any change to the server or the landing page |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

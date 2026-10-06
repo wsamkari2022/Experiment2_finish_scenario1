@@ -28,3 +28,6 @@ dist-ssr
 
 # Server secrets (MongoDB password) - never commit or upload
 .env
+
+# Prolific: the completion code, and from launch the daily database exports with participants' emails - never commit
+Prolific docs/

@@ -32,6 +32,10 @@
  *       with no default; saved as true / false beside age, gender and country - in the browser's directory, the
  *       demographic file, the API client and the server - and, like the country, never erased by a resume that does
  *       not know it; the country is asked as "Where are you from?"
+ *   C12 (since 6 October 2026, "multiple sessions safe") the server check: once in development, on the live site again
+ *       after 1, 2 and 4 seconds and then every 15 seconds; a server that answers LATE gets the participant's record
+ *       first (nothing is sent before it lands; if it cannot be sent it waits first in the queue), then the blocks,
+ *       then the completion of a finished run; another browser's record locks the page; saves wait 10 s, the check 5 s
  *
  * Run:  npm run validate:session
  */
@@ -405,6 +409,105 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
         || /^\s*english_first_language: body\./m.test(server)) why.push("the server can erase or garble the answer");
     gate("C11", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : "\"Is English your first language?\" asked as Yes / No, required with no default, saved as true / false with age, gender and country, never erased by a resume that does not know it; the country asked as \"Where are you from?\"; the page counts five questions");
+  }
+
+  /* ----------------------------------------------------------------------------------------- C12 */
+  {
+    const why = [];
+    /* The plan: development asks once, as before; the live site again after 1, 2 and 4 seconds, then every 15. */
+    const live = storage.serverCheckPlan(true);
+    const dev = storage.serverCheckPlan(false);
+    if (JSON.stringify(live) !== JSON.stringify({ pausesMs: [1000, 2000, 4000], thenEveryMs: 15000 })) why.push(`the live plan is ${JSON.stringify(live)}`);
+    if (JSON.stringify(dev) !== JSON.stringify({ pausesMs: [], thenEveryMs: null })) why.push(`the development plan is ${JSON.stringify(dev)}`);
+
+    /* A server that answers late. Its record route takes a moment, as a real one does. */
+    const log = [];
+    let recordRoute = "up";
+    const lateServer = {
+      findParticipant: async () => null,
+      upsertParticipant: async (e) => {
+        log.push(`record sent ${e.email} ${e.stage}`);
+        await wait(40);
+        if (recordRoute === "down") throw new Error("unreachable");
+        if (recordRoute === "another") throw Object.assign(new Error("409"), { httpStatus: 409, code: "another_browser_active" });
+        log.push("record landed");
+      },
+      updateStage: async (_e, s) => { log.push(`stage ${s}`); },
+      markCompleted: async () => { log.push("completed"); },
+      saveSection: async (p) => { log.push(`section ${p}`); },
+      getResumeFiles: async () => null, claimBrowser: async () => {}, isActiveBrowser: async () => true,
+    };
+    const offline = (email, stage) => {
+      storage.setRemoteBackend(null);
+      store.clear();
+      storage.saveParticipant({ email, sessionId: `s-${email}`, age: 29, gender: "Male", stage, consent: null });
+      localStorage.setItem("vrds_pending_email", email);
+      localStorage.setItem("vrds_demographics", JSON.stringify({ email, age: 29, gender: "Male" }));
+      localStorage.setItem("block4_reflection_results", JSON.stringify({ answered: email }));
+      log.length = 0;
+    };
+
+    /* 1. Somebody went through the demographic page while the server could not be reached: only this browser knows
+          them. The record goes first; saves made while it is on its way are not sent ahead of it. */
+    offline("late@example.com", "block2");
+    const connecting = storage.connectLate(lateServer, "late@example.com");
+    storage.saveProgress("late@example.com", "block2");
+    storage.syncBlocks("late@example.com");
+    await connecting;
+    storage.syncBlocks("late@example.com");
+    await wait(40);
+    if (log[0] !== "record sent late@example.com block2") why.push(`the first thing sent was "${log[0]}"`);
+    const landed = log.indexOf("record landed");
+    const firstOther = log.findIndex((l) => !l.startsWith("record"));
+    if (landed < 0 || (firstOther >= 0 && firstOther < landed)) why.push(`something was sent before the record landed: ${log.join(" | ")}`);
+    /* ...and at once: not left for the 15-second retry (the flush that switching the server on starts is still
+       finishing when the first syncs arrive). */
+    if (!log.some((l) => l === "section blocks.block4_stakeholder_reflection")) why.push(`the blocks were not sent at once after the record: ${log.join(" | ")}`);
+
+    /* 2. The record cannot be sent: it waits FIRST in the queue, and a save made after it waits behind it. */
+    offline("late2@example.com", "block3");
+    recordRoute = "down";
+    await storage.connectLate(lateServer, "late2@example.com");
+    storage.saveProgress("late2@example.com", "block4");
+    await wait(80);
+    const queued = (JSON.parse(localStorage.getItem("vrds_outbox") ?? "[]")).map((q) => q.op);
+    if (queued.join(",") !== "upsertParticipant,updateStage") why.push(`the queue reads ${queued.join(", ") || "(empty)"}`);
+    recordRoute = "up";
+    log.length = 0;
+    await storage.flushOutbox();
+    if (log.join(" | ") !== "record sent late2@example.com block3 | record landed | stage block4" || storage.pendingWriteCount() !== 0) why.push(`after the server came back: ${log.join(" | ")}`);
+
+    /* 3. Somebody who FINISHED while the server could not be reached: the record, then the completion. */
+    offline("done@example.com", "complete");
+    storage.saveCompletion("done@example.com");
+    await storage.connectLate(lateServer, "done@example.com");
+    await wait(40);
+    if (!/^record sent done@example\.com \S+ \| record landed \| completed$/.test(log.join(" | "))) why.push(`a finished run sent: ${log.join(" | ")}`);
+
+    /* 4. Another browser holds the record: the page locks and nothing else is sent. */
+    offline("other@example.com", "block1");
+    recordRoute = "another";
+    await storage.connectLate(lateServer, "other@example.com");
+    await wait(60);
+    if (guard.getLock() !== "browser") why.push("a record held by another browser did not lock the page");
+    if (log.some((l) => !l.startsWith("record"))) why.push(`something was sent after the lock: ${log.join(" | ")}`);
+    guard.setLock(null);
+    recordRoute = "up";
+    storage.setRemoteBackend(null);
+
+    /* From the source: the flow follows the plan and installs a late server through connectLate; the waits. */
+    const flow = src("src/experiment/ExperimentFlow.tsx");
+    const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
+    need(flow, /const plan = serverCheckPlan\(import\.meta\.env\.PROD\);/, "the page does not choose its plan by development or live");
+    need(flow, /for \(const ms of plan\.pausesMs\) \{[\s\S]{0,140}available = await isApiAvailable\(\);/, "the page does not ask again after the pauses");
+    need(flow, /noRemoteBackend\(\);\s*if \(plan\.thenEveryMs === null\) return;\s*while \(!available\) \{\s*await wait\(plan\.thenEveryMs\);/, "the live page does not go on asking after the landing page stops waiting");
+    need(flow, /if \(late\) await connectLate\(apiClient, email\);\s*else setRemoteBackend\(apiClient\);/, "a server that answers late is not installed through connectLate");
+    const api = src("src/experiment/apiClient.ts");
+    need(api, /const TIMEOUT_MS = 10_000;/, "a save is still given up after less than 10 seconds");
+    need(api, /const HEALTH_TIMEOUT_MS = 5_000;/, "no separate limit for the \"are you there?\" question");
+    need(api, /request<\{ ok\?: boolean \}>\("\/health", undefined, HEALTH_TIMEOUT_MS\)/, "the \"are you there?\" question does not use its own limit");
+    gate("C12", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : "the server check: once in development, live again after 1, 2 and 4 s and then every 15 s; a server that answers late gets the participant's record first (nothing before it lands; queued first if it cannot), then the blocks, then the completion; another browser's record locks the page; saves wait 10 s, the server check 5 s");
   }
 
   console.log("");

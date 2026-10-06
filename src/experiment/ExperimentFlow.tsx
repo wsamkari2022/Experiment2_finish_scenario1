@@ -7,6 +7,7 @@ import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
    That is what lets the database be switched on in one place. See the header of storage.ts. */
 import {
   claimThisBrowser,
+  connectLate,
   flushOutbox,
   noRemoteBackend,
   releaseConditionArrival,
@@ -15,6 +16,7 @@ import {
   saveCompletion,
   saveParticipant,
   saveProgress,
+  serverCheckPlan,
   setRemoteBackend,
   syncBlocks,
   syncResumeState,
@@ -421,39 +423,64 @@ export function ExperimentFlow() {
    *
    * Once it IS installed, the outbox is flushed: a participant who closed the tab while the API
    * was down comes back with writes still waiting, and this is the moment to deliver them.
+   *
+   * HOW PATIENTLY (since 6 October 2026, the advisor's "multiple sessions safe"; serverCheckPlan in
+   * storage.ts): in development the question is asked once, as before. On the live site it is asked
+   * again after 1, 2 and 4 seconds, and then every 15 seconds until the server answers: one missed
+   * answer used to keep a participant's whole session out of the database. A server that answers
+   * LATE is installed by connectLate, which sends the participant's record first.
    */
   useEffect(() => {
     let cancelled = false;
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     void (async () => {
-      const available = await isApiAvailable();
-      if (cancelled) return;
-      if (available) {
-        setRemoteBackend(apiClient);
-        void flushOutbox();
-        /*
-         * Sync immediately, because this effect finishes AFTER the first stage effect has already
-         * run. At that earlier moment there was no backend yet, so the sync it attempted did
-         * nothing — and without this line the data on screen would not reach the server until the
-         * participant happened to change stage. For somebody who opens the study on its last
-         * screen and finishes there, that stage change never comes.
-         *
-         * The email is read from storage rather than from `pendingEmail`, because this callback
-         * closed over the value from first render and may be looking at a stale null.
-         */
-        const email =
-          localStorage.getItem(STORAGE_KEY_PENDING_EMAIL) ??
-          readJson<{ email?: string }>(STORAGE_KEY_DEMOGRAPHICS)?.email ??
-          null;
-        syncBlocks(email);
-        /* And the copy that carries them to another machine — same reason, same moment. The
-           stage effect that normally sends it ran before this backend existed. */
-        syncResumeState(email);
-        /* And, as the page opens: is this browser still the one holding the record? (sessionGuard.ts) */
-        void checkActiveBrowser(email);
-      } else {
-        /* No server: the landing page stops waiting for one and picks a condition at random (since 1 October 2026). */
-        noRemoteBackend();
+      const plan = serverCheckPlan(import.meta.env.PROD);
+      let available = await isApiAvailable();
+      for (const ms of plan.pausesMs) {
+        if (available || cancelled) break;
+        await wait(ms);
+        if (!cancelled) available = await isApiAvailable();
       }
+      if (cancelled) return;
+      let late = false;
+      if (!available) {
+        /* No server: the landing page stops waiting for one. In development it picks a condition at random (since
+           1 October 2026); on the live site it offers "Try again" (LandingPage.tsx). */
+        noRemoteBackend();
+        if (plan.thenEveryMs === null) return;
+        while (!available) {
+          await wait(plan.thenEveryMs);
+          if (cancelled) return;
+          available = await isApiAvailable();
+        }
+        if (cancelled) return;
+        late = true;
+      }
+      /*
+       * The email is read from storage rather than from `pendingEmail`, because this callback
+       * closed over the value from first render and may be looking at a stale null.
+       */
+      const email =
+        localStorage.getItem(STORAGE_KEY_PENDING_EMAIL) ??
+        readJson<{ email?: string }>(STORAGE_KEY_DEMOGRAPHICS)?.email ??
+        null;
+      if (late) await connectLate(apiClient, email);
+      else setRemoteBackend(apiClient);
+      if (cancelled) return;
+      void flushOutbox();
+      /*
+       * Sync immediately, because this effect finishes AFTER the first stage effect has already
+       * run. At that earlier moment there was no backend yet, so the sync it attempted did
+       * nothing — and without this line the data on screen would not reach the server until the
+       * participant happened to change stage. For somebody who opens the study on its last
+       * screen and finishes there, that stage change never comes.
+       */
+      syncBlocks(email);
+      /* And the copy that carries them to another machine — same reason, same moment. The
+         stage effect that normally sends it ran before this backend existed. */
+      syncResumeState(email);
+      /* And, as the page opens: is this browser still the one holding the record? (sessionGuard.ts) */
+      void checkActiveBrowser(email);
     })();
     return () => {
       cancelled = true;

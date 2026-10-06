@@ -344,6 +344,12 @@ counts now (finished, working, just arrived) and every record ever by source. Nu
   shows "This study is open somewhere else". That is the one-browser rule, not an error.
 - `https://moonlander.fit.edu/api/health` should show `"ok":true` and `"database":"VRDS2"`.
 - Opening the count page or the health page never gives anybody a condition; only the study's own address does.
+- **Since 6 October 2026 ("multiple sessions safe")** the server hands out conditions to a crowd from one reading of
+  the database, and the live page never gives a random condition: if the server cannot be reached it says "We could
+  not reach the study" with a "Try again" button. Nothing new goes into `.env`; `./build-and-run.sh` restarts the
+  server, which this version needs. To see how many people at once the code handles, run `npm run test:load` on
+  your own computer (it needs MongoDB there, starts its own server on port 4100 against a throw-away database, and
+  deletes that database at the end). Do not run it against the live server: it would add hundreds of fake people.
 
 ---
 

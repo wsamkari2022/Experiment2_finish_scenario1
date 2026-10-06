@@ -16,7 +16,14 @@
  * address (the researcher testing one on purpose, "Q2-yes") or chosen at random without a server never is.
  *
  * ONE AT A TIME. Two people arriving in the same second would otherwise both read the same counts and both get the
- * same condition. Every assignment runs through `serially`, so the second one sees the first one's arrival.
+ * same condition. Assignments take turns, so the second one sees the first one's arrival.
+ *
+ * IN TURNS, BUT IN GROUPS (since 6 October 2026, the advisor's "multiple sessions safe"). Until then every turn read
+ * the database on its own (about 1/20 of a second under load), so in a burst the 100th person waited about 5
+ * seconds - and the page gave up after 3 and picked an UNCOUNTED random condition: 33 of 100 people in a load test.
+ * Now everybody waiting when a turn starts is served from ONE reading of the database, still one after another: each
+ * is counted exactly as if the one before had already been stored. Same rule, same answers (N22 compares the two
+ * person by person); 100 at once take a handful of readings instead of 100.
  *
  * SAME ARRIVAL, SAME ANSWER. A refresh on the landing page asks again with the same arrival id and gets the same
  * condition; nothing is counted twice.
@@ -78,45 +85,109 @@ export function chooseFewest(counts, random = Math.random) {
   return tied[Math.min(tied.length - 1, Math.floor(random() * tied.length))];
 }
 
-/* One assignment at a time: each waits for the one before it, and a failure does not stop the next. */
-let queue = Promise.resolve();
-export function serially(task) {
-  const run = queue.then(task, task);
-  queue = run.then(() => undefined, () => undefined);
-  return run;
-}
+/* The people waiting for a condition, in the order they asked, and whether a turn is running. */
+const waiting = [];
+let turnRunning = false;
+/** The most served from one reading of the database (one insert of their arrivals). */
+export const MOST_IN_ONE_TURN = 200;
 
 /**
  * Gives this arrival a condition. `store` is the database (or a pretend one in the checks):
  *   findArrival(id) -> row | null, loadDocs() -> [], loadArrivals(sinceIso) -> [], insertArrival(row)
+ *   and, when it has them, findArrivals(ids) -> rows and insertArrivals(rows), one call for a whole turn.
  * Returns { number, type, urlName, arrivalId, assignedAt, counts }.
  */
 export function assignCondition({ arrivalId, browser = null, store, now = () => Date.now(), random = Math.random }) {
-  return serially(async () => {
-    const existing = await store.findArrival(arrivalId);
-    if (existing) {
-      const c = conditionByType(existing.condition_type);
-      return { number: c.number, type: c.type, urlName: c.urlName, arrivalId, assignedAt: existing.assigned_at, repeated: true };
+  return new Promise((resolve, reject) => {
+    waiting.push({ arrivalId, browser, store, now, random, resolve, reject });
+    if (!turnRunning) void takeTurns();
+  });
+}
+
+/*
+ * Two stores are the same database when they are the same object, or carry the same `key`. The route builds a NEW store
+ * for every request (mongoStore(participants(), conditionArrivals()), and the driver hands out a new collection object
+ * each time), so matching on the object alone put every person in a turn of their own: the load test of 6 October
+ * 2026 still found 109 of 400 waiting 3 seconds or more. mongoStore gives every store the database's name as its key.
+ */
+const sameStore = (a, b) => a === b || (a?.key !== undefined && a.key === b?.key);
+
+/* Turns, one after another, until nobody waits. A turn that fails answers its own people with the error (the page
+   asks again with the same arrival id) and never stops the next turn. */
+async function takeTurns() {
+  turnRunning = true;
+  try {
+    while (waiting.length > 0) {
+      const store = waiting[0].store;
+      const group = [];
+      for (let i = 0; i < waiting.length && group.length < MOST_IN_ONE_TURN;) {
+        if (sameStore(waiting[i].store, store)) group.push(waiting.splice(i, 1)[0]);
+        else i += 1;
+      }
+      try {
+        await serveTurn(group, store);
+      } catch (error) {
+        for (const person of group) person.reject(error);
+      }
     }
-    const at = now();
+  } finally {
+    turnRunning = false;
+  }
+}
+
+/* One turn: one look for arrivals already answered, one reading of the counts, then each new person in the order
+   they asked - counted with everybody before them in this turn - and one insert of the new arrivals. */
+async function serveTurn(group, store) {
+  const ids = [...new Set(group.map((person) => person.arrivalId))];
+  const found = new Map();
+  const rows = store.findArrivals
+    ? await store.findArrivals(ids)
+    : (await Promise.all(ids.map((id) => store.findArrival(id)))).filter(Boolean);
+  for (const row of rows) found.set(row.arrival_id, row);
+
+  const made = new Map();
+  const fresh = ids.filter((id) => !found.has(id));
+  if (fresh.length > 0) {
+    const at = group[0].now();
     const [docs, arrivals] = await Promise.all([
       store.loadDocs(),
       store.loadArrivals(new Date(at - ARRIVAL_WINDOW_MS).toISOString()),
     ]);
-    const counts = tally(docs, arrivals, at);
-    const chosen = chooseFewest(counts, random);
     const assignedAt = new Date(at).toISOString();
-    await store.insertArrival({
-      arrival_id: arrivalId,
-      condition_number: chosen.number,
-      condition_type: chosen.type,
-      assigned_at: assignedAt,
-      browser,
-      linked_email: null,
-      released: false,
+    for (const id of fresh) {
+      const person = group.find((p) => p.arrivalId === id);
+      const counts = tally(docs, arrivals, at);
+      const chosen = chooseFewest(counts, person.random);
+      const row = {
+        arrival_id: id,
+        condition_number: chosen.number,
+        condition_type: chosen.type,
+        assigned_at: assignedAt,
+        browser: person.browser,
+        linked_email: null,
+        released: false,
+      };
+      arrivals.push({ ...row }); // the next person in this turn sees it, as if it were already stored
+      made.set(id, { row, counts });
+    }
+    const newRows = [...made.values()].map((m) => m.row);
+    if (store.insertArrivals) await store.insertArrivals(newRows);
+    else for (const row of newRows) await store.insertArrival(row);
+  }
+
+  const answered = new Set();
+  for (const person of group) {
+    const id = person.arrivalId;
+    const old = found.get(id);
+    const row = old ?? made.get(id).row;
+    const c = conditionByType(row.condition_type);
+    const repeated = !!old || answered.has(id);
+    answered.add(id);
+    person.resolve({
+      number: c.number, type: c.type, urlName: c.urlName, arrivalId: id, assignedAt: row.assigned_at,
+      ...(repeated ? { repeated: true } : { counts: made.get(id).counts }),
     });
-    return { number: chosen.number, type: chosen.type, urlName: chosen.urlName, arrivalId, assignedAt, counts };
-  });
+  }
 }
 
 /**
@@ -140,7 +211,12 @@ export function conditionFieldsFrom(body) {
 /** The database's side of `store`, for the real routes. */
 export function mongoStore(participantsCollection, arrivalsCollection) {
   return {
+    /* Which database this is, so the people waiting on it share a turn (sameStore). */
+    key: `${participantsCollection.namespace}|${arrivalsCollection.namespace}`,
     findArrival: (id) => arrivalsCollection.findOne({ arrival_id: id }, { projection: { _id: 0 } }),
+    /* A whole turn at once (since 6 October 2026). The rows are copied, so the driver's _id never lands on them. */
+    findArrivals: (ids) => arrivalsCollection.find({ arrival_id: { $in: ids } }, { projection: { _id: 0 } }).toArray(),
+    insertArrivals: (rows) => arrivalsCollection.insertMany(rows.map((row) => ({ ...row })), { ordered: true }),
     loadDocs: () => participantsCollection
       .find({ condition_type: { $exists: true } },
         { projection: { _id: 0, condition_type: 1, condition_source: 1, status: 1, updated_at: 1 } })

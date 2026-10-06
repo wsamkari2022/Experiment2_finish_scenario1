@@ -8,7 +8,14 @@
  * The API is a local process that can be stopped at any moment. A `fetch` to a port with nothing
  * listening fails fast, but a fetch to a process that is starting, hung, or mid-restart can hang
  * for a long time. Since these calls sit behind a participant's click, a hang would look like the
- * study freezing. Three seconds, then treat it as unreachable and let the outbox take it.
+ * study freezing. Ten seconds, then treat it as unreachable and let the outbox take it.
+ *
+ * TEN SECONDS, NOT THREE (since 6 October 2026, the advisor's "multiple sessions safe"). Three
+ * seconds was written for a local server that is either there or not. On the live server a BUSY
+ * moment (100 people starting together) or a slow home connection answers late but answers, and
+ * three seconds turned that into "no server": the landing page then gave an uncounted random
+ * condition, and a large save on a slow line could be cut off on every retry. A server that is
+ * really down still fails at once (the connection is refused), so nobody waits ten seconds for it.
  *
  * FAILURE IS NORMAL HERE, NOT EXCEPTIONAL
  * Every method throws on a bad response, and storage.ts catches that and queues the write. So an
@@ -22,11 +29,13 @@ import { conditionByNumber, type AssignedCondition, type SavedCondition } from "
 
 /** Same origin: Vite proxies /api to the API server in development. */
 const BASE = "/api";
-const TIMEOUT_MS = 3000;
+const TIMEOUT_MS = 10_000;
+/** The "are you there?" question is tiny; it is asked again (ExperimentFlow) rather than waited on. */
+const HEALTH_TIMEOUT_MS = 5_000;
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit, timeoutMs = TIMEOUT_MS): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${BASE}${path}`, {
       ...init,
@@ -204,13 +213,14 @@ function currentEmail(): string | null {
 /**
  * Asks the server whether it is there.
  *
- * Used once at startup to decide whether to switch the remote backend on at all. If the API is
- * not running, the study stays local-only and nothing is queued — which is the right behaviour
- * for a researcher testing the study without starting the server.
+ * Used at startup to decide whether to switch the remote backend on at all. In development it is
+ * asked once: if the API is not running, the study stays local-only and nothing is queued — the
+ * right behaviour for a researcher testing the study without starting the server. On the live site
+ * it is asked again until the server answers (ExperimentFlow, `SERVER_CHECK_PLAN` in storage.ts).
  */
 export async function isApiAvailable(): Promise<boolean> {
   try {
-    const health = await request<{ ok?: boolean }>("/health");
+    const health = await request<{ ok?: boolean }>("/health", undefined, HEALTH_TIMEOUT_MS);
     return health?.ok === true;
   } catch {
     return false;

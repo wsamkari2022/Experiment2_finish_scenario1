@@ -77,6 +77,16 @@
  *       Stability step); the good-fit page counts are apart and never switches; every row says whether the fit and the
  *       reasons could be shown; the database, the totals and the feedback summary read all of it
  *
+ * Many people at once (since 6 October 2026, the advisor's "multiple sessions safe"; a load test of 100 arrivals at once
+ * found 33 waiting longer than the page's 3 seconds and given an uncounted random condition):
+ *   N22 in turns, in groups: 100 arrivals at once get exactly the conditions they get one at a time (the same random
+ *       numbers), from a handful of readings of the counts instead of 100; the same arrival twice in one burst is
+ *       stored once; a turn that fails answers its own people with the error and never stops the next turn; the
+ *       database store reads and writes a whole turn at once
+ *   N23 the landing page asks up to four times (after 1, 2 and 4 seconds) with the same arrival id, a refusal only
+ *       once; on the live site it never picks at random: it says the study could not be reached and offers "Try
+ *       again", keeping the arrival id; after 8 seconds a line says it can take a few more seconds
+ *
  * Run:  npm run validate:conditions
  */
 const path = require("node:path");
@@ -940,6 +950,131 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (sum.scenarios[0].baselineGoodFitConfirmVisits !== 2 || sum.scenarios[1].baselineGoodFitConfirmVisits !== 0 || sum.scenarios[1].baselineConfirmVisits !== 1) why.push(`the feedback summary: ${JSON.stringify(sum.scenarios.map((x) => [x.baselineConfirmVisits, x.baselineGoodFitConfirmVisits]))}`);
     if (!(db.SHAPE_VERSION >= "2026-10-03-baseline-no-fit")) why.push(`SHAPE_VERSION is ${db.SHAPE_VERSION}`);
     gate("N21", "Baseline: no fit line or ranking reasons on the cards, the approved words, one confirmation page with How sure (a good fit's recorded only), every row and total", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N22 */
+  {
+    const why = [];
+    /* A pretend database that counts how often the counts are read. */
+    const counting = (docs) => {
+      const s = pretendStore(docs);
+      const load = s.loadDocs;
+      s.reads = 0;
+      s.loadDocs = async () => { s.reads += 1; return load(); };
+      return s;
+    };
+    const fresh = new Date().toISOString();
+    const uneven = [
+      ...Array.from({ length: 3 }, () => ({ condition_type: "CVR+APA", condition_source: "landing_page", status: "Study Completed", updated_at: fresh })),
+      { condition_type: "Baseline", condition_source: "landing_page", status: "Study Not Completed", updated_at: fresh },
+    ];
+    const ids = Array.from({ length: 100 }, (_, i) => `burst-${String(i).padStart(4, "0")}`);
+    /* One at a time (each waits for the one before, as before 6 October 2026) against all 100 at once, with the same
+       random numbers: every person must get the same condition. */
+    const alone = counting(uneven);
+    const r1 = seeded(21);
+    const oneByOne = [];
+    for (const id of ids) oneByOne.push((await S.assignCondition({ arrivalId: id, store: alone, random: r1 })).type);
+    const burst = counting(uneven);
+    const r2 = seeded(21);
+    const together = (await Promise.all(ids.map((id) => S.assignCondition({ arrivalId: id, store: burst, random: r2 })))).map((g) => g.type);
+    const differ = ids.filter((_, i) => oneByOne[i] !== together[i]).length;
+    if (differ) why.push(`${differ} of 100 got a different condition at once than one at a time`);
+    if (burst.reads > 5) why.push(`100 at once read the counts ${burst.reads} times (one at a time: ${alone.reads})`);
+    const totals = Object.fromEntries(NAMES.map((n) => [n, together.filter((t) => t === n).length + uneven.filter((d) => d.condition_type === n).length]));
+    if (NAMES.some((n) => totals[n] !== 26)) why.push(`100 at once on top of 3/0/0/1: ${JSON.stringify(totals)}`);
+    if (burst.arrivals.length !== 100 || new Set(burst.arrivals.map((a) => a.arrival_id)).size !== 100) why.push(`${burst.arrivals.length} arrivals stored for 100 people`);
+    /* As the real route does it: a NEW store object for every request, on the same database (the same key). The first
+       version grouped only identical objects, so on the real server every person still had a turn of their own (the
+       load test found it, 6 October 2026). */
+    const shared = counting(uneven);
+    const r3 = seeded(21);
+    const viaRoute = (await Promise.all(ids.map((id) => S.assignCondition({
+      arrivalId: id, store: { ...shared, key: "vrds.participants|vrds.condition_arrivals" }, random: r3,
+    })))).map((g) => g.type);
+    if (shared.reads > 5) why.push(`a new store per request (as the route makes them) read the counts ${shared.reads} times: the turns did not group`);
+    if (viaRoute.join() !== oneByOne.join()) why.push("a new store per request gave other conditions than one at a time");
+    if (!/key: `\$\{participantsCollection\.namespace\}\|\$\{arrivalsCollection\.namespace\}`,/.test(src("server/conditions.js"))) why.push("the database store carries no key naming its database");
+    /* The same arrival twice in one burst (a double refresh): one row, the same answer, and nobody after it counted
+       differently from one at a time (the repeat must not count, nor use up a random number). */
+    const twice = pretendStore();
+    const [a, b] = await Promise.all(["twice-in-a-burst", "twice-in-a-burst"].map((id) => S.assignCondition({ arrivalId: id, store: twice })));
+    if (a.type !== b.type || a.assignedAt !== b.assignedAt || twice.arrivals.length !== 1) why.push(`the same arrival twice in a burst: ${a.type} / ${b.type}, ${twice.arrivals.length} rows`);
+    const repeats = ["rep-d1", "rep-d1", "rep-d2", "rep-e1", "rep-d2", "rep-e2", "rep-e3", "rep-e4", "rep-e5", "rep-e6", "rep-e7"];
+    for (const seed of [31, 32, 33, 34, 35, 36]) {
+      const s1 = pretendStore();
+      const ra = seeded(seed);
+      const seq = [];
+      for (const id of repeats) seq.push((await S.assignCondition({ arrivalId: id, store: s1, random: ra })).type);
+      const s2 = pretendStore();
+      const rb = seeded(seed);
+      const bur = (await Promise.all(repeats.map((id) => S.assignCondition({ arrivalId: id, store: s2, random: rb })))).map((g) => g.type);
+      if (seq.join() !== bur.join() || s2.arrivals.length !== 9) { why.push(`repeats in a burst (seed ${seed}): ${bur.join(",")} against ${seq.join(",")}, ${s2.arrivals.length} rows`); break; }
+    }
+    /* A turn that fails answers its own people with the error (the page asks again), and the next turn is served. */
+    const flaky = pretendStore();
+    let failOnce = true;
+    const insert = flaky.insertArrival;
+    flaky.insertArrival = async (row) => {
+      if (failOnce) { failOnce = false; throw new Error("database busy"); }
+      return insert(row);
+    };
+    const first = await S.assignCondition({ arrivalId: "flaky-arrival-1", store: flaky }).then(() => "answered", (e) => e.message);
+    const again = await S.assignCondition({ arrivalId: "flaky-arrival-1", store: flaky }).then((g) => g.type, (e) => `error ${e.message}`);
+    if (first !== "database busy") why.push(`a failing turn answered "${first}"`);
+    if (!NAMES.includes(again) || flaky.arrivals.length !== 1) why.push(`the turn after a failure: ${again}, ${flaky.arrivals.length} rows`);
+    /* The real database: a whole turn in one read and one write. */
+    const server = src("server/conditions.js");
+    if (!/findArrivals: \(ids\) => arrivalsCollection\.find\(\{ arrival_id: \{ \$in: ids \} \}/.test(server)
+        || !/insertArrivals: \(rows\) => arrivalsCollection\.insertMany\(/.test(server)) why.push("the database store does not read and write a turn at once");
+    console.log(`       100 at once: the counts read ${burst.reads} times (one at a time: ${alone.reads}); on top of 3/0/0/1: ${JSON.stringify(totals)}`);
+    gate("N22", "in turns, in groups: 100 at once get exactly what one at a time gives, from a handful of readings; a double arrival stored once; a failed turn never stops the next", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N23 */
+  {
+    const why = [];
+    const asked = [];
+    const backend = (assign) => ({
+      findParticipant: async () => null, upsertParticipant: async () => {}, updateStage: async () => {},
+      markCompleted: async () => {}, saveSection: async () => {}, getResumeFiles: async () => null,
+      claimBrowser: async () => {}, isActiveBrowser: async () => true, releaseArrival: async () => {},
+      assignCondition: async (id) => { asked.push(id); return assign(id); },
+    });
+    const quick = { pausesMs: [5, 5, 5] };
+    /* No answer twice (a busy server), then an answer: the same arrival id every time, never a random condition. */
+    let misses = 2;
+    storage.setRemoteBackend(backend((id) => {
+      if (misses-- > 0) throw new Error("no answer in time");
+      return { number: 2, type: "CVR_Only", arrivalId: id, assignedAt: "2026-10-06T09:00:00Z" };
+    }));
+    const got = await storage.requestCondition("arrival-patient-1", quick);
+    if (got?.type !== "CVR_Only") why.push(`after two misses the page got ${JSON.stringify(got)}`);
+    if (asked.length !== 3 || asked.some((id) => id !== "arrival-patient-1")) why.push(`asked ${asked.length} times: ${asked.join(", ")}`);
+    /* A refusal is final: asked once. */
+    asked.length = 0;
+    storage.setRemoteBackend(backend(() => { throw Object.assign(new Error("400"), { httpStatus: 400 }); }));
+    if ((await storage.requestCondition("arrival-refused-1", quick)) !== null || asked.length !== 1) why.push(`a refusal was asked ${asked.length} times`);
+    /* Never an answer: four questions, then null (the live page then offers "Try again"). */
+    asked.length = 0;
+    storage.setRemoteBackend(backend(() => { throw new Error("unreachable"); }));
+    if ((await storage.requestCondition("arrival-down-1", quick)) !== null || asked.length !== 4) why.push(`a server that never answered was asked ${asked.length} times`);
+    if (JSON.stringify(storage.CONDITION_RETRY_PAUSES_MS) !== "[1000,2000,4000]") why.push(`the pauses are ${JSON.stringify(storage.CONDITION_RETRY_PAUSES_MS)}`);
+    storage.setRemoteBackend(null);
+    /* The page, from the source. */
+    const landing = src("src/experiment/LandingPage.tsx");
+    const need = (re, what) => { if (!re.test(landing)) why.push(what); };
+    need(/const LIVE = import\.meta\.env\.PROD;/, "the page does not know whether it is the live site");
+    need(/requestCondition\(arrivalId, \{ waitMs: live \? 30_000 : 6000 \}\)/, "the live page does not wait for the whole server check");
+    need(/if \(live\) return null;\s*return makeConditionFile\(randomCondition\(\), "random_offline"/, "the live page can still pick a random condition");
+    need(/void chooseCondition\(LIVE\)\.then/, "the page does not ask as the live site");
+    need(/if \(!file\) \{\s*setPhase\("unreachable"\);\s*return;\s*\}\s*writeConditionFile\(file\);\s*try \{\s*localStorage\.removeItem\(CONDITION_ARRIVAL_KEY\);/, "the arrival id is not kept for \"Try again\" (it must go only once a condition is written)");
+    need(/We could not reach the study/, "no words for a server that cannot be reached");
+    need(/onClick=\{tryAgain\}[\s\S]{0,200}Try again/, "no \"Try again\" button");
+    need(/const tryAgain = useCallback\(\(\) => \{\s*window\.location\.reload\(\);\s*\}, \[\]\);/, "\"Try again\" does not open the page afresh (the server check must start again at once)");
+    need(/This can take a few more seconds\./, "no line for a slow answer");
+    if (/\{[^}]*\.(type|urlName)\}/.test(landing.split("return (").slice(1).join(""))) why.push("the landing page shows the condition's name");
+    gate("N23", "the landing page asks up to four times with the same arrival id (a refusal once); live it never picks at random, offers \"Try again\" and keeps the arrival id; a slow line after 8 seconds", why);
   }
 
   const failed = results.filter((r) => !r.ok);

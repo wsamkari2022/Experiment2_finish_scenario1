@@ -57,6 +57,8 @@ CHECKS = {
     "session": "npm run validate:session",
     "attention": "npm run validate:attention",
     "conditions": "npm run validate:conditions",
+    # Since 6 October 2026: the real server against a throw-away database on this computer (needs MongoDB running).
+    "load": "npm run test:load",
     "mcf": "npm run validate:mcf",
     "prediction": "npm run validate:prediction",
     "build": "npm run build",
@@ -144,6 +146,11 @@ SECTIONS = [
          "screen is never a rushed block.", ["attention"], "(T4)"),
     ]),
     ("2. Saving the data and moving between computers", [
+        ("A short break in the server never keeps a participant out of the database.",
+         "Since 6 October 2026 the live page asks for the server again after 1, 2 and 4 seconds and then every 15 seconds; "
+         "when it answers late, the participant's record is sent first, then their answers. Checked live: somebody who "
+         "started while the server was down reached the database 13 seconds after it came back, with every answer. The first "
+         "saves after opening a page no longer wait 15 seconds (an older delay found the same day).", ["session"], "(C12)"),
         ("A refresh in the pause after a block never restarts that block.",
          "The pause is saved as the part it leads to the moment it starts, in the browser and on the server, so a refresh, "
          "a closed tab or a crash there opens the next part. This covers every block, Block 5 included. Tested live after "
@@ -189,6 +196,16 @@ SECTIONS = [
          ["envignored"], ""),
     ]),
     ("2b. The four conditions and the landing page", [
+        ("Many people at once: 100 people starting together are all saved, each with their own session id, and spread evenly.",
+         "Since 6 October 2026 (your advisor's \"multiple sessions safe\"). The real server, on a throw-away database, took "
+         "400 pretend people arriving in bursts of 100, 100 and 200 in the same instant: 17,600 requests, none failed, every "
+         "person saved with their own session id, exactly 25 per condition in every 100. The server now serves a crowd from one "
+         "reading of the database: the slowest wait for a condition fell from 4.8 seconds to 0.14 (before, a third of each "
+         "burst waited past the page's 3 seconds and got an uncounted random condition).", ["conditions", "load"], "(N22, L1-L4)"),
+        ("The live landing page never gives a random condition.",
+         "It asks the server up to four times with the same arrival id; if the server cannot be reached it says \"We could "
+         "not reach the study\" with \"Try again\", which keeps the arrival id, so nobody is counted twice. Checked live with "
+         "the server switched off and on again.", ["conditions"], "(N23)"),
         ("Each new participant gets the condition with the fewest people.",
          "The landing page asks the server, which counts finished people, people still working in the last 2 hours and "
          "people who arrived in the last 30 minutes (your Q1-B), and gives the fewest; a tie is broken at random. 40 pretend "
@@ -424,6 +441,11 @@ SECTIONS = [
 ]
 
 OPEN = [
+    ("The Prolific version",
+     "Decided 6 October 2026: two versions on one website (the email version for FIT students and employees, and "
+     "moonlander.fit.edu/prolific), conditions balanced per group, the second number check in the Prolific version only, "
+     "no pilot, the first batch 40 places, every submission manually reviewed with a daily pay check by Claude. Built: "
+     "Step 0 (many people at once). Still to build: steps 1-5 in docs/PROLIFIC_CONVERSION_PLAN.md section 1b.", "Before Prolific"),
     ("Fix 1, the very last fix before launch",
      "Done for Baseline on 3 October 2026; conditions 1-3 still wait. The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
      "page compares the wish with \"what you said matters most\", and the intro page says \"Each option will show you "
