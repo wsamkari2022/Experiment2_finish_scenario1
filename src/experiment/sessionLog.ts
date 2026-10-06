@@ -50,6 +50,8 @@ export const SESSION_LOG_KEY = "vrds_session_log";
  */
 export type SessionStart =
   | "typed_their_email"
+  /* The Prolific door (since 6 October 2026): their Prolific ID came in Prolific's link, or they pasted it. */
+  | "arrived_with_their_prolific_id"
   | "continued_in_this_browser"
   | "restored_from_another_device";
 
@@ -236,6 +238,7 @@ export function consumeLoginKind(): SessionStart | null {
     if (!value) return null;
     localStorage.removeItem(LOGIN_KIND_KEY);
     return value === "typed_their_email"
+      || value === "arrived_with_their_prolific_id"
       || value === "continued_in_this_browser"
       || value === "restored_from_another_device"
       ? value

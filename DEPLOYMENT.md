@@ -344,6 +344,15 @@ counts now (finished, working, just arrived) and every record ever by source. Nu
   shows "This study is open somewhere else". That is the one-browser rule, not an error.
 - `https://moonlander.fit.edu/api/health` should show `"ok":true` and `"database":"VRDS2"`.
 - Opening the count page or the health page never gives anybody a condition; only the study's own address does.
+- **Since 6 October 2026, two doors.** The university version stays at `https://moonlander.fit.edu`; the Prolific version is
+  `https://moonlander.fit.edu/prolific` (that is the URL to give Prolific, with "URL parameters" for the IDs). The count
+  page shows one table per door. **The researcher's "3-A": put this on the server only after Step 4** (the Prolific
+  door's consent, code and "Return to Prolific" are not built yet).
+- **Back up the database before that deploy.** The first start of the new server replaces the "one email = one person"
+  rule on `participants` with two rules that cover only the records that have an email or a Prolific ID (a database
+  with the old rule would refuse the second Prolific person). The swap keeps every record and was tested on a copy
+  with today's rule (`npm run test:load`, L6), but a backup first is cheap: in Compass, export the `participants` and
+  `condition_arrivals` collections to JSON (into `Prolific docs/`, which never goes to GitHub).
 - **Since 6 October 2026 ("multiple sessions safe")** the server hands out conditions to a crowd from one reading of
   the database, and the live page never gives a random condition: if the server cannot be reached it says "We could
   not reach the study" with a "Try again" button. Nothing new goes into `.env`; `./build-and-run.sh` restarts the

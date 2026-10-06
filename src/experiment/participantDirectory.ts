@@ -44,7 +44,15 @@ const DIRECTORY_KEY = PARTICIPANT_DIRECTORY_KEY;
 
 /** One person. Mirrors the MongoDB document planned in CONSENT_DEMOGRAPHICS_MONGODB_PLAN.md. */
 export interface DirectoryEntry {
+  /**
+   * THE PARTICIPANT'S KEY: their email (the university door) or, since 6 October 2026, their Prolific ID (the Prolific
+   * door; recruitment.ts). Still called `email` because it was only ever one before; the server stores a Prolific ID
+   * as `prolific_pid`, never in `email` (server/recruitment.js). `isProlificKey` tells the two apart (an @ or not).
+   */
   email: string;
+  /** Prolific's study and submission ids (the Prolific door only), kept once known. */
+  prolificStudyId?: string | null;
+  prolificSessionId?: string | null;
   sessionId: string;
   age: number;
   gender: string;
@@ -114,6 +122,9 @@ export function upsertParticipant(input: {
   countryCode?: string | null;
   /* Optional for the same reason as the country (since 4 October 2026). */
   englishFirstLanguage?: boolean;
+  /* The Prolific door's two ids (since 6 October 2026); optional, and never erased by a save without them. */
+  prolificStudyId?: string | null;
+  prolificSessionId?: string | null;
   condition?: SavedCondition | null;
   stage: string;
   consent: DirectoryEntry["consent"];
@@ -134,6 +145,8 @@ export function upsertParticipant(input: {
     ...(typeof input.englishFirstLanguage === "boolean"
       ? { englishFirstLanguage: input.englishFirstLanguage }
       : typeof existing?.englishFirstLanguage === "boolean" ? { englishFirstLanguage: existing.englishFirstLanguage } : {}),
+    ...((input.prolificStudyId ?? existing?.prolificStudyId) ? { prolificStudyId: input.prolificStudyId ?? existing?.prolificStudyId } : {}),
+    ...((input.prolificSessionId ?? existing?.prolificSessionId) ? { prolificSessionId: input.prolificSessionId ?? existing?.prolificSessionId } : {}),
     /* The condition is set once: a saved one is never replaced (the server keeps the same rule). The arrival id is
        not kept: it only travels with the save that makes the record (storage.saveParticipant). */
     ...(existing?.condition

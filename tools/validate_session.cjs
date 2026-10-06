@@ -36,6 +36,12 @@
  *       after 1, 2 and 4 seconds and then every 15 seconds; a server that answers LATE gets the participant's record
  *       first (nothing is sent before it lands; if it cannot be sent it waits first in the queue), then the blocks,
  *       then the completion of a finished run; another browser's record locks the page; saves wait 10 s, the check 5 s
+ *   C13 (since 6 October 2026, the two doors; the researcher's "1-A, 2-A, 4-A") the door an address opens (/prolific or
+ *       a Prolific ID in the link); a Prolific ID is never an email and the page and the server agree on every key; the
+ *       API client sends it as prolificPid and the server stores it as prolific_pid with the door and Prolific's two
+ *       ids; every queued save goes to the owner it was made for; a different Prolific ID in the link sets the other
+ *       person's run aside and keeps the machine's files; the Prolific first page (the same welcome, the ID, no email,
+ *       no question on a return); "A little about you" with four questions; the two database rules, swapped safely
  *
  * Run:  npm run validate:session
  */
@@ -101,13 +107,14 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     const s = src("server/index.js");
     const why = [];
     const routeBody = (marker) => { const i = s.indexOf(marker); const j = s.indexOf("\n);", i); return i < 0 ? "" : s.slice(i, j); };
-    for (const [name, marker] of [["create/update", 'app.post(\n  "/api/participants",'], ["stage", '"/api/participants/:email/stage"'],
-      ["complete", '"/api/participants/:email/complete"'], ["section", '"/api/participants/:email/section"']]) {
-      if (!routeBody(marker).includes("guardBrowser(req, res, email)")) why.push(`the ${name} route does not ask the rule`);
+    /* Since 6 October 2026 the routes take the participant's key (an email or a Prolific ID; server/recruitment.js). */
+    for (const [name, marker] of [["create/update", 'app.post(\n  "/api/participants",'], ["stage", '"/api/participants/:key/stage"'],
+      ["complete", '"/api/participants/:key/complete"'], ["section", '"/api/participants/:key/section"']]) {
+      if (!routeBody(marker).includes("guardBrowser(req, res, key)")) why.push(`the ${name} route does not ask the rule`);
     }
-    const claim = routeBody('"/api/participants/:email/claim"');
+    const claim = routeBody('"/api/participants/:key/claim"');
     if (!claim || !/Number\(doc\.age\) !== Number\(req\.body\?\.age\)/.test(claim)) why.push("the claim does not check the age");
-    if (!routeBody('"/api/participants/:email/active"')) why.push("there is no \"am I active?\" route");
+    if (!routeBody('"/api/participants/:key/active"')) why.push("there is no \"am I active?\" route");
     if (!/\$setOnInsert[\s\S]{0,400}active_browser/.test(s)) why.push("a brand-new participant is not given to the browser that created them");
     gate("C2", why.length === 0, why.length ? why.join(" | ") : "every write route asks the rule first, the claim needs the matching age, the \"am I active?\" route exists");
   }
@@ -271,7 +278,8 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!b2.includes("readTrolleyProgress(owner)") || !b2.includes("owner: progressOwner(owner)") || !b2.includes("localStorage.removeItem(TROLLEY_PROGRESS_STORAGE_KEY)")) why.push("Block 2 does not save, restore and clear its progress with an owner");
     if (!b3.includes("savedOwner === progressOwner(owner)") || !b3.includes("owner: progressOwner(owner)")) why.push("Block 3 does not save and restore its progress with an owner");
     if (!b2.includes("progressSaved();") || !b3.includes("progressSaved();")) why.push("Blocks 2 and 3 do not send their progress");
-    const resume = flow.slice(flow.indexOf("onResume={(entry) =>"), flow.indexOf("if (stage === \"consent\")"));
+    /* The resume step, shared by both doors' first pages since 6 October 2026. */
+    const resume = flow.slice(flow.indexOf("const onResume = (entry: DirectoryEntry) =>"), flow.indexOf("if (stage === \"consent\")"));
     const iClaim = resume.indexOf("await claimThisBrowser("), iSave = resume.indexOf("saveParticipant("), iRestore = resume.indexOf("restoreParticipantFiles(");
     if (!(iClaim > 0 && iClaim < iSave && iSave < iRestore)) why.push("the start screen does not claim the browser before it writes and downloads");
     if (!resume.includes("localStorage.setItem(SESSION_ID_KEY, entry.sessionId)")) why.push("a new device does not take the participant's own id (scenario 6's rule order depends on it)");
@@ -387,7 +395,9 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!page.includes("&& !englishError;") || !page.includes('const englishError = englishFirst === null ? "Please choose Yes or No." : null;')) why.push("the page can be sent without an answer");
     if (!page.includes("englishFirstLanguage: englishFirst === true,")) why.push("the answer is not recorded as true / false");
     if (!page.includes('label="Where are you from?"') || page.includes('label="Country"')) why.push("the country is not asked as \"Where are you from?\"");
-    if (!page.includes("Five short questions.") || !page.includes("Please complete all five questions to continue.") || /all four questions|Four short questions/.test(page)) why.push("the page still counts four questions");
+    /* Five in the university door; four in the Prolific door, which asks no email (since 6 October 2026, "4-A"). */
+    if (!page.includes('{askEmail ? "Five short questions." : "Four short questions."}')
+        || !page.includes('{askEmail ? "Please complete all five questions to continue." : "Please complete all four questions to continue."}')) why.push("the page does not count five questions (four without the email)");
     /* The browser's directory: saved, and a resume without it keeps it (as the country). */
     store.clear();
     const d = B("participantDirectory.js");
@@ -508,6 +518,133 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     need(api, /request<\{ ok\?: boolean \}>\("\/health", undefined, HEALTH_TIMEOUT_MS\)/, "the \"are you there?\" question does not use its own limit");
     gate("C12", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : "the server check: once in development, live again after 1, 2 and 4 s and then every 15 s; a server that answers late gets the participant's record first (nothing before it lands; queued first if it cannot), then the blocks, then the completion; another browser's record locks the page; saves wait 10 s, the server check 5 s");
+  }
+
+  /* ----------------------------------------------------------------------------------------- C13 */
+  {
+    const why = [];
+    const R = B("recruitment.js");
+    const SR = await import(require("node:url").pathToFileURL(path.join(ROOT, "server", "recruitment.js")).href);
+    const PID = "5f8a3c2e9b1d4e6f7a8b9c0d";
+    /* 1. The door an address opens. */
+    for (const [pathname, search, want] of [
+      ["/", "", "university"], ["/", "?condition=APA_Only", "university"], ["/prolific", "", "prolific"],
+      ["/prolific/", "?condition=Baseline", "prolific"], ["/Prolific", "", "prolific"],
+      ["/", `?PROLIFIC_PID=${PID}&STUDY_ID=s1234567&SESSION_ID=x1234567`, "prolific"],
+      ["/", "?PROLIFIC_PID={{%PROLIFIC_PID%}}", "university"], ["/prolifics", "", "university"],
+    ]) if (R.doorFromAddress(pathname, search) !== want) why.push(`${pathname}${search} opened the ${R.doorFromAddress(pathname, search)} door`);
+    const params = R.prolificParamsFrom(`?PROLIFIC_PID=${PID.toUpperCase()}&STUDY_ID=Study0001&SESSION_ID=bad id!`);
+    if (params.pid !== PID || params.studyId !== "study0001" || params.sessionId !== null) why.push(`the link was read as ${JSON.stringify(params)}`);
+    /* 2. A Prolific ID is never an email, and the page and the server agree on every key. */
+    const keys = [PID, "a1b2c3d4", "ana@example.com", "5f8a3c2e9b1d4e6f7a8b9c0d@x.y", "short", "has space 1234", "", "ABCDEF123456"];
+    for (const k of keys) {
+      if (R.isProlificKey(k) !== SR.isProlificKey(k)) why.push(`the page and the server disagree on "${k}"`);
+      if (k.includes("@") && R.isProlificKey(k)) why.push(`the email "${k}" read as a Prolific ID`);
+    }
+    if (JSON.stringify(SR.whoIs(PID)) !== JSON.stringify({ prolific_pid: PID }) || JSON.stringify(SR.whoIs("Ana@Example.com ")) !== JSON.stringify({ email: "ana@example.com" })) why.push("the server finds a record by the wrong field");
+    const onInsert = SR.identityOnInsert(PID);
+    if (onInsert.email !== undefined || onInsert.prolific_pid !== PID || onInsert.recruitment_source !== "prolific") why.push(`a Prolific record is made as ${JSON.stringify(onInsert)}`);
+    if (SR.identityOnInsert("ana@example.com").recruitment_source !== "university") why.push("a university record is not marked university");
+    if (JSON.stringify(SR.prolificIdsFrom({ prolificStudyId: "Study0001", prolificSessionId: "{{%SESSION_ID%}}" })) !== JSON.stringify({ prolific_study_id: "study0001" })) why.push("Prolific's study and submission ids are not kept as sent");
+    /* 3. What the API client sends: a Prolific ID as prolificPid, never as email; a save under the owner it was made for. */
+    const calls = [];
+    global.fetch = async (url, init) => {
+      calls.push({ url: String(url), body: init?.body ? JSON.parse(init.body) : null });
+      const answer = String(url).includes("/conditions/assign")
+        ? { number: 3, type: "APA_Only", assignedAt: "2026-10-06T10:00:00Z" }
+        : { prolific_pid: PID, prolific_study_id: "study0001", age: 30, status: "Study Not Completed", current_stage: "money" };
+      return { ok: true, status: 200, json: async () => answer };
+    };
+    const api = B("apiClient.js").apiClient;
+    await api.upsertParticipant({ email: PID, sessionId: "s", age: 30, gender: "Male", prolificStudyId: "study0001", prolificSessionId: "sess0001", stage: "money", consent: null, status: "Study Not Completed", createdAt: "", updatedAt: "", completedAt: null });
+    const up = calls.at(-1)?.body ?? {};
+    if (up.email !== undefined || up.prolificPid !== PID || up.prolificStudyId !== "study0001" || up.prolificSessionId !== "sess0001") why.push(`a Prolific record was sent as ${JSON.stringify(up).slice(0, 160)}`);
+    const found = await api.findParticipant(PID);
+    if (calls.at(-1)?.body?.prolificPid !== PID || calls.at(-1)?.body?.email !== undefined) why.push("the lookup sent the Prolific ID as an email");
+    if (found?.email !== PID || found?.prolificStudyId !== "study0001") why.push(`a Prolific record came back as ${JSON.stringify(found).slice(0, 120)}`);
+    await api.findParticipant("ana@example.com");
+    if (calls.at(-1)?.body?.email !== "ana@example.com") why.push("the university lookup changed");
+    store.set("vrds_pending_email", "someone-else@example.com");
+    await api.saveSection("blocks.block1_money", { a: 1 }, PID);
+    if (!calls.at(-1)?.url.endsWith(`/participants/${PID}/section`)) why.push(`a save made for ${PID} went to ${calls.at(-1)?.url}`);
+    await api.assignCondition("arrival-c13-1", "prolific");
+    if (calls.at(-1)?.body?.recruitmentSource !== "prolific") why.push("the landing page's question does not carry the door");
+    delete global.fetch;
+    /* 4. A save queued while the server is down is sent under the owner it was made for, even after somebody else starts. */
+    {
+      const sentTo = [];
+      let up2 = false;
+      storage.setRemoteBackend({
+        findParticipant: async () => null, upsertParticipant: async () => {}, updateStage: async () => {}, markCompleted: async () => {},
+        saveSection: async (_p, _d, owner) => { await wait(5); if (!up2) throw new Error("unreachable"); sentTo.push(owner); },
+        getResumeFiles: async () => null, claimBrowser: async () => {}, isActiveBrowser: async () => true,
+      });
+      store.clear();
+      store.set("vrds_pending_email", "first@example.com");
+      store.set("block4_reflection_results", JSON.stringify({ who: "first" }));
+      storage.syncBlocks("first@example.com");
+      await wait(40);
+      store.set("vrds_pending_email", PID);
+      up2 = true;
+      await storage.flushOutbox();
+      if (sentTo[0] !== "first@example.com") why.push(`a save queued for first@example.com was sent for ${sentTo[0]}`);
+      storage.setRemoteBackend(null);
+    }
+    /* 5. A different Prolific ID in the link sets the other person's run aside and keeps the machine's files. */
+    {
+      store.clear();
+      const kept = ["vrds_local_participants", "vrds_outbox", "vrds_browser_id", "theme", "vrds_active_tab"];
+      const run = ["vrds_pending_email", "vrds_demographics", "experiment_flow_stage", "vrds_session_id", "vrds_condition", "block4_reflection_results", "vrds_consent", "vrds_prolific"];
+      const fill = () => { store.clear(); for (const k of [...kept, ...run]) store.set(k, k === "vrds_pending_email" ? "ana@example.com" : "x"); };
+      fill();
+      if (!R.makeRoomForAnotherProlificId(`?PROLIFIC_PID=${PID}`)) why.push("a different Prolific ID did not set the other run aside");
+      if (run.some((k) => store.has(k))) why.push(`the other person's files stayed: ${run.filter((k) => store.has(k)).join(", ")}`);
+      if (kept.some((k) => !store.has(k))) why.push(`the machine's files were removed: ${kept.filter((k) => !store.has(k)).join(", ")}`);
+      fill();
+      store.set("vrds_pending_email", PID);
+      if (R.makeRoomForAnotherProlificId(`?PROLIFIC_PID=${PID}`) || !store.has("experiment_flow_stage")) why.push("the SAME Prolific ID lost its own run");
+      fill();
+      if (R.makeRoomForAnotherProlificId("") || !store.has("experiment_flow_stage")) why.push("a link without a Prolific ID set a run aside");
+      store.clear();
+    }
+    /* 6. The pages, from the source. */
+    const flow = src("src/experiment/ExperimentFlow.tsx");
+    const demo = src("src/experiment/DemographicPage.tsx");
+    const pstart = src("src/experiment/ProlificStartScreen.tsx");
+    const ustart = src("src/experiment/StartScreen.tsx");
+    const need = (text, re, what) => { if (!re.test(text)) why.push(what); };
+    if (!(flow.indexOf("useState(() => makeRoomForAnotherProlificId(window.location.search));") >= 0
+        && flow.indexOf("useState(() => makeRoomForAnotherProlificId(") < flow.indexOf("useState<string>(() => getSessionId())"))) why.push("another person's run is not set aside before the page reads anything");
+    need(flow, /if \(door === "prolific"\) \{\s*return \(\s*<ProlificStartScreen\s+params=\{prolificParamsFrom\(window\.location\.search\)\}\s+onNewParticipant=\{onNewParticipant\}\s+onResume=\{onResume\}/, "the Prolific door does not open its own first page");
+    need(flow, /return <StartScreen onNewParticipant=\{onNewParticipant\} onResume=\{onResume\} \/>;/, "the university door's first page changed");
+    need(flow, /askEmail=\{door !== "prolific"\}/, "the Prolific door's demographic page still asks the email");
+    need(flow, /prolificPid: key, recruitmentSource: "prolific" as const/, "the Prolific record does not name its key truthfully");
+    need(flow, /isProlificKey\(pendingEmail\) \? "arrived_with_their_prolific_id" : "typed_their_email"/, "the visit log says \"typed their email\" in the Prolific door");
+    need(demo, /\{askEmail && \(\s*<Field\s+label="Email address"/, "the email question is not behind askEmail");
+    need(demo, /\.\.\.\(askEmail \? \{ email: email\.trim\(\)\.toLowerCase\(\) \} : \{\}\),/, "the record carries an email in the Prolific door");
+    const words = (t) => (t.match(/data-welcome>([\s\S]*?)<\/Text>/)?.[1] ?? "").replace(/\s+/g, " ").trim();
+    if (!words(pstart) || words(pstart) !== words(ustart)) why.push("the Prolific first page's welcome differs from the university's");
+    need(pstart, /<Text as="span" whiteSpace="nowrap">Human-AI Moral Value<\/Text>\{" "\}\s*<Text as="span" whiteSpace="nowrap">Decision-making Study<\/Text>/, "the Prolific first page does not carry the study's name");
+    if (/type="email"|autoComplete="email"|[\w.-]+@[\w-]+\.\w{2,}/.test(pstart)) why.push("the Prolific first page asks or shows an email");
+    if (/age/i.test(pstart.split("{mode.kind === \"resume\"")[1]?.split("{mode.kind === \"finished\"")[0] ?? "")) why.push("a returning Prolific person is asked a question (the researcher's 1-A: none)");
+    need(pstart, /Your Prolific ID/, "the Prolific first page does not show the ID");
+    /* Found in the live check (6 October 2026): the page looked a person up before the server was known and called a
+       finished person "new"; and an unowned university condition kept a Prolific arrival at the university's door. */
+    need(pstart, /void whenServerKnown\(\)\.then\(\(\) => findParticipant\(pid\)\)/, "the Prolific first page looks a person up before it knows whether there is a server");
+    need(flow, /if \(!browserParticipantKey\(\) && file && !file\.owner && file\.recruitmentSource !== "prolific"\s*&& doorFromAddress\(window\.location\.pathname, window\.location\.search\) === "prolific"\) \{\s*try \{\s*localStorage\.removeItem\(CONDITION_KEY\);/, "an unowned condition from the university's door is kept by somebody arriving from Prolific");
+    need(flow, /: doorFromAddress\(window\.location\.pathname, window\.location\.search\) === "prolific"\s*\? "prolific"\s*: readConditionFile\(\)\?\.recruitmentSource \?\? "university";/, "the address does not decide the door before the condition file");
+    /* 7. The database rule: one email, one Prolific ID, each on the records that have it; the old rule replaced first. */
+    const db = src("server/db.js");
+    need(db, /await replaceIfDifferent\(participantsCollection, "email_unique", EMAIL_RULE\);\s*await participantsCollection\.createIndexes\(\[/, "the old email rule is not replaced before the indexes are made");
+    need(db, /name: "email_unique", unique: true, partialFilterExpression: EMAIL_RULE/, "the email rule still covers records without an email");
+    need(db, /name: "prolific_pid_unique", unique: true, partialFilterExpression: PROLIFIC_RULE/, "no one-Prolific-ID-one-person rule");
+    const server = src("server/index.js").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (/participants\(\)\.(?:findOne|updateOne)\(\s*\{\s*email\b|normalizeEmail|req\.params\.email/.test(server)
+        || (server.match(/whoIs\(key\)/g) ?? []).length < 14) why.push("a server route still finds a participant by email only");
+    need(server, /\.\.\.identityOnInsert\(key\),/, "a new record does not take its key under its true name");
+    need(server, /\.\.\.prolificIdsFrom\(body\),/, "the Prolific ids are not saved");
+    gate("C13", why.length === 0, why.length ? why.slice(0, 5).join(" | ")
+      : "the two doors: /prolific or a Prolific ID in the link opens the Prolific door; a Prolific ID is never an email (page and server agree), is sent as prolificPid and stored as prolific_pid with the door and Prolific's ids; every save goes to the owner it was made for; a different Prolific ID sets the other person's run aside (the machine's files kept); the Prolific first page has the same welcome, the ID, no email and no question for a return; four questions without the email; the database rules swapped safely");
   }
 
   console.log("");

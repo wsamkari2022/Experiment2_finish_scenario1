@@ -90,6 +90,10 @@
  *       two writes; a count read between them saw the person twice or not at all, and a burst could end 26 / 24 -
  *       found when the load test ran on a busy machine): the record keeps its arrival id, a turn reads the arrivals
  *       before the records, and in all six orders of the two writes and the two readings the person counts once
+ *   N25 (since 6 October 2026, the two doors; the researcher's "2-A") each door is balanced on its own: a door counts only
+ *       its own records and arrivals (a record from before the doors is the university's), 40 students and 40 Prolific
+ *       people arriving mixed give 10 per condition inside each door, 4 students after 40 Prolific people land in four
+ *       different conditions; the landing page sends the door, the route reads it, the count page shows both doors
  *
  * Run:  npm run validate:conditions
  */
@@ -226,11 +230,17 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     }
     if (S.chooseFewest(t, () => 0).type !== "CVR_Only") why.push("the next person did not go to the empty condition");
     /* The count page: all four conditions, the rule, and no email anywhere. */
+    /* Since 6 October 2026 one table per door (the university's and Prolific's). */
+    const ever = Object.fromEntries(NAMES.map((n) => [n, { finished: 1, not_finished: 2, tests_by_address: 3, without_server: 4 }]));
     const html = S.countReportHtml({
-      at: new Date(now).toISOString(), rule: "rule", counted: t, next_would_go_to: "CVR_Only",
-      everyone_ever: Object.fromEntries(NAMES.map((n) => [n, { finished: 1, not_finished: 2, tests_by_address: 3, without_server: 4 }])),
+      at: new Date(now).toISOString(), rule: "rule",
+      doors: {
+        university: { counted: t, everyone_ever: ever, next_would_go_to: "CVR_Only" },
+        prolific: { counted: S.tally([], [], now, "prolific"), everyone_ever: ever, next_would_go_to: "Baseline" },
+      },
     });
     for (const n of NAMES) if (!html.includes(n.replace("+", "+"))) why.push(`the count page does not show ${n}`);
+    if (!html.includes("<h2>University (email)</h2>") || !html.includes("<h2>Prolific</h2>")) why.push("the count page does not show both doors");
     if (/[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(html)) why.push("the count page shows an email address");
     if (!/prefers-color-scheme:dark/.test(html) || !/refresh" content="30"/.test(html)) why.push("the count page lost its dark mode or its refresh");
     gate("N3", "who counts (Q1-B): finished, working 2 h, arrived 30 min; drop-outs, tests and offline runs never", why);
@@ -286,8 +296,9 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
       ["no condition", {}],
     ]) if (S.conditionFieldsFrom(body) !== null) why.push(`${label} was accepted`);
     const server = src("server/index.js");
-    if (!/updateOne\(\{ email, condition_type: \{ \$exists: false \} \}, \{ \$set: condition \}\)/.test(server)) why.push("the participant route does not set the condition only on a record without one");
-    if (!/arrival_id: arrivalId, linked_email: null \},\s*\{ \$set: \{ linked_email: email/.test(server)) why.push("the participant route does not link the arrival");
+    /* Since 6 October 2026 the record is found by its key (email or Prolific ID: server/recruitment.js). */
+    if (!/updateOne\(\{ \.\.\.whoIs\(key\), condition_type: \{ \$exists: false \} \}, \{ \$set: condition \}\)/.test(server)) why.push("the participant route does not set the condition only on a record without one");
+    if (!/arrival_id: arrivalId, linked_email: null, linked_prolific_pid: null \},\s*\{ \$set: \{ \.\.\.arrivalLink\(key\), linked_at: now \} \}/.test(server)) why.push("the participant route does not link the arrival");
     for (const route of ["/api/conditions/assign", "/api/conditions/release", "/api/conditions/counts", "/api/conditions/report"]) {
       if (!server.includes(`"${route}"`)) why.push(`no route ${route}`);
     }
@@ -381,7 +392,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(flow, /if \(!readConditionFile\(\)\) return "landing";/, "a browser without a condition does not start at the landing page");
     need(flow, /ENTRY_STAGES\.includes\(saved\) && !readConditionFile\(\)\) return "landing"/, "an entry screen without a condition does not go to the landing page");
     need(flow, /if \(stage === "landing"\) return;/, "the landing page is saved as a stage");
-    need(flow, /if \(stage === "landing"\) \{\s*return <LandingPage onReady=\{handleLandingReady\} \/>;/, "the landing page is not rendered");
+    need(flow, /if \(stage === "landing"\) \{\s*return <LandingPage onReady=\{handleLandingReady\} door=\{door\} \/>;/, "the landing page is not rendered (with the person's door)");
     if (flow.indexOf('if (stage === "landing")') > flow.indexOf('if (stage === "start")')) why.push("the landing page comes after the start screen");
     need(flow, /JSON\.stringify\(\{ \.\.\.record, \.\.\.\(conditionFields\(condition\) \?\? \{\}\) \}\)/, "the two fields are not saved beside the demographic answers");
     if ((flow.match(/condition: savedFrom\(condition\),/g) ?? []).length !== 2) why.push("the two saves do not both carry the condition");
@@ -405,7 +416,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
   {
     const why = [];
     const copy = db.conditionCopy(C.makeConditionFile(C.CONDITIONS[3], "landing_page", "arrival-33333333", "a@b.c", "2026-10-01T11:00:00.000Z"));
-    const want = { condition_number: 4, condition_type: "Baseline", source: "landing_page", counted_for_balance: true, assigned_at: "2026-10-01T11:00:00.000Z" };
+    const want = { condition_number: 4, condition_type: "Baseline", source: "landing_page", counted_for_balance: true, assigned_at: "2026-10-01T11:00:00.000Z", recruitment_source: "university" };
     if (JSON.stringify(copy) !== JSON.stringify(want)) why.push(`the copy is ${JSON.stringify(copy)}`);
     if (db.conditionCopy(C.makeConditionFile(C.CONDITIONS[0], "address", null, ""))?.counted_for_balance !== false) why.push("a test by address is counted for balance");
     if (db.conditionCopy(null) !== null || db.conditionCopy({ number: 2, type: "Baseline" }) !== null) why.push("a missing or wrong file gave a copy");
@@ -1069,9 +1080,9 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const landing = src("src/experiment/LandingPage.tsx");
     const need = (re, what) => { if (!re.test(landing)) why.push(what); };
     need(/const LIVE = import\.meta\.env\.PROD;/, "the page does not know whether it is the live site");
-    need(/requestCondition\(arrivalId, \{ waitMs: live \? 30_000 : 6000 \}\)/, "the live page does not wait for the whole server check");
+    need(/requestCondition\(arrivalId, \{ waitMs: live \? 30_000 : 6000, recruitmentSource: door \}\)/, "the live page does not wait for the whole server check (with the door)");
     need(/if \(live\) return null;\s*return makeConditionFile\(randomCondition\(\), "random_offline"/, "the live page can still pick a random condition");
-    need(/void chooseCondition\(LIVE\)\.then/, "the page does not ask as the live site");
+    need(/void chooseCondition\(LIVE, door\)\.then/, "the page does not ask as the live site");
     need(/if \(!file\) \{\s*setPhase\("unreachable"\);\s*return;\s*\}\s*writeConditionFile\(file\);\s*try \{\s*localStorage\.removeItem\(CONDITION_ARRIVAL_KEY\);/, "the arrival id is not kept for \"Try again\" (it must go only once a condition is written)");
     need(/We could not reach the study/, "no words for a server that cannot be reached");
     need(/onClick=\{tryAgain\}[\s\S]{0,200}Try again/, "no \"Try again\" button");
@@ -1123,8 +1134,57 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     }
     const server = src("server/conditions.js");
     if (!/const arrivals = await store\.loadArrivals\(.*\);\s*const docs = await store\.loadDocs\(\);/.test(server)) why.push("a turn does not read the arrivals before the records");
-    if (!/condition_arrival_id: 1 \}/.test(server)) why.push("the store does not read each record's arrival id");
+    if (!/condition_arrival_id: 1[,\s}]/.test(server)) why.push("the store does not read each record's arrival id");
     gate("N24", "every person counted once while their record is being made: the record keeps its arrival id, a turn reads arrivals then records, all six orders of events count once", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N25 */
+  {
+    const why = [];
+    const now = Date.parse("2026-10-06T12:00:00Z");
+    const ago = (min) => new Date(now - min * 60000).toISOString();
+    /* Each door counts only its own people; a record from before the doors is the university's. */
+    const docs = [
+      { condition_type: "CVR+APA", condition_source: "landing_page", status: "Study Completed", updated_at: ago(600) },
+      { condition_type: "CVR+APA", condition_source: "landing_page", status: "Study Completed", updated_at: ago(600), recruitment_source: "university" },
+      { condition_type: "Baseline", condition_source: "landing_page", status: "Study Completed", updated_at: ago(600), recruitment_source: "prolific" },
+    ];
+    const arrivals = [
+      { arrival_id: "pa-1", condition_type: "APA_Only", assigned_at: ago(1), linked_email: null, released: false, recruitment_source: "prolific" },
+      { arrival_id: "ua-1", condition_type: "CVR_Only", assigned_at: ago(1), linked_email: null, released: false },
+      { arrival_id: "pa-2", condition_type: "CVR_Only", assigned_at: ago(1), linked_email: null, linked_prolific_pid: "5f8a3c2e9b1d4e6f7a8b9c0d", released: false, recruitment_source: "prolific" },
+    ];
+    const u = S.tally(docs, arrivals, now, "university");
+    const p = S.tally(docs, arrivals, now, "prolific");
+    const line = (t) => NAMES.map((n) => t[n].counted).join("/");
+    if (line(u) !== "2/1/0/0") why.push(`the university door counted ${line(u)} (wanted 2/1/0/0)`);
+    if (line(p) !== "0/0/1/1") why.push(`the Prolific door counted ${line(p)} (wanted 0/0/1/1: a linked Prolific arrival is no longer "just arrived")`);
+    if (line(S.tally(docs, arrivals, now)) !== line(u)) why.push("the default is not the university door");
+    /* 40 students and 40 Prolific people arriving together, mixed: 10 in each condition INSIDE each door. */
+    const mixed = pretendStore();
+    const ids = Array.from({ length: 80 }, (_, i) => `mix-${String(i).padStart(4, "0")}`);
+    await Promise.all(ids.map((id, i) => S.assignCondition({ arrivalId: id, store: mixed, random: seeded(40 + i), recruitmentSource: i % 2 ? "prolific" : "university" })));
+    for (const door of ["university", "prolific"]) {
+      const rows = mixed.arrivals.filter((a) => a.recruitment_source === door);
+      const by = NAMES.map((n) => rows.filter((a) => a.condition_type === n).length);
+      if (rows.length !== 40 || by.some((c) => c !== 10)) why.push(`${door}: ${rows.length} arrivals, ${by.join("/")} (wanted 10 each)`);
+    }
+    /* 4 students after 40 Prolific people: one in each of four conditions (with the doors mixed they would follow
+       Prolific's gaps). */
+    const after = pretendStore();
+    for (let i = 0; i < 40; i++) await S.assignCondition({ arrivalId: `pro-${String(i).padStart(4, "0")}`, store: after, recruitmentSource: "prolific", random: seeded(i) });
+    for (let i = 0; i < 4; i++) await S.assignCondition({ arrivalId: `uni-${String(i).padStart(4, "0")}`, store: after, recruitmentSource: "university", random: seeded(90 + i) });
+    const four = after.arrivals.filter((a) => a.recruitment_source === "university").map((a) => a.condition_type);
+    if (new Set(four).size !== 4) why.push(`4 students after 40 Prolific people landed ${four.join(", ")}`);
+    /* The door travels: the landing page sends it, the route reads it, the count page shows both. */
+    const server = src("server/index.js");
+    if (!/recruitmentSource: recruitmentSourceOf\(req\.body\?\.recruitmentSource\),/.test(server)) why.push("the assign route ignores the door");
+    if (!/return await remote\.assignCondition\(arrivalId, recruitmentSource\);/.test(src("src/experiment/storage.ts"))) why.push("the page does not send the door");
+    if (!/requestCondition\(arrivalId, \{ waitMs: live \? 30_000 : 6000, recruitmentSource: door \}\)/.test(src("src/experiment/LandingPage.tsx"))) why.push("the landing page does not ask for its door");
+    if (S.recruitmentSourceOf === undefined && !/recruitmentSourceOf/.test(server)) why.push("no door rule on the server");
+    if (!/doors\[door\] = \{ counted, everyone_ever: all, next_would_go_to:/.test(src("server/conditions.js"))) why.push("the count page does not count each door");
+    console.log(`       each door on its own: university ${line(u)}, Prolific ${line(p)}; 40 + 40 mixed: 10 each in each door; 4 students after 40 Prolific: ${four.join(", ")}`);
+    gate("N25", "each door balanced on its own (the researcher's 2-A): its own counts, old records the university's, 40 + 40 arriving mixed give 10 each per door, the door sent, read and shown", why);
   }
 
   const failed = results.filter((r) => !r.ok);

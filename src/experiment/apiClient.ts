@@ -26,6 +26,15 @@ import type { RemoteBackend } from "./storage";
 import { browserId } from "./sessionLog";
 import type { DirectoryEntry } from "./participantDirectory";
 import { conditionByNumber, type AssignedCondition, type SavedCondition } from "./conditions";
+import { isProlificKey, keyOfDemographics, type RecruitmentSource } from "./recruitment";
+
+/*
+ * THE KEY UNDER ITS TRUE NAME (since 6 October 2026; recruitment.ts). The participant's key is an email (the university
+ * door) or a Prolific ID (the Prolific door). It is sent as `email` or as `prolificPid`, and the server stores it the same
+ * way (`email` or `prolific_pid`), so a Prolific ID never lands in an email field.
+ */
+const identity = (key: string): { email: string } | { prolificPid: string } =>
+  (isProlificKey(key) ? { prolificPid: key } : { email: key });
 
 /** Same origin: Vite proxies /api to the API server in development. */
 const BASE = "/api";
@@ -76,7 +85,10 @@ async function request<T>(path: string, init?: RequestInit, timeoutMs = TIMEOUT_
 function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry | null {
   if (!doc) return null;
   return {
-    email: String(doc.email ?? ""),
+    /* The key: the email, or the Prolific ID of a Prolific record (recruitment.ts). */
+    email: String(doc.email ?? doc.prolific_pid ?? ""),
+    ...(typeof doc.prolific_study_id === "string" ? { prolificStudyId: doc.prolific_study_id } : {}),
+    ...(typeof doc.prolific_session_id === "string" ? { prolificSessionId: doc.prolific_session_id } : {}),
     /* The document calls it participant_id now; the browser's own directory still calls it
        sessionId internally. One name in the database is what matters for anybody reading it. */
     sessionId: String(doc.participant_id ?? doc.session_id ?? ""),
@@ -107,10 +119,10 @@ function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry |
 }
 
 export const apiClient: RemoteBackend = {
-  async findParticipant(email) {
+  async findParticipant(key) {
     const doc = await request<Record<string, unknown> | null>("/participants/lookup", {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify(identity(key)),
     });
     return toDirectoryEntry(doc);
   },
@@ -119,7 +131,10 @@ export const apiClient: RemoteBackend = {
     await request("/participants", {
       method: "POST",
       body: JSON.stringify({
-        email: entry.email,
+        ...identity(entry.email),
+        /* The Prolific door's two ids, sent only when known: the server never erases them (since 6 October 2026). */
+        ...(entry.prolificStudyId ? { prolificStudyId: entry.prolificStudyId } : {}),
+        ...(entry.prolificSessionId ? { prolificSessionId: entry.prolificSessionId } : {}),
         sessionId: entry.sessionId,
         age: entry.age,
         gender: entry.gender,
@@ -161,20 +176,21 @@ export const apiClient: RemoteBackend = {
     return answer?.active !== false;
   },
 
-  async getResumeFiles(email) {
+  async getResumeFiles(key) {
     /* The lookup already returns the whole document, so no extra endpoint is needed — the raw
        files ride along with the record the start screen was fetching anyway. */
     const doc = await request<{ resume_state?: { files?: Record<string, unknown> } } | null>(
       "/participants/lookup",
-      { method: "POST", body: JSON.stringify({ email }) },
+      { method: "POST", body: JSON.stringify(identity(key)) },
     );
     return doc?.resume_state?.files ?? null;
   },
 
-  async assignCondition(arrivalId): Promise<AssignedCondition> {
+  async assignCondition(arrivalId, recruitmentSource?: RecruitmentSource): Promise<AssignedCondition> {
     const given = await request<AssignedCondition>("/conditions/assign", {
       method: "POST",
-      body: JSON.stringify({ arrivalId }),
+      /* The door: each is balanced on its own (since 6 October 2026). */
+      body: JSON.stringify({ arrivalId, recruitmentSource: recruitmentSource ?? "university" }),
     });
     const condition = conditionByNumber(given?.number);
     if (!condition || condition.type !== given.type) throw new Error("the server named no known condition");
@@ -185,24 +201,25 @@ export const apiClient: RemoteBackend = {
     await request("/conditions/release", { method: "POST", body: JSON.stringify({ arrivalId }) });
   },
 
-  async saveSection(path, data) {
-    /* Addressed by email like everything else; the participant id travels on the document itself
-       and does not need repeating in every section write. */
-    const email = currentEmail();
-    if (!email) return;
-    await request(`/participants/${encodeURIComponent(email)}/section`, {
+  async saveSection(path, data, owner) {
+    /* Addressed by the participant's key like everything else; the participant id travels on the document itself
+       and does not need repeating in every section write. Since 6 October 2026 the key the save was MADE for (storage.ts
+       stamps it), so a save that waited in the queue can never land on somebody who started after it. */
+    const key = owner ?? currentEmail();
+    if (!key) return;
+    await request(`/participants/${encodeURIComponent(key)}/section`, {
       method: "PATCH",
       body: JSON.stringify({ path, data }),
     });
   },
 };
 
-/** The address of the participant currently running, used to address block writes. */
+/** The key (email or Prolific ID) of the participant currently running, used to address block writes. */
 function currentEmail(): string | null {
   try {
     return (
       localStorage.getItem("vrds_pending_email") ??
-      (JSON.parse(localStorage.getItem("vrds_demographics") ?? "null")?.email as string) ??
+      keyOfDemographics(JSON.parse(localStorage.getItem("vrds_demographics") ?? "null")) ??
       null
     );
   } catch {

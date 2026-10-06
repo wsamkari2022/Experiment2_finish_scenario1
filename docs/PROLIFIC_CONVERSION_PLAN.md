@@ -58,7 +58,11 @@ against the code as it is then, because the four conditions will have added code
 | Daily pay check | **Claude, from exported files** | Every day Waseem exports the `participants` collection from Compass (JSON) and Prolific's submissions file (CSV) into `Prolific docs/daily/<date>/`; a tool (to build) sorts every Prolific ID into Pay / Look first / Not finished / Problem by Prolific's valid reasons only, with one comma-separated line for Prolific's bulk approve. Claude never holds the server's database password |
 | Many people at once | **Step 0, built 6 October 2026** | CLAUDE.md "Many people at once": grouped condition turns, a patient landing page that never picks at random on the live site, a live page that keeps looking for the server; `npm run test:load` |
 
-**Build order (one step at a time):** Step 0 (done) -> 1 the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 the Prolific consent page and the demographic page without the email -> 3 the second number row (Prolific only) -> 4 the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
+**Step 1 built 6 October 2026** (plan answers "1-A, 2-A, 3-A": a returning Prolific person continues with no question;
+the Prolific first page is a welcome with the ID and Start; deploy only after Step 4, with a database backup first).
+What it does: CLAUDE.md, "Two doors". It also took "A little about you" without the email from Step 2.
+
+**Build order (one step at a time):** Step 0 (done) -> 1 (done) the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 the Prolific consent page and the demographic page without the email -> 3 the second number row (Prolific only) -> 4 the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
 
 **Prolific's rules re-read 6 October 2026, unchanged:** at least $8 an hour ($12 recommended); two failed valid checks before a rejection in a study over 5 minutes; memory-recall checks are not valid; "too slow", the researcher's own measures and a wrong or missing code are not valid reasons; submissions not reviewed are approved automatically on day 21; a completion code can approve automatically (not used here); bulk approval takes a list of Prolific IDs.
 

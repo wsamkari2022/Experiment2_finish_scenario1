@@ -99,6 +99,8 @@
  * fails if the two ever differ.
  */
 
+import type { RecruitmentSource } from "./recruitment";
+
 export const CONDITIONS = [
   { number: 1, type: "CVR+APA", urlName: "CVR_APA" },
   { number: 2, type: "CVR_Only", urlName: "CVR_Only" },
@@ -129,8 +131,10 @@ export interface ConditionFile {
   assignedAt: string;
   /** The landing page's arrival id when the server gave it; null otherwise. */
   arrivalId: string | null;
-  /** The participant's email, lower case; "" until the start screen or the demographic page knows it. */
+  /** The participant's key (email or Prolific ID), lower case; "" until the start screen or the demographic page knows it. */
   owner: string;
+  /** The door this condition was given at (since 6 October 2026; recruitment.ts); absent = the university door. */
+  recruitmentSource?: RecruitmentSource;
 }
 
 /** What the server answers when it gives a condition. */
@@ -227,6 +231,7 @@ export function writeConditionFile(file: ConditionFile): void {
 
 export function makeConditionFile(
   condition: Condition, source: ConditionSource, arrivalId: string | null, owner: string, assignedAt?: string,
+  recruitmentSource?: RecruitmentSource,
 ): ConditionFile {
   return {
     version: CONDITION_FILE_VERSION,
@@ -236,6 +241,7 @@ export function makeConditionFile(
     assignedAt: assignedAt || new Date().toISOString(),
     arrivalId,
     owner: owner.trim().toLowerCase(),
+    ...(recruitmentSource ? { recruitmentSource } : {}),
   };
 }
 

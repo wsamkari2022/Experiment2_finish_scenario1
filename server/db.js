@@ -39,18 +39,48 @@ let db = null;
  * A rule that lives only in the interface is a rule that holds until two people submit at the
  * same moment, or until somebody reloads at the wrong time. The database refuses a duplicate
  * outright, whatever the page does.
+ *
+ * TWO DOORS, TWO RULES (since 6 October 2026; server/recruitment.js). A Prolific participant has no email: their
+ * key is their Prolific ID (`prolific_pid`). A unique index on `email` that covers every record treats "no email" as
+ * one shared value, so the SECOND Prolific person would be refused. Both rules now cover only the records that have
+ * that field ("partial" indexes): one email is one person, one Prolific ID is one person.
+ *
+ * THE SWAP IS SAFE ON A DATABASE THAT ALREADY HAS THE OLD RULE. MongoDB refuses to create an index under an existing
+ * name with different options, and the server would stop at startup (PM2 restarting it again and again). So the old
+ * `email_unique` is removed first when it is not the partial one - here, before the server opens to anybody - and made
+ * again. Every record is kept; tested on a throw-away copy that had the old rule (npm run test:load, L6).
  */
+const EMAIL_RULE = { email: { $type: "string" } };
+const PROLIFIC_RULE = { prolific_pid: { $type: "string" } };
+
+async function replaceIfDifferent(collection, name, partialFilterExpression) {
+  let existing = null;
+  try {
+    existing = (await collection.indexes()).find((index) => index.name === name) ?? null;
+  } catch {
+    return; /* no collection yet: createIndexes makes it */
+  }
+  if (existing && JSON.stringify(existing.partialFilterExpression ?? null) !== JSON.stringify(partialFilterExpression)) {
+    await collection.dropIndex(name);
+    console.log(`[db] replaced the index ${name} with the two-door rule`);
+  }
+}
+
 export async function connect() {
   if (db) return db;
   await client.connect();
   db = client.db(DB_NAME);
 
-  await db.collection("participants").createIndexes([
-    { key: { email: 1 }, name: "email_unique", unique: true },
+  const participantsCollection = db.collection("participants");
+  await replaceIfDifferent(participantsCollection, "email_unique", EMAIL_RULE);
+  await participantsCollection.createIndexes([
+    { key: { email: 1 }, name: "email_unique", unique: true, partialFilterExpression: EMAIL_RULE },
+    { key: { prolific_pid: 1 }, name: "prolific_pid_unique", unique: true, partialFilterExpression: PROLIFIC_RULE },
     { key: { participant_id: 1 }, name: "participant_id_unique", unique: true },
     { key: { status: 1 }, name: "status" },
-    /* The condition counts read these (since 1 October 2026; server/conditions.js). */
+    /* The condition counts read these (since 1 October 2026; server/conditions.js); the door since 6 October 2026. */
     { key: { condition_type: 1 }, name: "condition_type" },
+    { key: { recruitment_source: 1 }, name: "recruitment_source" },
   ]);
   /* The landing page's arrivals: one row per condition it gave, until the person reaches the demographic page
      (linked_email) or turns out to be somebody returning (released). server/conditions.js has the rule. */

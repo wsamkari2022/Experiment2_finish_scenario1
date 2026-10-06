@@ -32,6 +32,7 @@
  * built from the feedback record and is never used for pay. Checked by `npm run validate:attention`.
  */
 
+import { keyOfDemographics } from "./recruitment";
 import { SESSION_ID_KEY } from "./session";
 import {
   APA_QUESTIONS, CVR_QUESTIONS, DUAL_VIEW_QUESTIONS, TOOL_CLOSERS, TOOL_RATINGS, WELLBEING_ITEMS,
@@ -172,8 +173,8 @@ function currentOwner(): string {
   try {
     const pending = localStorage.getItem("vrds_pending_email");
     if (pending) return pending.trim().toLowerCase();
-    const demo = JSON.parse(localStorage.getItem("vrds_demographics") ?? "null") as { email?: string } | null;
-    return String(demo?.email ?? "").trim().toLowerCase();
+    /* The demographic record names the key as `email`, or as `prolificPid` in the Prolific door (since 6 October 2026). */
+    return String(keyOfDemographics(JSON.parse(localStorage.getItem("vrds_demographics") ?? "null")) ?? "").trim().toLowerCase();
   } catch {
     return "";
   }

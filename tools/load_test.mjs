@@ -16,6 +16,12 @@
  *   L3  the four conditions exactly even inside every wave (and every arrival linked to its person)
  *   L4  nobody waited 3 seconds or more for their condition (until 6 October 2026: 33 of 100 did, and the page then
  *       gave them a random condition that was never counted; now the page also waits longer and asks again)
+ *   L5  (the two doors, since 6 October 2026) 100 students and 100 Prolific people in the same instant: each door 25 per
+ *       condition, every Prolific record under prolific_pid with NO email and its door and Prolific's ids, every
+ *       university record under its email and marked university
+ *   L6  the database rule swap: the throw-away database is first made with TODAY'S rule ("one email = one person" over
+ *       every record) and an old record; the new server must replace the rule, keep the record, and accept the many
+ *       Prolific records that have no email
  *
  * The first run, on 6 October 2026 before the fix: 0 errors, 400 people, 100 per condition, but 33 of 100, 41 of 100
  * and 67 of 200 waited longer than 3 seconds (the slowest 5.7 s). The numbers depend on the computer; the live server
@@ -24,7 +30,7 @@
  * Run:  npm run test:load            (needs MongoDB running on this computer, as `npm run server` does)
  */
 import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -42,6 +48,8 @@ const WAVES = [
   { label: "wave1", people: 100, rounds: 15 },
   { label: "wave2", people: 100, rounds: 15 },
   { label: "wave3", people: 200, rounds: 5 },
+  /* Both doors at once (since 6 October 2026): every second person comes from Prolific with a Prolific ID. */
+  { label: "doors", people: 200, rounds: 5, mixed: true },
 ];
 if (!DB_NAME.startsWith("vrds_load_test_")) throw new Error("refusing to run against a database that is not a load test");
 
@@ -49,7 +57,7 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const filler = (kb) => "x".repeat(kb * 1024);
 const q = (arr, p) => { const s = [...arr].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 
-async function runWave({ label, people, rounds }) {
+async function runWave({ label, people, rounds, mixed = false }) {
   const lat = {};
   const errors = [];
   async function call(name, method, route, body, browser) {
@@ -71,18 +79,23 @@ async function runWave({ label, people, rounds }) {
   }
   async function person(i) {
     const browser = randomUUID();
-    const email = `${label}-${i}@loadtest.invalid`;
+    const door = mixed && i % 2 === 1 ? "prolific" : "university";
+    /* A Prolific ID looks like Prolific's: 24 letters a-f and digits. */
+    const key = door === "prolific" ? randomBytes(12).toString("hex") : `${label}-${i}@loadtest.invalid`;
+    const identity = door === "prolific"
+      ? { prolificPid: key, prolificStudyId: "loadteststudy0001", prolificSessionId: randomBytes(12).toString("hex") }
+      : { email: key };
     const sessionId = randomUUID(); // what session.ts makes with crypto.randomUUID()
     await call("health", "GET", "/health", null, browser);
     const arrivalId = randomUUID();
-    const given = await call("condition", "POST", "/conditions/assign", { arrivalId }, browser);
-    if (!given?.type) return sessionId;
+    const given = await call("condition", "POST", "/conditions/assign", { arrivalId, recruitmentSource: door }, browser);
+    if (!given?.type) return { sessionId, key, door };
     await call("record", "POST", "/participants", {
-      email, sessionId, age: 30, gender: "Female", country: "Ireland", countryCode: "IE", englishFirstLanguage: true,
+      ...identity, sessionId, age: 30, gender: "Female", country: "Ireland", countryCode: "IE", englishFirstLanguage: true,
       consent: { agreed: true }, stage: "demographics",
       condition: { number: given.number, type: given.type, source: "landing_page", assignedAt: given.assignedAt, arrivalId },
     }, browser);
-    const who = encodeURIComponent(email);
+    const who = encodeURIComponent(key);
     for (let r = 0; r < rounds; r++) {
       await pause(Math.random() * 200);
       await Promise.all([
@@ -93,13 +106,13 @@ async function runWave({ label, people, rounds }) {
       ]);
     }
     await call("complete", "PATCH", `/participants/${who}/complete`, {}, browser);
-    return sessionId;
+    return { sessionId, key, door };
   }
 
   const t0 = performance.now();
-  const sessionIds = await Promise.all(Array.from({ length: people }, (_, i) => person(i)));
+  const persons = await Promise.all(Array.from({ length: people }, (_, i) => person(i)));
   const seconds = (performance.now() - t0) / 1000;
-  return { label, people, rounds, lat, errors, sessionIds, seconds };
+  return { label, people, rounds, mixed, lat, errors, persons, sessionIds: persons.map((p) => p.sessionId), seconds };
 }
 
 async function waitForServer(server) {
@@ -128,6 +141,12 @@ try {
   await client.connect();
   console.log(`\nLoad test: the real server (${production ? "production mode, serving dist/" : "API only: no dist/ yet"}) on port ${PORT},`);
   console.log(`database ${DB_NAME} on this computer (deleted at the end).\n`);
+  /* L6: the database as it is today, with the OLD rule over every record and one old record (a tester's, so it is
+     never counted for balance). */
+  const oldRecord = { email: "old-record@loadtest.invalid", participant_id: "old-record-1", status: "Study Completed",
+    condition_type: "CVR+APA", condition_source: "address", updated_at: new Date().toISOString(), blocks: { kept: true } };
+  await client.db(DB_NAME).collection("participants").createIndex({ email: 1 }, { name: "email_unique", unique: true });
+  await client.db(DB_NAME).collection("participants").insertOne({ ...oldRecord });
   server = spawn(process.execPath, [path.join(ROOT, "server", "index.js")], {
     cwd: ROOT,
     env: { ...process.env, NODE_ENV: production ? "production" : "development", PORT: String(PORT), HOST: "127.0.0.1", MONGO_URL, MONGO_DB: DB_NAME },
@@ -138,6 +157,10 @@ try {
   await waitForServer(server);
 
   const db = client.db(DB_NAME);
+  const indexes = await db.collection("participants").indexes();
+  const emailRule = indexes.find((i) => i.name === "email_unique");
+  const pidRule = indexes.find((i) => i.name === "prolific_pid_unique");
+  const oldAfter = await db.collection("participants").findOne({ email: oldRecord.email }, { projection: { _id: 0 } });
   const all = [];
   for (const wave of WAVES) {
     const w = await runWave(wave);
@@ -147,17 +170,25 @@ try {
       const over = name === "condition" ? arr.filter((ms) => ms >= CONDITION_LIMIT_MS).length : null;
       console.log(`  ${name.padEnd(9)} ${String(arr.length).padStart(5)} requests   median ${q(arr, 0.5).toFixed(0).padStart(5)} ms   95% under ${q(arr, 0.95).toFixed(0).padStart(5)} ms   slowest ${Math.max(...arr).toFixed(0).padStart(5)} ms${over === null ? "" : `   3 s or more: ${over}`}`);
     }
-    const docs = await db.collection("participants").find({ email: { $regex: `^${w.label}-` } },
-      { projection: { participant_id: 1, condition_type: 1, status: 1, blocks: 1 } }).toArray();
+    const emails = w.persons.filter((p) => p.door === "university").map((p) => p.key);
+    const pids = w.persons.filter((p) => p.door === "prolific").map((p) => p.key);
+    const docs = await db.collection("participants").find({ $or: [{ email: { $in: emails } }, { prolific_pid: { $in: pids } }] },
+      { projection: { participant_id: 1, condition_type: 1, status: 1, blocks: 1, email: 1, prolific_pid: 1, recruitment_source: 1, prolific_study_id: 1, prolific_session_id: 1 } }).toArray();
+    w.docs = docs;
     w.records = docs.length;
     w.uniqueIds = new Set(docs.map((d) => d.participant_id)).size;
     w.sentIdsMatch = docs.every((d) => w.sessionIds.includes(d.participant_id));
     w.finished = docs.filter((d) => d.status === "Study Completed").length;
     w.allSaves = docs.filter((d) => Object.keys(d.blocks ?? {}).length === w.rounds).length;
     w.byCondition = {};
-    for (const d of docs) w.byCondition[d.condition_type] = (w.byCondition[d.condition_type] ?? 0) + 1;
-    w.linked = await db.collection("condition_arrivals").countDocuments({ linked_email: { $regex: `^${w.label}-` } });
-    console.log(`  saved ${w.records} of ${w.people}; own session ids ${w.uniqueIds}; finished ${w.finished}; every save landed for ${w.allSaves}; conditions ${JSON.stringify(w.byCondition)}\n`);
+    w.byDoor = { university: {}, prolific: {} };
+    for (const d of docs) {
+      w.byCondition[d.condition_type] = (w.byCondition[d.condition_type] ?? 0) + 1;
+      const door = d.recruitment_source === "prolific" ? "prolific" : "university";
+      w.byDoor[door][d.condition_type] = (w.byDoor[door][d.condition_type] ?? 0) + 1;
+    }
+    w.linked = await db.collection("condition_arrivals").countDocuments({ $or: [{ linked_email: { $in: emails } }, { linked_prolific_pid: { $in: pids } }] });
+    console.log(`  saved ${w.records} of ${w.people}; own session ids ${w.uniqueIds}; finished ${w.finished}; every save landed for ${w.allSaves}; conditions ${w.mixed ? `university ${JSON.stringify(w.byDoor.university)}, Prolific ${JSON.stringify(w.byDoor.prolific)}` : JSON.stringify(w.byCondition)}\n`);
   }
 
   const requests = all.reduce((n, w) => n + Object.values(w.lat).reduce((m, a) => m + a.length, 0), 0);
@@ -166,11 +197,25 @@ try {
   const people = all.reduce((n, w) => n + w.people, 0);
   const dataOk = all.every((w) => w.records === w.people && w.uniqueIds === w.people && w.sentIdsMatch && w.finished === w.people && w.allSaves === w.people);
   gate("L2", dataOk, `${people} people: every one saved with their own session id, every save landed, every one finished`);
-  const even = all.every((w) => {
-    const counts = Object.values(w.byCondition);
-    return counts.length === 4 && counts.every((c) => c === w.people / 4) && w.linked === w.people;
-  });
-  gate("L3", even, `the four conditions exactly even in every wave (${all.map((w) => `${w.people}: ${w.people / 4} each`).join("; ")}), every arrival linked to its person`);
+  const evenIn = (byCondition, n) => { const counts = Object.values(byCondition); return counts.length === 4 && counts.every((c) => c === n / 4); };
+  const single = all.filter((w) => !w.mixed);
+  const even = single.every((w) => evenIn(w.byCondition, w.people) && w.linked === w.people);
+  gate("L3", even, `the four conditions exactly even in every wave (${single.map((w) => `${w.people}: ${w.people / 4} each`).join("; ")}), every arrival linked to its person`);
+  /* L5: both doors at once. */
+  const doors = all.find((w) => w.mixed);
+  const proDocs = doors.docs.filter((d) => d.prolific_pid);
+  const uniDocs = doors.docs.filter((d) => d.email);
+  const doorsOk = evenIn(doors.byDoor.university, doors.people / 2) && evenIn(doors.byDoor.prolific, doors.people / 2)
+    && doors.linked === doors.people
+    && proDocs.length === doors.people / 2
+    && proDocs.every((d) => d.email === undefined && d.recruitment_source === "prolific" && d.prolific_study_id === "loadteststudy0001" && /^[a-f0-9]{24}$/.test(d.prolific_session_id ?? ""))
+    && uniDocs.length === doors.people / 2 && uniDocs.every((d) => d.prolific_pid === undefined && d.recruitment_source === "university");
+  gate("L5", doorsOk, `both doors at once (${doors.people / 2} + ${doors.people / 2}): university ${JSON.stringify(doors.byDoor.university)}, Prolific ${JSON.stringify(doors.byDoor.prolific)}; Prolific records under prolific_pid with no email (${proDocs.filter((d) => d.email === undefined).length} of ${proDocs.length}), every arrival linked`);
+  /* L6: the rule swap. */
+  const swapOk = emailRule?.unique && JSON.stringify(emailRule.partialFilterExpression) === JSON.stringify({ email: { $type: "string" } })
+    && pidRule?.unique && JSON.stringify(pidRule.partialFilterExpression) === JSON.stringify({ prolific_pid: { $type: "string" } })
+    && oldAfter?.participant_id === oldRecord.participant_id && oldAfter?.blocks?.kept === true && proDocs.length > 1;
+  gate("L6", !!swapOk, `the old "one email = one person" rule over every record was replaced at startup by the two-door rules; the old record kept; ${proDocs.length} Prolific records without an email accepted`);
   const slow = all.reduce((n, w) => n + (w.lat.condition ?? []).filter((ms) => ms >= CONDITION_LIMIT_MS).length, 0);
   const slowest = Math.max(...all.flatMap((w) => w.lat.condition ?? [0]));
   gate("L4", slow === 0, `nobody waited 3 seconds for their condition (slowest ${(slowest / 1000).toFixed(2)} s; ${slow} of ${people} waited 3 s or more)`);

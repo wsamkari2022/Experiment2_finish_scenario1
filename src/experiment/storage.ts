@@ -79,6 +79,7 @@ import { FEEDBACK_KEY } from "./feedbackTypes";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import { ATTENTION_KEY, buildFeedbackPatterns } from "./attentionChecks";
 import { CONDITION_KEY, type AssignedCondition, type SavedCondition } from "./conditions";
+import { keyOfDemographics, type RecruitmentSource } from "./recruitment";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -91,8 +92,9 @@ export interface RemoteBackend {
   upsertParticipant(entry: DirectoryEntry): Promise<void>;
   updateStage(email: string, stage: string): Promise<void>;
   markCompleted(email: string): Promise<void>;
-  /** Writes one named section of the participant document. `path` is dotted, e.g. blocks.block1_money */
-  saveSection(path: string, data: unknown): Promise<void>;
+  /** Writes one named section of the participant document. `path` is dotted, e.g. blocks.block1_money. `owner` is the
+      participant's key the save was made for (since 6 October 2026); without it, the participant now in this browser. */
+  saveSection(path: string, data: unknown, owner?: string | null): Promise<void>;
   /** The raw browser files stored for a half-finished participant, or null. */
   getResumeFiles(email: string): Promise<Record<string, unknown> | null>;
   /** This browser takes the participant's record (after the email-and-age check). */
@@ -100,7 +102,7 @@ export interface RemoteBackend {
   /** Is this browser the one holding the participant's record? */
   isActiveBrowser(email: string): Promise<boolean>;
   /** The landing page: which condition does this new arrival get? (since 1 October 2026; server/conditions.js) */
-  assignCondition?(arrivalId: string): Promise<AssignedCondition>;
+  assignCondition?(arrivalId: string, recruitmentSource?: RecruitmentSource): Promise<AssignedCondition>;
   /** The arrival was somebody returning with a condition of their own: stop counting it. */
   releaseArrival?(arrivalId: string): Promise<void>;
 }
@@ -150,6 +152,16 @@ export function serverCheckPlan(live: boolean): { pausesMs: readonly number[]; t
   return live ? { pausesMs: [1000, 2000, 4000], thenEveryMs: 15_000 } : { pausesMs: [], thenEveryMs: null };
 }
 
+/**
+ * Resolves once the page knows whether there is a server (or after `waitMs`). The Prolific door's first page looks the
+ * person up the moment it opens, so it waits for this first: opened straight onto that page (a refresh), it asked
+ * before the server was switched on, found nobody in this browser and called a finished person "new" (found in the
+ * live check, 6 October 2026). The university page looks up only after somebody types, by then the server is known.
+ */
+export function whenServerKnown(waitMs = 30_000): Promise<void> {
+  return Promise.race([remoteKnownPromise, pause(waitMs)]);
+}
+
 /** The pauses before the landing page asks for a condition again (since 6 October 2026). */
 export const CONDITION_RETRY_PAUSES_MS: readonly number[] = [1000, 2000, 4000];
 
@@ -165,13 +177,15 @@ export const CONDITION_RETRY_PAUSES_MS: readonly number[] = [1000, 2000, 4000];
  */
 export async function requestCondition(
   arrivalId: string,
-  { waitMs = 6000, pausesMs = CONDITION_RETRY_PAUSES_MS }: { waitMs?: number; pausesMs?: readonly number[] } = {},
+  { waitMs = 6000, pausesMs = CONDITION_RETRY_PAUSES_MS, recruitmentSource = "university" }:
+    { waitMs?: number; pausesMs?: readonly number[]; recruitmentSource?: RecruitmentSource } = {},
 ): Promise<AssignedCondition | null> {
   await Promise.race([remoteKnownPromise, pause(waitMs)]);
   for (let attempt = 0; ; attempt += 1) {
     if (!remote?.assignCondition) return null;
     try {
-      return await remote.assignCondition(arrivalId);
+      /* The door goes with the question: each door is balanced on its own (the researcher's "2-A"). */
+      return await remote.assignCondition(arrivalId, recruitmentSource);
     } catch (error) {
       if (isRefusal(error) || attempt >= pausesMs.length) return null;
       await pause(pausesMs[attempt]);
@@ -203,7 +217,7 @@ type OutboxItem =
   | { op: "upsertParticipant"; entry: DirectoryEntry }
   | { op: "updateStage"; email: string; stage: string }
   | { op: "markCompleted"; email: string }
-  | { op: "saveSection"; path: string; data: unknown };
+  | { op: "saveSection"; path: string; data: unknown; owner?: string | null };
 
 function readOutbox(): OutboxItem[] {
   try {
@@ -298,7 +312,7 @@ async function send(item: OutboxItem): Promise<SendResult> {
         await remote.markCompleted(item.email);
         return "sent";
       case "saveSection":
-        await remote.saveSection(item.path, item.data);
+        await remote.saveSection(item.path, item.data, item.owner ?? null);
         return "sent";
     }
   } catch (error) {
@@ -436,8 +450,25 @@ function retrySoon(): void {
  * a lost "study completed" was never sent again. Now a "retry" is queued. And while anything is already
  * waiting, a new write joins the END of the queue instead of overtaking it, so the order holds.
  */
-function sendOrQueue(item: OutboxItem): void {
+/** The participant this browser works for now: their key (email or Prolific ID), or null. */
+function currentKey(): string | null {
+  try {
+    return localStorage.getItem("vrds_pending_email")
+      ?? keyOfDemographics(JSON.parse(localStorage.getItem("vrds_demographics") ?? "null"));
+  } catch {
+    return null;
+  }
+}
+
+/*
+ * EVERY SAVE NAMES ITS OWNER (since 6 October 2026). A section save used to find its participant when it was SENT
+ * (apiClient read the browser's current key then). A save that waited in the queue - the server unreachable - and
+ * was sent after another person had started on the same computer would have landed on THAT person's record. It is
+ * now stamped with its owner when it is made, and sent under that owner (validate:session C13).
+ */
+function sendOrQueue(given: OutboxItem): void {
   if (!remote) return;
+  const item: OutboxItem = given.op === "saveSection" && given.owner === undefined ? { ...given, owner: currentKey() } : given;
   if (readOutbox().length > 0 || flushing) {
     queue(item);
     void flushOutbox();
@@ -487,6 +518,9 @@ export function saveParticipant(input: {
   englishFirstLanguage?: boolean;
   /* Since 1 October 2026 (conditions.ts). Set once, here and on the server; a later value never replaces it. */
   condition?: SavedCondition | null;
+  /* The Prolific door's study and submission ids (since 6 October 2026); `email` then holds the Prolific ID. */
+  prolificStudyId?: string | null;
+  prolificSessionId?: string | null;
   stage: string;
   consent: DirectoryEntry["consent"];
 }): DirectoryEntry {

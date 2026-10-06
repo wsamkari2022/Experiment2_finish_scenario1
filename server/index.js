@@ -6,11 +6,11 @@
  * speak to a server.
  *
  *   GET   /api/health                      is the server up, and is Mongo reachable
- *   POST  /api/participants/lookup         find somebody by email
+ *   POST  /api/participants/lookup         find somebody by email or Prolific ID
  *   POST  /api/participants                create or update a participant
- *   PATCH /api/participants/:email/stage   record how far they have got
- *   PATCH /api/participants/:email/complete  mark the study finished
- *   PATCH /api/participants/:email/section save one named section of the document
+ *   PATCH /api/participants/:key/stage     record how far they have got
+ *   PATCH /api/participants/:key/complete  mark the study finished
+ *   PATCH /api/participants/:key/section   save one named section of the document
  *
  * And, since 1 October 2026, the four conditions (server/conditions.js has the rule):
  *   POST  /api/conditions/assign    the landing page asks which condition a new arrival gets
@@ -26,6 +26,10 @@
  * THE EMAIL IS THE KEY, AND IT IS NORMALISED ON ARRIVAL
  * Addresses are lower-cased and trimmed here as well as in the browser. The browser's copy is a
  * convenience; this one is the one that matters, because it is what the unique index sees.
+ *
+ * TWO DOORS, ONE KEY EACH (since 6 October 2026; server/recruitment.js). The key in a route is the participant's
+ * email (the university door) or their Prolific ID (the Prolific door, /prolific). `whoIs(key)` finds the record:
+ * `{ email }` or `{ prolific_pid }`. A Prolific ID is never stored in `email`.
  */
 
 import express from "express";
@@ -36,6 +40,9 @@ import { fileURLToPath } from "url";
 import { connect, participants, conditionArrivals, DB_NAME, SAFE_MONGO_URL } from "./db.js";
 import { mergeResumeState } from "./resumeMerge.js";
 import { browserVerdict, requestBrowser, REFUSED_BODY } from "./activeBrowser.js";
+import {
+  arrivalLink, identityOnInsert, keyFromBody, normalizeKey, prolificIdsFrom, recruitmentSourceOf, whoIs,
+} from "./recruitment.js";
 import {
   ARRIVAL_ID, assignCondition, conditionFieldsFrom, countReport, countReportHtml, mongoStore,
 } from "./conditions.js";
@@ -59,7 +66,7 @@ if (IS_PRODUCTION) {
 app.use(cors());
 app.use(express.json({ limit: "5mb" })); // a finished participant document is a few hundred KB
 
-const normalizeEmail = (value) => String(value ?? "").trim().toLowerCase();
+/* Keys (an email, or a Prolific ID) are trimmed and lower-cased by normalizeKey in server/recruitment.js. */
 
 /** Wraps a handler so a thrown error becomes a 500 with a message instead of a dead request. */
 const route = (handler) => (req, res) => {
@@ -90,9 +97,9 @@ app.get(
  *   allow  -> carries on.
  * Returns true when the route may continue.
  */
-async function guardBrowser(req, res, email) {
+async function guardBrowser(req, res, key) {
   const requestId = requestBrowser(req);
-  const doc = await participants().findOne({ email }, { projection: { active_browser: 1 } });
+  const doc = await participants().findOne(whoIs(key), { projection: { active_browser: 1 } });
   const verdict = browserVerdict(doc?.active_browser?.id ?? null, requestId);
   if (verdict === "refuse") {
     res.status(409).json(REFUSED_BODY);
@@ -100,7 +107,7 @@ async function guardBrowser(req, res, email) {
   }
   if (verdict === "claim" && doc) {
     await participants().updateOne(
-      { email },
+      whoIs(key),
       { $set: { active_browser: { id: requestId, claimed_at: new Date().toISOString() } } },
     );
   }
@@ -110,9 +117,9 @@ async function guardBrowser(req, res, email) {
 app.post(
   "/api/participants/lookup",
   route(async (req, res) => {
-    const email = normalizeEmail(req.body?.email);
-    if (!email) return res.status(400).json({ error: "email is required" });
-    const doc = await participants().findOne({ email }, { projection: { _id: 0 } });
+    const key = keyFromBody(req.body);
+    if (!key) return res.status(400).json({ error: "an email or a Prolific ID is required" });
+    const doc = await participants().findOne(whoIs(key), { projection: { _id: 0 } });
     res.json(doc ?? null);
   }),
 );
@@ -121,10 +128,10 @@ app.post(
   "/api/participants",
   route(async (req, res) => {
     const body = req.body ?? {};
-    const email = normalizeEmail(body.email);
-    if (!email) return res.status(400).json({ error: "email is required" });
+    const key = keyFromBody(body);
+    if (!key) return res.status(400).json({ error: "an email or a Prolific ID is required" });
 
-    if (!(await guardBrowser(req, res, email))) return;
+    if (!(await guardBrowser(req, res, key))) return;
     const now = new Date().toISOString();
     const requestId = requestBrowser(req);
 
@@ -135,7 +142,7 @@ app.post(
      * unfinished and could take it again.
      */
     await participants().updateOne(
-      { email },
+      whoIs(key),
       {
         $set: {
           participant_id: body.sessionId,
@@ -151,13 +158,17 @@ app.post(
           /* "Is English your first language?" (since 4 October 2026), set ONLY when the page sent a true or false, for the
              same reason as the country; anything else is ignored. */
           ...(typeof body.englishFirstLanguage === "boolean" ? { english_first_language: body.englishFirstLanguage } : {}),
+          /* Prolific's study and submission ids (the Prolific door, since 6 October 2026), set ONLY when the page sent
+             them, like the country. Never Prolific's SESSION_ID in participant_id: that one is the study's own. */
+          ...prolificIdsFrom(body),
           consent: body.consent ?? null,
           current_stage: body.stage ?? "money",
           /* `stage` is the app's word; `current_stage` says what it is to a reader. */
           updated_at: now,
         },
         $setOnInsert: {
-          email,
+          /* The key under its true name (email or prolific_pid) and the door, both facts of the first visit. */
+          ...identityOnInsert(key),
           status: "Study Not Completed",
           created_at: now,
           completed_at: null,
@@ -177,30 +188,30 @@ app.post(
      */
     const condition = conditionFieldsFrom(body);
     if (condition) {
-      await participants().updateOne({ email, condition_type: { $exists: false } }, { $set: condition });
+      await participants().updateOne({ ...whoIs(key), condition_type: { $exists: false } }, { $set: condition });
       const arrivalId = body?.condition?.arrivalId;
       if (typeof arrivalId === "string" && ARRIVAL_ID.test(arrivalId)) {
         await conditionArrivals().updateOne(
-          { arrival_id: arrivalId, linked_email: null },
-          { $set: { linked_email: email, linked_at: now } },
+          { arrival_id: arrivalId, linked_email: null, linked_prolific_pid: null },
+          { $set: { ...arrivalLink(key), linked_at: now } },
         );
       }
     }
 
-    const doc = await participants().findOne({ email }, { projection: { _id: 0 } });
+    const doc = await participants().findOne(whoIs(key), { projection: { _id: 0 } });
     res.json(doc);
   }),
 );
 
 app.patch(
-  "/api/participants/:email/stage",
+  "/api/participants/:key/stage",
   route(async (req, res) => {
-    const email = normalizeEmail(req.params.email);
+    const key = normalizeKey(req.params.key);
     const stage = String(req.body?.stage ?? "");
     if (!stage) return res.status(400).json({ error: "stage is required" });
-    if (!(await guardBrowser(req, res, email))) return;
+    if (!(await guardBrowser(req, res, key))) return;
     const result = await participants().updateOne(
-      { email },
+      whoIs(key),
       { $set: { current_stage: stage, updated_at: new Date().toISOString() } },
     );
     res.json({ updated: result.matchedCount === 1 });
@@ -208,19 +219,19 @@ app.patch(
 );
 
 app.patch(
-  "/api/participants/:email/complete",
+  "/api/participants/:key/complete",
   route(async (req, res) => {
-    const email = normalizeEmail(req.params.email);
-    if (!(await guardBrowser(req, res, email))) return;
+    const key = normalizeKey(req.params.key);
+    if (!(await guardBrowser(req, res, key))) return;
     const now = new Date().toISOString();
     /*
      * completedAt is only written if it is not already set, so a repeated request — a retry from
      * the outbox, say — records the moment they FIRST finished rather than the moment the
      * message happened to arrive.
      */
-    const existing = await participants().findOne({ email }, { projection: { completed_at: 1 } });
+    const existing = await participants().findOne(whoIs(key), { projection: { completed_at: 1 } });
     await participants().updateOne(
-      { email },
+      whoIs(key),
       {
         $set: {
           status: "Study Completed",
@@ -247,16 +258,16 @@ app.patch(
  * check the page makes, repeated here so the claim cannot be made with the email alone.
  */
 app.post(
-  "/api/participants/:email/claim",
+  "/api/participants/:key/claim",
   route(async (req, res) => {
-    const email = normalizeEmail(req.params.email);
+    const key = normalizeKey(req.params.key);
     const requestId = requestBrowser(req);
     if (!requestId) return res.status(400).json({ error: "the browser id is required" });
-    const doc = await participants().findOne({ email }, { projection: { age: 1 } });
+    const doc = await participants().findOne(whoIs(key), { projection: { age: 1 } });
     if (!doc) return res.status(404).json({ error: "no such participant" });
     if (Number(doc.age) !== Number(req.body?.age)) return res.status(403).json({ error: "the age does not match" });
     await participants().updateOne(
-      { email },
+      whoIs(key),
       { $set: { active_browser: { id: requestId, claimed_at: new Date().toISOString() } } },
     );
     res.json({ ok: true });
@@ -266,10 +277,10 @@ app.post(
 /* IS THIS BROWSER THE ACTIVE ONE? Asked by the page when it opens, after every page and after every Block 5
    scenario. Unknown participant, or nobody holding the record: yes. */
 app.post(
-  "/api/participants/:email/active",
+  "/api/participants/:key/active",
   route(async (req, res) => {
-    const email = normalizeEmail(req.params.email);
-    const doc = await participants().findOne({ email }, { projection: { active_browser: 1 } });
+    const key = normalizeKey(req.params.key);
+    const doc = await participants().findOne(whoIs(key), { projection: { active_browser: 1 } });
     const verdict = browserVerdict(doc?.active_browser?.id ?? null, requestBrowser(req));
     res.json({ active: verdict !== "refuse" });
   }),
@@ -296,9 +307,9 @@ const WRITABLE_ROOTS = new Set([
 const SAFE_PATH = /^[a-z0-9_]+(\.[a-z0-9_]+)?$/;
 
 app.patch(
-  "/api/participants/:email/section",
+  "/api/participants/:key/section",
   route(async (req, res) => {
-    const email = normalizeEmail(req.params.email);
+    const key = normalizeKey(req.params.key);
     const path = String(req.body?.path ?? "");
 
     if (!SAFE_PATH.test(path)) {
@@ -307,7 +318,7 @@ app.patch(
     if (!WRITABLE_ROOTS.has(path.split(".")[0])) {
       return res.status(400).json({ error: `"${path}" is not a writable section` });
     }
-    if (!(await guardBrowser(req, res, email))) return;
+    if (!(await guardBrowser(req, res, key))) return;
 
     /*
      * RESUME STATE IS MERGED, NOT REPLACED, AND NOT ACCEPTED AT ALL ONCE THE STUDY IS DONE.
@@ -323,25 +334,25 @@ app.patch(
      */
     if (path === "resume_state") {
       const doc = await participants().findOne(
-        { email }, { projection: { resume_state: 1, status: 1 } },
+        whoIs(key), { projection: { resume_state: 1, status: 1 } },
       );
       if (doc?.status === "Study Completed") {
         return res.json({ ok: true, ignored: "the study is finished; resume state is not kept" });
       }
       const { state, added, replaced, kept } = mergeResumeState(doc?.resume_state, req.body?.data);
       await participants().updateOne(
-        { email },
+        whoIs(key),
         { $set: { resume_state: state, updated_at: new Date().toISOString() } },
       );
       if (kept.length) {
-        console.log(`[api] resume merge for ${email}: ${added} added, ${replaced} replaced, `
+        console.log(`[api] resume merge for ${key}: ${added} added, ${replaced} replaced, `
           + `${kept.length} kept that this browser did not have (${kept.join(", ")})`);
       }
       return res.json({ ok: true, added, replaced, kept: kept.length });
     }
 
     await participants().updateOne(
-      { email },
+      whoIs(key),
       { $set: { [path]: req.body?.data ?? null, updated_at: new Date().toISOString() } },
     );
     res.json({ ok: true });
@@ -361,6 +372,8 @@ app.post(
       arrivalId,
       browser: requestBrowser(req),
       store: mongoStore(participants(), conditionArrivals()),
+      /* Each door is balanced on its own (the researcher's "2-A", 6 October 2026). */
+      recruitmentSource: recruitmentSourceOf(req.body?.recruitmentSource),
     });
     res.json({ number: given.number, type: given.type, urlName: given.urlName, arrivalId, assignedAt: given.assignedAt });
   }),
@@ -373,7 +386,7 @@ app.post(
     const arrivalId = String(req.body?.arrivalId ?? "");
     if (!ARRIVAL_ID.test(arrivalId)) return res.status(400).json({ error: "a valid arrivalId is required" });
     await conditionArrivals().updateOne(
-      { arrival_id: arrivalId, linked_email: null },
+      { arrival_id: arrivalId, linked_email: null, linked_prolific_pid: null },
       { $set: { released: true, released_at: new Date().toISOString() } },
     );
     res.json({ ok: true });

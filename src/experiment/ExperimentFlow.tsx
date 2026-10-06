@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { StartScreen } from "./StartScreen";
 import { ConsentPage } from "./ConsentPage";
 import { DemographicPage } from "./DemographicPage";
-import { STATUS_COMPLETED, STATUS_NOT_COMPLETED } from "./participantDirectory";
+import { STATUS_COMPLETED, STATUS_NOT_COMPLETED, type DirectoryEntry } from "./participantDirectory";
 /* Every participant write goes through storage.ts, never to the directory or a server directly.
    That is what lets the database be switched on in one place. See the header of storage.ts. */
 import {
@@ -28,6 +28,11 @@ import {
 } from "./sessionGuard";
 import { SessionLockScreen } from "./SessionLockScreen";
 import { LandingPage } from "./LandingPage";
+import { ProlificStartScreen } from "./ProlificStartScreen";
+import {
+  browserParticipantKey, doorFromAddress, isProlificKey, keyDoor, keyOfDemographics, makeRoomForAnotherProlificId, prolificParamsFrom,
+  readProlificFile, type RecruitmentSource,
+} from "./recruitment";
 import {
   CONDITION_KEY, clearConditionFromAddress, conditionByNumber, conditionFields, makeConditionFile, readConditionFile,
   savedFrom, showConditionInAddress, writeConditionFile, type ConditionFile,
@@ -235,6 +240,30 @@ function getRestoredStage(): Stage {
  * with the attention check's screen right after Block 3 (attentionChecks.ts).
  */
 export function ExperimentFlow() {
+  /*
+   * ANOTHER PROLIFIC ID IN THE LINK (since 6 October 2026; recruitment.ts). The link names a Prolific ID and this
+   * browser holds a different person's run (a shared computer): that run is set aside BEFORE anything below reads
+   * storage, so the newcomer never sees or continues it and gets their own session id. Their unsent saves stay queued,
+   * each naming its owner; the browser's list of people and the machine's id stay. Runs once, on the first render.
+   */
+  useState(() => makeRoomForAnotherProlificId(window.location.search));
+  /*
+   * A CONDITION FROM THE OTHER DOOR THAT NOBODY OWNS YET (found in the live check, 6 October 2026). A browser that opened
+   * the university address got a condition counted among the university's people; if, before anybody was known, it
+   * then arrives through Prolific's link, that condition is not theirs to keep: it goes, and the landing page gives one
+   * counted among the Prolific people. (Its arrival stops counting after 30 minutes, as any unused arrival does.)
+   */
+  useState(() => {
+    const file = readConditionFile();
+    if (!browserParticipantKey() && file && !file.owner && file.recruitmentSource !== "prolific"
+        && doorFromAddress(window.location.pathname, window.location.search) === "prolific") {
+      try {
+        localStorage.removeItem(CONDITION_KEY);
+      } catch { /* ignore */ }
+    }
+    return null;
+  });
+
   /**
    * The unified, anonymous session id for this participant (see session.ts). Generated once and
    * persisted in LocalStorage, so it stays stable across refreshes — giving one id per participant
@@ -267,13 +296,24 @@ export function ExperimentFlow() {
     try {
       return (
         localStorage.getItem(STORAGE_KEY_PENDING_EMAIL) ??
-        readJson<{ email?: string }>(STORAGE_KEY_DEMOGRAPHICS)?.email ??
+        keyOfDemographics(readJson(STORAGE_KEY_DEMOGRAPHICS)) ??
         null
       );
     } catch {
       return null;
     }
   });
+
+  /*
+   * WHICH DOOR (since 6 October 2026; recruitment.ts): the person's own key decides once it is known. Before that, an
+   * address that names the Prolific door (/prolific, or a Prolific ID in the link) wins; then the door the landing page
+   * counted them in (the condition file); otherwise the university's.
+   */
+  const door: RecruitmentSource = pendingEmail
+    ? keyDoor(pendingEmail)
+    : doorFromAddress(window.location.pathname, window.location.search) === "prolific"
+      ? "prolific"
+      : readConditionFile()?.recruitmentSource ?? "university";
 
   /**
    * WAS THIS PARTICIPANT ALREADY KNOWN WHEN THE PAGE LOADED?
@@ -330,7 +370,8 @@ export function ExperimentFlow() {
 
     const login = noteLogin(
       consumeLoginKind()
-        ?? (knownAtPageLoad.current ? "continued_in_this_browser" : "typed_their_email"),
+        ?? (knownAtPageLoad.current ? "continued_in_this_browser"
+          : isProlificKey(pendingEmail) ? "arrived_with_their_prolific_id" : "typed_their_email"),
       stage,
     );
     /* Opening the study on a different machine is a new visit by the study's own rule, and the
@@ -462,7 +503,7 @@ export function ExperimentFlow() {
        */
       const email =
         localStorage.getItem(STORAGE_KEY_PENDING_EMAIL) ??
-        readJson<{ email?: string }>(STORAGE_KEY_DEMOGRAPHICS)?.email ??
+        keyOfDemographics(readJson(STORAGE_KEY_DEMOGRAPHICS)) ??
         null;
       if (late) await connectLate(apiClient, email);
       else setRemoteBackend(apiClient);
@@ -630,6 +671,7 @@ export function ExperimentFlow() {
     return (
       <SessionLockScreen
         reason={lock}
+        prolificDoor={door === "prolific"}
         onContinueHere={() => {
           if (lock === "tab") {
             claimTab();
@@ -644,153 +686,166 @@ export function ExperimentFlow() {
   }
 
   if (stage === "landing") {
-    return <LandingPage onReady={handleLandingReady} />;
+    return <LandingPage onReady={handleLandingReady} door={door} />;
   }
 
   if (stage === "start") {
-    return (
-      <StartScreen
-        onNewParticipant={(email) => {
-          try {
-            localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, email);
-          } catch {
-            /* Storage unavailable; the form will simply ask for the address again. */
-          }
-          setPendingEmail(email);
-          /*
-           * THE CONDITION BECOMES THIS PERSON'S (since 1 October 2026). A condition this browser holds for somebody
-           * else (a shared computer) is not theirs: it goes, and the landing page gives them their own before consent.
-           */
-          const file = readConditionFile();
-          if (file && file.owner && file.owner !== email.trim().toLowerCase()) {
-            try {
-              localStorage.removeItem(CONDITION_KEY);
-            } catch { /* ignore */ }
-            /* The address still names the first person's condition; without this the landing page would take it as a
-               tester's choice and never ask the server. */
-            clearConditionFromAddress();
-            afterLanding.current = "consent";
-            setStage("landing");
-            return;
-          }
-          if (file && !file.owner) writeConditionFile({ ...file, owner: email.trim().toLowerCase() });
-          setStage("consent");
-        }}
-        onResume={(entry) => {
-          /* Rebuild just enough local state for the study to continue, then jump to the stage
-             they stopped on. On this machine that stage is usually already present; on a new
-             machine the directory is the only thing that knows it. */
-          /*
-           * THEIR CONDITION IS THE ONE ON THEIR RECORD (since 1 October 2026; conditions.ts). The landing page gave this
-           * browser a new one a moment ago; it is replaced, and its arrival stops counting at once. A record from before
-           * conditions existed takes the one this browser holds (the server sets it only on a record that has none).
-           */
-          const owner = entry.email.trim().toLowerCase();
-          const provisional = readConditionFile();
-          const saved = entry.condition ? conditionByNumber(entry.condition.number) : null;
-          let condition: ConditionFile | null = null;
-          if (entry.condition && saved) {
-            condition = makeConditionFile(saved, entry.condition.source, null, owner, entry.condition.assignedAt);
-            if (provisional?.arrivalId && provisional.owner !== owner) releaseConditionArrival(provisional.arrivalId);
-          } else if (provisional && (!provisional.owner || provisional.owner === owner)) {
-            condition = { ...provisional, owner };
-          }
-          if (condition) {
-            writeConditionFile(condition);
-            showConditionInAddress(condition);
-          }
-          try {
-            localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, entry.email);
-            if (entry.consent) {
-              localStorage.setItem(STORAGE_KEY_CONSENT, JSON.stringify(entry.consent));
-            }
-            localStorage.setItem(
-              STORAGE_KEY_DEMOGRAPHICS,
-              JSON.stringify({
-                email: entry.email, age: entry.age, gender: entry.gender,
-                ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
-                ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
-                ...(conditionFields(condition) ?? {}),
-              }),
-            );
-            localStorage.setItem(STORAGE_KEY_STATUS, entry.status);
-            /* Their own participant id, not a new one made by this browser (since 29 September 2026). It
-               seeds scenario 6's rule order (shuffleForParticipant), so without it the four rules could
-               come in another order on a new device, and the blocks would record a second id. */
-            if (entry.sessionId) localStorage.setItem(SESSION_ID_KEY, entry.sessionId);
-          } catch {
-            /* Storage unavailable; the resume still works for this tab. */
-          }
-          /*
-           * Copy the participant into this browser's own directory.
-           *
-           * When the entry came from the SERVER, nothing local knows this person yet. Without
-           * this, a participant who resumed on a new machine and then lost the server would have
-           * no local record to fall back on — their progress would stop being tracked locally,
-           * which is exactly the situation the local-first rule exists to prevent. Writing it
-           * here makes the browser self-sufficient again from the first moment of the session.
-           */
-          /* The sync fingerprints in this browser describe whoever used it last, not this
-             participant, so forget them and let the next sync re-send from scratch. */
-          resetSyncState();
-          setPendingEmail(entry.email);
-          /* Nothing is left locked on this page: it is about to become the active one. */
-          setLock(null);
+    /* The two doors' first pages share these two steps (since 6 October 2026): the key is an email or a Prolific ID. */
+    const onNewParticipant = (email: string) => {
+      try {
+        localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, email);
+      } catch {
+        /* Storage unavailable; the form will simply ask for the address again. */
+      }
+      setPendingEmail(email);
+      /*
+       * THE CONDITION BECOMES THIS PERSON'S (since 1 October 2026). A condition this browser holds for somebody
+       * else (a shared computer) is not theirs: it goes, and the landing page gives them their own before consent.
+       */
+      const file = readConditionFile();
+      if (file && file.owner && file.owner !== email.trim().toLowerCase()) {
+        try {
+          localStorage.removeItem(CONDITION_KEY);
+        } catch { /* ignore */ }
+        /* The address still names the first person's condition; without this the landing page would take it as a
+           tester's choice and never ask the server. */
+        clearConditionFromAddress();
+        afterLanding.current = "consent";
+        setStage("landing");
+        return;
+      }
+      if (file && !file.owner) writeConditionFile({ ...file, owner: email.trim().toLowerCase() });
+      setStage("consent");
+    };
+    const onResume = (entry: DirectoryEntry) => {
+      /* Rebuild just enough local state for the study to continue, then jump to the stage
+         they stopped on. On this machine that stage is usually already present; on a new
+         machine the directory is the only thing that knows it. */
+      /*
+       * THEIR CONDITION IS THE ONE ON THEIR RECORD (since 1 October 2026; conditions.ts). The landing page gave this
+       * browser a new one a moment ago; it is replaced, and its arrival stops counting at once. A record from before
+       * conditions existed takes the one this browser holds (the server sets it only on a record that has none).
+       */
+      const owner = entry.email.trim().toLowerCase();
+      const provisional = readConditionFile();
+      const saved = entry.condition ? conditionByNumber(entry.condition.number) : null;
+      let condition: ConditionFile | null = null;
+      if (entry.condition && saved) {
+        condition = makeConditionFile(saved, entry.condition.source, null, owner, entry.condition.assignedAt);
+        if (provisional?.arrivalId && provisional.owner !== owner) releaseConditionArrival(provisional.arrivalId);
+      } else if (provisional && (!provisional.owner || provisional.owner === owner)) {
+        condition = { ...provisional, owner };
+      }
+      if (condition) {
+        writeConditionFile(condition);
+        showConditionInAddress(condition);
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, entry.email);
+        if (entry.consent) {
+          localStorage.setItem(STORAGE_KEY_CONSENT, JSON.stringify(entry.consent));
+        }
+        localStorage.setItem(
+          STORAGE_KEY_DEMOGRAPHICS,
+          JSON.stringify({
+            ...(isProlificKey(entry.email) ? { prolificPid: entry.email, recruitmentSource: "prolific" } : { email: entry.email }),
+            age: entry.age, gender: entry.gender,
+            ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+            ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
+            ...(conditionFields(condition) ?? {}),
+          }),
+        );
+        localStorage.setItem(STORAGE_KEY_STATUS, entry.status);
+        /* Their own participant id, not a new one made by this browser (since 29 September 2026). It
+           seeds scenario 6's rule order (shuffleForParticipant), so without it the four rules could
+           come in another order on a new device, and the blocks would record a second id. */
+        if (entry.sessionId) localStorage.setItem(SESSION_ID_KEY, entry.sessionId);
+      } catch {
+        /* Storage unavailable; the resume still works for this tab. */
+      }
+      /*
+       * Copy the participant into this browser's own directory.
+       *
+       * When the entry came from the SERVER, nothing local knows this person yet. Without
+       * this, a participant who resumed on a new machine and then lost the server would have
+       * no local record to fall back on — their progress would stop being tracked locally,
+       * which is exactly the situation the local-first rule exists to prevent. Writing it
+       * here makes the browser self-sufficient again from the first moment of the session.
+       */
+      /* The sync fingerprints in this browser describe whoever used it last, not this
+         participant, so forget them and let the next sync re-send from scratch. */
+      resetSyncState();
+      setPendingEmail(entry.email);
+      /* Nothing is left locked on this page: it is about to become the active one. */
+      setLock(null);
 
-          /*
-           * BRING THEIR ANSWERS DOWN BEFORE SHOWING THEM ANYTHING.
-           *
-           * Everything above restores who they are. None of it restores what they DID, and the
-           * later stages refuse to render without it: Block 5 with no profile falls through to
-           * `setStage("money")` and the participant starts the whole study again. That is the
-           * bug this fixes, and it is why the stage is not set here.
-           *
-           * The page is reloaded rather than continued, because every one of these files is read
-           * once when the app starts. Writing them into storage under a running app would leave
-           * it using the empty versions it already loaded. A reload is the only honest way to
-           * pick them up, and it is also what makes this safe: nothing half-restored is ever on
-           * screen.
-           */
-          void (async () => {
-            /*
-             * THIS BROWSER TAKES THE RECORD FIRST (since 29 September 2026; sessionGuard.ts). The
-             * email and age were just checked, so this is the participant. Claimed before anything is
-             * written or downloaded: every write from here on is accepted, and any other browser still
-             * open on this run is refused from now on and shows "open somewhere else".
-             */
-            await claimThisBrowser(entry.email, entry.age);
-            saveParticipant({
-              email: entry.email,
-              sessionId: entry.sessionId,
-              age: entry.age,
-              gender: entry.gender,
-              ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
-              ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
-              condition: savedFrom(condition),
-              stage: entry.stage,
-              consent: entry.consent,
-            });
-            const restored = await restoreParticipantFiles(entry.email);
-            try {
-              localStorage.setItem(STORAGE_KEY_STAGE, entry.stage || "money");
-            } catch {
-              /* ignore */
-            }
-            if (restored > 0) {
-              /* Their answers came down from the server, so this browser did not have them: they
-                 are arriving from somewhere else. Said now, because the reload below makes the
-                 next load look like any other. See sessionLog.ts. */
-              markNextLoginAs("restored_from_another_device");
-              window.location.reload();
-              return;
-            }
-            /* Nothing came back — either there is no server, or this participant has nothing
-               stored yet. Continue in this tab; the stage guards will place them safely. */
-            setStage((entry.stage as Stage) || "money");
-          })();
-        }}
-      />
-    );
+      /*
+       * BRING THEIR ANSWERS DOWN BEFORE SHOWING THEM ANYTHING.
+       *
+       * Everything above restores who they are. None of it restores what they DID, and the
+       * later stages refuse to render without it: Block 5 with no profile falls through to
+       * `setStage("money")` and the participant starts the whole study again. That is the
+       * bug this fixes, and it is why the stage is not set here.
+       *
+       * The page is reloaded rather than continued, because every one of these files is read
+       * once when the app starts. Writing them into storage under a running app would leave
+       * it using the empty versions it already loaded. A reload is the only honest way to
+       * pick them up, and it is also what makes this safe: nothing half-restored is ever on
+       * screen.
+       */
+      void (async () => {
+        /*
+         * THIS BROWSER TAKES THE RECORD FIRST (since 29 September 2026; sessionGuard.ts). The
+         * email and age were just checked, so this is the participant. Claimed before anything is
+         * written or downloaded: every write from here on is accepted, and any other browser still
+         * open on this run is refused from now on and shows "open somewhere else".
+         */
+        await claimThisBrowser(entry.email, entry.age);
+        saveParticipant({
+          email: entry.email,
+          sessionId: entry.sessionId,
+          age: entry.age,
+          gender: entry.gender,
+          ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
+          ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
+          condition: savedFrom(condition),
+          /* The Prolific door: this link's study and submission ids, else the record's (since 6 October 2026). */
+          prolificStudyId: readProlificFile(entry.email)?.studyId ?? entry.prolificStudyId ?? null,
+          prolificSessionId: readProlificFile(entry.email)?.sessionId ?? entry.prolificSessionId ?? null,
+          stage: entry.stage,
+          consent: entry.consent,
+        });
+        const restored = await restoreParticipantFiles(entry.email);
+        try {
+          localStorage.setItem(STORAGE_KEY_STAGE, entry.stage || "money");
+        } catch {
+          /* ignore */
+        }
+        if (restored > 0) {
+          /* Their answers came down from the server, so this browser did not have them: they
+             are arriving from somewhere else. Said now, because the reload below makes the
+             next load look like any other. See sessionLog.ts. */
+          markNextLoginAs("restored_from_another_device");
+          window.location.reload();
+          return;
+        }
+        /* Nothing came back — either there is no server, or this participant has nothing
+           stored yet. Continue in this tab; the stage guards will place them safely. */
+        setStage((entry.stage as Stage) || "money");
+      })();
+    };
+    /* The Prolific door's first page (the researcher's "2-A"): the ID from the link, Start, or Continue with no
+       question ("1-A"). The university door's is unchanged. */
+    if (door === "prolific") {
+      return (
+        <ProlificStartScreen
+          params={prolificParamsFrom(window.location.search)}
+          onNewParticipant={onNewParticipant}
+          onResume={onResume}
+        />
+      );
+    }
+    return <StartScreen onNewParticipant={onNewParticipant} onResume={onResume} />;
   }
 
   if (stage === "consent") {
@@ -821,15 +876,31 @@ export function ExperimentFlow() {
   if (stage === "demographics") {
     return (
       <DemographicPage
-        initialEmail={pendingEmail ?? ""}
+        initialEmail={door === "prolific" ? "" : pendingEmail ?? ""}
         emailLocked={!!pendingEmail}
-        onSubmit={(record) => {
+        askEmail={door !== "prolific"}
+        onSubmit={(submitted) => {
+          /*
+           * THE KEY (since 6 October 2026): the email confirmed here, or in the Prolific door (no email question) the
+           * Prolific ID the first page brought. Its record names it truthfully (prolificPid, never email) with the door and
+           * Prolific's two ids. Without a key there is nobody to save: back to the first page.
+           */
+          const key = submitted.email ?? pendingEmail;
+          if (!key) {
+            setStage("start");
+            return;
+          }
+          const prolific = isProlificKey(key) ? readProlificFile(key) : null;
+          const record = isProlificKey(key)
+            ? { ...submitted, prolificPid: key, recruitmentSource: "prolific" as const,
+                prolificStudyId: prolific?.studyId ?? null, prolificSessionId: prolific?.sessionId ?? null }
+            : submitted;
           /*
            * "CONDITION NUMBER" AND "CONDITION TYPE" BESIDE THE ANSWERS (the researcher's request, 1 October 2026). Saved,
            * never asked: the participant does not see their condition. The browser's condition becomes theirs here if
            * the start screen did not already make it so.
            */
-          const owner = record.email.trim().toLowerCase();
+          const owner = key.trim().toLowerCase();
           let condition = readConditionFile();
           if (condition && condition.owner && condition.owner !== owner) condition = null;
           if (condition && !condition.owner) {
@@ -839,13 +910,15 @@ export function ExperimentFlow() {
           try {
             localStorage.setItem(STORAGE_KEY_DEMOGRAPHICS, JSON.stringify({ ...record, ...(conditionFields(condition) ?? {}) }));
             localStorage.setItem(STORAGE_KEY_STATUS, STATUS_NOT_COMPLETED);
-            localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, record.email);
+            localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, key);
           } catch {
             /* Storage unavailable; the study still runs. See the note on the consent record. */
           }
-          setPendingEmail(record.email);
+          setPendingEmail(key);
           saveParticipant({
-            email: record.email,
+            email: key,
+            prolificStudyId: prolific?.studyId ?? null,
+            prolificSessionId: prolific?.sessionId ?? null,
             sessionId: participantId,
             age: record.age,
             gender: record.gender,

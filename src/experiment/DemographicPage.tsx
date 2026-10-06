@@ -27,6 +27,11 @@
  * `emailLocked`, and this page shows it as confirmation rather than asking twice. Until then the
  * field is editable and this page is where the address is first captured.
  *
+ * THE PROLIFIC DOOR ASKS NO EMAIL (since 6 October 2026, the researcher's "4-A"; recruitment.ts). Prolific forbids
+ * asking for a participant's email, and their key is their Prolific ID, which came in Prolific's link. With
+ * `askEmail={false}` the email question is not drawn, the page counts four questions, and the record has no `email`.
+ * The university door is unchanged: five questions, the email shown locked from the start screen.
+ *
  * VALIDATION IS DELIBERATELY GENTLE
  * Nothing is marked wrong while it is being typed. Errors appear on blur, or when Continue is
  * pressed. A form that turns red on the second keystroke of an email address reads as an
@@ -61,7 +66,8 @@ const MAX_AGE = 120;
 
 /** What this page produces. Written to storage by the caller. */
 export interface DemographicRecord {
-  email: string;
+  /** The university door's email; absent in the Prolific door (since 6 October 2026), whose key is the Prolific ID. */
+  email?: string;
   age: number;
   gender: Gender;
   /** Their country, as its English name, or "Prefer not to say" (since 30 September 2026). */
@@ -86,12 +92,15 @@ const looksLikeEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}
 export function DemographicPage({
   initialEmail = "",
   emailLocked = false,
+  askEmail = true,
   onSubmit,
 }: {
   /** Pre-filled by the start screen once that exists. */
   initialEmail?: string;
   /** True when the address was already given and this page is only confirming it. */
   emailLocked?: boolean;
+  /** False in the Prolific door: no email question at all (since 6 October 2026). */
+  askEmail?: boolean;
   onSubmit: (record: DemographicRecord) => void;
 }) {
   const [email, setEmail] = useState(initialEmail);
@@ -108,10 +117,11 @@ export function DemographicPage({
   const ageNumber = Number.parseInt(age, 10);
 
   const emailError = useMemo(() => {
+    if (!askEmail) return null;
     if (!email.trim()) return "Please enter your email address.";
     if (!looksLikeEmail(email)) return "Please check this address — it does not look complete.";
     return null;
-  }, [email]);
+  }, [email, askEmail]);
 
   const ageError = useMemo(() => {
     if (!age.trim()) return "Please enter your age.";
@@ -137,7 +147,7 @@ export function DemographicPage({
     setSubmitAttempted(true);
     if (!valid) return;
     onSubmit({
-      email: email.trim().toLowerCase(),
+      ...(askEmail ? { email: email.trim().toLowerCase() } : {}),
       age: ageNumber,
       gender: gender as Gender,
       country: country?.name ?? "",
@@ -180,8 +190,8 @@ export function DemographicPage({
             A little about you
           </Heading>
           <Text fontSize="sm" color="fg.muted" maxW="md">
-            Five short questions. Your answers are stored with your results and reported only as
-            group data.
+            {askEmail ? "Five short questions." : "Four short questions."} Your answers are stored with your
+            results and reported only as group data.
           </Text>
         </VStack>
 
@@ -193,7 +203,8 @@ export function DemographicPage({
           p={{ base: "5", md: "7" }}
         >
           <VStack align="stretch" gap="6">
-            {/* EMAIL */}
+            {/* EMAIL - the university door only */}
+            {askEmail && (
             <Field
               label="Email address"
               invalid={!!showEmailError}
@@ -233,6 +244,7 @@ export function DemographicPage({
                 />
               </Box>
             </Field>
+            )}
 
             {/* AGE */}
             <Field
@@ -377,7 +389,7 @@ export function DemographicPage({
           </Button>
           {!valid && (
             <Text fontSize="xs" color="fg.subtle" textAlign="center">
-              Please complete all five questions to continue.
+              {askEmail ? "Please complete all five questions to continue." : "Please complete all four questions to continue."}
             </Text>
           )}
         </VStack>

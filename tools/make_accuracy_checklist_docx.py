@@ -203,6 +203,18 @@ SECTIONS = [
          "reading of the database: the slowest wait for a condition fell from 4.8 seconds to 0.14 (before, a third of each "
          "burst waited past the page's 3 seconds and got an uncounted random condition). Every person is counted exactly once "
          "while their record is being made (a burst could end 26 / 24 before).", ["conditions", "load"], "(N22, N24, L1-L4)"),
+        ("Two doors: the university version is unchanged, and the Prolific version keys everybody by their Prolific ID.",
+         "Since 6 October 2026 (your 1-A, 2-A, 4-A; Step 1). moonlander.fit.edu asks the email as before; /prolific takes the "
+         "Prolific ID from Prolific's link (a paste box if it is missing), stores it as prolific_pid and never as an email, "
+         "marks every new record with its door (recruitment_source) and balances the four conditions inside each door. A "
+         "returning Prolific person continues with no question; \"A little about you\" asks four questions there. 100 students "
+         "and 100 Prolific people at once: 25 per condition inside each door. Checked live on the built site.",
+         ["session", "conditions", "load"], "(C13, N25, L5)"),
+        ("The database's \"one person\" rules work for both doors, and the swap is safe.",
+         "One email is one person, and one Prolific ID is one person, each on the records that have it. The old rule is replaced "
+         "when the server starts; tested on a copy with today's rule (every record kept). Without the swap the server could "
+         "not start on such a database, which is why the swap is there. Back up the database before that deploy.",
+         ["session", "load"], "(C13, L6)"),
         ("The live landing page never gives a random condition.",
          "It asks the server up to four times with the same arrival id; if the server cannot be reached it says \"We could "
          "not reach the study\" with \"Try again\", which keeps the arrival id, so nobody is counted twice. Checked live with "
@@ -446,7 +458,14 @@ OPEN = [
      "Decided 6 October 2026: two versions on one website (the email version for FIT students and employees, and "
      "moonlander.fit.edu/prolific), conditions balanced per group, the second number check in the Prolific version only, "
      "no pilot, the first batch 40 places, every submission manually reviewed with a daily pay check by Claude. Built: "
-     "Step 0 (many people at once). Still to build: steps 1-5 in docs/PROLIFIC_CONVERSION_PLAN.md section 1b.", "Before Prolific"),
+     "Step 0 (many people at once) and Step 1 (the two doors and the Prolific ID). Still to build: steps 2-5 in "
+     "docs/PROLIFIC_CONVERSION_PLAN.md section 1b (the Prolific door still shows the university consent page). Deploy "
+     "after Step 4, with a database backup first (your 3-A).", "Before Prolific"),
+    ("A second student on a shared computer (the university door)",
+     "Found on 6 October 2026, not changed: on a shared lab computer the browser reopens the first student's run, or their "
+     "thank-you page, so a second student cannot start there. A private window (or their own device) works. A \"Not you? "
+     "Start as someone else\" button is your decision. (The Prolific door handles this: a different Prolific ID in the "
+     "link starts fresh.)", "Your choice"),
     ("Fix 1, the very last fix before launch",
      "Done for Baseline on 3 October 2026; conditions 1-3 still wait. The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
      "page compares the wish with \"what you said matters most\", and the intro page says \"Each option will show you "

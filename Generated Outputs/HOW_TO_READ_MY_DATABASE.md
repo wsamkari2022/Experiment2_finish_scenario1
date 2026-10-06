@@ -120,7 +120,10 @@ correlating the two will produce impressive and meaningless results.
 | Field | Meaning |
 |---|---|
 | `participant_id` | Unique id for the run (a UUID). **The only id in the database.** |
-| `email` | The key. Lower-cased. Also how a participant returns to finish. |
+| `email` | The key of a **university-door** participant. Lower-cased. Also how they return to finish. **Absent on a Prolific record** (since 6 October 2026). |
+| `prolific_pid` | Since 6 October 2026, **Prolific-door** participants only: their Prolific ID, the key of their record (lower-cased). Never in `email`. One Prolific ID is one person (a unique rule on the records that have it). |
+| `prolific_study_id`, `prolific_session_id` | Since 6 October 2026, Prolific door only: Prolific's STUDY_ID and SESSION_ID from the link (the submission). `prolific_session_id` is Prolific's, NOT the study's own `participant_id`. Set only when the page sent them. |
+| `recruitment_source` | Since 6 October 2026: which door they came through - `"university"` (moonlander.fit.edu, email, $5 gift card) or `"prolific"` (moonlander.fit.edu/prolific, paid by Prolific). **Absent on every record made before that date: those are all university-door records.** The four conditions are balanced inside each door on its own. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
 | `country`, `country_code` | Since 30 September 2026, from the demographic form's Country question (asked as "Where are you from?" since 4 October 2026): the English name as listed (e.g. "Saudi Arabia") and its ISO 3166-1 alpha-2 code ("SA"; Kosovo "XK"), or "Prefer not to say" with a null code. Group by `country_code`, never by the name. Absent on records made before that date. |
 | `english_first_language` | Since 4 October 2026: the demographic form's "Is English your first language?" - **true** = Yes, **false** = No. Required, no default, so every record from that date has it; absent on records made before. Also in `blocks…vrds_demographics.englishFirstLanguage` |
@@ -167,8 +170,9 @@ Thursday has two logins on two browsers, and this is where that shows.
 | `first_login_at`, `last_login_at`, `days_between_first_and_last_login` | The span of the run |
 | `list[]` | `number`, `started_at`, `last_seen_at`, `minutes_open`, `how_it_started`, `stage_at_start`, `stage_at_last_seen`, `browser_number`, `browser_id` |
 
-`how_it_started` is one of three words: `typed_their_email` (they entered the study from the start
-screen), `continued_in_this_browser` (the study was reopened where their answers already were), or
+`how_it_started` is one of four words: `typed_their_email` (they entered the study from the start
+screen), `arrived_with_their_prolific_id` (the Prolific door, since 6 October 2026: the ID came in Prolific's link, or they
+pasted it), `continued_in_this_browser` (the study was reopened where their answers already were), or
 `restored_from_another_device` (their answers were downloaded onto this machine first).
 
 > ⚠️ **`sessions.total_logins` is not `active_time.sittings`.** A sitting is a gap of more than
@@ -191,10 +195,11 @@ run can be followed across machines without reading UUIDs.
 ### The `condition_arrivals` collection (since 1 October 2026)
 
 A second, small collection beside `participants`: one row per condition the landing page gave (`arrival_id`,
-`condition_number`, `condition_type`, `assigned_at`, `browser`, `linked_email` once the person reached the demographic
-page, `released` when they turned out to be somebody returning with a condition of their own). It exists only so the
+`condition_number`, `condition_type`, `assigned_at`, `browser`, `linked_email` (or, for the Prolific door,
+`linked_prolific_pid`) once the person reached the demographic page, `recruitment_source` (since 6 October 2026: the door it
+was counted in; absent = university), `released` when they turned out to be somebody returning with a condition of their own). It exists only so the
 balance can count people who just arrived; it holds no answers. **Not data about participants; never analyse it.**
-The live counts are at `/api/conditions/report`.
+The live counts are at `/api/conditions/report`: since 6 October 2026 one table per door.
 
 ## 3c. `major_info_and_scores` — every major score in one room
 
@@ -206,7 +211,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 
 | Field | What it holds |
 |---|---|
-| `condition` | Since 1 October 2026: `condition_number`, `condition_type`, `source`, `counted_for_balance` (true only for `landing_page`) and `assigned_at`, copied from the browser's condition file (the same values as the document's top-level fields) |
+| `condition` | Since 1 October 2026: `condition_number`, `condition_type`, `source`, `counted_for_balance` (true only for `landing_page`), `assigned_at` and, since 6 October 2026, `recruitment_source` (the door; `"university"` for a file from before), copied from the browser's condition file (the same values as the document's top-level fields) |
 | `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them, and (since 25 September 2026) `what_the_wish_changed_by_value` and `what_the_wish_changed_in_words`, copied from `decided_versus_wished` |
 | `stability` | The score and label, plus the directness, context and stakeholder stabilities, and (since 26 September 2026) `was_measured`, `conflict_steps_counted` and `how_to_read_was_measured`, copied from the headline |
 | `performance` | `score`, `captured`, `captured_label`, and (since 25 September 2026) `what_the_wish_changed_in_performance_by_metric` and `..._in_words`, copied from `decided_versus_wished` |

@@ -18,8 +18,10 @@
  * ============================================================================
  * WHAT A PARTICIPANT DOCUMENT LOOKS LIKE AFTERWARDS
  * ============================================================================
- *   participant_id, email, age, gender, country, country_code (since 30 September 2026), english_first_language (true /
- *   false, since 4 October 2026), status, current_stage, consent, timestamps
+ *   participant_id, email (the university door) or prolific_pid + prolific_study_id + prolific_session_id (the Prolific
+ *   door, since 6 October 2026), recruitment_source ("university" / "prolific"; absent before 6 October 2026), age, gender,
+ *   country, country_code (since 30 September 2026), english_first_language (true / false, since 4 October 2026), status,
+ *   current_stage, consent, timestamps
  *   headline  { the few numbers an analyst actually asks for }
  *   blocks    { RAW answers only — what the person did }
  *   analysis  { COMPUTED results only — what the model made of it }
@@ -114,7 +116,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-03-baseline-no-fit";
+export const SHAPE_VERSION = "2026-10-06-two-doors";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -3080,6 +3082,9 @@ export function conditionCopy(file: unknown): Record<string, unknown> | null {
     source,
     counted_for_balance: source === "landing_page",
     assigned_at: typeof f.assignedAt === "string" ? f.assignedAt : null,
+    /* The door it was given at, and counted in (since 6 October 2026; recruitment.ts): a file from before has none
+       and was the university's. */
+    recruitment_source: f.recruitmentSource === "prolific" ? "prolific" : "university",
   };
 }
 

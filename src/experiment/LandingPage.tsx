@@ -18,6 +18,10 @@
  * "Try again", which opens the page afresh with the same arrival id (an answer the server already made is the one
  * given). In development, without the server, it still picks at random as before.
  *
+ * TWO DOORS (since 6 October 2026; recruitment.ts). The page is told which door this person came through (the
+ * university's, or /prolific), sends it with the question, and the server counts each door on its own (the
+ * researcher's "2-A"). The door is kept in the condition file (`recruitmentSource`).
+ *
  * Nothing on the screen names the condition: a participant never chooses it and never sees it on the page.
  */
 
@@ -29,6 +33,7 @@ import {
   showConditionInAddress, writeConditionFile, type ConditionFile,
 } from "./conditions";
 import { requestCondition } from "./storage";
+import type { RecruitmentSource } from "./recruitment";
 
 /** The live site never gives an uncounted random condition; development (no server) still does. */
 const LIVE = import.meta.env.PROD;
@@ -49,21 +54,25 @@ function arrivalIdForThisBrowser(): string {
 }
 
 /** The condition file, or null on the live site when the server could not be reached (the page offers "Try again"). */
-async function chooseCondition(live: boolean): Promise<ConditionFile | null> {
+async function chooseCondition(live: boolean, door: RecruitmentSource): Promise<ConditionFile | null> {
   const fromAddress = conditionFromAddress(window.location.search);
-  if (fromAddress) return makeConditionFile(fromAddress, "address", null, "");
+  if (fromAddress) return makeConditionFile(fromAddress, "address", null, "", undefined, door);
   const arrivalId = arrivalIdForThisBrowser();
   /* Live, the page waits for the whole server check (up to about half a minute when it keeps missing). */
-  const given = await requestCondition(arrivalId, { waitMs: live ? 30_000 : 6000 });
+  const given = await requestCondition(arrivalId, { waitMs: live ? 30_000 : 6000, recruitmentSource: door });
   const condition = given ? conditionByNumber(given.number) : null;
-  if (given && condition) return makeConditionFile(condition, "landing_page", arrivalId, "", given.assignedAt);
+  if (given && condition) return makeConditionFile(condition, "landing_page", arrivalId, "", given.assignedAt, door);
   if (live) return null;
-  return makeConditionFile(randomCondition(), "random_offline", null, "");
+  return makeConditionFile(randomCondition(), "random_offline", null, "", undefined, door);
 }
 
 type Phase = "asking" | "slow" | "unreachable";
 
-export function LandingPage({ onReady }: { onReady: (file: ConditionFile) => void }) {
+export function LandingPage({ onReady, door = "university" }: {
+  onReady: (file: ConditionFile) => void;
+  /** Which door this person came through (since 6 October 2026). */
+  door?: RecruitmentSource;
+}) {
   const [phase, setPhase] = useState<Phase>("asking");
 
   useEffect(() => {
@@ -71,7 +80,7 @@ export function LandingPage({ onReady }: { onReady: (file: ConditionFile) => voi
     const slow = setTimeout(() => {
       if (!cancelled) setPhase("slow");
     }, SLOW_AFTER_MS);
-    void chooseCondition(LIVE).then((file) => {
+    void chooseCondition(LIVE, door).then((file) => {
       if (cancelled) return;
       clearTimeout(slow);
       if (!file) {
@@ -89,7 +98,7 @@ export function LandingPage({ onReady }: { onReady: (file: ConditionFile) => voi
       cancelled = true;
       clearTimeout(slow);
     };
-  }, [onReady]);
+  }, [onReady, door]);
 
   /* "Try again" opens the page afresh: the server check starts again at once (the page's own check would otherwise
      wait up to 15 seconds for its next look), and the arrival id saved in this browser is asked for again. */
