@@ -1762,6 +1762,64 @@ for (const [who, block5] of PEOPLE) {
     : `Stability's two parts are wrong: ${why.slice(0, 3).join(" | ")}`);
 }
 
+/* D70 - ONLY THE SIX REAL PARTS CAN BE CALLED RUSHED (7 October 2026, the researcher's "1-A"). The Prolific rehearsal
+   found quality.rushed_blocks counting the consent page, "A little about you", the 0.9-second pauses (which catch a
+   5-second working-time tick about 1 time in 5.5), the page before the main study and the results page: an honest fast
+   reader could reach the three strikes that cost the gift card and put a Prolific person in "Look first". Checked on
+   hand-made ledgers: the list is exactly Blocks 1-4, the main study and the feedback; an honest fast reader with every
+   other page under 30 seconds has no strike, and those pages are kept in short_pages_not_counted; a rusher of three
+   real parts still gets three strikes, the reason and no gift card. */
+{
+  const why = [];
+  const SIX = ["money", "trolley", "product", "block4", "block5", "feedback"];
+  if (JSON.stringify([...(db.REAL_BLOCK_STAGES ?? [])]) !== JSON.stringify(SIX)) {
+    why.push(`the parts that can be called rushed are ${JSON.stringify(db.REAL_BLOCK_STAGES)}, not the six`);
+  }
+  const SHORT_PAGES = {
+    consent: 12_000, demographics: 18_000, transition_money_trolley: 5_000, transition_trolley_product: 4_000,
+    transition_product_block4: 5_000, transition_block4_block5: 3_000, block5_intro: 20_000,
+    transition_block5_summary: 5_000, block5_summary: 25_000,
+  };
+  const ledger = (parts) => ({
+    totalMs: 2_700_000, sittings: 1, longestIdleMs: 0,
+    byStage: { ...SHORT_PAGES, attention_check: 6_000, insights: 2_000, ...parts },
+  });
+  /* All three attention checks right, so the gift card turns on the rushed parts alone. */
+  const A = B("attentionChecks.js");
+  const plan = A.planAttentionChecks("d70-session|d70@example.test");
+  const ans = (answer) => ({ answer, correct: false, answeredAt: "2026-10-07T10:00:00.000Z", secondsToAnswer: 2, timesChanged: 0 });
+  const passing = { version: A.ATTENTION_VERSION, owner: "x", plan, answers: {
+    after_block3: ans(A.TOPIC_CHECKS.after_block3.right), after_scenario3: ans(A.TOPIC_CHECKS.after_scenario3.right), number: ans(plan.number.target) } };
+  const honest = db.buildQuality(ledger({
+    money: 240_000, trolley: 200_000, product: 260_000, block4: 300_000, block5: 1_200_000, feedback: 400_000,
+  }), PEOPLE[0][1], null, "Study Completed", passing);
+  if (honest.compensation_eligible !== true) why.push(`an honest fast reader with every rule met loses the gift card: ${JSON.stringify(honest.reasons)}`);
+  if (honest.blocks_under_30_seconds !== 0 || honest.rushed_blocks.length !== 0) {
+    why.push(`an honest fast reader got ${honest.blocks_under_30_seconds} strikes (${honest.rushed_blocks.map((b) => b.stage).join(", ")})`);
+  }
+  if (honest.reasons.some((r) => /blocks finished/.test(r))) why.push("an honest fast reader has a rushed-blocks reason");
+  const listed = (honest.short_pages_not_counted ?? []).map((s) => s.stage).sort();
+  if (JSON.stringify(listed) !== JSON.stringify(Object.keys(SHORT_PAGES).sort())) {
+    why.push(`short_pages_not_counted lists ${listed.join(", ")} (it must list the short pages, never the attention check or a deleted page)`);
+  }
+  if (!honest.fastest_block || !SIX.includes(honest.fastest_block.stage) || honest.fastest_block.stage !== "trolley") {
+    why.push(`fastest_block is ${JSON.stringify(honest.fastest_block)}, not the fastest real part (Block 2)`);
+  }
+  if (JSON.stringify(honest.blocks_that_can_be_called_rushed) !== JSON.stringify(SIX)) why.push("the record does not say which parts can be called rushed");
+  const rusher = db.buildQuality(ledger({
+    money: 20_000, trolley: 15_000, product: 25_000, block4: 300_000, block5: 1_200_000, feedback: 400_000,
+  }), PEOPLE[0][1], null, "Study Completed", passing);
+  if (rusher.blocks_under_30_seconds !== 3 || JSON.stringify(rusher.rushed_blocks.map((b) => b.stage)) !== JSON.stringify(["money", "trolley", "product"])) {
+    why.push(`a rusher of Blocks 1-3 got ${rusher.blocks_under_30_seconds} strikes`);
+  }
+  if (!rusher.reasons.includes("3 blocks finished in under 30s") || rusher.compensation_eligible !== false) {
+    why.push("a rusher of three real parts lost no gift card, or the reason is missing");
+  }
+  gate("D70", why.length === 0, why.length === 0
+    ? "only Blocks 1-4, the main study and the feedback can be called rushed: an honest fast reader (consent, the four questions, the pauses, the page before the main study and the results page all under 30 s) has no strike, those pages are kept apart; three rushed real parts still cost the gift card"
+    : `the rushed-blocks rule is wrong: ${why.slice(0, 3).join(" | ")}`);
+}
+
 /* D66 - WHICH BUTTON TOOK THEM TO THE FEEDBACK (28 September 2026, the researcher's plan "Q5-yes"). The results
    page gained a "One last step" card and a bottom bar; analysis.results_page says which button was used. Since
    29 September 2026 the charts are on the thank-you page, after the feedback, so only the results page's three

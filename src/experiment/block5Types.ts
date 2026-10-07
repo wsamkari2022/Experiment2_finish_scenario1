@@ -823,6 +823,9 @@ export interface APARecord {
   originalOptionId: string;         // the misaligned option that triggered APA
   /* APA_Only (since 1 October 2026): the value the page said that option serves most, more than the other three. */
   mainValueShown?: Block5PolicyDimKey;
+  /* APA_Only (since 7 October 2026): the box also said "It still gives less on X than your earlier answers asked for",
+     because the option falls short on that same value (mainValueFallsShort in block5CVR.ts). */
+  mainValueShortSaid?: boolean;
 }
 
 /**

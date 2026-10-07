@@ -44,7 +44,9 @@ const RULES = {
   fastSds: 3,
   /** The speed rule is only read once this many submissions have a time (a smaller group gives no stable spread). */
   fastNeedsAtLeast: 10,
-  /** Clear low effort: this many blocks finished in under 30 seconds (the gift-card rule's own line). */
+  /** Clear low effort: this many blocks finished in under 30 seconds (the gift-card rule's own line). Since 7 October
+      2026 only the six real parts count (Blocks 1-4, the main study, the feedback; REAL_BLOCK_STAGES in dbShape.ts):
+      the record's quality.blocks_under_30_seconds already says so, and this tool reads that number. */
   rushedBlocks: 3,
   /** Almost no working time recorded: a real run has about 40 minutes; a script has none. */
   minWorkingMinutes: 5,

@@ -36,6 +36,7 @@
  *       everywhere and by a hover only for a mouse (a click pins a hover-opened panel); its panel is the score's own level
  *       ladder (the same bands as its bar), each level's badge, range and the approved few words, "you are here" on the
  *       participant's level, the full name "Value Consistency Index"; no line about 50 (drafted and removed the same day)
+ *   J17 (7 October 2026) the progress bar on the thank-you page: every step done and the flag "Done", not looping
  *   J14 (3 October 2026) the first page: the study's name as its heading (and, since 4 October, in the browser tab), never split at a hyphen, the welcome only
  *       while the email is asked for, "Start or continue" inside the card, the email check unchanged; and the
  *       performance panel's title row on a phone: the title asks for room before sharing the row and the controls
@@ -231,7 +232,9 @@ console.log("===================================================================
   if (!view.includes("DECK_POSITIONS.map")) why.push("the legend is written out");
   if (/>\s*Finish\s*</.test(feedback) || feedback.includes("handleFinish = ")) why.push("the Finish button is back");
   if (!feedback.includes("useState(alreadyCompleted)")) why.push("the feedback page ignores a finished study");
-  if (!/alreadyCompleted=\{\(\(\) => \{\s*try \{ return localStorage\.getItem\(STORAGE_KEY_STATUS\) === STATUS_COMPLETED;/.test(flow)) why.push("the flow does not pass the finished status");
+  /* Since 7 October 2026 the status is read once into `alreadyCompleted` (the progress bar reads it too, J17). */
+  if (!/const alreadyCompleted = \(\(\) => \{\s*try \{ return localStorage\.getItem\(STORAGE_KEY_STATUS\) === STATUS_COMPLETED;/.test(flow)
+      || !/<UserFeedbackPage[\s\S]{0,600}alreadyCompleted=\{alreadyCompleted\}/.test(flow)) why.push("the flow does not pass the finished status");
   gate("J8", why.length === 0, why.length ? why.join(" | ")
     : "the cards read every scenario, five colors from the deck, no Finish button, a finished participant opens on the thank-you screen");
 }
@@ -598,6 +601,31 @@ console.log("===================================================================
   if (/data-fifty-note|A 50 is what you get|not the middle/.test(page)) why.push("the line about 50 is still drawn");
   gate("J16", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : "an ⓘ right after every level badge, a named button opened by tap or click (hover only for a mouse; a click pins it); its panel is the score's own level ladder with the approved words and \"you are here\", the Value Consistency Index in full; no line about 50");
+}
+
+/* ------------------------------------------------------------------------------------------- J17 */
+/* (7 October 2026, the researcher's "3-A".) The thank-you page is still the feedback stage, so the progress bar said
+   "Finish · You are nearly there" with Feedback as the current step under a page that says "the study is complete"
+   (found in the Prolific rehearsal). Once the feedback is sent - on this page, or read from the saved status after a
+   reload - every step is drawn done, the flag says "Done" and stops its looping animation. Read from the source. */
+{
+  const why = [];
+  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const stepper = strip(fs.readFileSync(path.join(ROOT, "src", "experiment", "GlobalStepper.tsx"), "utf8"));
+  const flow = strip(fs.readFileSync(path.join(ROOT, "src", "experiment", "ExperimentFlow.tsx"), "utf8"));
+  if (!stepper.includes("export function GlobalStepper({ stage, finished = false }: { stage: string; finished?: boolean })")) why.push("the progress bar is not told when the study is finished");
+  if (!/const note = finished\s*\? "Done"\s*: reached\s*\? "You are nearly there"/.test(stepper)) why.push('the flag does not say "Done" once finished, or says it before');
+  if (!stepper.includes('className={finished ? undefined : "vrds-goal-beacon"}')) why.push("the flag keeps looping after the study is finished");
+  if (!stepper.includes('const state: NodeState = i < current || (finished && i === current) ? "done" : i === current ? "current" : "upcoming";')) why.push("the Feedback step is not drawn done once finished");
+  if (!stepper.includes("<RailSegment filled={i < current || (finished && i === current)} />")) why.push("the rail after Feedback is not filled once finished");
+  if (!stepper.includes("finished={finished && reached}")) why.push("the flag could say Done before the last step");
+  if (!/<GlobalStepper stage=\{stage\} finished=\{feedbackSentHere \|\| alreadyCompleted\} \/>\s*<UserFeedbackPage/.test(flow)) why.push("the feedback stage does not tell the bar when the feedback was sent or the saved status says finished");
+  /* Any spelling counts: `finished`, `finished={...}`, `finished={true}`. */
+  if ((flow.match(/<GlobalStepper\b[^>]*\bfinished\b/g) ?? []).length !== 1) why.push("another page tells the bar the study is finished");
+  if (!/const alreadyCompleted = \(\(\) => \{\s*try \{ return localStorage\.getItem\(STORAGE_KEY_STATUS\) === STATUS_COMPLETED; \} catch \{ return false; \}\s*\}\)\(\);/.test(flow)) why.push("a reload does not read the saved status");
+  if (!/syncBlocks\(pendingEmail, \{ force: true \}\);\s*\}\s*setFeedbackSentHere\(true\);\s*\}\}/.test(flow)) why.push("sending the feedback does not turn the bar to Done");
+  gate("J17", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : 'once the feedback is sent (or after a reload of a finished run) every step is done, the flag says "Done" and stops looping; before that, unchanged');
 }
 
 console.log("");

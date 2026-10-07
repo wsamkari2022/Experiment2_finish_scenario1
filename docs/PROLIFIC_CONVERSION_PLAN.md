@@ -275,7 +275,13 @@ memory.
 
 1. The ethics board (IRB) approved Prolific recruitment, the new consent text, the Prolific ID and the attention rule.
 2. The four conditions are built and tested.
-3. The conversion (A-G) is built and every check passes.
+3. The conversion (A-G) is built and every check passes. **A full local rehearsal passed on 7 October 2026** (the built
+   site in production mode, a throw-away database, a made-up code): the Prolific link, consent, the four questions, every
+   block, both topic checks, six scenarios in APA_Only, the results page, the feedback with both number rows, and the code
+   on the thank-you page within about 2 seconds; the record complete and the code never stored; the daily pay check read
+   a Compass-style export. It found three things, fixed the same day ("1-A 2-A 3-A"): only the six real parts can be
+   called rushed (the pauses and short pages had been giving honest people strikes), APA_Only's box says when the option
+   still gives less on the value it serves most, and the thank-you page's progress bar says "Done".
 4. The study opens from outside the university, on https, from the Prolific link.
 5. The test records are removed from the server database - both doors. **The rule for every test run (both doors,
    and Prolific's "Preview as participant"): open the study with `?condition=CVR_APA` (or `CVR_Only`, `APA_Only`,

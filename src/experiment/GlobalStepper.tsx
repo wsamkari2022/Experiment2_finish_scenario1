@@ -392,7 +392,7 @@ function GoalApproach() {
  * beneath, and the only thing on screen that moves. It should be impossible to mistake for
  * another step in the queue.
  */
-function GoalMarker({ reached, afterNext }: { reached: boolean; afterNext: string | null }) {
+function GoalMarker({ reached, afterNext, finished }: { reached: boolean; afterNext: string | null; finished: boolean }) {
   /*
    * No countdown here any more.
    *
@@ -404,25 +404,32 @@ function GoalMarker({ reached, afterNext }: { reached: boolean; afterNext: strin
    * One stop before the last (the results page) it says what still stands before the end:
    * "After the feedback" (since 28 September 2026). Beside "End of the study", a participant
    * looking at their results read the flag as the place they had just arrived.
+   *
+   * ON THE THANK-YOU PAGE IT SAYS "Done" (since 7 October 2026, the researcher's "3-A"). The thank-you page is still the
+   * feedback stage, so the bar went on saying "You are nearly there" under a page that says "the study is complete"
+   * (found in the Prolific rehearsal). Once the feedback is sent the flag says "Done" and stops its looping animation:
+   * there is nothing left to beckon towards.
    */
-  const note = reached
-    ? "You are nearly there"
-    : afterNext
-      ? `After the ${afterNext.toLowerCase()}`
-      : "End of the study";
+  const note = finished
+    ? "Done"
+    : reached
+      ? "You are nearly there"
+      : afterNext
+        ? `After the ${afterNext.toLowerCase()}`
+        : "End of the study";
 
   return (
-    <HStack gap={{ base: "2", md: "2.5" }} flexShrink={0} align="flex-start">
+    <HStack gap={{ base: "2", md: "2.5" }} flexShrink={0} align="flex-start" data-goal-note={note}>
       <Center h={RAIL_ROW_H}>
         <Center
-          className="vrds-goal-beacon"
+          className={finished ? undefined : "vrds-goal-beacon"}
           boxSize={{ base: "8", md: "10" }}
           rounded="full"
           bgGradient="to-br"
           gradientFrom="purple.400"
           gradientTo="purple.600"
           color="white"
-          aria-label={`Finish — the end of the study. ${note}.`}
+          aria-label={finished ? "Finish — the study is complete. Done." : `Finish — the end of the study. ${note}.`}
         >
           <Icon boxSize={{ base: "4", md: "5" }}>
             <LuFlag />
@@ -463,7 +470,11 @@ function GoalMarker({ reached, afterNext }: { reached: boolean; afterNext: strin
   );
 }
 
-export function GlobalStepper({ stage }: { stage: string }) {
+/**
+ * `finished`: the feedback has been sent and the thank-you page is on screen (since 7 October 2026). Every stop,
+ * Feedback included, is then drawn done (green) and the flag says "Done".
+ */
+export function GlobalStepper({ stage, finished = false }: { stage: string; finished?: boolean }) {
   const current = stopIndexForStage(stage);
   /*
    * ON A PHONE THE RAIL IS WIDER THAN THE SCREEN, SO IT SLIDES TO WHERE YOU ARE (since 28 September 2026).
@@ -531,7 +542,7 @@ export function GlobalStepper({ stage }: { stage: string }) {
           css={{ scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } }}
         >
           {STOPS.map((s, i) => {
-            const state: NodeState = i < current ? "done" : i === current ? "current" : "upcoming";
+            const state: NodeState = i < current || (finished && i === current) ? "done" : i === current ? "current" : "upcoming";
             return (
               <HStack
                 key={s.label}
@@ -550,13 +561,13 @@ export function GlobalStepper({ stage }: { stage: string }) {
                 {s.kind === "tail" && (
                   <TailNode state={state} label={s.label} next={nextIsLast && i === current + 1} />
                 )}
-                <RailSegment filled={i < current} />
+                <RailSegment filled={i < current || (finished && i === current)} />
               </HStack>
             );
           })}
         </HStack>
         <GoalApproach />
-        <GoalMarker reached={reached} afterNext={nextIsLast ? lastStop.label : null} />
+        <GoalMarker reached={reached} afterNext={nextIsLast ? lastStop.label : null} finished={finished && reached} />
       </HStack>
     </Box>
   );

@@ -306,6 +306,10 @@ export function ExperimentFlow() {
     }
   });
 
+  /** The feedback was sent on this page (since 7 October 2026): the progress bar then says "Done". A reload reads the
+      saved status instead (see the feedback stage). */
+  const [feedbackSentHere, setFeedbackSentHere] = useState(false);
+
   /*
    * WHICH DOOR (since 6 October 2026; recruitment.ts): the person's own key decides once it is known. Before that, an
    * address that names the Prolific door (/prolific, or a Prolific ID in the link) wins; then the door the landing page
@@ -1084,20 +1088,22 @@ export function ExperimentFlow() {
   }
 
   if (stage === "feedback") {
+    /* A finished participant who reloads sees the thank-you screen, never the form again (28 September 2026). The
+       status is the one onCompleted below writes. */
+    const alreadyCompleted = (() => {
+      try { return localStorage.getItem(STORAGE_KEY_STATUS) === STATUS_COMPLETED; } catch { return false; }
+    })();
     return (
       <>
-        <GlobalStepper stage={stage} />
+        {/* On the thank-you page the bar shows every step done and the flag "Done" (since 7 October 2026, "3-A"). */}
+        <GlobalStepper stage={stage} finished={feedbackSentHere || alreadyCompleted} />
         <UserFeedbackPage
           results={block5Results}
           sessionId={participantId}
           onBack={handleBackToSummary}
           /* The Prolific door's completion code (since 7 October 2026, Step 4): the key decides the door. */
           prolificId={pendingEmail && isProlificKey(pendingEmail) ? pendingEmail : null}
-          /* A finished participant who reloads sees the thank-you screen, never the form again
-             (28 September 2026). The status is the one onCompleted below writes. */
-          alreadyCompleted={(() => {
-            try { return localStorage.getItem(STORAGE_KEY_STATUS) === STATUS_COMPLETED; } catch { return false; }
-          })()}
+          alreadyCompleted={alreadyCompleted}
           /*
            * THE ONLY PLACE THE STUDY IS MARKED COMPLETE.
            *
@@ -1128,6 +1134,8 @@ export function ExperimentFlow() {
                */
               syncBlocks(pendingEmail, { force: true });
             }
+            /* The progress bar now says "Done" (no reload follows, so setting state here is safe). */
+            setFeedbackSentHere(true);
           }}
         />
       </>

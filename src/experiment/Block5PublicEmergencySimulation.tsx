@@ -76,7 +76,7 @@ import {
   scenarioShowsPerformance,
   scenarioIsScored, isPredictionTest,
   performanceScore, computeVCI, computeStability, computeSensitivityStability, averagePerformance,
-  cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, violatedValue,
+  cumulativeMetrics, projectedMetrics, metricProfileScore, optionMainValue, mainValueFallsShort, violatedValue,
   chooseFraming, otherFraming, framingSensitivityKey, policyAlignmentShortfall, policyShortfallByValue,
   FIT_SCORE_SCALE, roundForRecord, scenarioCountsTowardsPerformance, STABILITY_VERSION,
 } from "./block5CVR";
@@ -351,6 +351,8 @@ interface ApaCommitPayload {
   q2Influenced: boolean;
   q3Value: Block5PolicyDimKey;
   originalOptionId: string;
+  /** APA_Only: the box also said the option falls short on the value it serves most (mainValueFallsShort). */
+  mainValueShortSaid: boolean;
   // Dual-perspective (NO path): which lens changed their mind (+20), and the snapshot for storage.
   altViewGenerated: boolean;
   framingShownFirst: CVRFraming;
@@ -1817,6 +1819,8 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
         originalOptionId: payload.originalOptionId,
         /* APA_Only: the value the page said the chosen option serves most (the box under the opening sentence). */
         ...(apaOnlyCondition && originalOption ? { mainValueShown: optionMainValue(originalOption) } : {}),
+        /* APA_Only: whether the box also said the option falls short on that value (since 7 October 2026). */
+        ...(apaOnlyCondition ? { mainValueShortSaid: payload.mainValueShortSaid } : {}),
       },
       ...(apaOnlyCondition ? {} : { cvrStakeholderShown: cvrWho?.label }),
       telemetry: telRef.current
@@ -5579,6 +5583,8 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
   /* Going back to all the options. APA_Only (the researcher, 1 October 2026: "remove the warning") leaves at once; the
      other conditions still ask "Go back and clear your answers?" first. */
   const leave = () => (straightToApa ? onBail() : setConfirmBail(true));
+  /* APA_Only's box: does the option also fall short on the value it serves most? Same profile as the shortfall line. */
+  const mainValueShort = mainValueFallsShort(option, profile);
 
   // The +20 to the lens that changed their mind — only when generated AND answered. Pending until commit.
   const framingAdjust = useMemo<FramingAdjust | null>(
@@ -5717,6 +5723,7 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
                 onClick={() => onCommit({
                   finalOption: section4, pendingProfile: pending, pendingMoves: pendingUpdate.moves,
                   confidence, q2Influenced: stakeholderMoved === true, q3Value: q3, originalOptionId: option.id,
+                  mainValueShortSaid: straightToApa && mainValueShort,
                   altViewGenerated, framingShownFirst: framingFirst,
                   framingSelected: framingInfluential, framingAdjust,
                 })}>
@@ -5769,10 +5776,17 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
         value, so "more than any of the other three" is always true (validate:conditions N14 holds it). Which value it named
         is saved (apa.mainValueShown), so the analysis can see whether people then named the same one.
       */}
+      {/* When the shortfall line below also names that value, one more sentence says so, so the two never read as a
+          contradiction (since 7 October 2026, the researcher's "2-A"; mainValueFallsShort, saved as apa.mainValueShortSaid). */}
       {straightToApa && (
         <Box bg="bg.subtle" borderLeftWidth="3px" borderLeftColor={accent} rounded="lg" px="4" py="3" data-apa-main-value>
           <Text fontSize="sm" color="fg.muted" lineHeight="tall">
             The option you chose serves {vSpan(optionMainValue(option), accent)} more than any of the other three values.
+            {mainValueShort && (
+              <span data-apa-main-value-short>
+                {" "}It still gives less on {vSpan(optionMainValue(option), accent)} than your earlier answers asked for.
+              </span>
+            )}
           </Text>
         </Box>
       )}

@@ -925,6 +925,7 @@ scenario is still a Stability step, so its row has **`cvrFired: true` but `refle
 | `cvr.counted_as_a_stability_step` | true for every choice confirmed on the APA page (the researcher's choice), so Stability and Stability_all measure the APA moves; false when the participant went back from the APA page to a good fit (the card still says "Clarification shown") |
 | `apa.the_stakeholder_influenced_them` | null (no person spoke) |
 | `apa.value_the_page_said_the_option_serves_most` (+ `_label`) | Since 1 October 2026: the page showed, before the question, "The option you chose serves X more than any of the other three values"; this is X (null in the other conditions) |
+| `apa.page_said_the_option_falls_short_on_that_value` | Since 7 October 2026 (APA_Only): the box also said "It still gives less on X than your earlier answers asked for.", because the participant holds X even higher than the option gives (the shortfall line under the box names X too). true / false; null in the other conditions and on a row from before the sentence |
 | `apa.named_the_value_the_page_said` | Whether the value they then named was that same X. **Trap:** the box may steer the answer, and naming X is also the way to keep the chosen option (it is then in the list), so a high share here is expected and is not by itself evidence of a value |
 | `cvr` view and person fields | null (no view or person was shown) |
 
@@ -1588,14 +1589,16 @@ by nudging a mouse on one page. What they cannot fake is the *shape* of the run.
 | Field | What it catches |
 |---|---|
 | `active_minutes`, `met_time_requirement` | The 35-minute rule |
-| `fastest_block` | The classic tell: 2 seconds on a page |
-| `blocks_under_30_seconds`, `rushed_blocks` | Which blocks were skimmed, by name |
+| `fastest_block` | The classic tell: 2 seconds on a part (since 7 October 2026 only the six real parts, below) |
+| `blocks_under_30_seconds`, `rushed_blocks` | Which of the six real parts were skimmed, by name: Blocks 1-4 (`money`, `trolley`, `product`, `block4`), the main study (`block5`) and the feedback (`feedback`) |
+| `blocks_that_can_be_called_rushed` | Since 7 October 2026: the list of those six, stored with the record |
+| `short_pages_not_counted` | Since 7 October 2026: every OTHER timed page under 30 seconds (the consent page, "A little about you", the pauses between parts, the page before the main study, the results page), kept for the analysis and never counted |
 | `scenarios_under_15_seconds` | Block 5 choices made without reading |
 | `straightlined_feedback` | The same rating to every question |
 | `longest_idle_minutes`, `sittings` | How the work was spread |
 | `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The three attention checks (since 29 September 2026; section 6p); four in the Prolific door |
 | `prolific_instruction_checks_failed`, `prolific_failed_both_instruction_checks` | Since 7 October 2026, the Prolific door only (null in the university door): how many of the two number rows were answered wrongly, and whether both were (the "look first" flag; Step 4 turns it into the completion path) |
-| `compensation_eligible` | The verdict: finished, 35 working minutes, not straightlined, fewer than 3 rushed blocks, **and all three attention checks right** (the last since 29 September 2026) |
+| `compensation_eligible` | The verdict: finished, 35 working minutes, not straightlined, fewer than 3 rushed blocks (of the six real parts since 7 October 2026), **and all three attention checks right** (the last since 29 September 2026) |
 | `reasons` | **Why** it failed, in plain words |
 | `rule` | The rule that was applied, stored with the record |
 
@@ -1612,7 +1615,18 @@ specific answer.
 > This makes eligibility slightly more generous, never less. Both pages were deleted on 29 September 2026.
 
 > The attention check's own screen after Block 3 (stage `attention_check`) can never appear in `rushed_blocks` either: it
-> is answered in seconds by design. Each missed check, a check never reached, or no attention file at all adds its own
+> is answered in seconds by design.
+
+> **Since 7 October 2026 only the six real parts can be called rushed** (`REAL_BLOCK_STAGES` in dbShape.ts: Blocks 1-4,
+> the main study, the feedback; the researcher's "1-A"). Found in the Prolific rehearsal of that day: every timed page
+> used to count, including the consent page, "A little about you" (four questions a quick person finishes in 20 seconds),
+> the page before the main study, the results page and the 0.9-second pauses between the parts. Working time is added
+> every 5 seconds to the page on screen at that moment, so a pause caught a tick about 1 time in 5.5 and then counted as
+> "a block finished in 5 seconds": an honest participant had at least one such strike in 63 runs of 100 and two in 22,
+> and three strikes cost the gift card and put a Prolific person in "Look first". Those pages are now listed in
+> `short_pages_not_counted` instead. This makes eligibility more generous, never less, and the Prolific pay check
+> follows by itself (it reads `blocks_under_30_seconds`). A record made before this date still carries the old count;
+> `rushed_blocks` names each stage, so the six can be recounted from it. Each missed check, a check never reached, or no attention file at all adds its own
 > line to `reasons` (e.g. `missed the check after Block 3 (the right answer was "...", picked "...")`).
 
 ---

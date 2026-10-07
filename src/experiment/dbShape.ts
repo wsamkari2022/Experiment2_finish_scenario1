@@ -116,7 +116,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-07-prolific-checks";
+export const SHAPE_VERSION = "2026-10-07-rehearsal-fixes";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -573,6 +573,17 @@ function attachFeedbackQuestions(value: unknown): unknown {
 
 /** Below this, a block was not read. */
 const RUSHED_BLOCK_SECONDS = 30;
+/**
+ * THE SIX PARTS THAT CAN BE CALLED RUSHED (since 7 October 2026, the researcher's "1-A"): Blocks 1-4, the main study
+ * and the feedback. Every other timed page is left out: the consent page and "A little about you" (a quick reader
+ * finishes the four questions in 20 seconds), the page before the main study, the results page, and the 0.9-second
+ * pauses between the parts. Working time is added every 5 seconds to the page on screen at that moment, so a pause
+ * caught a tick about 1 time in 5.5 and was then "a block finished in 5 seconds": an honest participant got at least
+ * one such strike in 63 runs of 100 and two in 22, and three strikes cost the gift card and put a Prolific person in
+ * "Look first" (found in the Prolific rehearsal of 7 October 2026). The left-out pages' times are still saved, in
+ * `active_time.by_stage_minutes` and, when under 30 seconds, in `short_pages_not_counted`.
+ */
+export const REAL_BLOCK_STAGES = ["money", "trolley", "product", "block4", "block5", "feedback"] as const;
 /** Below this, a Block 5 scenario was not considered — six options and a trade-off in that time. */
 const RUSHED_SCENARIO_SECONDS = 15;
 /** The compensation bar, in minutes of genuine work. Stated on the consent page. */
@@ -637,23 +648,25 @@ export function buildQuality(
   };
 
   /*
-   * THE TWO DISPLAY PAGES ARE NOT ELIGIBLE TO BE CALLED RUSHED, and that is a correction as much as
-   * a consequence of no longer timing them.
+   * ONLY THE SIX REAL PARTS ARE ELIGIBLE TO BE CALLED RUSHED (REAL_BLOCK_STAGES, since 7 October 2026).
    *
-   * `rushed_blocks` counts stages finished in under 30 seconds, and three of them costs a
-   * participant their compensation. The insights page and the final analysis page are pages to
-   * read: somebody who takes them in quickly has done nothing wrong, and every fast reader was
-   * collecting two free strikes against a threshold of three.
+   * `rushed_blocks` counts parts finished in under 30 seconds, and three of them costs a participant their
+   * compensation. A page to read, a short form or a 0.9-second pause is not a block: somebody who takes it in
+   * quickly has done nothing wrong. The same reasoning first took out the insights and final analysis pages and
+   * the attention check's own screen; the list of the six now keeps out every such page, including any added later.
    */
-  const stageSeconds = Object.entries(a.byStage ?? {})
+  const allStageSeconds = Object.entries(a.byStage ?? {})
     .filter(([stage]) => !(UNTIMED_DISPLAY_STAGES as readonly string[]).includes(stage))
-    /* The colour attention check's own screen is answered in seconds by design: it is not a block. */
+    /* The attention check's own screen is answered in seconds by design: it is not a block. */
     .filter(([stage]) => stage !== ATTENTION_STAGE)
     .map(([stage, ms]) => ({
       stage,
       seconds: Math.round(ms / 1000),
     }));
+  const isRealBlock = (stage: string): boolean => (REAL_BLOCK_STAGES as readonly string[]).includes(stage);
+  const stageSeconds = allStageSeconds.filter((s) => isRealBlock(s.stage));
   const rushedBlocks = stageSeconds.filter((s) => s.seconds < RUSHED_BLOCK_SECONDS);
+  const shortPagesNotCounted = allStageSeconds.filter((s) => !isRealBlock(s.stage) && s.seconds < RUSHED_BLOCK_SECONDS);
   const fastest = stageSeconds.length
     ? stageSeconds.reduce((min, s) => (s.seconds < min.seconds ? s : min))
     : null;
@@ -685,6 +698,10 @@ export function buildQuality(
     fastest_block: fastest,
     blocks_under_30_seconds: rushedBlocks.length,
     rushed_blocks: rushedBlocks,
+    /* Which stages can be called rushed, and the other pages under 30 seconds, kept for the analysis and never
+       counted (since 7 October 2026). */
+    blocks_that_can_be_called_rushed: [...REAL_BLOCK_STAGES],
+    short_pages_not_counted: shortPagesNotCounted,
     scenarios_under_15_seconds: rushedScenarios,
 
     sittings: a.sittings ?? 1,
@@ -719,7 +736,7 @@ export function buildQuality(
       ...(attentionScore ? attentionScore.misses : ["no attention checks on record"]),
     ],
     rule:
-      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, fewer than 3 blocks were finished in under 30 seconds, and all three attention checks were answered as asked (since 29 September 2026; analysis.attention_checks). Raw numbers above allow a different rule to be applied later.",
+      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, fewer than 3 of the six parts (Blocks 1-4, the main study, the feedback; since 7 October 2026, before then every timed page counted) were finished in under 30 seconds, and all three attention checks were answered as asked (since 29 September 2026; analysis.attention_checks). Raw numbers above allow a different rule to be applied later.",
   };
 }
 
@@ -2208,6 +2225,10 @@ export function buildAlignmentRecords(block5: unknown): Record<string, unknown> 
             value_the_page_said_the_option_serves_most: r.apa.mainValueShown ?? null,
             value_the_page_said_the_option_serves_most_label: r.apa.mainValueShown ? POLICY_DIM_SHORT[r.apa.mainValueShown] : null,
             named_the_value_the_page_said: r.apa.mainValueShown ? r.apa.mainValueShown === r.apa.prioritizedValue : null,
+            /* Since 7 October 2026: the box also said the option gives less on that value than the participant's earlier
+               answers asked for (null when not APA_Only, or a row from before the sentence existed). */
+            page_said_the_option_falls_short_on_that_value:
+              r.apa.mainValueShown && typeof r.apa.mainValueShortSaid === "boolean" ? r.apa.mainValueShortSaid : null,
           }
         : { ran: false },
 

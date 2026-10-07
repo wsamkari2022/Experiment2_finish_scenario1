@@ -2085,3 +2085,16 @@ thesis says so.
   (every answer present, the two clocks compared, the code typed); docs/DAILY_PAY_CHECK.md for Waseem. C16, L8 extended;
   validate:pay (Y1-Y5) new and in the chain. 18 breaks, 18 caught (one after Y4 was tightened). The launch list in the
   Prolific plan also lost its old pilot and two-code lines (decided otherwise on 6 October).
+- **2026-10-07. The Prolific rehearsal and its three fixes** (Waseem: "Ok do A and tell how much my code is ready", then
+  "1-A 2-A 3-A, implement"). A full local run of the Prolific version (built site, production mode, throw-away database,
+  made-up code) worked end to end. It found: (1) `quality.rushed_blocks` counted every timed page, so the consent page,
+  the four-question page, the page before the main study, the results page and the 0.9-second pauses (which catch a
+  5-second working-time tick 1 time in 5.5: an honest person has one such strike in 63 runs of 100, two in 22) could give
+  an honest fast reader the three strikes that cost the gift card and put a Prolific person in "Look first"; now only the
+  six real parts count (`REAL_BLOCK_STAGES`), the other short pages are kept in `short_pages_not_counted`. (2) APA_Only's
+  box said the option serves X most while the line under it said it fell short on X; the box now adds "It still gives
+  less on X than your earlier answers asked for." exactly then (`mainValueFallsShort`, saved). (3) The thank-you page's
+  progress bar said "Finish · You are nearly there"; it now shows every step done and "Done". D70, N27, J17 new; J8
+  taught the new form of the finished check; 16 breaks, 16 caught (one only after J17 was tightened). A second full
+  rehearsal confirmed all three live (the sentence where it belongs and not where it does not, "Done" after a reload and
+  on a phone, the record's new fields). `SHAPE_VERSION` "2026-10-07-rehearsal-fixes".

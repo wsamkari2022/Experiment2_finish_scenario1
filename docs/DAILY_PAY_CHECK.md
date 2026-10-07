@@ -29,7 +29,7 @@ and two files appear in today's folder:
 | Group | Who | What you do |
 |---|---|---|
 | **Pay** | Prolific says "Awaiting review", our record is finished with every answer, and none of the reasons below | Paste `approve_ids.txt` into bulk approve |
-| **Look first** | Failed **both** "pick the number" rows; the same answer to every feedback rating, or 3+ blocks in under 30 seconds; exceptionally fast (more than 3 standard deviations faster than the average on Prolific's own "Time taken", judged once 10 have finished); or our record began long before Prolific's clock | You decide. The report gives Prolific's own wording if you reject |
+| **Look first** | Failed **both** "pick the number" rows; the same answer to every feedback rating, or 3 or more of the six parts (Blocks 1-4, the main study, the feedback) in under 30 seconds; exceptionally fast (more than 3 standard deviations faster than the average on Prolific's own "Time taken", judged once 10 have finished); or our record began long before Prolific's clock | You decide. The report gives Prolific's own wording if you reject |
 | **Problem** | The data does not match the submission: no record here, a record not finished, answers missing, the code never shown, almost no working time, or our clock far shorter than Prolific's | Usually send the person a message through Prolific first |
 | **Not finished** | Returned, timed out, or still working | Nothing |
 | **Already decided** | Approved or rejected on Prolific | Nothing |

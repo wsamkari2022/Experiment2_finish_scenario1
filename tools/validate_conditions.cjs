@@ -93,6 +93,9 @@
  *   N26 (since 7 October 2026, the researcher's "A") somebody who already finished hands back the condition the landing
  *       page just gave their browser: both first pages say so when they see a finished person, only a condition nobody
  *       owns is given back, each arrival once, and a given-back arrival never counts for balance
+ *   N27 (since 7 October 2026, the researcher's "2-A") APA_Only's box adds "It still gives less on X than your earlier
+ *       answers asked for." exactly when the shortfall line under it names X too (the value the option serves most):
+ *       recounted by hand over every option and 400 pretend profiles, the words from the source, saved, in the database
  *   N25 (since 6 October 2026, the two doors; the researcher's "2-A") each door is balanced on its own: a door counts only
  *       its own records and arrivals (a record from before the doors is the university's), 40 students and 40 Prolific
  *       people arriving mixed give 10 per condition inside each door, 4 students after 40 Prolific people land in four
@@ -1222,6 +1225,58 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (!/setMode\(\{ kind: "finished" \}\);\s*onFinishedSeen\?\.\(\);/.test(src("src/experiment/StartScreen.tsx"))) why.push("the university first page does not give it back when the email has finished");
     if (!/if \(mode\.kind === "finished"\) onFinishedSeen\?\.\(\);/.test(src("src/experiment/ProlificStartScreen.tsx"))) why.push("the Prolific first page does not give it back when the ID has finished");
     gate("N26", "somebody who already finished gives back the condition the landing page just gave their browser: both first pages, only a condition nobody owns, each arrival once, and a given-back arrival never counts (either door)", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N27 */
+  /* (Since 7 October 2026, the researcher's "2-A".) APA_Only's box names the value the chosen option serves most; when the
+     shortfall line under it names that same value, one more sentence says the option still gives less on it than the
+     participant's earlier answers asked for. The rule recounted by hand over every option and 400 pretend profiles (it
+     must agree with the shortfall line's own test, and both cases must happen), the words and their place from the source,
+     the same option and profile as the shortfall line, saved, and read into the database. */
+  {
+    const why = [];
+    const CVR = B("block5CVR.js");
+    const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
+    const KEYS4 = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+    let seed = 2026107;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+    let yes = 0, no = 0;
+    for (let p = 0; p < 400; p++) {
+      const scores = Object.fromEntries(KEYS4.map((k) => [k, Math.round(rnd() * 100)]));
+      const profile = { dimensions: KEYS4.map((key, i) => ({ key, score: scores[key], rank: i + 1 })) };
+      for (const sc of BLOCK5_SCENARIOS) {
+        if (!CVR.scenarioIsScored(sc)) continue;
+        for (const o of sc.options) {
+          const main = CVR.optionMainValue(o);
+          const byHand = scores[main] > o.fingerprint[main] && scores[main] > 0;
+          const lineNamesIt = CVR.policyShortfallByValue(o, profile)[main] > 0;
+          const said = CVR.mainValueFallsShort(o, profile);
+          if (said !== byHand || said !== lineNamesIt) { why.push(`${o.id}: said ${said}, by hand ${byHand}, the shortfall line ${lineNamesIt}`); break; }
+          if (said) yes++; else no++;
+        }
+      }
+      if (why.length) break;
+    }
+    if (!why.length && (yes === 0 || no === 0)) why.push(`only one case ever happened (said ${yes}, not said ${no})`);
+    const sim = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const need = (re, what) => { if (!re.test(sim)) why.push(what); };
+    need(/const mainValueShort = mainValueFallsShort\(option, profile\);/, "the APA page does not work out whether the value also falls short");
+    need(/\{straightToApa && \(\s*<Box[^>]*data-apa-main-value>\s*<Text[^>]*>\s*The option you chose serves \{vSpan\(optionMainValue\(option\), accent\)\} more than any of the other three values\.\s*\{mainValueShort && \(\s*<span data-apa-main-value-short>\s*\{" "\}It still gives less on \{vSpan\(optionMainValue\(option\), accent\)\} than your earlier answers asked for\.\s*<\/span>\s*\)\}\s*<\/Text>/,
+      "the sentence is not the approved one, not inside APA_Only's box, or not only when the value falls short");
+    /* The shortfall line inside the APA page reads the SAME option and profile. */
+    const apaPanel = sim.slice(sim.indexOf("function APAPanel("), sim.indexOf("function APAPanel(") + 40000);
+    if (!/<ShortfallNote option=\{option\} profile=\{profile\}/.test(apaPanel)) why.push("the shortfall line on the APA page reads another option or profile");
+    need(/mainValueShortSaid: straightToApa && mainValueShort,/, "the page does not hand on whether it said the sentence");
+    need(/\.\.\.\(apaOnlyCondition \? \{ mainValueShortSaid: payload\.mainValueShortSaid \} : \{\}\),/, "whether the sentence was said is not saved");
+    if ((sim.match(/It still gives less on/g) ?? []).length !== 1) why.push("the sentence appears somewhere else too");
+    /* The database. */
+    const row = (extra) => ({ scenarioId: "chemical_plant_fire", selectedOptionId: "x", selectedRank: 1, topRankedOptionId: "x", selectedWasTopCandidate: true, selectedWasCandidate: true,
+      cvrFired: true, reflectionShown: false, apa: { confidence: 3, stakeholderInfluenced: null, prioritizedValue: "groupSizeSensitivity", originalOptionId: "y", mainValueShown: "groupSizeSensitivity", ...extra } });
+    const rows = db.buildAlignmentRecords({ scenarioResults: [row({ mainValueShortSaid: true }), row({ mainValueShortSaid: false }), row({}),
+      { ...row({}), apa: { confidence: 3, stakeholderInfluenced: true, prioritizedValue: "groupSizeSensitivity", originalOptionId: "y" } }], originalProfile: { dimensions: [] } })?.by_scenario ?? [];
+    const read = rows.map((r) => r?.apa?.page_said_the_option_falls_short_on_that_value);
+    if (JSON.stringify(read) !== JSON.stringify([true, false, null, null])) why.push(`the database reads ${JSON.stringify(read)} (want true, false, null for an older row, null in another condition)`);
+    gate("N27", `APA_Only's box also says the option still gives less on its own strongest value exactly when the shortfall line names it (recounted by hand: said ${yes}, not said ${no}); the approved words, saved, and in the database`, why);
   }
 
   const failed = results.filter((r) => !r.ok);

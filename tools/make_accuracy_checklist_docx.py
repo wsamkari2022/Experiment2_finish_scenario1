@@ -257,6 +257,22 @@ SECTIONS = [
          "record, answers missing, the code never shown, almost no working time, clocks that disagree), Not finished, "
          "Decided. It never rejects, never prints an email or the code. How to: docs/DAILY_PAY_CHECK.md.",
          ["pay"], "(Y1-Y5)"),
+        ("Only the six real parts can be called \"rushed\".",
+         "Since 7 October 2026 (found in the Prolific rehearsal; your 1-A). Three parts finished in under 30 seconds cost the "
+         "gift card and put a Prolific person in \"Look first\". Every timed page used to count, so the consent page, the "
+         "short \"about you\" page, the page before the main study, the results page and the 1-second pauses between parts "
+         "could give an honest fast reader those strikes (a pause caught a 5-second working-time tick in 63 runs of 100). Now "
+         "only Blocks 1-4, the main study and the feedback count; the other short pages are saved apart.",
+         ["dbshape", "pay"], "(D70)"),
+        ("APA_Only's box never seems to contradict the line under it.",
+         "Since 7 October 2026 (your 2-A). When the chosen option falls short on the very value the box says it serves most, "
+         "the box adds \"It still gives less on X than your earlier answers asked for.\" - exactly when the line under it "
+         "names that value too. Saved with the record. Checked by hand over every option and 400 pretend profiles, and live.",
+         ["conditions"], "(N27)"),
+        ("The thank-you page's progress bar says \"Done\".",
+         "Since 7 October 2026 (your 3-A). It said \"Finish - You are nearly there\" under \"the study is complete\". Now every "
+         "step is green and the flag says \"Done\", also after a reload and on a phone (both versions). Checked live.",
+         ["journey"], "(J17)"),
         ("Somebody who already finished never tilts the balance.",
          "Since 7 October 2026 (your \"A\"). A finished person who opens the study on a new device is given a condition by "
          "the landing page; the first page now gives it back as soon as it sees they finished, so it never counts as "
@@ -506,7 +522,8 @@ OPEN = [
      "no pilot, the first batch 40 places, every submission manually reviewed with a daily pay check by Claude. Built: "
      "Step 0 (many people at once), Step 1 (the two doors and the Prolific ID), the privacy fix, Step 2 (the Prolific "
      "consent page), Step 3 (the second number row), Step 4 (the completion code and \"Return to Prolific\") and Step 5 "
-     "(the daily pay check, docs/DAILY_PAY_CHECK.md). Left: back up the database, deploy with PROLIFIC_COMPLETION_CODE in "
+     "(the daily pay check, docs/DAILY_PAY_CHECK.md). A full local rehearsal of the Prolific version passed on 7 October "
+     "2026, and its three findings were fixed the same day. Left: back up the database, deploy with PROLIFIC_COMPLETION_CODE in "
      "the server's .env (DEPLOYMENT.md, Part C), then one Prolific \"Preview as participant\" run to the very end, "
      "pressing \"Return to Prolific\" to see Prolific accept the code (the plan, section 5, item 8).",
      "Before Prolific"),

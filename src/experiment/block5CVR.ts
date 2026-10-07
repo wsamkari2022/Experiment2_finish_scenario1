@@ -310,6 +310,18 @@ export function optionMainValue(option: Block5ScenarioOption): Block5PolicyDimKe
   return best;
 }
 
+/**
+ * APA_Only's box says which value the chosen option serves most (optionMainValue). That can ALSO be a value the option
+ * falls short on - the participant holds it even higher than the option gives - and the shortfall line below the box
+ * then names it too, which read as a contradiction in the rehearsal of 7 October 2026 ("serves Reducing harm more than
+ * any of the other three values" over "It fell short on ... Reducing harm"). When this is true the box adds one
+ * sentence saying so (the researcher's "2-A"). The test is the shortfall line's own: that value's share of the
+ * shortfall is above 0 (policyShortfallByValue), so the two can never disagree.
+ */
+export function mainValueFallsShort(option: Block5ScenarioOption, profile: Block5UserProfile): boolean {
+  return policyShortfallByValue(option, profile)[optionMainValue(option)] > 0;
+}
+
 /** The value with the largest IMPORTANCE-WEIGHTED shortfall (the value the option most under-served). */
 export function violatedValue(option: Block5ScenarioOption, profile: Block5UserProfile): Block5PolicyDimKey {
   let best: Block5PolicyDimKey = POLICY_DIM_KEYS[0];
