@@ -114,6 +114,10 @@ export interface RemoteBackend {
   signIn(key: string, age: number): Promise<SignedIn>;
   /** Is this browser the one holding the participant's record? */
   isActiveBrowser(email: string): Promise<boolean>;
+  /** The Prolific completion code (since 7 October 2026, Step 4): the code and Prolific's completion address once the
+      server holds this person's completion, null before it. Throws 409 to a browser not holding the record, 503 when
+      the server has no code set. */
+  getProlificCode(key: string): Promise<{ code: string; url: string } | null>;
   /** The landing page: which condition does this new arrival get? (since 1 October 2026; server/conditions.js) */
   assignCondition?(arrivalId: string, recruitmentSource?: RecruitmentSource): Promise<AssignedCondition>;
   /** The arrival was somebody returning with a condition of their own: stop counting it. */
@@ -624,6 +628,60 @@ export function saveProgress(email: string, stage: string): void {
 export function saveCompletion(email: string): void {
   markCompletedLocal(email);
   sendOrQueue({ op: "markCompleted", email });
+}
+
+/* ------------------------------------------------------------- the Prolific completion code */
+
+/*
+ * THE PROLIFIC COMPLETION CODE (since 7 October 2026; Step 4, the researcher's "1-A, 2-A"). The server gives it to the
+ * browser holding a finished Prolific record; this browser keeps it (with its owner) so a reload shows it again without
+ * asking. It is not a resume file: a finished run has no resume state, and another device asks the age first
+ * (ProlificStartScreen) and then asks the server.
+ */
+export const PROLIFIC_COMPLETION_KEY = "vrds_prolific_completion";
+
+export interface ProlificCompletion {
+  owner: string;
+  code: string;
+  url: string;
+  receivedAt: string;
+}
+
+/** What the final page can show: the code; "not yet" (the completion is still on its way); or "not now". */
+export type CompletionCodeAnswer =
+  | { kind: "ready"; code: string; url: string }
+  | { kind: "waiting" }
+  | { kind: "unavailable" };
+
+/** The code this browser was given for this person, or null. */
+export function readSavedCompletionCode(owner: string): ProlificCompletion | null {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PROLIFIC_COMPLETION_KEY) ?? "null") as ProlificCompletion | null;
+    return saved && saved.owner === owner && typeof saved.code === "string" && typeof saved.url === "string" ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Asks for this person's completion code: the saved one first, then the server. "waiting" means the server does not
+ * hold the completion yet (it is still in the queue: ask again in a few seconds); "unavailable" means no server, no code
+ * set on it, or a refusal (another browser holds the record: the page is locked as for any other write).
+ */
+export async function fetchCompletionCode(owner: string): Promise<CompletionCodeAnswer> {
+  const saved = readSavedCompletionCode(owner);
+  if (saved) return { kind: "ready", code: saved.code, url: saved.url };
+  if (!remote) return { kind: "unavailable" };
+  try {
+    const given = await remote.getProlificCode(owner);
+    if (!given) return { kind: "waiting" };
+    const file: ProlificCompletion = { owner, code: given.code, url: given.url, receivedAt: new Date().toISOString() };
+    try { localStorage.setItem(PROLIFIC_COMPLETION_KEY, JSON.stringify(file)); } catch { /* shown, not kept */ }
+    return { kind: "ready", code: given.code, url: given.url };
+  } catch (error) {
+    if (isAnotherBrowser(error)) onLocked?.();
+    return { kind: "unavailable" };
+  }
 }
 
 /* ------------------------------------------------------------------------- blocks */

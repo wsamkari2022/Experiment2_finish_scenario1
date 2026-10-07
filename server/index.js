@@ -11,6 +11,8 @@
  *   PATCH /api/participants/:key/stage     record how far they have got
  *   PATCH /api/participants/:key/complete  mark the study finished
  *   PATCH /api/participants/:key/section   save one named section of the document
+ *   POST  /api/participants/:key/prolific-code   the Prolific completion code, after a saved completion (since 7 October
+ *                                          2026, Step 4; the code lives only in the server's .env)
  *
  * And, since 1 October 2026, the four conditions (server/conditions.js has the rule):
  *   POST  /api/conditions/assign    the landing page asks which condition a new arrival gets
@@ -40,7 +42,7 @@ import { connect, participants, conditionArrivals, DB_NAME, SAFE_MONGO_URL } fro
 import { mergeResumeState } from "./resumeMerge.js";
 import { browserVerdict, requestBrowser, REFUSED_BODY } from "./activeBrowser.js";
 import {
-  arrivalLink, identityOnInsert, keyFromBody, normalizeKey, prolificIdsFrom, recruitmentSourceOf, whoIs,
+  arrivalLink, identityOnInsert, isProlificKey, keyFromBody, normalizeKey, prolificIdsFrom, recruitmentSourceOf, whoIs,
 } from "./recruitment.js";
 import {
   ARRIVAL_ID, assignCondition, conditionFieldsFrom, countReport, countReportHtml, mongoStore,
@@ -83,9 +85,32 @@ app.get(
   "/api/health",
   route(async (_req, res) => {
     const count = await participants().estimatedDocumentCount();
-    res.json({ ok: true, database: DB_NAME, url: SAFE_MONGO_URL, participants: count });
+    /* Whether the Prolific completion code is set (since 7 October 2026): yes or no, never the code itself. */
+    res.json({
+      ok: true, database: DB_NAME, url: SAFE_MONGO_URL, participants: count,
+      prolific_code_configured: completionCode() !== null,
+    });
   }),
 );
+
+/* ------------------------------------------------------------------ the Prolific completion code */
+
+/**
+ * THE PROLIFIC COMPLETION CODE (since 7 October 2026; Step 4 of docs/PROLIFIC_CONVERSION_PLAN.md; the researcher's
+ * "1-A, 2-A"). One code for everybody, set to "Manually review" on Prolific. It lives ONLY in the server's .env
+ * (PROLIFIC_COMPLETION_CODE): never in the page's code (anyone can read that), never in Git, never in the database. It is
+ * handed out only when all three hold: the record is a Prolific record, its status is "Study Completed", and the request
+ * comes from the browser that holds the record. Everybody who finishes gets it - Prolific allows a rejection only in the
+ * review, never by withholding the code. The first and the last time it was handed out, and how often, are written on
+ * the record (prolific_code_given_at, prolific_code_last_given_at, prolific_code_given_times) for the daily pay check;
+ * the code itself never is. Prolific's own completion address is built here too, so the page never holds it.
+ */
+const PROLIFIC_CODE = /^[A-Z0-9]{4,32}$/;
+function completionCode() {
+  const code = String(process.env.PROLIFIC_COMPLETION_CODE ?? "").trim().toUpperCase();
+  return PROLIFIC_CODE.test(code) ? code : null;
+}
+const completionUrl = (code) => `https://app.prolific.com/submissions/complete?cc=${code}`;
 
 /* ---------------------------------------------------------------------- participants */
 
@@ -280,6 +305,39 @@ const SIGN_IN_FIELDS = {
   condition_number: 1, condition_type: 1, condition_source: 1, condition_assigned_at: 1,
   status: 1, current_stage: 1, consent: 1, created_at: 1, updated_at: 1, completed_at: 1, resume_state: 1,
 };
+
+/*
+ * The completion code (see "the Prolific completion code" above). Answers { ready: true, code, url } after a saved
+ * completion, { ready: false } before it (the page asks again in a few seconds: the completion may still be on its way),
+ * 409 to a browser that does not hold the record, 404 for a university key or no record, 503 when no code is set.
+ */
+app.post(
+  "/api/participants/:key/prolific-code",
+  route(async (req, res) => {
+    const key = normalizeKey(req.params.key);
+    if (!isProlificKey(key)) return res.status(404).json({ error: "not a Prolific participant" });
+    const requestId = requestBrowser(req);
+    if (!requestId) return res.status(400).json({ error: "the browser id is required" });
+    const doc = await participants().findOne(whoIs(key), {
+      projection: { _id: 0, status: 1, active_browser: 1, prolific_code_given_at: 1 },
+    });
+    if (!doc) return res.status(404).json({ error: "no such participant" });
+    /* Only the browser that holds the record: since the privacy fix a new device holds it only after the age check. */
+    if (doc.active_browser?.id !== requestId) return res.status(409).json(REFUSED_BODY);
+    if (doc.status !== "Study Completed") return res.json({ ready: false });
+    const code = completionCode();
+    if (!code) {
+      console.error("[api] PROLIFIC_COMPLETION_CODE is not set (or not letters and digits) in .env: no code was given");
+      return res.status(503).json({ error: "no_code_configured" });
+    }
+    const now = new Date().toISOString();
+    await participants().updateOne(whoIs(key), {
+      $set: { prolific_code_given_at: doc.prolific_code_given_at ?? now, prolific_code_last_given_at: now },
+      $inc: { prolific_code_given_times: 1 },
+    });
+    res.json({ ready: true, code, url: completionUrl(code) });
+  }),
+);
 
 app.post(
   "/api/participants/:key/claim",

@@ -51,6 +51,12 @@
  *       the create/update route only "ok"; the claim checks the age (both doors) before it hands back the person's
  *       details and run; no write without a browser id; no cross-site access; the start screens never compare the age
  *       themselves; signing in sets aside only that person's old saves
+ *   C16 (Step 4, since 7 October 2026; the researcher's "1-A, 2-A, 3-A") the Prolific completion code: the server gives it
+ *       only for a finished Prolific record to the browser holding it, from .env only, never storing it; no code and no
+ *       Prolific completion address anywhere in the page's code; the page keeps the code it was given for its owner and
+ *       asks again while the completion is on its way; a button, never an automatic jump; the final page shows it only in
+ *       the Prolific door; a finished person on another device gets it after the age check; the results page's Prolific
+ *       sentence; "confidential" on the feedback page; the deploy files pass the code on without printing it
  *
  * Run:  npm run validate:session
  */
@@ -796,6 +802,101 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     }
     gate("C15", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : "privacy (the audit's F2): the lookup gives only the status, the create/update route only \"ok\", the claim checks the age before it hands back the person's details and run (never their analysis or other sections); no write without a browser id; no cross-site access; the start screens never compare the age themselves; signing in sets aside only that person's old saves");
+  }
+
+  /* ----------------------------------------------------------------------------------------- C16 */
+  {
+    const why = [];
+    const server = src("server/index.js");
+    const code = server.replace(/\/\*[\s\S]*?\*\//g, "");
+    const routeAt = code.indexOf('"/api/participants/:key/prolific-code"');
+    const route = routeAt < 0 ? "" : code.slice(routeAt, code.indexOf("\n);", routeAt));
+    /* The server: a Prolific record only, the holding browser only, a saved completion only, the code from .env only. */
+    const order = ["if (!isProlificKey(key))", "if (!requestId)", "if (!doc)", "if (doc.active_browser?.id !== requestId)",
+      'if (doc.status !== "Study Completed") return res.json({ ready: false });', "const code = completionCode();", "res.json({ ready: true, code, url: completionUrl(code) });"];
+    const at = order.map((o) => route.indexOf(o));
+    if (at.some((i) => i < 0) || at.some((i, k) => k > 0 && i < at[k - 1])) why.push("the code route does not check, in order: a Prolific key, the browser id, the record, the holding browser, a saved completion, then the code");
+    if (!/String\(process\.env\.PROLIFIC_COMPLETION_CODE \?\? ""\)/.test(code) || !/const PROLIFIC_CODE = \/\^\[A-Z0-9\]\{4,32\}\$\/;/.test(code)) why.push("the code does not come from .env, or is not checked as letters and digits");
+    const setPart = route.slice(route.indexOf("$set:"), route.indexOf("res.json({ ready: true"));
+    if (/\bcode\b(?!_)/.test(setPart.replace(/prolific_code_\w+/g, ""))) why.push("the code itself is written on the record");
+    if (!/prolific_code_given_at: doc\.prolific_code_given_at \?\? now/.test(route) || !/\$inc: \{ prolific_code_given_times: 1 \}/.test(route)) why.push("the first time and the count are not written");
+    if (!/prolific_code_configured: completionCode\(\) !== null/.test(code)) why.push("the health page does not say whether a code is set");
+    if (/console\.(log|error|warn)\([^)]*\bcode\b[^_]/.test(route.replace(/no code was given/g, ""))) why.push("the server prints the code");
+    /* .env.example holds a placeholder the server refuses (an underscore is not a letter or digit); PM2 passes the code on;
+       the deploy script warns without printing it. */
+    const example = src(".env.example");
+    if (!/^PROLIFIC_COMPLETION_CODE=CHANGE_ME$/m.test(example) || /^[A-Z0-9]{4,32}$/.test("CHANGE_ME")) why.push(".env.example does not hold a refused placeholder");
+    if (!/PROLIFIC_COMPLETION_CODE: process\.env\.PROLIFIC_COMPLETION_CODE \?\? ""/.test(src("ecosystem.config.cjs"))) why.push("PM2 does not pass the code on to the server");
+    const deploy = src("build-and-run.sh");
+    if (!/WARNING: PROLIFIC_COMPLETION_CODE is not set in \.env/.test(deploy) || /echo[^\n]*\$\{?PROLIFIC_COMPLETION_CODE/.test(deploy)) why.push("the deploy script does not warn, or prints the code");
+    /* The page: no code and no Prolific completion address anywhere in its code (anyone can read a page's JavaScript). */
+    const pageFiles = [];
+    const walk = (dir) => { for (const f of fs.readdirSync(dir, { withFileTypes: true })) { const p = path.join(dir, f.name); if (f.isDirectory()) walk(p); else if (/\.(tsx?|jsx?)$/.test(f.name)) pageFiles.push(p); } };
+    walk(path.join(ROOT, "src"));
+    const leaky = pageFiles.filter((p) => /submissions\/complete|[?&]cc=|PROLIFIC_COMPLETION_CODE/.test(fs.readFileSync(p, "utf8")));
+    if (leaky.length) why.push(`the page's code names the completion address or the code: ${leaky.map((p) => path.basename(p)).join(", ")}`);
+    const dist = path.join(ROOT, "dist");
+    if (fs.existsSync(dist)) {
+      const built = [];
+      const walkDist = (dir) => { for (const f of fs.readdirSync(dir, { withFileTypes: true })) { const p = path.join(dir, f.name); if (f.isDirectory()) walkDist(p); else if (/\.(js|html)$/.test(f.name)) built.push(p); } };
+      walkDist(dist);
+      if (built.some((p) => /submissions\/complete\?cc=/.test(fs.readFileSync(p, "utf8")))) why.push("the built site contains Prolific's completion address");
+    }
+    /* storage.fetchCompletionCode: the saved code first (only its owner's), "waiting" before the completion lands, the
+       code kept once given, "unavailable" without a server, and a refusal locks the page as any other write does. */
+    {
+      store.clear();
+      const PID = "aa11bb22cc33dd44ee55ff66";
+      let answer = null, calls = 0, throwWith = null;
+      storage.setRemoteBackend(null);
+      if ((await storage.fetchCompletionCode(PID)).kind !== "unavailable") why.push("without a server the code is not 'unavailable'");
+      storage.setRemoteBackend({
+        findParticipant: async () => null, upsertParticipant: async () => {}, updateStage: async () => {}, markCompleted: async () => {},
+        saveSection: async () => {}, isActiveBrowser: async () => true, signIn: async () => { throw new Error("no"); },
+        getProlificCode: async (key) => { calls += 1; if (throwWith) throw throwWith; return key === PID ? answer : null; },
+      });
+      if ((await storage.fetchCompletionCode(PID)).kind !== "waiting") why.push("before the completion lands the code is not 'waiting'");
+      answer = { code: "TEST1234", url: "https://example.invalid/back" };
+      const ready = await storage.fetchCompletionCode(PID);
+      if (ready.kind !== "ready" || ready.code !== "TEST1234" || ready.url !== "https://example.invalid/back") why.push(`the code given came back as ${JSON.stringify(ready)}`);
+      const before = calls;
+      const again = await storage.fetchCompletionCode(PID);
+      if (again.kind !== "ready" || calls !== before) why.push("a reload asks the server again instead of the code it kept");
+      if (storage.readSavedCompletionCode("ff66ee55dd44cc33bb22aa11") !== null) why.push("another person's code is read");
+      store.clear();
+      let locked = 0;
+      storage.setLockedListener(() => { locked += 1; });
+      throwWith = Object.assign(new Error("409"), { httpStatus: 409, code: "another_browser_active" });
+      if ((await storage.fetchCompletionCode(PID)).kind !== "unavailable" || locked !== 1) why.push("a refusal from another browser does not lock the page");
+      throwWith = Object.assign(new Error("503"), { httpStatus: 503, code: "no_code_configured" });
+      if ((await storage.fetchCompletionCode(PID)).kind !== "unavailable" || locked !== 1) why.push("no code on the server is not 'unavailable', or locks the page");
+      storage.setLockedListener(null);
+      storage.setRemoteBackend(null);
+      store.clear();
+    }
+    /* The card: from fetchCompletionCode, asked again while waiting, a button and never an automatic jump. */
+    const card = src("src/experiment/ProlificCompletionCard.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (!/await fetchCompletionCode\(prolificId\)/.test(card) || !/answer\.kind === "waiting" \? SOON_MS : LATER_MS/.test(card)) why.push("the card does not ask the server again while the code is on its way");
+    if (/location\.(href|assign|replace)|window\.open|setTimeout\([^)]*url/.test(card)) why.push("the card moves the person to Prolific by itself (the researcher's 1-A: a button only)");
+    if (!/<a data-return-to-prolific href=\{given\.url\}>/.test(card) || !/<Clipboard\.Root value=\{given\.code\}>/.test(card)) why.push("the card has no Return to Prolific button or no Copy");
+    /* The final page shows it only with a Prolific ID; the flow passes it by the key. */
+    const page = src("src/experiment/UserFeedbackPage.tsx");
+    if (!/\{prolificId && <ProlificCompletionCard prolificId=\{prolificId\} \/>\}/.test(page)) why.push("the final page does not show the card for a Prolific participant");
+    if (!/prolificId=\{pendingEmail && isProlificKey\(pendingEmail\) \? pendingEmail : null\}/.test(src("src/experiment/ExperimentFlow.tsx"))) why.push("the flow does not pass the Prolific ID by the key");
+    if (/answers are anonymous/.test(page) || !/your answers are confidential and help/.test(page)) why.push("the feedback page still says the answers are anonymous (the researcher's 3-A: confidential)");
+    /* A finished person on another device: the age (signIn), then the card ("2-A"). */
+    const pstart = src("src/experiment/ProlificStartScreen.tsx");
+    const finished = pstart.slice(pstart.indexOf('{mode.kind === "finished" && ('), pstart.indexOf('{mode.kind === "paste" && ('));
+    if (!/const result = await signIn\(pid, given\);[\s\S]{0,400}setShowCode\(true\);/.test(pstart) || !/label="Your age"/.test(finished) || !/<ProlificCompletionCard prolificId=\{pid\} \/>/.test(finished)) why.push("a finished person on another device does not get the code after the age check (the researcher's 2-A)");
+    /* ...and the card waits for it: shown only once the age matched (a deliberate break found the first version blind). */
+    if (!/\{pid && showCode \? \(\s*<ProlificCompletionCard prolificId=\{pid\} \/>/.test(finished)
+        || (pstart.match(/setShowCode\(true\)/g) ?? []).length !== 1
+        || !/if \(!result\.ok\) \{[\s\S]{0,300}return;\s*\}\s*setShowCode\(true\);/.test(pstart)) why.push("the code is shown to a finished person before their age is checked");
+    /* The results page: the Prolific sentence, the university one kept. */
+    const nudge = src("src/experiment/Block5FeedbackNudge.tsx");
+    if (!/Answering them finishes the study and gives you your Prolific completion code\./.test(nudge) || !/which you need for your \$5 gift card/.test(nudge) || !/const prolific = isProlificKey\(browserParticipantKey\(\)\);/.test(nudge)) why.push("the results page's sentence is not the door's own");
+    gate("C16", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : "the Prolific completion code: the server gives it only for a finished Prolific record to the browser holding it, from .env only and never stored; no code or completion address in the page's code or the built site; the page keeps what it was given for its owner and asks again while waiting; a button, never an automatic jump; only in the Prolific door, and after the age check on another device; the results page's Prolific sentence; \"confidential\" on the feedback page; the deploy files pass the code on without printing it");
   }
 
   console.log("");

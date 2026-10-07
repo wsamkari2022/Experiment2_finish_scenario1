@@ -1079,6 +1079,8 @@ export function ExperimentFlow() {
           results={block5Results}
           sessionId={participantId}
           onBack={handleBackToSummary}
+          /* The Prolific door's completion code (since 7 October 2026, Step 4): the key decides the door. */
+          prolificId={pendingEmail && isProlificKey(pendingEmail) ? pendingEmail : null}
           /* A finished participant who reloads sees the thank-you screen, never the form again
              (28 September 2026). The status is the one onCompleted below writes. */
           alreadyCompleted={(() => {

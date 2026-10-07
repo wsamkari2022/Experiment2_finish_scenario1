@@ -122,6 +122,7 @@ correlating the two will produce impressive and meaningless results.
 | `participant_id` | Unique id for the run (a UUID). **The only id in the database.** |
 | `email` | The key of a **university-door** participant. Lower-cased. Also how they return to finish. **Absent on a Prolific record** (since 6 October 2026). |
 | `prolific_pid` | Since 6 October 2026, **Prolific-door** participants only: their Prolific ID, the key of their record (lower-cased). Never in `email`. One Prolific ID is one person (a unique rule on the records that have it). |
+| `prolific_code_given_at`, `prolific_code_last_given_at`, `prolific_code_given_times` | Since 7 October 2026, Prolific door only: when the server first and last gave this person the completion code (after their completion was saved), and how many times (a reload on the same browser shows the kept code without asking, so more than 1 means another device or an emptied browser). **The code itself is never stored.** Absent = never given (not finished, or finished before a code was set on the server). For the daily pay check: a finished Prolific record without `prolific_code_given_at` never saw its code. |
 | `prolific_study_id`, `prolific_session_id` | Since 6 October 2026, Prolific door only: Prolific's STUDY_ID and SESSION_ID from the link (the submission). `prolific_session_id` is Prolific's, NOT the study's own `participant_id`. Set only when the page sent them. |
 | `recruitment_source` | Since 6 October 2026: which door they came through - `"university"` (moonlander.fit.edu, email, $5 gift card) or `"prolific"` (moonlander.fit.edu/prolific, paid by Prolific). **Absent on every record made before that date: those are all university-door records.** The four conditions are balanced inside each door on its own. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
@@ -1624,6 +1625,10 @@ age, gender, country, English, condition, status, stage, consent, dates) and the
 `analysis`, `headline`, `quality` or any other section. The create/update route answers `{ ok: true }`; a write without
 the browser's id is refused; other websites cannot read the server's answers. Before that date anybody who knew a key
 could read the whole record. Export the data with Compass, as before: nothing here limits the researcher.
+
+Since the same day a Prolific record's completion code comes only from `POST /api/participants/:key/prolific-code`: to
+the browser holding a FINISHED Prolific record, from the server's `.env`; `/api/health` says `prolific_code_configured`
+(true / false), never the code.
 
 ## 8d. `resume_state` — scaffolding, not data
 

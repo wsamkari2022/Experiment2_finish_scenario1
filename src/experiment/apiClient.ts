@@ -173,6 +173,18 @@ export const apiClient: RemoteBackend = {
     return { participant, files: answer?.files ?? null };
   },
 
+  async getProlificCode(key) {
+    /* The server gives the code only to the browser holding a finished Prolific record (since 7 October 2026, Step 4).
+       The page never holds the code or Prolific's completion address itself: both arrive here. */
+    const answer = await request<{ ready?: boolean; code?: unknown; url?: unknown }>(
+      `/participants/${encodeURIComponent(key)}/prolific-code`,
+      { method: "POST", body: JSON.stringify({}) },
+    );
+    return answer?.ready && typeof answer.code === "string" && typeof answer.url === "string"
+      ? { code: answer.code, url: answer.url }
+      : null;
+  },
+
   async isActiveBrowser(email) {
     const answer = await request<{ active?: boolean }>(`/participants/${encodeURIComponent(email)}/active`, {
       method: "POST",

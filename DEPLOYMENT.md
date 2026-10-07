@@ -147,7 +147,14 @@ Replace `CHANGE_ME` with the password from A3, so the lines read:
 ```
 MONGO_URL=mongodb://vrds2_user:THE_PASSWORD_FROM_A3@127.0.0.1:27017/VRDS2?authSource=admin
 MONGO_DB=VRDS2
+PROLIFIC_COMPLETION_CODE=THE_CODE_FROM_PROLIFIC
 ```
+
+The last line (since 7 October 2026) is the Prolific completion code: copy it from the study's completion path on Prolific
+(it is also in your `Prolific docs/` folder). Letters and digits only. It is shown to a Prolific participant only after
+their completion is saved, and it is never written anywhere else. Without it the university version works as before;
+`./build-and-run.sh` prints a warning, and the Prolific version's final page cannot show the code. After the start,
+`https://moonlander.fit.edu/api/health` must say `"prolific_code_configured": true`.
 
 Save (`Ctrl+O`, `Enter`) and exit (`Ctrl+X`). Then lock the file so only you can read it:
 

@@ -236,6 +236,13 @@ SECTIONS = [
          "BOTH is the \"look first\" flag (a random clicker fails both about 36 times in 49). The university plan is drawn "
          "exactly as before (20,000 compared, 0 different), and a run already in progress keeps its answered checks.",
          ["attention"], "(T9)"),
+        ("The Prolific version ends with the completion code and a \"Return to Prolific\" button.",
+         "Since 7 October 2026 (Step 4; your 1-A, 2-A, 3-A). The code lives only in the server's settings file (.env), never "
+         "in the page's code or the database. The server gives it only to the browser holding a FINISHED Prolific record; the "
+         "final page shows it with Copy and a button (never an automatic jump); a person who already finished gets it again "
+         "on another device after the age check. The record keeps when the code was given, never the code. The feedback page "
+         "now says \"confidential\" in both versions. Checked on the real server with a made-up code and live in the browser.",
+         ["session", "load"], "(C16, L8)"),
         ("The live landing page never gives a random condition.",
          "It asks the server up to four times with the same arrival id; if the server cannot be reached it says \"We could "
          "not reach the study\" with \"Try again\", which keeps the arrival id, so nobody is counted twice. Checked live with "
@@ -480,9 +487,15 @@ OPEN = [
      "moonlander.fit.edu/prolific), conditions balanced per group, the second number check in the Prolific version only, "
      "no pilot, the first batch 40 places, every submission manually reviewed with a daily pay check by Claude. Built: "
      "Step 0 (many people at once), Step 1 (the two doors and the Prolific ID), the privacy fix, Step 2 (the Prolific "
-     "consent page) and Step 3 (the second number row). Still to build: Step 4 (the end page with the completion code "
-     "and \"Return to Prolific\") and Step 5 (the daily pay check), docs/PROLIFIC_CONVERSION_PLAN.md section 1b. Deploy "
-     "after Step 4, with a database backup first (your 3-A).", "Before Prolific"),
+     "consent page), Step 3 (the second number row) and Step 4 (the completion code and \"Return to Prolific\"). "
+     "Still to build: Step 5 (the daily pay check), docs/PROLIFIC_CONVERSION_PLAN.md section 1b. Ready to deploy now "
+     "(your 3-A): back up the database first, and add PROLIFIC_COMPLETION_CODE to the server's .env (DEPLOYMENT.md, Part C).",
+     "Before Prolific"),
+    ("A finished person on a new device counts as \"just arrived\" for 30 minutes",
+     "Noticed on 7 October 2026, not changed: somebody who already finished and opens the study on a new device is given "
+     "a landing-page condition that counts for balance as \"just arrived\" for 30 minutes (both versions, since 1 "
+     "October). The balance is off by one for that half hour, then corrects itself. A small fix (release that arrival "
+     "when the first page sees a finished person) is possible.", "Optional"),
     ("Your ethics board approves the Prolific consent text",
      "docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md shows the Prolific version's consent page beside the university's: eight "
      "parts differ (payment through Prolific, one sitting, the Prolific ID instead of the email, the two-failure attention "

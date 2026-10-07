@@ -12,7 +12,9 @@
  *   NEW            -> "Your Prolific ID ✓" and Start, then consent and "A little about you" (four questions)
  *   KNOWN, UNFINISHED -> "Welcome back", their age, and Continue where I stopped (checked by the server; only then does
  *                        this browser take the record and the answers come down)
- *   KNOWN, FINISHED   -> "You have already finished" (the completion code comes here in Step 4)
+ *   KNOWN, FINISHED   -> "You have already finished"; their age (checked by the server, as above) shows the completion
+ *                        code again (since 7 October 2026, Step 4, the researcher's "2-A": somebody who lost it can still
+ *                        submit on Prolific)
  *   NO ID IN THE LINK -> a box to paste it (letters and digits); it is then written into the address, so a refresh keeps it
  *
  * The welcome's words are the university page's, word for word (validate:session C13 holds the two together).
@@ -23,7 +25,8 @@ import { Box, Button, Heading, HStack, Icon, Input, Spinner, Text, VStack } from
 import { LuArrowRight, LuBadgeCheck, LuCircleCheck, LuSparkles, LuTriangleAlert } from "react-icons/lu";
 import { Field } from "@/components/ui/field";
 import { STATUS_COMPLETED, type DirectoryEntry } from "./participantDirectory";
-import { findParticipant, signIn, whenServerKnown } from "./storage";
+import { findParticipant, readSavedCompletionCode, signIn, whenServerKnown } from "./storage";
+import { ProlificCompletionCard } from "./ProlificCompletionCard";
 import { addressWithProlificId, normalizeProlificId, writeProlificFile, type ProlificParams } from "./recruitment";
 
 type Mode =
@@ -51,6 +54,9 @@ export function ProlificStartScreen({
   const [error, setError] = useState<string | null>(null);
   const [ageAnswer, setAgeAnswer] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+  /* Finished on another device: the age is checked, then the code is shown again (since 7 October 2026, "2-A"). A
+     browser that was already given the code for this person (after that check, or on finishing) shows it at once. */
+  const [showCode, setShowCode] = useState(() => !!params.pid && readSavedCompletionCode(params.pid) !== null);
 
   /* Look the ID up as soon as it is known: new, unfinished or finished. */
   useEffect(() => {
@@ -91,6 +97,31 @@ export function ProlificStartScreen({
       }
       keepProlificIds(pid);
       onResume(result.entry, result.restored);
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
+  /* The same age check (signIn), for somebody who already finished: this browser then holds the record, and the server
+     gives it the code. Nothing of the run comes down (a finished run keeps no resume state). */
+  const showCodeAfterAge = async () => {
+    if (!pid || signingIn) return;
+    const given = Number.parseInt(ageAnswer, 10);
+    if (Number.isNaN(given)) {
+      setError("Please enter your age as a number.");
+      return;
+    }
+    setError(null);
+    setSigningIn(true);
+    try {
+      const result = await signIn(pid, given);
+      if (!result.ok) {
+        setError(result.reason === "mismatch"
+          ? "This does not match the information given before. Please check your age."
+          : "We could not reach the study just now. Please try again in a moment.");
+        return;
+      }
+      setShowCode(true);
     } finally {
       setSigningIn(false);
     }
@@ -297,6 +328,48 @@ export function ProlificStartScreen({
                 Thank you, your answers are already recorded, and the study can only be taken once. If you believe
                 this is a mistake, please send the researcher a message through Prolific.
               </Text>
+              {pid && showCode ? (
+                <ProlificCompletionCard prolificId={pid} />
+              ) : (
+                <VStack align="stretch" gap="4" pt="1">
+                  <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+                    Need your completion code again? To confirm it is you, please enter your age.
+                  </Text>
+                  <Field label="Your age" invalid={!!error} errorText={error || undefined}>
+                    <Input
+                      data-prolific-finished-age
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="Age"
+                      value={ageAnswer}
+                      onChange={(e) => {
+                        setAgeAnswer(e.target.value);
+                        if (error) setError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void showCodeAfterAge();
+                      }}
+                      rounded="lg"
+                      color="fg"
+                      size="lg"
+                      maxW="40"
+                    />
+                  </Field>
+                  <Button
+                    size="lg"
+                    w="full"
+                    variant="outline"
+                    rounded="lg"
+                    fontWeight="semibold"
+                    gap="2"
+                    loading={signingIn}
+                    loadingText="Checking"
+                    onClick={() => void showCodeAfterAge()}
+                  >
+                    Show my completion code
+                  </Button>
+                </VStack>
+              )}
             </VStack>
           )}
 

@@ -65,10 +65,13 @@ What it does: CLAUDE.md, "Two doors". It also took "A little about you" without 
 **Built 7 October 2026:** the privacy fix (the audit's F2; "1-B": a Prolific person continuing on ANOTHER device is asked
 their age, checked by the server; "2 - no limits": no lock after wrong ages), Step 2 (the Prolific consent page, section
 4.B as planned, with "I do not agree"; text for the ethics board in docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md) and Step 3
-(the second number row, section 4.E as planned; the two numbers always differ). What they do: CLAUDE.md, "Privacy, the
+(the second number row, section 4.E as planned; the two numbers always differ). **Step 4 built the same day** ("1-A, 2-A,
+3-A"): ONE code (all "Manually review", as decided), so no second path and no fallback code in the page: the server gives
+the code to the browser holding a finished Prolific record; the thank-you page shows it with Copy and "Return to
+Prolific"; another device gets it after the age check; without a server the page says to message the researcher. What they do: CLAUDE.md, "Privacy, the
 Prolific consent page and the second number row".
 
-**Build order (one step at a time):** Step 0 (done) -> 1 (done) the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 (done) the Prolific consent page and the demographic page without the email -> 3 (done) the second number row (Prolific only) -> 4 the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
+**Build order (one step at a time):** Step 0 (done) -> 1 (done) the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 (done) the Prolific consent page and the demographic page without the email -> 3 (done) the second number row (Prolific only) -> 4 (done) the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
 
 **Prolific's rules re-read 6 October 2026, unchanged:** at least $8 an hour ($12 recommended); two failed valid checks before a rejection in a study over 5 minutes; memory-recall checks are not valid; "too slow", the researcher's own measures and a wrong or missing code are not valid reasons; submissions not reviewed are approved automatically on day 21; a completion code can approve automatically (not used here); bulk approval takes a list of Prolific IDs.
 

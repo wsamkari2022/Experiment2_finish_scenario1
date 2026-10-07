@@ -27,9 +27,12 @@
 import { useEffect, useState, type Ref, type RefObject } from "react";
 import { Box, Button, Center, HStack, Icon, Stack, Text } from "@chakra-ui/react";
 import { LuArrowRight, LuMessageCircle } from "react-icons/lu";
+import { browserParticipantKey, isProlificKey } from "./recruitment";
 
 /** The "One last step" card, placed under the four score cards on the results page. */
 export function LastStepCard({ onContinue, ref }: { onContinue: () => void; ref?: Ref<HTMLDivElement> }) {
+  /* The Prolific door (since 7 October 2026, Step 4) is paid through Prolific: no gift card there. */
+  const prolific = isProlificKey(browserParticipantKey());
   return (
     <Box
       ref={ref}
@@ -53,9 +56,9 @@ export function LastStepCard({ onContinue, ref }: { onContinue: () => void; ref?
               One last step: a few questions about your experience
             </Text>
             <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="1">
-              About 5 to 10 minutes. Answering them completes the study, which you need for
-              your $5 gift card. Look through your results first; this button is also at the
-              bottom of the page.
+              {prolific
+                ? "About 5 to 10 minutes. Answering them finishes the study and gives you your Prolific completion code. Look through your results first; this button is also at the bottom of the page."
+                : "About 5 to 10 minutes. Answering them completes the study, which you need for your $5 gift card. Look through your results first; this button is also at the bottom of the page."}
             </Text>
           </Box>
         </HStack>

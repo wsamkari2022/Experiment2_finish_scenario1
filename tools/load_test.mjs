@@ -22,6 +22,10 @@
  *   L7  (the audit's F2) privacy on the real server: a lookup reveals only the status, a wrong age is refused, the right
  *       age brings back the person's details and run but none of their analysis, the create/update route answers only
  *       "ok", a write without the browser's id is refused, and another website gets no permission to read answers
+ *   L8  (Step 4, since 7 October 2026) the Prolific completion code, with a made-up code in the server's settings: not
+ *       before the completion is saved, then the code and Prolific's address, only to the browser holding the record,
+ *       never for a university key, never in a lookup or sign-in answer; the time and count written on the record, never
+ *       the code; the health page says a code is set
  *   L6  the database rule swap: the throw-away database is first made with TODAY'S rule ("one email = one person" over
  *       every record) and an old record; the new server must replace the rule, keep the record, and accept the many
  *       Prolific records that have no email
@@ -46,6 +50,8 @@ const PORT = 4100;
 const MONGO_URL = "mongodb://127.0.0.1:27017";
 const DB_NAME = `vrds_load_test_${Date.now()}`;
 const BASE = `http://127.0.0.1:${PORT}/api`;
+/** L8's made-up completion code: letters and digits, like Prolific's. */
+const TEST_CODE = "LOADTEST77";
 const CONDITION_LIMIT_MS = 3000;
 const WAVES = [
   { label: "wave1", people: 100, rounds: 15 },
@@ -152,7 +158,9 @@ try {
   await client.db(DB_NAME).collection("participants").insertOne({ ...oldRecord });
   server = spawn(process.execPath, [path.join(ROOT, "server", "index.js")], {
     cwd: ROOT,
-    env: { ...process.env, NODE_ENV: production ? "production" : "development", PORT: String(PORT), HOST: "127.0.0.1", MONGO_URL, MONGO_DB: DB_NAME },
+    env: { ...process.env, NODE_ENV: production ? "production" : "development", PORT: String(PORT), HOST: "127.0.0.1", MONGO_URL, MONGO_DB: DB_NAME,
+      /* A made-up completion code for L8 (never the real one, which lives only in the live server's .env). */
+      PROLIFIC_COMPLETION_CODE: TEST_CODE },
     stdio: ["ignore", "ignore", "pipe"],
   });
   let serverErrors = "";
@@ -250,6 +258,41 @@ try {
     if (fromElsewhere.headers.get("access-control-allow-origin")) why.push("another website is allowed to read the answer");
     gate("L7", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : "privacy on the real server: a lookup reveals only the status (both doors), a wrong age is refused, the right age brings the details and run without any analysis, the create/update route answers only \"ok\", a write without the browser's id is refused, no other website may read answers");
+  }
+  /* L8: the Prolific completion code (Step 4). */
+  {
+    const send = async (method, route, body, browser) => {
+      const r = await fetch(BASE + route, {
+        method, headers: { "content-type": "application/json", ...(browser ? { "x-vrds-browser": browser } : {}) },
+        body: body === null ? undefined : JSON.stringify(body),
+      });
+      return { status: r.status, json: await r.json().catch(() => null), text: "" };
+    };
+    const why = [];
+    const pid = randomBytes(12).toString("hex"), mine = randomUUID(), theirs = randomUUID();
+    await send("POST", "/participants", { prolificPid: pid, sessionId: randomUUID(), age: 27, gender: "Male", stage: "feedback" }, mine);
+    const early = await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
+    if (early.status !== 200 || early.json?.ready !== false || JSON.stringify(early.json).includes(TEST_CODE)) why.push(`before the completion the route answered ${early.status} ${JSON.stringify(early.json)}`);
+    await send("PATCH", `/participants/${pid}/complete`, {}, mine);
+    const given = await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
+    if (given.json?.ready !== true || given.json?.code !== TEST_CODE || given.json?.url !== `https://app.prolific.com/submissions/complete?cc=${TEST_CODE}`) why.push(`after the completion the route answered ${JSON.stringify(given.json)}`);
+    const other = await send("POST", `/participants/${pid}/prolific-code`, {}, theirs);
+    if (other.status !== 409 || JSON.stringify(other.json).includes(TEST_CODE)) why.push(`another browser got ${other.status}`);
+    const noId = await send("POST", `/participants/${pid}/prolific-code`, {}, null);
+    if (noId.status !== 400) why.push(`no browser id got ${noId.status}`);
+    const uni = await send("POST", `/participants/${encodeURIComponent(all[0].persons[1].key)}/prolific-code`, {}, mine);
+    if (uni.status !== 404 || JSON.stringify(uni.json).includes(TEST_CODE)) why.push(`a university key got ${uni.status}`);
+    await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
+    const look = await send("POST", "/participants/lookup", { prolificPid: pid }, null);
+    const claim = await send("POST", `/participants/${pid}/claim`, { age: 27 }, theirs);
+    if (JSON.stringify(look.json).includes(TEST_CODE) || JSON.stringify(claim.json).includes(TEST_CODE)) why.push("the lookup or the sign-in carried the code");
+    const doc = await db.collection("participants").findOne({ prolific_pid: pid });
+    if (!doc?.prolific_code_given_at || doc.prolific_code_given_times !== 2 || !doc.prolific_code_last_given_at || doc.prolific_code_given_at > doc.prolific_code_last_given_at) why.push(`the record's code times: ${JSON.stringify({ at: doc?.prolific_code_given_at, n: doc?.prolific_code_given_times })}`);
+    if (JSON.stringify(doc ?? {}).includes(TEST_CODE)) why.push("the code itself was written on the record");
+    const health = await send("GET", "/health", null, null);
+    if (health.json?.prolific_code_configured !== true || JSON.stringify(health.json).includes(TEST_CODE)) why.push(`the health page said ${JSON.stringify(health.json?.prolific_code_configured)}`);
+    gate("L8", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : "the Prolific completion code: not before the completion is saved; then the code and Prolific's address, to the browser holding the record only (another browser 409, no id 400), never for a university key, never in a lookup or sign-in answer; the first time, the last time and the count on the record, never the code; the health page says a code is set");
   }
   gate("L6", !!swapOk, `the old "one email = one person" rule over every record was replaced at startup by the two-door rules; the old record kept; ${proDocs.length} Prolific records without an email accepted`);
   const slow = all.reduce((n, w) => n + (w.lat.condition ?? []).filter((ms) => ms >= CONDITION_LIMIT_MS).length, 0);

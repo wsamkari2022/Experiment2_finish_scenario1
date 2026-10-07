@@ -211,6 +211,15 @@ if [ -n "$ENV_PERMS" ] && [ "$ENV_PERMS" != "600" ] && [ "$ENV_PERMS" != "400" ]
   echo "      WARNING: .env permissions are $ENV_PERMS - run: chmod 600 .env"
 fi
 echo "      Database: $MONGO_DB"
+# The Prolific completion code (since 7 October 2026): warn, never fail - the university version works without it.
+# Its value is never printed.
+case "${PROLIFIC_COMPLETION_CODE:-}" in
+  ""|*CHANGE_ME*)
+    echo "      WARNING: PROLIFIC_COMPLETION_CODE is not set in .env - the Prolific version's final page"
+    echo "               cannot show the completion code until it is (see .env.example)." ;;
+  *)
+    echo "      Prolific completion code: set" ;;
+esac
 echo "      Server  : $(printf '%s' "$MONGO_URL" | sed -E 's#//([^:@/]+):[^@/]*@#//\1:***@#')"
 
 # ---------------------------------------------------------------------------

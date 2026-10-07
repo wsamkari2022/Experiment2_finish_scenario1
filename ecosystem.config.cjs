@@ -6,7 +6,9 @@
  *
  * MONGO_URL and MONGO_DB are NOT written here - they hold the database password.
  * build-and-run.sh reads them from the server's .env file and exports them
- * before calling `pm2 start`, and this file passes them through.
+ * before calling `pm2 start`, and this file passes them through. So does the
+ * Prolific completion code (PROLIFIC_COMPLETION_CODE, since 7 October 2026):
+ * it lives only in .env, never in this file or in Git.
  *
  * All paths come from __dirname - nothing is tied to one machine.
  */
@@ -32,6 +34,7 @@ module.exports = {
         HOST: "0.0.0.0",
         MONGO_URL: process.env.MONGO_URL,
         MONGO_DB: process.env.MONGO_DB,
+        PROLIFIC_COMPLETION_CODE: process.env.PROLIFIC_COMPLETION_CODE ?? "",
       },
       time: true,
       merge_logs: true,

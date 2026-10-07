@@ -2063,3 +2063,12 @@ thesis says so.
   check found a bug: after the right age the page set the participant before its reload, re-running the effect that
   saves the stage, which wrote "start" over it, so the reload opened "Welcome back" again (both doors). Fixed (nothing on
   the page changes before that reload) and held by C15; then checked live on both doors.
+- **2026-10-07. Step 4: the Prolific completion code** (Waseem: "start step 4", "1-A 2-A 3-A, implement"). The code lives
+  only in the server's .env; a new route gives it only for a finished Prolific record to the browser holding it, writes
+  the times on the record and never the code; the Prolific thank-you page shows it with Copy and a "Return to Prolific"
+  button (never an automatic jump); a finished person on another device gets it again after the age check; the results
+  page's Prolific sentence; "confidential" instead of "anonymous" on the feedback page (both doors). C16 and L8 new; 18
+  breaks, 18 caught (one after C16 was tightened). Found live and fixed: the code split over two lines on a phone, and a
+  reload of the "already finished" page asked the age again although the browser held the code. Noticed, not changed: a
+  person who already finished and opens the study on a new device is given a landing-page condition that counts as "just
+  arrived" for 30 minutes (both doors, since 1 October); the balance is off by one for that half hour.

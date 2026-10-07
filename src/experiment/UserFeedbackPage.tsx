@@ -22,6 +22,7 @@ import {
 } from "@chakra-ui/react";
 import { LuArrowLeft, LuCheck, LuClock, LuMessageSquare, LuRotateCw, LuSparkles } from "react-icons/lu";
 import { JourneyTabs } from "./JourneyTabs";
+import { ProlificCompletionCard } from "./ProlificCompletionCard";
 import type { Block5Results } from "./block5Types";
 import { markStage } from "./telemetry";
 // DEV ONLY — delete this import and the <DevFillFeedbackButton /> below before the study is live.
@@ -61,6 +62,11 @@ interface Props {
    * have overwritten the answers already sent. The flow reads the status; this page only shows it.
    */
   alreadyCompleted?: boolean;
+  /**
+   * The Prolific ID of a Prolific-door participant (since 7 October 2026, Step 4): the thank-you screen then shows their
+   * completion code and "Return to Prolific" (ProlificCompletionCard). Null in the university door, which has no code.
+   */
+  prolificId?: string | null;
 }
 
 /* ------------------------------- small inputs ------------------------------- */
@@ -163,7 +169,7 @@ function SectionCard({ accent, eyebrow, title, subtitle, method, children }: {
 
 /* ------------------------------- the page ------------------------------- */
 
-export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alreadyCompleted = false }: Props) {
+export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alreadyCompleted = false, prolificId = null }: Props) {
   const [answers, setAnswers] = useState<Record<string, FeedbackAnswer>>({});
   const [submitted, setSubmitted] = useState(alreadyCompleted);
   /** The active-time summary, frozen at the moment of submission. On a return to a finished study it is
@@ -388,6 +394,9 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
                 Your answers are saved. We are grateful for the time and thought you gave: it helps us understand
                 how people make hard choices. Below is the story of yours.
               </Text>
+              {/* The Prolific door's completion code and the way back (since 7 October 2026, Step 4; "1-A": a button,
+                  never an automatic jump). The university door has no code. */}
+              {prolificId && <ProlificCompletionCard prolificId={prolificId} />}
               {(minutes !== null || visits !== null) && (
                 <HStack gap="3" wrap="wrap" justify="center" pt="1">
                   {minutes !== null && (
@@ -436,7 +445,7 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
           </Box>
           <Heading size="2xl" color="fg" fontWeight="semibold">Your Feedback</Heading>
           <Text color="fg.muted" fontSize="lg" maxW="2xl" mx="auto" lineHeight="tall">
-            We value your experience. This is the final step — your answers are anonymous and help
+            We value your experience. This is the final step — your answers are confidential and help
             us understand what worked and what to improve.
           </Text>
           <Button onClick={onBack} variant="ghost" size="sm" colorPalette="gray" gap="2" rounded="lg">
