@@ -26,6 +26,11 @@
  * A participant on their own machine never sees this screen: the flow resumes them silently. It
  * appears only when the browser does not recognise them, which is exactly the case the email is
  * for.
+ *
+ * THE AGE IS CHECKED BY THE SERVER (the audit of 6 October 2026, F2). The lookup used to bring the whole record,
+ * age included, and this page compared the age itself - so anybody could read the age (and every answer) from the
+ * server. Now the lookup says only "new / not finished / finished", the age goes to the server (signIn in
+ * storage.ts), and the person's details and answers come down only when it matches.
  */
 
 import { useState } from "react";
@@ -42,7 +47,7 @@ import {
 import { LuArrowRight, LuCircleCheck, LuMail, LuSparkles, LuTriangleAlert } from "react-icons/lu";
 import { Field } from "@/components/ui/field";
 import { STATUS_COMPLETED, type DirectoryEntry } from "./participantDirectory";
-import { findParticipant } from "./storage";
+import { findParticipant, signIn } from "./storage";
 
 /** Same permissive test as the demographic page — catch typos, do not police addresses. */
 const looksLikeEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
@@ -50,8 +55,8 @@ const looksLikeEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}
 /** What the screen is currently doing. */
 type Mode =
   | { kind: "askEmail" }
-  /** The address is known and unfinished; confirm the person before resuming. */
-  | { kind: "verify"; entry: DirectoryEntry }
+  /** The address is known and unfinished; confirm the person (on the server) before resuming. */
+  | { kind: "verify" }
   /** The address is known and the study is already finished. */
   | { kind: "finished" };
 
@@ -61,8 +66,8 @@ export function StartScreen({
 }: {
   /** A new address: carry it forward to consent and the demographic form. */
   onNewParticipant: (email: string) => void;
-  /** A confirmed returning participant: resume at the stage they stopped on. */
-  onResume: (entry: DirectoryEntry) => void;
+  /** A confirmed returning participant: resume at the stage they stopped on (`restored` files came down). */
+  onResume: (entry: DirectoryEntry, restored: number) => void;
 }) {
   const [email, setEmail] = useState("");
   const [mode, setMode] = useState<Mode>({ kind: "askEmail" });
@@ -90,27 +95,36 @@ export function StartScreen({
         setMode({ kind: "finished" });
         return;
       }
-      setMode({ kind: "verify", entry });
+      setMode({ kind: "verify" });
     } finally {
       setChecking(false);
     }
   };
 
-  const handleVerify = () => {
-    if (mode.kind !== "verify") return;
+  const handleVerify = async () => {
+    if (mode.kind !== "verify" || checking) return;
     const given = Number.parseInt(ageAnswer, 10);
     if (Number.isNaN(given)) {
       setError("Please enter your age as a number.");
       return;
     }
-    if (given !== mode.entry.age) {
-      /* Requirement: the wording names the email, not the age, so a wrong guess does not
-         tell the guesser which detail was wrong. */
-      setError("This email does not match the information provided previously.");
-      return;
-    }
     setError(null);
-    onResume(mode.entry);
+    setChecking(true);
+    try {
+      /* The server compares the age; only a match brings their details and answers down. */
+      const result = await signIn(email.trim().toLowerCase(), given);
+      if (!result.ok) {
+        /* Requirement: the wording names the email, not the age, so a wrong guess does not
+           tell the guesser which detail was wrong. */
+        setError(result.reason === "mismatch"
+          ? "This email does not match the information provided previously."
+          : "We could not reach the study just now. Please try again in a moment.");
+        return;
+      }
+      onResume(result.entry, result.restored);
+    } finally {
+      setChecking(false);
+    }
   };
 
   return (
@@ -301,7 +315,7 @@ export function StartScreen({
                       fontWeight="semibold"
                       wordBreak="break-all"
                     >
-                      {mode.entry.email}
+                      {email.trim().toLowerCase()}
                     </Text>
                   </VStack>
                 </HStack>
@@ -322,7 +336,7 @@ export function StartScreen({
                     if (error) setError(null);
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleVerify();
+                    if (e.key === "Enter") void handleVerify();
                   }}
                   rounded="lg"
                   color="fg"
@@ -342,7 +356,9 @@ export function StartScreen({
                   rounded="lg"
                   fontWeight="semibold"
                   gap="2"
-                  onClick={handleVerify}
+                  loading={checking}
+                  loadingText="Checking"
+                  onClick={() => void handleVerify()}
                 >
                   Continue where I stopped
                   <Icon boxSize="4">

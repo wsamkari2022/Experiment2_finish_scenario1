@@ -62,7 +62,13 @@ against the code as it is then, because the four conditions will have added code
 the Prolific first page is a welcome with the ID and Start; deploy only after Step 4, with a database backup first).
 What it does: CLAUDE.md, "Two doors". It also took "A little about you" without the email from Step 2.
 
-**Build order (one step at a time):** Step 0 (done) -> 1 (done) the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 the Prolific consent page and the demographic page without the email -> 3 the second number row (Prolific only) -> 4 the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
+**Built 7 October 2026:** the privacy fix (the audit's F2; "1-B": a Prolific person continuing on ANOTHER device is asked
+their age, checked by the server; "2 - no limits": no lock after wrong ages), Step 2 (the Prolific consent page, section
+4.B as planned, with "I do not agree"; text for the ethics board in docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md) and Step 3
+(the second number row, section 4.E as planned; the two numbers always differ). What they do: CLAUDE.md, "Privacy, the
+Prolific consent page and the second number row".
+
+**Build order (one step at a time):** Step 0 (done) -> 1 (done) the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 (done) the Prolific consent page and the demographic page without the email -> 3 (done) the second number row (Prolific only) -> 4 the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
 
 **Prolific's rules re-read 6 October 2026, unchanged:** at least $8 an hour ($12 recommended); two failed valid checks before a rejection in a study over 5 minutes; memory-recall checks are not valid; "too slow", the researcher's own measures and a wrong or missing code are not valid reasons; submissions not reviewed are approved automatically on day 21; a completion code can approve automatically (not used here); bulk approval takes a list of Prolific IDs.
 
@@ -160,7 +166,9 @@ the attention plan). Store Prolific's as `prolific_session_id`; keep `vrds_sessi
 **How to build it safely.** Keep every mechanism and swap only the key: one helper that returns "this participant's
 key" (the Prolific ID), used wherever the email is read. The database field becomes `prolific_pid` with a unique
 index, plus `prolific_study_id` and `prolific_session_id`; the routes take `:pid`. The claim (`/claim`) no longer
-asks the age: an ID that arrives in the Prolific link is the participant. "Continue here instead" on the lock screen
+asks the age: an ID that arrives in the Prolific link is the participant. (Changed 7 October 2026, "1-B": on the same
+browser nothing is asked, but on ANOTHER device the claim checks the age, because a Prolific ID alone must not open a
+record.) "Continue here instead" on the lock screen
 claims directly. The study's own test records use emails; there is no real data, so no old-record handling is needed
 (confirm with Waseem that the server database was cleared first).
 

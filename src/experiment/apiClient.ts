@@ -120,11 +120,12 @@ function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry |
 
 export const apiClient: RemoteBackend = {
   async findParticipant(key) {
-    const doc = await request<Record<string, unknown> | null>("/participants/lookup", {
+    /* Only the status comes back (the audit of 6 October 2026, F2). */
+    const glance = await request<{ status?: string } | null>("/participants/lookup", {
       method: "POST",
       body: JSON.stringify(identity(key)),
     });
-    return toDirectoryEntry(doc);
+    return glance?.status ? { status: glance.status as DirectoryEntry["status"] } : null;
   },
 
   async upsertParticipant(entry) {
@@ -161,11 +162,15 @@ export const apiClient: RemoteBackend = {
     await request(`/participants/${encodeURIComponent(email)}/complete`, { method: "PATCH" });
   },
 
-  async claimBrowser(email, age) {
-    await request(`/participants/${encodeURIComponent(email)}/claim`, {
-      method: "POST",
-      body: JSON.stringify({ age }),
-    });
+  async signIn(key, age) {
+    /* The server checks the age (both doors) and only then answers with the details and the run's files. */
+    const answer = await request<{ participant?: Record<string, unknown>; files?: Record<string, unknown> | null }>(
+      `/participants/${encodeURIComponent(key)}/claim`,
+      { method: "POST", body: JSON.stringify({ age }) },
+    );
+    const participant = toDirectoryEntry(answer?.participant ?? null);
+    if (!participant) throw new Error("the server sent no participant");
+    return { participant, files: answer?.files ?? null };
   },
 
   async isActiveBrowser(email) {
@@ -174,16 +179,6 @@ export const apiClient: RemoteBackend = {
       body: JSON.stringify({}),
     });
     return answer?.active !== false;
-  },
-
-  async getResumeFiles(key) {
-    /* The lookup already returns the whole document, so no extra endpoint is needed — the raw
-       files ride along with the record the start screen was fetching anyway. */
-    const doc = await request<{ resume_state?: { files?: Record<string, unknown> } } | null>(
-      "/participants/lookup",
-      { method: "POST", body: JSON.stringify(identity(key)) },
-    );
-    return doc?.resume_state?.files ?? null;
   },
 
   async assignCondition(arrivalId, recruitmentSource?: RecruitmentSource): Promise<AssignedCondition> {

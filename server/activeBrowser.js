@@ -8,7 +8,8 @@
  * carries the browser's id in the `X-VRDS-Browser` header.
  *
  * THE RULE, in one function so it can be tested without a database (npm run validate:session):
- *   - no id on the request      -> allow  (a request that is not from the study page, e.g. a tool)
+ *   - no id on the request      -> refuse (since the audit of 6 October 2026, F2: every study page has sent its id
+ *                                  since 29 September 2026, and "allow" let any script write any record it could name)
  *   - nobody holds the record   -> claim  (the first writer takes it: a brand-new participant)
  *   - this browser holds it     -> allow
  *   - another browser holds it  -> refuse (409; the page shows "open on another browser or device")
@@ -29,7 +30,7 @@ export function requestBrowser(req) {
 
 /** "allow" | "claim" | "refuse" — see the rule above. */
 export function browserVerdict(activeBrowserId, requestBrowserId) {
-  if (!requestBrowserId) return "allow";
+  if (!requestBrowserId) return "refuse";
   if (!activeBrowserId) return "claim";
   return activeBrowserId === requestBrowserId ? "allow" : "refuse";
 }

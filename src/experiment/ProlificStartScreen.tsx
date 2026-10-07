@@ -2,12 +2,16 @@
  * ProlificStartScreen.tsx — the first page of the Prolific door (since 6 October 2026; recruitment.ts).
  *
  * The researcher's answers: "2-A" a welcome page with the participant's Prolific ID and a Start button (the same
- * welcome and study name as the university door's first page, StartScreen.tsx, so both doors look like one study), and
- * "1-A" a returning participant continues with NO question: the Prolific ID in Prolific's own link is the person.
+ * welcome and study name as the university door's first page, StartScreen.tsx, so both doors look like one study).
+ * A returning participant continued with no question ("1-A") until the audit of 6 October 2026 (F2): a Prolific ID alone
+ * then opened a record, and Prolific IDs travel in links. Since then ("1-B") somebody continuing on ANOTHER device gives
+ * their age, which the server checks (signIn in storage.ts) before anything comes down. On their own device the run is
+ * already there and this page never shows.
  *
  * Nobody types an email here. The ID comes in the link (PROLIFIC_PID); the page looks it up and shows one of:
  *   NEW            -> "Your Prolific ID ✓" and Start, then consent and "A little about you" (four questions)
- *   KNOWN, UNFINISHED -> "Welcome back" and Continue where I stopped (this browser takes the record, the answers come down)
+ *   KNOWN, UNFINISHED -> "Welcome back", their age, and Continue where I stopped (checked by the server; only then does
+ *                        this browser take the record and the answers come down)
  *   KNOWN, FINISHED   -> "You have already finished" (the completion code comes here in Step 4)
  *   NO ID IN THE LINK -> a box to paste it (letters and digits); it is then written into the address, so a refresh keeps it
  *
@@ -19,14 +23,14 @@ import { Box, Button, Heading, HStack, Icon, Input, Spinner, Text, VStack } from
 import { LuArrowRight, LuBadgeCheck, LuCircleCheck, LuSparkles, LuTriangleAlert } from "react-icons/lu";
 import { Field } from "@/components/ui/field";
 import { STATUS_COMPLETED, type DirectoryEntry } from "./participantDirectory";
-import { findParticipant, whenServerKnown } from "./storage";
+import { findParticipant, signIn, whenServerKnown } from "./storage";
 import { addressWithProlificId, normalizeProlificId, writeProlificFile, type ProlificParams } from "./recruitment";
 
 type Mode =
   | { kind: "paste" }
   | { kind: "checking" }
   | { kind: "new" }
-  | { kind: "resume"; entry: DirectoryEntry }
+  | { kind: "resume" }
   | { kind: "finished" };
 
 export function ProlificStartScreen({
@@ -38,13 +42,15 @@ export function ProlificStartScreen({
   params: ProlificParams;
   /** A new Prolific participant: carry the ID forward to consent and the demographic page. */
   onNewParticipant: (prolificId: string) => void;
-  /** A returning one: resume at the stage they stopped on (no question: the researcher's "1-A"). */
-  onResume: (entry: DirectoryEntry) => void;
+  /** A returning one, after the server checked their age: resume where they stopped (`restored` files came down). */
+  onResume: (entry: DirectoryEntry, restored: number) => void;
 }) {
   const [pid, setPid] = useState<string | null>(params.pid);
   const [mode, setMode] = useState<Mode>(params.pid ? { kind: "checking" } : { kind: "paste" });
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [ageAnswer, setAgeAnswer] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
 
   /* Look the ID up as soon as it is known: new, unfinished or finished. */
   useEffect(() => {
@@ -55,7 +61,7 @@ export function ProlificStartScreen({
       if (cancelled) return;
       if (!entry) setMode({ kind: "new" });
       else if (entry.status === STATUS_COMPLETED) setMode({ kind: "finished" });
-      else setMode({ kind: "resume", entry });
+      else setMode({ kind: "resume" });
     });
     return () => {
       cancelled = true;
@@ -64,6 +70,31 @@ export function ProlificStartScreen({
 
   /* The study and submission ids go with the person to the demographic page, where their record is made. */
   const keepProlificIds = (id: string) => writeProlificFile({ owner: id, studyId: params.studyId, sessionId: params.sessionId });
+
+  /* The age goes to the server; only a match brings their details and answers down (the researcher's "1-B"). */
+  const continueWithAge = async () => {
+    if (!pid || signingIn) return;
+    const given = Number.parseInt(ageAnswer, 10);
+    if (Number.isNaN(given)) {
+      setError("Please enter your age as a number.");
+      return;
+    }
+    setError(null);
+    setSigningIn(true);
+    try {
+      const result = await signIn(pid, given);
+      if (!result.ok) {
+        setError(result.reason === "mismatch"
+          ? "This does not match the information given before. Please check your age."
+          : "We could not reach the study just now. Please try again in a moment.");
+        return;
+      }
+      keepProlificIds(pid);
+      onResume(result.entry, result.restored);
+    } finally {
+      setSigningIn(false);
+    }
+  };
 
   const submitPasted = () => {
     const id = normalizeProlificId(typed);
@@ -207,9 +238,29 @@ export function ProlificStartScreen({
                 </Icon>
                 <Text fontSize="sm" color="fg.muted" lineHeight="tall">
                   We found your earlier session and can continue from exactly where you stopped. Your answers are all
-                  still here.
+                  still here. To confirm it is you, please enter your age.
                 </Text>
               </HStack>
+              <Field label="Your age" invalid={!!error} errorText={error || undefined}>
+                <Input
+                  data-prolific-age
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Age"
+                  value={ageAnswer}
+                  onChange={(e) => {
+                    setAgeAnswer(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void continueWithAge();
+                  }}
+                  rounded="lg"
+                  color="fg"
+                  size="lg"
+                  maxW="40"
+                />
+              </Field>
               <Button
                 size="lg"
                 w="full"
@@ -220,11 +271,9 @@ export function ProlificStartScreen({
                 rounded="lg"
                 fontWeight="semibold"
                 gap="2"
-                onClick={() => {
-                  if (!pid) return;
-                  keepProlificIds(pid);
-                  onResume(mode.entry);
-                }}
+                loading={signingIn}
+                loadingText="Checking"
+                onClick={() => void continueWithAge()}
               >
                 Continue where I stopped
                 <Icon boxSize="4">

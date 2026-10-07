@@ -87,18 +87,31 @@ import { keyOfDemographics, type RecruitmentSource } from "./recruitment";
  * What a server has to be able to do. Step 8 supplies an object with these five methods, backed
  * by `fetch` calls to the local API; nothing else in the app changes.
  */
+/**
+ * What the first page may know about a key BEFORE the person proves who they are: only whether they started and whether
+ * they finished (the audit of 6 October 2026, F2: the server used to send the whole record).
+ */
+export interface Glance {
+  status: DirectoryEntry["status"];
+}
+
+/** What the server hands back after the age is checked: the participant's details and the files of their run. */
+export interface SignedIn {
+  participant: DirectoryEntry;
+  files: Record<string, unknown> | null;
+}
+
 export interface RemoteBackend {
-  findParticipant(email: string): Promise<DirectoryEntry | null>;
+  findParticipant(email: string): Promise<Glance | null>;
   upsertParticipant(entry: DirectoryEntry): Promise<void>;
   updateStage(email: string, stage: string): Promise<void>;
   markCompleted(email: string): Promise<void>;
   /** Writes one named section of the participant document. `path` is dotted, e.g. blocks.block1_money. `owner` is the
       participant's key the save was made for (since 6 October 2026); without it, the participant now in this browser. */
   saveSection(path: string, data: unknown, owner?: string | null): Promise<void>;
-  /** The raw browser files stored for a half-finished participant, or null. */
-  getResumeFiles(email: string): Promise<Record<string, unknown> | null>;
-  /** This browser takes the participant's record (after the email-and-age check). */
-  claimBrowser(email: string, age: number): Promise<void>;
+  /** The age is checked ON THE SERVER; when it matches, this browser takes the record and gets its details and files
+      (since the audit of 6 October 2026; it replaced claimBrowser and getResumeFiles). Throws 403 on a wrong age. */
+  signIn(key: string, age: number): Promise<SignedIn>;
   /** Is this browser the one holding the participant's record? */
   isActiveBrowser(email: string): Promise<boolean>;
   /** The landing page: which condition does this new arrival get? (since 1 October 2026; server/conditions.js) */
@@ -273,6 +286,34 @@ export function setLockedListener(listener: (() => void) | null): void {
 function isAnotherBrowser(error: unknown): boolean {
   const e = error as { httpStatus?: number; code?: string } | null;
   return e?.httpStatus === 409 && e?.code === "another_browser_active";
+}
+
+/** Whose a waiting write is: its email or Prolific ID; null for a section save from before owners were stamped. */
+function ownerOfItem(item: OutboxItem): string | null {
+  switch (item.op) {
+    case "upsertParticipant":
+      return item.entry.email;
+    case "updateStage":
+    case "markCompleted":
+      return item.email;
+    case "saveSection":
+      return item.owner ?? null;
+  }
+}
+
+/** Moves this person's waiting writes aside (and any without an owner), keeping everybody else's (signIn). */
+function setAsideQueuedFor(key: string): void {
+  const who = key.trim().toLowerCase();
+  const waiting = readOutbox();
+  const theirs = waiting.filter((item) => {
+    const owner = ownerOfItem(item);
+    return owner === null || owner.trim().toLowerCase() === who;
+  });
+  if (theirs.length === 0) return;
+  try {
+    localStorage.setItem(LOCKED_OUT_KEY, JSON.stringify({ at: new Date().toISOString(), items: theirs }));
+  } catch { /* they are dropped either way */ }
+  writeOutbox(waiting.filter((item) => !theirs.includes(item)));
 }
 
 /** Moves every waiting write aside: this browser will never send them. */
@@ -486,23 +527,56 @@ function sendOrQueue(given: OutboxItem): void {
 /* -------------------------------------------------------------------- participants */
 
 /**
- * Finds a participant by email — the question the start screen asks.
+ * Finds a participant by their key (email or Prolific ID) — the question the start screen asks.
  *
  * The server is asked first when there is one, because it is the only place that knows about
  * participants who started on a DIFFERENT machine, which is the entire reason a participant
  * types their address. The browser answers when there is no server, or when it cannot be reached:
  * a returning participant on their own laptop is still recognised while the server is down.
+ *
+ * ONLY A GLANCE (the audit of 6 October 2026, F2): started or not, finished or not. Who they are and what they answered
+ * comes down only through signIn, after the server has checked the age.
  */
-export async function findParticipant(email: string): Promise<DirectoryEntry | null> {
+export async function findParticipant(email: string): Promise<Glance | null> {
   if (remote) {
     try {
       const found = await remote.findParticipant(email);
-      if (found) return found;
+      if (found) return { status: found.status };
     } catch {
       /* Server unreachable — fall through to what this browser knows. */
     }
   }
-  return lookupByEmail(email);
+  const local = lookupByEmail(email);
+  return local ? { status: local.status } : null;
+}
+
+/** The answer of a sign-in: in, with the details and how many files came down; or why not. */
+export type SignInResult =
+  | { ok: true; entry: DirectoryEntry; restored: number }
+  | { ok: false; reason: "mismatch" | "unreachable" };
+
+/**
+ * SIGNING BACK IN (the audit of 6 October 2026, F2; the researcher's "1-B": both doors ask the age). The server checks
+ * the age and, when it matches, this browser takes the record and gets the details and the run's files, which are
+ * written into this browser here. The person's own older saves still waiting in this browser are set aside first: they
+ * belong to an older run and must never be sent over the newer answers (other people's waiting saves name their own
+ * owner and still go to them). No server: this browser's own copy is checked instead.
+ */
+export async function signIn(key: string, age: number): Promise<SignInResult> {
+  if (remote) {
+    try {
+      setAsideQueuedFor(key);
+      const { participant, files } = await remote.signIn(key, age);
+      return { ok: true, entry: participant, restored: restoreResumeFiles(files) };
+    } catch (error) {
+      const status = (error as { httpStatus?: number } | null)?.httpStatus;
+      if (status === 403 || status === 404) return { ok: false, reason: "mismatch" };
+      /* The server could not be reached: this browser's own copy below. */
+    }
+  }
+  const local = lookupByEmail(key);
+  if (local && local.age === age) return { ok: true, entry: local, restored: 0 };
+  return { ok: false, reason: local ? "mismatch" : "unreachable" };
 }
 
 /** Creates or updates a participant. Written locally at once, sent to the server after. */
@@ -610,39 +684,6 @@ export async function connectLate(backend: RemoteBackend, email: string | null):
   if (email && now?.status === "Study Completed") sendOrQueue({ op: "markCompleted", email });
 }
 
-/**
- * Downloads a participant's files and writes them into this browser.
- *
- * Returns how many were restored, so the caller can tell the difference between "welcome back,
- * everything is here" and "the server had nothing for you" — two very different situations for
- * somebody who is otherwise about to be sent back to the start.
- */
-export async function restoreParticipantFiles(email: string): Promise<number> {
-  if (!remote) return 0;
-  try {
-    const files = await remote.getResumeFiles(email);
-    return restoreResumeFiles(files);
-  } catch {
-    return 0;
-  }
-}
-
-/**
- * THIS BROWSER TAKES THE PARTICIPANT'S RECORD (since 29 September 2026). Called by the start screen after the
- * email-and-age check, BEFORE their answers are downloaded, so every write that follows is accepted. Anything
- * this browser still had waiting belongs to an older run here and is set aside, never sent over the newer
- * answers. True when the server took the claim; false with no server or when it could not be reached.
- */
-export async function claimThisBrowser(email: string, age: number): Promise<boolean> {
-  if (!remote) return false;
-  setOutboxAside();
-  try {
-    await remote.claimBrowser(email, age);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Is this browser still the one holding the participant's record? true / false, or null when it cannot be

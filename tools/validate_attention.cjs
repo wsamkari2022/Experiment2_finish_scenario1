@@ -22,6 +22,13 @@
  *   T8  the screens, from the source: they say it is an attention check, never say right or wrong, let any pick
  *       continue, show each colour's name; the flow offers the colour check after the drawn part; Block 5 restarts
  *       the next scenario's clock after the letter check; the consent page names the rule
+ *   T9  (since 7 October 2026) the Prolific door's two number rows: one in each section at every place about equally,
+ *       two different numbers two to five; the university plan drawn exactly as before; the door follows the key; only
+ *       the number rows count for Prolific's rule, failing BOTH is the flag, a row never reached is not a failure; the
+ *       database rows, quality and the major copy; the chance a random clicker fails both; the page draws every row
+ *   T10 the consent page of each door: the university wording kept, the Prolific wording (paid through Prolific, one
+ *       sitting, the Prolific ID instead of the email, two failed checks, one box, "I do not agree" with the way to
+ *       return the study), its own version stamp, and the flow passing the door
  *   P1  the deleted pages' data: the new functions make exactly the files the pages made (the pages' own recipe,
  *       written out again here) for 300 pretend participants, and write nothing when an earlier block is missing
  *   P2  the deleted pages, from the source: the four files are gone, the flow derives the files when Block 3 and
@@ -143,8 +150,19 @@ const TOPICS = ["after_block3", "after_scenario3"];
   store = { vrds_pending_email: "dee@example.test", [A.ATTENTION_KEY]: JSON.stringify(lookalike) };
   const dee = A.readAttention();
   if (dee.version !== A.ATTENTION_VERSION || Object.keys(dee.answers).length !== 0) why.push("a file with an older version stamp is kept");
+  /* The version before the Prolific door (30 September 2026) is kept as the university plan it was, with its answers:
+     a run that began before the change keeps its answered checks (A.STILL_READ_VERSIONS). */
+  const before = { version: "2026-09-30-topics", owner: "eve@example.test", plan: A.planAttentionChecks("eve"), answers: { after_block3: ans0(A.TOPIC_CHECKS.after_block3.right) } };
+  store = { vrds_pending_email: "eve@example.test", [A.ATTENTION_KEY]: JSON.stringify(before) };
+  const eve = A.readAttention();
+  if (eve.version !== "2026-09-30-topics" || !eve.answers.after_block3 || JSON.stringify(eve.plan) !== JSON.stringify(before.plan)) why.push("a run from before the Prolific door lost its answered check");
+  if (A.scoreAttention({ ...before, answers: {} })?.asked !== 3) why.push("a file from before the Prolific door is not scored as the university's three checks");
+  /* ...but never as a Prolific plan: a still-read version with a second row is drawn again. */
+  const forged = { ...before, owner: "fay@example.test", plan: { ...A.planAttentionChecks("fay", "prolific") } };
+  store = { vrds_pending_email: "fay@example.test", [A.ATTENTION_KEY]: JSON.stringify(forged) };
+  if (A.readAttention().version !== A.ATTENTION_VERSION) why.push("an older version was read as a Prolific plan");
   gate("T2", why.length === 0, why.length ? why.join(" | ")
-    : "the plan is drawn once and saved: the same participant gets the same answer orders after a refresh or on another device, an answered check stays answered, another email gets its own, an old-version file is drawn again");
+    : "the plan is drawn once and saved: the same participant gets the same answer orders after a refresh or on another device, an answered check stays answered, another email gets its own, an old-version file is drawn again; a run begun before the Prolific door keeps its answered checks");
 }
 
 /* ------------------------------------------------------------------ T3 scoring */
@@ -204,25 +222,26 @@ const oneMissing = fileWith(P, { after_block3: ans(R3), after_scenario3: ans(RS)
   const why = [];
   const page = bare(src("UserFeedbackPage.tsx"));
   /* Never in a list that is collected into the feedback record. */
-  if (/collect\([^)]*ATTENTION_FEEDBACK_CODE/.test(page)) why.push("the check is collected into the feedback");
+  if (/collect\([^)]*(ATTENTION_FEEDBACK_CODE|attentionRows)/.test(page)) why.push("the check is collected into the feedback");
   /* Whatever builds the feedback record may not touch the check's code, nor copy every answer wholesale. */
-  const iBuilt = page.indexOf("const feedback: FeedbackAnswers = {"), iAttn = page.indexOf("const attentionAnswer = answers[ATTENTION_FEEDBACK_CODE]");
+  const iBuilt = page.indexOf("const feedback: FeedbackAnswers = {"), iAttn = page.indexOf("for (const a of attentionRows) {\n      const attentionAnswer = answers[a.code];");
   const iSave = page.indexOf("saveFeedbackRecord(record)");
   const built = iBuilt > 0 && iAttn > iBuilt ? page.slice(iBuilt, iAttn) : "";
   const after = iAttn > 0 && iSave > iAttn ? page.slice(iAttn, iSave) : "";
-  if (!built || /ATTENTION_FEEDBACK_CODE|\.\.\.answers\b/.test(built) || /feedback\.\w+\s*=/.test(after)) why.push("the feedback record can carry the check's answer");
-  if (!/recordAttentionAnswer\("number", attentionAnswer, null, attentionChanges\.current\)/.test(page)) why.push("the answer is not saved in the attention file on submit");
-  const submitAt = page.indexOf('recordAttentionAnswer("number"'), saveAt = page.indexOf("saveFeedbackRecord(record)");
+  if (!built || /ATTENTION_FEEDBACK_CODE|attentionRows|ATTN_|\.\.\.answers\b/.test(built) || /feedback\.\w+\s*=/.test(after)) why.push("the feedback record can carry the check's answer");
+  if (!/recordAttentionAnswer\(a\.check, attentionAnswer, null, attentionChanges\.current\[a\.code\] \?\? 0\)/.test(page)) why.push("the answer is not saved in the attention file on submit");
+  const submitAt = page.indexOf("recordAttentionAnswer(a.check"), saveAt = page.indexOf("saveFeedbackRecord(record)");
   if (!(submitAt > 0 && saveAt > submitAt)) why.push("the answer is saved after the feedback record, or not at all");
   /* Only in the tools and well-being sections. */
   const calls = [...page.matchAll(/attentionAfter\("(\w+)"/g)].map((m) => m[1]);
   if (calls.sort().join() !== "tools,wellbeing_a,wellbeing_b") why.push(`the row can appear in: ${calls.join(", ")}`);
   const cvrCard = page.slice(page.indexOf('method="cvr"'), page.indexOf('eyebrow="Decision-support tools"'));
-  if (/attentionAfter|ATTENTION_FEEDBACK_CODE/.test(cvrCard)) why.push("the row can appear in the reflection or clarification sections");
-  if (!page.includes("filled[ATTENTION_FEEDBACK_CODE] = attention.target;")) why.push("the development fill button answers it wrong");
-  if (!/text: `This question is just to check your attention\. Pick the number \$\{attention\.word\}\.`/.test(page)) why.push("the wording is not the researcher's");
+  if (/attentionAfter|ATTENTION_FEEDBACK_CODE|attentionRows/.test(cvrCard)) why.push("the row can appear in the reflection or clarification sections");
+  if (!page.includes("for (const a of attentionRows) filled[a.code] = a.row.target;")) why.push("the development fill button answers it wrong");
+  if (!/text: `This question is just to check your attention\. Pick the number \$\{at\.row\.word\}\.`/.test(page)) why.push("the wording is not the researcher's");
+  if (!page.includes("const [attentionRows] = useState(() => numberRowsOf(readAttention().plan));")) why.push("the page does not draw the rows the plan drew");
   /* The feedback record never sees it: the ratings read back from a record carry only real questions. */
-  const record = { feedback: { decisionSupport: { TOOL_optionCards: 4, [A.ATTENTION_FEEDBACK_CODE]: 4 }, wellbeing: { items: { LI1: 4 } } } };
+  const record = { feedback: { decisionSupport: { TOOL_optionCards: 4, [A.ATTENTION_FEEDBACK_CODE]: 4, [A.ATTENTION_FEEDBACK_CODE_2]: 5 }, wellbeing: { items: { LI1: 4, [A.ATTENTION_FEEDBACK_CODE_2]: 3 } } } };
   if (A.feedbackRatingsInOrder(record).length !== 2) why.push("a stray check answer would be read as a rating");
   gate("T5", why.length === 0, why.length ? why.join(" | ")
     : "the row is never collected into the feedback record (so no score or 'same answer' flag can move), is saved in the attention file before the record, sits only in the tools or well-being sections, uses the researcher's words, and the dev fill answers it right");
@@ -299,6 +318,127 @@ const oneMissing = fileWith(P, { after_block3: ans(R3), after_scenario3: ans(RS)
   if (/"attention_check"/.test(telemetry.slice(telemetry.indexOf("const TIMED_STAGES"), telemetry.indexOf("];", telemetry.indexOf("const TIMED_STAGES"))))) why.push("the check's screen is timed as a stage");
   gate("T8", why.length === 0, why.length ? why.join(" | ")
     : "the screens say it is an attention check, ask the approved question, never say right or wrong, keep the drawn answer order and continue after any pick; only Block 3's end leads to the first, which leads on to Block 4 and is never shown twice; the second sits after scenario 3 and restarts scenario 4's clock; the consent page names the rule");
+}
+
+/* ------------------------------------------------------------------ T9 the Prolific door's two number rows */
+{
+  const why = [];
+  const within = (x, target, tol) => Math.abs(x - target) <= tol;
+  const pro = Array.from({ length: N }, (_, i) => A.planAttentionChecks(`pretend-session-${i}|pid${String(i).padStart(20, "0")}`, "prolific"));
+  /* The university plan is drawn exactly as before the Prolific door: the same seed, the same plan, no second row. */
+  if (plans.some((p, i) => JSON.stringify(A.planAttentionChecks(`pretend-session-${i}|person${i}@example.test`, "university")) !== JSON.stringify(p))
+      || plans.some((p) => "door" in p || "number_2" in p)) why.push("the university plan changed");
+  /* ...and exactly as the code before the Prolific door drew it: the fingerprint of 200 plans made by that code
+     (commit cd2cc56; 20,000 plans compared with it on 7 October 2026, 0 different). */
+  const fingerprint = require("node:crypto").createHash("sha256")
+    .update(JSON.stringify(Array.from({ length: 200 }, (_, i) => A.planAttentionChecks(`fingerprint-${i}`)))).digest("hex");
+  if (fingerprint !== "61463e1280bf62bba0b8addb82ad4a560d23709e232ac6f55a23122dfc6dd119") why.push("the university plan is not drawn as it was before the Prolific door");
+  if (pro.some((p) => p.door !== "prolific" || !p.number_2)) why.push("a Prolific plan has no second row");
+  if (pro.some((p) => p.number.list !== "tools")) why.push("the first row is not in the tools section");
+  if (pro.some((p) => !["wellbeing_a", "wellbeing_b"].includes(p.number_2.list))) why.push("the second row is not in the well-being section");
+  if (pro.some((p) => p.number.target === p.number_2.target)) why.push("the two rows ask the same number");
+  if (pro.some((p) => [p.number, p.number_2].some((r) => ![2, 3, 4, 5].includes(r.target) || A.NUMBER_WORDS[r.target] !== r.word || r.after < 1 || r.after > A.NUMBER_LIST_LENGTHS[r.list]))) why.push("a number outside two to five, the wrong word, or a row first in a section");
+  for (const n of [2, 3, 4, 5]) {
+    if (!within(pro.filter((p) => p.number.target === n).length / N, 0.25, 0.03)) why.push(`first row: ${n} not about 1 in 4`);
+    if (!within(pro.filter((p) => p.number_2.target === n).length / N, 0.25, 0.03)) why.push(`second row: ${n} not about 1 in 4`);
+  }
+  const toolsUsed = new Set(pro.map((p) => p.number.after)), wbUsed = new Set(pro.map((p) => `${p.number_2.list}:${p.number_2.after}`));
+  if (toolsUsed.size !== A.TOOLS_SLOTS.length || wbUsed.size !== A.WELLBEING_SLOTS.length) why.push(`places used: ${toolsUsed.size}/${A.TOOLS_SLOTS.length} tools, ${wbUsed.size}/${A.WELLBEING_SLOTS.length} well-being`);
+  for (const sl of A.TOOLS_SLOTS) if (!within(pro.filter((p) => p.number.after === sl.after).length / N, 1 / A.TOOLS_SLOTS.length, 0.03)) why.push(`tools place ${sl.after} not about equally likely`);
+  for (const sl of A.WELLBEING_SLOTS) if (!within(pro.filter((p) => p.number_2.list === sl.list && p.number_2.after === sl.after).length / N, 1 / A.WELLBEING_SLOTS.length, 0.015)) why.push(`well-being place ${sl.list}:${sl.after} not about equally likely`);
+  /* The key decides the door: a Prolific ID draws the Prolific plan, an email the university's. */
+  store = { vrds_session_id: "s-9", vrds_pending_email: "5f8a9b0c1d2e3f4a5b6c7d8e" };
+  const pf = A.readAttention();
+  if (A.planDoor(pf.plan) !== "prolific" || !pf.plan.number_2) why.push("a Prolific ID did not draw the Prolific plan");
+  store = { vrds_session_id: "s-9", vrds_pending_email: "gil@example.test", [A.ATTENTION_KEY]: JSON.stringify({ ...pf, owner: "gil@example.test" }) };
+  const gil = A.readAttention();
+  if (A.planDoor(gil.plan) !== "university" || gil.plan.number_2) why.push("a Prolific plan was kept for an email");
+  /* Scoring: only the number rows count for Prolific's rule; failing BOTH is the flag. */
+  const pp = pro[3], t1 = pp.number.target, t2 = pp.number_2.target, wrong = (t) => (t === 7 ? 1 : 7);
+  const pfile = (answers) => ({ version: A.ATTENTION_VERSION, owner: "x", plan: pp, answers });
+  const topicsRight = { after_block3: ans(R3), after_scenario3: ans(RS) };
+  const cases = [
+    ["all right", { ...topicsRight, number: ans(t1), number_2: ans(t2) }, 4, 0, false],
+    ["the first row wrong", { ...topicsRight, number: ans(wrong(t1)), number_2: ans(t2) }, 3, 1, false],
+    ["the second row wrong", { ...topicsRight, number: ans(t1), number_2: ans(wrong(t2)) }, 3, 1, false],
+    ["both rows wrong", { ...topicsRight, number: ans(wrong(t1)), number_2: ans(wrong(t2)) }, 2, 2, true],
+    ["both topic questions wrong", { after_block3: ans(W3), after_scenario3: ans(A.TOPIC_CHECKS.after_scenario3.wrong[0]), number: ans(t1), number_2: ans(t2) }, 2, 0, false],
+    ["the second row never reached", { ...topicsRight, number: ans(wrong(t1)) }, 2, 1, false],
+    ["the first row's number given to the second", { ...topicsRight, number: ans(t1), number_2: ans(t1) }, 3, 1, false],
+  ];
+  for (const [label, answers, passed, failed, both] of cases) {
+    const sc = A.scoreAttention(pfile(answers));
+    if (!sc || sc.door !== "prolific" || sc.asked !== 4 || sc.passedCount !== passed || sc.instruction?.failed !== failed || sc.instruction?.failedBoth !== both) why.push(`${label}: ${JSON.stringify(sc).slice(0, 160)}`);
+  }
+  const bothWrong = pfile(cases[3][1]);
+  const sec = A.buildAttentionSection(bothWrong);
+  if (sec.door !== "prolific" || sec.checks.length !== 4 || sec.checks[3].check !== "number_2" || sec.checks[3].right_answer !== t2 || sec.checks[3].correct !== false
+      || !/How this experience was for you/.test(sec.checks[3].where_it_was_shown) || !/The tools & the experiment design/.test(sec.checks[2].where_it_was_shown)
+      || sec.prolific_rule?.failed_both_instruction_checks !== true || sec.prolific_rule?.instruction_checks_failed !== 2 || sec.prolific_rule?.topic_checks_count_for_pay !== false
+      || !sec.misses.some((m) => m.startsWith("missed the first feedback check")) || !sec.misses.some((m) => m.startsWith("missed the second feedback check"))) why.push("analysis.attention_checks for the Prolific door is wrong");
+  const uniSec = A.buildAttentionSection(allRight);
+  if (uniSec.door !== "university" || uniSec.checks.length !== 3 || "prolific_rule" in uniSec) why.push("the university section gained the Prolific rule");
+  const ledger = { totalMs: 2_400_000, sittings: 1, longestIdleMs: 0, byStage: { money: 300_000 } };
+  const varied = { feedback: { decisionSupport: { TOOL_optionCards: 3, TOOL_consequences: 6 }, wellbeing: { items: { LI1: 5, LI2: 2, LI3: 7 } } } };
+  const qp = db.buildQuality(ledger, null, varied, "Study Completed", bothWrong), qu = db.buildQuality(ledger, null, varied, "Study Completed", allRight);
+  if (qp.prolific_failed_both_instruction_checks !== true || qp.prolific_instruction_checks_failed !== 2 || qp.attention_checks_asked !== 4) why.push("quality does not carry the Prolific rule");
+  if (qu.prolific_failed_both_instruction_checks !== null || qu.prolific_instruction_checks_failed !== null || qu.attention_checks_asked !== 3) why.push("the university quality gained Prolific fields");
+  const block5 = { scenarioResults: [], originalProfile: { dimensions: [] } };
+  const mp = db.buildMajorScores(block5, null, null, null, null, null, bothWrong)?.attention_checks;
+  if (mp?.door !== "prolific" || mp?.failed_both_instruction_checks !== true || mp?.instruction_checks_failed !== 2) why.push("the major copy does not carry the Prolific rule");
+  /* Chance: a random clicker on the 1-7 scale fails both rows 36 times in 49; passes both 1 in 49. Someone who gives one
+     number everywhere can never pass both (the two numbers differ). */
+  const rand = recipe.seededRandom(20261007);
+  let failBoth = 0;
+  for (let i = 0; i < 100_000; i++) {
+    const p = pro[i % N];
+    if (Math.floor(rand() * 7) + 1 !== p.number.target && Math.floor(rand() * 7) + 1 !== p.number_2.target) failBoth += 1;
+  }
+  if (!within(failBoth / 100_000, 36 / 49, 0.01)) why.push(`random clickers fail both ${(failBoth / 1000).toFixed(1)}%, not about 73.5%`);
+  if ([1, 2, 3, 4, 5, 6, 7].some((c) => pro.some((p) => p.number.target === c && p.number_2.target === c))) why.push("one number everywhere can pass both rows");
+  /* The page draws every row the plan drew, each with its own code, and saves each. */
+  const page = bare(src("UserFeedbackPage.tsx"));
+  if (!page.includes("const at = attentionRows.find((a) => a.row.list === list && a.row.after === after);")
+      || !page.includes("for (const a of here) out.splice(a.row.after, 0, a.code);")) why.push("the page does not draw and require every row");
+  const rows = A.numberRowsOf(pp), uniRows = A.numberRowsOf(plans[0]);
+  if (rows.map((r) => r.code).join() !== `${A.ATTENTION_FEEDBACK_CODE},${A.ATTENTION_FEEDBACK_CODE_2}` || uniRows.length !== 1 || rows[1].check !== "number_2") why.push("the rows or their codes are wrong");
+  gate("T9", why.length === 0, why.slice(0, 5).join(" | ") ||
+    `the Prolific door: over ${N} pretend participants one row in "The tools & the experiment design" (all ${A.TOOLS_SLOTS.length} places) and one in "How this experience was for you" (all ${A.WELLBEING_SLOTS.length}), each place and each number two to five about equally, never the same number twice; the university plan drawn exactly as before; the key decides the door; only the number rows count for Prolific's rule, failing both is the flag, a row never reached is not a failure; the database rows, quality and the major copy; a random clicker fails both ${(failBoth / 1000).toFixed(1)}% (36 in 49), one number everywhere never passes both; the page draws and saves every row`);
+}
+
+/* ------------------------------------------------------------------ T10 the consent page of each door */
+{
+  const why = [];
+  const raw = src("ConsentPage.tsx");
+  const consent = bare(raw);
+  /* The university page, word for word in its key places (the researcher: the email version "as it is right now"). */
+  for (const kept of ['export const CONSENT_VERSION = "2026-09-14b";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
+    "Your $5 Amazon Gift Card", "Answer the quick attention checks as asked.", "Tick both boxes above to continue.",
+    "You do not have to finish in one sitting — see below.", "you may skip questions you do not wish to answer."]) {
+    if (!raw.includes(kept)) why.push(`the university page lost: ${kept.slice(0, 50)}`);
+  }
+  if (!/export const PROLIFIC_CONSENT_VERSION = "2026-10-06-prolific";/.test(consent)) why.push("the Prolific wording has no version stamp of its own");
+  const block = (name) => consent.slice(consent.indexOf(`function ${name}(`), consent.indexOf("\nfunction ", consent.indexOf(`function ${name}(`) + 10) > 0 ? consent.indexOf("\nfunction ", consent.indexOf(`function ${name}(`) + 10) : consent.indexOf("export function ConsentPage"));
+  const prolificText = ["ProlificSitting", "ProlificPayment", "ProlificPrivacy", "ProlificAgreement"].map(block).join("\n").replace(/\s+/g, " ");
+  for (const said of ["One Sitting, Within Prolific's Time Limit", "open the study again from Prolific", "Your Payment Through Prolific",
+    "If you fail two or more of them, your submission may be rejected.", "We never ask for your name or your email.",
+    "Your answers are stored with your Prolific ID", "I do not agree", "Stop without completing", "No completion code is needed.",
+    "version: PROLIFIC_CONSENT_VERSION"]) {
+    if (!prolificText.includes(said)) why.push(`the Prolific page does not say: ${said}`);
+  }
+  if (/gift card|Amazon|\$5|REQUIRED_ACTIVE_MINUTES|active minutes|your email address/i.test(prolificText)) why.push("the Prolific page names the gift card, the email or the minutes rule");
+  if ((block("ProlificAgreement").match(/<Checkbox\b/g) ?? []).length !== 1) why.push("the Prolific agreement does not have exactly one box");
+  if (!/disabled=\{!checked\}/.test(block("ProlificAgreement"))) why.push("the Prolific button works before the box is ticked");
+  const page = consent.slice(consent.indexOf("export function ConsentPage"));
+  for (const sw of ["{prolific ? <ProlificSitting /> : (", "{prolific ? <ProlificPayment /> : (", "{prolific ? <ProlificPrivacy /> : (", "{prolific ? <ProlificAgreement onAgree={onAgree} /> : ("]) {
+    if (!page.includes(sw)) why.push(`the page does not switch: ${sw}`);
+  }
+  if (!/door = "university"/.test(page) || !/const prolific = door === "prolific";/.test(page)) why.push("the page does not default to the university door");
+  if (!/You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific\./.test(page) || !/with your Prolific ID, and it will be deleted\./.test(page)) why.push("the Prolific withdrawal does not go through Prolific with the ID");
+  const flow = bare(src("ExperimentFlow.tsx"));
+  if (!/<ConsentPage\s+door=\{door\}/.test(flow)) why.push("the flow does not tell the consent page its door");
+  gate("T10", why.length === 0, why.slice(0, 5).join(" | ") ||
+    "the consent page: the university wording kept word for word in its key places; the Prolific door says paid through Prolific, one sitting within Prolific's time limit, the Prolific ID instead of the email, failing two or more checks may lead to a rejection, withdrawal through Prolific with the ID, one box, \"I do not agree\" with \"Stop without completing\"; no gift card, email or minutes there; its own version stamp; the flow passes the door");
 }
 
 /* ------------------------------------------------------------------ P1 the deleted pages' data */

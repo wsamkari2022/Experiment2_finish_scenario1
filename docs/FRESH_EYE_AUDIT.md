@@ -2049,3 +2049,17 @@ thesis says so.
   a strip above the progress bar), it asked "Not you?" right after a sign-in, and a phone broke the email mid-word.
   F2 (any key opens the whole record through /api/participants/lookup; older than the doors) is the next step, planned
   before Step 2.
+- **2026-10-07. The privacy fix (F2), the Prolific consent page (Step 2) and the second number row (Step 3)** (Waseem:
+  "implement the privacy fix now and also do 'Prolific consent page' and 'Second "pick the number" row'"; "1-B", "2 - no
+  limits"). Privacy: the lookup answers only the status; the details and the run come only from the claim, after the
+  server checks the age, never any analysis section; the create route answers "ok"; no write without the browser's id;
+  CORS gone; one `signIn` on the page (both start screens), and a Prolific person on a new device is asked the age. The
+  Prolific consent page: eight parts in Prolific's terms, one box, "I do not agree"; the university page word for word;
+  docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md for the ethics board. The second number row: Prolific plans only, one row per
+  section, two different numbers; only the number rows count for Prolific's rule, failing both the flag; the university
+  plan drawn exactly as before (20,000 compared, 0 different) and an in-progress university file kept. C15, T9, T10, L7
+  new; 26 breaks, 26 caught (two only after C15 was tightened). One trap on the way: a Python edit wrote a backspace
+  character into a check's regular expression instead of `\b`; found, fixed, and every changed file scanned. The live
+  check found a bug: after the right age the page set the participant before its reload, re-running the effect that
+  saves the stage, which wrote "start" over it, so the reload opened "Welcome back" again (both doors). Fixed (nothing on
+  the page changes before that reload) and held by C15; then checked live on both doors.

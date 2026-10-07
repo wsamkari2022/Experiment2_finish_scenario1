@@ -47,6 +47,10 @@
  *   C14 (the audit of 6 October 2026; the researcher's "4-Yes") "Not you?" on the university door: shown only when the
  *       page opens with a university run, the email partly hidden, gone once the person moves on, a confirmation first,
  *       then the run set aside (the machine's files kept) and the university door opened afresh
+ *   C15 (the audit's F2, 6 October 2026; the researcher's "1-B, 2 - no limits") privacy: the lookup answers only the status,
+ *       the create/update route only "ok"; the claim checks the age (both doors) before it hands back the person's
+ *       details and run; no write without a browser id; no cross-site access; the start screens never compare the age
+ *       themselves; signing in sets aside only that person's old saves
  *
  * Run:  npm run validate:session
  */
@@ -100,11 +104,13 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
   /* C1 */
   {
     const { browserVerdict, requestBrowser } = await import(path.join(ROOT, "server", "activeBrowser.js").replace(/\\/g, "/").replace(/^([A-Za-z]):/, "file:///$1:"));
-    const ok = browserVerdict("a", null) === "allow" && browserVerdict(null, "a") === "claim"
+    /* Since the audit of 6 October 2026 (F2) a request without the browser's id is REFUSED: every study page has sent it
+       since 29 September 2026, and "allow" let any script write any record it could name. */
+    const ok = browserVerdict("a", null) === "refuse" && browserVerdict(null, null) === "refuse" && browserVerdict(null, "a") === "claim"
       && browserVerdict("a", "a") === "allow" && browserVerdict("a", "b") === "refuse"
       && requestBrowser({ headers: { "x-vrds-browser": " b1 " } }) === "b1"
       && requestBrowser({ headers: {} }) === null && requestBrowser({ headers: { "x-vrds-browser": "x".repeat(200) } }) === null;
-    gate("C1", ok, "the server's rule: no id allow, nobody holds it claim, this browser allow, another browser refuse");
+    gate("C1", ok, "the server's rule: no id refuse, nobody holds it claim, this browser allow, another browser refuse");
   }
 
   /* C2 */
@@ -172,8 +178,10 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     updateStage: async (_e, stage) => answer(`stage ${stage}`),
     markCompleted: async () => answer("completed"),
     saveSection: async (p) => answer(`section ${p}`),
-    getResumeFiles: async () => null,
-    claimBrowser: async () => { sent.push("claim"); },
+    signIn: async (key) => {
+      sent.push("claim");
+      return { participant: { email: key, sessionId: "s", age: 34, gender: "Female", stage: "feedback", consent: null, status: "Study Not Completed", createdAt: "", updatedAt: "", completedAt: null }, files: null };
+    },
     isActiveBrowser: async () => server.mode !== "another",
   });
   await wait(20);
@@ -232,8 +240,9 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     storage.saveProgress("sara@example.com", "feedback");
     await wait(60);
     server.mode = "up";
-    const claimed = await storage.claimThisBrowser("sara@example.com", 34);
-    if (!claimed || storage.pendingWriteCount() !== 0 || !sent.includes("claim")) why.push("claiming did not set the old queue aside before taking the record");
+    /* Signing in (since the audit of 6 October 2026: the server checks the age) sets this person's old queue aside first. */
+    const claimed = await storage.signIn("sara@example.com", 34);
+    if (!claimed.ok || storage.pendingWriteCount() !== 0 || !sent.includes("claim")) why.push("signing in did not set the old queue aside before taking the record");
     gate("C6", why.length === 0, why.length ? why.join(" | ") : "\"another browser holds this record\" locks the page, sets the queue aside (kept, never sent), parks nothing; claiming this browser sets an old queue aside first");
   }
 
@@ -284,9 +293,15 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!b3.includes("savedOwner === progressOwner(owner)") || !b3.includes("owner: progressOwner(owner)")) why.push("Block 3 does not save and restore its progress with an owner");
     if (!b2.includes("progressSaved();") || !b3.includes("progressSaved();")) why.push("Blocks 2 and 3 do not send their progress");
     /* The resume step, shared by both doors' first pages since 6 October 2026. */
-    const resume = flow.slice(flow.indexOf("const onResume = (entry: DirectoryEntry) =>"), flow.indexOf("if (stage === \"consent\")"));
-    const iClaim = resume.indexOf("await claimThisBrowser("), iSave = resume.indexOf("saveParticipant("), iRestore = resume.indexOf("restoreParticipantFiles(");
-    if (!(iClaim > 0 && iClaim < iSave && iSave < iRestore)) why.push("the start screen does not claim the browser before it writes and downloads");
+    const resume = flow.slice(flow.indexOf("const onResume = (entry: DirectoryEntry, restored: number) =>"), flow.indexOf("if (stage === \"consent\")"));
+    /* Since the audit of 6 October 2026 (F2) the claim AND the download happen in signIn, on both start screens, after the
+       server checked the age and before onResume writes anything; onResume itself neither claims nor downloads. */
+    for (const [file, label] of [["src/experiment/StartScreen.tsx", "the university"], ["src/experiment/ProlificStartScreen.tsx", "the Prolific"]]) {
+      const page = src(file);
+      const iSign = page.indexOf("await signIn("), iResume = page.indexOf("onResume(result.entry, result.restored)");
+      if (!(iSign > 0 && iSign < iResume)) why.push(`${label} start screen does not sign in (age checked by the server) before it resumes`);
+    }
+    if (!resume || /claimThisBrowser|restoreParticipantFiles|getResumeFiles/.test(resume) || !resume.includes("saveParticipant(")) why.push("the resume step still claims or downloads by itself");
     if (!resume.includes("localStorage.setItem(SESSION_ID_KEY, entry.sessionId)")) why.push("a new device does not take the participant's own id (scenario 6's rule order depends on it)");
     const iLock = flow.indexOf("if (lock) {"), iStart = flow.indexOf("if (stage === \"start\") {");
     if (!(iLock > 0 && iLock < iStart) || !flow.includes("<SessionLockScreen")) why.push("the lock screen is not shown before any page");
@@ -565,7 +580,9 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
       calls.push({ url: String(url), body: init?.body ? JSON.parse(init.body) : null });
       const answer = String(url).includes("/conditions/assign")
         ? { number: 3, type: "APA_Only", assignedAt: "2026-10-06T10:00:00Z" }
-        : { prolific_pid: PID, prolific_study_id: "study0001", age: 30, status: "Study Not Completed", current_stage: "money" };
+        : String(url).includes("/claim")
+          ? { participant: { prolific_pid: PID, prolific_study_id: "study0001", age: 30, status: "Study Not Completed", current_stage: "money" }, files: null }
+          : { status: "Study Not Completed" };
       return { ok: true, status: 200, json: async () => answer };
     };
     const api = B("apiClient.js").apiClient;
@@ -574,7 +591,11 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (up.email !== undefined || up.prolificPid !== PID || up.prolificStudyId !== "study0001" || up.prolificSessionId !== "sess0001") why.push(`a Prolific record was sent as ${JSON.stringify(up).slice(0, 160)}`);
     const found = await api.findParticipant(PID);
     if (calls.at(-1)?.body?.prolificPid !== PID || calls.at(-1)?.body?.email !== undefined) why.push("the lookup sent the Prolific ID as an email");
-    if (found?.email !== PID || found?.prolificStudyId !== "study0001") why.push(`a Prolific record came back as ${JSON.stringify(found).slice(0, 120)}`);
+    if (JSON.stringify(found) !== JSON.stringify({ status: "Study Not Completed" })) why.push(`the lookup gave more than a glance: ${JSON.stringify(found).slice(0, 120)}`);
+    /* The record itself comes only through signing in (since the audit of 6 October 2026), keyed by the Prolific ID. */
+    const signed = await api.signIn(PID, 30);
+    if (!calls.at(-1)?.url.endsWith(`/participants/${PID}/claim`) || calls.at(-1)?.body?.age !== 30) why.push("signing in does not send the age to the claim route");
+    if (signed?.participant?.email !== PID || signed?.participant?.prolificStudyId !== "study0001") why.push(`a Prolific record came back as ${JSON.stringify(signed).slice(0, 120)}`);
     await api.findParticipant("ana@example.com");
     if (calls.at(-1)?.body?.email !== "ana@example.com") why.push("the university lookup changed");
     store.set("vrds_pending_email", "someone-else@example.com");
@@ -639,7 +660,10 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!words(pstart) || words(pstart) !== words(ustart)) why.push("the Prolific first page's welcome differs from the university's");
     need(pstart, /<Text as="span" whiteSpace="nowrap">Human-AI Moral Value<\/Text>\{" "\}\s*<Text as="span" whiteSpace="nowrap">Decision-making Study<\/Text>/, "the Prolific first page does not carry the study's name");
     if (/type="email"|autoComplete="email"|[\w.-]+@[\w-]+\.\w{2,}/.test(pstart)) why.push("the Prolific first page asks or shows an email");
-    if (/age/i.test(pstart.split("{mode.kind === \"resume\"")[1]?.split("{mode.kind === \"finished\"")[0] ?? "")) why.push("a returning Prolific person is asked a question (the researcher's 1-A: none)");
+    /* The researcher's "1-B" (the audit of 6 October 2026): continuing on another device asks the age, checked by the server. */
+    const resumeBlock = pstart.split("{mode.kind === \"resume\"")[1]?.split("{mode.kind === \"finished\"")[0] ?? "";
+    if (!/label="Your age"/.test(resumeBlock) || !/onClick=\{\(\) => void continueWithAge\(\)\}/.test(resumeBlock)
+        || !/const result = await signIn\(pid, given\);/.test(pstart)) why.push("a Prolific person continuing on another device is not asked their age (the researcher's 1-B), or it is not checked by the server");
     need(pstart, /Your Prolific ID/, "the Prolific first page does not show the ID");
     /* Found in the live check (6 October 2026): the page looked a person up before the server was known and called a
        finished person "new"; and an unowned university condition kept a Prolific arrival at the university's door. */
@@ -702,6 +726,76 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!/<NotYouLink \/>/.test(src("src/App.tsx"))) why.push("the note is not on the page");
     gate("C14", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : "\"Not you?\" on the university door: shown only when the page opens with a university run (never a Prolific one), the email partly hidden, gone once the person moves on or closes it, a confirmation first, then the run set aside (the machine's files kept) and the university door opened afresh");
+  }
+
+  /* ----------------------------------------------------------------------------------------- C15 */
+  {
+    const why = [];
+    const server = src("server/index.js");
+    const code = server.replace(/\/\*[\s\S]*?\*\//g, "");
+    const routeBody = (marker) => { const i = code.indexOf(marker); const j = code.indexOf("\n);", i); return i < 0 ? "" : code.slice(i, j); };
+    /* The lookup: only the status. */
+    const lookup = routeBody('"/api/participants/lookup"');
+    if (!/projection: \{ _id: 0, status: 1 \}/.test(lookup) || !/res\.json\(doc \? \{ status: doc\.status \} : null\)/.test(lookup)) why.push("the lookup still answers with more than the status");
+    /* The create/update route: only "ok". */
+    const create = routeBody('app.post(\n  "/api/participants",');
+    if (!/res\.json\(\{ ok: true \}\);/.test(create) || /res\.json\(doc\)/.test(create)) why.push("the create/update route still answers with the record");
+    /* The claim: the age checked before anything is answered; the details and files only after. */
+    const claim = routeBody('"/api/participants/:key/claim"');
+    const iAge = claim.indexOf("Number(doc.age) !== Number(req.body?.age)"), iAnswer = claim.indexOf("res.json({ participant, files: resumeState?.files ?? null })");
+    if (!(iAge > 0 && iAnswer > iAge)) why.push("the claim does not check the age before it answers with the record");
+    if (!/projection: SIGN_IN_FIELDS/.test(claim)) why.push("the claim reads more than the sign-in fields");
+    /* The saved run travels only as `files`, never inside the person's details (a deliberate break found this gap). */
+    if (!/const \{ resume_state: resumeState, \.\.\.participant \} = doc;/.test(claim) || /participant\s*=\s*doc\b/.test(claim)) why.push("the claim hands back the saved run inside the person's details");
+    const fields = server.match(/const SIGN_IN_FIELDS = \{([\s\S]*?)\};/)?.[1] ?? "";
+    for (const leak of ["blocks", "analysis", "headline", "major_info_and_scores", "active_browser", "quality", "timings", "sessions"]) {
+      if (new RegExp(`\\b${leak}: 1`).test(fields)) why.push(`the claim hands back ${leak}`);
+    }
+    /* No write without a browser id; no cross-site access. */
+    if (!/if \(!requestId\) \{\s*res\.status\(400\)\.json\(\{ error: "the browser id is required" \}\);\s*return false;/.test(code)) why.push("a write without a browser id is still accepted");
+    if (/import cors|app\.use\(cors|access-control-allow/i.test(code)) why.push("other websites may still call the server");
+    /* After signing in, a page that reloads to pick up the run changes nothing before it reloads (found live on 7
+       October 2026: setting the participant first re-ran the stage-saving effect, which wrote "start" over the saved
+       stage, and the reload opened "Welcome back" again). */
+    {
+      const flow = src("src/experiment/ExperimentFlow.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+      const resume = flow.slice(flow.indexOf("const onResume = (entry: DirectoryEntry, restored: number) => {"), flow.indexOf("if (door === \"prolific\") {", flow.indexOf("const onResume")));
+      const iReload = resume.indexOf("window.location.reload();"), iSet = resume.indexOf("setPendingEmail(entry.email);"), iStage = resume.indexOf("localStorage.setItem(STORAGE_KEY_STAGE, entry.stage || \"money\");");
+      if (!(iStage > 0 && iReload > iStage && iSet > iReload) || /set(Lock|Stage|PendingEmail)\(/.test(resume.slice(iStage, iReload))) why.push("the page changes its state before the reload that picks up the run, so the stage can be overwritten");
+    }
+    /* The page: the age goes to the server; the start screens never compare it themselves. */
+    const ustart = src("src/experiment/StartScreen.tsx"), pstart = src("src/experiment/ProlificStartScreen.tsx");
+    if (/mode\.entry\.age|entry\.age !==|given !== /.test(ustart + pstart)) why.push("a start screen still compares the age itself");
+    /* signIn: a wrong age is "mismatch", the right one brings the files down; nobody else's waiting saves are set aside. */
+    {
+      store.clear();
+      const outbox = [
+        { op: "updateStage", email: "mia@example.com", stage: "old" },
+        { op: "updateStage", email: "someone-else@example.com", stage: "theirs" },
+      ];
+      store.set("vrds_outbox", JSON.stringify(outbox));
+      let mode = "wrong";
+      storage.setRemoteBackend({
+        findParticipant: async () => ({ status: "Study Not Completed" }), upsertParticipant: async () => { throw new Error("down"); },
+        updateStage: async () => { throw new Error("down"); }, markCompleted: async () => {}, saveSection: async () => {}, isActiveBrowser: async () => true,
+        signIn: async (key, age) => {
+          if (mode === "wrong") throw Object.assign(new Error("403"), { httpStatus: 403 });
+          return { participant: { email: key, sessionId: "s", age, gender: "Female", stage: "product", consent: null, status: "Study Not Completed", createdAt: "", updatedAt: "", completedAt: null },
+            files: { block4_reflection_results: { mine: true } } };
+        },
+      });
+      const wrong = await storage.signIn("mia@example.com", 99);
+      if (wrong.ok || wrong.reason !== "mismatch") why.push(`a wrong age answered ${JSON.stringify(wrong)}`);
+      mode = "right";
+      const right = await storage.signIn("mia@example.com", 30);
+      if (!right.ok || right.restored !== 1 || JSON.parse(store.get("block4_reflection_results") ?? "{}").mine !== true) why.push(`the right age did not bring the run down: ${JSON.stringify(right).slice(0, 120)}`);
+      const left = JSON.parse(store.get("vrds_outbox") ?? "[]").map((i) => i.email);
+      if (left.join() !== "someone-else@example.com") why.push(`after signing in the queue holds ${left.join(", ")} (only somebody else's saves should stay)`);
+      storage.setRemoteBackend(null);
+      store.clear();
+    }
+    gate("C15", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : "privacy (the audit's F2): the lookup gives only the status, the create/update route only \"ok\", the claim checks the age before it hands back the person's details and run (never their analysis or other sections); no write without a browser id; no cross-site access; the start screens never compare the age themselves; signing in sets aside only that person's old saves");
   }
 
   console.log("");

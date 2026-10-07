@@ -25,6 +25,19 @@
  * cannot say which wording a given participant actually agreed to, which is the first question
  * asked when a consent form changes mid-study.
  *
+ * THE PROLIFIC DOOR (since 6 October 2026; Step 2 of docs/PROLIFIC_CONVERSION_PLAN.md, section 4.B). The same page and
+ * design, with Prolific's terms where the university's differ, because Prolific's rules differ:
+ *   - paid through Prolific (the amount shown there), not a $5 gift card by email;
+ *   - no "35 active minutes" rule: Prolific does not allow refusing pay for time or for the researcher's own measures
+ *     (active time is still measured, for the analysis);
+ *   - one sitting, within Prolific's time limit (a page closed by accident continues from Prolific's link);
+ *   - no email: the answers are stored with the Prolific ID;
+ *   - the attention rule in Prolific's terms: failing two or more checks may lead to a rejected submission;
+ *   - one agreement box, and "I do not agree", which says how to return the study on Prolific;
+ *   - withdrawal through a Prolific message (or the researcher's email) with the Prolific ID.
+ * Its own version stamp (PROLIFIC_CONSENT_VERSION). The university door's wording is unchanged, word for word.
+ * The ethics board must approve this text before the Prolific door opens to participants.
+ *
  * THE BUTTON IS DISABLED UNTIL THE BOX IS TICKED
  * Deliberate, and not merely a validation convenience: the tick is the consent record. A page
  * that can be walked past without it produces participants whose agreement was never given.
@@ -43,12 +56,15 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuArrowRight, LuCheck, LuClock, LuGift, LuLock, LuShieldCheck } from "react-icons/lu";
+import { LuArrowRight, LuCheck, LuClock, LuGift, LuLock, LuShieldCheck, LuUndo2, LuWallet } from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { REQUIRED_ACTIVE_MINUTES } from "./dbShape";
+import type { RecruitmentSource } from "./recruitment";
 
 /** Bump whenever the consent wording below changes. Stored with every consent record. */
 export const CONSENT_VERSION = "2026-09-14b";
+/** The Prolific door's wording (since 6 October 2026). Bump it whenever that wording changes. */
+export const PROLIFIC_CONSENT_VERSION = "2026-10-06-prolific";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
@@ -142,7 +158,176 @@ function Highlight({
   );
 }
 
-export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => void }) {
+/* ------------------------------------------------------------------------------------- THE PROLIFIC DOOR */
+
+/** One sitting, within Prolific's time limit (it replaces "You Can Stop and Come Back"). */
+function ProlificSitting() {
+  return (
+    <Highlight icon={<LuClock />} title="One Sitting, Within Prolific's Time Limit">
+      <Text>
+        Please complete the study in one sitting, within the time limit Prolific shows you. If the page closes by
+        accident, open the study again from Prolific: you will continue from where you stopped.
+      </Text>
+    </Highlight>
+  );
+}
+
+/** The payment through Prolific, and what completes the study (it replaces the gift-card panel). */
+function ProlificPayment() {
+  return (
+    <Box data-prolific-payment borderWidth="2px" borderColor="orange.solid" bg="orange.subtle" rounded="xl" p={{ base: "4", md: "5" }}>
+      <HStack gap="2.5" mb="3" align="center">
+        <Icon boxSize="5" color="orange.fg">
+          <LuWallet />
+        </Icon>
+        <Heading size="sm" color="fg" letterSpacing="tight">
+          Your Payment Through Prolific
+        </Heading>
+      </HStack>
+      <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+        Everyone who completes the study is paid{" "}
+        <Text as="span" color="fg" fontWeight="semibold">
+          through Prolific
+        </Text>
+        , the amount shown in the study on Prolific. Every submission is reviewed before it is paid.
+      </Text>
+      <HStack gap="2.5" mt="4" mb="3" align="center">
+        <Icon boxSize="4" color="orange.fg">
+          <LuCheck />
+        </Icon>
+        <Text fontSize="xs" fontWeight="bold" color="orange.fg" textTransform="uppercase" letterSpacing="wider">
+          What completes it
+        </Text>
+      </HStack>
+      <VStack align="stretch" gap="3" fontSize="sm" color="fg.muted" lineHeight="tall">
+        <Rule title="Reach the end.">
+          Answer the feedback questions and arrive at the final page. There you receive your completion code, and a
+          button takes you back to Prolific.
+        </Rule>
+        <Rule title="Answer the attention checks as asked.">
+          A few simple questions check that you are reading. If you fail two or more of them, your submission may be
+          rejected.
+        </Rule>
+        <Rule title="Answer thoughtfully.">
+          A submission that shows clear low effort throughout, such as the same answer to every question, may be
+          rejected.
+        </Rule>
+      </VStack>
+    </Box>
+  );
+}
+
+/** Privacy without an email (it replaces "Privacy and Your Email"). */
+function ProlificPrivacy() {
+  return (
+    <Highlight icon={<LuLock />} title="Privacy and Your Prolific ID">
+      <Text color="fg" fontWeight="semibold">
+        We never ask for your name or your email.
+      </Text>
+      <Text>
+        Your answers are stored with your Prolific ID, which we use only to pay you and to let you continue if the page
+        closes. Your Prolific ID is seen only by the research team and is never shown to anyone else taking part.
+      </Text>
+      <Text>
+        Your answers are analyzed and reported as group results, so no individual can be identified in anything we
+        publish. Data is kept on secure, password-protected storage accessible only to the research team.
+      </Text>
+    </Highlight>
+  );
+}
+
+/** The agreement for the Prolific door: one box, and a way to decline that says how to return the study. */
+function ProlificAgreement({ onAgree }: { onAgree: (record: ConsentRecord) => void }) {
+  const [checked, setChecked] = useState(false);
+  const [declined, setDeclined] = useState(false);
+  if (declined) {
+    return (
+      <Box data-prolific-declined borderWidth="2px" borderColor="border.emphasized" bg="bg.panel" rounded="2xl" p={{ base: "5", md: "6" }}>
+        <HStack gap="2.5" mb="3" align="center">
+          <Icon boxSize="4" color="fg.muted">
+            <LuUndo2 />
+          </Icon>
+          <Heading size="sm" color="fg" letterSpacing="tight">
+            Thank you for considering the study
+          </Heading>
+        </HStack>
+        <Text fontSize="sm" color="fg.muted" lineHeight="tall">
+          You have not agreed, so nothing has been recorded. Please go back to Prolific and return the study by choosing{" "}
+          <Text as="span" color="fg" fontWeight="semibold">
+            &ldquo;Stop without completing&rdquo;
+          </Text>
+          . No completion code is needed.
+        </Text>
+        <Button mt="4" size="sm" variant="ghost" rounded="lg" color="fg.muted" onClick={() => setDeclined(false)}>
+          Go back to the information
+        </Button>
+      </Box>
+    );
+  }
+  return (
+    <Box
+      data-prolific-agreement
+      borderWidth="2px"
+      borderColor={checked ? "green.solid" : "border.emphasized"}
+      bg="bg.panel"
+      rounded="2xl"
+      p={{ base: "5", md: "6" }}
+      transition="border-color 0.2s ease"
+    >
+      <HStack gap="2.5" mb="3" align="center">
+        <Icon boxSize="4" color={checked ? "green.fg" : "fg.subtle"}>
+          <LuShieldCheck />
+        </Icon>
+        <Heading size="sm" color="fg" letterSpacing="tight">
+          Agreement
+        </Heading>
+      </HStack>
+      <Checkbox checked={checked} onCheckedChange={(e) => setChecked(!!e.checked)} colorPalette="green" alignItems="flex-start" cursor="pointer">
+        <Text fontSize="sm" color="fg" lineHeight="tall">
+          I have read the information above. I voluntarily agree to take part, and I understand how the study is paid
+          through Prolific and that the attention checks must be answered as asked.
+        </Text>
+      </Checkbox>
+      <Button
+        mt="5"
+        size="lg"
+        w="full"
+        colorPalette="green"
+        bg={checked ? "green.solid" : "bg.muted"}
+        color={checked ? "green.contrast" : "fg.subtle"}
+        _hover={checked ? { opacity: 0.92 } : {}}
+        rounded="lg"
+        fontWeight="semibold"
+        gap="2"
+        disabled={!checked}
+        onClick={() => {
+          if (!checked) return;
+          onAgree({ agreed: true, timestamp: new Date().toISOString(), version: PROLIFIC_CONSENT_VERSION });
+        }}
+      >
+        I agree — continue
+        <Icon boxSize="4">
+          <LuArrowRight />
+        </Icon>
+      </Button>
+      {!checked && (
+        <Text mt="2.5" fontSize="xs" color="fg.subtle" textAlign="center">
+          Tick the box above to continue.
+        </Text>
+      )}
+      <Button mt="3" size="sm" variant="ghost" w="full" rounded="lg" color="fg.muted" onClick={() => setDeclined(true)}>
+        I do not agree
+      </Button>
+    </Box>
+  );
+}
+
+export function ConsentPage({ onAgree, door = "university" }: {
+  onAgree: (record: ConsentRecord) => void;
+  /** Which door (since 6 October 2026): the Prolific door gets Prolific's terms; the university's is unchanged. */
+  door?: RecruitmentSource;
+}) {
+  const prolific = door === "prolific";
   const [checked, setChecked] = useState(false);
   /*
    * Deliberately a SECOND tick, not folded into the first. The payment rules are the part a
@@ -292,7 +477,7 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
                 <Text as="span" color="fg" fontWeight="semibold">
                   40 to 55 minutes
                 </Text>
-                . You do not have to finish in one sitting — see below.
+                {prolific ? ". Please complete it in one sitting — see below." : ". You do not have to finish in one sitting — see below."}
               </Text>
             </Section>
 
@@ -303,12 +488,14 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
               reason the address is collected, and saying it twice made the shorter version read as
               a second, separate purpose. The address is explained in exactly one place.
             */}
+            {prolific ? <ProlificSitting /> : (
             <Highlight icon={<LuArrowRight />} title="You Can Stop and Come Back">
               <Text>
                 You may close the study at any time and return later to continue from where you
                 stopped. Your answers are saved, and you can even continue on a different computer.
               </Text>
             </Highlight>
+            )}
 
             {/*
               THE PAYMENT, AND THE RULES OF IT, IN ONE PANEL.
@@ -322,6 +509,7 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
               time is a condition of payment they are entitled to know it in advance, and a rule
               agreed to beforehand is far easier to apply afterwards than one produced at the end.
             */}
+            {prolific ? <ProlificPayment /> : (
             <Box
               borderWidth="2px"
               borderColor="orange.solid"
@@ -382,7 +570,9 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
                 </Rule>
               </VStack>
             </Box>
+            )}
 
+            {prolific ? <ProlificPrivacy /> : (
             <Highlight icon={<LuLock />} title="Privacy and Your Email">
               <Text color="fg" fontWeight="semibold">
                 This study is confidential, not anonymous.
@@ -402,6 +592,7 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
                 team.
               </Text>
             </Highlight>
+            )}
 
             <Section title="Possible Risks">
               <Text>
@@ -422,16 +613,17 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
 
             <Section title="Taking Part Is Voluntary">
               <Text>
-                Your participation is completely voluntary. There is no penalty for not taking
-                part, and you may skip questions you do not wish to answer.
+                {prolific
+                  ? "Your participation is completely voluntary. There is no penalty for not taking part: if you decide not to, please return the study on Prolific."
+                  : "Your participation is completely voluntary. There is no penalty for not taking part, and you may skip questions you do not wish to answer."}
               </Text>
             </Section>
 
             <Section title="Your Right to Withdraw">
               <Text>
-                You may stop at any time, without giving a reason and without consequence. If you
-                would like your data removed after taking part, contact the researcher below and
-                it will be deleted.
+                {prolific
+                  ? "You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific. If you would like your data removed after taking part, send the researcher a message through Prolific, or email the researcher below, with your Prolific ID, and it will be deleted."
+                  : "You may stop at any time, without giving a reason and without consequence. If you would like your data removed after taking part, contact the researcher below and it will be deleted."}
               </Text>
             </Section>
 
@@ -485,7 +677,8 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
           </Stack>
         </Box>
 
-        {/* Agreement */}
+        {/* Agreement - the Prolific door's own (one box, and "I do not agree") */}
+        {prolific ? <ProlificAgreement onAgree={onAgree} /> : (
         <Box
           borderWidth="2px"
           borderColor={checked ? "green.solid" : "border.emphasized"}
@@ -562,6 +755,7 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
             </Text>
           )}
         </Box>
+        )}
       </VStack>
     </Box>
   );

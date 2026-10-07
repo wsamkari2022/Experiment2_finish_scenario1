@@ -486,7 +486,7 @@ console.log("===================================================================
   /* "Start or continue" moved into the card; the email step itself unchanged. */
   if (!/\{mode\.kind !== "verify" && \(\s*<VStack[^>]*>\s*<Heading as="h2"[^>]*>\s*\{mode\.kind === "finished" \? "You have already finished" : "Start or continue"\}/.test(start)) why.push("\"Start or continue\" is not the card's own title");
   for (const [needle, what] of [["const entry = await findParticipant(email);", "the lookup"], ["onNewParticipant(email.trim().toLowerCase());", "a new address"],
-    ["if (given !== mode.entry.age) {", "the age check"], ['helperText="Used only to save your place and to send your gift card when you finish."', "the email's helper text"]]) {
+    ["const result = await signIn(email.trim().toLowerCase(), given);", "the age check (on the server since the audit of 6 October 2026)"], ['helperText="Used only to save your place and to send your gift card when you finish."', "the email's helper text"]]) {
     if (!start.includes(needle)) why.push(`the email step changed: ${what}`);
   }
   /* The panel's title row on a phone. */

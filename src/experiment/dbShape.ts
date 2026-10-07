@@ -116,7 +116,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-06-two-doors";
+export const SHAPE_VERSION = "2026-10-07-prolific-checks";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -693,9 +693,13 @@ export function buildQuality(
 
     straightlined_feedback: straightlined,
 
-    attention_checks_asked: 3,
+    attention_checks_asked: attentionScore?.asked ?? 3,
     attention_checks_passed: attentionScore?.passedCount ?? 0,
     passed_all_attention_checks: passedAttention,
+    /* The Prolific door's rule (since 7 October 2026): only the two number rows count, and failing BOTH is the "look
+       first" flag (Step 4 makes it the completion path). null in the university door. */
+    prolific_instruction_checks_failed: attentionScore?.instruction?.failed ?? null,
+    prolific_failed_both_instruction_checks: attentionScore?.instruction ? attentionScore.instruction.failedBoth : null,
 
     /*
      * The verdict, and the reason. Storing WHY it failed matters as much as the answer: a
@@ -3389,7 +3393,12 @@ export function buildMajorScores(
        29 September 2026); the gift card needs passed_all. validate:attention T4 checks the copy. */
     attention_checks: (() => {
       const a = buildAttentionSection(attention);
-      return a ? { passed_all: a.passed_all, passed_count: a.passed_count, answered_count: a.answered_count, misses: a.misses } : null;
+      if (!a) return null;
+      const base = { passed_all: a.passed_all, passed_count: a.passed_count, answered_count: a.answered_count, misses: a.misses };
+      /* The Prolific door adds its own rule (since 7 October 2026); the university door's copy is unchanged. */
+      const rule = a.prolific_rule as { instruction_checks_failed: number; failed_both_instruction_checks: boolean } | undefined;
+      return rule ? { ...base, door: "prolific", instruction_checks_failed: rule.instruction_checks_failed,
+        failed_both_instruction_checks: rule.failed_both_instruction_checks } : base;
     })(),
 
     /* 14 ----------------------------------------------------------------- the company's value */

@@ -207,7 +207,8 @@ SECTIONS = [
          "Since 6 October 2026 (your 1-A, 2-A, 4-A; Step 1). moonlander.fit.edu asks the email as before; /prolific takes the "
          "Prolific ID from Prolific's link (a paste box if it is missing), stores it as prolific_pid and never as an email, "
          "marks every new record with its door (recruitment_source) and balances the four conditions inside each door. A "
-         "returning Prolific person continues with no question; \"A little about you\" asks four questions there. 100 students "
+         "returning Prolific person continues with no question on the same browser, and is asked their age on another "
+         "device (your 1-B, 7 October); \"A little about you\" asks four questions there. 100 students "
          "and 100 Prolific people at once: 25 per condition inside each door. Checked live on the built site.",
          ["session", "conditions", "load"], "(C13, N25, L5)"),
         ("The database's \"one person\" rules work for both doors, and the swap is safe.",
@@ -219,6 +220,22 @@ SECTIONS = [
          "Since 6 October 2026 (your 4-Yes). When the university door opens with somebody's run in the browser, a small note "
          "says \"This study is open for w•••@my.fit.edu. Not you?\" (the email partly hidden); after a confirmation the "
          "browser forgets that run (it stays on the server) and the study starts afresh. Checked live.", ["session"], "(C14)"),
+        ("A key alone opens nothing: an email or a Prolific ID shows only \"finished or not\".",
+         "Since 7 October 2026 (the audit's F2, your 2-A, 1-B, \"2 - no limits\"). The server checks the age before it hands "
+         "back a person's details and saved run, and it never hands back their answers' analysis or any other section. A save "
+         "without the browser's id is refused, and other websites cannot read the server's answers. Checked on the real "
+         "server (a wrong age refused, the right age gives no analysis) and live in the browser.", ["session", "load"], "(C15, L7)"),
+        ("The Prolific version's consent page says Prolific's terms; the university page is unchanged.",
+         "Since 7 October 2026 (Step 2). Paid through Prolific (no gift card, no minutes rule), one sitting within Prolific's "
+         "time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission may be "
+         "rejected.\", withdrawal through Prolific, one tick-box, and \"I do not agree\" (return the study on Prolific). "
+         "The text for your ethics board: docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md.", ["attention"], "(T10)"),
+        ("The Prolific version has two \"pick the number\" rows; the university version keeps its one.",
+         "Since 7 October 2026 (your 3-B, Step 3). One row in \"The tools & the experiment design\" and one in \"How this "
+         "experience was for you\", two different numbers two to five. Only these two count for Prolific's rule, and failing "
+         "BOTH is the \"look first\" flag (a random clicker fails both about 36 times in 49). The university plan is drawn "
+         "exactly as before (20,000 compared, 0 different), and a run already in progress keeps its answered checks.",
+         ["attention"], "(T9)"),
         ("The live landing page never gives a random condition.",
          "It asks the server up to four times with the same arrival id; if the server cannot be reached it says \"We could "
          "not reach the study\" with \"Try again\", which keeps the arrival id, so nobody is counted twice. Checked live with "
@@ -462,15 +479,14 @@ OPEN = [
      "Decided 6 October 2026: two versions on one website (the email version for FIT students and employees, and "
      "moonlander.fit.edu/prolific), conditions balanced per group, the second number check in the Prolific version only, "
      "no pilot, the first batch 40 places, every submission manually reviewed with a daily pay check by Claude. Built: "
-     "Step 0 (many people at once) and Step 1 (the two doors and the Prolific ID). Still to build: steps 2-5 in "
-     "docs/PROLIFIC_CONVERSION_PLAN.md section 1b (the Prolific door still shows the university consent page). Deploy "
+     "Step 0 (many people at once), Step 1 (the two doors and the Prolific ID), the privacy fix, Step 2 (the Prolific "
+     "consent page) and Step 3 (the second number row). Still to build: Step 4 (the end page with the completion code "
+     "and \"Return to Prolific\") and Step 5 (the daily pay check), docs/PROLIFIC_CONVERSION_PLAN.md section 1b. Deploy "
      "after Step 4, with a database backup first (your 3-A).", "Before Prolific"),
-    ("Anybody who knows a key can download that person's whole record (audit F2)",
-     "Found in the audit of 6 October 2026, older than the two doors: /api/participants/lookup returns the whole record "
-     "(every answer, and the age) to anyone who knows a participant's email or Prolific ID, so the \"email and age\" check "
-     "is weaker than it looks. Your 2-A: fix it as the next step, before Step 2 - the start page would learn only \"new, "
-     "unfinished or finished\", the server would check the age itself, and answers would come down only after that.",
-     "Before launch, next"),
+    ("Your ethics board approves the Prolific consent text",
+     "docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md shows the Prolific version's consent page beside the university's: eight "
+     "parts differ (payment through Prolific, one sitting, the Prolific ID instead of the email, the two-failure attention "
+     "rule, one tick-box, \"I do not agree\"). The Prolific door must not open before the approval.", "Before Prolific"),
     ("Fix 1, the very last fix before launch",
      "Done for Baseline on 3 October 2026; conditions 1-3 still wait. The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
      "page compares the wish with \"what you said matters most\", and the intro page says \"Each option will show you "
@@ -494,8 +510,8 @@ OPEN = [
      "ethics board whether this change to how the gift card is earned needs their approval before launch.", "Before launch"),
 
     ("The one-browser rule is only as strong as the email-and-age check",
-     "Anyone who knows a participant's email and age can take their record, exactly as they could already continue "
-     "their study. It stops accidents and casual misuse, not a determined attacker; there are no passwords.", "Known"),
+     "Anyone who knows a participant's key (email or Prolific ID) and age can take their record, exactly as they could "
+     "already continue their study (since 7 October 2026 a key alone shows only \"finished or not\"). It stops accidents and casual misuse, not a determined attacker; there are no passwords.", "Known"),
     ("Decisions still open (for you and your advisor)",
      "A3 (the card order read as a recommendation), A5 (your values drawn over the options), A9 (your value numbers on "
      "screen while choosing), B6 and E7 (difference scores against level scores), C2 and C8 (the thresholds' "

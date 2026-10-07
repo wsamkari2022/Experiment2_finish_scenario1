@@ -19,6 +19,9 @@
  *   L5  (the two doors, since 6 October 2026) 100 students and 100 Prolific people in the same instant: each door 25 per
  *       condition, every Prolific record under prolific_pid with NO email and its door and Prolific's ids, every
  *       university record under its email and marked university
+ *   L7  (the audit's F2) privacy on the real server: a lookup reveals only the status, a wrong age is refused, the right
+ *       age brings back the person's details and run but none of their analysis, the create/update route answers only
+ *       "ok", a write without the browser's id is refused, and another website gets no permission to read answers
  *   L6  the database rule swap: the throw-away database is first made with TODAY'S rule ("one email = one person" over
  *       every record) and an old record; the new server must replace the rule, keep the record, and accept the many
  *       Prolific records that have no email
@@ -215,6 +218,39 @@ try {
   const swapOk = emailRule?.unique && JSON.stringify(emailRule.partialFilterExpression) === JSON.stringify({ email: { $type: "string" } })
     && pidRule?.unique && JSON.stringify(pidRule.partialFilterExpression) === JSON.stringify({ prolific_pid: { $type: "string" } })
     && oldAfter?.participant_id === oldRecord.participant_id && oldAfter?.blocks?.kept === true && proDocs.length > 1;
+  /* L7: privacy on the real server (the audit's F2). */
+  {
+    const post = async (route, body, headers = {}) => {
+      const r = await fetch(BASE + route, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+      return { status: r.status, json: await r.json().catch(() => null), headers: r.headers };
+    };
+    const uni = all[0].persons[0].key;
+    const pro = doors.persons.find((p) => p.door === "prolific").key;
+    const why = [];
+    for (const [label, body] of [["a university email", { email: uni }], ["a Prolific ID", { prolificPid: pro }]]) {
+      const look = await post("/participants/lookup", body);
+      if (JSON.stringify(Object.keys(look.json ?? {})) !== JSON.stringify(["status"])) why.push(`the lookup of ${label} revealed ${Object.keys(look.json ?? {}).join(", ")}`);
+    }
+    const browser = { "x-vrds-browser": randomUUID() };
+    const wrongAge = await post(`/participants/${encodeURIComponent(uni)}/claim`, { age: 31 }, browser);
+    if (wrongAge.status !== 403 || wrongAge.json?.participant) why.push(`a wrong age answered ${wrongAge.status}`);
+    const rightAge = await post(`/participants/${encodeURIComponent(uni)}/claim`, { age: 30 }, browser);
+    const handed = Object.keys(rightAge.json?.participant ?? {});
+    if (rightAge.status !== 200 || rightAge.json?.participant?.email !== uni || !("files" in (rightAge.json ?? {}))) why.push(`the right age answered ${rightAge.status}`);
+    for (const leak of ["blocks", "analysis", "headline", "major_info_and_scores", "resume_state", "active_browser"]) if (handed.includes(leak)) why.push(`signing in handed back ${leak}`);
+    const created = await post("/participants", { email: "privacy-check@loadtest.invalid", sessionId: randomUUID(), age: 40, gender: "Male", stage: "money" }, { "x-vrds-browser": randomUUID() });
+    if (JSON.stringify(created.json) !== JSON.stringify({ ok: true })) why.push(`the create/update route answered ${JSON.stringify(created.json).slice(0, 80)}`);
+    const noId = await fetch(`${BASE}/participants/${encodeURIComponent(uni)}/section`, {
+      method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ path: "blocks.part_0", data: { overwritten: true } }),
+    });
+    if (noId.status !== 400) why.push(`a write without the browser's id answered ${noId.status}`);
+    const fromElsewhere = await fetch(`${BASE}/participants/lookup`, {
+      method: "POST", headers: { "content-type": "application/json", origin: "https://somewhere-else.example" }, body: JSON.stringify({ email: uni }),
+    });
+    if (fromElsewhere.headers.get("access-control-allow-origin")) why.push("another website is allowed to read the answer");
+    gate("L7", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+      : "privacy on the real server: a lookup reveals only the status (both doors), a wrong age is refused, the right age brings the details and run without any analysis, the create/update route answers only \"ok\", a write without the browser's id is refused, no other website may read answers");
+  }
   gate("L6", !!swapOk, `the old "one email = one person" rule over every record was replaced at startup by the two-door rules; the old record kept; ${proDocs.length} Prolific records without an email accepted`);
   const slow = all.reduce((n, w) => n + (w.lat.condition ?? []).filter((ms) => ms >= CONDITION_LIMIT_MS).length, 0);
   const slowest = Math.max(...all.flatMap((w) => w.lat.condition ?? [0]));

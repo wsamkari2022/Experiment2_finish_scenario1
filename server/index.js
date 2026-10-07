@@ -33,7 +33,6 @@
  */
 
 import express from "express";
-import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -63,7 +62,9 @@ if (IS_PRODUCTION) {
   });
 }
 
-app.use(cors());
+/* No cross-site access (the audit of 6 October 2026, F2): the study page and this server share one address in
+   production, and Vite passes /api through in development, so nothing of ours calls it from another site. Without
+   a CORS header a page on another site cannot read any answer from this server. */
 app.use(express.json({ limit: "5mb" })); // a finished participant document is a few hundred KB
 
 /* Keys (an email, or a Prolific ID) are trimmed and lower-cased by normalizeKey in server/recruitment.js. */
@@ -99,6 +100,11 @@ app.get(
  */
 async function guardBrowser(req, res, key) {
   const requestId = requestBrowser(req);
+  /* No browser id, no write (the audit of 6 October 2026, F2): "allow" let any script write any record it could name. */
+  if (!requestId) {
+    res.status(400).json({ error: "the browser id is required" });
+    return false;
+  }
   const doc = await participants().findOne(whoIs(key), { projection: { active_browser: 1 } });
   const verdict = browserVerdict(doc?.active_browser?.id ?? null, requestId);
   if (verdict === "refuse") {
@@ -119,8 +125,14 @@ app.post(
   route(async (req, res) => {
     const key = keyFromBody(req.body);
     if (!key) return res.status(400).json({ error: "an email or a Prolific ID is required" });
-    const doc = await participants().findOne(whoIs(key), { projection: { _id: 0 } });
-    res.json(doc ?? null);
+    /*
+     * ONLY THE STATUS (the audit of 6 October 2026, F2). This route answered with the WHOLE record - every answer and
+     * the age - to anybody who knew an email or a Prolific ID, which also made the email-and-age check pointless (the
+     * age came back with it). The first page needs to know only whether this key started and whether it finished;
+     * everything else comes down through the claim route below, after the age is checked HERE.
+     */
+    const doc = await participants().findOne(whoIs(key), { projection: { _id: 0, status: 1 } });
+    res.json(doc ? { status: doc.status } : null);
   }),
 );
 
@@ -198,8 +210,8 @@ app.post(
       }
     }
 
-    const doc = await participants().findOne(whoIs(key), { projection: { _id: 0 } });
-    res.json(doc);
+    /* Only "ok" (the audit, F2): this route used to answer with the whole record, to anybody who could write it. */
+    res.json({ ok: true });
   }),
 );
 
@@ -256,21 +268,34 @@ app.patch(
  * THIS BROWSER TAKES THE RECORD (since 29 September 2026). Called by the start screen once the email-and-age
  * check has passed, before the participant's answers are downloaded. The age must match the record: the same
  * check the page makes, repeated here so the claim cannot be made with the email alone.
+ *
+ * SINCE THE AUDIT OF 6 OCTOBER 2026 (F2) THE AGE IS CHECKED ONLY HERE, and this is the only route that hands a record
+ * back: the participant's details and the files that carry their run (resume_state.files), to the browser that has
+ * just proved who it is. Both doors ask the age (the researcher's "1-B": a Prolific person continuing on another device
+ * too). No limit on wrong answers (the researcher's "2 - no limits").
  */
+const SIGN_IN_FIELDS = {
+  _id: 0, email: 1, prolific_pid: 1, prolific_study_id: 1, prolific_session_id: 1, recruitment_source: 1,
+  participant_id: 1, age: 1, gender: 1, country: 1, country_code: 1, english_first_language: 1,
+  condition_number: 1, condition_type: 1, condition_source: 1, condition_assigned_at: 1,
+  status: 1, current_stage: 1, consent: 1, created_at: 1, updated_at: 1, completed_at: 1, resume_state: 1,
+};
+
 app.post(
   "/api/participants/:key/claim",
   route(async (req, res) => {
     const key = normalizeKey(req.params.key);
     const requestId = requestBrowser(req);
     if (!requestId) return res.status(400).json({ error: "the browser id is required" });
-    const doc = await participants().findOne(whoIs(key), { projection: { age: 1 } });
+    const doc = await participants().findOne(whoIs(key), { projection: SIGN_IN_FIELDS });
     if (!doc) return res.status(404).json({ error: "no such participant" });
     if (Number(doc.age) !== Number(req.body?.age)) return res.status(403).json({ error: "the age does not match" });
     await participants().updateOne(
       whoIs(key),
       { $set: { active_browser: { id: requestId, claimed_at: new Date().toISOString() } } },
     );
-    res.json({ ok: true });
+    const { resume_state: resumeState, ...participant } = doc;
+    res.json({ participant, files: resumeState?.files ?? null });
   }),
 );
 

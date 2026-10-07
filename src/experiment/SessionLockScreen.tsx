@@ -6,8 +6,8 @@
  * starting on a laptop is ordinary. The button is the researcher's "Q2-yes": the participant can bring the
  * study back HERE, but only by the safe route.
  *   - another browser or device: back through the start screen's email-and-age check, which makes this
- *     browser the active one and downloads the newest answers before anything is shown (in the Prolific door,
- *     since 6 October 2026, its first page: the Prolific ID is the person, so nothing is asked - the researcher's "1-A");
+ *     browser the active one and downloads the newest answers before anything is shown (in the Prolific door, since 6
+ *     October 2026, its first page, which asks the age - the researcher's "1-B" after the audit);
  *   - another tab of this browser: this tab claims the study again and reloads, so it reads the newest
  *     answers the other tab saved.
  */
@@ -47,7 +47,7 @@ export function SessionLockScreen({ reason, onContinueHere, prolificDoor = false
             <Text fontSize="xs" color="fg.subtle" mt="2.5" lineHeight="tall">
               {browser
                 ? prolificDoor
-                  ? "Your newest answers will be brought here."
+                  ? "You will be asked for your age again, and your newest answers will be brought here."
                   : "You will be asked for your email and age again, and your newest answers will be brought here."
                 : "The other tab will stop, and this one will load your newest answers."}
             </Text>

@@ -361,6 +361,12 @@ counts now (finished, working, just arrived) and every record ever by source. Nu
   server, which this version needs. To see how many people at once the code handles, run `npm run test:load` on
   your own computer (it needs MongoDB there, starts its own server on port 4100 against a throw-away database, and
   deletes that database at the end). Do not run it against the live server: it would add hundreds of fake people.
+- **Since 7 October 2026 (privacy)** the server answers a lookup with "finished or not" only, hands a person's details
+  back only after their age is checked, and refuses a save that does not carry the browser's id. **The page and the
+  server must go up together** (`./build-and-run.sh` does both): a page from before this date compares the age itself
+  and would not find it. A tab a participant left open from before the deploy should be refreshed. Nothing new goes into
+  `.env`. The Prolific door's consent page and second number row went in the same day; **the ethics board must approve
+  the Prolific consent text** (docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md) before the Prolific door opens.
 
 ---
 

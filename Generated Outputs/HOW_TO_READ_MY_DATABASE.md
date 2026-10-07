@@ -134,7 +134,7 @@ correlating the two will produce impressive and meaningless results.
 | `status` | `"Study Not Completed"` or `"Study Completed"` — nothing else. |
 | `current_stage` | The screen they last reached, e.g. `money`, `block5`, `feedback`. |
 | `active_browser` | Since 29 September 2026: `{ id, claimed_at }`, the one browser allowed to write this record (a random id, naming nothing but that browser). The newest browser that passed the email-and-age check. Not data about the participant; never analyse it. |
-| `consent` | `{ agreed, timestamp, version }`. The version records which wording they agreed to. |
+| `consent` | `{ agreed, timestamp, version }`. The version records which wording they agreed to: `"2026-09-14b"` the university door (with `compensation_rules_agreed: true`, the second tick-box), `"2026-10-06-prolific"` the Prolific door (since 7 October 2026: paid through Prolific, one tick-box, no `compensation_rules_agreed`). |
 | `created_at` | First time this person was seen. Never rewritten. |
 | `updated_at` | Last write of any kind. |
 | `completed_at` | When they finished, or `null`. Set once, never overwritten. |
@@ -1395,6 +1395,24 @@ is in `major_info_and_scores.attention_checks`.
 > **A miss does not leave anybody out of the analysis:** all completed sessions are analysed (the researcher, 30
 > September 2026). It affects the gift card only.
 
+### The Prolific door: four checks, and Prolific's rule (since 7 October 2026)
+
+`door` says which door the plan was drawn for (`"university"` or `"prolific"`; a file from before 7 October 2026 reads
+`"university"`). In the **Prolific door** there is a fourth check, `number_2`, and the two number rows sit apart:
+
+| Check | Where (Prolific door) |
+|---|---|
+| `number` | one row in "The tools & the experiment design" (after any of its rating rows) |
+| `number_2` | one row in "How this experience was for you" (after any of its rating rows); a different number from `number` |
+
+Prolific accepts only these instruction checks as reasons to reject, and only after TWO fails, so the section adds
+`prolific_rule`: `instruction_checks` (2), `instruction_checks_answered`, `instruction_checks_failed` (a row ANSWERED
+wrongly; a row never reached is not a failure), `failed_both_instruction_checks` (the "look first" flag) and
+`topic_checks_count_for_pay: false` (the two topic questions are memory checks, which Prolific does not accept; they are
+kept for the analysis). `passed_all` there means all four right and is information only. `checks_asked` is 4.
+`version` is `"2026-10-07-two-doors"` for files drawn since 7 October 2026 (a university file of `"2026-09-30-topics"` is
+the same plan).
+
 ## 6q. `analysis.feedback_answer_patterns` — two answer-pattern flags (analysis only)
 
 Added **29 September 2026** (the researcher's Q4). Over the feedback's 1-7 ratings in the order they were on screen (the
@@ -1573,7 +1591,8 @@ by nudging a mouse on one page. What they cannot fake is the *shape* of the run.
 | `scenarios_under_15_seconds` | Block 5 choices made without reading |
 | `straightlined_feedback` | The same rating to every question |
 | `longest_idle_minutes`, `sittings` | How the work was spread |
-| `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The three attention checks (since 29 September 2026; section 6p) |
+| `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The three attention checks (since 29 September 2026; section 6p); four in the Prolific door |
+| `prolific_instruction_checks_failed`, `prolific_failed_both_instruction_checks` | Since 7 October 2026, the Prolific door only (null in the university door): how many of the two number rows were answered wrongly, and whether both were (the "look first" flag; Step 4 turns it into the completion path) |
 | `compensation_eligible` | The verdict: finished, 35 working minutes, not straightlined, fewer than 3 rushed blocks, **and all three attention checks right** (the last since 29 September 2026) |
 | `reasons` | **Why** it failed, in plain words |
 | `rule` | The rule that was applied, stored with the record |
@@ -1595,6 +1614,16 @@ specific answer.
 > line to `reasons` (e.g. `missed the check after Block 3 (the right answer was "...", picked "...")`).
 
 ---
+
+## 8c-2. What the server answers (privacy, since 7 October 2026)
+
+Nothing stored changed; this is about who can READ a record through the study's own server. Since 7 October 2026 the
+lookup (`POST /api/participants/lookup`) answers only `{ status }`; the person's details and saved run come only from
+signing in (`/api/participants/:key/claim`), which checks the age first and hands back the sign-in fields (who they are,
+age, gender, country, English, condition, status, stage, consent, dates) and the resume files, never `blocks`,
+`analysis`, `headline`, `quality` or any other section. The create/update route answers `{ ok: true }`; a write without
+the browser's id is refused; other websites cannot read the server's answers. Before that date anybody who knew a key
+could read the whole record. Export the data with Compass, as before: nothing here limits the researcher.
 
 ## 8d. `resume_state` — scaffolding, not data
 

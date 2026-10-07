@@ -37,7 +37,7 @@ import {
 import { getActiveSummary } from "./activeTime";
 import { MethodLogo, type Method } from "./MethodLogo";
 import {
-  ATTENTION_FEEDBACK_CODE, readAttention, recordAttentionAnswer, type NumberList,
+  numberRowsOf, readAttention, recordAttentionAnswer, type NumberList,
 } from "./attentionChecks";
 
 interface Props {
@@ -187,30 +187,38 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
    * never first in a section, never among the reflection or clarification questions. It looks like its neighbours
    * (same scale, same end labels). It is required like them, but its answer is saved in the attention file on
    * submit, never in the feedback record, so it cannot move any score or the "same answer everywhere" flag.
+   *
+   * THE PROLIFIC DOOR HAS TWO (since 7 October 2026; the researcher's "3-B"): one in "The tools & the experiment
+   * design" and one in "How this experience was for you", each with its own number, the same words. The university
+   * door keeps its one row. `numberRowsOf` gives the rows the plan drew, each with its own answer code.
    */
-  const [attention] = useState(() => readAttention().plan.number);
-  const attentionChanges = useRef(0);
-  const setAttentionAnswer = useCallback((v: number) => {
+  const [attentionRows] = useState(() => numberRowsOf(readAttention().plan));
+  const attentionChanges = useRef<Record<string, number>>({});
+  const setAttentionAnswer = useCallback((code: string, v: number) => {
     setAnswers((prev) => {
-      if (typeof prev[ATTENTION_FEEDBACK_CODE] === "number" && prev[ATTENTION_FEEDBACK_CODE] !== v) attentionChanges.current += 1;
-      return { ...prev, [ATTENTION_FEEDBACK_CODE]: v };
+      if (typeof prev[code] === "number" && prev[code] !== v) attentionChanges.current[code] = (attentionChanges.current[code] ?? 0) + 1;
+      return { ...prev, [code]: v };
     });
   }, []);
-  /** The check row, when it was drawn to follow row `after` (1-based) of `list`. */
-  const attentionAfter = (list: NumberList, after: number, accent: string, labels?: { low: string; high: string }) =>
-    attention.list === list && attention.after === after ? (
+  /** The check row, when one was drawn to follow row `after` (1-based) of `list` (at most one: the rows never share a place). */
+  const attentionAfter = (list: NumberList, after: number, accent: string, labels?: { low: string; high: string }) => {
+    const at = attentionRows.find((a) => a.row.list === list && a.row.after === after);
+    return at ? (
       <LikertRow q={{
-        code: ATTENTION_FEEDBACK_CODE, type: "likert",
-        text: `This question is just to check your attention. Pick the number ${attention.word}.`,
+        code: at.code, type: "likert",
+        text: `This question is just to check your attention. Pick the number ${at.row.word}.`,
         likertLow: labels?.low, likertHigh: labels?.high,
-      }} value={num(ATTENTION_FEEDBACK_CODE)} onChange={setAttentionAnswer} accent={accent}
-        invalid={showValidation && !isAnswered(ATTENTION_FEEDBACK_CODE)} />
+      }} value={num(at.code)} onChange={(v) => setAttentionAnswer(at.code, v)} accent={accent}
+        invalid={showValidation && !isAnswered(at.code)} />
     ) : null;
-  /** A list's codes with the check's code placed where its row is, so "first unanswered" follows the page. */
-  const withAttention = (codes: string[], list: NumberList) =>
-    attention.list === list
-      ? [...codes.slice(0, attention.after), ATTENTION_FEEDBACK_CODE, ...codes.slice(attention.after)]
-      : codes;
+  };
+  /** A list's codes with each check's code placed where its row is, so "first unanswered" follows the page. */
+  const withAttention = (codes: string[], list: NumberList) => {
+    const here = attentionRows.filter((a) => a.row.list === list).sort((x, y) => y.row.after - x.row.after);
+    const out = [...codes];
+    for (const a of here) out.splice(a.row.after, 0, a.code);
+    return out;
+  };
 
   const num = (code: string): number | undefined =>
     typeof answers[code] === "number" ? (answers[code] as number) : undefined;
@@ -240,7 +248,7 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
     codes.push(...withAttention(
       WELLBEING_ITEMS.filter((i) => !WELLBEING_PART_A_SUBSCALES.includes(i.subscale)).map((i) => i.code), "wellbeing_b"));
     return codes;
-    // withAttention reads `attention`, which never changes after the first render.
+    // withAttention reads `attentionRows`, which never changes after the first render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCvr, showApa, showDual]);
 
@@ -267,11 +275,11 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
     for (const q of [...CVR_QUESTIONS, ...DUAL_VIEW_QUESTIONS, ...APA_QUESTIONS, ...TOOL_CLOSERS]) {
       if (q.type === "open") filled[q.code] = "Dev fill — written by the development button.";
     }
-    /* The attention check is answered as asked, or every test run would fail it. */
-    filled[ATTENTION_FEEDBACK_CODE] = attention.target;
+    /* The attention checks are answered as asked, or every test run would fail them. */
+    for (const a of attentionRows) filled[a.code] = a.row.target;
     setAnswers((prev) => ({ ...prev, ...filled }));
     setShowValidation(false);
-  }, [requiredCodes, attention.target]);
+  }, [requiredCodes, attentionRows]);
 
   const missingCount = requiredCodes.filter((c) => !isAnswered(c)).length;
   const answeredCount = requiredCodes.length - missingCount;
@@ -317,10 +325,12 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
     if (showCvr) feedback.cvr = { ...collect(CVR_QUESTIONS), ...(showDual ? collect(DUAL_VIEW_QUESTIONS) : {}) };
     if (showApa) feedback.apa = collect(APA_QUESTIONS);
 
-    /* The attention check's answer goes to the attention file, never into the feedback record below. */
-    const attentionAnswer = answers[ATTENTION_FEEDBACK_CODE];
-    if (typeof attentionAnswer === "number") {
-      recordAttentionAnswer("number", attentionAnswer, null, attentionChanges.current);
+    /* The attention checks' answers go to the attention file, never into the feedback record below. */
+    for (const a of attentionRows) {
+      const attentionAnswer = answers[a.code];
+      if (typeof attentionAnswer === "number") {
+        recordAttentionAnswer(a.check, attentionAnswer, null, attentionChanges.current[a.code] ?? 0);
+      }
     }
 
     // Close out the feedback-stage timer so feedbackMs / totalExperimentMs include this page.
@@ -336,7 +346,7 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
     onCompleted?.();
     setSubmitted(true);
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* ignore */ }
-  }, [answers, collect, isAnswered, onCompleted, requiredCodes, results, sessionId, showApa, showCvr, showDual]);
+  }, [answers, attentionRows, collect, isAnswered, onCompleted, requiredCodes, results, sessionId, showApa, showCvr, showDual]);
 
   /*
    * NO "FINISH" BUTTON ON THE THANK-YOU PAGE (removed 28 September 2026, the researcher's request).

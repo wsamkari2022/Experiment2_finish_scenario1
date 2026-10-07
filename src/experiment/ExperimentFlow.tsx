@@ -6,13 +6,11 @@ import { STATUS_COMPLETED, STATUS_NOT_COMPLETED, type DirectoryEntry } from "./p
 /* Every participant write goes through storage.ts, never to the directory or a server directly.
    That is what lets the database be switched on in one place. See the header of storage.ts. */
 import {
-  claimThisBrowser,
   connectLate,
   flushOutbox,
   noRemoteBackend,
   releaseConditionArrival,
   resetSyncState,
-  restoreParticipantFiles,
   saveCompletion,
   saveParticipant,
   saveProgress,
@@ -721,7 +719,7 @@ export function ExperimentFlow() {
       if (file && !file.owner) writeConditionFile({ ...file, owner: email.trim().toLowerCase() });
       setStage("consent");
     };
-    const onResume = (entry: DirectoryEntry) => {
+    const onResume = (entry: DirectoryEntry, restored: number) => {
       /* Rebuild just enough local state for the study to continue, then jump to the stage
          they stopped on. On this machine that stage is usually already present; on a new
          machine the directory is the only thing that knows it. */
@@ -781,9 +779,6 @@ export function ExperimentFlow() {
       /* The sync fingerprints in this browser describe whoever used it last, not this
          participant, so forget them and let the next sync re-send from scratch. */
       resetSyncState();
-      setPendingEmail(entry.email);
-      /* Nothing is left locked on this page: it is about to become the active one. */
-      setLock(null);
 
       /*
        * BRING THEIR ANSWERS DOWN BEFORE SHOWING THEM ANYTHING.
@@ -799,14 +794,14 @@ export function ExperimentFlow() {
        * pick them up, and it is also what makes this safe: nothing half-restored is ever on
        * screen.
        */
-      void (async () => {
+      {
         /*
-         * THIS BROWSER TAKES THE RECORD FIRST (since 29 September 2026; sessionGuard.ts). The
-         * email and age were just checked, so this is the participant. Claimed before anything is
-         * written or downloaded: every write from here on is accepted, and any other browser still
-         * open on this run is refused from now on and shows "open somewhere else".
+         * THIS BROWSER ALREADY TOOK THE RECORD (since 29 September 2026; sessionGuard.ts), and since the audit of 6
+         * October 2026 (F2) it did so in signIn, on the start screen: the server checked the age, made this browser the
+         * one holding the record, and sent their details and files, which are already written into this browser
+         * (`restored` of them). Any other browser still open on this run is refused from now on and shows "open
+         * somewhere else".
          */
-        await claimThisBrowser(entry.email, entry.age);
         saveParticipant({
           email: entry.email,
           sessionId: entry.sessionId,
@@ -821,7 +816,6 @@ export function ExperimentFlow() {
           stage: entry.stage,
           consent: entry.consent,
         });
-        const restored = await restoreParticipantFiles(entry.email);
         try {
           localStorage.setItem(STORAGE_KEY_STAGE, entry.stage || "money");
         } catch {
@@ -832,16 +826,22 @@ export function ExperimentFlow() {
              are arriving from somewhere else. Said now, because the reload below makes the
              next load look like any other. See sessionLog.ts. */
           markNextLoginAs("restored_from_another_device");
+          /* NOTHING ON THIS PAGE CHANGES BEFORE THE RELOAD (found in the live check of 7 October 2026). Setting the
+             participant here re-ran the effect that saves the stage, which wrote this page's "start" over the stage
+             just saved, and the reload opened "Welcome back" again. The reloaded page reads them all from storage. */
           window.location.reload();
           return;
         }
+        setPendingEmail(entry.email);
+        /* Nothing is left locked on this page: it is about to become the active one. */
+        setLock(null);
         /* Nothing came back — either there is no server, or this participant has nothing
            stored yet. Continue in this tab; the stage guards will place them safely. */
         setStage((entry.stage as Stage) || "money");
-      })();
+      }
     };
-    /* The Prolific door's first page (the researcher's "2-A"): the ID from the link, Start, or Continue with no
-       question ("1-A"). The university door's is unchanged. */
+    /* The Prolific door's first page (the researcher's "2-A"): the ID from the link, Start, or - continuing on another
+       device - the age, checked by the server ("1-B", the audit of 6 October 2026). */
     if (door === "prolific") {
       /* The ID from the link; failing that, the Prolific ID this browser already knows (the audit of 6 October 2026:
          a returning person whose address had lost it was asked to paste their own ID). */
@@ -861,6 +861,7 @@ export function ExperimentFlow() {
   if (stage === "consent") {
     return (
       <ConsentPage
+        door={door}
         onAgree={(record) => {
           try {
             localStorage.setItem(STORAGE_KEY_CONSENT, JSON.stringify(record));
