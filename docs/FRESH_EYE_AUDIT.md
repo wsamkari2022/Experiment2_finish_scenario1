@@ -2106,3 +2106,10 @@ thesis says so.
   best fit X - the value you just prioritized." (conditions 1 and 3) can list the person's own option one screen after
   "It fell short on ... X"; for 4 in 100 misaligned picks of random pretend people the option's own strongest value is
   short, 25 in 100 for people who hold all four values at 70-100.
+- **2026-10-07. The APA list heading** (Waseem: "B, implement"). Conditions 1 and 3: "These options best fit X - the value
+  you just prioritized." became "These options are built on X - the value you just prioritized.", so a person who names
+  the value their own option is built on no longer sees it listed as "best fit" one screen after "It fell short on ...
+  X". The list itself is unchanged. N28 new (the words, no "best fit" on the APA page, the list still the options built
+  on X, and every value has an option built on it in each decision scenario so the heading is always true); 5 breaks, 5
+  caught (one re-run after a line-ending mismatch in the break script). Seen live in condition 1; choosing from the list
+  still works.

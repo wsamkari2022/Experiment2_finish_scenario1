@@ -97,6 +97,9 @@
  *       answers asked for." exactly when the shortfall line under it names X too (the value the option serves most):
  *       recounted by hand over every option and 400 pretend profiles, the words from the source, saved, in the database;
  *       and the main study never reads the door, so the box (and every condition's page) is the same in both doors
+ *   N28 (since 7 October 2026, the researcher's "B") the APA list heading "These options are built on X - the value you
+ *       just prioritized." (was "best fit X"), no "best fit" on the APA page, and every value has an option built on it in
+ *       each decision scenario, so the heading is always true
  *   N25 (since 6 October 2026, the two doors; the researcher's "2-A") each door is balanced on its own: a door counts only
  *       its own records and arrivals (a record from before the doors is the university's), 40 students and 40 Prolific
  *       people arriving mixed give 10 per condition inside each door, 4 students after 40 Prolific people land in four
@@ -1282,6 +1285,36 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     const read = rows.map((r) => r?.apa?.page_said_the_option_falls_short_on_that_value);
     if (JSON.stringify(read) !== JSON.stringify([true, false, null, null])) why.push(`the database reads ${JSON.stringify(read)} (want true, false, null for an older row, null in another condition)`);
     gate("N27", `APA_Only's box also says the option still gives less on its own strongest value exactly when the shortfall line names it (recounted by hand: said ${yes}, not said ${no}); the approved words, saved, and in the database`, why);
+  }
+
+  /* ------------------------------------------------------------------------------ N28 */
+  /* (Since 7 October 2026, the researcher's "B".) The APA page's list heading says "These options are built on X - the value
+     you just prioritized." (it said "best fit X", which could list the person's own option one screen after "It fell short
+     on ... X", in conditions 1 and 3). The words and their place from the source, no "best fit" left on the page, the
+     list still the options built on X, and - so the heading is always true - in every scenario where the APA page can
+     open, each of the four values has at least one option built on it (the fallback, one option that is not, never
+     shows). */
+  {
+    const why = [];
+    const CVR = B("block5CVR.js");
+    const { BLOCK5_SCENARIOS } = B("block5Scenarios.js");
+    const KEYS4 = ["vulnerabilityProtectionSensitivity", "groupSizeSensitivity", "gainResponsivenessSensitivity", "outcomeAggregationSensitivity"];
+    let checked = 0;
+    for (const sc of BLOCK5_SCENARIOS) {
+      if (!CVR.scenarioIsScored(sc)) continue;
+      for (const k of KEYS4) {
+        checked++;
+        if (!sc.options.some((o) => CVR.optionMainValue(o) === k)) why.push(`${sc.id}: no option is built on ${k}, so the heading would be untrue there`);
+      }
+    }
+    const sim = src("src/experiment/Block5PublicEmergencySimulation.tsx");
+    const code = sim.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (!/\{stage === "options" && q3 !== null && \(\s*<Stack gap="3">\s*<Text[^>]*data-apa-list-heading>\s*These options are built on \{vSpan\(q3, accent\)\} — the value you just prioritized\.\s*<\/Text>/.test(code)) {
+      why.push("the list heading is not the approved \"These options are built on X - the value you just prioritized.\"");
+    }
+    if (/best fit/i.test(code.slice(code.indexOf("function APAPanel("), code.indexOf("function APAPanel(") + 30000))) why.push("\"best fit\" is still on the APA page");
+    if (!/const m = labeled\.filter\(\(o\) => optionMainValue\(o\) === q3\);/.test(code)) why.push("the list is no longer the options built on the value named");
+    gate("N28", `the APA list heading says "These options are built on X" in every condition that has the page, no "best fit" left; each value has an option built on it in all ${checked / 4} decision scenarios (${checked} checked), so it is always true`, why);
   }
 
   const failed = results.filter((r) => !r.ok);

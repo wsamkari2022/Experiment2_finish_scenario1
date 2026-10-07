@@ -5681,8 +5681,14 @@ function APAPanel({ option, profile, scenario, accent, coord, stakeholderMoved, 
         <Text fontSize="xs" color={accent} textTransform="uppercase" letterSpacing="wider" fontWeight="bold">Make your decision</Text>
         {stage === "options" && q3 !== null && (
           <Stack gap="3">
-            <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-              These options best fit {vSpan(q3, accent)} — the value you just prioritized.
+            {/* "BUILT ON", NOT "BEST FIT" (since 7 October 2026, the researcher's "B"). The list is the options whose
+                strongest value is the one just named (optionMainValue), so "built on" says exactly what it is - the same
+                idea as APA_Only's box ("serves X more than any of the other three values"). "These options best fit X"
+                could list the person's own option one screen after "It fell short on ... X" (conditions 1 and 3), which
+                read as a contradiction, and "best fit" sounds like a fit verdict. In every scenario where this page can
+                open, each value has at least one option built on it, so the fallback below never shows (N28 holds it). */}
+            <Text fontSize="sm" color="fg.muted" lineHeight="tall" data-apa-list-heading>
+              These options are built on {vSpan(q3, accent)} — the value you just prioritized.
             </Text>
             <Stack gap="2">
               {matching.map((o) => (
