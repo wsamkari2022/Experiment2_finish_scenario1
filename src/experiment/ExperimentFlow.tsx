@@ -840,6 +840,17 @@ export function ExperimentFlow() {
         setStage((entry.stage as Stage) || "money");
       }
     };
+    /*
+     * SOMEBODY WHO ALREADY FINISHED (since 7 October 2026, the researcher's "A"). The landing page gave this browser a
+     * condition a moment ago, and its arrival counted for balance as "just arrived" for 30 minutes, although nobody will
+     * take the study with it. When either first page sees a finished person, that arrival is given back at once (it stops
+     * counting). The file stays: the next person on this computer starts with it, and counts as soon as their record is
+     * made. Only a condition nobody owns yet is given back.
+     */
+    const onFinishedSeen = () => {
+      const file = readConditionFile();
+      if (file?.arrivalId && !file.owner) releaseConditionArrival(file.arrivalId);
+    };
     /* The Prolific door's first page (the researcher's "2-A"): the ID from the link, Start, or - continuing on another
        device - the age, checked by the server ("1-B", the audit of 6 October 2026). */
     if (door === "prolific") {
@@ -852,10 +863,11 @@ export function ExperimentFlow() {
           params={{ ...linkParams, pid: linkParams.pid ?? knownId }}
           onNewParticipant={onNewParticipant}
           onResume={onResume}
+          onFinishedSeen={onFinishedSeen}
         />
       );
     }
-    return <StartScreen onNewParticipant={onNewParticipant} onResume={onResume} />;
+    return <StartScreen onNewParticipant={onNewParticipant} onResume={onResume} onFinishedSeen={onFinishedSeen} />;
   }
 
   if (stage === "consent") {

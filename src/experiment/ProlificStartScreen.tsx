@@ -40,6 +40,7 @@ export function ProlificStartScreen({
   params,
   onNewParticipant,
   onResume,
+  onFinishedSeen,
 }: {
   /** Prolific's three values from the link (pid null when missing or malformed). */
   params: ProlificParams;
@@ -47,6 +48,8 @@ export function ProlificStartScreen({
   onNewParticipant: (prolificId: string) => void;
   /** A returning one, after the server checked their age: resume where they stopped (`restored` files came down). */
   onResume: (entry: DirectoryEntry, restored: number) => void;
+  /** The ID has already finished: the condition this browser was just given is handed back (since 7 October 2026). */
+  onFinishedSeen?: () => void;
 }) {
   const [pid, setPid] = useState<string | null>(params.pid);
   const [mode, setMode] = useState<Mode>(params.pid ? { kind: "checking" } : { kind: "paste" });
@@ -73,6 +76,11 @@ export function ProlificStartScreen({
       cancelled = true;
     };
   }, [pid]);
+
+  /* A finished person: give back the condition the landing page just gave this browser (storage gives each back once). */
+  useEffect(() => {
+    if (mode.kind === "finished") onFinishedSeen?.();
+  }, [mode.kind, onFinishedSeen]);
 
   /* The study and submission ids go with the person to the demographic page, where their record is made. */
   const keepProlificIds = (id: string) => writeProlificFile({ owner: id, studyId: params.studyId, sessionId: params.sessionId });

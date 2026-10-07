@@ -2072,3 +2072,7 @@ thesis says so.
   reload of the "already finished" page asked the age again although the browser held the code. Noticed, not changed: a
   person who already finished and opens the study on a new device is given a landing-page condition that counts as "just
   arrived" for 30 minutes (both doors, since 1 October); the balance is off by one for that half hour.
+- **2026-10-07. A finished person's new condition is given back** (Waseem: "A"). Somebody who already finished and opened
+  the study on a new device was given a landing-page condition that counted as "just arrived" for 30 minutes. Now both
+  first pages give it back as soon as they see a finished email or Prolific ID (only a condition nobody owns, each arrival
+  once); a given-back arrival never counts. N26 new; 5 breaks, 5 caught; checked live in both doors.

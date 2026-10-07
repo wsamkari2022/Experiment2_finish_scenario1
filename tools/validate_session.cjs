@@ -656,7 +656,8 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!(flow.indexOf("useState(() => makeRoomForAnotherProlificId(window.location.search));") >= 0
         && flow.indexOf("useState(() => makeRoomForAnotherProlificId(") < flow.indexOf("useState<string>(() => getSessionId())"))) why.push("another person's run is not set aside before the page reads anything");
     need(flow, /if \(door === "prolific"\) \{[\s\S]{0,500}?const linkParams = prolificParamsFrom\(window\.location\.search\);[\s\S]{0,200}?return \(\s*<ProlificStartScreen\s+params=\{\{ \.\.\.linkParams, pid: linkParams\.pid \?\? knownId \}\}\s+onNewParticipant=\{onNewParticipant\}\s+onResume=\{onResume\}/, "the Prolific door does not open its own first page");
-    need(flow, /return <StartScreen onNewParticipant=\{onNewParticipant\} onResume=\{onResume\} \/>;/, "the university door's first page changed");
+    /* Since 7 October 2026 it is also told how to give back a finished person's new condition (N26). */
+    need(flow, /return <StartScreen onNewParticipant=\{onNewParticipant\} onResume=\{onResume\} onFinishedSeen=\{onFinishedSeen\} \/>;/, "the university door's first page changed");
     need(flow, /askEmail=\{door !== "prolific"\}/, "the Prolific door's demographic page still asks the email");
     need(flow, /prolificPid: key, recruitmentSource: "prolific" as const/, "the Prolific record does not name its key truthfully");
     need(flow, /isProlificKey\(pendingEmail\) \? "arrived_with_their_prolific_id" : "typed_their_email"/, "the visit log says \"typed their email\" in the Prolific door");

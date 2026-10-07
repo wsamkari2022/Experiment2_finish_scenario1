@@ -90,6 +90,9 @@
  *       two writes; a count read between them saw the person twice or not at all, and a burst could end 26 / 24 -
  *       found when the load test ran on a busy machine): the record keeps its arrival id, a turn reads the arrivals
  *       before the records, and in all six orders of the two writes and the two readings the person counts once
+ *   N26 (since 7 October 2026, the researcher's "A") somebody who already finished hands back the condition the landing
+ *       page just gave their browser: both first pages say so when they see a finished person, only a condition nobody
+ *       owns is given back, each arrival once, and a given-back arrival never counts for balance
  *   N25 (since 6 October 2026, the two doors; the researcher's "2-A") each door is balanced on its own: a door counts only
  *       its own records and arrivals (a record from before the doors is the university's), 40 students and 40 Prolific
  *       people arriving mixed give 10 per condition inside each door, 4 students after 40 Prolific people land in four
@@ -1185,6 +1188,40 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (!/doors\[door\] = \{ counted, everyone_ever: all, next_would_go_to:/.test(src("server/conditions.js"))) why.push("the count page does not count each door");
     console.log(`       each door on its own: university ${line(u)}, Prolific ${line(p)}; 40 + 40 mixed: 10 each in each door; 4 students after 40 Prolific: ${four.join(", ")}`);
     gate("N25", "each door balanced on its own (the researcher's 2-A): its own counts, old records the university's, 40 + 40 arriving mixed give 10 each per door, the door sent, read and shown", why);
+  }
+
+  /* ------------------------------------------------------------------------------ N26 */
+  {
+    const why = [];
+    /* The page gives each arrival back once (the first pages may ask again as they redraw). */
+    const given = [];
+    storage.setRemoteBackend({
+      findParticipant: async () => null, upsertParticipant: async () => {}, updateStage: async () => {},
+      markCompleted: async () => {}, saveSection: async () => {}, isActiveBrowser: async () => true,
+      releaseArrival: async (id) => { given.push(id); },
+    });
+    storage.releaseConditionArrival("n26-arrival-0001");
+    storage.releaseConditionArrival("n26-arrival-0001");
+    storage.releaseConditionArrival(null);
+    storage.releaseConditionArrival("n26-arrival-0002");
+    await wait(5);
+    if (given.join() !== "n26-arrival-0001,n26-arrival-0002") why.push(`the page gave back ${given.join(", ") || "nothing"}`);
+    storage.setRemoteBackend(null);
+    /* A given-back arrival never counts for balance (either door). */
+    const now = Date.now();
+    const arrival = (id, door, released) => ({ arrival_id: id, condition_type: "Baseline", assigned_at: new Date(now - 60_000).toISOString(),
+      linked_email: null, linked_prolific_pid: null, released, recruitment_source: door });
+    for (const door of ["university", "prolific"]) {
+      if (S.tally([], [arrival(`kept-${door}`, door, false)], now, door).Baseline.counted !== 1) why.push(`${door}: a fresh arrival does not count`);
+      if (S.tally([], [arrival(`back-${door}`, door, true)], now, door).Baseline.counted !== 0) why.push(`${door}: a given-back arrival still counts`);
+    }
+    /* From the source: only a condition nobody owns is given back, and both first pages say when they see a finished person. */
+    const flow = src("src/experiment/ExperimentFlow.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (!/const onFinishedSeen = \(\) => \{\s*const file = readConditionFile\(\);\s*if \(file\?\.arrivalId && !file\.owner\) releaseConditionArrival\(file\.arrivalId\);\s*\};/.test(flow)) why.push("the flow gives back more than a condition nobody owns, or nothing");
+    if (!/<ProlificStartScreen[\s\S]{0,320}onFinishedSeen=\{onFinishedSeen\}/.test(flow) || !/<StartScreen [^>]*onFinishedSeen=\{onFinishedSeen\}/.test(flow)) why.push("a first page is not told how to give the condition back");
+    if (!/setMode\(\{ kind: "finished" \}\);\s*onFinishedSeen\?\.\(\);/.test(src("src/experiment/StartScreen.tsx"))) why.push("the university first page does not give it back when the email has finished");
+    if (!/if \(mode\.kind === "finished"\) onFinishedSeen\?\.\(\);/.test(src("src/experiment/ProlificStartScreen.tsx"))) why.push("the Prolific first page does not give it back when the ID has finished");
+    gate("N26", "somebody who already finished gives back the condition the landing page just gave their browser: both first pages, only a condition nobody owns, each arrival once, and a given-back arrival never counts (either door)", why);
   }
 
   const failed = results.filter((r) => !r.ok);

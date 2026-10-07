@@ -63,11 +63,14 @@ type Mode =
 export function StartScreen({
   onNewParticipant,
   onResume,
+  onFinishedSeen,
 }: {
   /** A new address: carry it forward to consent and the demographic form. */
   onNewParticipant: (email: string) => void;
   /** A confirmed returning participant: resume at the stage they stopped on (`restored` files came down). */
   onResume: (entry: DirectoryEntry, restored: number) => void;
+  /** The address has already finished: the condition this browser was just given is handed back (since 7 October 2026). */
+  onFinishedSeen?: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [mode, setMode] = useState<Mode>({ kind: "askEmail" });
@@ -93,6 +96,7 @@ export function StartScreen({
       }
       if (entry.status === STATUS_COMPLETED) {
         setMode({ kind: "finished" });
+        onFinishedSeen?.();
         return;
       }
       setMode({ kind: "verify" });

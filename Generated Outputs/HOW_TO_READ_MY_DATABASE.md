@@ -198,7 +198,8 @@ run can be followed across machines without reading UUIDs.
 A second, small collection beside `participants`: one row per condition the landing page gave (`arrival_id`,
 `condition_number`, `condition_type`, `assigned_at`, `browser`, `linked_email` (or, for the Prolific door,
 `linked_prolific_pid`) once the person reached the demographic page, `recruitment_source` (since 6 October 2026: the door it
-was counted in; absent = university), `released` when they turned out to be somebody returning with a condition of their own). It exists only so the
+was counted in; absent = university), `released` when they turned out to be somebody returning with a condition of their own, or - since 7 October 2026 -
+somebody who had already finished). It exists only so the
 balance can count people who just arrived; it holds no answers. **Not data about participants; never analyse it.**
 The live counts are at `/api/conditions/report`: since 6 October 2026 one table per door.
 

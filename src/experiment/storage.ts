@@ -211,8 +211,13 @@ export async function requestCondition(
 }
 
 /** A returning participant brought their own condition: the landing page's arrival stops counting. Best effort. */
+/* Each arrival is given back once per page (the first pages may ask again as they redraw; the server's answer would be
+   the same). */
+const releasedArrivals = new Set<string>();
+
 export function releaseConditionArrival(arrivalId: string | null | undefined): void {
-  if (!arrivalId || !remote?.releaseArrival) return;
+  if (!arrivalId || !remote?.releaseArrival || releasedArrivals.has(arrivalId)) return;
+  releasedArrivals.add(arrivalId);
   void remote.releaseArrival(arrivalId).catch(() => { /* it stops counting after 30 minutes anyway */ });
 }
 

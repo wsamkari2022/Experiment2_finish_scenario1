@@ -243,6 +243,10 @@ SECTIONS = [
          "on another device after the age check. The record keeps when the code was given, never the code. The feedback page "
          "now says \"confidential\" in both versions. Checked on the real server with a made-up code and live in the browser.",
          ["session", "load"], "(C16, L8)"),
+        ("Somebody who already finished never tilts the balance.",
+         "Since 7 October 2026 (your \"A\"). A finished person who opens the study on a new device is given a condition by "
+         "the landing page; the first page now gives it back as soon as it sees they finished, so it never counts as "
+         "\"just arrived\" (both versions). Checked live.", ["conditions"], "(N26)"),
         ("The live landing page never gives a random condition.",
          "It asks the server up to four times with the same arrival id; if the server cannot be reached it says \"We could "
          "not reach the study\" with \"Try again\", which keeps the arrival id, so nobody is counted twice. Checked live with "
@@ -491,11 +495,6 @@ OPEN = [
      "Still to build: Step 5 (the daily pay check), docs/PROLIFIC_CONVERSION_PLAN.md section 1b. Ready to deploy now "
      "(your 3-A): back up the database first, and add PROLIFIC_COMPLETION_CODE to the server's .env (DEPLOYMENT.md, Part C).",
      "Before Prolific"),
-    ("A finished person on a new device counts as \"just arrived\" for 30 minutes",
-     "Noticed on 7 October 2026, not changed: somebody who already finished and opens the study on a new device is given "
-     "a landing-page condition that counts for balance as \"just arrived\" for 30 minutes (both versions, since 1 "
-     "October). The balance is off by one for that half hour, then corrects itself. A small fix (release that arrival "
-     "when the first page sees a finished person) is possible.", "Optional"),
     ("Your ethics board approves the Prolific consent text",
      "docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md shows the Prolific version's consent page beside the university's: eight "
      "parts differ (payment through Prolific, one sitting, the Prolific ID instead of the email, the two-failure attention "
