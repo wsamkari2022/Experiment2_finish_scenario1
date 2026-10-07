@@ -95,7 +95,8 @@
  *       owns is given back, each arrival once, and a given-back arrival never counts for balance
  *   N27 (since 7 October 2026, the researcher's "2-A") APA_Only's box adds "It still gives less on X than your earlier
  *       answers asked for." exactly when the shortfall line under it names X too (the value the option serves most):
- *       recounted by hand over every option and 400 pretend profiles, the words from the source, saved, in the database
+ *       recounted by hand over every option and 400 pretend profiles, the words from the source, saved, in the database;
+ *       and the main study never reads the door, so the box (and every condition's page) is the same in both doors
  *   N25 (since 6 October 2026, the two doors; the researcher's "2-A") each door is balanced on its own: a door counts only
  *       its own records and arrivals (a record from before the doors is the university's), 40 students and 40 Prolific
  *       people arriving mixed give 10 per condition inside each door, 4 students after 40 Prolific people land in four
@@ -1269,6 +1270,10 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     need(/mainValueShortSaid: straightToApa && mainValueShort,/, "the page does not hand on whether it said the sentence");
     need(/\.\.\.\(apaOnlyCondition \? \{ mainValueShortSaid: payload\.mainValueShortSaid \} : \{\}\),/, "whether the sentence was said is not saved");
     if ((sim.match(/It still gives less on/g) ?? []).length !== 1) why.push("the sentence appears somewhere else too");
+    /* The same in both doors: the main study never reads the door, so every condition's pages (this box included) are
+       identical for a student and a Prolific person (the researcher asked, 7 October 2026). */
+    const code = sim.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    if (/from "\.\/recruitment"|isProlificKey|keyDoor|recruitmentSource|recruitment_source|\bdoor\b/.test(code)) why.push("the main study reads the door, so a condition's pages could differ between the two doors");
     /* The database. */
     const row = (extra) => ({ scenarioId: "chemical_plant_fire", selectedOptionId: "x", selectedRank: 1, topRankedOptionId: "x", selectedWasTopCandidate: true, selectedWasCandidate: true,
       cvrFired: true, reflectionShown: false, apa: { confidence: 3, stakeholderInfluenced: null, prioritizedValue: "groupSizeSensitivity", originalOptionId: "y", mainValueShown: "groupSizeSensitivity", ...extra } });

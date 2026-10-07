@@ -267,7 +267,8 @@ SECTIONS = [
         ("APA_Only's box never seems to contradict the line under it.",
          "Since 7 October 2026 (your 2-A). When the chosen option falls short on the very value the box says it serves most, "
          "the box adds \"It still gives less on X than your earlier answers asked for.\" - exactly when the line under it "
-         "names that value too. Saved with the record. Checked by hand over every option and 400 pretend profiles, and live.",
+         "names that value too, in both versions (students and Prolific). Saved with the record. Checked by hand over every option "
+         "and 400 pretend profiles, and live in both versions.",
          ["conditions"], "(N27)"),
         ("The thank-you page's progress bar says \"Done\".",
          "Since 7 October 2026 (your 3-A). It said \"Finish - You are nearly there\" under \"the study is complete\". Now every "
@@ -527,6 +528,11 @@ OPEN = [
      "the server's .env (DEPLOYMENT.md, Part C), then one Prolific \"Preview as participant\" run to the very end, "
      "pressing \"Return to Prolific\" to see Prolific accept the code (the plan, section 5, item 8).",
      "Before Prolific"),
+    ("The APA list heading in conditions 1 and 3 (your decision)",
+     "After a person names a value, the APA page lists options under \"These options best fit X - the value you just "
+     "prioritized.\" If they name the value their own option is built on, their option is listed there one screen after "
+     "\"It fell short on ... X\". Both are true (\"best fit\" compares the options; \"fell short\" compares with what they "
+     "asked for), but it can read like the clash fixed in APA_Only's box. Found 7 October 2026; asked.", "Before Prolific"),
     ("Your ethics board approves the Prolific consent text",
      "docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md shows the Prolific version's consent page beside the university's: eight "
      "parts differ (payment through Prolific, one sitting, the Prolific ID instead of the email, the two-failure attention "

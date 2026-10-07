@@ -2098,3 +2098,11 @@ thesis says so.
   taught the new form of the finished check; 16 breaks, 16 caught (one only after J17 was tightened). A second full
   rehearsal confirmed all three live (the sentence where it belongs and not where it does not, "Done" after a reload and
   on a phone, the record's new fields). `SHAPE_VERSION` "2026-10-07-rehearsal-fixes".
+- **2026-10-07. Fix 2 in both doors, and condition 1 checked** (Waseem: "Did you fix this in one door or both doors?").
+  The main study never reads the door, so APA_Only's box and its new sentence are the same for students and Prolific
+  people; N27 now fails if the page ever reads the door (2 breaks, 2 caught); seen live in the university door with the
+  same answers as the Prolific rehearsal. Condition 1 (CVR+APA) has no box: its APA page says only "It fell short on ...",
+  so the clash cannot happen there (seen live). Found and left for his decision: the next step's heading "These options
+  best fit X - the value you just prioritized." (conditions 1 and 3) can list the person's own option one screen after
+  "It fell short on ... X"; for 4 in 100 misaligned picks of random pretend people the option's own strongest value is
+  short, 25 in 100 for people who hold all four values at 70-100.

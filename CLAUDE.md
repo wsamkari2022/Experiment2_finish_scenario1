@@ -777,7 +777,11 @@ code) worked end to end and found three things, all fixed. **Participants see 2 
   (the shortfall line's own test, so the two never disagree), the box adds "It still gives less on X than your earlier
   answers asked for." (the approved example's words, with "on" added so every value name reads well). Saved as
   `apa.mainValueShortSaid`; database `apa.page_said_the_option_falls_short_on_that_value` (null elsewhere and for older
-  rows).
+  rows). **Both doors** (the main study never reads the door; N27 fails if it ever does; seen live in each door).
+  **Only APA_Only has the box**, so this exact clash cannot happen in condition 1 (its APA page says only "It fell short
+  on ..."; seen live). Left for the researcher (asked 7 October 2026): the next step's list heading, "These options best
+  fit X - the value you just prioritized.", in conditions 1 and 3, can list the person's own option one screen after
+  "It fell short on ... X" (both true: "best fit" compares the options, "fell short" compares with what they asked for).
 - **3, the thank-you page's progress bar ("3-A"; `GlobalStepper` `finished`).** The thank-you page is still the feedback
   stage, so the bar said "Finish · You are nearly there" with Feedback current. Once the feedback is sent (or a reload
   reads the saved status) every step is drawn done, the flag says "Done" and stops its looping animation. Both doors.
@@ -785,7 +789,7 @@ code) worked end to end and found three things, all fixed. **Participants see 2 
   every short page under 30 s keeps the gift card, a rusher of three real parts loses it), `validate:conditions` N27 (the
   rule recounted by hand over every option and 400 pretend profiles, the words from the source, saved, the database),
   `validate:journey` J17 (and J8 taught the finished check's new form); 16 deliberate breaks, 16 caught (one only after
-  J17 counted every spelling of `finished`). Live, a second full rehearsal: scenario 1 showed the sentence and scenario 2
+  J17 counted every spelling of `finished`), and 2 more for the both-doors line of N27, 2 caught. Live, a second full rehearsal: scenario 1 showed the sentence and scenario 2
   did not (both saved as shown), the bar said "After the feedback", "You are nearly there", then "Done" after sending,
   after a reload and on a 375px phone; the record's rushed list held only real parts and the short pages apart.
 
