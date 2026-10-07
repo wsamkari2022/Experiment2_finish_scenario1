@@ -154,7 +154,9 @@ The last line (since 7 October 2026) is the Prolific completion code: copy it fr
 (it is also in your `Prolific docs/` folder). Letters and digits only. It is shown to a Prolific participant only after
 their completion is saved, and it is never written anywhere else. Without it the university version works as before;
 `./build-and-run.sh` prints a warning, and the Prolific version's final page cannot show the code. After the start,
-`https://moonlander.fit.edu/api/health` must say `"prolific_code_configured": true`.
+`https://moonlander.fit.edu/api/health` must say `"prolific_code_configured": true`. Then do one Prolific "Preview as
+participant" run to the very end and press "Return to Prolific" (docs/PROLIFIC_CONVERSION_PLAN.md, section 5, item 8).
+The daily pay check during collection: docs/DAILY_PAY_CHECK.md.
 
 Save (`Ctrl+O`, `Enter`) and exit (`Ctrl+X`). Then lock the file so only you can read it:
 

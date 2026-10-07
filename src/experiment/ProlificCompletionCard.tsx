@@ -57,6 +57,9 @@ export function ProlificCompletionCard({ prolificId }: { prolificId: string }) {
   return (
     <Box
       data-prolific-completion
+      /* Read out when the code arrives (the audit of 7 October 2026, H3): a screen reader announces the change. */
+      role="status"
+      aria-live="polite"
       w="full"
       maxW="xl"
       mx="auto"

@@ -71,7 +71,7 @@ the code to the browser holding a finished Prolific record; the thank-you page s
 Prolific"; another device gets it after the age check; without a server the page says to message the researcher. What they do: CLAUDE.md, "Privacy, the
 Prolific consent page and the second number row".
 
-**Build order (one step at a time):** Step 0 (done) -> 1 (done) the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 (done) the Prolific consent page and the demographic page without the email -> 3 (done) the second number row (Prolific only) -> 4 (done) the end page: the code from the server and "Return to Prolific" -> 5 the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
+**Build order (one step at a time):** Step 0 (done) -> 1 (done) the two doors, the Prolific ID as the key, `recruitment_source`, balance per group -> 2 (done) the Prolific consent page and the demographic page without the email -> 3 (done) the second number row (Prolific only) -> 4 (done) the end page: the code from the server and "Return to Prolific" -> 5 (done 7 October 2026: `npm run pay:check`, docs/DAILY_PAY_CHECK.md) the daily pay-check tool -> 6 deploy, Preview runs, colleagues, then Prolific in batches.
 
 **Prolific's rules re-read 6 October 2026, unchanged:** at least $8 an hour ($12 recommended); two failed valid checks before a rejection in a study over 5 minutes; memory-recall checks are not valid; "too slow", the researcher's own measures and a wrong or missing code are not valid reasons; submissions not reviewed are approved automatically on day 21; a completion code can approve automatically (not used here); bulk approval takes a list of Prolific IDs.
 
@@ -283,11 +283,15 @@ memory.
    the plain Prolific link would count as a real Prolific participant). Delete or mark every test record before launch.
 6. Fix 1 (the option cards' fit numbers; kept for "just before real participants") is done.
 7. `docs/PREREGISTRATION_FREEZE.md` is final.
-8. The codes and links of both paths are in the server's `.env`; "Preview as participant" reached the end and went
-   back to Prolific.
-9. The pilot of 10 is done and read: the real median time, any problems, the pay per hour. Then the main run of 160,
-   opened in steps (Prolific can fill dozens of places within minutes).
-10. During collection: Prolific messages daily; "Needs review" submissions within a few days.
+8. The completion code is in the server's `.env` (`PROLIFIC_COMPLETION_CODE`, exactly as Prolific shows it) and
+   `https://moonlander.fit.edu/api/health` says `"prolific_code_configured": true`. Then **one Prolific "Preview as
+   participant" run to the very end** (the audit of 7 October 2026, H4): the final page shows the code, press "Return to
+   Prolific", and check that Prolific accepts it. If the Preview link carries no real Prolific ID, the study's paste box
+   takes any test ID (letters and digits, for example `previewtest0001`). Delete that test record afterwards.
+9. No pilot (decided 6 October 2026): the first batch is 40 places; read its data (the median time, any problems, the pay
+   per hour from the daily pay check) before opening the rest in steps (Prolific can fill dozens of places within minutes).
+10. During collection: Prolific messages daily; the daily pay check (docs/DAILY_PAY_CHECK.md) every day, and every
+    submission decided before day 21.
 
 ---
 

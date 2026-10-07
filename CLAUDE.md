@@ -592,9 +592,9 @@ after Step 4, with a database backup first). **Participants see it** (HOW_TO_ANA
   condition file "prolific", a link without the ID recognised; three found and fixed in that check: the floating note
   covered Block 1's first button (now a strip above the progress bar), it asked "Not you?" right after a sign-in, and a
   phone broke the masked email mid-word.
-- **Not yet (Step 5):** the daily pay check. (Steps 2 and 3, the Prolific consent page and the second number row, were
-  built on 7 October 2026, and Step 4, the end page with the code and "Return to Prolific", the same day: the next two
-  sections.) The visit log says
+- **All five steps built on 7 October 2026** (Steps 2-3, the consent page and the second number row; Step 4, the end page
+  with the code; Step 5, the daily pay check): the next three sections. Left before Prolific: the ethics board, the
+  deploy with the code in the server's `.env`, and one Prolific Preview run to the end (docs/PROLIFIC_CONVERSION_PLAN.md 5). The visit log says
   `arrived_with_their_prolific_id` in the Prolific door. `SHAPE_VERSION` "2026-10-06-two-doors"
   (`major_info_and_scores.condition.recruitment_source`).
 - **Checked:** `validate:session` C13 (new) with C2, C8 and C11 taught the new routes and page; `validate:conditions` N25
@@ -700,7 +700,8 @@ page says "confidential", not "anonymous", in both doors). **Participants see it
 - **Checked:** `validate:session` C16 (new: the route's order of checks, the code from .env only and never stored, the
   health flag, PM2 and the deploy script, no code and no completion address anywhere in `src/` or `dist/`,
   `fetchCompletionCode` with a pretend server, the card asking again and never jumping, the final page in the Prolific
-  door only, the age before the code on another device, the results-page sentence, "confidential"); `npm run test:load`
+  door only, the age before the code on another device, the results-page sentence, "confidential"; since the audit the answers
+  needed, the code kept letter for letter, the screen-reader announcement); `npm run test:load`
   L8 (new, the real server with a made-up code: not before the completion, then the code and the address, only to the
   holding browser, never for a university key, never in a lookup or sign-in answer, the times on the record and never the
   code, the health flag). 18 deliberate breaks, 18 caught (one only after C16 learned that the card must wait for the age).
@@ -710,8 +711,50 @@ page says "confidential", not "anonymous", in both doors). **Participants see it
   one showed the code; the record had the three times and never the code; the university thank-you page showed no code;
   a 375px phone (after the one-line fix) and light mode. Two found and fixed live: the code split over two lines on a
   phone, and a reload of the "already finished" page asked the age again although the browser held the code.
+- **Hardened after the audit of 7 October 2026** (the researcher's "1-yes, 2-yes"): **H1** the route also needs the study's
+  own answers on the record (`HOLDS_THE_STUDY`: `blocks.feedback_answers` and all six scenarios of
+  `blocks.block5_emergency_scenarios`); before, a script could make a record, mark it finished and get the code in three
+  requests, without the study (confirmed in the audit). A real participant notices nothing: both travel with the
+  completion and the card asks again every 3 seconds. A script must now fake the whole study, which the daily pay check
+  reads. **H2** the code is kept exactly as written in `.env` (letters and digits, small or capital: Prolific compares it
+  letter for letter; it used to be turned into capitals). **H3** the card is `role="status" aria-live="polite"`, so a
+  screen reader announces the code. **H4** the launch list now ends with one Prolific "Preview as participant" run to the
+  end, pressing "Return to Prolific" (docs/PROLIFIC_CONVERSION_PLAN.md, section 5). C16 and L8 taught all three (L8 with a
+  made-up code in small and capital letters; a finished record without answers, and one with five scenarios of six, get
+  no code); 6 breaks, 6 caught. Live (before the hardening): with no code set the card says "Getting your code...", then
+  after a minute "This is taking longer than usual ... send the researcher a message through Prolific".
 - **Deploying:** add `PROLIFIC_COMPLETION_CODE=<the code from Prolific>` to the server's `.env` (DEPLOYMENT.md, Part C), run
   `./build-and-run.sh`, and check `/api/health` says `"prolific_code_configured": true`.
+
+## The daily Prolific pay check (Step 5), since 7 October 2026
+
+The researcher: "1-A 2-A 3-A 4-A" on the plan (and the audit's three additions, "3-yes"). **Nothing participants see.**
+How to do it, for the researcher: docs/DAILY_PAY_CHECK.md.
+
+- **`npm run pay:check -- "Prolific docs/daily/<date>" [--reward 10] [--today <date>]`** (`tools/pay_check.cjs`, plain
+  Node, no packages). It reads `participants.json` (Compass's export of `participants`: an array, one per line, or
+  Extended JSON) and `prolific.csv` (Prolific's submissions file: Participant id, Status, Time taken, Completed at,
+  Completion code; columns found by name, and it STOPS with the columns it saw when a needed one is missing), and writes
+  `PAY_CHECK.md` and `approve_ids.txt` (one comma-separated line for Prolific's bulk approve) beside them. It never
+  rejects, contacts anybody or touches the database.
+- **The groups** (only Prolific's valid reasons, researcher-help "Who should I reject?"): PAY (Awaiting review, finished,
+  every answer, nothing below; ONE failed number row is not enough); LOOK FIRST with Prolific's wording ("3-A": failed
+  BOTH number rows; "2-A" clear low effort = the same answer to every rating or 3+ blocks under 30 seconds; "1-A"
+  exceptionally fast on Prolific's own "Time taken", mean - 3 x the sample standard deviation over finished submissions,
+  read only once 10 have a time; our record begun 15+ minutes before Prolific's clock); PROBLEM (no record, not
+  finished, answers missing - Blocks 1-4, all six scenarios, the feedback, the attention checks -, the code never shown,
+  under 5 working minutes, our clock shorter than half of Prolific's minus 5 minutes); NOT FINISHED (returned, timed
+  out, active); DECIDED (approved, rejected). Plus: "Decide soon" from day 18 (Prolific approves by itself on day 21),
+  the code each person typed compared with most people's (information only, never printed), the median time and the
+  hourly pay at `--reward`, and the Prolific records that are not in Prolific's file (tests, previews). All the numbers
+  live in `RULES` at the top of the tool.
+- **Privacy:** only records with a Prolific ID are read (the Compass file holds university emails); a report or approve
+  line that would contain an email is refused; the completion code is never printed.
+- **Checked:** `npm run validate:pay` (`tools/validate_pay_check.cjs`, in the chain before `validate:position`): Y1 every
+  group with one pretend person each, Y2 the speed line recounted by hand and not read with nine, Y3 the files (Extended
+  JSON, quoted CSV, BOM, CRLF, h:mm:ss, GMT dates, a missing column), Y4 privacy, Y5 the command end to end in a
+  temporary folder. 12 deliberate breaks, 12 caught (one only after Y4 learned to read the whole result and to count a
+  refused report as a failure).
 
 ## Prolific: planned, not built (since 1 October 2026)
 
@@ -725,8 +768,8 @@ on the server only); every day the researcher exports the participants collectio
 submissions file into `Prolific docs/daily/`, and Claude says which Prolific IDs to pay, which to look at and which did
 not finish, by Prolific's own valid reasons only. Build order: Step 0 (done, above), Step 1 the two doors and the
 Prolific ID (done, "Two doors" above; it took the demographic page without the email), Step 2 the consent page and Step 3
-the number row (both done 7 October 2026, with the privacy fix), Step 4 the end page with the code (done the same day: "The
-Prolific completion code"), then the daily pay check.
+the number row (both done 7 October 2026, with the privacy fix), Step 4 the end page with the code and Step 5 the daily pay check
+(both done the same day: "The Prolific completion code", "The daily Prolific pay check").
 
 The study will be recruited on Prolific, but only AFTER the four conditions are built and tested (the researcher's
 order, 1 October 2026). The full plan - Prolific's rules with their sources, the answers for Prolific's study form,
@@ -829,7 +872,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
 `validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED`
-(since 24 September 2026), `ALL DATABASE GATES PASSED`, `ALL VCI_ALL GATES PASSED`, `ALL JOURNEY GATES PASSED` (both since 28 September 2026), `ALL SESSION GATES PASSED` and `ALL ATTENTION GATES PASSED` (both since 29 September 2026) and `ALL CONDITION GATES PASSED` (since 1 October 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
+(since 24 September 2026), `ALL DATABASE GATES PASSED`, `ALL VCI_ALL GATES PASSED`, `ALL JOURNEY GATES PASSED` (both since 28 September 2026), `ALL SESSION GATES PASSED` and `ALL ATTENTION GATES PASSED` (both since 29 September 2026), `ALL CONDITION GATES PASSED` (since 1 October 2026) and `ALL PAY CHECK GATES PASSED` (since 7 October 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
 until 26 September 2026 (it passes since Fix 6, see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
 above were never printed and four suites never ran. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
 a blocker, not a warning.
@@ -1816,6 +1859,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2); since 7 October 2026 the Prolific door's two number rows, one per section, two different numbers, the university plan drawn exactly as before, failing both the flag (T9), and the consent page of each door (T10) |
 | `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20); since 3 October 2026 Baseline's cards without the fit line and the ranking reasons, and one confirmation page with "How sure" for every choice (N21); since 6 October 2026 many people at once: a burst served from one reading in turns, person by person equal to one at a time (N22), the landing page asking four times with one arrival id and never picking at random on the live site (N23), every person counted once while their record is being made (N24), and each door balanced on its own (N25); since 7 October 2026 somebody who already finished gives back the condition their browser was just given (N26) |
 | `test:load` | Many people at once, on the REAL server (since 6 October 2026; not in the chain: needs MongoDB on this computer). Starts `server/index.js` itself on port 4100 against a throw-away `vrds_load_test_<time>` database (always deleted), sends 100, 100 and 200 pretend people in the same instant and checks no request refused (L1), everybody saved with their own session id and every save landed (L2), the conditions exactly even in every burst (L3), nobody waited 3 s for a condition (L4), and since the two doors 100 students and 100 Prolific people at once, 25 per condition inside each door with every Prolific record under prolific_pid and no email (L5), and the database rule swap on a copy with today's rule (L6), and since 7 October 2026 privacy on the real server: the lookup gives only the status, a wrong age is refused, the right age brings no analysis, the create route answers "ok", a write without the browser's id is refused, no cross-site header (L7), and the Prolific completion code with a made-up code: not before the completion, only to the holding browser, never for a university key or in another answer, never stored (L8). Run after any change to the server or the landing page |
+| `validate:pay` | The daily Prolific pay check (since 7 October 2026; `tools/pay_check.cjs`, run as `npm run pay:check`): every group with a pretend person each (Y1), exceptionally fast recounted by hand (Y2), the two files in every shape they come in (Y3), no email and no code in the output (Y4), the command end to end (Y5) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

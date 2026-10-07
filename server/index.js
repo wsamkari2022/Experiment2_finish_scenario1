@@ -104,12 +104,25 @@ app.get(
  * review, never by withholding the code. The first and the last time it was handed out, and how often, are written on
  * the record (prolific_code_given_at, prolific_code_last_given_at, prolific_code_given_times) for the daily pay check;
  * the code itself never is. Prolific's own completion address is built here too, so the page never holds it.
+ *
+ * HARDENED AFTER THE AUDIT OF 7 OCTOBER 2026 (the researcher's "1-yes"). A finished status alone could be made by a
+ * script in three requests (create a record, mark it finished, ask) without doing the study, so the code now also needs
+ * the record to hold the study's own answers: the main study (`blocks.block5_emergency_scenarios`, all six scenarios)
+ * and the feedback (`blocks.feedback_answers`). A real participant notices nothing - both are sent with the completion
+ * and the page asks again every few seconds - and a script must now fake the whole study, which the daily pay check reads
+ * (tools/pay_check.cjs). The code is kept exactly as written in .env (letters and digits; never changed to capitals,
+ * because Prolific compares it letter for letter).
  */
-const PROLIFIC_CODE = /^[A-Z0-9]{4,32}$/;
+const PROLIFIC_CODE = /^[A-Za-z0-9]{4,32}$/;
 function completionCode() {
-  const code = String(process.env.PROLIFIC_COMPLETION_CODE ?? "").trim().toUpperCase();
+  const code = String(process.env.PROLIFIC_COMPLETION_CODE ?? "").trim();
   return PROLIFIC_CODE.test(code) ? code : null;
 }
+/** The record holds the study's own answers: the six scenarios of the main study and the feedback. */
+const HOLDS_THE_STUDY = {
+  "blocks.feedback_answers": { $exists: true },
+  "blocks.block5_emergency_scenarios.scenarioResults.5": { $exists: true },
+};
 const completionUrl = (code) => `https://app.prolific.com/submissions/complete?cc=${code}`;
 
 /* ---------------------------------------------------------------------- participants */
@@ -325,6 +338,8 @@ app.post(
     /* Only the browser that holds the record: since the privacy fix a new device holds it only after the age check. */
     if (doc.active_browser?.id !== requestId) return res.status(409).json(REFUSED_BODY);
     if (doc.status !== "Study Completed") return res.json({ ready: false });
+    /* ...and the answers themselves have arrived (they travel with the completion; until then, "not yet"). */
+    if (!(await participants().countDocuments({ ...whoIs(key), ...HOLDS_THE_STUDY }, { limit: 1 }))) return res.json({ ready: false });
     const code = completionCode();
     if (!code) {
       console.error("[api] PROLIFIC_COMPLETION_CODE is not set (or not letters and digits) in .env: no code was given");

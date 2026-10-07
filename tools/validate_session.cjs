@@ -814,10 +814,16 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     const route = routeAt < 0 ? "" : code.slice(routeAt, code.indexOf("\n);", routeAt));
     /* The server: a Prolific record only, the holding browser only, a saved completion only, the code from .env only. */
     const order = ["if (!isProlificKey(key))", "if (!requestId)", "if (!doc)", "if (doc.active_browser?.id !== requestId)",
-      'if (doc.status !== "Study Completed") return res.json({ ready: false });', "const code = completionCode();", "res.json({ ready: true, code, url: completionUrl(code) });"];
+      'if (doc.status !== "Study Completed") return res.json({ ready: false });',
+      "if (!(await participants().countDocuments({ ...whoIs(key), ...HOLDS_THE_STUDY }, { limit: 1 }))) return res.json({ ready: false });",
+      "const code = completionCode();", "res.json({ ready: true, code, url: completionUrl(code) });"];
     const at = order.map((o) => route.indexOf(o));
-    if (at.some((i) => i < 0) || at.some((i, k) => k > 0 && i < at[k - 1])) why.push("the code route does not check, in order: a Prolific key, the browser id, the record, the holding browser, a saved completion, then the code");
-    if (!/String\(process\.env\.PROLIFIC_COMPLETION_CODE \?\? ""\)/.test(code) || !/const PROLIFIC_CODE = \/\^\[A-Z0-9\]\{4,32\}\$\/;/.test(code)) why.push("the code does not come from .env, or is not checked as letters and digits");
+    if (at.some((i) => i < 0) || at.some((i, k) => k > 0 && i < at[k - 1])) why.push("the code route does not check, in order: a Prolific key, the browser id, the record, the holding browser, a saved completion, the study's answers, then the code");
+    /* The answers it needs (the audit of 7 October 2026, H1): the feedback and all six scenarios of the main study. */
+    if (!/const HOLDS_THE_STUDY = \{\s*"blocks\.feedback_answers": \{ \$exists: true \},\s*"blocks\.block5_emergency_scenarios\.scenarioResults\.5": \{ \$exists: true \},\s*\};/.test(code)) why.push("the code route does not need the feedback and all six scenarios");
+    if (!/String\(process\.env\.PROLIFIC_COMPLETION_CODE \?\? ""\)\.trim\(\);/.test(code) || !/const PROLIFIC_CODE = \/\^\[A-Za-z0-9\]\{4,32\}\$\/;/.test(code)) why.push("the code does not come from .env, or is not checked as letters and digits");
+    /* Kept letter for letter (H2): Prolific compares the code exactly. */
+    if (/PROLIFIC_COMPLETION_CODE[^\n]*\.(toUpperCase|toLowerCase)\(/.test(code)) why.push("the code's letters are changed before it is given");
     const setPart = route.slice(route.indexOf("$set:"), route.indexOf("res.json({ ready: true"));
     if (/\bcode\b(?!_)/.test(setPart.replace(/prolific_code_\w+/g, ""))) why.push("the code itself is written on the record");
     if (!/prolific_code_given_at: doc\.prolific_code_given_at \?\? now/.test(route) || !/\$inc: \{ prolific_code_given_times: 1 \}/.test(route)) why.push("the first time and the count are not written");
@@ -880,6 +886,8 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
     if (!/await fetchCompletionCode\(prolificId\)/.test(card) || !/answer\.kind === "waiting" \? SOON_MS : LATER_MS/.test(card)) why.push("the card does not ask the server again while the code is on its way");
     if (/location\.(href|assign|replace)|window\.open|setTimeout\([^)]*url/.test(card)) why.push("the card moves the person to Prolific by itself (the researcher's 1-A: a button only)");
     if (!/<a data-return-to-prolific href=\{given\.url\}>/.test(card) || !/<Clipboard\.Root value=\{given\.code\}>/.test(card)) why.push("the card has no Return to Prolific button or no Copy");
+    /* A screen reader hears the code arrive (H3). */
+    if (!/data-prolific-completion[\s\S]{0,200}role="status"\s+aria-live="polite"/.test(src("src/experiment/ProlificCompletionCard.tsx"))) why.push("a screen reader is not told when the code arrives");
     /* The final page shows it only with a Prolific ID; the flow passes it by the key. */
     const page = src("src/experiment/UserFeedbackPage.tsx");
     if (!/\{prolificId && <ProlificCompletionCard prolificId=\{prolificId\} \/>\}/.test(page)) why.push("the final page does not show the card for a Prolific participant");

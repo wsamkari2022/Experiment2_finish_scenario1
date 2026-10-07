@@ -2076,3 +2076,12 @@ thesis says so.
   the study on a new device was given a landing-page condition that counted as "just arrived" for 30 minutes. Now both
   first pages give it back as soon as they see a finished email or Prolific ID (only a condition nobody owns, each arrival
   once); a given-back arrival never counts. N26 new; 5 breaks, 5 caught; checked live in both doors.
+- **2026-10-07. The audit of Steps 4-5, its fixes, and Step 5** (Waseem: "1-yes 2-yes 3-yes, and 1-A 2-A 3-A 4-A";
+  "make sure that you make my experiment strong and solid"). The audit found a script could get the completion code in
+  three requests without the study (create, finish, ask): H1 the code now also needs the feedback and all six scenarios
+  on the record; H2 the code is kept letter for letter (it was made capitals); H3 the card is announced to screen
+  readers; H4 the launch list ends with one Prolific Preview run to the very end. Step 5 built: `npm run pay:check`
+  (tools/pay_check.cjs) sorts every Prolific submission by Prolific's valid reasons only, with the audit's three additions
+  (every answer present, the two clocks compared, the code typed); docs/DAILY_PAY_CHECK.md for Waseem. C16, L8 extended;
+  validate:pay (Y1-Y5) new and in the chain. 18 breaks, 18 caught (one after Y4 was tightened). The launch list in the
+  Prolific plan also lost its old pilot and two-code lines (decided otherwise on 6 October).

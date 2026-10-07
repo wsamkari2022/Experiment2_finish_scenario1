@@ -56,6 +56,8 @@ CHECKS = {
     "resume": "npm run validate:resume",
     "session": "npm run validate:session",
     "attention": "npm run validate:attention",
+    # Since 7 October 2026: the daily Prolific pay check (tools/pay_check.cjs) on pretend files.
+    "pay": "npm run validate:pay",
     "conditions": "npm run validate:conditions",
     # Since 6 October 2026: the real server against a throw-away database on this computer (needs MongoDB running).
     "load": "npm run test:load",
@@ -243,6 +245,18 @@ SECTIONS = [
          "on another device after the age check. The record keeps when the code was given, never the code. The feedback page "
          "now says \"confidential\" in both versions. Checked on the real server with a made-up code and live in the browser.",
          ["session", "load"], "(C16, L8)"),
+        ("Only a real, finished study gets the Prolific code.",
+         "Since the audit of 7 October 2026 (your 1-yes). The server gives the code only when the record also holds the "
+         "feedback and all six scenarios, so a script that just marks a record finished gets nothing; the code is kept "
+         "exactly as written (capitals matter), and a screen reader announces it. Checked on the real server with a "
+         "made-up code in small and capital letters.", ["session", "load"], "(C16, L8)"),
+        ("The daily pay check sorts every Prolific submission by Prolific's own rules.",
+         "Since 7 October 2026 (Step 5; your 1-A, 2-A, 3-A, 4-A). npm run pay:check reads the day's Compass export and "
+         "Prolific's file and writes PAY_CHECK.md and approve_ids.txt: Pay, Look first (both number rows failed, the "
+         "same answer everywhere or 3+ rushed blocks, exceptionally fast on Prolific's time), Problem (no or unfinished "
+         "record, answers missing, the code never shown, almost no working time, clocks that disagree), Not finished, "
+         "Decided. It never rejects, never prints an email or the code. How to: docs/DAILY_PAY_CHECK.md.",
+         ["pay"], "(Y1-Y5)"),
         ("Somebody who already finished never tilts the balance.",
          "Since 7 October 2026 (your \"A\"). A finished person who opens the study on a new device is given a condition by "
          "the landing page; the first page now gives it back as soon as it sees they finished, so it never counts as "
@@ -491,9 +505,10 @@ OPEN = [
      "moonlander.fit.edu/prolific), conditions balanced per group, the second number check in the Prolific version only, "
      "no pilot, the first batch 40 places, every submission manually reviewed with a daily pay check by Claude. Built: "
      "Step 0 (many people at once), Step 1 (the two doors and the Prolific ID), the privacy fix, Step 2 (the Prolific "
-     "consent page), Step 3 (the second number row) and Step 4 (the completion code and \"Return to Prolific\"). "
-     "Still to build: Step 5 (the daily pay check), docs/PROLIFIC_CONVERSION_PLAN.md section 1b. Ready to deploy now "
-     "(your 3-A): back up the database first, and add PROLIFIC_COMPLETION_CODE to the server's .env (DEPLOYMENT.md, Part C).",
+     "consent page), Step 3 (the second number row), Step 4 (the completion code and \"Return to Prolific\") and Step 5 "
+     "(the daily pay check, docs/DAILY_PAY_CHECK.md). Left: back up the database, deploy with PROLIFIC_COMPLETION_CODE in "
+     "the server's .env (DEPLOYMENT.md, Part C), then one Prolific \"Preview as participant\" run to the very end, "
+     "pressing \"Return to Prolific\" to see Prolific accept the code (the plan, section 5, item 8).",
      "Before Prolific"),
     ("Your ethics board approves the Prolific consent text",
      "docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md shows the Prolific version's consent page beside the university's: eight "

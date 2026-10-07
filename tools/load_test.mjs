@@ -23,7 +23,8 @@
  *       age brings back the person's details and run but none of their analysis, the create/update route answers only
  *       "ok", a write without the browser's id is refused, and another website gets no permission to read answers
  *   L8  (Step 4, since 7 October 2026) the Prolific completion code, with a made-up code in the server's settings: not
- *       before the completion is saved, then the code and Prolific's address, only to the browser holding the record,
+ *       before the completion is saved, nor for a finished record without the study's answers (a script's three requests;
+ *       the audit of 7 October 2026), then the code letter for letter and Prolific's address, only to the browser holding the record,
  *       never for a university key, never in a lookup or sign-in answer; the time and count written on the record, never
  *       the code; the health page says a code is set
  *   L6  the database rule swap: the throw-away database is first made with TODAY'S rule ("one email = one person" over
@@ -50,8 +51,9 @@ const PORT = 4100;
 const MONGO_URL = "mongodb://127.0.0.1:27017";
 const DB_NAME = `vrds_load_test_${Date.now()}`;
 const BASE = `http://127.0.0.1:${PORT}/api`;
-/** L8's made-up completion code: letters and digits, like Prolific's. */
-const TEST_CODE = "LOADTEST77";
+/** L8's made-up completion code: letters and digits, small and capital, like a code Prolific could give (kept letter for
+ *  letter since the audit of 7 October 2026). */
+const TEST_CODE = "LoadTest77";
 const CONDITION_LIMIT_MS = 3000;
 const WAVES = [
   { label: "wave1", people: 100, rounds: 15 },
@@ -274,6 +276,14 @@ try {
     const early = await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
     if (early.status !== 200 || early.json?.ready !== false || JSON.stringify(early.json).includes(TEST_CODE)) why.push(`before the completion the route answered ${early.status} ${JSON.stringify(early.json)}`);
     await send("PATCH", `/participants/${pid}/complete`, {}, mine);
+    /* A finished record without the study's answers (what a script makes in three requests) gets no code. */
+    const scripted = await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
+    if (scripted.json?.ready !== false || JSON.stringify(scripted.json).includes(TEST_CODE)) why.push(`a finished record without answers got ${JSON.stringify(scripted.json)}`);
+    await send("PATCH", `/participants/${pid}/section`, { path: "blocks.block5_emergency_scenarios", data: { scenarioResults: Array.from({ length: 5 }, (_, i) => ({ scenarioId: i + 1 })) } }, mine);
+    await send("PATCH", `/participants/${pid}/section`, { path: "blocks.feedback_answers", data: { feedback: { wellbeing: { items: { LI1: 4 } } } } }, mine);
+    const fiveOnly = await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
+    if (fiveOnly.json?.ready !== false) why.push(`five scenarios of six got ${JSON.stringify(fiveOnly.json)}`);
+    await send("PATCH", `/participants/${pid}/section`, { path: "blocks.block5_emergency_scenarios", data: { scenarioResults: Array.from({ length: 6 }, (_, i) => ({ scenarioId: i + 1 })) } }, mine);
     const given = await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
     if (given.json?.ready !== true || given.json?.code !== TEST_CODE || given.json?.url !== `https://app.prolific.com/submissions/complete?cc=${TEST_CODE}`) why.push(`after the completion the route answered ${JSON.stringify(given.json)}`);
     const other = await send("POST", `/participants/${pid}/prolific-code`, {}, theirs);
@@ -292,7 +302,7 @@ try {
     const health = await send("GET", "/health", null, null);
     if (health.json?.prolific_code_configured !== true || JSON.stringify(health.json).includes(TEST_CODE)) why.push(`the health page said ${JSON.stringify(health.json?.prolific_code_configured)}`);
     gate("L8", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
-      : "the Prolific completion code: not before the completion is saved; then the code and Prolific's address, to the browser holding the record only (another browser 409, no id 400), never for a university key, never in a lookup or sign-in answer; the first time, the last time and the count on the record, never the code; the health page says a code is set");
+      : "the Prolific completion code: not before the completion is saved, nor for a finished record without the study's answers (or with five scenarios of six); then the code letter for letter and Prolific's address, to the browser holding the record only (another browser 409, no id 400), never for a university key, never in a lookup or sign-in answer; the first time, the last time and the count on the record, never the code; the health page says a code is set");
   }
   gate("L6", !!swapOk, `the old "one email = one person" rule over every record was replaced at startup by the two-door rules; the old record kept; ${proDocs.length} Prolific records without an email accepted`);
   const slow = all.reduce((n, w) => n + (w.lat.condition ?? []).filter((ms) => ms >= CONDITION_LIMIT_MS).length, 0);
