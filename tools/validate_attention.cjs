@@ -412,12 +412,16 @@ const oneMissing = fileWith(P, { after_block3: ans(R3), after_scenario3: ans(RS)
   const raw = src("ConsentPage.tsx");
   const consent = bare(raw);
   /* The university page, word for word in its key places (the researcher: the email version "as it is right now"). */
-  for (const kept of ['export const CONSENT_VERSION = "2026-09-14b";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
+  for (const kept of ['export const CONSENT_VERSION = "2026-10-07-35-minutes";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
     "Your $5 Amazon Gift Card", "Answer the quick attention checks as asked.", "Tick both boxes above to continue.",
     "You do not have to finish in one sitting — see below.", "you may skip questions you do not wish to answer."]) {
     if (!raw.includes(kept)) why.push(`the university page lost: ${kept.slice(0, 50)}`);
   }
-  if (!/export const PROLIFIC_CONSENT_VERSION = "2026-10-06-prolific";/.test(consent)) why.push("the Prolific wording has no version stamp of its own");
+  if (!/export const PROLIFIC_CONSENT_VERSION = "2026-10-07-prolific-35-minutes";/.test(consent)) why.push("the Prolific wording has no version stamp of its own");
+  /* The study's length, the same sentence in both doors (the researcher, 7 October 2026: "the minimum time for this study is
+     35 minutes"; Prolific's listing says 35): not inside a door switch, and the old "40 to 55 minutes" gone. */
+  if (!/The whole study takes\{" "\}\s*<Text[^>]*>\s*at least 35 minutes\s*<\/Text>\s*\{prolific \? "\. Please complete it in one sitting — see below\." : "\. You do not have to finish in one sitting — see below\."\}/.test(consent)) why.push("the consent page does not say \"at least 35 minutes\" in both doors");
+  if (/40 to 55/.test(consent)) why.push("the old \"40 to 55 minutes\" is still on the consent page");
   const block = (name) => consent.slice(consent.indexOf(`function ${name}(`), consent.indexOf("\nfunction ", consent.indexOf(`function ${name}(`) + 10) > 0 ? consent.indexOf("\nfunction ", consent.indexOf(`function ${name}(`) + 10) : consent.indexOf("export function ConsentPage"));
   const prolificText = ["ProlificSitting", "ProlificPayment", "ProlificPrivacy", "ProlificAgreement"].map(block).join("\n").replace(/\s+/g, " ");
   for (const said of ["One Sitting, Within Prolific's Time Limit", "open the study again from Prolific", "Your Payment Through Prolific",

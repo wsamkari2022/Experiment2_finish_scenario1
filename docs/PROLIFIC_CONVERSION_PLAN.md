@@ -121,9 +121,9 @@ The full table, with a reason and a tag per item, is `Prolific docs/Prolific_New
 | 4.4 Credentials | No |
 | 4.5 Submissions | Once |
 | 4.6 Auto-reject fast | No |
-| 5.1 Time | 50 minutes until the pilot gives the real median (consent page says 40 to 55) |
-| 5.2 Reward | $10.00 = $12 an hour at 50 minutes recommended; $12.50 = $15 an hour fills faster - open |
-| 6 Cost | Main 160 x $10 = $1,600 + 33.3% = about $2,133; pilot about $133 |
+| 5.1 Time | **35 minutes** (decided 7 October 2026; both consent pages say "at least 35 minutes"). Prolific then sets the maximum time to 67 minutes, and asks for an additional payment if the real median exceeds the estimate |
+| 5.2 Reward | **$8.75 = $15.00 an hour at 35 minutes** (decided 7 October 2026, set on Prolific's page) |
+| 6 Cost | **Budget $1,000.** Each finished person costs $8.75 + 33.3% fee = $11.67; Prolific's page showed 80 people = $933.33 (no VAT). $1,000 pays for at most 85 |
 | 7.1 Action | Save as draft; Preview as participant before any publish |
 
 ---
@@ -310,7 +310,7 @@ memory.
 > town during a wildfire or how to share out a limited medicine, and you choose what to do. At the end you see a
 > summary of your own choices and answer some questions about your experience.
 >
-> - Time: about [50] minutes. Please do it in one sitting.
+> - Time: at least 35 minutes. Please do it in one sitting.
 > - Device: please use a computer (desktop or laptop).
 > - A few simple questions check that you are reading. Please answer them as asked.
 > - Some situations describe hard choices where someone is worse off whatever you decide.
@@ -351,7 +351,7 @@ direct identifiers only; low risk). Prolific's pages may change before the conve
 2. Devices: computer only (recommended), computer and tablet, or all.
 3. Content warning: "Sensitive topics" (recommended) or None.
 4. Country: US only (recommended; the study uses dollars) or US, UK, Canada, Australia, Ireland.
-5. Pay: $10 = $12 an hour (recommended) or $12.50 = $15 an hour; final after the pilot.
+5. Pay: decided 7 October 2026, $8.75 for 35 minutes ($15.00 an hour), budget $1,000.
 6. Demographics: remove the email, keep age, gender, country (recommended), or remove all and use Prolific's file.
 7. Attention: keep the topic questions as data and add a second number row (recommended), or replace the topic
    questions with instruction checks.

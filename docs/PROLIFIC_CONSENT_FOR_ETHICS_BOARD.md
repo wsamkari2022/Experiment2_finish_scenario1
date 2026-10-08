@@ -14,14 +14,15 @@ consent text below, storing the Prolific ID, and the attention-check rule.
 ## What stays the same in both versions
 
 These sections have the same words in both versions: the header ("Informed Consent"), Study Title, Purpose of the Study,
-What You Will Do (the five parts and the guess about the participant), the time ("about 40 to 55 minutes"), Possible
+What You Will Do (the five parts and the guess about the participant), the time ("at least 35 minutes"; it said "about 40
+to 55 minutes" in both versions until 7 October 2026, so the university version changed here too), Possible
 Risks, Possible Benefits, and Who to Contact With Questions (the researcher and the IRB).
 
 ## The eight parts that differ
 
 | # | University version (unchanged) | Prolific version | Why |
 |---|---|---|---|
-| 1 | "... about 40 to 55 minutes. You do not have to finish in one sitting — see below." | "... about 40 to 55 minutes. Please complete it in one sitting — see below." | Prolific gives each submission a time limit |
+| 1 | "... at least 35 minutes. You do not have to finish in one sitting — see below." | "... at least 35 minutes. Please complete it in one sitting — see below." | Prolific gives each submission a time limit |
 | 2 | **You Can Stop and Come Back**: close the study and continue later, even on a different computer | **One Sitting, Within Prolific's Time Limit**: "Please complete the study in one sitting, within the time limit Prolific shows you. If the page closes by accident, open the study again from Prolific: you will continue from where you stopped." | Same reason |
 | 3 | **Your $5 Amazon Gift Card**, and what earns it: reach the end; at least 35 minutes of active work; time counts only while working; answer thoughtfully; answer the attention checks as asked | **Your Payment Through Prolific**: "Everyone who completes the study is paid through Prolific, the amount shown in the study on Prolific. Every submission is reviewed before it is paid." What completes it: **Reach the end** ("Answer the feedback questions and arrive at the final page. There you receive your completion code, and a button takes you back to Prolific."); **Answer the attention checks as asked** ("A few simple questions check that you are reading. If you fail two or more of them, your submission may be rejected."); **Answer thoughtfully** ("A submission that shows clear low effort throughout, such as the same answer to every question, may be rejected.") | Prolific pays. Prolific does not allow refusing payment for time spent or for the researcher's own measures, so there is no minutes rule (working time is still measured, for the analysis). Prolific allows rejection only after two failed attention checks |
 | 4 | **Privacy and Your Email**: confidential, not anonymous; the email is collected to let the person return and to send the gift card | **Privacy and Your Prolific ID**: "We never ask for your name or your email. Your answers are stored with your Prolific ID, which we use only to pay you and to let you continue if the page closes. Your Prolific ID is seen only by the research team and is never shown to anyone else taking part. Your answers are analyzed and reported as group results, so no individual can be identified in anything we publish. Data is kept on secure, password-protected storage accessible only to the research team." | No email is collected in this version |

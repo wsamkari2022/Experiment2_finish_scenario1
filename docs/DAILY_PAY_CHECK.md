@@ -11,12 +11,12 @@ says how to prepare the two files each day; Claude then runs the check and expla
    **`participants.json`**.
 3. **Prolific's file:** on Prolific, open the study → **Submissions** → download / export the submissions file (CSV)
    → save it in today's folder as **`prolific.csv`**.
-4. **Tell Claude:** "pay check 2026-10-20" (and the reward, for example "the reward is 10 dollars").
+4. **Tell Claude:** "pay check 2026-10-20" (the reward is $8.75 since 7 October 2026).
 
 Claude runs:
 
 ```bash
-npm run pay:check -- "Prolific docs/daily/2026-10-20" --reward 10
+npm run pay:check -- "Prolific docs/daily/2026-10-20" --reward 8.75
 ```
 
 and two files appear in today's folder:

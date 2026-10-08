@@ -797,6 +797,25 @@ code) worked end to end and found three things, all fixed. **Participants see 2 
   did not (both saved as shown), the bar said "After the feedback", "You are nearly there", then "Done" after sending,
   after a reload and on a 375px phone; the record's rushed list held only real parts and the short pages apart.
 
+## The study's length and the Prolific price (7 October 2026)
+
+The researcher: "make the consent form in both doors that the minimum time for this study is 35 minutes", and on
+Prolific's page he set **35 minutes and $8.75 ($15.00 an hour)**; with the 33.3% academic fee each finished person costs
+$11.67 (80 people = $933.33 on Prolific's page, no VAT), and the budget is **$1,000** (at most 85 people).
+**Participants see it** (HOW_TO_ANALYZE 4.9).
+
+- **Both consent pages** say "The whole study takes **at least 35 minutes**" (one shared sentence; it said "about 40 to 55
+  minutes"). `CONSENT_VERSION` "2026-10-07-35-minutes", `PROLIFIC_CONSENT_VERSION` "2026-10-07-prolific-35-minutes"
+  (stored with every consent record). docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md updated; **the university consent changed
+  too, so ask the ethics board** whether that change needs approval. The university gift-card rule (35 active minutes)
+  is unchanged.
+- Prolific shows a maximum time of 67 minutes at a 35-minute estimate and asks for an additional payment when the real
+  median exceeds the estimate: the Preview run and the first batch should be read for the median.
+- **Checked:** `validate:attention` T10 (the sentence in both doors, "40 to 55" gone, both stamps moved); 4 deliberate
+  breaks, 4 caught. Live on the built site: both doors' consent pages, and the record saved the new stamp.
+- **Pay by progress** (the advisor's idea, 7 October 2026): analysed, not built; the researcher's concerns and the options
+  are in the deck for his advisor. Nothing in the study pays partial amounts.
+
 ## Prolific: planned, not built (since 1 October 2026)
 
 **Decided 6 October 2026** (the researcher, after his advisor): TWO versions on one website - the email version as it

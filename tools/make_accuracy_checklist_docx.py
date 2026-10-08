@@ -232,6 +232,11 @@ SECTIONS = [
          "time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission may be "
          "rejected.\", withdrawal through Prolific, one tick-box, and \"I do not agree\" (return the study on Prolific). "
          "The text for your ethics board: docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md.", ["attention"], "(T10)"),
+        ("Both consent pages say the study takes at least 35 minutes.",
+         "Since 7 October 2026 (your request). One shared sentence, \"The whole study takes at least 35 minutes\" (it said "
+         "\"about 40 to 55 minutes\"), the same as Prolific's listing (35 minutes, $8.75 = $15 an hour). Both consent version "
+         "stamps moved, so every record says which wording it agreed to. The university page changed too: ask your ethics "
+         "board. Checked live in both versions.", ["attention"], "(T10)"),
         ("The Prolific version has two \"pick the number\" rows; the university version keeps its one.",
          "Since 7 October 2026 (your 3-B, Step 3). One row in \"The tools & the experiment design\" and one in \"How this "
          "experience was for you\", two different numbers two to five. Only these two count for Prolific's rule, and failing "

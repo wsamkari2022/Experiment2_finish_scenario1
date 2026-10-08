@@ -35,7 +35,9 @@
  *   - the attention rule in Prolific's terms: failing two or more checks may lead to a rejected submission;
  *   - one agreement box, and "I do not agree", which says how to return the study on Prolific;
  *   - withdrawal through a Prolific message (or the researcher's email) with the Prolific ID.
- * Its own version stamp (PROLIFIC_CONSENT_VERSION). The university door's wording is unchanged, word for word.
+ * Its own version stamp (PROLIFIC_CONSENT_VERSION). The university door's wording is unchanged, word for word, except
+ * the study's length, which both doors changed together on 7 October 2026 ("at least 35 minutes", was "about 40 to 55
+ * minutes"; CONSENT_VERSION "2026-10-07-35-minutes", PROLIFIC_CONSENT_VERSION "2026-10-07-prolific-35-minutes").
  * The ethics board must approve this text before the Prolific door opens to participants.
  *
  * THE BUTTON IS DISABLED UNTIL THE BOX IS TICKED
@@ -62,9 +64,9 @@ import { REQUIRED_ACTIVE_MINUTES } from "./dbShape";
 import type { RecruitmentSource } from "./recruitment";
 
 /** Bump whenever the consent wording below changes. Stored with every consent record. */
-export const CONSENT_VERSION = "2026-09-14b";
+export const CONSENT_VERSION = "2026-10-07-35-minutes";
 /** The Prolific door's wording (since 6 October 2026). Bump it whenever that wording changes. */
-export const PROLIFIC_CONSENT_VERSION = "2026-10-06-prolific";
+export const PROLIFIC_CONSENT_VERSION = "2026-10-07-prolific-35-minutes";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
@@ -472,10 +474,12 @@ export function ConsentPage({ onAgree, door = "university" }: {
                   A few questions about your experience of taking part.
                 </Text>
               </VStack>
+              {/* "At least 35 minutes" in both doors (the researcher, 7 October 2026: "the minimum time for this study is 35
+                  minutes"; it said "about 40 to 55 minutes"). Prolific's listing says 35 minutes. Both version stamps moved. */}
               <Text>
-                The whole study takes about{" "}
+                The whole study takes{" "}
                 <Text as="span" color="fg" fontWeight="semibold">
-                  40 to 55 minutes
+                  at least 35 minutes
                 </Text>
                 {prolific ? ". Please complete it in one sitting — see below." : ". You do not have to finish in one sitting — see below."}
               </Text>
