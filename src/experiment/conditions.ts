@@ -101,11 +101,17 @@
 
 import type { RecruitmentSource } from "./recruitment";
 
+/*
+ * BASELINE'S ADDRESS WORD IS "BSL4" (since 14 October 2026, the researcher's choice for the OSF blinding answer): a
+ * participant who looks at the address bar must not read "Baseline" and guess they are the comparison group. Only the
+ * address word changed; the stored name (`type`, condition_type in the database) is still "Baseline", and an address
+ * with the word Baseline is still read (a tester's old link), then shown as BSL4. The other three words are unchanged.
+ */
 export const CONDITIONS = [
   { number: 1, type: "CVR+APA", urlName: "CVR_APA" },
   { number: 2, type: "CVR_Only", urlName: "CVR_Only" },
   { number: 3, type: "APA_Only", urlName: "APA_Only" },
-  { number: 4, type: "Baseline", urlName: "Baseline" },
+  { number: 4, type: "Baseline", urlName: "BSL4" },
 ] as const;
 
 export type Condition = (typeof CONDITIONS)[number];

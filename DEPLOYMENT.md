@@ -334,11 +334,11 @@ continued.
 | You open | What happens | Counted for balance? |
 |---|---|---|
 | The plain address | The landing page gives the condition with the fewest people, exactly as for a real participant | **Yes.** A finished run counts forever; an unfinished one for 2 hours |
-| The address plus `?condition=CVR_APA`, `CVR_Only`, `APA_Only` or `Baseline` | That condition, on purpose (saved with source `address`) | **No, never** |
+| The address plus `?condition=CVR_APA`, `CVR_Only`, `APA_Only` or `BSL4` (Baseline; the word `Baseline` also works) | That condition, on purpose (saved with source `address`) | **No, never** |
 
 So test a particular condition with its address. A run started on the plain address is a real test of the landing page,
 but it stays in the counts. **The same for the Prolific door and Prolific's "Preview as participant"** (since 6 October
-2026): add `&condition=…` to the test link (for example `https://moonlander.fit.edu/prolific?PROLIFIC_PID=…&condition=Baseline`),
+2026): add `&condition=…` to the test link (for example `https://moonlander.fit.edu/prolific?PROLIFIC_PID=…&condition=BSL4`),
 or the test counts as a real Prolific participant. **Before the first real participant, the test records must be deleted or marked** (an open
 item in `docs/VRDS_Accuracy_Checklist.docx`), so the four counts start equal.
 

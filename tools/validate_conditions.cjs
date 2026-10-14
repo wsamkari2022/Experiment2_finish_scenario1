@@ -181,6 +181,8 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (C.CONDITIONS.map((c) => c.type).join(",") !== NAMES.join(",")) why.push(`names ${C.CONDITIONS.map((c) => c.type)}`);
     if (C.CONDITIONS.map((c) => c.number).join(",") !== "1,2,3,4") why.push("numbers are not 1-4 in order");
     for (const c of C.CONDITIONS) if (!/^[A-Za-z0-9_]+$/.test(c.urlName)) why.push(`${c.urlName} is not safe in an address`);
+    /* Since 14 October 2026 Baseline's address word is BSL4 (blinding: the address bar must not say "Baseline"). */
+    if (C.CONDITIONS.map((c) => c.urlName).join(",") !== "CVR_APA,CVR_Only,APA_Only,BSL4") why.push(`the address words are ${C.CONDITIONS.map((c) => c.urlName)}`);
     gate("N1", "one list of four, the same on the page and the server, with the researcher's names", why);
   }
 
@@ -326,6 +328,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
       ["?condition=CVR%2BAPA", "CVR+APA"], ["?condition=1", "CVR+APA"], ["?condition=CVR_Only", "CVR_Only"],
       ["?condition=cvr-only", "CVR_Only"], ["?condition=APA_Only", "APA_Only"], ["?condition=3", "APA_Only"],
       ["?condition=Baseline", "Baseline"], ["?condition=BASELINE&PROLIFIC_PID=abc", "Baseline"],
+      ["?condition=BSL4", "Baseline"], ["?condition=bsl4", "Baseline"], ["?condition=4", "Baseline"], ["?condition=BSL", null],
       ["?condition=", null], ["?condition=CVR", null], ["?condition=5", null], ["?condition=APA", null], ["", null],
       ["?other=Baseline", null],
     ];
@@ -335,6 +338,8 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (url.searchParams.get("condition") !== "APA_Only" || url.searchParams.get("PROLIFIC_PID") !== "5f3a" || url.searchParams.get("STUDY_ID") !== "9") why.push(`the address became ${next}`);
     const over = new URL(C.addressFor(C.CONDITIONS[0], "https://study.example/?condition=Baseline"));
     if (over.searchParams.getAll("condition").join(",") !== "CVR_APA") why.push("an address naming another condition was not corrected");
+    const bsl = new URL(C.addressFor(C.CONDITIONS[3], "https://study.example/prolific?PROLIFIC_PID=5f3a&condition=Baseline"));
+    if (bsl.searchParams.getAll("condition").join(",") !== "BSL4" || bsl.searchParams.get("PROLIFIC_PID") !== "5f3a" || /baseline/i.test(bsl.toString())) why.push(`Baseline's address became ${bsl}`);
     if (C.savedConditionOf({ number: 2, type: "Baseline", source: "landing_page" }) !== null) why.push("a saved condition whose number and name disagree was accepted");
     gate("N7", "the address: every spelling read, anything else not; the rest of the address kept", why);
   }

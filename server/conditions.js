@@ -40,7 +40,7 @@ export const CONDITIONS = [
   { number: 1, type: "CVR+APA", urlName: "CVR_APA" },
   { number: 2, type: "CVR_Only", urlName: "CVR_Only" },
   { number: 3, type: "APA_Only", urlName: "APA_Only" },
-  { number: 4, type: "Baseline", urlName: "Baseline" },
+  { number: 4, type: "Baseline", urlName: "BSL4" }, // the address word since 14 October 2026 (see conditions.ts)
 ];
 
 /** The only source that counts for balance. */

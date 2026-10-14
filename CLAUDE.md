@@ -52,7 +52,9 @@ Plan answers "Q1-B, Q2-yes, Q3-yes". **Participants see it** (a one-second landi
   everybody waiting when a turn starts is served from ONE reading of the database, still one after another; see "Many
   people at once" below). The arrival id is saved before the request, so a refresh asks for the same arrival
   (`condition_arrivals`, unique).
-- **The address shows it** (`?condition=CVR_APA`, `CVR_Only`, `APA_Only`, `Baseline`; "+" would read as a space),
+- **The address shows it** (`?condition=CVR_APA`, `CVR_Only`, `APA_Only`, `BSL4`; "+" would read as a space; Baseline's
+  word is `BSL4` since 14 October 2026, so a participant never reads "Baseline" in the address bar - the OSF blinding
+  answer - while `?condition=Baseline` is still read and then shown as `BSL4`; the stored name is still `Baseline`),
   always the SAVED condition: an address naming another one is corrected. **A tester may open a condition's address
   directly ("Q2-yes")**: saved with source `address` and never counted. No server: a random one, source
   `random_offline`, never counted - **in development only since 6 October 2026**; the live site never picks at random
