@@ -16,6 +16,9 @@ results, then give feedback. React 19 + Chakra UI v3 + Vite + TypeScript.
 3. `docs/ANALYSIS_AND_FIGURES_PLAN.md` (since 27 September 2026) — the full plan for the paper: the analysis
    tables to build, every analysis and figure with its database field and test, how the measures relate, the
    feedback links, and the hypotheses to freeze in `docs/PREREGISTRATION_FREEZE.md` before the data is opened.
+   **The main hypotheses since 14 October 2026 are the 23 A1-D5** (section 11.1 there, section 5.1 of the freeze note;
+   draft 2, awaiting the advisor's approval; the same words as the IRB, `VRDS2_Hypotheses_Draft.docx` and the OSF answers).
+   The earlier H1-H13 are kept for possible future use; each one's place in the main set is in the mapping table there.
 
 **The document carries no stamp of the study code's version** (`SHAPE_VERSION` lives only in the browser's sync
 state; found 27 September 2026). Date records by `completed_at`.
@@ -1148,7 +1151,7 @@ other than the new section 1b is identical).
   the running fit judges the wish on the values AFTER scenario 4's choice, so (a) the echo: 35 in 100 wishes for the
   decided option score higher; (b) 8 in 100 wishes for the best-looking card score below 100 (seen on a real browser
   run: 85 on screen, second-best on the running values).
-- **Traps:** VCI_all contains VCI - never correlate them; two scenario-5 fits (`vci_wished` for H12 is the study's).
+- **Traps:** VCI_all contains VCI - never correlate them; two scenario-5 fits (`vci_wished` for H12 - B6 in the main hypotheses since 14 October 2026 - is the study's).
 - **Stored:** `headline.consistency_score_all_six` / `_label_all_six`, `analysis.vci_all` (with a self-check that
   REBUILDS every running fit from the saved record and must agree; old records get rebuilt values),
   `running_*` on `analysis.alignment_records` rows, a copy in `major_info_and_scores.vci`. `SHAPE_VERSION`
@@ -1207,7 +1210,7 @@ React), which `npm run validate:journey` checks (J1-J8, in the chain; every gate
 - **Scenario 6 on the page:** a row in the choice card; the value line runs to S6 (flat in S5 and S6 until 30 September
   2026, now moved by the running values: see "The value line moves in scenarios 5 and 6");
   a "behind the veil" reference drawn APART from the five positions, never a sixth bar (its FINAL rule's
-  `profileDistance` from the values brought into Block 5, the four rules' range; the H13 idea); its own card,
+  `profileDistance` from the values brought into Block 5, the four rules' range; the H13 idea, now B5); its own card,
   "Behind the veil: your rule and our guess" (the MPF's chances, first and final rule, the "sounds like me"
   answer); reconsidering split before/after the guess; a note that it had no performance numbers.
 - **Consistency shows VCI and VCI_all** as two dashed lines (blue and cyan, the results page's colors); the six

@@ -1308,7 +1308,7 @@ saved no running fits, and this section works them out. The same two fields sit 
 
 > ⚠️ **Three traps.** (1) VCI_all contains VCI's four scenarios: never correlate the two; use `vci_all_minus_vci`.
 > (2) Two fits for scenario 5 and two for scenario 6: the study's (`per_scenario_consistency_0_to_1`; `vci_wished`,
-> hypothesis H12, is the study's scenario-5 fit on the values scenario 4 OPENED with) and the running one here.
+> hypothesis H12 (B6 in the main hypotheses since 14 October 2026), is the study's scenario-5 fit on the values scenario 4 OPENED with) and the running one here.
 > (3) Scenario 5's cards SHOWED fit on the values scenario 4 opened with; the running fit judges the wish on the values
 > AFTER scenario 4's choice. So a wish for the option decided in scenario 4 often scores higher (35 in 100 of such
 > wishes in pretend runs, "the echo"), and 8 in 100 wishes for the card that looked best score below 100. The

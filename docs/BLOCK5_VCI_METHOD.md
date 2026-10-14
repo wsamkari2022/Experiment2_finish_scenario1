@@ -345,7 +345,7 @@ shown and scored on the values scenario 4 OPENED with; the running fit judges th
 
 **Traps for the analysis.** VCI_all contains VCI's four scenarios: never correlate the two, compare their
 difference (`vci_all_minus_vci`). There are two scenario-5 fits and two scenario-6 fits (the study's and the running
-one) and two sets of values; `vci_wished` (hypothesis H12) is the study's scenario-5 fit. VCI_all is described, not
+one) and two sets of values; `vci_wished` (hypothesis H12; B6 in the main hypotheses since 14 October 2026) is the study's scenario-5 fit. VCI_all is described, not
 tested: no hypothesis rests on it ("Q4-described").
 
 **Gates.** `npm run validate:vciall` (A1-A8: the keep rule unchanged, the running rule, running values = the study's

@@ -6,10 +6,15 @@ that adds this file**. Fix 1 (what participants see while choosing) is still to 
 the very last change before launch. **At launch:** re-check every value below against the launch commit, fill in the
 two lines at the end, and do not change this file afterwards except by an appended, dated "Deviations" entry.
 
+**Since 14 October 2026 the MAIN hypotheses are the 23 in section 5.1 (A1-D5)**, still awaiting the advisor's
+approval. The earlier hypotheses of 27 September 2026 (H1-H13) are kept in section 5.2 for possible future use.
+Sections 1-4 and 6 were written on 27 September 2026 and have not yet been brought up to date for the four
+conditions (to be done once the advisor has approved the hypotheses).
+
 **Why it exists.** Every number here was chosen by the researcher or derived from simulation, not estimated from the
 data. Freezing them, dated, before the data is opened is what answers the question "were these tuned after you saw
-the results?". The analysis plan is in `docs/ANALYSIS_AND_FIGURES_PLAN.md`; section 11 there is the source of the
-hypotheses below.
+the results?". The analysis plan is in `docs/ANALYSIS_AND_FIGURES_PLAN.md`; its section 11 holds the same two sets
+of hypotheses as section 5 below (the main 23, and the earlier set kept for possible future use).
 
 ---
 
@@ -83,6 +88,88 @@ Scores stay between 0 and 100; a step past an edge is cut off and recorded. Test
 
 ## 5. The hypotheses and their tests
 
+### 5.1 The main hypotheses: 23 in four families (since 14 October 2026)
+
+**Status: draft 2, awaiting Dr. Eskridge's approval.** Word for word the same as the IRB application's Hypothesis box, `VRDS2_Hypotheses_Draft.docx` (project folder; it adds each hypothesis's power, the reason it is attainable and the limit to state) and the OSF preregistration answers (`OSF_PREREGISTRATION_ANSWERS.md`). Change them in all four places together, or in none.
+
+The study tests 23 hypotheses in four families. Each family has one primary hypothesis; the four primary hypotheses are Holm-corrected together, and the secondary hypotheses are Holm-corrected within their family. Directional hypotheses are tested one-sided; all others two-sided, α = .05.
+
+**Primary** (Holm-corrected together):
+
+| | Hypothesis | Measure (database field) | Test |
+|---|---|---|---|
+| A1 (conditions) | Participants in the full CVR+APA condition will have a higher Value Consistency Index (VCI: how well their four decisions fit their own values) than participants in the Baseline condition. | VCI (headline.consistency_score), one score per participant. | one-sided Mann-Whitney U. |
+| B1 (position) | How far a choice departs from the participant's own values will differ between deciding the care-visit cuts inside an employer's rules (scenario 4) and receiving the same cuts decided by someone else (scenario 5); the two scenarios are identical except for the participant's position. Measure: departure share (0 = the option closest to the values they brought into the main study, 100 = the farthest). | Departure share in scenario 5 minus scenario 4 (analysis.position_effect.authority_vs_receiving; by_scenario[].departure_share). Both are measured from the same values (those brought into the main study). | two-sided Wilcoxon signed-rank. |
+| C1 (prediction) | The Moral Prediction Function's top pick will match the rule each participant chooses behind the veil of ignorance (scenario 6, before seeing the prediction) more often than chance (25%). | analysis.scenario6_mpf_test.participant.mpf_guessed_right; the chance level in mpf_prediction.chance_if_guessing_percent. | one-sided exact binomial. |
+| D1 (performance) | In decisions where the first pick went against the participant's values and a reflection, clarification or confirmation step followed, the performance of the final choice will be equivalent to that of the first choice, within ±5 points on a 0-100 scale. | performanceCaptured of the first pick and of the final choice, per decision where the step ran (scenarios 1-4). | paired two one-sided tests (TOST). |
+
+**Family A, the conditions (measure: VCI unless stated)** (Holm-corrected within the family):
+
+| | Hypothesis | Measure (database field) | Test |
+|---|---|---|---|
+| A2 | VCI is higher in CVR+APA than in APA only: the reflection step adds to the clarification step. | VCI. | one-sided Mann-Whitney U. |
+| A3 | VCI is higher in CVR+APA than in CVR only: the clarification step adds to the reflection step. | VCI. | one-sided Mann-Whitney U. |
+| A4 | Among decisions whose first pick goes against the participant's values (Misaligned or Strongly misaligned), the final choice fits their values (Aligned or Weakly aligned) more often in the three conditions with a help step than in Baseline. | Per decision in scenarios 1-4: the first pick's fit and the final choice's fit (analysis.alignment_records.by_scenario[]: cvr.changed_their_choice, the fit of every option). | mixed logistic regression at the decision level, participant as a random effect. |
+
+**Family B, position (measure: departure share; every contrast is also tested on the menu-adjusted departure, which removes differences between the scenarios' menus)** (Holm-corrected within the family):
+
+| | Hypothesis | Measure (database field) | Test |
+|---|---|---|---|
+| B2 | Departure is larger when the participant's own safety is at stake (scenarios 1 and 2) than when only other people bear the cost (scenario 3). | Departure share; menu-adjusted departure as the robustness check. | one-sided Wilcoxon signed-rank. |
+| B3 | Departure is larger when deciding for one's household (scenario 2) than when deciding alone (scenario 1). | Departure share; menu-adjusted departure. | one-sided Wilcoxon signed-rank. |
+| B4 | Departure is larger when deciding inside an employer's rules (scenario 4) than when deciding freely for other people (scenario 3). | Departure share; menu-adjusted departure. | one-sided Wilcoxon signed-rank. |
+| B5 | Departure is smaller behind the veil of ignorance (scenario 6, the rule chosen before seeing the prediction) than when the participant's own safety is at stake (scenarios 1 and 2). | Scenario 6: departure share of the first rule, on its own four-rule menu (computed with the same distance rule from analysis.scenario6_mpf_test.participant.rule_chosen_before_seeing_the_guess); scenarios 1 and 2: departure share. | one-sided Wilcoxon signed-rank. |
+| B6 | The wish on the receiving end (scenario 5) fits the participant's values better than their own decision in scenario 4, both judged on the same values. | analysis.position_effect.decided_versus_wished.responsibility_gap (fit of the wish minus fit of the decision, both on the values scenario 4 opened with). | one-sided Wilcoxon signed-rank. |
+| B7 | Participants whose found-money answers change more between the three places also change more between the positions of the main study. | Block 1 place spread (the highest minus the lowest acceptance rung over the three places); Block 5 position spread (analysis.position_effect.overall_effect). | one-sided Spearman correlation, supported only if the partial correlation controlling for VCI is also positive. |
+
+**Family C, prediction** (Holm-corrected within the family):
+
+| | Hypothesis | Measure (database field) | Test |
+|---|---|---|---|
+| C2 | Over the four decisions, the MPF's top pick matches the participant's first choice more often than chance (16.7%), and its probabilities beat a uniform guess on log loss. | analysis.mpf_predictions_every_scenario.by_scenario[].participant (mpf_named_their_first_choice, mpf_chance_of_their_first_choice_percent). | one-sided, bootstrap over participants. |
+| C3 | The MPF's confidence tracks its accuracy: the higher the probability it gives its own top rule in scenario 6, the more likely the participant chose that rule. | Probability of the MPF's top rule (mpf_prediction.by_rule for most_expected_rule) and mpf_guessed_right. | logistic regression, one-sided on the slope. |
+| C4 | Participants rate the prediction as sounding more like them (1-7) when the MPF named the rule they chose than when it did not. | does_this_sound_like_me_1_to_7, by mpf_guessed_right. | one-sided Mann-Whitney U. |
+| C5 | Participants who change their rule after seeing the prediction move to the MPF's top rule more often than chance (one in three of the other rules). | rule_chosen_before_seeing_the_guess, rule_chosen_in_the_end, changed_after_seeing_the_guess, most_expected_rule; wavering separates real reactivity from earlier doubt. | one-sided exact binomial, only if at least 20 participants change; otherwise reported as description. |
+| C6 | Predictions made from the value profile as it is updated during the study beat predictions made from the profile measured before the study's main part. | mpf_predictions_every_scenario: the main columns against using_profile_before_block5. | paired difference in log loss and hit rate, bootstrap over participants, one-sided. |
+| C7 | The values measured in the first four blocks predict the choices in the four decisions beyond each option's position on the screen and its performance. | Per decision and option: the option's fit to the values brought into the main study (points_short_of_what_they_asked_for_every_option), its place in the card order, and its performance. | conditional logit regression, likelihood-ratio test of the value terms. |
+
+**Family D, reflection and experience** (Holm-corrected within the family):
+
+| | Hypothesis | Measure (database field) | Test |
+|---|---|---|---|
+| D2 | When a choice changes after a help step, the final choice fits the participant's values better than the first choice, on the same values. | points_short_of_what_they_asked_for_every_option for the first and the final choice (analysis.alignment_records). | one-sided paired Wilcoxon signed-rank on the shortfall. |
+| D3 | VCI is above the level a random chooser reaches in the participant's own condition (57, 60, 63 and 60 in CVR+APA, CVR only, APA only and Baseline). | VCI minus the random line of the participant's condition. | one-sided one-sample Wilcoxon. |
+| D4 | Holding Stability and performance fixed, the well-being composite and decision satisfaction rise with VCI (controls: age, gender, active minutes, condition, group). | wellbeingComposite and decisionSatisfaction; predictors VCI, Stability, performance; controls age, gender, active minutes, condition, group. | linear regression, one-sided on VCI. |
+| D5 | Self-reported value congruence rises with VCI. | subscales.valueCongruence and VCI. | one-sided Spearman correlation. |
+
+**Analysis rules.** The sample is every participant who completes the study; people who do not complete are excluded, and no one who completes is removed for any other reason. Prolific participants and students are analysed together, with the group as a covariate, and every primary result is also reported for the Prolific participants alone. Every test is reported with an effect size and a 95% bootstrap confidence interval. All other analyses are labelled exploratory. All hypotheses, measures, tests and the sample plan are preregistered on OSF Registries before data collection begins.
+
+### 5.2 The earlier hypotheses (27 September 2026), kept for possible future use
+
+**These are not the main hypotheses.** They were frozen on 27 September 2026, before the four conditions existed, and
+are kept unchanged below in case the researcher wants any of them later; what happens to them is his decision after
+the advisor's review. Where each one went in the main set:
+
+| Earlier hypothesis | In the main set |
+|---|---|
+| H1 (scenario 4 against 5) | B1 (primary) |
+| H2 (the fit after reflection) | D2 |
+| H3 (no performance cost) | D1 (primary) |
+| H4 (MPF on the four decisions) | C2 |
+| H5 (VCI above chance) | D3, with the lines of the four conditions |
+| H6 (value terms predict choices beyond card position) | C7 |
+| H7 (learning predictor) | C6 |
+| H8 (experience) | D4 |
+| H9 (value congruence) | D5 |
+| H10 (context sensitivity) | B7 |
+| H11 (reconsidering is a trait) | Exploratory: only about 15 in 100 people are expected to change their Block 4 decision, too few for a test |
+| H12 (truer when not one's decision) | B6 |
+| H13 (the veil against the positions) | B5, now directional (against the self-stake positions) |
+
+A1-A4 (the four conditions), B2, B3, B4, C1, C3, C4 and C5 are new; they have no earlier counterpart.
+
+The earlier set, as written on 27 September 2026:
+
 Two-sided α = 0.05 unless stated. 95% confidence intervals by bootstrap over participants (10,000 resamples).
 Effect sizes with every test.
 
@@ -105,7 +192,7 @@ Effect sizes with every test.
 | H8 | Holding the other scores fixed, `wellbeingComposite` and `decisionSatisfaction` rise with `consistency_score` and with `stability_score` (measured participants), and fall with `performance_captured` | linear regression with standardized coefficients, controls age, gender, active minutes |
 | H9 | Self-reported value congruence (`subscales.valueCongruence`) rises with `consistency_score` | Spearman, one-sided |
 | H10 | **Context with money carries over to lives.** People whose Block 1 answers change more between the three places also change more between the chairs of Block 5. Block 1 place spread = the highest minus the lowest rung over the three places (rung = `thresholdAmountIndex` 0-7 when `accepted`, 8 when `thresholdBeyondRange`; range 0-8). Block 5: `analysis.position_effect.overall_effect` (the widest gap in `departure_share` between any two chairs). Added 27 September 2026 | Spearman ρ, one-sided (positive), **and** the partial Spearman controlling for `consistency_score` must also be positive; H10 is supported only if both are. Why the second: answering at random in both blocks makes both spreads large (a random chooser also reaches a high `overall_effect`, audit P2) and gives a low VCI, so controlling for VCI keeps randomness from producing the result. Also reported without `said_yes_at_the_first_step_everywhere` and `answered_very_fast` |
-| H11 | **Reconsidering is a trait.** People who changed their Block 4 decision after hearing the voices (`decisions.finalDecision` ≠ `decisions.initialDecision`) change their choice after the reflection in Block 5 more often (`analysis.alignment_records.by_scenario[].cvr.changed_their_choice` on the decisions where `cvrFired` is true). Added 27 September 2026 | mixed logistic regression on the reflected decisions, `changed_their_choice` ~ Block 4 changed + (1 | participant), one-sided on the coefficient; a simple check beside it: Mann-Whitney on each person's share of reflected decisions changed. Only participants with at least one reflected decision. The measurement model estimates that about 15 in 100 change their Block 4 decision (docs/MEASUREMENT_MODEL.md 5), so the group is likely small: report the odds ratio and its CI whatever the p-value |
+| H11 | **Reconsidering is a trait.** People who changed their Block 4 decision after hearing the voices (`decisions.finalDecision` ≠ `decisions.initialDecision`) change their choice after the reflection in Block 5 more often (`analysis.alignment_records.by_scenario[].cvr.changed_their_choice` on the decisions where `cvrFired` is true). Added 27 September 2026 | mixed logistic regression on the reflected decisions, `changed_their_choice` ~ Block 4 changed + (1 \| participant), one-sided on the coefficient; a simple check beside it: Mann-Whitney on each person's share of reflected decisions changed. Only participants with at least one reflected decision. The measurement model estimates that about 15 in 100 change their Block 4 decision (docs/MEASUREMENT_MODEL.md 5), so the group is likely small: report the odds ratio and its CI whatever the p-value |
 | H12 | **Truer to one's values when the decision is not theirs.** VCI wished (scenario 5) is higher than VCI acted (scenario 4): `analysis.position_effect.decided_versus_wished.responsibility_gap` (wished − acted) > 0. Both are judged on the values the participant opened scenario 4 with. Added 27 September 2026 | Wilcoxon signed-rank on the gap with the zeros kept (Pratt), one-sided; the sign test beside it |
 | H13 | **Not knowing one's position.** The departure from one's own values behind the veil (scenario 6) differs from the mean departure over the five positions. Measure: the veil's departure share = 100 × (distance of the rule chosen BEFORE seeing the guess − the nearest of the four rules) ÷ (the farthest − the nearest), every distance from the frozen pre-Block-5 profile by the study's own position arithmetic (`profileDistance` and the menu range in block5Position.ts, the four rules' numbers from `tools/export_block5_content.cjs`). The first rule is `analysis.scenario6_mpf_test.participant.rule_chosen_before_seeing_the_guess`; the stored `analysis.scenario6_mpf_test.distance_from_profile_before_block5` is for the FINAL rule, the same number unless the person changed after the guess. Compared with the participant's mean `analysis.position_effect.by_scenario[].departure_share`. Added 27 September 2026 | Paired Wilcoxon signed-rank, two-sided. The veil stays out of the Position Effect itself; both shares are scaled to their own menu (four rules; six actions) |
 
