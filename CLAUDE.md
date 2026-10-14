@@ -1689,8 +1689,11 @@ with scenario 4.
 
 ## Two reliability numbers (Fix 7b), since 26 September 2026
 
-After Fix 7, the three raters agreed (spread under 30) that two options were the LEAST reliable in their scenario,
-but the numbers gave that place to another option. Both moved to the raters' average (the researcher's approval,
+After Fix 7, the raters' average put two options LAST on reliability in their scenario (in scenario 3 all three raters
+did; in scenario 1 two of the three did, while Haiku put "Carry the respirator" last, 38 against 40; every spread under
+30), but the numbers gave that place to another option. (Corrected 14 October 2026: this line said "the three raters
+agreed", which is true only for scenario 3; found while checking the OSF blind-review summary.)
+Both moved to the raters' average (the researcher's approval,
 audit Fix 7b); each carries a "METRIC AUDIT ... audit Fix 7b" comment in block5Scenarios.ts.
 
 - **S1 Seal your apartment, reliability 40 -> 23** (raters 40 / 18 / 12). Reliability there is "how likely you
