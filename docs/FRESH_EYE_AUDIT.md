@@ -2113,3 +2113,14 @@ thesis says so.
   on X, and every value has an option built on it in each decision scenario so the heading is always true); 5 breaks, 5
   caught (one re-run after a line-ending mismatch in the break script). Seen live in condition 1; choosing from the list
   still works.
+- **2026-10-14. Baseline's address word is BSL4** (Waseem, for the OSF preregistration's blinding answer: "make the
+  Baseline only to be "BSL4" and keep the rest untouched", then "make sure the experiment documents ... indicate that
+  BSL4 is the baseline condition"). A participant could read `?condition=Baseline` in the address bar and guess they were
+  the comparison group. Only Baseline's address word changed (conditions.ts and server/conditions.js); CVR_APA, CVR_Only
+  and APA_Only are unchanged; the database still stores 4 / "Baseline" (it never stores the address); an old
+  `?condition=Baseline` link is still read and then shown as BSL4. N1 holds the four words, N7 reads BSL4. Checks, build
+  and test:load pass; 4 breaks, 4 caught; seen live (Baseline and bsl4 became BSL4, CVR_Only unchanged with the Prolific
+  ID kept). Commit f1a4552. Then the documents: HOW_TO_READ_MY_DATABASE (the condition fields, `condition_source`, the
+  Baseline section heading), HOW_TO_ANALYZE (section 1, section 9's opening, 9.2, and a 14 October row in 4.9), CLAUDE.md,
+  DEPLOYMENT.md, the Prolific plan and the accuracy checklist now say BSL4 is Baseline. Not on the live server until the
+  next deploy.

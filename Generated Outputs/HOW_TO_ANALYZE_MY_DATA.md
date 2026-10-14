@@ -62,7 +62,8 @@ The block's designed manipulation is **who carries the cost** (`stakePosition`),
 thing deliberately varied across the five emergency scenarios.
 
 **Since 1 October 2026 there is a second manipulation, between participants: the condition.** Each participant is in
-one of four (`condition_type`: CVR+APA, CVR_Only, APA_Only, Baseline). They share Blocks 1-4 and differ only in what
+one of four (`condition_type`: CVR+APA, CVR_Only, APA_Only, Baseline; Baseline appears as `BSL4` in the web address
+since 14 October 2026, never in the database). They share Blocks 1-4 and differ only in what
 happens after a choice that goes against the participant's best fit in scenarios 1-4. Section 9 has the full table.
 
 ---
@@ -375,6 +376,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 7 October 2026 | **The thank-you page, both doors:** the progress bar shows every step done and the flag says "Done" (it went on saying "Finish · You are nearly there" with Feedback as the current step). Nothing recorded changed |
 | 7 October 2026 | **Conditions 1 (CVR+APA) and 3 (APA_Only), the APA page's list:** after the participant names a value, the heading over the options reads "These options are built on X - the value you just prioritized." (it said "These options best fit X ..."). The same options as before; only the heading's words changed. Nothing recorded changed |
 | 7 October 2026 | **The consent page, both doors:** "The whole study takes at least 35 minutes" (it said "about 40 to 55 minutes"). `consent.version` `"2026-10-07-35-minutes"` (university) and `"2026-10-07-prolific-35-minutes"` (Prolific). A shorter stated length may change how long people expect to spend: compare working times across this date with care |
+| 14 October 2026 | **Condition 4 (Baseline) only, the web address:** the address bar shows `?condition=BSL4` instead of `?condition=Baseline`, so a participant cannot read "Baseline" there (the blinding answer of the OSF preregistration). Nothing on the page changed, and the database still stores `condition_number` 4 / `condition_type` "Baseline". No participant took part before this date. |
 | 6 October 2026 | **The university door, a browser reopened with somebody's run in it:** a thin strip at the top of the page, "This study is open for w•••@my.fit.edu. Not you?" (the email partly hidden); it goes once the person moves to another page or closes it. "Not you?" asks to confirm, then this browser forgets that run (it stays on the server) and the study starts afresh for the next person - for shared lab computers. Nothing recorded; the study itself is unchanged |
 | 1 October 2026 | **Condition 4 (Baseline) only:** a misaligned choice opens the confirmation page a good fit gets (no reflection, no person, no APA page), with its own first sentence, "Before you confirm, take a moment with what this option gives up." (a good fit still reads "This option fits your earlier priorities"), and "How sure are you about this choice?" (1-5), needed before keeping it. Keeping it moves the four values: +30 to the value the option serves most and -10 (misaligned) or -15 (strongly misaligned) to each other one, all x 0.6-1.0 by "how sure"; each such keep counts as a Stability step; the stakeholder, directness and context scores never move; the results page shows no reflection badge and says "This went against your usual values, and you kept it."; no CVR or APA feedback questions. Until this row, Baseline ran the full version (condition 1). Conditions 1, 2 and 3 unchanged |
 | 1 October 2026 | **Condition 3 (APA_Only) only:** a misaligned choice opens the APA page at once: no reflection page and no person speaking; the APA page shows only its value question (with "How sure"), the options built on that value and the confirm (no two-situations table, no "which view" question), and opens with its own sentence: "This step just helps the system represent your priorities the way you truly mean them. There are no right or wrong answers here." Under it, a box: "The option you chose serves X more than any of the other three values" (X saved as apa.mainValueShown); going back to all the options needs no confirmation (no "Go back and clear your answers?" warning) The stakeholder, directness and context scores never move; each APA visit counts as a Stability step; the results page says "Clarification shown"; the feedback asks the APA questions but never the CVR or two-views questions. Conditions 1, 2 and 4 unchanged |
@@ -680,7 +682,8 @@ State these in the limitations section rather than waiting to be asked.
 
 Since 1 October 2026 every participant is in one of four conditions. This section is everything an analyst needs to
 compare them. The design, in the researcher's words: four conditions that share Blocks 1-4 and differ from Block 5 to
-the end - **1 CVR+APA** (the full version), **2 CVR_Only**, **3 APA_Only**, **4 Baseline** (no CVR or APA).
+the end - **1 CVR+APA** (the full version), **2 CVR_Only**, **3 APA_Only**, **4 Baseline** (no CVR or APA; **`BSL4` in the
+web address** since 14 October 2026, so a participant cannot read "Baseline" there; the database still says 4 / "Baseline").
 
 ### 9.1 What differs, and what does not
 
@@ -717,7 +720,7 @@ from both. The design does not separate the two; say so wherever Baseline is com
 | Field | What it says |
 |---|---|
 | `condition_number`, `condition_type` | 1-4 and its name (`CVR+APA`, `CVR_Only`, `APA_Only`, `Baseline`). Set ONCE by the server, never changed; also beside the demographic answers (`blocks…vrds_demographics.conditionNumber` / `conditionType`) |
-| `condition_source` | `landing_page` (the server's balanced count gave it), `address` (somebody opened `?condition=...` on purpose: a tester), `random_offline` (no server; local testing - since 6 October 2026 it cannot happen on the live site). Only `landing_page` is counted for balance |
+| `condition_source` | `landing_page` (the server's balanced count gave it), `address` (somebody opened `?condition=...` on purpose: a tester; the words are `CVR_APA`, `CVR_Only`, `APA_Only` and `BSL4` = Baseline), `random_offline` (no server; local testing - since 6 October 2026 it cannot happen on the live site). Only `landing_page` is counted for balance |
 | `condition_assigned_at` | When it was given |
 | `major_info_and_scores.condition` | A copy, with `counted_for_balance` |
 

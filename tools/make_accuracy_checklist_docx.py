@@ -301,7 +301,8 @@ SECTIONS = [
          "server sets only when it has none. A returning participant gets their own back, on any computer; an address naming "
          "another condition is corrected.", ["conditions"], "(N6, N8, N9)"),
         ("You can see and test each condition.",
-         "The address shows the condition (?condition=CVR_APA, CVR_Only, APA_Only, Baseline). Opening one of those addresses "
+         "The address shows the condition (?condition=CVR_APA, CVR_Only, APA_Only, BSL4; BSL4 is Baseline, so a participant "
+         "cannot read \"Baseline\" there, since 14 October). Opening one of those addresses "
          "yourself gives that condition and is never counted (your Q2-yes); /api/conditions/report shows the counts (Q3-yes).",
          ["conditions"], "(N3, N7)"),
         ("Each condition's difference is built one task at a time.",
@@ -553,7 +554,7 @@ OPEN = [
      "The database holds test runs, and a record carries no stamp of the code version. Decide before launch whether "
      "to delete them or mark them. When analysing, always filter on status \"Study Completed\" and date records by "
      "completed_at. The rule for every test run, both doors and Prolific's \"Preview as participant\": add "
-     "?condition=CVR_APA (or CVR_Only, APA_Only, Baseline) to the address, so it is never counted for balance.", "Before launch"),
+     "?condition=CVR_APA (or CVR_Only, APA_Only, BSL4 for Baseline) to the address, so it is never counted for balance.", "Before launch"),
     ("One full click-through on the remote server",
      "A fresh email, on a computer and on a phone, from consent to the thank-you page.", "Before launch"),
     ("Look at the gift-card verdict on one real record",

@@ -30,7 +30,8 @@ Two of those traps matter enough to repeat here:
 ## The four conditions and the landing page (since 1 October 2026)
 
 The researcher's design (his words): four conditions - **1 CVR+APA** (the current, full version), **2 CVR_Only**,
-**3 APA_Only**, **4 Baseline** (no CVR or APA). All four share Blocks 1-4 (building the profile) and differ from Block 5
+**3 APA_Only**, **4 Baseline** (no CVR or APA; **`BSL4` in the web address** since 14 October 2026, never in the
+database). All four share Blocks 1-4 (building the profile) and differ from Block 5
 to the end. **What each condition does differently is built one task at a time**, when he gives it ("do this task to
 CVR_Only"); a condition without a built task runs exactly today's study. Built: **CVR_Only's CVR Rejection page**,
 **APA_Only's straight-to-APA flow** and **Baseline's confirmation page** (the next three sections), so all four now differ;
