@@ -32,12 +32,14 @@
  *     (active time is still measured, for the analysis);
  *   - one sitting, within Prolific's time limit (a page closed by accident continues from Prolific's link);
  *   - no email: the answers are stored with the Prolific ID;
- *   - the attention rule in Prolific's terms: failing two or more checks may lead to a rejected submission;
+ *   - the attention rule in Prolific's terms: failing two or more checks means a rejected submission ("will be
+ *     rejected" since 14 October 2026, the researcher: it said "may be rejected"; all four checks count);
  *   - one agreement box, and "I do not agree", which says how to return the study on Prolific;
  *   - withdrawal through a Prolific message (or the researcher's email) with the Prolific ID.
  * Its own version stamp (PROLIFIC_CONSENT_VERSION). The university door's wording is unchanged, word for word, except
  * the study's length, which both doors changed together on 7 October 2026 ("at least 35 minutes", was "about 40 to 55
- * minutes"; CONSENT_VERSION "2026-10-07-35-minutes", PROLIFIC_CONSENT_VERSION "2026-10-07-prolific-35-minutes").
+ * minutes"; CONSENT_VERSION "2026-10-07-35-minutes", PROLIFIC_CONSENT_VERSION "2026-10-07-prolific-35-minutes"), and the
+ * Prolific attention sentence on 14 October 2026 (PROLIFIC_CONSENT_VERSION "2026-10-14-prolific-will-be-rejected").
  * The ethics board must approve this text before the Prolific door opens to participants.
  *
  * THE BUTTON IS DISABLED UNTIL THE BOX IS TICKED
@@ -66,7 +68,7 @@ import type { RecruitmentSource } from "./recruitment";
 /** Bump whenever the consent wording below changes. Stored with every consent record. */
 export const CONSENT_VERSION = "2026-10-07-35-minutes";
 /** The Prolific door's wording (since 6 October 2026). Bump it whenever that wording changes. */
-export const PROLIFIC_CONSENT_VERSION = "2026-10-07-prolific-35-minutes";
+export const PROLIFIC_CONSENT_VERSION = "2026-10-14-prolific-will-be-rejected";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
@@ -207,7 +209,7 @@ function ProlificPayment() {
           button takes you back to Prolific.
         </Rule>
         <Rule title="Answer the attention checks as asked.">
-          A few simple questions check that you are reading. If you fail two or more of them, your submission may be
+          A few simple questions check that you are reading. If you fail two or more of them, your submission will be
           rejected.
         </Rule>
         <Rule title="Answer thoughtfully.">

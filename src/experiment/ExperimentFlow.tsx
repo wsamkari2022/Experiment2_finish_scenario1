@@ -45,7 +45,7 @@ import { AdaptiveStakeholderReflectionBlock } from "./AdaptiveStakeholderReflect
 import type { Block4CompletionPayload } from "./AdaptiveStakeholderReflectionBlock";
 import { deriveAndSaveInsights, saveFinalAnalysis, type InsightsPayload } from "./interBlockData";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
-import { readAttention } from "./attentionChecks";
+import { readAttention, readingCheckFollowsBlock } from "./attentionChecks";
 import { TRANSITION_TARGET, isTransition, stageToSave } from "./flowStages";
 import { Block5IntroPage } from "./Block5IntroPage";
 import { Block5PublicEmergencySimulation } from "./Block5PublicEmergencySimulation";
@@ -103,8 +103,9 @@ type Stage =
   | "transition_block5_summary"
   | "block5_summary"
   | "feedback"
-  /* The attention check's own screen right after Block 3 (since 29 September 2026; a question about the part just
-     finished since 30 September 2026; attentionChecks.ts). Not a block: never timed, never counted as a rushed block. */
+  /* The between-blocks reading check's own screen (since 29 September 2026; since 14 October 2026 a reading check after
+     Block 1, 2 or 3, the place drawn per participant; attentionChecks.ts). Not a block: never timed, never counted as a
+     rushed block. */
   | "attention_check";
 
 /** Lookup set used to detect whether the current stage is a transient spinner. */
@@ -116,8 +117,15 @@ const STAGES_WITH_TRANSITION: Stage[] = [
   "transition_block5_summary",
 ];
 
-/** Where the flow goes after the attention check that follows Block 3 (attentionChecks.ts). */
-const AFTER_ATTENTION_CHECK: Stage = "transition_product_block4";
+/**
+ * Where the flow goes after each block that can be followed by the between-blocks reading check (attentionChecks.ts,
+ * BLOCK_CHECK_PLACES): the pause before the next block. The check, when it follows that block, sits between the two.
+ */
+const AFTER_BLOCK: Record<number, Stage> = {
+  1: "transition_money_trolley",
+  2: "transition_trolley_product",
+  3: "transition_product_block4",
+};
 
 /**
  * A browser that stopped on one of the two deleted pages opens on the stage that followed it. Only a test run can
@@ -235,7 +243,7 @@ function getRestoredStage(): Stage {
  * Stage transitions:
  *   money → (transition) → trolley → (transition) → product →
  *   (transition) → block4 → (transition) → block5_intro → block5 → results → feedback
- * with the attention check's screen right after Block 3 (attentionChecks.ts).
+ * with the reading check's screen after Block 1, 2 or 3, drawn per participant (attentionChecks.ts).
  */
 export function ExperimentFlow() {
   /*
@@ -560,22 +568,23 @@ export function ExperimentFlow() {
   useScrollToTop(stage);
 
   /**
-   * After Block 3: the attention check about the part just finished, unless it is answered already, then on towards
-   * Block 4 (attentionChecks.ts; its place is fixed since 30 September 2026).
+   * After Block 1, 2 or 3: the between-blocks reading check when this participant's plan put it after THIS block and it
+   * is not answered yet, then on towards the next block (attentionChecks.ts; the place is drawn per participant since
+   * 14 October 2026, and saved, so a refresh or another device keeps it).
    */
-  const goOnAfterBlock3 = useCallback(() => {
-    setStage(readAttention().answers.after_block3 ? AFTER_ATTENTION_CHECK : "attention_check");
+  const goOnAfterBlock = useCallback((block: 1 | 2 | 3) => {
+    setStage(readingCheckFollowsBlock(readAttention(), block) ? "attention_check" : AFTER_BLOCK[block]);
   }, []);
 
-  /** Called when Block 1 completes; moves to the transition spinner before Block 2. */
+  /** Called when Block 1 completes; moves on towards Block 2 (through the reading check when it was drawn here). */
   const handleMoneyContinue = useCallback((_results: MoneyBlockResults) => {
-    setStage("transition_money_trolley");
-  }, []);
+    goOnAfterBlock(1);
+  }, [goOnAfterBlock]);
 
-  /** Called when Block 2 completes; moves to the transition spinner before Block 3. */
+  /** Called when Block 2 completes; moves on towards Block 3 (through the reading check when it was drawn here). */
   const handleTrolleyContinue = useCallback((_results: TrolleyBlockResults) => {
-    setStage("transition_trolley_product");
-  }, []);
+    goOnAfterBlock(2);
+  }, [goOnAfterBlock]);
 
   /**
    * Called when Block 3 completes. Derives what Blocks 4 and 5 are built from and writes the same two files the
@@ -585,9 +594,9 @@ export function ExperimentFlow() {
     (_results: AIWorkforceBlockResults) => {
       const payload = deriveAndSaveInsights(participantId);
       if (payload) setInsights(payload);
-      goOnAfterBlock3();
+      goOnAfterBlock(3);
     },
-    [participantId, goOnAfterBlock3],
+    [participantId, goOnAfterBlock],
   );
 
   /**
@@ -1012,16 +1021,18 @@ export function ExperimentFlow() {
   }
 
   /*
-   * The attention check right after Block 3 (since 29 September 2026; a question about the part just finished since
-   * 30 September 2026; attentionChecks.ts). Its own screen, with no progress bar: it is not a part of the study. A
-   * refresh or another device lands back here and goes on to Block 4; once answered it is never shown again.
+   * The between-blocks reading check (since 29 September 2026; since 14 October 2026 after Block 1, 2 or 3, the place
+   * drawn per participant; attentionChecks.ts). Its own screen, with no progress bar: it is not a part of the study. A
+   * refresh or another device lands back here and goes on to the next block; once answered it is never shown again.
    */
   if (stage === "attention_check") {
-    if (readAttention().answers.after_block3) {
-      setStage(AFTER_ATTENTION_CHECK);
+    const { plan, answers } = readAttention();
+    const next = AFTER_BLOCK[plan.between_blocks.after];
+    if (answers.between_blocks) {
+      setStage(next);
       return null;
     }
-    return <AttentionCheckScreen check="after_block3" onDone={() => setStage(AFTER_ATTENTION_CHECK)} />;
+    return <AttentionCheckScreen check="between_blocks" onDone={() => setStage(next)} />;
   }
 
   if (stage === "block4" && insights) {

@@ -187,7 +187,7 @@ ID never sees another person's progress. `validate:dbshape` D44 still holds (any
 | Rule "Spend at least 35 minutes actively working" + "Time counts only while you are working" (`REQUIRED_ACTIVE_MINUTES`, dbShape.ts line 549) | Removed as a pay rule. Active time is still measured, stored and shown on the thank-you page | Prolific: "too slow" and internal measures are not valid rejection reasons |
 | "You do not have to finish in one sitting" + "You Can Stop and Come Back ... on a different computer" | "Please complete it in one sitting, within Prolific's time limit (about 2 hours). If the page closes, open it again from Prolific and you continue where you stopped." | Prolific times out |
 | "Privacy and Your Email ... confidential, not anonymous ... we collect your email" | "We never ask your name or email. Your answers are stored with your Prolific ID only, and reported as group results." | No email |
-| "Answer the quick attention checks as asked to qualify" | "A few simple questions check that you are reading. If you fail two or more, your submission may be rejected." | Prolific's two-failure rule |
+| "Answer the quick attention checks as asked to qualify" | "A few simple questions check that you are reading. If you fail two or more of them, your submission will be rejected." ("may be rejected" until 14 October 2026) | Prolific's two-failure rule |
 | "you may skip questions you do not wish to answer" | "You may stop at any time." | The study requires every answer, so the old sentence is untrue |
 | Two tick-boxes naming the gift card, the email and the 35 minutes | One agreement box without email, gift card or minutes | Same reasons |
 | No way to decline except closing the tab | An "I do not agree" button -> "Please return this study on Prolific (click 'Stop without completing')." No code | Prolific's normal way out |
@@ -237,6 +237,17 @@ The ethics board must approve the new consent text BEFORE launch (recruitment, p
 Bump `ATTENTION_VERSION`; update T1 (two rows, one per section, numbers 2-5, places equally likely), T4 (the path
 rule), T7 (chance a random clicker fails both), the consent-page check in T8. The topic checks' words stay as
 Waseem approved them (T1 holds them).
+
+**Built differently on 14 October 2026 (the researcher, after his advisor; "1-B").** The two topic questions were
+memory checks, so they became READING checks ("How do you usually get to work or class? This question checks that you
+are reading: please choose 'By boat', whatever your real answer is." and "Which of these do you enjoy most on a free
+afternoon? ... please choose 'Reading a book' ..."), in BOTH doors, at places drawn at random per participant (after
+Block 1, 2 or 3; after scenario 1, 2 or 3). All four of the Prolific door's checks are now valid under Prolific's
+policy, and **all four count: failing two or more means the submission is rejected**. The Prolific consent page says so
+("If you fail two or more of them, your submission will be rejected."; `PROLIFIC_CONSENT_VERSION`
+"2026-10-14-prolific-will-be-rejected"), `npm run pay:check` lists those people in a Reject group, and the database
+says `failed_two_or_more_attention_checks`. The rows of the table above that say "topic question" and "Fail BOTH number
+rows" describe the plan of 7 October 2026, not the study now. CLAUDE.md, "Reading checks at random places".
 
 ### F. The four conditions on Prolific
 

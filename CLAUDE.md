@@ -635,7 +635,7 @@ limits" (no lock after wrong ages). **Participants see all three** (HOW_TO_ANALY
 - **The Prolific consent page** (`ConsentPage.tsx`, `door` from ExperimentFlow): the same page and design; eight parts
   in Prolific's terms - one sitting within Prolific's time limit (a closed page continues from Prolific's link), paid
   through Prolific (no gift card, no minutes rule: Prolific forbids both as reasons), "If you fail two or more of them,
-  your submission may be rejected.", the Prolific ID instead of the email, voluntary and withdrawal through Prolific with
+  your submission may be rejected." ("will be rejected" since 14 October 2026), the Prolific ID instead of the email, voluntary and withdrawal through Prolific with
   the ID, ONE box, and "I do not agree" (a calm panel: return the study with "Stop without completing", no code needed).
   `PROLIFIC_CONSENT_VERSION` "2026-10-06-prolific"; the university page is unchanged word for word. **The ethics board must
   approve the text first:** docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md (side by side with the university's).
@@ -644,8 +644,9 @@ limits" (no lock after wrong ages). **Participants see all three** (HOW_TO_ANALY
   "prolific"`) puts `number` in "The tools & the experiment design" and `number_2` in "How this experience was for you",
   each at a random place, two DIFFERENT numbers two to five (one answer everywhere never passes both); the page draws every
   row the plan drew (`numberRowsOf`, codes `ATTN_number`, `ATTN_number_2`), saves each in the attention file, never in the
-  feedback record. The door follows the key (`keyDoor(owner)`). Scoring: only the number rows count for Prolific's rule; a
-  row "failed" is one ANSWERED wrongly; failing both is the "look first" flag (`analysis.attention_checks.prolific_rule`,
+  feedback record. The door follows the key (`keyDoor(owner)`). Scoring (until 14 October 2026; since then all four checks
+  count, two or more failed = rejected: "Reading checks at random places"): only the number rows counted; a
+  row "failed" is one ANSWERED wrongly; failing both was the "look first" flag (`analysis.attention_checks.prolific_rule`,
   `quality.prolific_instruction_checks_failed` / `prolific_failed_both_instruction_checks`, the major copy; Step 4 makes it
   the completion path). **The university door is untouched:** its plan is drawn exactly as before (20,000 plans compared
   with the committed code, 0 different; T9 holds a fingerprint), and a file of the previous version ("2026-09-30-topics")
@@ -744,8 +745,9 @@ How to do it, for the researcher: docs/DAILY_PAY_CHECK.md.
   `PAY_CHECK.md` and `approve_ids.txt` (one comma-separated line for Prolific's bulk approve) beside them. It never
   rejects, contacts anybody or touches the database.
 - **The groups** (only Prolific's valid reasons, researcher-help "Who should I reject?"): PAY (Awaiting review, finished,
-  every answer, nothing below; ONE failed number row is not enough); LOOK FIRST with Prolific's wording ("3-A": failed
-  BOTH number rows; "2-A" clear low effort = the same answer to every rating or 3+ blocks under 30 seconds; "1-A"
+  every answer, nothing below; ONE failed attention check is not enough); REJECT (since 14 October 2026: two or more of the
+  four attention checks failed, "will be rejected" on the Prolific consent page; it replaced "3-A", both number rows in
+  LOOK FIRST); LOOK FIRST with Prolific's wording ("2-A" clear low effort = the same answer to every rating or 3+ blocks under 30 seconds; "1-A"
   exceptionally fast on Prolific's own "Time taken", mean - 3 x the sample standard deviation over finished submissions,
   read only once 10 have a time; our record begun 15+ minutes before Prolific's clock); PROBLEM (no record, not
   finished, answers missing - Blocks 1-4, all six scenarios, the feedback, the attention checks -, the code never shown,
@@ -821,6 +823,69 @@ $11.67 (80 people = $933.33 on Prolific's page, no VAT), and the budget is **$1,
   breaks, 4 caught. Live on the built site: both doors' consent pages, and the record saved the new stamp.
 - **Pay by progress** (the advisor's idea, 7 October 2026): analysed, not built; the researcher's concerns and the options
   are in the deck for his advisor. Nothing in the study pays partial amounts.
+
+## Reading checks at random places, and Prolific's two-or-more rule (14 October 2026)
+
+The researcher's advisor (email, 14 October 2026): an attention check should test whether the participant is really
+READING, not what they remember, and the checks "should be (somewhat) randomly placed in the survey". Prolific's policy
+says the same (a valid check gives an explicit instruction, says it is a check, and "cannot rely on memory recall").
+Plan answers: "make them random as you suggested", "1-B" (Prolific counts all four checks), "2-yes" (the approved words,
+no attention sentence repeated), "4-yes", and the Prolific consent says "will be rejected". **Participants see it**
+(HOW_TO_ANALYZE 4.9). No score changed.
+
+- **Two reading checks, both doors** (`READING_CHECKS` in attentionChecks.ts; the words are the researcher's, held by
+  `validate:attention` T1): `between_blocks`, "How do you usually get to work or class? This question checks that you are
+  reading: please choose 'By boat', whatever your real answer is." (By car, By bus or train, On foot or by bike, By boat),
+  and `between_scenarios`, "Which of these do you enjoy most on a free afternoon? This question checks that you are
+  reading: please choose 'Reading a book', whatever your real answer is." (Listening to music, Reading a book, Walking
+  outside, Watching a film). Four answers in a random order per participant. They replace the two memory questions of 30
+  September ("What was the part you just finished about?"), and their ids replace `after_block3` / `after_scenario3`.
+- **Random places, drawn once and saved:** the block check after Block 1, 2 or 3 (`BLOCK_CHECK_PLACES`), the scenario
+  check after scenario 1, 2 or 3 (`SCENARIO_CHECK_PLACES`; never between 4 and 5, never before 6), each about 1 time in 3
+  and independent of each other (all 9 pairs). The plan keeps `after` beside the answer order; a refresh or another
+  device keeps the place. The flow asks one rule at the end of Blocks 1, 2 and 3 (`goOnAfterBlock(n)` ->
+  `readingCheckFollowsBlock`, then `AFTER_BLOCK[n]`, the pause before the next block); Block 5 asks
+  `readingCheckBeforeScenario` before each scenario and restarts the next scenario's clock after the check.
+- **The screen** (`AttentionCheckScreen.tsx`): the "Quick check" badge and "Quick attention check" heading stay; the
+  question, then its instruction. The line "This question is only to check that you are reading." is gone: it repeated
+  the instruction ("2-yes"; T8 fails if any such words return).
+- **Prolific's rule ("1-B"):** all four checks of the Prolific door (the two reading checks and the two number rows) count;
+  a check ANSWERED against its instruction is failed (one never reached is not); **two or more failed = rejected**
+  (`PROLIFIC_FAILS_TO_REJECT`). The Prolific consent page: "If you fail two or more of them, your submission will be
+  rejected." (`PROLIFIC_CONSENT_VERSION` "2026-10-14-prolific-will-be-rejected"; it said "may be"). Stored as
+  `analysis.attention_checks.prolific_rule` (`attention_checks_counted` 4, `_answered`, `_failed`,
+  `failed_two_or_more_attention_checks`), `quality.prolific_attention_checks_failed` /
+  `prolific_failed_two_or_more_attention_checks`, and the major copy (the two-row fields `instruction_checks_failed` /
+  `failed_both_instruction_checks` are gone; nobody took the study under them). The university door: three checks, all
+  needed for the gift card, unchanged.
+- **The daily pay check** (`tools/pay_check.cjs`): a new **REJECT** group, after PROBLEM (a record not finished is never
+  judged on its checks) and before LOOK FIRST: two or more failed, with Prolific's wording "Failed attention checks: two
+  or more of the study's four attention checks (each said exactly which answer to choose) were not answered as
+  instructed."; any other reason found stays beside it. ONE failed check is a note only. The report's sections are
+  renumbered (1 Pay, 2 Reject, 3 Look first, 4 Problem, ...); docs/DAILY_PAY_CHECK.md says what to do.
+- **Stored:** `analysis.attention_checks.checks[]` gains `shown_after_block` and `shown_after_scenario` (the drawn place
+  as a number; `where_it_was_shown` in words), `asked` is the question with its instruction. `ATTENTION_VERSION`
+  "2026-10-14-reading-checks" (a file of an older version is drawn again: `STILL_READ_VERSIONS` is empty, no real data),
+  `SHAPE_VERSION` "2026-10-14-reading-checks". The university plan's draw is pinned by a new fingerprint in T9.
+- **Chance:** a random clicker passes all three university checks 1 time in 112 (1/4 x 1/4 x 1/7, as before) and fails
+  two or more of the Prolific door's four 765 times in 784 (97.6%); an honest reader who slips once is never rejected.
+- **Checked:** `validate:attention` T1 (the approved words, the instruction naming the answer, the places about 1 in 3,
+  all 9 pairs, never after scenario 4), T2 (the place kept between reads; both memory-question versions drawn again in
+  both doors; a place outside 1-3 never read), T3 (the place in words and as a number), T8 (no repeated line; the
+  placement rules over 4,000 pretend plans, never again once answered; the flow and Block 5 from the source), T9 (the
+  rule: both rows, both reading checks, one of each, three, four = rejected; one, or one plus a check never reached = not;
+  the database, quality, the major copy; 765 in 784), T10 ("will be rejected", the stamp); `validate:pay` Y1 (two and
+  three failed = REJECT, another reason kept, a record not finished = PROBLEM first, one failed = a note), Y5 (the
+  report's sections); `validate:dbshape` and `validate:session` taught the new names. 17 deliberate breaks, 17 caught.
+  **Live** (a separate test address, port 5174, its old storage restored exactly afterwards): a university person drawn
+  "after Block 1 / after scenario 1" saw the block check right after Block 1 (the same check and order after a refresh),
+  answered By car then By boat (saved right, changed once), went on to Block 2, no check after Blocks 2 or 3; the scenario
+  check right after scenario 1 (again after a refresh), a wrong answer saved as wrong with nothing said on screen, then
+  scenario 2, and no check after a refresh; the database section built from that file named both places and the miss.
+  A Prolific person drawn "after Block 2": no check after Block 1, the check after Block 2 on a 375px phone in dark and
+  light mode (no sideways scroll), then Block 3; the Prolific consent page said "will be rejected".
+- **Deploying:** the page only (the server does not read the checks); the IRB attachments and the OSF text describe the
+  new checks (the researcher's IRB modification of 14 October 2026).
 
 ## Prolific: planned, not built (since 1 October 2026)
 
@@ -1388,6 +1453,8 @@ getting their own; all checks right needed for compensation "among other existin
 but the insights and post-Block-4 pages ("delete them entirely ... if all the data are safe"), Q2 yes, Q3 A, Q4 yes.
 **Participants see it** (HOW_TO_ANALYZE 4.9). No score changed.
 
+- **Replaced on 14 October 2026** by two reading checks at random places (see "Reading checks at random places, and
+  Prolific's two-or-more rule"); what follows describes the versions of 29 and 30 September.
 - **Three checks** (`attentionChecks.ts`; revised 30 September 2026, the researcher: a colour question is unfair to
   colour-blind people and "tap the letter K" shows somebody is there, not that they read; of eight drafted topic
   questions he approved #3 and #6 only): a question about the PART JUST FINISHED on its own screen right after Block 3
@@ -1419,7 +1486,7 @@ but the insights and post-Block-4 pages ("delete them entirely ... if all the da
   the researcher analysis-rule questions: he decides them after the experiment.
 - **The consent page** gained the rule "Answer the quick attention checks as asked" and the same words in the gift-card
   checkbox (Q2). **The Prolific door (since 7 October 2026)** has a second number row and Prolific's rule (failing both
-  number rows), and its own consent wording: see "Privacy, the Prolific consent page and the second number row". The researcher should ask the ethics board whether this change needs approval before launch.
+  number rows; since 14 October 2026 two or more of all four checks), and its own consent wording: see "Privacy, the Prolific consent page and the second number row". The researcher should ask the ethics board whether this change needs approval before launch.
 - **Chance:** a random clicker passes all three about 1 time in 112; a same-number answerer on 1, 6 or 7 always fails the
   number row (on 2-5 passes it 1 time in 4, but the old "same answer to every rating" flag catches them); a diagonal
   clicker passes it about 1 time in 6.
@@ -1925,10 +1992,10 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8); since 29 September 2026 Stability_all: its decisions' part equals Stability's swaps (A9), which steps count (A10), a best-fit picker 100 and not measured, the kinds in order (A11), the top-value choices recounted by hand (A12); since 2 October 2026 Stability_all's difference part recounted by hand (A13). Prints the echo and the screen-against-yardstick shares, and Stability / Stability_all / top-value choices by kind |
 | `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12); since 4 October 2026 the results page explains itself: the scores taught, the 4-decisions / 6-scenarios box, traffic-light level badges on level bars built from the code's own levels, no random mark (J15); an ⓘ beside every level badge opening its own level ladder (J16); since 3 October 2026 the first page's study name and welcome, and the performance panel's title row on a phone (J14); since 7 October 2026 the progress bar on the thank-you page says "Done" (J17) |
 | `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9); since 4 October 2026 "Is English your first language?" (Yes / No, required, kept through a resume) and the country asked as "Where are you from?" (C11); since 6 October 2026 the server check (once in development, live again and again), a server that answers late getting the participant's record first, the queue that no longer leaves a save for the 15-second retry, and the 10 s / 5 s waiting limits (C12); the two doors: the address, the Prolific ID never an email (page and server agree), sent as prolificPid and stored as prolific_pid, every save to the owner it was made for, another person's run set aside, the Prolific first page and the four-question page, the database rules swapped safely (C13); "Not you?" on a shared computer (C14); since 7 October 2026 privacy: the lookup gives only the status, the claim checks the age before it hands back the details and the run, no write without the browser's id, no cross-site access, the age never compared on the page (C15); the Prolific completion code: only for a finished Prolific record to the browser holding it, from .env only, never in the page's code, a button and never a jump, after the age on another device (C16) |
-| `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): the two topic questions in the researcher's approved words with each answer order about equally over 4,000 pretend participants, the scenario check after scenario 3, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2); since 7 October 2026 the Prolific door's two number rows, one per section, two different numbers, the university plan drawn exactly as before, failing both the flag (T9), and the consent page of each door (T10) |
+| `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): since 14 October 2026 the two reading checks in the researcher's approved words with each answer order and each place (after Block 1-3, after scenario 1-3) about equally over 4,000 pretend participants, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); the gift card needs all three, each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens (no repeated line), the placement rules over every pretend plan, the flow and Block 5, and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2); since 7 October 2026 the Prolific door's two number rows, one per section, two different numbers, the university plan's fingerprint, and since 14 October 2026 all four checks counting, two or more failed the flag (T9), and the consent page of each door, "will be rejected" (T10) |
 | `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20); since 3 October 2026 Baseline's cards without the fit line and the ranking reasons, and one confirmation page with "How sure" for every choice (N21); since 6 October 2026 many people at once: a burst served from one reading in turns, person by person equal to one at a time (N22), the landing page asking four times with one arrival id and never picking at random on the live site (N23), every person counted once while their record is being made (N24), and each door balanced on its own (N25); since 7 October 2026 somebody who already finished gives back the condition their browser was just given (N26), and APA_Only's box saying the option still gives less on the value it serves most exactly when it does (N27), and the APA list heading "These options are built on X", always true (N28) |
 | `test:load` | Many people at once, on the REAL server (since 6 October 2026; not in the chain: needs MongoDB on this computer). Starts `server/index.js` itself on port 4100 against a throw-away `vrds_load_test_<time>` database (always deleted), sends 100, 100 and 200 pretend people in the same instant and checks no request refused (L1), everybody saved with their own session id and every save landed (L2), the conditions exactly even in every burst (L3), nobody waited 3 s for a condition (L4), and since the two doors 100 students and 100 Prolific people at once, 25 per condition inside each door with every Prolific record under prolific_pid and no email (L5), and the database rule swap on a copy with today's rule (L6), and since 7 October 2026 privacy on the real server: the lookup gives only the status, a wrong age is refused, the right age brings no analysis, the create route answers "ok", a write without the browser's id is refused, no cross-site header (L7), and the Prolific completion code with a made-up code: not before the completion, only to the holding browser, never for a university key or in another answer, never stored (L8). Run after any change to the server or the landing page |
-| `validate:pay` | The daily Prolific pay check (since 7 October 2026; `tools/pay_check.cjs`, run as `npm run pay:check`): every group with a pretend person each (Y1), exceptionally fast recounted by hand (Y2), the two files in every shape they come in (Y3), no email and no code in the output (Y4), the command end to end (Y5) |
+| `validate:pay` | The daily Prolific pay check (since 7 October 2026; `tools/pay_check.cjs`, run as `npm run pay:check`): every group with a pretend person each, the Reject group (two or more failed attention checks) since 14 October 2026 (Y1), exceptionally fast recounted by hand (Y2), the two files in every shape they come in (Y3), no email and no code in the output (Y4), the command end to end (Y5) |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |

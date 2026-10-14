@@ -142,7 +142,7 @@ SECTIONS = [
         ("Two reading pages have no page time of their own.",
          "The insights page and the post-Block-4 profile page (both deleted on 29 September) were left out of the per-page "
          "times on purpose; the rule still holds for any older ledger.", ["dbshape"], "(D1-D6)"),
-        ("The gift card needs all three attention checks right.",
+        ("The gift card needs all three attention checks right (university version).",
          "On top of the old rules (finished, 35 working minutes, not the same answer everywhere, fewer than 3 rushed "
          "blocks). Each miss, and a check never reached, gives its own reason in quality.reasons; the check's own "
          "screen is never a rushed block.", ["attention"], "(T4)"),
@@ -229,8 +229,8 @@ SECTIONS = [
          "server (a wrong age refused, the right age gives no analysis) and live in the browser.", ["session", "load"], "(C15, L7)"),
         ("The Prolific version's consent page says Prolific's terms; the university page is unchanged.",
          "Since 7 October 2026 (Step 2). Paid through Prolific (no gift card, no minutes rule), one sitting within Prolific's "
-         "time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission may be "
-         "rejected.\", withdrawal through Prolific, one tick-box, and \"I do not agree\" (return the study on Prolific). "
+         "time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission will be "
+         "rejected.\" (\"may be\" until 14 October 2026), withdrawal through Prolific, one tick-box, and \"I do not agree\" (return the study on Prolific). "
          "The text for your ethics board: docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md.", ["attention"], "(T10)"),
         ("Both consent pages say the study takes at least 35 minutes.",
          "Since 7 October 2026 (your request). One shared sentence, \"The whole study takes at least 35 minutes\" (it said "
@@ -239,10 +239,10 @@ SECTIONS = [
          "board. Checked live in both versions.", ["attention"], "(T10)"),
         ("The Prolific version has two \"pick the number\" rows; the university version keeps its one.",
          "Since 7 October 2026 (your 3-B, Step 3). One row in \"The tools & the experiment design\" and one in \"How this "
-         "experience was for you\", two different numbers two to five. Only these two count for Prolific's rule, and failing "
-         "BOTH is the \"look first\" flag (a random clicker fails both about 36 times in 49). The university plan is drawn "
-         "exactly as before (20,000 compared, 0 different), and a run already in progress keeps its answered checks.",
-         ["attention"], "(T9)"),
+         "experience was for you\", two different numbers two to five. Since 14 October 2026 (your 1-B) all FOUR checks count "
+         "for Prolific's rule (the two reading checks and the two number rows): two or more failed means the submission is "
+         "rejected, as the consent page says; one failed is never a reason. A random clicker fails two or more 765 times in "
+         "784; the daily pay check lists them in its Reject group.", ["attention", "pay"], "(T9, Y1)"),
         ("The Prolific version ends with the completion code and a \"Return to Prolific\" button.",
          "Since 7 October 2026 (Step 4; your 1-A, 2-A, 3-A). The code lives only in the server's settings file (.env), never "
          "in the page's code or the database. The server gives it only to the browser holding a FINISHED Prolific record; the "
@@ -474,17 +474,22 @@ SECTIONS = [
          "No type errors and no lint errors.", ["typecheck", "lint"], ""),
     ]),
     ("6b. The attention checks, and the two deleted pages", [
-        ("Three very simple attention checks, in your approved words.",
-         "\"What was the part you just finished about?\" right after Block 3, \"What was the scenario you just finished "
-         "about?\" right after scenario 3 (each: the right topic and three answers from outside the study, in a random "
-         "order), and \"Pick the number four\" in the feedback (two to five, random place). The words are held to the "
-         "approved text; over 4,000 pretend people each answer order and number comes up about equally.", ["attention"], "(T1)"),
+        ("Three very simple reading checks, in your approved words, at random places.",
+         "Since 14 October 2026 (your advisor: test reading, not memory, and place them at random): \"How do you usually "
+         "get to work or class? This question checks that you are reading: please choose 'By boat', whatever your real "
+         "answer is.\" after Block 1, 2 or 3, and \"Which of these do you enjoy most on a free afternoon? ... please choose "
+         "'Reading a book' ...\" after scenario 1, 2 or 3 (never between scenarios 4 and 5, never before 6), each place "
+         "drawn per person; and \"Pick the number four\" in the feedback (two to five, random place). The words are held to "
+         "the approved text; over 4,000 pretend people each answer order, each place and each number comes up about "
+         "equally.", ["attention"], "(T1)"),
         ("The same person always meets the same checks.",
          "Drawn once and saved; a refresh or another computer shows the same check in the same place, an answered one is "
-         "never asked again, and a second person on the same computer gets their own.", ["attention"], "(T2)"),
+         "never asked again, and a second person on the same computer gets their own. Checked live on 14 October 2026: "
+         "the checks after the drawn block and the drawn scenario, the same after a refresh.", ["attention"], "(T2, T8)"),
         ("Right means exactly what was asked, and nobody is told.",
-         "The screens say it is an attention check, never say right or wrong, and let any pick continue; words only, so "
-         "fair to colour-blind people. Checked live in the browser, on a computer and a phone.",
+         "The screens say it is an attention check, give the instruction once (the repeated line is gone since 14 "
+         "October 2026), never say right or wrong, and let any pick continue; words only, so fair to colour-blind people. "
+         "Checked live in the browser, on a computer and a phone.",
          ["attention"], "(T3, T8)"),
         ("The feedback check never touches a score.",
          "Its answer is saved with the checks, never in the feedback record, so no well-being score, tool rating or "
@@ -541,8 +546,8 @@ OPEN = [
      "Before Prolific"),
     ("Your ethics board approves the Prolific consent text",
      "docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md shows the Prolific version's consent page beside the university's: eight "
-     "parts differ (payment through Prolific, one sitting, the Prolific ID instead of the email, the two-failure attention "
-     "rule, one tick-box, \"I do not agree\"). The Prolific door must not open before the approval.", "Before Prolific"),
+     "parts differ (payment through Prolific, one sitting, the Prolific ID instead of the email, the attention rule "
+     "\"two or more failed: will be rejected\" (since 14 October 2026), one tick-box, \"I do not agree\"). The Prolific door must not open before the approval.", "Before Prolific"),
     ("Fix 1, the very last fix before launch",
      "Done for Baseline on 3 October 2026; conditions 1-3 still wait. The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
      "page compares the wish with \"what you said matters most\", and the intro page says \"Each option will show you "

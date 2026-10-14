@@ -5,8 +5,10 @@
  * Extended JSON values included; a Prolific submissions CSV with quotes, a byte-order mark and Windows line ends), with
  * one person for every group, and the command run end to end:
  *
- *   Y1  the groups: a clean finisher is PAY (also with ONE failed number row, a different code typed, or near day 21);
- *       failed BOTH rows, the same answer everywhere, 3+ rushed blocks, exceptionally fast, a record begun long before
+ *   Y1  the groups: a clean finisher is PAY (also with ONE failed attention check, a different code typed, or near day
+ *       21); two or more of the four attention checks failed -> REJECT with Prolific's wording (since 14 October 2026;
+ *       another reason found is kept with it; a record not finished is PROBLEM first); the same answer everywhere, 3+
+ *       rushed blocks, exceptionally fast, a record begun long before
  *       Prolific's clock -> LOOK FIRST with Prolific's wording; no record, not finished, answers missing (five scenarios
  *       of six, no feedback), the code never shown, almost no working time, our clock far shorter than Prolific's ->
  *       PROBLEM; returned / timed out / active -> NOT FINISHED; approved / rejected -> DECIDED
@@ -59,7 +61,7 @@ function record(n, over = {}) {
       block5_emergency_scenarios: { scenarioResults: Array.from({ length: 6 }, (_, i) => ({ scenarioId: i + 1 })) },
       feedback_answers: { feedback: { wellbeing: { items: { LI1: 4 } } } },
     },
-    analysis: { attention_checks: { door: "prolific", prolific_rule: { instruction_checks_failed: over.rowsFailed ?? 0, failed_both_instruction_checks: (over.rowsFailed ?? 0) === 2 } } },
+    analysis: { attention_checks: { door: "prolific", prolific_rule: { attention_checks_failed: over.checksFailed ?? 0, failed_two_or_more_attention_checks: (over.checksFailed ?? 0) >= 2 } } },
     quality: { active_minutes: over.working ?? 40, straightlined_feedback: !!over.straight, blocks_under_30_seconds: over.rushed ?? 0 },
     active_time: { total_active_minutes: over.working ?? 40 },
   };
@@ -70,8 +72,8 @@ function record(n, over = {}) {
 /* Who is who: [number, what we expect, Prolific status, Prolific minutes, record options or null for no record] */
 const PEOPLE = [
   [1, "pay", "AWAITING REVIEW", 50, {}],
-  [2, "pay", "AWAITING REVIEW", 48, { rowsFailed: 1 }],
-  [3, "look", "AWAITING REVIEW", 52, { rowsFailed: 2 }],
+  [2, "pay", "AWAITING REVIEW", 48, { checksFailed: 1 }],
+  [3, "reject", "AWAITING REVIEW", 52, { checksFailed: 2 }],
   [4, "look", "AWAITING REVIEW", 47, { straight: true }],
   [5, "look", "AWAITING REVIEW", 49, { rushed: 3 }],
   [6, "look", "AWAITING REVIEW", 5, { took: 4, working: 6 }], // exceptionally fast on Prolific's clock
@@ -90,6 +92,8 @@ const PEOPLE = [
   [19, "notFinished", "ACTIVE", null, null],
   [20, "decided", "APPROVED", 49, {}],
   [21, "decided", "REJECTED", 51, {}],
+  [22, "reject", "AWAITING REVIEW", 51, { checksFailed: 3, straight: true }], // rejected, with the other reason kept
+  [23, "problem", "AWAITING REVIEW", 50, { checksFailed: 2, mutate: (d) => { d.status = "Study Not Completed"; d.current_stage = "block5"; } }],
 ];
 const COMMON = "SECRETCODE1"; // the code most people typed in this pretend file: must never be printed
 const csvHeader = ["Submission id", "Participant id", "Status", "Custom study tncs accepted at", "Started at", "Completed at", "Reviewed at", "Archived at", "Time taken", "Completion code", "Total approvals", "Country of residence"];
@@ -119,10 +123,13 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
   const why = [];
   for (const [n, want] of PEOPLE) if (groupOf.get(pidOf(n)) !== want) why.push(`person ${n}: ${groupOf.get(pidOf(n)) ?? "nowhere"} (wanted ${want})`);
   const row = (n) => Object.values(result.groups).flat().find((r) => r.pid === pidOf(n));
-  if (!row(3).wording.some((w) => /Failed attention checks/.test(w))) why.push("both rows failed gives no Prolific wording");
+  if (!row(3).wording.some((w) => /Failed attention checks/.test(w)) || !row(3).reasons.includes("failed 2 of the 4 attention checks")) why.push("two failed checks give no Prolific wording or reason");
+  if (!row(22).reasons.includes("failed 3 of the 4 attention checks") || !row(22).reasons.some((r) => /same answer to every feedback rating/.test(r))
+      || !row(22).wording.some((w) => /Failed attention checks/.test(w)) || !row(22).wording.some((w) => /Low effort/.test(w))) why.push("a rejection loses the other reason found");
+  if (!row(23).reasons.some((r) => /not finished/.test(r)) || row(23).wording.length) why.push("a record not finished is judged on its attention checks");
   if (!row(4).wording.some((w) => /Low effort/.test(w)) || !row(5).wording.some((w) => /Low effort/.test(w))) why.push("low effort gives no Prolific wording");
   if (!row(6).wording.some((w) => /Exceptionally fast/.test(w))) why.push("exceptionally fast gives no Prolific wording");
-  if (!row(2).notes.some((x) => /one of the two number rows/.test(x))) why.push("one failed row is not noted");
+  if (!row(2).notes.some((x) => /one of the four attention checks/.test(x))) why.push("one failed check is not noted");
   if (!row(15).notes.some((x) => /different from most/.test(x)) || row(1).code !== "same as most") why.push("the typed code is not compared");
   if (row(16).decideBy !== "2026-10-22" || !row(16).notes.some((x) => /approves it by itself on 2026-10-22/.test(x))) why.push(`day 21 is not counted: ${row(16).decideBy}`);
   for (const [n, re] of [[7, /no record/], [8, /not finished/], [9, /5 of 6 scenarios/], [10, /the feedback answers/], [11, /never showed them the completion code/], [12, /0\.4 working minutes/], [13, /made and finished in 3 minutes, but Prolific counted 50/], [14, /began 30 minutes before/]]) {
@@ -131,7 +138,7 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
   if (result.approveIds.join() !== [1, 2, 15, 16].map(pidOf).join()) why.push(`the approve list is ${result.approveIds.join(",")}`);
   if (result.notInProlific.length !== 1 || result.notInProlific[0].pid !== pidOf(30)) why.push("the record missing from Prolific's file is not listed");
   gate("Y1", why.length === 0, why.length ? why.slice(0, 5).join(" | ")
-    : "a clean finisher is PAY (also with one failed number row, a different code, or near day 21: decide by 2026-10-22); both rows failed, the same answer everywhere, 3 rushed blocks, exceptionally fast and a record begun before Prolific's clock are LOOK FIRST with Prolific's wording; no record, not finished, five scenarios of six, no feedback, the code never shown, 0.4 working minutes and our clock far shorter are PROBLEM; returned, timed out and active NOT FINISHED; approved and rejected DECIDED; the approve line is exactly the PAY group; a test record not in Prolific's file is listed");
+    : "a clean finisher is PAY (also with one failed attention check, a different code, or near day 21: decide by 2026-10-22); two or three of the four attention checks failed are REJECT with Prolific's wording (another reason found kept with it; a record not finished is PROBLEM first); the same answer everywhere, 3 rushed blocks, exceptionally fast and a record begun before Prolific's clock are LOOK FIRST with Prolific's wording; no record, not finished, five scenarios of six, no feedback, the code never shown, 0.4 working minutes and our clock far shorter are PROBLEM; returned, timed out and active NOT FINISHED; approved and rejected DECIDED; the approve line is exactly the PAY group; a test record not in Prolific's file is listed");
 }
 
 /* ------------------------------------------------------------------ Y2 exceptionally fast, by hand */
@@ -144,7 +151,7 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
   if (Math.abs(result.speed.mean - mean) > 1e-9 || Math.abs(result.speed.sd - sd) > 1e-9 || Math.abs(result.speed.line - line) > 1e-9) why.push(`the line is ${result.speed.line}, by hand ${line}`);
   const flagged = Object.values(result.groups).flat().filter((r) => r.reasons.some((x) => /exceptionally fast/.test(x))).map((r) => r.pid);
   const byHand = PEOPLE.filter(([, , status, min]) => status === "AWAITING REVIEW" && min !== null && min < line).map(([n]) => pidOf(n));
-  if (flagged.join() !== byHand.filter((p) => groupOf.get(p) === "look").join()) why.push(`flagged ${flagged.join(",")}, by hand ${byHand.join(",")}`);
+  if (flagged.join() !== byHand.filter((p) => ["look", "reject"].includes(groupOf.get(p))).join()) why.push(`flagged ${flagged.join(",")}, by hand ${byHand.join(",")}`);
   /* Nine timed submissions: the rule is not read. */
   const nine = PEOPLE.filter(([n]) => [1, 2, 3, 4, 5, 6, 15, 16, 20].includes(n));
   const small = P.payCheck({ docs, submissions: P.readSubmissions(csvFor(nine)), today: TODAY });
@@ -207,8 +214,9 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
     const md = fs.readFileSync(path.join(dir, "PAY_CHECK.md"), "utf8");
     const approve = fs.readFileSync(path.join(dir, "approve_ids.txt"), "utf8").trim();
     if (approve !== [1, 2, 15, 16].map(pidOf).join(",")) why.push(`approve_ids.txt holds ${approve}`);
-    if (!/^Pay check 2026-10-20: pay 4, look first 5, problem 7, not finished 3, already decided 2; in our database but not in Prolific's file 1\./m.test(out)) why.push(`the summary reads: ${out.split("\n")[0]}`);
-    if (!/## 1\. Pay \(4\)/.test(md) || !/## 2\. Look first \(5\)/.test(md) || !/## 3\. Problem \(7\)/.test(md) || !/Decide soon/.test(md) || !/per hour/.test(md)) why.push("the report lacks a section, the day-21 warning or the hourly pay");
+    if (!/^Pay check 2026-10-20: pay 4, reject 2, look first 4, problem 8, not finished 3, already decided 2; in our database but not in Prolific's file 1\./m.test(out)) why.push(`the summary reads: ${out.split("\n")[0]}`);
+    if (!/## 1\. Pay \(4\)/.test(md) || !/## 2\. Reject: failed two or more attention checks \(2\)/.test(md) || !/## 3\. Look first \(4\)/.test(md) || !/## 4\. Problem \(8\)/.test(md)
+        || !/\| Reject \| 2 \|/.test(md) || !/will be rejected/.test(md) || !/Decide soon/.test(md) || !/per hour/.test(md)) why.push("the report lacks a section, the reject rule, the day-21 warning or the hourly pay");
     if (P.EMAIL.test(md + out) || (md + out).includes(COMMON)) why.push("the written files or the summary carry an email or the code");
     let stopped = "";
     try { execFileSync(process.execPath, [path.join(__dirname, "pay_check.cjs"), path.join(dir, "nowhere")], { encoding: "utf8", stdio: "pipe" }); } catch (e) { stopped = String(e.stderr); }

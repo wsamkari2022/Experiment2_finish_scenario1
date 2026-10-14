@@ -10,7 +10,10 @@
  * touches the database: it reads the two files and writes two files beside them.
  *
  *   PAY          Prolific "Awaiting review", our record finished with every answer, and nothing below applies
- *   LOOK FIRST   failed BOTH "pick the number" rows; clear low effort (the same answer to every feedback rating, or 3+
+ *   REJECT       failed TWO OR MORE of the four attention checks (since 14 October 2026, the researcher's "1-B": the
+ *                Prolific consent page says "If you fail two or more of them, your submission will be rejected"). The
+ *                researcher presses Reject himself, with the wording the report gives.
+ *   LOOK FIRST   clear low effort (the same answer to every feedback rating, or 3+
  *                blocks finished in under 30 seconds); exceptionally fast on Prolific's own "Time taken"; or the record
  *                began long before Prolific's clock. The researcher decides; the report gives Prolific's wording.
  *   PROBLEM      the data does not match the submission: no record here, a record not finished, answers missing, the
@@ -21,7 +24,8 @@
  *
  * The researcher's answers of 7 October 2026: "1-A" exceptionally fast is judged on Prolific's own "Time taken"; "2-A" clear
  * low effort = the same answer to every rating OR 3+ blocks under 30 seconds (the gift-card rule's two reasons); "3-A"
- * failing both number rows goes to LOOK FIRST (he presses Reject himself); "4-A" a Markdown report, a one-line approve
+ * failing both number rows went to LOOK FIRST (replaced on 14 October 2026: all four checks count, and two or more failed
+ * is REJECT, "1-B"); "4-A" a Markdown report, a one-line approve
  * list, and a summary in the chat. Plus the audit's three additions: every answer present, the two clocks compared, and
  * the code each person typed (information only: a wrong code is not a valid reason to reject).
  *
@@ -71,7 +75,7 @@ const NEEDED_PARTS = [
 ];
 
 const PROLIFIC_WORDING = {
-  bothRows: "Failed attention checks: both instruction checks (\"Pick the number ...\") were answered wrongly.",
+  failedChecks: "Failed attention checks: two or more of the study's four attention checks (each said exactly which answer to choose) were not answered as instructed.",
   lowEffort: "Low effort: clear low-effort responding throughout the study.",
   fast: "Exceptionally fast: completed more than 3 standard deviations faster than the mean.",
 };
@@ -208,9 +212,10 @@ function recordFacts(doc) {
     codeGiven: !!doc.prolific_code_given_at,
     workingMinutes: typeof working === "number" ? working : null,
     ourMinutes: minutesBetween(doc.created_at, doc.completed_at),
-    rowsFailed: typeof rule?.instruction_checks_failed === "number" ? rule.instruction_checks_failed
-      : (typeof quality.prolific_instruction_checks_failed === "number" ? quality.prolific_instruction_checks_failed : null),
-    failedBoth: rule?.failed_both_instruction_checks === true || quality.prolific_failed_both_instruction_checks === true,
+    /* Prolific's rule (since 14 October 2026): all four attention checks count; two or more failed is REJECT. */
+    checksFailed: typeof rule?.attention_checks_failed === "number" ? rule.attention_checks_failed
+      : (typeof quality.prolific_attention_checks_failed === "number" ? quality.prolific_attention_checks_failed : null),
+    failedTwoOrMore: rule?.failed_two_or_more_attention_checks === true || quality.prolific_failed_two_or_more_attention_checks === true,
     straightlined: quality.straightlined_feedback === true,
     rushedBlocks: typeof quality.blocks_under_30_seconds === "number" ? quality.blocks_under_30_seconds : 0,
   };
@@ -245,7 +250,7 @@ function payCheck({ docs, submissions, today = new Date(), reward = null }) {
   for (const s of submissions) if (DONE.has(s.status) && s.code) codeCounts.set(s.code, (codeCounts.get(s.code) ?? 0) + 1);
   const commonCode = [...codeCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-  const groups = { pay: [], look: [], problem: [], notFinished: [], decided: [], other: [] };
+  const groups = { pay: [], reject: [], look: [], problem: [], notFinished: [], decided: [], other: [] };
   for (const s of submissions) {
     const doc = byPid.get(s.pid) ?? null;
     const facts = doc ? recordFacts(doc) : null;
@@ -285,8 +290,14 @@ function payCheck({ docs, submissions, today = new Date(), reward = null }) {
     }
     if (row.reasons.length) { groups.problem.push(row); continue; }
 
+    /* REJECT: two or more of the four attention checks failed, the rule the Prolific consent page names ("will be
+       rejected"). Checked before LOOK FIRST; any other reason found below is kept with it, for the researcher's eyes. */
+    const reject = facts.failedTwoOrMore;
+    if (reject) {
+      row.reasons.push(`failed ${facts.checksFailed ?? "two or more"} of the 4 attention checks`);
+      row.wording.push(PROLIFIC_WORDING.failedChecks);
+    }
     /* LOOK FIRST: Prolific's own reasons, for the researcher to decide. */
-    if (facts.failedBoth) { row.reasons.push("failed BOTH \"pick the number\" rows"); row.wording.push(PROLIFIC_WORDING.bothRows); }
     if (facts.straightlined) { row.reasons.push("gave the same answer to every feedback rating"); row.wording.push(PROLIFIC_WORDING.lowEffort); }
     if (facts.rushedBlocks >= RULES.rushedBlocks) {
       row.reasons.push(`${facts.rushedBlocks} blocks finished in under 30 seconds`);
@@ -299,9 +310,10 @@ function payCheck({ docs, submissions, today = new Date(), reward = null }) {
     if (facts.ourMinutes !== null && prolificMinutes !== null && facts.ourMinutes > prolificMinutes + RULES.clockLongSlackMin) {
       row.reasons.push(`our record began ${round1(facts.ourMinutes - prolificMinutes)} minutes before Prolific's clock started (an earlier attempt?)`);
     }
-    if (facts.rowsFailed === 1) row.notes.push("failed one of the two number rows (not enough for Prolific)");
+    if (facts.checksFailed === 1) row.notes.push("failed one of the four attention checks (two are needed for a rejection)");
     if (row.code === "different from most") row.notes.push("typed a code different from most people's (information only)");
-    if (row.reasons.length) groups.look.push(row);
+    if (reject) groups.reject.push(row);
+    else if (row.reasons.length) groups.look.push(row);
     else groups.pay.push(row);
   }
 
@@ -331,40 +343,44 @@ function reportMarkdown(result, { date, files }) {
   L.push(`Read: \`${files.db}\` (records with a Prolific ID only) and \`${files.prolific}\`. Nothing was changed anywhere; nobody was contacted.`, "");
   L.push("| Group | People | What to do |", "|---|---|---|");
   L.push(`| Pay | ${groups.pay.length} | Approve: paste approve_ids.txt into Prolific's bulk approve |`);
+  L.push(`| Reject | ${groups.reject.length} | Failed two or more attention checks: reject on Prolific with the wording given (the consent page says these submissions will be rejected) |`);
   L.push(`| Look first | ${groups.look.length} | You decide; Prolific's wording is given |`);
   L.push(`| Problem | ${groups.problem.length} | Usually a message to the person through Prolific first |`);
   L.push(`| Not finished | ${groups.notFinished.length} | Nothing to pay |`);
   L.push(`| Already decided | ${groups.decided.length} | Nothing to do |`);
   if (groups.other.length) L.push(`| Unknown status | ${groups.other.length} | Look at them on Prolific |`);
   L.push("");
-  const urgent = [...groups.pay, ...groups.look, ...groups.problem].filter((r) => r.decideBy);
+  const urgent = [...groups.pay, ...groups.reject, ...groups.look, ...groups.problem].filter((r) => r.decideBy);
   if (urgent.length) L.push(`**Decide soon:** ${urgent.length} submission(s) are near day 21, when Prolific approves by itself (${urgent.map((r) => `${r.pid} by ${r.decideBy}`).join(", ")}).`, "");
 
   L.push(`## 1. Pay (${groups.pay.length})`, "");
   table(groups.pay, [["Prolific ID", (r) => r.pid], ["Prolific minutes", (r) => fmt(r.prolificMinutes)], ["Working minutes", (r) => fmt(r.workingMinutes)],
     ["Condition", (r) => fmt(r.condition)], ["Code typed", (r) => r.code], ["Notes", (r) => r.notes.join("; ") || "-"]]);
-  L.push(`## 2. Look first (${groups.look.length})`, "");
+  L.push(`## 2. Reject: failed two or more attention checks (${groups.reject.length})`, "");
+  table(groups.reject, [["Prolific ID", (r) => r.pid], ["Why", (r) => r.reasons.join("; ")], ["Prolific's wording", (r) => r.wording.join(" ")],
+    ["Prolific minutes", (r) => fmt(r.prolificMinutes)], ["Notes", (r) => r.notes.join("; ") || "-"]]);
+  L.push(`## 3. Look first (${groups.look.length})`, "");
   table(groups.look, [["Prolific ID", (r) => r.pid], ["Why", (r) => r.reasons.join("; ")], ["Prolific's wording if you reject", (r) => r.wording.join(" ") || "- (no rejection reason; usually pay)"],
     ["Prolific minutes", (r) => fmt(r.prolificMinutes)], ["Notes", (r) => r.notes.join("; ") || "-"]]);
-  L.push(`## 3. Problem (${groups.problem.length})`, "");
+  L.push(`## 4. Problem (${groups.problem.length})`, "");
   table(groups.problem, [["Prolific ID", (r) => r.pid], ["What does not match", (r) => r.reasons.join("; ")], ["Prolific minutes", (r) => fmt(r.prolificMinutes)],
     ["Our minutes", (r) => fmt(r.ourMinutes)], ["Notes", (r) => r.notes.join("; ") || "-"]]);
-  L.push(`## 4. Not finished (${groups.notFinished.length})`, "");
+  L.push(`## 5. Not finished (${groups.notFinished.length})`, "");
   table(groups.notFinished, [["Prolific ID", (r) => r.pid], ["Prolific status", (r) => r.status], ["Our record stopped at", (r) => fmt(r.stage)]]);
-  L.push(`## 5. Already decided (${groups.decided.length})`, "");
+  L.push(`## 6. Already decided (${groups.decided.length})`, "");
   table(groups.decided, [["Prolific ID", (r) => r.pid], ["Prolific status", (r) => r.status]]);
   if (groups.other.length) { L.push(`## Unknown Prolific status (${groups.other.length})`, ""); table(groups.other, [["Prolific ID", (r) => r.pid], ["Status", (r) => r.status]]); }
-  L.push(`## 6. In our database, not in Prolific's file (${notInProlific.length})`, "");
+  L.push(`## 7. In our database, not in Prolific's file (${notInProlific.length})`, "");
   L.push("Usually test runs, Prolific previews, or a different Prolific study. Nothing to pay from this file.", "");
   table(notInProlific, [["Prolific ID", (r) => r.pid], ["Our status", (r) => fmt(r.status)], ["Stage", (r) => fmt(r.stage)]]);
-  L.push("## 7. Time and pay", "");
+  L.push("## 8. Time and pay", "");
   L.push(`- Finished submissions with a time: ${speed.n}. Median ${fmt(round1(speed.median), " min")}, mean ${fmt(round1(speed.mean), " min")}, standard deviation ${fmt(round1(speed.sd), " min")}.`);
   L.push(speed.active
     ? `- Exceptionally fast line (Prolific's rule, mean - 3 x standard deviation): ${round1(speed.line)} min${speed.line <= 0 ? " (below zero: nobody can be under it)" : ""}.`
     : `- Exceptionally fast: not judged yet (needs at least ${RULES.fastNeedsAtLeast} finished submissions with a time).`);
   if (reward !== null) L.push(`- At a reward of ${reward} and the median time, the pay is ${fmt(round1(hourly))} per hour (Prolific: at least 8 USD, 12 recommended).`);
   L.push("", "## How this was decided", "");
-  L.push("Only Prolific's valid reasons are used (researcher-help.prolific.com, \"Who should I reject?\"). Failing ONE number row, being slow, a wrong or missing code, or the study's own measures are never reasons to reject. Problem rows mean the data and the submission do not match; ask the person first. Made by tools/pay_check.cjs (`npm run pay:check`).", "");
+  L.push("Only Prolific's valid reasons are used (researcher-help.prolific.com, \"Who should I reject?\"). Failing TWO OR MORE of the four attention checks is the rejection rule the Prolific consent page states (\"If you fail two or more of them, your submission will be rejected\"). Failing ONE attention check, being slow, a wrong or missing code, or the study's own measures are never reasons to reject. Problem rows mean the data and the submission do not match; ask the person first. Made by tools/pay_check.cjs (`npm run pay:check`).", "");
   const text = L.join("\n");
   if (EMAIL.test(text)) throw new Error("the report would contain an email address; nothing was written");
   return text;
@@ -398,7 +414,7 @@ function main(argv) {
   fs.writeFileSync(path.join(outDir, "PAY_CHECK.md"), md);
   fs.writeFileSync(path.join(outDir, "approve_ids.txt"), approve + (approve ? "\n" : ""));
   const g = result.groups;
-  console.log(`Pay check ${date}: pay ${g.pay.length}, look first ${g.look.length}, problem ${g.problem.length}, not finished ${g.notFinished.length}, already decided ${g.decided.length}${g.other.length ? `, unknown status ${g.other.length}` : ""}; in our database but not in Prolific's file ${result.notInProlific.length}.`);
+  console.log(`Pay check ${date}: pay ${g.pay.length}, reject ${g.reject.length}, look first ${g.look.length}, problem ${g.problem.length}, not finished ${g.notFinished.length}, already decided ${g.decided.length}${g.other.length ? `, unknown status ${g.other.length}` : ""}; in our database but not in Prolific's file ${result.notInProlific.length}.`);
   console.log(`Written: ${path.join(outDir, "PAY_CHECK.md")} and ${path.join(outDir, "approve_ids.txt")}`);
   return result;
 }

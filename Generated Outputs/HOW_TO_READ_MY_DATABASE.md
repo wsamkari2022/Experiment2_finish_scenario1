@@ -1373,48 +1373,58 @@ about 2.7 of 6, because the best fit balances all four values. A copy of the cou
 
 ---
 
-## 6p. `analysis.attention_checks` — three simple checks
+## 6p. `analysis.attention_checks` — three simple reading checks
 
-Added **29 September 2026** (the researcher's request); the two checks inside the study **revised 30 September 2026**
-(a named colour and a letter became questions about what was just finished, in the researcher's approved words). The
-answer order, and the feedback row's place and number, are drawn once per participant and saved, so a refresh or another
-device shows the same:
+Added **29 September 2026** (the researcher's request); the two checks inside the study **rewritten 14 October 2026** as
+reading checks at random places (his advisor: an attention check must test READING, not memory, and the checks should be
+"(somewhat) randomly placed"; Prolific's rule says the same). The two places, the answer orders, and the feedback row's
+place and number, are drawn once per participant and saved, so a refresh or another device shows the same:
 
 | Check | Where | What it asks |
 |---|---|---|
-| `after_block3` | its own screen right after Block 3 (the AI workforce), before Block 4 | "What was the part you just finished about?" Right: "Deciding whether to approve an AI system that affects workers' jobs"; the other three are from outside the study; random order |
-| `after_scenario3` | its own screen right after scenario 3 (the cancer treatment), before scenario 4 | "What was the scenario you just finished about?" Right: "Sharing out a limited cancer treatment"; three from outside the study; random order |
+| `between_blocks` | its own screen right after Block 1, 2 or 3 (drawn at random per participant), before the next block | "How do you usually get to work or class? This question checks that you are reading: please choose 'By boat', whatever your real answer is." Answers, in a random order: By car, By bus or train, On foot or by bike, By boat (right) |
+| `between_scenarios` | its own screen right after scenario 1, 2 or 3 (drawn at random), before the next scenario; never between scenarios 4 and 5, never before scenario 6 | "Which of these do you enjoy most on a free afternoon? This question checks that you are reading: please choose 'Reading a book', whatever your real answer is." Answers: Listening to music, Reading a book (right), Walking outside, Watching a film |
 | `number` | one row in the feedback, after any row of "The tools & the experiment design" or "How this experience was for you" | "This question is just to check your attention. Pick the number four." (two, three, four or five; the 1-7 scale) |
 
 Participants were told it is an attention check and never whether they were right. `passed_all` (all three right) is
-what the gift card needs (`quality.passed_all_attention_checks`); `passed_count`, `answered_count`, `misses` (in words)
-and `checks[]`: `where_it_was_shown`, `asked`, `right_answer`, `options_in_the_order_shown`, `answer`, `correct`,
-`seconds_to_answer` (null for the feedback row, which is not timed), `times_changed`, `answered_at`. A copy of the verdict
-is in `major_info_and_scores.attention_checks`.
+what the gift card needs (`quality.passed_all_attention_checks`); `passed_count`, `answered_count`, `misses` (in words,
+e.g. `missed the reading check after scenario 1 (the right answer was "Reading a book", picked "Watching a film")`)
+and `checks[]`: `where_it_was_shown` (in words), `shown_after_block` (1-3, the between-blocks check only, else null),
+`shown_after_scenario` (1-3, the between-scenarios check only, else null), `asked` (the question with its instruction),
+`right_answer`, `options_in_the_order_shown`, `answer`, `correct`, `seconds_to_answer` (null for the feedback row, which
+is not timed), `times_changed`, `answered_at`. A copy of the verdict is in `major_info_and_scores.attention_checks`.
 
 > **The feedback row is not feedback.** Its answer is kept here and never in `blocks.feedback_answers`, so it cannot move
 > a well-being score, a tool rating or `quality.straightlined_feedback`.
 
 > **A miss does not leave anybody out of the analysis:** all completed sessions are analysed (the researcher, 30
-> September 2026). It affects the gift card only.
+> September 2026). It affects the gift card only (and, in the Prolific door, Prolific's rule below).
 
-### The Prolific door: four checks, and Prolific's rule (since 7 October 2026)
+> **The place is a variable.** Because each person met the two reading checks at a different place, `shown_after_block`
+> and `shown_after_scenario` say where. A check right after a long block may be missed more often than one after a short
+> one: report misses by place before reading anything into them.
 
-`door` says which door the plan was drawn for (`"university"` or `"prolific"`; a file from before 7 October 2026 reads
-`"university"`). In the **Prolific door** there is a fourth check, `number_2`, and the two number rows sit apart:
+> **Before 14 October 2026** the two screens asked what the part just finished was about (`after_block3`, always after
+> Block 3; `after_scenario3`, always after scenario 3; version `"2026-09-30-topics"` or `"2026-10-07-two-doors"`). Nobody
+> took the study under those versions; a file saved under them is drawn again (`STILL_READ_VERSIONS` is empty).
+
+### The Prolific door: four checks, and Prolific's rule (since 7 October 2026; all four count since 14 October 2026)
+
+`door` says which door the plan was drawn for (`"university"` or `"prolific"`). In the **Prolific door** there is a
+fourth check, `number_2`, and the two number rows sit apart:
 
 | Check | Where (Prolific door) |
 |---|---|
 | `number` | one row in "The tools & the experiment design" (after any of its rating rows) |
 | `number_2` | one row in "How this experience was for you" (after any of its rating rows); a different number from `number` |
 
-Prolific accepts only these instruction checks as reasons to reject, and only after TWO fails, so the section adds
-`prolific_rule`: `instruction_checks` (2), `instruction_checks_answered`, `instruction_checks_failed` (a row ANSWERED
-wrongly; a row never reached is not a failure), `failed_both_instruction_checks` (the "look first" flag) and
-`topic_checks_count_for_pay: false` (the two topic questions are memory checks, which Prolific does not accept; they are
-kept for the analysis). `passed_all` there means all four right and is information only. `checks_asked` is 4.
-`version` is `"2026-10-07-two-doors"` for files drawn since 7 October 2026 (a university file of `"2026-09-30-topics"` is
-the same plan).
+All four checks are reading checks of the kind Prolific accepts (an explicit instruction, said to be a check, nothing to
+remember), and **all four count** (the researcher's "1-B", 14 October 2026). The section adds `prolific_rule`:
+`attention_checks_counted` (4), `attention_checks_answered`, `attention_checks_failed` (a check ANSWERED against its
+instruction; a check never reached is not a failure) and `failed_two_or_more_attention_checks` (true at two or more: the
+rejection reason the Prolific consent page names, "If you fail two or more of them, your submission will be rejected";
+`npm run pay:check` puts those people in its Reject group). `passed_all` there means all four right and is information
+only. `checks_asked` is 4. `version` is `"2026-10-14-reading-checks"`.
 
 ## 6q. `analysis.feedback_answer_patterns` — two answer-pattern flags (analysis only)
 
@@ -1597,7 +1607,7 @@ by nudging a mouse on one page. What they cannot fake is the *shape* of the run.
 | `straightlined_feedback` | The same rating to every question |
 | `longest_idle_minutes`, `sittings` | How the work was spread |
 | `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The three attention checks (since 29 September 2026; section 6p); four in the Prolific door |
-| `prolific_instruction_checks_failed`, `prolific_failed_both_instruction_checks` | Since 7 October 2026, the Prolific door only (null in the university door): how many of the two number rows were answered wrongly, and whether both were (the "look first" flag; Step 4 turns it into the completion path) |
+| `prolific_attention_checks_failed`, `prolific_failed_two_or_more_attention_checks` | The Prolific door only (null in the university door). Since 14 October 2026: how many of the FOUR attention checks were answered against their instruction, and whether two or more were (Prolific's rejection reason, "will be rejected" on the Prolific consent page; `npm run pay:check` lists them as Reject). From 7 to 13 October 2026 these were `prolific_instruction_checks_failed` / `prolific_failed_both_instruction_checks` over the two number rows only; nobody took the study then |
 | `compensation_eligible` | The verdict: finished, 35 working minutes, not straightlined, fewer than 3 rushed blocks (of the six real parts since 7 October 2026), **and all three attention checks right** (the last since 29 September 2026) |
 | `reasons` | **Why** it failed, in plain words |
 | `rule` | The rule that was applied, stored with the record |
@@ -1614,7 +1624,7 @@ specific answer.
 > fault — and every fast reader had been collecting two free strikes against a threshold of three.
 > This makes eligibility slightly more generous, never less. Both pages were deleted on 29 September 2026.
 
-> The attention check's own screen after Block 3 (stage `attention_check`) can never appear in `rushed_blocks` either: it
+> The between-blocks reading check's own screen (stage `attention_check`, after Block 1, 2 or 3) can never appear in `rushed_blocks` either: it
 > is answered in seconds by design.
 
 > **Since 7 October 2026 only the six real parts can be called rushed** (`REAL_BLOCK_STAGES` in dbShape.ts: Blocks 1-4,
@@ -1627,7 +1637,7 @@ specific answer.
 > `short_pages_not_counted` instead. This makes eligibility more generous, never less, and the Prolific pay check
 > follows by itself (it reads `blocks_under_30_seconds`). A record made before this date still carries the old count;
 > `rushed_blocks` names each stage, so the six can be recounted from it. Each missed check, a check never reached, or no attention file at all adds its own
-> line to `reasons` (e.g. `missed the check after Block 3 (the right answer was "...", picked "...")`).
+> line to `reasons` (e.g. `missed the reading check after Block 2 (the right answer was "By boat", picked "By car")`).
 
 ---
 

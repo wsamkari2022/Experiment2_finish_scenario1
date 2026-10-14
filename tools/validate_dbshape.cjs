@@ -1789,7 +1789,7 @@ for (const [who, block5] of PEOPLE) {
   const plan = A.planAttentionChecks("d70-session|d70@example.test");
   const ans = (answer) => ({ answer, correct: false, answeredAt: "2026-10-07T10:00:00.000Z", secondsToAnswer: 2, timesChanged: 0 });
   const passing = { version: A.ATTENTION_VERSION, owner: "x", plan, answers: {
-    after_block3: ans(A.TOPIC_CHECKS.after_block3.right), after_scenario3: ans(A.TOPIC_CHECKS.after_scenario3.right), number: ans(plan.number.target) } };
+    between_blocks: ans(A.READING_CHECKS.between_blocks.right), between_scenarios: ans(A.READING_CHECKS.between_scenarios.right), number: ans(plan.number.target) } };
   const honest = db.buildQuality(ledger({
     money: 240_000, trolley: 200_000, product: 260_000, block4: 300_000, block5: 1_200_000, feedback: 400_000,
   }), PEOPLE[0][1], null, "Study Completed", passing);

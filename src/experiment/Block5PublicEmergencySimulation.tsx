@@ -91,7 +91,7 @@ import {
 } from "./conditions";
 import { progressSaved } from "./sessionGuard";
 import { AttentionCheckScreen } from "./AttentionCheckScreen";
-import { SCENARIO_CHECK_AFTER, readAttention } from "./attentionChecks";
+import { readAttention, readingCheckBeforeScenario } from "./attentionChecks";
 import { getCVRStory, pickWhoVariant, getCVRLensPair, getCVRMirror, getCVRValueHere } from "./block5CVRContent";
 import { SHOW_STAKEHOLDER_PAGE } from "./blocksLegacyMethodology";
 import { useScrollToTop } from "./useScrollToTop";
@@ -626,13 +626,14 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
   }>({ scenarioId: null, moved: false, moves: [], visits: [], openedAt: null });
 
   /*
-   * THE ATTENTION CHECK BETWEEN SCENARIOS (since 29 September 2026; since 30 September 2026 a question about the
-   * scenario just finished, always right after scenario 3; attentionChecks.ts). Its own screen before scenario 4
-   * opens. Answering it restarts the next scenario's clock and telemetry, so none of its seconds count towards a
-   * scenario. It is answered once: the answer is saved in the attention file, which travels between browsers, so a
-   * refresh never asks it twice.
+   * THE READING CHECK BETWEEN SCENARIOS (since 29 September 2026; since 14 October 2026 a reading check after scenario
+   * 1, 2 or 3, the place drawn per participant and saved; attentionChecks.ts). Its own screen before the next scenario
+   * opens, never between scenarios 4 and 5 and never before scenario 6. Answering it restarts the next scenario's clock
+   * and telemetry, so none of its seconds count towards a scenario. It is answered once: the answer is saved in the
+   * attention file, which travels between browsers, so a refresh never asks it twice.
    */
-  const [scenarioCheckDone, setScenarioCheckDone] = useState(() => !!readAttention().answers.after_scenario3);
+  const [attentionFile] = useState(() => readAttention());
+  const [scenarioCheckDone, setScenarioCheckDone] = useState(false);
 
   // Each scenario opens at the top of the page.
   useScrollToTop(progress.currentScenarioIndex);
@@ -1965,9 +1966,9 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
 
   if (!scenario) return null;
 
-  if (!scenarioCheckDone && progress.currentScenarioIndex === SCENARIO_CHECK_AFTER) {
+  if (!scenarioCheckDone && readingCheckBeforeScenario(attentionFile, progress.currentScenarioIndex)) {
     return (
-      <AttentionCheckScreen check="after_scenario3" onDone={() => {
+      <AttentionCheckScreen check="between_scenarios" onDone={() => {
         telRef.current = newTelemetryAccum();
         setProgress((p) => ({ ...p, scenarioStartTime: Date.now() }));
         setScenarioCheckDone(true);

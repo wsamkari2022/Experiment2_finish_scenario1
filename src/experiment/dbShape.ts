@@ -116,7 +116,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-07-rehearsal-fixes";
+export const SHAPE_VERSION = "2026-10-14-reading-checks";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -685,7 +685,8 @@ export function buildQuality(
   const activeMinutes = typeof a.totalMs === "number" ? Math.round((a.totalMs / 60000) * 10) / 10 : 0;
   const straightlined = isStraightlined(feedbackRecord);
   const completed = status === "Study Completed";
-  /* ALL THREE ATTENTION CHECKS RIGHT (the researcher's rule, 29 September 2026; attentionChecks.ts). */
+  /* EVERY ATTENTION CHECK RIGHT (the researcher's gift-card rule, 29 September 2026; attentionChecks.ts): three in the
+     university door, four in the Prolific door (where this verdict is information only: Prolific pays by its own rule). */
   const attentionScore = scoreAttention(attention);
   const passedAttention = attentionScore?.passedAll ?? false;
 
@@ -713,10 +714,11 @@ export function buildQuality(
     attention_checks_asked: attentionScore?.asked ?? 3,
     attention_checks_passed: attentionScore?.passedCount ?? 0,
     passed_all_attention_checks: passedAttention,
-    /* The Prolific door's rule (since 7 October 2026): only the two number rows count, and failing BOTH is the "look
-       first" flag (Step 4 makes it the completion path). null in the university door. */
-    prolific_instruction_checks_failed: attentionScore?.instruction?.failed ?? null,
-    prolific_failed_both_instruction_checks: attentionScore?.instruction ? attentionScore.instruction.failedBoth : null,
+    /* The Prolific door's rule (since 14 October 2026, the researcher's "1-B"): all four reading checks count, and
+       failing two or more is the rejection reason the Prolific consent page names ("will be rejected"); npm run
+       pay:check lists those people. null in the university door. */
+    prolific_attention_checks_failed: attentionScore?.prolific?.failed ?? null,
+    prolific_failed_two_or_more_attention_checks: attentionScore?.prolific ? attentionScore.prolific.failedTwoOrMore : null,
 
     /*
      * The verdict, and the reason. Storing WHY it failed matters as much as the answer: a
@@ -736,7 +738,7 @@ export function buildQuality(
       ...(attentionScore ? attentionScore.misses : ["no attention checks on record"]),
     ],
     rule:
-      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, fewer than 3 of the six parts (Blocks 1-4, the main study, the feedback; since 7 October 2026, before then every timed page counted) were finished in under 30 seconds, and all three attention checks were answered as asked (since 29 September 2026; analysis.attention_checks). Raw numbers above allow a different rule to be applied later.",
+      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, fewer than 3 of the six parts (Blocks 1-4, the main study, the feedback; since 7 October 2026, before then every timed page counted) were finished in under 30 seconds, and every attention check was answered as asked (three in the university door; since 29 September 2026; analysis.attention_checks). In the Prolific door this verdict is information only: Prolific pays by its own rule (prolific_failed_two_or_more_attention_checks). Raw numbers above allow a different rule to be applied later.",
   };
 }
 
@@ -3410,16 +3412,17 @@ export function buildMajorScores(
     blocks_1_to_4: buildBlocks1to4Checks(blocks1to4),
 
     /* 13b --------------------------------------------------------------- the attention checks */
-    /* The verdict of the three checks, lifted from analysis.attention_checks by the same builder (since
-       29 September 2026); the gift card needs passed_all. validate:attention T4 checks the copy. */
+    /* The verdict of the checks, lifted from analysis.attention_checks by the same builder (since 29 September 2026);
+       the university gift card needs passed_all. validate:attention T4 and T9 check the copy. */
     attention_checks: (() => {
       const a = buildAttentionSection(attention);
       if (!a) return null;
       const base = { passed_all: a.passed_all, passed_count: a.passed_count, answered_count: a.answered_count, misses: a.misses };
-      /* The Prolific door adds its own rule (since 7 October 2026); the university door's copy is unchanged. */
-      const rule = a.prolific_rule as { instruction_checks_failed: number; failed_both_instruction_checks: boolean } | undefined;
-      return rule ? { ...base, door: "prolific", instruction_checks_failed: rule.instruction_checks_failed,
-        failed_both_instruction_checks: rule.failed_both_instruction_checks } : base;
+      /* The Prolific door adds its own rule (since 14 October 2026: all four checks, two or more failed); the
+         university door's copy is unchanged. */
+      const rule = a.prolific_rule as { attention_checks_failed: number; failed_two_or_more_attention_checks: boolean } | undefined;
+      return rule ? { ...base, door: "prolific", attention_checks_failed: rule.attention_checks_failed,
+        failed_two_or_more_attention_checks: rule.failed_two_or_more_attention_checks } : base;
     })(),
 
     /* 14 ----------------------------------------------------------------- the company's value */

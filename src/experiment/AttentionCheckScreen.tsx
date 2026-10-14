@@ -1,20 +1,22 @@
 /**
- * AttentionCheckScreen — the two attention checks inside the study (since 29 September 2026; since 30 September 2026
- * one question each about what the participant has just finished, in the researcher's approved words): right after
- * Block 3, and right after scenario 3. See attentionChecks.ts for the why and the rules.
+ * AttentionCheckScreen — the two reading checks inside the study (since 29 September 2026; since 14 October 2026 an
+ * everyday question with the instruction inside it, in the researcher's approved words, at a place drawn at random per
+ * participant): after Block 1, 2 or 3, and after scenario 1, 2 or 3. See attentionChecks.ts for the why and the rules.
  *
- * It says openly that it is an attention check, asks what the part just finished was about, and offers four answers in
- * the order drawn for this participant. Any pick lets the participant continue, and it never says whether the pick was
- * right. Words only, so it is fair to colour-blind people. The seconds from the screen appearing to Continue, and how
- * often the pick changed, are saved with the answer.
+ * Its heading says openly that it is an attention check; the question and its instruction ("This question checks that
+ * you are reading: please choose ...") follow, with four answers in the order drawn for this participant. The
+ * instruction is said ONCE: the line "This question is only to check that you are reading." that stood under the
+ * heading until 14 October 2026 would have repeated it (the researcher's "2-yes"). Any pick lets the participant
+ * continue, and it never says whether the pick was right. Words only, so it is fair to colour-blind people. The seconds
+ * from the screen appearing to Continue, and how often the pick changed, are saved with the answer.
  */
 
 import { useRef, useState } from "react";
 import { Badge, Box, Button, Center, Heading, Icon, SimpleGrid, Text, VStack } from "@chakra-ui/react";
 import { LuArrowRight, LuEye } from "react-icons/lu";
-import { TOPIC_CHECKS, readAttention, recordAttentionAnswer, type TopicCheckId } from "./attentionChecks";
+import { READING_CHECKS, readAttention, recordAttentionAnswer, type ReadingCheckId } from "./attentionChecks";
 
-export function AttentionCheckScreen({ check, onDone }: { check: TopicCheckId; onDone: () => void }) {
+export function AttentionCheckScreen({ check, onDone }: { check: ReadingCheckId; onDone: () => void }) {
   const [options] = useState(() => readAttention().plan[check].options);
   /* The moment the screen appeared, taken once (a lazy state initializer, not a render-time call). */
   const [shownAt] = useState(() => Date.now());
@@ -43,11 +45,11 @@ export function AttentionCheckScreen({ check, onDone }: { check: TopicCheckId; o
           <Badge colorPalette="blue" variant="subtle" rounded="md" px="2.5" textTransform="uppercase" letterSpacing="wider"
             fontSize="2xs">Quick check</Badge>
           <Heading size="lg" color="fg" fontWeight="semibold">Quick attention check</Heading>
-          <Text color="fg.muted" fontSize="md" lineHeight="tall">
-            This question is only to check that you are reading.
+          <Text color="fg" fontSize="lg" fontWeight="medium" mt="1" data-attention-question>
+            {READING_CHECKS[check].question}
           </Text>
-          <Text color="fg" fontSize="lg" fontWeight="medium" data-attention-instruction>
-            {TOPIC_CHECKS[check].question}
+          <Text color="fg" fontSize="md" lineHeight="tall" data-attention-instruction>
+            {READING_CHECKS[check].instruction}
           </Text>
         </VStack>
 

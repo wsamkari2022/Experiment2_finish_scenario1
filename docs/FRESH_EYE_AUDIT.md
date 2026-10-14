@@ -2124,3 +2124,18 @@ thesis says so.
   Baseline section heading), HOW_TO_ANALYZE (section 1, section 9's opening, 9.2, and a 14 October row in 4.9), CLAUDE.md,
   DEPLOYMENT.md, the Prolific plan and the accuracy checklist now say BSL4 is Baseline. Not on the live server until the
   next deploy.
+- **2026-10-14. Reading checks at random places, and Prolific's two-or-more rule** (Waseem, after his advisor's email:
+  test reading, not memory, and place the checks "(somewhat) randomly"; then "make them random as you suggested",
+  "1-B", "2-yes", "4-yes", and the Prolific consent says "will be rejected"). The two memory questions became two
+  reading checks in his approved words, in both doors, at places drawn per participant (after Block 1, 2 or 3; after
+  scenario 1, 2 or 3; never between 4 and 5 or before 6), saved with the plan; the screen's repeated line "This question
+  is only to check that you are reading." is gone. In the Prolific door all four checks count and two or more failed is
+  the rejection reason (`failed_two_or_more_attention_checks`; the consent page "will be rejected",
+  `PROLIFIC_CONSENT_VERSION` "2026-10-14-prolific-will-be-rejected"); the pay check gained a REJECT group. ATTENTION_VERSION
+  and SHAPE_VERSION "2026-10-14-reading-checks". The full chain passes; 17 breaks, 17 caught (one break run left a file
+  broken when Windows refused the restore; found at once, restored by hand and proved identical by the fingerprint test;
+  the break runner now retries and verifies). Seen live on a separate test address (its storage restored exactly): both
+  checks at the drawn places, refreshes, a wrong answer saved as wrong, the Prolific consent sentence, a 375px phone in
+  dark and light mode. Then the documents: CLAUDE.md (a new section), HOW_TO_READ (6p and the quality fields), HOW_TO_ANALYZE
+  (4.9 rows, the quality table, 9.8), DAILY_PAY_CHECK, PROLIFIC_CONSENT_FOR_ETHICS_BOARD, the Prolific plan (a dated note),
+  the accuracy checklist.
