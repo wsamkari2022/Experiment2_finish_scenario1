@@ -58,6 +58,8 @@ CHECKS = {
     "attention": "npm run validate:attention",
     # Since 7 October 2026: the daily Prolific pay check (tools/pay_check.cjs) on pretend files.
     "pay": "npm run validate:pay",
+    # Since 16 October 2026: the course-credit list for the instructor (tools/credit_list.cjs) on pretend records.
+    "credit": "npm run validate:credit",
     "conditions": "npm run validate:conditions",
     # Since 6 October 2026: the real server against a throw-away database on this computer (needs MongoDB running).
     "load": "npm run test:load",
@@ -111,13 +113,13 @@ VERSIONS = [
     ("PREDICTION_VERSION", const("block5Prediction.ts", "PREDICTION_VERSION"), "the MPF's prediction rule"),
     ("MCF_VERSION", const("block5MCF.ts", "MCF_VERSION"), "the Moral Commitment Function"),
     ("RUNNING_VERSION", const("block5VciAll.ts", "RUNNING_VERSION"), "the hidden running values behind VCI_all"),
-    ("Working minutes required", const("dbShape.ts", "REQUIRED_ACTIVE_MINUTES"), "for the $5 gift card, beside finishing the feedback"),
+    ("Study length on the consent pages (minutes)", const("dbShape.ts", "STUDY_LENGTH_ESTIMATE_MINUTES"), "\"at least 35 minutes\"; information only: the course credit is completion only (since 16 October 2026)"),
 ]
 
 # ------------------------------------------------------------------------------------------------ the content
 # Each item: (what is accurate now, why it can be trusted, [check keys], extra words for the "checked by" column)
 SECTIONS = [
-    ("1. Working time, visits and the gift-card numbers", [
+    ("1. Working time, visits and the course credit", [
         ("Working time counts only real work.",
          "It grows only while the study tab is on screen AND the person moved, typed, clicked or scrolled in the last "
          "90 seconds. Example from the test: 15 minutes of work, then a 31-minute break, gives 16.4 minutes "
@@ -137,15 +139,24 @@ SECTIONS = [
          "The time on the consent page, before the email is known, is not lost.", ["visits"], ""),
         ("The total at the end is the real working time.",
          "The thank-you page shows the working minutes (rounded) and the number of visits when there was more than one, "
-         "with no verdict about the gift card. The database headline says which ledger its total comes from.",
+         "with no verdict about credit or pay. The database headline says which ledger its total comes from.",
          ["visits", "dbshape"], "(D33)"),
         ("Two reading pages have no page time of their own.",
          "The insights page and the post-Block-4 profile page (both deleted on 29 September) were left out of the per-page "
          "times on purpose; the rule still holds for any older ledger.", ["dbshape"], "(D1-D6)"),
-        ("The gift card needs all three attention checks right (university version).",
-         "On top of the old rules (finished, 35 working minutes, not the same answer everywhere, fewer than 3 rushed "
-         "blocks). Each miss, and a check never reached, gives its own reason in quality.reasons; the check's own "
-         "screen is never a rushed block.", ["attention"], "(T4)"),
+        ("The course credit is given on completion (university version), exactly as the consent page says.",
+         "Since 16 October 2026 (your 1-yes to 4-yes; the $5 gift card and its five rules are gone). quality.course_credit_earned "
+         "= finished the study, and nothing else decides it. Careful participation (the four OSF robustness signs: very fast in "
+         "Blocks 1-3, two or more scenarios under 15 seconds, the same answer to every feedback rating, an attention check "
+         "answered wrongly) is saved for you only, each sign with its reason, and never takes the credit away. The thank-you "
+         "page says \"If you are taking part for course credit, your completion is recorded.\" (university version only). "
+         "Checked live.", ["attention", "journey"], "(T4, T10, J18)"),
+        ("The course-credit list for the instructor holds emails and nothing else.",
+         "Since 16 October 2026. npm run credit:list writes CREDIT_LIST.txt (Florida Tech emails of the students who finished "
+         "by the end of 12 December in Florida time) and CREDIT_CHECK.md (for you only: the dates, careful participation, the "
+         "late finishers and other addresses to look at, and who did not finish). Careful participation never takes anybody off "
+         "the list; the screen shows counts only, never an email; the folder \"Course credit/\" never goes to GitHub.",
+         ["credit"], "(Z1-Z5)"),
     ]),
     ("2. Saving the data and moving between computers", [
         ("A short break in the server never keeps a participant out of the database.",
@@ -263,8 +274,8 @@ SECTIONS = [
          "Decided. It never rejects, never prints an email or the code. How to: docs/DAILY_PAY_CHECK.md.",
          ["pay"], "(Y1-Y5)"),
         ("Only the six real parts can be called \"rushed\".",
-         "Since 7 October 2026 (found in the Prolific rehearsal; your 1-A). Three parts finished in under 30 seconds cost the "
-         "gift card and put a Prolific person in \"Look first\". Every timed page used to count, so the consent page, the "
+         "Since 7 October 2026 (found in the Prolific rehearsal; your 1-A). Three parts finished in under 30 seconds put a "
+         "Prolific person in \"Look first\" (they also cost the gift card until 16 October 2026). Every timed page used to count, so the consent page, the "
          "short \"about you\" page, the page before the main study, the results page and the 1-second pauses between parts "
          "could give an honest fast reader those strikes (a pause caught a 5-second working-time tick in 63 runs of 100). Now "
          "only Blocks 1-4, the main study and the feedback count; the other short pages are saved apart.",
@@ -562,13 +573,13 @@ OPEN = [
      "?condition=CVR_APA (or CVR_Only, APA_Only, BSL4 for Baseline) to the address, so it is never counted for balance.", "Before launch"),
     ("One full click-through on the remote server",
      "A fresh email, on a computer and on a phone, from consent to the thank-you page.", "Before launch"),
-    ("Look at the gift-card verdict on one real record",
-     "Since 29 September the whole verdict is checked on hand-made records (T4: finished, 35 working minutes, not the "
-     "same answer everywhere, fewer than 3 rushed blocks, all three attention checks). Look at quality on one real "
-     "finished record.", "At the click-through"),
-    ("The consent page now names the attention checks",
-     "A new rule, \"Answer the quick attention checks as asked\", and the same words in the gift-card checkbox. Ask your "
-     "ethics board whether this change to how the gift card is earned needs their approval before launch.", "Before launch"),
+    ("Look at the course-credit and careful-participation fields on one real record",
+     "Since 16 October 2026 both are checked on hand-made records (T4: credit = finished; careful participation from the "
+     "four signs, \"cannot tell\" when one cannot be read). Look at quality on one real finished university record, and "
+     "run npm run credit:list once on a test export.", "At the click-through"),
+    ("The university consent page is the Florida Tech consent submitted to the IRB on 14 October 2026",
+     "Course credit (50 points, an alternative assignment), what completes the study, the instructor told only whether "
+     "the student completed it. Deploy it only after the IRB approves the modification.", "After IRB approval"),
 
     ("The one-browser rule is only as strong as the email-and-age check",
      "Anyone who knows a participant's key (email or Prolific ID) and age can take their record, exactly as they could "

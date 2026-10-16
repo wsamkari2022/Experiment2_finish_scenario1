@@ -31,3 +31,6 @@ dist-ssr
 
 # Prolific: the completion code, and from launch the daily database exports with participants' emails - never commit
 Prolific docs/
+
+# Course-credit lists hold students' emails (tools/credit_list.cjs): never on GitHub
+Course credit/

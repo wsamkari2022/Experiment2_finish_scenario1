@@ -903,7 +903,7 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
         || !/if \(!result\.ok\) \{[\s\S]{0,300}return;\s*\}\s*setShowCode\(true\);/.test(pstart)) why.push("the code is shown to a finished person before their age is checked");
     /* The results page: the Prolific sentence, the university one kept. */
     const nudge = src("src/experiment/Block5FeedbackNudge.tsx");
-    if (!/Answering them finishes the study and gives you your Prolific completion code\./.test(nudge) || !/which you need for your \$5 gift card/.test(nudge) || !/const prolific = isProlificKey\(browserParticipantKey\(\)\);/.test(nudge)) why.push("the results page's sentence is not the door's own");
+    if (!/Answering them finishes the study and gives you your Prolific completion code\./.test(nudge) || !/which you need for your course credit/.test(nudge) || !/const prolific = isProlificKey\(browserParticipantKey\(\)\);/.test(nudge)) why.push("the results page's sentence is not the door's own");
     gate("C16", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : "the Prolific completion code: the server gives it only for a finished Prolific record to the browser holding it, from .env only and never stored; no code or completion address in the page's code or the built site; the page keeps what it was given for its owner and asks again while waiting; a button, never an automatic jump; only in the Prolific door, and after the age check on another device; the results page's Prolific sentence; \"confidential\" on the feedback page; the deploy files pass the code on without printing it");
   }

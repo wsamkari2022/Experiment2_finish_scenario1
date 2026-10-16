@@ -397,6 +397,13 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
               {/* The Prolific door's completion code and the way back (since 7 October 2026, Step 4; "1-A": a button,
                   never an automatic jump). The university door has no code. */}
               {prolificId && <ProlificCompletionCard prolificId={prolificId} />}
+              {/* The university door (since 16 October 2026, the researcher's "3-yes"): one reassuring line, nothing the
+                  consent page does not already promise ("the course credit is given when I complete the study"). */}
+              {!prolificId && (
+                <Text color="fg" fontSize={{ base: "sm", md: "md" }} fontWeight="medium" data-course-credit-line>
+                  If you are taking part for course credit, your completion is recorded.
+                </Text>
+              )}
               {(minutes !== null || visits !== null) && (
                 <HStack gap="3" wrap="wrap" justify="center" pt="1">
                   {minutes !== null && (

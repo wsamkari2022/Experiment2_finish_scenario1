@@ -15,9 +15,9 @@
  *   - The card sits UNDER the four score cards ("Q1-A"), so everyone sees their main scores first -
  *     the advisor's design is results before feedback - and it asks them to look through their results
  *     first. The feedback asks them to rate "The final results page".
- *   - The gift-card sentence says what the consent page says: finishing the feedback completes the
- *     study, and the gift card needs a completed study. It does NOT say the feedback alone earns it,
- *     because the consent page names a second rule (the active minutes).
+ *   - The course-credit sentence says what the consent page says (since 16 October 2026; it was the $5 gift card):
+ *     finishing the feedback completes the study, and the course credit is given when the study is complete. It says
+ *     "which you need for", never "earns": the consent page, not this card, is where the rule lives.
  *   - The bar shows only while neither the card nor a page's bottom button is on screen, so there is
  *     never a second button beside the first. It slides in, and nothing loops: the flag in the progress
  *     bar keeps the study's one looping animation.
@@ -31,7 +31,7 @@ import { browserParticipantKey, isProlificKey } from "./recruitment";
 
 /** The "One last step" card, placed under the four score cards on the results page. */
 export function LastStepCard({ onContinue, ref }: { onContinue: () => void; ref?: Ref<HTMLDivElement> }) {
-  /* The Prolific door (since 7 October 2026, Step 4) is paid through Prolific: no gift card there. */
+  /* The Prolific door (since 7 October 2026, Step 4) is paid through Prolific; the university door is the course credit. */
   const prolific = isProlificKey(browserParticipantKey());
   return (
     <Box
@@ -58,7 +58,7 @@ export function LastStepCard({ onContinue, ref }: { onContinue: () => void; ref?
             <Text fontSize="sm" color="fg.muted" lineHeight="tall" mt="1">
               {prolific
                 ? "About 5 to 10 minutes. Answering them finishes the study and gives you your Prolific completion code. Look through your results first; this button is also at the bottom of the page."
-                : "About 5 to 10 minutes. Answering them completes the study, which you need for your $5 gift card. Look through your results first; this button is also at the bottom of the page."}
+                : "About 5 to 10 minutes. Answering them completes the study, which you need for your course credit. Look through your results first; this button is also at the bottom of the page."}
             </Text>
           </Box>
         </HStack>

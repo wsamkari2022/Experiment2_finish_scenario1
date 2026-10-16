@@ -5,7 +5,9 @@
  * THE RESEARCHER'S REQUEST (29 September 2026). Simple attention checks during the study, plus a feedback row, "This
  * question is just to check your attention. Pick the number four." (the number only two, three, four or five, at a
  * random place among the design or learning-insight questions, never among the CVR or APA questions); all of them
- * answered as asked is needed for the university gift card, among the other rules. Plan answers of 29 September: Q2 yes
+ * answered as asked was needed for the university gift card, among the other rules (no gift card since 16 October 2026:
+ * course credit on completion; a check answered wrongly is now one of the four careful-participation signs in `quality`,
+ * information for the researcher). Plan answers of 29 September: Q2 yes
  * (the consent page says so), Q3 A (the gift card only; all completed sessions are analysed), Q4 yes (two answer-pattern
  * flags, for analysis only).
  *
@@ -35,11 +37,11 @@
  * accepts, and all four count (the researcher's "1-B", 14 October 2026): failing TWO OR MORE of them is Prolific's
  * rejection reason ("If you fail two or more of them, your submission will be rejected", the Prolific consent page). A
  * check never reached is not a failure (a person who did not finish is handled by Prolific on its own). The university
- * door keeps its three checks and its gift-card rule (all three answered as asked).
+ * door keeps its three checks (since 16 October 2026 information only: course credit is given on completion).
  *
  * WHAT IT FEEDS. `analysis.attention_checks` (every check, where it was shown, what was asked, the answer order, the
- * answer, right or wrong), `quality.passed_all_attention_checks` (the gift card needs all of them, with a reason per
- * miss), the Prolific rule in `quality` and `analysis.attention_checks.prolific_rule`, and a copy in
+ * answer, right or wrong), `quality.passed_all_attention_checks` and `quality.careful_participation` (a check answered
+ * wrongly is one of its four signs; information only, never credit or pay), the Prolific rule in `quality` and `analysis.attention_checks.prolific_rule`, and a copy in
  * `major_info_and_scores`. The feedback check's answer is kept HERE, never in the feedback record, so it cannot move a
  * well-being score, a tool rating or the "same answer to every rating" flag. `analysis.feedback_answer_patterns` (Q4) is
  * built from the feedback record and is never used for pay. Checked by `npm run validate:attention`.
@@ -448,10 +450,11 @@ export function buildAttentionSection(raw: unknown): Record<string, unknown> | n
       "Three very simple reading checks: one on its own screen after Block 1, 2 or 3, one after scenario 1, 2 or 3 (each "
       + "place drawn at random per participant; shown_after_block / shown_after_scenario), each an everyday question with "
       + "the instruction inside it ('please choose ...') and four answers in a random order, and 'Pick the number ...' on "
-      + "the 1-7 scale at a random place in the feedback. passed_all is what the gift card needs "
-      + "(quality.passed_all_attention_checks); a check never reached counts as missed. Participants were never told "
-      + "whether they were right. A miss affects the gift card only: all completed sessions are analysed (the "
-      + "researcher, 30 September 2026). Before 14 October 2026 the two screens asked what the part just finished was "
+      + "the 1-7 scale at a random place in the feedback. passed_all is information (quality.passed_all_attention_checks); "
+      + "a check answered wrongly is one of the four careful-participation signs (quality.careful_participation), which "
+      + "never affects course credit: the credit is given on completion. Participants were never told whether they were "
+      + "right. All completed sessions are analysed (the researcher, 30 September 2026). Until 16 October 2026 passed_all "
+      + "was part of a gift-card verdict. Before 14 October 2026 the two screens asked what the part just finished was "
       + "about (after Block 3 and after scenario 3); no participant took the study under that version.",
   };
 }
@@ -511,7 +514,7 @@ export function buildFeedbackPatterns(feedbackRecord: unknown): Record<string, u
       "The 1-7 feedback ratings in the order they were on screen (the attention check's row is not among them). "
       + "longest_run_of_the_same_answer: e.g. 8 for 5,5,5,5,5,5,5,5. share_of_steps_of_exactly_one: how often the next "
       + "answer was one more or one less than the last, 1.0 for a diagonal like 1,2,3,4,5,6,7,6,5. Saved for the "
-      + "analysis only (the researcher's Q4); never part of the gift-card verdict. Any cut-off must be fixed before "
+      + "analysis only (the researcher's Q4); never used for credit or pay. Any cut-off must be fixed before "
       + "the data is opened.",
   };
 }

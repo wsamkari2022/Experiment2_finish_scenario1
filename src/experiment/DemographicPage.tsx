@@ -16,7 +16,7 @@
  * THE EMAIL IS THE RETURN KEY, NOT AN AFTERTHOUGHT
  * This study runs 35-50 minutes and is explicitly allowed to be done across several sittings.
  * The email is how a participant is recognised when they come back on a different day or a
- * different machine, and how the gift card reaches them. Both reasons are stated ON the field,
+ * different machine, and how the course credit is given (the gift card until 16 October 2026). Both reasons are stated ON the field,
  * not only in the consent document, because the consent page is read once and this is the moment
  * the address is actually typed.
  *
@@ -85,7 +85,7 @@ export interface DemographicRecord {
  * The job here is to catch a typo — a missing @, a stray space, a forgotten domain — not to
  * decide what a valid address looks like. Strict email patterns reject real addresses, and a
  * participant locked out of a study by a regular expression has no way to argue with it. The
- * real test of an address is whether the gift card arrives.
+ * real test of an address is whether the student can come back with it.
  */
 const looksLikeEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
 
@@ -212,7 +212,7 @@ export function DemographicPage({
               helperText={
                 emailLocked
                   ? "This is the address you started with."
-                  : "Used to save your place if you leave, and to send your $5 gift card when you finish. Nothing else."
+                  : "Used to save your place if you leave, and to give your course credit when you finish. Nothing else."
               }
             >
               <Box position="relative" w="full">

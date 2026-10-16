@@ -17,8 +17,8 @@
  *      intention was.
  *
  *   3. COMPENSATION IS PART OF THE CONSENT. The email exists for two reasons — returning to an
- *      unfinished session, and receiving the gift card — and a participant has to know both
- *      before they hand it over, not after.
+ *      unfinished session, and the course credit (the gift card until 16 October 2026) — and a
+ *      participant has to know both before they hand it over, not after.
  *
  * CONSENT_VERSION
  * Stamped onto every consent record. If this text is ever edited, bump it. Without a version you
@@ -36,11 +36,17 @@
  *     rejected" since 14 October 2026, the researcher: it said "may be rejected"; all four checks count);
  *   - one agreement box, and "I do not agree", which says how to return the study on Prolific;
  *   - withdrawal through a Prolific message (or the researcher's email) with the Prolific ID.
- * Its own version stamp (PROLIFIC_CONSENT_VERSION). The university door's wording is unchanged, word for word, except
- * the study's length, which both doors changed together on 7 October 2026 ("at least 35 minutes", was "about 40 to 55
- * minutes"; CONSENT_VERSION "2026-10-07-35-minutes", PROLIFIC_CONSENT_VERSION "2026-10-07-prolific-35-minutes"), and the
- * Prolific attention sentence on 14 October 2026 (PROLIFIC_CONSENT_VERSION "2026-10-14-prolific-will-be-rejected").
- * The ethics board must approve this text before the Prolific door opens to participants.
+ * Its own version stamp (PROLIFIC_CONSENT_VERSION). The study's length changed in both doors together on 7 October 2026
+ * ("at least 35 minutes", was "about 40 to 55 minutes"; CONSENT_VERSION "2026-10-07-35-minutes", PROLIFIC_CONSENT_VERSION
+ * "2026-10-07-prolific-35-minutes"), and the Prolific attention sentence on 14 October 2026 (PROLIFIC_CONSENT_VERSION
+ * "2026-10-14-prolific-will-be-rejected"). The ethics board must approve this text before the Prolific door opens to
+ * participants.
+ *
+ * THE UNIVERSITY DOOR SINCE 16 OCTOBER 2026 (the researcher's "1-yes" to "4-yes"): word for word the Florida Tech consent
+ * submitted to the IRB with the modification of 14 October 2026 - course credit for CSE4301/CSE5290 (50 points, or an
+ * alternative assignment), "What completes the study: Reach the end.", the instructor told only whether the student
+ * completed the study; no gift card and none of its five rules. CONSENT_VERSION "2026-10-16-course-credit". validate:
+ * attention T10 compares it with the submitted text. Deploy it only after the IRB approves the modification.
  *
  * THE BUTTON IS DISABLED UNTIL THE BOX IS TICKED
  * Deliberate, and not merely a validation convenience: the tick is the consent record. A page
@@ -60,13 +66,14 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuArrowRight, LuCheck, LuClock, LuGift, LuLock, LuShieldCheck, LuUndo2, LuWallet } from "react-icons/lu";
+import { LuArrowRight, LuCheck, LuClock, LuGraduationCap, LuLock, LuShieldCheck, LuUndo2, LuWallet } from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { REQUIRED_ACTIVE_MINUTES } from "./dbShape";
 import type { RecruitmentSource } from "./recruitment";
 
-/** Bump whenever the consent wording below changes. Stored with every consent record. */
-export const CONSENT_VERSION = "2026-10-07-35-minutes";
+/** Bump whenever the consent wording below changes. Stored with every consent record. Since 16 October 2026 the
+ *  university door says what the Florida Tech consent submitted to the IRB on 14 October 2026 says: course credit, no
+ *  gift card. */
+export const CONSENT_VERSION = "2026-10-16-course-credit";
 /** The Prolific door's wording (since 6 October 2026). Bump it whenever that wording changes. */
 export const PROLIFIC_CONSENT_VERSION = "2026-10-14-prolific-will-be-rejected";
 
@@ -334,9 +341,9 @@ export function ConsentPage({ onAgree, door = "university" }: {
   const prolific = door === "prolific";
   const [checked, setChecked] = useState(false);
   /*
-   * Deliberately a SECOND tick, not folded into the first. The payment rules are the part a
-   * participant is most likely to skim and most likely to dispute later, so agreement to them is
-   * recorded as its own deliberate act rather than bundled into a general "I agree".
+   * Deliberately a SECOND tick, not folded into the first. The credit rule (since 16 October 2026: course credit on
+   * completion, or the alternative assignment) is the part a participant is most likely to skim and most likely to
+   * dispute later, so agreement to it is recorded as its own deliberate act rather than bundled into a general "I agree".
    */
   const [rulesChecked, setRulesChecked] = useState(false);
   const bothAgreed = checked && rulesChecked;
@@ -348,7 +355,7 @@ export function ConsentPage({ onAgree, door = "university" }: {
       timestamp: new Date().toISOString(),
       version: CONSENT_VERSION,
       /* Recorded separately, because it answers a different question than "did they consent":
-         it answers "were they told the payment rules before they started". */
+         it answers "were they told the credit rule before they started" (the name is kept from the gift-card days). */
       compensation_rules_agreed: true,
     });
   };
@@ -504,16 +511,11 @@ export function ConsentPage({ onAgree, door = "university" }: {
             )}
 
             {/*
-              THE PAYMENT, AND THE RULES OF IT, IN ONE PANEL.
-              These were two panels: what you get, then how it is earned. Split across two boxes
-              they repeated each other - both named the feedback questions, both mentioned finishing
-              across several visits - and the softer of the two came first, so the conditions read
-              as an afterthought to a promise already made.
-
-              They are one thing and are now one panel, and it keeps the strong border and its own
-              tick-box because it is the section a participant could later say they had not seen. If
-              time is a condition of payment they are entitled to know it in advance, and a rule
-              agreed to beforehand is far easier to apply afterwards than one produced at the end.
+              THE COURSE CREDIT, AND WHAT COMPLETES THE STUDY, IN ONE PANEL (since 16 October 2026; it was the $5 Amazon
+              gift card with five rules, among them 35 active minutes). The words are the Florida Tech consent submitted to
+              the IRB on 14 October 2026: only students of CSE4301/CSE5290 take part in this door, the credit is given on
+              completion, and the alternative assignment gives the same points. It keeps the strong border and its own
+              tick-box below, because it is the section a participant could later say they had not seen.
             */}
             {prolific ? <ProlificPayment /> : (
             <Box
@@ -525,24 +527,27 @@ export function ConsentPage({ onAgree, door = "university" }: {
             >
               <HStack gap="2.5" mb="3" align="center">
                 <Icon boxSize="5" color="orange.fg">
-                  <LuGift />
+                  <LuGraduationCap />
                 </Icon>
                 <Heading size="sm" color="fg" letterSpacing="tight">
-                  Your $5 Amazon Gift Card
+                  Course Credit
                 </Heading>
               </HStack>
 
               <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-                Everyone who completes the study receives a{" "}
+                If you are taking part for CSE4301/CSE5290 Introduction to Artificial Intelligence: when you complete
+                the study, you receive{" "}
                 <Text as="span" color="fg" fontWeight="semibold">
-                  $5 Amazon gift card
-                </Text>
-                , sent privately by email.
+                  50 points averaged into your assignments grade
+                </Text>{" "}
+                for the course. Taking part is your choice. If you prefer not to take part, or you start and decide to
+                stop, you can complete an alternative assignment for the same 50 points; ask your instructor. Your
+                instructor is told only whether you completed the study, never your answers.
               </Text>
 
               <HStack gap="2.5" mt="4" mb="3" align="center">
                 <Icon boxSize="4" color="orange.fg">
-                  <LuClock />
+                  <LuCheck />
                 </Icon>
                 <Text
                   fontSize="xs"
@@ -551,7 +556,7 @@ export function ConsentPage({ onAgree, door = "university" }: {
                   textTransform="uppercase"
                   letterSpacing="wider"
                 >
-                  What earns it
+                  What completes the study:
                 </Text>
               </HStack>
 
@@ -559,20 +564,6 @@ export function ConsentPage({ onAgree, door = "university" }: {
                 <Rule title="Reach the end.">
                   Answer the feedback questions and arrive at the thank-you page. That is the point
                   at which the study counts as complete.
-                </Rule>
-                <Rule title={`Spend at least ${REQUIRED_ACTIVE_MINUTES} minutes actively working.`}>
-                  Your time adds up across every visit, so you do not have to do it in one sitting.
-                </Rule>
-                <Rule title="Time counts only while you are working.">
-                  If you step away or switch to something else, the study pauses and starts again
-                  when you return. Leaving it open while you do something else does not count.
-                </Rule>
-                <Rule title="Answer thoughtfully.">
-                  Rushing through, or giving the same answer to every question, may not qualify.
-                </Rule>
-                {/* Since 29 September 2026 (the researcher's "Q2-yes"; attentionChecks.ts). */}
-                <Rule title="Answer the quick attention checks as asked.">
-                  A few simple questions only check that you are reading. Answer all of them as asked to qualify.
                 </Rule>
               </VStack>
             </Box>
@@ -585,13 +576,14 @@ export function ConsentPage({ onAgree, door = "university" }: {
               </Text>
               <Text>
                 We collect your email address for two reasons only: so you can return and finish
-                the study, and so we can send your gift card.
+                the study, and to give your course credit.
               </Text>
               <Text>
-                Your email is stored separately from your answers and is seen only by the research
-                team. It is never shared, never sold, and never shown to anyone else taking part.
-                Your answers are analyzed and reported as group results, so no individual can be
-                identified in anything we publish.
+                Your email is stored with your answers so that you can continue later, and it is seen
+                only by the research team. It is never shared, never sold, and never shown to anyone
+                else taking part. If you take part for course credit, your instructor is told only that
+                you completed the study, never your answers. Your answers are analyzed and reported as
+                group results, so no individual can be identified in anything we publish.
               </Text>
               <Text>
                 Data is kept on secure, password-protected storage accessible only to the research
@@ -621,7 +613,7 @@ export function ConsentPage({ onAgree, door = "university" }: {
               <Text>
                 {prolific
                   ? "Your participation is completely voluntary. There is no penalty for not taking part: if you decide not to, please return the study on Prolific."
-                  : "Your participation is completely voluntary. There is no penalty for not taking part, and you may skip questions you do not wish to answer."}
+                  : "Your participation is completely voluntary. There is no penalty for not taking part. Questions with answer choices need an answer before you can move on (the written answers at the end are optional); if you do not wish to answer a question, you may stop at any time."}
               </Text>
             </Section>
 
@@ -629,7 +621,7 @@ export function ConsentPage({ onAgree, door = "university" }: {
               <Text>
                 {prolific
                   ? "You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific. If you would like your data removed after taking part, send the researcher a message through Prolific, or email the researcher below, with your Prolific ID, and it will be deleted."
-                  : "You may stop at any time, without giving a reason and without consequence. If you would like your data removed after taking part, contact the researcher below and it will be deleted."}
+                  : "You may stop at any time, without giving a reason and without consequence. If you take part for course credit, stopping does not affect your grade: you can complete the alternative assignment instead. If you would like your data removed after taking part, contact the researcher below and it will be deleted."}
               </Text>
             </Section>
 
@@ -712,7 +704,7 @@ export function ConsentPage({ onAgree, door = "university" }: {
             <Text fontSize="sm" color="fg" lineHeight="tall">
               I have read the procedure described above. I voluntarily agree to take part, and I
               understand that my email address will be collected so I can return to finish the
-              study and receive the gift card.
+              study and receive my course credit.
             </Text>
           </Checkbox>
 
@@ -725,12 +717,8 @@ export function ConsentPage({ onAgree, door = "university" }: {
               cursor="pointer"
             >
               <Text fontSize="sm" color="fg" lineHeight="tall">
-                I understand how the gift card is earned: at least{" "}
-                <Text as="span" fontWeight="bold">
-                  {REQUIRED_ACTIVE_MINUTES} minutes of active work
-                </Text>{" "}
-                plus the feedback questions, that time counts only while I am actually working, that
-                rushing may not qualify, and that I must answer the attention checks as asked.
+                I understand that the course credit is given when I complete the study, and that I may
+                complete an alternative assignment instead.
               </Text>
             </Checkbox>
           </Box>

@@ -1765,10 +1765,11 @@ for (const [who, block5] of PEOPLE) {
 /* D70 - ONLY THE SIX REAL PARTS CAN BE CALLED RUSHED (7 October 2026, the researcher's "1-A"). The Prolific rehearsal
    found quality.rushed_blocks counting the consent page, "A little about you", the 0.9-second pauses (which catch a
    5-second working-time tick about 1 time in 5.5), the page before the main study and the results page: an honest fast
-   reader could reach the three strikes that cost the gift card and put a Prolific person in "Look first". Checked on
-   hand-made ledgers: the list is exactly Blocks 1-4, the main study and the feedback; an honest fast reader with every
-   other page under 30 seconds has no strike, and those pages are kept in short_pages_not_counted; a rusher of three
-   real parts still gets three strikes, the reason and no gift card. */
+   reader could reach the three strikes that cost the gift card (until 16 October 2026; the course credit since then is
+   given on completion) and put a Prolific person in "Look first". Checked on hand-made ledgers: the list is exactly
+   Blocks 1-4, the main study and the feedback; an honest fast reader with every other page under 30 seconds has no
+   strike, and those pages are kept in short_pages_not_counted; a rusher of three real parts still gets three strikes
+   (the number the daily pay check reads), and keeps the course credit. */
 {
   const why = [];
   const SIX = ["money", "trolley", "product", "block4", "block5", "feedback"];
@@ -1784,7 +1785,7 @@ for (const [who, block5] of PEOPLE) {
     totalMs: 2_700_000, sittings: 1, longestIdleMs: 0,
     byStage: { ...SHORT_PAGES, attention_check: 6_000, insights: 2_000, ...parts },
   });
-  /* All three attention checks right, so the gift card turns on the rushed parts alone. */
+  /* All three attention checks right, so only the rushed parts differ. */
   const A = B("attentionChecks.js");
   const plan = A.planAttentionChecks("d70-session|d70@example.test");
   const ans = (answer) => ({ answer, correct: false, answeredAt: "2026-10-07T10:00:00.000Z", secondsToAnswer: 2, timesChanged: 0 });
@@ -1793,11 +1794,11 @@ for (const [who, block5] of PEOPLE) {
   const honest = db.buildQuality(ledger({
     money: 240_000, trolley: 200_000, product: 260_000, block4: 300_000, block5: 1_200_000, feedback: 400_000,
   }), PEOPLE[0][1], null, "Study Completed", passing);
-  if (honest.compensation_eligible !== true) why.push(`an honest fast reader with every rule met loses the gift card: ${JSON.stringify(honest.reasons)}`);
+  if (honest.course_credit_earned !== true) why.push("an honest fast reader lost the course credit");
   if (honest.blocks_under_30_seconds !== 0 || honest.rushed_blocks.length !== 0) {
     why.push(`an honest fast reader got ${honest.blocks_under_30_seconds} strikes (${honest.rushed_blocks.map((b) => b.stage).join(", ")})`);
   }
-  if (honest.reasons.some((r) => /blocks finished/.test(r))) why.push("an honest fast reader has a rushed-blocks reason");
+  if ((honest.careful_participation_reasons ?? []).length) why.push(`an honest fast reader has a careful-participation reason: ${honest.careful_participation_reasons}`);
   const listed = (honest.short_pages_not_counted ?? []).map((s) => s.stage).sort();
   if (JSON.stringify(listed) !== JSON.stringify(Object.keys(SHORT_PAGES).sort())) {
     why.push(`short_pages_not_counted lists ${listed.join(", ")} (it must list the short pages, never the attention check or a deleted page)`);
@@ -1812,11 +1813,9 @@ for (const [who, block5] of PEOPLE) {
   if (rusher.blocks_under_30_seconds !== 3 || JSON.stringify(rusher.rushed_blocks.map((b) => b.stage)) !== JSON.stringify(["money", "trolley", "product"])) {
     why.push(`a rusher of Blocks 1-3 got ${rusher.blocks_under_30_seconds} strikes`);
   }
-  if (!rusher.reasons.includes("3 blocks finished in under 30s") || rusher.compensation_eligible !== false) {
-    why.push("a rusher of three real parts lost no gift card, or the reason is missing");
-  }
+  if (rusher.course_credit_earned !== true) why.push("three rushed parts took the course credit away (it is given on completion)");
   gate("D70", why.length === 0, why.length === 0
-    ? "only Blocks 1-4, the main study and the feedback can be called rushed: an honest fast reader (consent, the four questions, the pauses, the page before the main study and the results page all under 30 s) has no strike, those pages are kept apart; three rushed real parts still cost the gift card"
+    ? "only Blocks 1-4, the main study and the feedback can be called rushed: an honest fast reader (consent, the four questions, the pauses, the page before the main study and the results page all under 30 s) has no strike, those pages are kept apart; three rushed real parts are three strikes (the pay check's number) and keep the course credit"
     : `the rushed-blocks rule is wrong: ${why.slice(0, 3).join(" | ")}`);
 }
 

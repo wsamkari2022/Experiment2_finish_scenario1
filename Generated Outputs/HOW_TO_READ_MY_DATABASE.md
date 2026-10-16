@@ -124,7 +124,7 @@ correlating the two will produce impressive and meaningless results.
 | `prolific_pid` | Since 6 October 2026, **Prolific-door** participants only: their Prolific ID, the key of their record (lower-cased). Never in `email`. One Prolific ID is one person (a unique rule on the records that have it). |
 | `prolific_code_given_at`, `prolific_code_last_given_at`, `prolific_code_given_times` | Since 7 October 2026, Prolific door only: when the server first and last gave this person the completion code (after their completion was saved), and how many times (a reload on the same browser shows the kept code without asking, so more than 1 means another device or an emptied browser). **The code itself is never stored.** Absent = never given (not finished, or finished before a code was set on the server). For the daily pay check: a finished Prolific record without `prolific_code_given_at` never saw its code. |
 | `prolific_study_id`, `prolific_session_id` | Since 6 October 2026, Prolific door only: Prolific's STUDY_ID and SESSION_ID from the link (the submission). `prolific_session_id` is Prolific's, NOT the study's own `participant_id`. Set only when the page sent them. |
-| `recruitment_source` | Since 6 October 2026: which door they came through - `"university"` (moonlander.fit.edu, email, $5 gift card) or `"prolific"` (moonlander.fit.edu/prolific, paid by Prolific). **Absent on every record made before that date: those are all university-door records.** The four conditions are balanced inside each door on its own. |
+| `recruitment_source` | Since 6 October 2026: which door they came through - `"university"` (moonlander.fit.edu, email; course credit since 16 October 2026, a $5 gift card before) or `"prolific"` (moonlander.fit.edu/prolific, paid by Prolific). **Absent on every record made before that date: those are all university-door records.** The four conditions are balanced inside each door on its own. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
 | `country`, `country_code` | Since 30 September 2026, from the demographic form's Country question (asked as "Where are you from?" since 4 October 2026): the English name as listed (e.g. "Saudi Arabia") and its ISO 3166-1 alpha-2 code ("SA"; Kosovo "XK"), or "Prefer not to say" with a null code. Group by `country_code`, never by the name. Absent on records made before that date. |
 | `english_first_language` | Since 4 October 2026: the demographic form's "Is English your first language?" - **true** = Yes, **false** = No. Required, no default, so every record from that date has it; absent on records made before. Also in `blocks…vrds_demographics.englishFirstLanguage` |
@@ -1386,8 +1386,9 @@ place and number, are drawn once per participant and saved, so a refresh or anot
 | `between_scenarios` | its own screen right after scenario 1, 2 or 3 (drawn at random), before the next scenario; never between scenarios 4 and 5, never before scenario 6 | "Which of these do you enjoy most on a free afternoon? This question checks that you are reading: please choose 'Reading a book', whatever your real answer is." Answers: Listening to music, Reading a book (right), Walking outside, Watching a film |
 | `number` | one row in the feedback, after any row of "The tools & the experiment design" or "How this experience was for you" | "This question is just to check your attention. Pick the number four." (two, three, four or five; the 1-7 scale) |
 
-Participants were told it is an attention check and never whether they were right. `passed_all` (all three right) is
-what the gift card needs (`quality.passed_all_attention_checks`); `passed_count`, `answered_count`, `misses` (in words,
+Participants were told it is an attention check and never whether they were right. `passed_all` (all three right) was
+what the gift card needed until 16 October 2026 (`quality.passed_all_attention_checks`); since then a check answered wrongly
+is one of the four careful-participation signs (`quality.careful_participation`, section 8c), information only; `passed_count`, `answered_count`, `misses` (in words,
 e.g. `missed the reading check after scenario 1 (the right answer was "Reading a book", picked "Watching a film")`)
 and `checks[]`: `where_it_was_shown` (in words), `shown_after_block` (1-3, the between-blocks check only, else null),
 `shown_after_scenario` (1-3, the between-scenarios check only, else null), `asked` (the question with its instruction),
@@ -1398,7 +1399,8 @@ is not timed), `times_changed`, `answered_at`. A copy of the verdict is in `majo
 > a well-being score, a tool rating or `quality.straightlined_feedback`.
 
 > **A miss does not leave anybody out of the analysis:** all completed sessions are analysed (the researcher, 30
-> September 2026). It affects the gift card only (and, in the Prolific door, Prolific's rule below).
+> September 2026). In the university door it affected the gift card only, and since 16 October 2026 it affects nothing but
+> the careful-participation verdict (never the course credit); in the Prolific door, Prolific's rule below.
 
 > **The place is a variable.** Because each person met the two reading checks at a different place, `shown_after_block`
 > and `shown_after_scenario` say where. A check right after a long block may be missed more often than one after a short
@@ -1431,7 +1433,8 @@ only. `checks_asked` is 4. `version` is `"2026-10-14-reading-checks"`.
 Added **29 September 2026** (the researcher's Q4). Over the feedback's 1-7 ratings in the order they were on screen (the
 attention row is not among them): `longest_run_of_the_same_answer` (e.g. 8 for eight 5s in a row), `most_common_answer`
 and `share_of_the_most_common_answer`, `share_of_steps_of_exactly_one` and `longest_run_of_steps_of_exactly_one` (1.0
-for a diagonal like 1,2,3,4,5,6,7,6,5). `used_for_pay` is always false: these never touch the gift-card verdict. Any
+for a diagonal like 1,2,3,4,5,6,7,6,5). `used_for_pay` is always false: these never touched the gift-card verdict and never touch the course credit or the
+careful-participation verdict (which reads `quality.straightlined_feedback`). Any
 cut-off must be fixed before the data is opened.
 
 ---
@@ -1547,7 +1550,7 @@ one of them**, and the correction matters more than the original claim:
 
 | Total | Changed? | Why |
 |---|---|---|
-| `active_time.total_active_minutes` | **No** | A separate ledger that counts on every page. This is what compensation is judged on |
+| `active_time.total_active_minutes` | **No** | A separate ledger that counts on every page. The daily Prolific pay check reads it (it was the gift card's 35-minute rule until 16 October 2026; the course credit never reads it) |
 | `timings.totalExperimentMs` | **No** | The span from the first stage to the last event, so reading time is still inside it |
 | `headline.total_time_minutes` | **Yes — it got smaller** | It is the *sum of the timed stages*, and two stages are no longer timed. Measured at about **5 minutes** on a typical run |
 
@@ -1582,7 +1585,7 @@ never included, and the rule itself is stored in the record as `counting_rule`.
 
 > ⚠️ **`by_stage_minutes` does not add up to `total_active_minutes`,** and the gap is exactly the
 > time spent on the insights page and the final-analysis page. Those two are no longer broken out
-> (section 8), while the total still includes them because it is what compensation is judged on.
+> (section 8), while the total still includes them because it is the real working time (the daily Prolific pay check reads it; the course credit never does).
 > Shortening somebody's total would have been a different decision from deciding what is worth
 > measuring, and it was not the one taken.
 
@@ -1591,14 +1594,26 @@ never included, and the rule itself is stored in the record as `counting_rule`.
 
 ---
 
-## 8c. `quality` — engagement checks and eligibility
+## 8c. `quality` — the course credit, careful participation and engagement checks
 
 Time alone cannot tell a genuine run from one done for the payment: somebody can reach 35 minutes
 by nudging a mouse on one page. What they cannot fake is the *shape* of the run.
 
+**Since 16 October 2026 (the IRB modification of 14 October; the researcher's "1-yes" to "4-yes") the university door
+gives COURSE CREDIT, not a gift card.** The Florida Tech consent page says "the course credit is given when I complete the
+study", so the credit is completion and nothing else. How carefully somebody took part is a separate verdict, for the
+researcher only, which never takes the credit away and is never shown. `npm run credit:list` reads both (see the end of this
+section).
+
 | Field | What it catches |
 |---|---|
-| `active_minutes`, `met_time_requirement` | The 35-minute rule |
+| `course_credit_earned` | **The university door only** (null in the Prolific door): exactly `completed_the_study`. Since 16 October 2026 |
+| `completed_the_study` | `status` is "Study Completed" (they reached the thank-you page) |
+| `careful_participation` | For the researcher only, since 16 October 2026: **false** when any of the four OSF robustness signs is present, **null** when a sign cannot be read from what was saved, **true** otherwise. Never used for credit or pay |
+| `careful_participation_reasons` | Each sign present, in words (e.g. `2 scenarios decided in under 15 seconds`) |
+| `careful_participation_cannot_tell` | Each sign that could not be read, in words (e.g. `feedback not on record`) |
+| `careful_participation_signs` | The four signs, each with `sign`, `flagged` (true / false / null) and `detail`: `answered_very_fast_in_blocks_1_to_3` (`analysis.blocks_1_to_4_checks.answered_very_fast`: median under 2 seconds between answers), `two_or_more_scenarios_under_15_seconds`, `same_answer_to_every_feedback_rating` (`straightlined_feedback`), `an_attention_check_answered_wrongly` (a check never reached is not wrong) |
+| `active_minutes`, `study_length_estimate_minutes`, `under_the_estimated_length` | Working minutes against the consent page's "at least 35 minutes"; information only since 16 October 2026 (it was the gift card's 35-minute rule, `required_active_minutes` / `met_time_requirement`) |
 | `fastest_block` | The classic tell: 2 seconds on a part (since 7 October 2026 only the six real parts, below) |
 | `blocks_under_30_seconds`, `rushed_blocks` | Which of the six real parts were skimmed, by name: Blocks 1-4 (`money`, `trolley`, `product`, `block4`), the main study (`block5`) and the feedback (`feedback`) |
 | `blocks_that_can_be_called_rushed` | Since 7 October 2026: the list of those six, stored with the record |
@@ -1608,13 +1623,22 @@ by nudging a mouse on one page. What they cannot fake is the *shape* of the run.
 | `longest_idle_minutes`, `sittings` | How the work was spread |
 | `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The three attention checks (since 29 September 2026; section 6p); four in the Prolific door |
 | `prolific_attention_checks_failed`, `prolific_failed_two_or_more_attention_checks` | The Prolific door only (null in the university door). Since 14 October 2026: how many of the FOUR attention checks were answered against their instruction, and whether two or more were (Prolific's rejection reason, "will be rejected" on the Prolific consent page; `npm run pay:check` lists them as Reject). From 7 to 13 October 2026 these were `prolific_instruction_checks_failed` / `prolific_failed_both_instruction_checks` over the two number rows only; nobody took the study then |
-| `compensation_eligible` | The verdict: finished, 35 working minutes, not straightlined, fewer than 3 rushed blocks (of the six real parts since 7 October 2026), **and all three attention checks right** (the last since 29 September 2026) |
-| `reasons` | **Why** it failed, in plain words |
-| `rule` | The rule that was applied, stored with the record |
+| `how_to_read` | The rules above, in words, stored with the record |
 
-**Every raw number is kept, not just the verdict.** A different rule can be applied later to data
-already collected. `reasons` exists so a participant querying their payment can be given a
-specific answer.
+**Gone since 16 October 2026:** `compensation_eligible` (the gift-card verdict: finished, 35 working minutes, not
+straightlined, fewer than 3 rushed blocks, all three attention checks right), `reasons`, `rule`, `required_active_minutes`
+and `met_time_requirement`. No real participant took the study under them (only test records may carry them).
+
+**Every raw number is kept, not just the verdicts.** A different rule can be applied later to data
+already collected. `careful_participation_reasons` says why somebody did not count as careful, sign by sign.
+
+**The course-credit list.** After the window closes (12 December 2026), export `participants` from Compass into
+`Course credit/<date>/participants.json` and run `npm run credit:list -- "Course credit/<date>"`. It writes
+`CREDIT_LIST.txt` (for the instructor: the Florida Tech emails of the students who finished by the end of the deadline
+day in Florida time, nothing else) and `CREDIT_CHECK.md` (for the researcher only: the finishing time and careful
+participation of each, the late finishers and other addresses to look at, and who did not finish). Records with a
+Prolific ID are skipped. Both files hold emails: `Course credit/` never goes to GitHub, and neither file goes to an AI
+tool.
 
 > `scenarios_under_15_seconds` uses Block 5's own per-scenario timer, which is **clock** time and
 > therefore generous. A scenario flagged here was rushed even on the kindest reading.
@@ -1633,11 +1657,12 @@ specific answer.
 > the page before the main study, the results page and the 0.9-second pauses between the parts. Working time is added
 > every 5 seconds to the page on screen at that moment, so a pause caught a tick about 1 time in 5.5 and then counted as
 > "a block finished in 5 seconds": an honest participant had at least one such strike in 63 runs of 100 and two in 22,
-> and three strikes cost the gift card and put a Prolific person in "Look first". Those pages are now listed in
+> and three strikes cost the gift card (until 16 October 2026) and put a Prolific person in "Look first". Those pages are now listed in
 > `short_pages_not_counted` instead. This makes eligibility more generous, never less, and the Prolific pay check
 > follows by itself (it reads `blocks_under_30_seconds`). A record made before this date still carries the old count;
-> `rushed_blocks` names each stage, so the six can be recounted from it. Each missed check, a check never reached, or no attention file at all adds its own
-> line to `reasons` (e.g. `missed the reading check after Block 2 (the right answer was "By boat", picked "By car")`).
+> `rushed_blocks` names each stage, so the six can be recounted from it. Each missed check, or a check never reached, is
+> listed in `attention_check_misses` (e.g. `missed the reading check after Block 2 (the right answer was "By boat", picked
+> "By car")`); until 16 October 2026 each also added a line to `reasons`.
 
 ---
 
@@ -1793,12 +1818,11 @@ db.participants.aggregate([
    deck. Do not write analysis code that assumes one row per position forever.
 10. **`lowbuffer` / `highbuffer` are dead names.** If you see them, the data predates 11 Sept 2026.
 11. **Never use `timings` for effort.** It includes idle time. `active_time` is the real one.
-12. **Filter payment analyses on `quality.compensation_eligible`,** and read `quality.reasons`
-    before telling anyone why they did not qualify. **University door only.** It is the $5 gift-card rule (35 working
-    minutes and the rest), and it is computed for every record - but for `recruitment_source: "prolific"` it decides
-    NOTHING: Prolific forbids refusing pay for too few minutes or for the researcher's own measures, and Prolific pay is
-    decided by the daily pay check (Step 5 of docs/PROLIFIC_CONVERSION_PLAN.md). Never withhold Prolific pay because this
-    field is false (the audit of 6 October 2026).
+12. **The course credit is `quality.course_credit_earned`, and it is completion only** (university door, since 16
+    October 2026; `compensation_eligible`, the old $5 gift-card verdict, is gone). Never take credit away because
+    `quality.careful_participation` is false: the consent page promises the credit on completion, and careful
+    participation is for the analysis (the OSF robustness check). In the Prolific door `course_credit_earned` is null and
+    pay is decided by the daily pay check (Step 5 of docs/PROLIFIC_CONVERSION_PLAN.md) on Prolific's own valid reasons.
 13. **`resume_state` is not data.** If present, the participant is unfinished.
 14. **The two lifted scenarios are copies.** `blocks.block5_scenario_5_wish_on_the_receiving_end`
     and `blocks.block5_scenario_6_veil_of_ignorance` hold the same answers as the rows inside

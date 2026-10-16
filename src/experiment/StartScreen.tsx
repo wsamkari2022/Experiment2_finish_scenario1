@@ -228,7 +228,7 @@ export function StartScreen({
                 label="Email address"
                 invalid={!!error}
                 errorText={error || undefined}
-                helperText="Used only to save your place and to send your gift card when you finish."
+                helperText="Please use your Florida Tech email address. It is used only to save your place and to give your course credit."
               >
                 <Box position="relative" w="full">
                   <Box

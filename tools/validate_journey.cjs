@@ -37,6 +37,8 @@
  *       ladder (the same bands as its bar), each level's badge, range and the approved few words, "you are here" on the
  *       participant's level, the full name "Value Consistency Index"; no line about 50 (drafted and removed the same day)
  *   J17 (7 October 2026) the progress bar on the thank-you page: every step done and the flag "Done", not looping
+ *   J18 (16 October 2026) the student door speaks of course credit: no participant-facing gift card, $5 or active-minutes
+ *       rule anywhere, the four course-credit sentences in place, the thank-you line in the university door only
  *   J14 (3 October 2026) the first page: the study's name as its heading (and, since 4 October, in the browser tab), never split at a hyphen, the welcome only
  *       while the email is asked for, "Start or continue" inside the card, the email check unchanged; and the
  *       performance panel's title row on a phone: the title asks for room before sharing the row and the controls
@@ -266,8 +268,9 @@ console.log("===================================================================
     if (!results.includes(`toFeedback("${b}")`)) why.push(`the results page does not record ${b}`);
   }
   if (/onClick=\{onContinueToFeedback\}/.test(results)) why.push("a feedback button skips the record");
-  /* Q4, and the consent page: the gift card NEEDS a completed study; the feedback alone does not earn it. */
-  if (!nudge.includes("which you need for") || /earns your \$5/.test(nudge)) why.push("the gift-card sentence promises more than the consent page");
+  /* Q4, and the consent page: the course credit (the gift card until 16 October 2026) NEEDS a completed study; the card
+     never says the feedback alone earns it. */
+  if (!nudge.includes("which you need for your course credit") || /earns your|gift card/.test(nudge.replace(/\/\*[\s\S]*?\*\//g, ""))) why.push("the course-credit sentence promises more than the consent page, or names the gift card");
   /* It invites and never warns, and nothing new loops. */
   if (/beforeunload|Don't leave|Do not leave/i.test(nudge + results + view)) why.push("a leave warning is back");
   if (/infinite|animationIterationCount/.test(nudge)) why.push("a second looping animation");
@@ -489,7 +492,7 @@ console.log("===================================================================
   /* "Start or continue" moved into the card; the email step itself unchanged. */
   if (!/\{mode\.kind !== "verify" && \(\s*<VStack[^>]*>\s*<Heading as="h2"[^>]*>\s*\{mode\.kind === "finished" \? "You have already finished" : "Start or continue"\}/.test(start)) why.push("\"Start or continue\" is not the card's own title");
   for (const [needle, what] of [["const entry = await findParticipant(email);", "the lookup"], ["onNewParticipant(email.trim().toLowerCase());", "a new address"],
-    ["const result = await signIn(email.trim().toLowerCase(), given);", "the age check (on the server since the audit of 6 October 2026)"], ['helperText="Used only to save your place and to send your gift card when you finish."', "the email's helper text"]]) {
+    ["const result = await signIn(email.trim().toLowerCase(), given);", "the age check (on the server since the audit of 6 October 2026)"], ['helperText="Please use your Florida Tech email address. It is used only to save your place and to give your course credit."', "the email's helper text (course credit since 16 October 2026)"]]) {
     if (!start.includes(needle)) why.push(`the email step changed: ${what}`);
   }
   /* The panel's title row on a phone. */
@@ -626,6 +629,34 @@ console.log("===================================================================
   if (!/syncBlocks\(pendingEmail, \{ force: true \}\);\s*\}\s*setFeedbackSentHere\(true\);\s*\}\}/.test(flow)) why.push("sending the feedback does not turn the bar to Done");
   gate("J17", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : 'once the feedback is sent (or after a reload of a finished run) every step is done, the flag says "Done" and stops looping; before that, unchanged');
+}
+
+/* ------------------------------------------------------------------------------------------- J18 */
+{
+  /* The student door speaks of course credit (since 16 October 2026; the Florida Tech consent submitted to the IRB on
+     14 October 2026): no participant-facing words name the gift card, its $5 or its 35 active minutes anywhere in the
+     page's code (comments and the database's own notes aside), and the four places a student meets the credit say so. */
+  const why = [];
+  const dir = path.join(ROOT, "src");
+  const files = [];
+  const walk = (d) => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) walk(p); else if (/\.tsx$/.test(f.name)) files.push(p); } };
+  walk(dir);
+  for (const f of files) {
+    const code = fs.readFileSync(f, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/^\s*\/\/.*$/gm, "");
+    const hit = code.match(/[^\n]*(gift card|Gift Card|Amazon|\$5\b|minutes of active work|actively working)[^\n]*/);
+    if (hit) why.push(`${path.relative(ROOT, f)} still shows: ${hit[0].trim().slice(0, 80)}`);
+  }
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  for (const [file, needle] of [
+    ["Block5FeedbackNudge.tsx", "Answering them completes the study, which you need for your course credit."],
+    ["DemographicPage.tsx", "Used to save your place if you leave, and to give your course credit when you finish. Nothing else."],
+    ["StartScreen.tsx", "Please use your Florida Tech email address. It is used only to save your place and to give your course credit."],
+    ["UserFeedbackPage.tsx", "If you are taking part for course credit, your completion is recorded."],
+  ]) if (!src(file).includes(needle)) why.push(`${file} does not say: ${needle.slice(0, 60)}`);
+  /* The thank-you line is the university door's only: never beside the Prolific completion code. */
+  if (!/\{!prolificId && \(\s*<Text[^>]*data-course-credit-line>\s*If you are taking part for course credit, your completion is recorded\.\s*<\/Text>\s*\)\}/.test(src("UserFeedbackPage.tsx"))) why.push("the thank-you line can show in the Prolific door");
+  gate("J18", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : "the student door speaks of course credit: no page shows the gift card, its $5 or the active-minutes rule; the results card, the demographic and start pages' email help, and the thank-you line (university door only) say course credit");
 }
 
 console.log("");

@@ -13,7 +13,12 @@ paper, with the field for each, the test, and the hypotheses to freeze first.
 effect were absent. Most of the traps below are cases where the absent-effect version and the
 present-effect version produce the same number.
 
-> **Updated 6 October 2026 (later).** The study now has **two doors**: the university version (email, $5 gift card,
+> **Updated 16 October 2026.** The university door gives **course credit** for CSE4301/CSE5290 on completion (the IRB
+> modification of 14 October 2026), no longer a $5 gift card: `quality.course_credit_earned` = finished, and a separate
+> `quality.careful_participation` (the four OSF robustness signs, for the analysis only) replaces `compensation_eligible`
+> (section 2, 4.9).
+
+> **Updated 6 October 2026 (later).** The study now has **two doors**: the university version (email, a $5 gift card until 16 October 2026, course credit since,
 > `recruitment_source: "university"`, and every record before this date) and the Prolific version
 > (`recruitment_source: "prolific"`, keyed by `prolific_pid`, no email). The two groups differ in who they are, how they
 > are paid and (from Step 2) what their consent page says: **compare them side by side and never pool them without
@@ -81,23 +86,24 @@ Then decide, in advance and in writing, what to do about `quality`:
 
 | Field | What it flags |
 |---|---|
-| `quality.met_time_requirement` | Reached the 35 active minutes the payment rule requires |
+| `quality.careful_participation` | Since 16 October 2026: false when any of the four OSF robustness signs is present (the next four rows, plus `analysis.blocks_1_to_4_checks.answered_very_fast`), each in `careful_participation_reasons`; null when one cannot be read. Information only: it never takes the course credit away. **The preregistered robustness checks drop each sign on its own** (the main analysis keeps everybody who finished; each robustness analysis leaves out the people with ONE sign): read the sign you need in `careful_participation_signs`, never the combined verdict, for those. The combined verdict is the quick look (and the course-credit check file) |
+| `quality.under_the_estimated_length` | Worked fewer than the consent page's "at least 35 minutes" (information only since 16 October 2026; it was the gift card's 35-minute rule, `met_time_requirement`) |
 | `quality.straightlined_feedback` | Gave the same rating to everything |
 | `quality.blocks_under_30_seconds` | Parts finished impossibly fast: since 7 October 2026 only the six real parts (Blocks 1-4, the main study, the feedback); before, every timed page counted, pauses and short forms included (HOW_TO_READ 8c) |
 | `quality.scenarios_under_15_seconds` | Scenarios clicked through |
 | `quality.passed_all_attention_checks` | Every reading check answered as instructed (three; four in the Prolific door; the two inside the study are reading checks at random places since 14 October 2026, `analysis.attention_checks`) |
 | `quality.prolific_failed_two_or_more_attention_checks` | The Prolific door only: two or more of its four checks failed, Prolific's rejection reason (since 14 October 2026) |
 | `analysis.blocks_1_to_4_checks.answered_very_fast` | The median time between answers in Blocks 1-3 (not 4) under 2 seconds |
-| `quality.compensation_eligible` | The combined verdict |
+| `quality.course_credit_earned` | The university door only: exactly "finished" (the consent page's rule). Not an analysis variable. `compensation_eligible`, the old gift-card verdict, is gone since 16 October 2026 |
 
 **Group every comparison by `condition_type`** (section 9.2). `condition_source` says how the condition was given:
 `landing_page` (the balanced count), `address` (a tester who opened a condition on purpose) or `random_offline` (no
 server; since 6 October 2026 only in development - the live site never picks at random). A record with no condition was made before 1 October 2026 and ran condition 1.
 
-**`compensation_eligible` is a payment decision, not an analysis decision.** Do not silently use it
-as an exclusion rule. Decide your own criteria, state them, and report how many participants each
-one removed. A paper that reports one N and no exclusion table invites the question of what was
-dropped.
+**`course_credit_earned` is a credit decision, not an analysis decision**, and so was `compensation_eligible` before it.
+Do not silently use either as an exclusion rule. The only exclusion is the preregistered one (not finishing); the robustness checks drop one
+sign at a time (`careful_participation_signs`); state them, and report how many participants each one removed. A paper that reports one
+N and no exclusion table invites the question of what was dropped.
 
 ---
 
@@ -382,6 +388,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 14 October 2026 | **Condition 4 (Baseline) only, the web address:** the address bar shows `?condition=BSL4` instead of `?condition=Baseline`, so a participant cannot read "Baseline" there (the blinding answer of the OSF preregistration). Nothing on the page changed, and the database still stores `condition_number` 4 / `condition_type` "Baseline". No participant took part before this date. |
 | 14 October 2026 | **The two attention checks inside the study, both doors and all four conditions:** each is now a READING check, an everyday question with the instruction inside it ("How do you usually get to work or class? This question checks that you are reading: please choose 'By boat', whatever your real answer is."; "Which of these do you enjoy most on a free afternoon? ... please choose 'Reading a book' ..."), at a place drawn at random per participant: after Block 1, 2 or 3, and after scenario 1, 2 or 3 (`shown_after_block`, `shown_after_scenario`). They used to ask what the part just finished was about, always after Block 3 and after scenario 3 (memory, not reading: the advisor's and Prolific's point). The line under the heading, "This question is only to check that you are reading.", is gone (the question says it). The next scenario's clock restarts after the check, so its seconds never count towards a scenario. Because the place differs between people, report misses by place before reading anything into them. No participant took part before this date |
 | 14 October 2026 | **The Prolific door's consent page:** "If you fail two or more of them, your submission will be rejected." (it said "may be rejected"; `consent.version` `"2026-10-14-prolific-will-be-rejected"`), and Prolific's rule now counts all four checks (the two reading checks and the two number rows), two or more failed (`analysis.attention_checks.prolific_rule`, `quality.prolific_failed_two_or_more_attention_checks`). The university door's consent and gift-card rule are unchanged |
+| 16 October 2026 | **The university door only (all four conditions):** course credit instead of the $5 gift card, as in the Florida Tech consent submitted to the IRB on 14 October 2026. The consent page has a "Course Credit" panel (50 points, or an alternative assignment for the same 50 points; the instructor told only whether the student completed the study), "What completes the study: Reach the end." instead of the gift card's five rules (35 active minutes among them), "Questions with answer choices need an answer before you can move on ..." instead of "you may skip questions", and two new tick-box sentences (`consent.version` `"2026-10-16-course-credit"`). The start page asks for a Florida Tech email "to give your course credit"; the results page's "One last step" card says "... which you need for your course credit."; the thank-you page says "If you are taking part for course credit, your completion is recorded." A student no longer reads that 35 working minutes are needed, so working time before and after this date may differ for that reason alone. Deployed only after the IRB approves the modification; date records by `consent.version` |
 | 6 October 2026 | **The university door, a browser reopened with somebody's run in it:** a thin strip at the top of the page, "This study is open for w•••@my.fit.edu. Not you?" (the email partly hidden); it goes once the person moves to another page or closes it. "Not you?" asks to confirm, then this browser forgets that run (it stays on the server) and the study starts afresh for the next person - for shared lab computers. Nothing recorded; the study itself is unchanged |
 | 1 October 2026 | **Condition 4 (Baseline) only:** a misaligned choice opens the confirmation page a good fit gets (no reflection, no person, no APA page), with its own first sentence, "Before you confirm, take a moment with what this option gives up." (a good fit still reads "This option fits your earlier priorities"), and "How sure are you about this choice?" (1-5), needed before keeping it. Keeping it moves the four values: +30 to the value the option serves most and -10 (misaligned) or -15 (strongly misaligned) to each other one, all x 0.6-1.0 by "how sure"; each such keep counts as a Stability step; the stakeholder, directness and context scores never move; the results page shows no reflection badge and says "This went against your usual values, and you kept it."; no CVR or APA feedback questions. Until this row, Baseline ran the full version (condition 1). Conditions 1, 2 and 3 unchanged |
 | 1 October 2026 | **Condition 3 (APA_Only) only:** a misaligned choice opens the APA page at once: no reflection page and no person speaking; the APA page shows only its value question (with "How sure"), the options built on that value and the confirm (no two-situations table, no "which view" question), and opens with its own sentence: "This step just helps the system represent your priorities the way you truly mean them. There are no right or wrong answers here." Under it, a box: "The option you chose serves X more than any of the other three values" (X saved as apa.mainValueShown); going back to all the options needs no confirmation (no "Go back and clear your answers?" warning) The stakeholder, directness and context scores never move; each APA visit counts as a Stability step; the results page says "Clarification shown"; the feedback asks the APA questions but never the CVR or two-views questions. Conditions 1, 2 and 4 unchanged |
@@ -839,8 +846,8 @@ researcher's decision after the experiment.
 
 ### 9.8 Two groups: the university door and the Prolific door (since 6 October 2026)
 
-`recruitment_source` says where a participant came from: `"university"` (FIT students and employees, by email, a $5 gift
-card; also every record made before 6 October 2026, which has no `recruitment_source` at all) or `"prolific"` (paid by
+`recruitment_source` says where a participant came from: `"university"` (FIT students and employees, by email, course
+credit since 16 October 2026 and a $5 gift card before; also every record made before 6 October 2026, which has no `recruitment_source` at all) or `"prolific"` (paid by
 Prolific, keyed by `prolific_pid`). Treat it as a between-person factor, like the condition:
 
 - The conditions are balanced **within** each group (the researcher's "2-A"), so a condition comparison can be made inside
@@ -850,5 +857,6 @@ Prolific, keyed by `prolific_pid`). Treat it as a between-person factor, like th
   and `prolific_rule`; since 14 October 2026 Prolific's rule counts all four checks, two or more failed). The Prolific consent page asks for one sitting, so visits and breaks are not comparable between
   the groups. Report each group's numbers; pool only when the question allows it, and say so.
 - `prolific_session_id` is Prolific's submission id, never the study's `participant_id`.
-- `quality.compensation_eligible` is the university gift-card rule. It is computed for Prolific records too, but it does
-  not decide Prolific pay; never use it as a payment verdict for `recruitment_source: "prolific"`.
+- `quality.course_credit_earned` is the university door's course credit (completion only), null for Prolific records.
+  Prolific pay is decided by the daily pay check on Prolific's own valid reasons. (`quality.compensation_eligible`, the
+  university gift-card rule computed for every record, is gone since 16 October 2026.)

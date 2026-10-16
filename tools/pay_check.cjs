@@ -23,7 +23,7 @@
  *   DECIDED      already approved or rejected on Prolific
  *
  * The researcher's answers of 7 October 2026: "1-A" exceptionally fast is judged on Prolific's own "Time taken"; "2-A" clear
- * low effort = the same answer to every rating OR 3+ blocks under 30 seconds (the gift-card rule's two reasons); "3-A"
+ * low effort = the same answer to every rating OR 3+ blocks under 30 seconds (the old university gift-card rule's two reasons); "3-A"
  * failing both number rows went to LOOK FIRST (replaced on 14 October 2026: all four checks count, and two or more failed
  * is REJECT, "1-B"); "4-A" a Markdown report, a one-line approve
  * list, and a summary in the chat. Plus the audit's three additions: every answer present, the two clocks compared, and
@@ -48,7 +48,7 @@ const RULES = {
   fastSds: 3,
   /** The speed rule is only read once this many submissions have a time (a smaller group gives no stable spread). */
   fastNeedsAtLeast: 10,
-  /** Clear low effort: this many blocks finished in under 30 seconds (the gift-card rule's own line). Since 7 October
+  /** Clear low effort: this many blocks finished in under 30 seconds (the old university gift-card rule's own line). Since 7 October
       2026 only the six real parts count (Blocks 1-4, the main study, the feedback; REAL_BLOCK_STAGES in dbShape.ts):
       the record's quality.blocks_under_30_seconds already says so, and this tool reads that number. */
   rushedBlocks: 3,

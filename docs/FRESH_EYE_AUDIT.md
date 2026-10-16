@@ -2139,3 +2139,21 @@ thesis says so.
   dark and light mode. Then the documents: CLAUDE.md (a new section), HOW_TO_READ (6p and the quality fields), HOW_TO_ANALYZE
   (4.9 rows, the quality table, 9.8), DAILY_PAY_CHECK, PROLIFIC_CONSENT_FOR_ETHICS_BOARD, the Prolific plan (a dated note),
   the accuracy checklist.
+- **2026-10-16. The university door: course credit instead of the gift card** (Waseem: "modify the Student door first",
+  then "1-yes 2-yes 3-yes 4-yes, implement and audit"; earlier "1-A" build now and deploy only after the IRB approves,
+  "2-Yes keep, and you can turn it into course credit verdict", "3- Yes" the email tool). The university consent page is
+  now word for word the Florida Tech consent submitted to the IRB on 14 October 2026 (course credit for CSE4301/CSE5290,
+  "Reach the end", the instructor told only whether the student completed; `CONSENT_VERSION` "2026-10-16-course-credit";
+  live, all 33 paragraphs and 12 headings of the submitted .docx found on the page). The start page, the demographic page
+  and the results card speak of the course credit; the thank-you page says "If you are taking part for course credit,
+  your completion is recorded." (university door only). `quality.compensation_eligible` and its four companions are gone:
+  `course_credit_earned` = finished (university door only) and, for the researcher only, `careful_participation` from the
+  four OSF robustness signs (never takes the credit away; each sign kept on its own, because the OSF robustness checks
+  drop one sign at a time). New `npm run credit:list` (CREDIT_LIST.txt, emails only, for the instructor; CREDIT_CHECK.md
+  for the researcher; late finishers and other addresses to look at; counts only on the screen; `Course credit/`
+  git-ignored) and `npm run validate:credit` (Z1-Z5, in the chain). `SHAPE_VERSION` "2026-10-16-course-credit". The full
+  chain passes; 19 breaks, 19 caught (two only after Z2 and Z3 learned to turn a crash into a failure). Seen live on a
+  separate test address (its storage restored exactly, nothing written to the database). Stale "compensation" notes in
+  three stored texts corrected. Then the documents: CLAUDE.md (a new section), HOW_TO_READ 8c, HOW_TO_ANALYZE (2, 4.9,
+  9.8), PROLIFIC_CONSENT_FOR_ETHICS_BOARD (the university column), the new docs/COURSE_CREDIT_LIST.md, the two Word files.
+  The Prolific door is untouched (its consent's Appendix 2 changes are the next step).

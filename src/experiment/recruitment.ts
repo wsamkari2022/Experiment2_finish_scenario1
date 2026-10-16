@@ -3,7 +3,7 @@
  *
  * The researcher's decision ("1-A"): one website, two doors.
  *   - https://moonlander.fit.edu            the university door: FIT students and employees, exactly as before
- *                                            (the email is the key, the $5 gift card);
+ *                                            (the email is the key; course credit since 16 October 2026, the $5 gift card before);
  *   - https://moonlander.fit.edu/prolific   the Prolific door: Prolific opens it with the participant's Prolific ID in
  *                                            the link (PROLIFIC_PID, STUDY_ID, SESSION_ID), and nobody types an email.
  *

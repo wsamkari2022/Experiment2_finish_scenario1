@@ -252,8 +252,9 @@ para("One more row appears in section 3 or 4, looking exactly like the rows arou
      "participant (after any row of those two sections, never first), and the number is drawn at random from two, "
      "three, four and five. It is not scored as feedback: its answer is kept with the study's two reading checks "
      "(since 14 October 2026: \"please choose 'By boat'\" after Block 1, 2 or 3, \"please choose 'Reading a book'\" "
-     "after scenario 1, 2 or 3). For Florida Tech participants all three answered as asked are needed for the gift "
-     "card. The Prolific version has a second number row, one in each of the two sections, and there failing two or "
+     "after scenario 1, 2 or 3). For Florida Tech participants a check answered wrongly is recorded for the researcher "
+     "only (one of the four careful-participation signs); the course credit is given on completion (since 16 October "
+     "2026). The Prolific version has a second number row, one in each of the two sections, and there failing two or "
      "more of the four checks means the submission is rejected (src/experiment/attentionChecks.ts).",
      after=4).paragraph_format.keep_with_next = True
 table(COLS, [["This question is just to check your attention. Pick the number four.",

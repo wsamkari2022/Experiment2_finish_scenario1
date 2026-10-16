@@ -15,8 +15,9 @@
  *   T2  the plan is drawn once and saved: the same participant always gets the same checks (a refresh or another
  *       device), another email gets its own, and an answered check stays answered
  *   T3  scoring: right only when the answer is what was asked; a miss or a check never reached has its own reason
- *   T4  the gift card (quality): eligible only with all three right on top of the old rules; the check's own screen
- *       is never a rushed block; the copy in major_info_and_scores matches
+ *   T4  course credit and careful participation (quality, since 16 October 2026; the gift card until then): credit =
+ *       completion, the university door only, never taken away by behaviour; careful participation = none of the four OSF
+ *       robustness signs; the check's own screen is never a rushed block; the copy in major_info_and_scores matches
  *   T5  the feedback row stays out of the feedback record: never in a scored list, saved in the attention file on
  *       submit, only in the tools or well-being sections, answered correctly by the development fill button
  *   T6  the two answer-pattern flags (Q4) count runs and steps of one exactly, and say they are not for pay
@@ -222,27 +223,57 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
     : "right only when the answer is exactly the right one (a number as a number); a wrong pick names the check's place, the right answer and the pick; a check never reached counts as missed; the rows keep where each check was shown (in words and as a number), the question with its instruction, the answer order and the answer");
 }
 
-/* ------------------------------------------------------------------ T4 the gift card */
+/* ------------------------------------------------------------------ T4 course credit, and careful participation */
 {
+  /* Since 16 October 2026 (the researcher's "1-yes, 2-yes"): course credit = completion, the university door only (the
+     consent page: "the course credit is given when I complete the study"); careful participation = none of the four OSF
+     robustness signs, for the researcher only, never taking credit away. */
   const why = [];
   const ledger = { totalMs: 2_400_000, sittings: 1, longestIdleMs: 0, byStage: { money: 300_000, block5: 900_000, attention_check: 5_000 } };
   const varied = { feedback: { decisionSupport: { TOOL_optionCards: 3, TOOL_consequences: 6 }, wellbeing: { items: { LI1: 5, LI2: 2, LI3: 7, LI4: 4, DS1: 5, DS2: 3, DS4: 6, DR1: 2 } } } };
-  const q = (attention) => db.buildQuality(ledger, null, varied, "Study Completed", attention);
-  const ok = q(allRight), miss = q(oneWrong), none = q(null), missing = q(oneMissing);
-  if (ok.compensation_eligible !== true || ok.passed_all_attention_checks !== true || ok.attention_checks_passed !== 3) why.push(`all rules met reads not eligible: ${JSON.stringify(ok.reasons)}`);
-  if (miss.compensation_eligible !== false || !miss.reasons.some((r) => /missed the reading check after Block [123]/.test(r))) why.push("a wrong answer is still eligible, or has no reason");
-  if (missing.compensation_eligible !== false || !missing.reasons.includes("did not answer the feedback check")) why.push("a check never reached is still eligible");
-  if (none.compensation_eligible !== false || !none.reasons.includes("no attention checks on record")) why.push("no attention file is still eligible");
+  const same = { feedback: { decisionSupport: { TOOL_optionCards: 4, TOOL_consequences: 4 }, wellbeing: { items: { LI1: 4, LI2: 4, LI3: 4, LI4: 4, DS1: 4, DS2: 4, DS4: 4, DR1: 4 } } } };
+  const b5 = (fast) => ({ scenarioResults: Array.from({ length: 6 }, (_, i) => ({ timeMs: i < fast ? 9_000 : 60_000 })) });
+  const steady = { answered_very_fast: false, median_seconds_between_answers: 3.4 };
+  const hasty = { answered_very_fast: true, median_seconds_between_answers: 1.2 };
+  const q = (over = {}) => db.buildQuality(over.ledger ?? ledger, "b5" in over ? over.b5 : b5(0), "fb" in over ? over.fb : varied,
+    over.status ?? "Study Completed", "att" in over ? over.att : allRight, "b14" in over ? over.b14 : steady, over.door ?? "university");
+  const ok = q();
+  if (ok.course_credit_earned !== true || ok.careful_participation !== true || ok.careful_participation_reasons.length !== 0
+      || ok.careful_participation_cannot_tell.length !== 0 || ok.careful_participation_signs.length !== 4 || ok.passed_all_attention_checks !== true) why.push(`a careful finisher reads wrong: ${JSON.stringify(ok).slice(0, 200)}`);
+  const cases = [
+    ["an attention check answered wrongly", { att: oneWrong }, /answered 1 attention check wrongly/],
+    ["answered very fast in Blocks 1-3", { b14: hasty }, /answered very fast in Blocks 1-3/],
+    ["two scenarios under 15 seconds", { b5: b5(2) }, /2 scenarios decided in under 15 seconds/],
+    ["the same answer to every rating", { fb: same }, /same answer to every feedback rating/],
+  ];
+  for (const [label, over, reason] of cases) {
+    const r = q(over);
+    if (r.careful_participation !== false || !r.careful_participation_reasons.some((x) => reason.test(x))) why.push(`${label}: careful ${r.careful_participation}, ${r.careful_participation_reasons}`);
+    if (r.course_credit_earned !== true) why.push(`${label} took the course credit away`);
+  }
+  if (q({ b5: b5(1) }).careful_participation !== true) why.push("one fast scenario counts as a sign");
+  const unknown = q({ b14: null });
+  if (unknown.careful_participation !== null || !unknown.careful_participation_cannot_tell.includes("Blocks 1-3 timing not on record") || unknown.course_credit_earned !== true) why.push("a sign that cannot be read does not give null");
+  if (q({ att: null }).careful_participation !== null || !q({ att: null }).attention_check_misses.includes("no attention checks on record")) why.push("no attention file does not give null");
+  if (q({ status: "Study Not Completed" }).course_credit_earned !== false) why.push("an unfinished student earned the credit");
+  if (q({ door: "prolific" }).course_credit_earned !== null) why.push("the Prolific door got a course credit");
+  const slow = q({ ledger: { ...ledger, totalMs: 600_000 } });
+  if (slow.course_credit_earned !== true || slow.under_the_estimated_length !== true || slow.careful_participation !== true) why.push("ten working minutes changed the credit or the careful verdict");
+  const rushed = q({ ledger: { ...ledger, byStage: { money: 10_000, trolley: 9_000, product: 8_000, block5: 900_000 } } });
+  if (rushed.blocks_under_30_seconds !== 3 || rushed.careful_participation !== true || rushed.course_credit_earned !== true) why.push("three rushed parts became a careful sign (it is the pay check's, not the OSF's)");
   if (ok.blocks_under_30_seconds !== 0 || ok.rushed_blocks.some((b) => b.stage === "attention_check")) why.push("the check's screen counted as a rushed block");
-  const slow = db.buildQuality({ ...ledger, totalMs: 600_000 }, null, varied, "Study Completed", allRight);
-  if (slow.compensation_eligible !== false) why.push("too few minutes is eligible once the checks pass");
-  if (!/every attention check was answered as asked \(three in the university door/.test(ok.rule)) why.push("the rule sentence does not name the checks");
+  for (const gone of ["compensation_eligible", "reasons", "rule", "required_active_minutes", "met_time_requirement"]) if (gone in ok) why.push(`the gift-card field ${gone} is still saved`);
+  /* The page passes what the verdict reads: the Blocks 1-3 speed flag (built first) and the participant's door. */
+  const storage = bare(src("storage.ts"));
+  const iB14 = storage.indexOf("const blocks1to4 = buildBlocks1to4Checks({"), iQ = storage.indexOf("const quality = buildQuality(");
+  if (!(iB14 > 0 && iQ > iB14) || !/const quality = buildQuality\(\s*readKey\(ACTIVE_TIME_KEY\),\s*readKey\(BLOCK5_RESULTS_KEY\),\s*readKey\(FEEDBACK_KEY\),\s*localStorage\.getItem\("vrds_status"\) \?\? "",\s*readKey\(ATTENTION_KEY\),\s*blocks1to4,\s*keyDoor\(browserParticipantKey\(\) \?\? ""\),\s*\);/.test(storage)) why.push("the page does not pass the speed flag and the door to the verdict");
+  if (!/course_credit_earned \(the university door only; null in the Prolific door\) is exactly completed_the_study/.test(ok.how_to_read)) why.push("how_to_read does not say what decides the credit");
   const block5 = { scenarioResults: [], originalProfile: { dimensions: [] } };
   const major = db.buildMajorScores(block5, null, null, null, null, null, oneWrong);
   if (!major || JSON.stringify(major.attention_checks) !== JSON.stringify({ passed_all: false, passed_count: 2, answered_count: 3, misses: A.scoreAttention(oneWrong).misses })) why.push("the copy in major_info_and_scores is wrong");
   if (!/analysis\.attention_checks/.test(major?.where_each_number_lives?.attention_checks ?? "")) why.push("where_each_number_lives does not name the source");
   gate("T4", why.length === 0, why.length ? why.join(" | ")
-    : "the gift card needs all three right on top of the old rules, each miss and a missing file give their own reason, the check's screen is never a rushed block, and major_info_and_scores copies the verdict");
+    : "course credit = completion in the university door (null in the Prolific door), never taken away by behaviour; careful participation false with its reason for each of the four OSF signs (an attention check wrong, very fast in Blocks 1-3, two scenarios under 15 s, the same answer to every rating), null when a sign cannot be read, unmoved by ten working minutes or three rushed parts; the gift-card fields gone; the check's screen never a rushed block; major_info_and_scores copies the checks");
 }
 
 /* ------------------------------------------------------------------ T5 the feedback row */
@@ -356,7 +387,8 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   if (!sim.includes("const [attentionFile] = useState(() => readAttention());")
       || !/if \(!scenarioCheckDone && readingCheckBeforeScenario\(attentionFile, progress\.currentScenarioIndex\)\)[\s\S]{0,300}check="between_scenarios"[\s\S]{0,120}telRef\.current = newTelemetryAccum\(\);[\s\S]{0,120}scenarioStartTime: Date\.now\(\)[\s\S]{0,80}setScenarioCheckDone\(true\)/.test(sim)) why.push("the scenario check is not asked before each scenario by the rule, or does not restart the next scenario's clock");
   const consent = bare(src("ConsentPage.tsx"));
-  if (!/Answer the quick attention checks as asked\./.test(consent) || !/answer the attention checks as asked/.test(consent)) why.push("the consent page does not name the rule");
+  /* Since 16 October 2026 only the Prolific page names an attention rule (the university page: course credit on completion). */
+  if (!/Answer the attention checks as asked\./.test(consent) || !/the attention checks must be answered as asked/.test(consent) || /Answer the quick attention checks as asked/.test(consent)) why.push("the consent pages do not name the rule where they should");
   const telemetry = bare(src("telemetry.ts"));
   if (/"attention_check"/.test(telemetry.slice(telemetry.indexOf("const TIMED_STAGES"), telemetry.indexOf("];", telemetry.indexOf("const TIMED_STAGES"))))) why.push("the check's screen is timed as a stage");
   gate("T8", why.length === 0, why.length ? why.join(" | ")
@@ -475,12 +507,27 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   const why = [];
   const raw = src("ConsentPage.tsx");
   const consent = bare(raw);
-  /* The university page, word for word in its key places (the researcher: the email version "as it is right now"). */
-  for (const kept of ['export const CONSENT_VERSION = "2026-10-07-35-minutes";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
-    "Your $5 Amazon Gift Card", "Answer the quick attention checks as asked.", "Tick both boxes above to continue.",
-    "You do not have to finish in one sitting — see below.", "you may skip questions you do not wish to answer."]) {
+  /* The university page (since 16 October 2026) = the Florida Tech consent submitted to the IRB on 14 October 2026: its key
+     places, and every sentence that changed from the gift card, compared letter by letter (the page splits sentences
+     across formatting tags). */
+  for (const kept of ['export const CONSENT_VERSION = "2026-10-16-course-credit";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
+    "Course Credit", "What completes the study:", "Tick both boxes above to continue.", "You do not have to finish in one sitting — see below."]) {
     if (!raw.includes(kept)) why.push(`the university page lost: ${kept.slice(0, 50)}`);
   }
+  const letters = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const pageLetters = letters(raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<[^>]*>/g, " "));
+  for (const said of [
+    "If you are taking part for CSE4301/CSE5290 Introduction to Artificial Intelligence: when you complete the study, you receive 50 points averaged into your assignments grade for the course. Taking part is your choice. If you prefer not to take part, or you start and decide to stop, you can complete an alternative assignment for the same 50 points; ask your instructor. Your instructor is told only whether you completed the study, never your answers.",
+    "Answer the feedback questions and arrive at the thank-you page. That is the point at which the study counts as complete.",
+    "We collect your email address for two reasons only: so you can return and finish the study, and to give your course credit.",
+    "Your email is stored with your answers so that you can continue later, and it is seen only by the research team. It is never shared, never sold, and never shown to anyone else taking part. If you take part for course credit, your instructor is told only that you completed the study, never your answers. Your answers are analyzed and reported as group results, so no individual can be identified in anything we publish.",
+    "Your participation is completely voluntary. There is no penalty for not taking part. Questions with answer choices need an answer before you can move on (the written answers at the end are optional); if you do not wish to answer a question, you may stop at any time.",
+    "You may stop at any time, without giving a reason and without consequence. If you take part for course credit, stopping does not affect your grade: you can complete the alternative assignment instead. If you would like your data removed after taking part, contact the researcher below and it will be deleted.",
+    "I have read the procedure described above. I voluntarily agree to take part, and I understand that my email address will be collected so I can return to finish the study and receive my course credit.",
+    "I understand that the course credit is given when I complete the study, and that I may complete an alternative assignment instead.",
+  ]) if (!pageLetters.includes(letters(said))) why.push(`the university page does not say: ${said.slice(0, 60)}`);
+  if ((raw.match(/<Rule title="Reach the end\.">/g) ?? []).length !== 2) why.push("the university page lost its rule \"Reach the end.\" (one in each door)");
+  if (/gift card|Amazon|\$5|REQUIRED_ACTIVE_MINUTES|skip questions|stored separately/i.test(consent)) why.push("the consent page still names the gift card, the minutes rule, skipping questions or a separate email");
   if (!/export const PROLIFIC_CONSENT_VERSION = "2026-10-14-prolific-will-be-rejected";/.test(consent)) why.push("the Prolific wording has no version stamp of its own, or the stamp did not move with the attention sentence");
   /* The study's length, the same sentence in both doors (the researcher, 7 October 2026: "the minimum time for this study is
      35 minutes"; Prolific's listing says 35): not inside a door switch, and the old "40 to 55 minutes" gone. */
@@ -507,7 +554,7 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   const flow = bare(src("ExperimentFlow.tsx"));
   if (!/<ConsentPage\s+door=\{door\}/.test(flow)) why.push("the flow does not tell the consent page its door");
   gate("T10", why.length === 0, why.slice(0, 5).join(" | ") ||
-    "the consent page: the university wording kept word for word in its key places; the Prolific door says paid through Prolific, one sitting within Prolific's time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission will be rejected.\", withdrawal through Prolific with the ID, one box, \"I do not agree\" with \"Stop without completing\"; no gift card, email or minutes there; its own version stamp; the flow passes the door");
+    "the consent page: the university wording = the Florida Tech consent submitted on 14 October 2026 (course credit, its eight changed sentences letter by letter, no gift card, no minutes rule); the Prolific door says paid through Prolific, one sitting within Prolific's time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission will be rejected.\", withdrawal through Prolific with the ID, one box, \"I do not agree\" with \"Stop without completing\"; no gift card, email or minutes there; its own version stamp; the flow passes the door");
 }
 
 /* ------------------------------------------------------------------ P1 the deleted pages' data */

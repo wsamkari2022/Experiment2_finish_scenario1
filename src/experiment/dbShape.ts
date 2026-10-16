@@ -89,6 +89,7 @@ import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { rebuildRunningFits, vciAllLevel, RUNNING_VERSION, VCI_ALL_LEVELS } from "./block5VciAll";
 import { computeStabilityAll, computeTopValueChoices, STABILITY_ALL_VERSION } from "./block5StabilityAll";
 import { ATTENTION_KEY, ATTENTION_STAGE, buildAttentionSection, scoreAttention } from "./attentionChecks";
+import type { RecruitmentSource } from "./recruitment";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
 import { deriveCompanyValues, analyseStance, STANCE_LABEL, STANCE_BAND } from "./block5Company";
@@ -116,7 +117,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-14-reading-checks";
+export const SHAPE_VERSION = "2026-10-16-course-credit";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -368,7 +369,7 @@ function summariseActiveTime(value: unknown): unknown {
     breakdown_note:
       "by_stage_minutes does NOT sum to total_active_minutes. The insights page and the final "
       + "analysis page are read rather than answered, so they are no longer broken out; the minutes "
-      + "spent on them are still inside total_active_minutes and still count toward compensation.",
+      + "spent on them are still inside total_active_minutes, the working time the daily Prolific pay check reads.",
     sittings: l.sittings ?? null,
     longest_idle_minutes: minutes(l.longestIdleMs),
     first_seen_at: l.firstSeenAt ? new Date(l.firstSeenAt).toISOString() : null,
@@ -586,15 +587,19 @@ const RUSHED_BLOCK_SECONDS = 30;
 export const REAL_BLOCK_STAGES = ["money", "trolley", "product", "block4", "block5", "feedback"] as const;
 /** Below this, a Block 5 scenario was not considered — six options and a trade-off in that time. */
 const RUSHED_SCENARIO_SECONDS = 15;
-/** The compensation bar, in minutes of genuine work. Stated on the consent page. */
-export const REQUIRED_ACTIVE_MINUTES = 35;
+/**
+ * The study's stated length: both consent pages say "The whole study takes at least 35 minutes". Since 16 October 2026
+ * it is information only: it was the gift card's bar of 35 active minutes, and there is no gift card any more (course
+ * credit on completion, Prolific's own rules). `quality.under_the_estimated_length` compares the working time with it.
+ */
+export const STUDY_LENGTH_ESTIMATE_MINUTES = 35;
 
 /**
  * Straightlining: the same answer to every rating, all the way down.
  *
  * Somebody who answers 7, 7, 7, 7, 7 to twenty differently-worded questions — several of which
  * point in opposite directions — has not read them. It is the clearest single signal of a
- * participant who wanted the payment rather than the study, and it costs nothing to detect.
+ * participant who was not reading, and it costs nothing to detect.
  *
  * Requires at least eight ratings before judging: a section with three questions can honestly be
  * answered identically by somebody who simply agrees with all three.
@@ -621,7 +626,20 @@ function isStraightlined(feedbackRecord: unknown): boolean {
 }
 
 /**
- * The signals that separate a genuine run from one done for the payment.
+ * The signals that separate a genuine run from a careless one, and the two verdicts built on them (since 16 October 2026;
+ * before, one gift-card verdict).
+ *
+ * COURSE CREDIT IS GIVEN ON COMPLETION, AND NOTHING ELSE DECIDES IT. The Florida Tech consent page says "I understand that
+ * the course credit is given when I complete the study" (the IRB modification of 14 October 2026, 6.3 and 6.4), so
+ * `course_credit_earned` is exactly "reached the thank-you page" in the university door (null in the Prolific door,
+ * which Prolific pays by its own rule). Behaviour never withholds credit: that would need a new consent sentence and a
+ * new IRB modification.
+ *
+ * CAREFUL PARTICIPATION IS FOR THE RESEARCHER ONLY (the researcher's "2-yes": the same four signs the OSF preregistration
+ * names as robustness checks, so the verdict and the paper use one definition): answering very fast in Blocks 1-3,
+ * two or more scenarios decided in under 15 seconds, the same answer to every feedback rating, an attention check
+ * answered wrongly. Any sign present gives false, with its reason in words; a sign that cannot be read (a file missing)
+ * gives null, never true. Never shown to the participant, never used for pay.
  *
  * TIME ALONE IS NOT ENOUGH, WHICH IS THE WHOLE POINT.
  * A participant can reach 35 active minutes by sitting on one page nudging the mouse. What that
@@ -638,9 +656,13 @@ export function buildQuality(
   block5: unknown,
   feedbackRecord: unknown,
   status: string,
-  /* The attention file (since 29 September 2026). Optional so an older caller still works; without it the
-     checks read as not passed, which is the safe direction for a rule that can cost somebody payment. */
+  /* The attention file (since 29 September 2026). Optional so an older caller still works; without it the attention
+     sign cannot be read (careful participation null, never true). */
   attention?: unknown,
+  /* analysis.blocks_1_to_4_checks (since 16 October 2026): its answered_very_fast is a careful-participation sign. */
+  blocks1to4Checks?: unknown,
+  /* The participant's door (since 16 October 2026); without it, the attention plan's door, else the university's. */
+  door?: RecruitmentSource | null,
 ): Record<string, unknown> | null {
   if (!activeLedger || typeof activeLedger !== "object") return null;
   const a = activeLedger as {
@@ -650,8 +672,9 @@ export function buildQuality(
   /*
    * ONLY THE SIX REAL PARTS ARE ELIGIBLE TO BE CALLED RUSHED (REAL_BLOCK_STAGES, since 7 October 2026).
    *
-   * `rushed_blocks` counts parts finished in under 30 seconds, and three of them costs a participant their
-   * compensation. A page to read, a short form or a 0.9-second pause is not a block: somebody who takes it in
+   * `rushed_blocks` counts parts finished in under 30 seconds; three of them puts a Prolific person in the daily pay
+   * check's "Look first" (it cost the university gift card until 16 October 2026; the course credit never reads it).
+   * A page to read, a short form or a 0.9-second pause is not a block: somebody who takes it in
    * quickly has done nothing wrong. The same reasoning first took out the insights and final analysis pages and
    * the attention check's own screen; the list of the six now keeps out every such page, including any added later.
    */
@@ -685,16 +708,68 @@ export function buildQuality(
   const activeMinutes = typeof a.totalMs === "number" ? Math.round((a.totalMs / 60000) * 10) / 10 : 0;
   const straightlined = isStraightlined(feedbackRecord);
   const completed = status === "Study Completed";
-  /* EVERY ATTENTION CHECK RIGHT (the researcher's gift-card rule, 29 September 2026; attentionChecks.ts): three in the
-     university door, four in the Prolific door (where this verdict is information only: Prolific pays by its own rule). */
+  /* Every attention check right: three in the university door, four in the Prolific door. Information since 16
+     October 2026 (it was part of the gift-card verdict); a check answered wrongly is a careful-participation sign. */
   const attentionScore = scoreAttention(attention);
   const passedAttention = attentionScore?.passedAll ?? false;
+  const theDoor: RecruitmentSource = door ?? attentionScore?.door ?? "university";
+
+  /* THE FOUR CAREFUL-PARTICIPATION SIGNS (the OSF robustness checks). flagged: true = present, false = absent,
+     null = cannot be read from what was saved. */
+  const veryFast = (blocks1to4Checks as { answered_very_fast?: unknown; median_seconds_between_answers?: unknown } | null)
+    ?.answered_very_fast;
+  const medianGap = (blocks1to4Checks as { median_seconds_between_answers?: unknown } | null)?.median_seconds_between_answers;
+  const answeredWrongly = attentionScore ? attentionScore.answeredCount - attentionScore.passedCount : null;
+  const signs = [
+    {
+      sign: "answered_very_fast_in_blocks_1_to_3",
+      flagged: typeof veryFast === "boolean" ? veryFast : null,
+      detail: typeof medianGap === "number"
+        ? `median ${medianGap} seconds between two answers in Blocks 1-3 (the line is ${FAST_ANSWER_SECONDS})`
+        : "Blocks 1-3 timing not on record",
+    },
+    {
+      sign: "two_or_more_scenarios_under_15_seconds",
+      flagged: Array.isArray(results) ? rushedScenarios >= 2 : null,
+      detail: Array.isArray(results)
+        ? `${rushedScenarios} scenario${rushedScenarios === 1 ? "" : "s"} decided in under ${RUSHED_SCENARIO_SECONDS} seconds`
+        : "Block 5 results not on record",
+    },
+    {
+      sign: "same_answer_to_every_feedback_rating",
+      flagged: feedbackRecord ? straightlined : null,
+      detail: feedbackRecord ? (straightlined ? "every feedback rating the same" : "the feedback ratings vary")
+        : "feedback not on record",
+    },
+    {
+      sign: "an_attention_check_answered_wrongly",
+      flagged: answeredWrongly === null ? null : answeredWrongly > 0,
+      detail: answeredWrongly === null ? "no attention checks on record"
+        : `${answeredWrongly} of ${attentionScore?.asked} attention checks answered wrongly`,
+    },
+  ];
+  const reasonWords: Record<string, string> = {
+    answered_very_fast_in_blocks_1_to_3: `answered very fast in Blocks 1-3 (median under ${FAST_ANSWER_SECONDS} seconds between answers)`,
+    two_or_more_scenarios_under_15_seconds: `${rushedScenarios} scenarios decided in under ${RUSHED_SCENARIO_SECONDS} seconds`,
+    same_answer_to_every_feedback_rating: "gave the same answer to every feedback rating",
+    an_attention_check_answered_wrongly: `answered ${answeredWrongly ?? 0} attention check${answeredWrongly === 1 ? "" : "s"} wrongly`,
+  };
+  const careful = signs.some((x) => x.flagged === true) ? false : signs.some((x) => x.flagged === null) ? null : true;
 
   return {
-    active_minutes: activeMinutes,
-    required_active_minutes: REQUIRED_ACTIVE_MINUTES,
-    met_time_requirement: activeMinutes >= REQUIRED_ACTIVE_MINUTES,
+    /* COURSE CREDIT: completion only, the university door only (the consent page's own rule). */
+    course_credit_earned: theDoor === "university" ? completed : null,
     completed_the_study: completed,
+
+    /* CAREFUL PARTICIPATION: the four OSF robustness signs, for the researcher only. */
+    careful_participation: careful,
+    careful_participation_reasons: signs.filter((x) => x.flagged === true).map((x) => reasonWords[x.sign]),
+    careful_participation_cannot_tell: signs.filter((x) => x.flagged === null).map((x) => x.detail),
+    careful_participation_signs: signs,
+
+    active_minutes: activeMinutes,
+    study_length_estimate_minutes: STUDY_LENGTH_ESTIMATE_MINUTES,
+    under_the_estimated_length: activeMinutes < STUDY_LENGTH_ESTIMATE_MINUTES,
 
     fastest_block: fastest,
     blocks_under_30_seconds: rushedBlocks.length,
@@ -714,31 +789,23 @@ export function buildQuality(
     attention_checks_asked: attentionScore?.asked ?? 3,
     attention_checks_passed: attentionScore?.passedCount ?? 0,
     passed_all_attention_checks: passedAttention,
+    attention_check_misses: attentionScore ? attentionScore.misses : ["no attention checks on record"],
     /* The Prolific door's rule (since 14 October 2026, the researcher's "1-B"): all four reading checks count, and
        failing two or more is the rejection reason the Prolific consent page names ("will be rejected"); npm run
        pay:check lists those people. null in the university door. */
     prolific_attention_checks_failed: attentionScore?.prolific?.failed ?? null,
     prolific_failed_two_or_more_attention_checks: attentionScore?.prolific ? attentionScore.prolific.failedTwoOrMore : null,
 
-    /*
-     * The verdict, and the reason. Storing WHY it failed matters as much as the answer: a
-     * participant who queries their payment deserves a specific reason, and "eligible: false" on
-     * its own cannot give one.
-     */
-    compensation_eligible:
-      completed && activeMinutes >= REQUIRED_ACTIVE_MINUTES && !straightlined && rushedBlocks.length < 3
-      && passedAttention,
-    reasons: [
-      ...(completed ? [] : ["did not finish the study"]),
-      ...(activeMinutes >= REQUIRED_ACTIVE_MINUTES
-        ? []
-        : [`active time ${activeMinutes} min is under the ${REQUIRED_ACTIVE_MINUTES} min requirement`]),
-      ...(straightlined ? ["gave the same answer to every feedback rating"] : []),
-      ...(rushedBlocks.length >= 3 ? [`${rushedBlocks.length} blocks finished in under ${RUSHED_BLOCK_SECONDS}s`] : []),
-      ...(attentionScore ? attentionScore.misses : ["no attention checks on record"]),
-    ],
-    rule:
-      "Eligible when the study was completed, active time met the requirement, the feedback was not straightlined, fewer than 3 of the six parts (Blocks 1-4, the main study, the feedback; since 7 October 2026, before then every timed page counted) were finished in under 30 seconds, and every attention check was answered as asked (three in the university door; since 29 September 2026; analysis.attention_checks). In the Prolific door this verdict is information only: Prolific pays by its own rule (prolific_failed_two_or_more_attention_checks). Raw numbers above allow a different rule to be applied later.",
+    how_to_read:
+      "course_credit_earned (the university door only; null in the Prolific door) is exactly completed_the_study: the "
+      + "Florida Tech consent page says the course credit is given when the study is complete, and nothing else decides "
+      + "it. careful_participation is for the researcher only, never shown and never used for credit or pay: false when "
+      + "any of the four OSF robustness signs is present (answered very fast in Blocks 1-3; two or more scenarios under "
+      + "15 seconds; the same answer to every feedback rating; an attention check answered wrongly), each with its "
+      + "reason; null when a sign cannot be read; true otherwise. Since 16 October 2026; before, one gift-card verdict "
+      + "(compensation_eligible: completed, 35 active minutes, not straightlined, fewer than 3 rushed parts, every "
+      + "attention check right), which no participant took the study under. Raw numbers are kept so another line can "
+      + "be drawn later. The Prolific door's own rule is prolific_failed_two_or_more_attention_checks.",
   };
 }
 
@@ -982,8 +1049,8 @@ export function buildProfileChange(block5: unknown): Record<string, unknown> | n
  * hidden total that still included the two pages would mean storing their timing under another
  * name, which is the thing that was asked to stop. So the number narrowed and says so: the
  * companion field below states what it covers, and nothing that matters rests on it —
- * `active_time.total_active_minutes` is a separate ledger, still counts every page, and is what
- * compensation is judged on.
+ * `active_time.total_active_minutes` is a separate ledger, still counts every page, and is the
+ * working time the daily Prolific pay check reads (the course credit never reads it, since 16 October 2026).
  */
 function totalTimeMs(timings: unknown): number | null {
   if (!timings || typeof timings !== "object") return null;
@@ -3330,7 +3397,8 @@ export function buildMajorScores(
       active_minutes: active?.total_active_minutes ?? null,
       active_minutes_note:
         "Real working time: counted only while the tab was visible and something was moved, typed "
-        + "or scrolled within the previous 90 seconds. This is the number compensation is judged on.",
+        + "or scrolled within the previous 90 seconds. The daily Prolific pay check reads it; the course credit "
+        + "never does (since 16 October 2026: completion only).",
       timed_stage_minutes: headline?.total_time_minutes ?? null,
       timed_stage_minutes_note: headline?.total_time_minutes_covers ?? null,
       by_stage_minutes: active?.by_stage_minutes ?? null,
@@ -3413,7 +3481,8 @@ export function buildMajorScores(
 
     /* 13b --------------------------------------------------------------- the attention checks */
     /* The verdict of the checks, lifted from analysis.attention_checks by the same builder (since 29 September 2026);
-       the university gift card needs passed_all. validate:attention T4 and T9 check the copy. */
+       information only in the university door since 16 October 2026 (the course credit is completion only; a check
+       answered wrongly is a careful-participation sign). validate:attention T4 and T9 check the copy. */
     attention_checks: (() => {
       const a = buildAttentionSection(attention);
       if (!a) return null;

@@ -79,7 +79,7 @@ import { FEEDBACK_KEY } from "./feedbackTypes";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import { ATTENTION_KEY, buildFeedbackPatterns } from "./attentionChecks";
 import { CONDITION_KEY, type AssignedCondition, type SavedCondition } from "./conditions";
-import { keyOfDemographics, type RecruitmentSource } from "./recruitment";
+import { browserParticipantKey, keyDoor, keyOfDemographics, type RecruitmentSource } from "./recruitment";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -1032,12 +1032,25 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
         return null;
       }
     };
+    /* How Blocks 1-4 were answered (first-step yes, speed, values not measured, ties). Built here,
+       not inside the Block 5 branch, because it exists as soon as Block 3 is done - long before
+       Block 5 - and a participant who stops early should still carry it. `major_info_and_scores`
+       holds a copy made by the same builder. Built before `quality`, which reads its speed flag
+       (one of the four careful-participation signs, since 16 October 2026). */
+    const blocks1to4 = buildBlocks1to4Checks({
+      money: readKey(BLOCKS_1_TO_4_KEYS.money),
+      trolley: readKey(BLOCKS_1_TO_4_KEYS.trolley),
+      aiWorkforce: readKey(BLOCKS_1_TO_4_KEYS.aiWorkforce),
+      participantRecord: readKey(BLOCKS_1_TO_4_KEYS.participantRecord),
+    });
     const quality = buildQuality(
       readKey(ACTIVE_TIME_KEY),
       readKey(BLOCK5_RESULTS_KEY),
       readKey(FEEDBACK_KEY),
       localStorage.getItem("vrds_status") ?? "",
       readKey(ATTENTION_KEY),
+      blocks1to4,
+      keyDoor(browserParticipantKey() ?? ""),
     );
     if (quality) sendOrQueue({ op: "saveSection", path: "quality", data: quality });
 
@@ -1046,16 +1059,6 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
     const patterns = buildFeedbackPatterns(readKey(FEEDBACK_KEY));
     if (patterns) sendOrQueue({ op: "saveSection", path: "analysis.feedback_answer_patterns", data: patterns });
 
-    /* How Blocks 1-4 were answered (first-step yes, speed, values not measured, ties). Built here,
-       not inside the Block 5 branch, because it exists as soon as Block 3 is done - long before
-       Block 5 - and a participant who stops early should still carry it. `major_info_and_scores`
-       holds a copy made by the same builder. */
-    const blocks1to4 = buildBlocks1to4Checks({
-      money: readKey(BLOCKS_1_TO_4_KEYS.money),
-      trolley: readKey(BLOCKS_1_TO_4_KEYS.trolley),
-      aiWorkforce: readKey(BLOCKS_1_TO_4_KEYS.aiWorkforce),
-      participantRecord: readKey(BLOCKS_1_TO_4_KEYS.participantRecord),
-    });
     if (blocks1to4) sendOrQueue({ op: "saveSection", path: "analysis.blocks_1_to_4_checks", data: blocks1to4 });
   }
 
