@@ -151,6 +151,12 @@ SECTIONS = [
          "answered wrongly) is saved for you only, each sign with its reason, and never takes the credit away. The thank-you "
          "page says \"If you are taking part for course credit, your completion is recorded.\" (university version only). "
          "Checked live.", ["attention", "journey"], "(T4, T10, J18)"),
+        ("Students are asked to take their time (a request box on their consent page only).",
+         "Since 16 October 2026 (your 1-OK, 2-yes). \"At Least 35 Minutes\" (A request): take your time, read carefully, answer "
+         "as you genuinely would (not as you think you should), and a few short questions check that you are reading; the course "
+         "credit is still given on completion. Not one word about positions, roles, values, choices or options. Grey, not "
+         "orange, so it reads as a request. Checked live on a computer and a phone; not in the Prolific version.",
+         ["attention"], "(T10)"),
         ("The course-credit list for the instructor holds emails and nothing else.",
          "Since 16 October 2026. npm run credit:list writes CREDIT_LIST.txt (Florida Tech emails of the students who finished "
          "by the end of 12 December in Florida time) and CREDIT_CHECK.md (for you only: the dates, careful participation, the "
@@ -580,6 +586,9 @@ OPEN = [
     ("The university consent page is the Florida Tech consent submitted to the IRB on 14 October 2026",
      "Course credit (50 points, an alternative assignment), what completes the study, the instructor told only whether "
      "the student completed it. Deploy it only after the IRB approves the modification.", "After IRB approval"),
+    ("Send the \"At Least 35 Minutes\" box to the IRB office",
+     "A small change to the pending modification: the clean form, the form with the box highlighted (both PDF) and a note to "
+     "paste are in Downloads/Consent forms/Ready to upload (16 October).", "Before launch"),
 
     ("The one-browser rule is only as strong as the email-and-age check",
      "Anyone who knows a participant's key (email or Prolific ID) and age can take their record, exactly as they could "

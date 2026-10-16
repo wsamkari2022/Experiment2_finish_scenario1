@@ -47,6 +47,9 @@
  * alternative assignment), "What completes the study: Reach the end.", the instructor told only whether the student
  * completed the study; no gift card and none of its five rules. CONSENT_VERSION "2026-10-16-course-credit". validate:
  * attention T10 compares it with the submitted text. Deploy it only after the IRB approves the modification.
+ * The same day the researcher added one box for students, "At Least 35 Minutes" (TakeYourTime: take your time, read
+ * carefully, answer as you genuinely would, the reading checks exist; a request, the credit still given on completion),
+ * which he sends to the IRB as a small change (CONSENT_VERSION "2026-10-16-take-your-time").
  *
  * THE BUTTON IS DISABLED UNTIL THE BOX IS TICKED
  * Deliberate, and not merely a validation convenience: the tick is the consent record. A page
@@ -55,6 +58,7 @@
 
 import { useState } from "react";
 import {
+  Badge,
   Box,
   Button,
   Heading,
@@ -66,14 +70,29 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { LuArrowRight, LuCheck, LuClock, LuGraduationCap, LuLock, LuShieldCheck, LuUndo2, LuWallet } from "react-icons/lu";
+import {
+  LuArrowRight,
+  LuBookOpen,
+  LuCheck,
+  LuClock,
+  LuCompass,
+  LuEye,
+  LuGraduationCap,
+  LuHourglass,
+  LuLock,
+  LuShieldCheck,
+  LuTimer,
+  LuUndo2,
+  LuWallet,
+} from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { RecruitmentSource } from "./recruitment";
 
 /** Bump whenever the consent wording below changes. Stored with every consent record. Since 16 October 2026 the
- *  university door says what the Florida Tech consent submitted to the IRB on 14 October 2026 says: course credit, no
- *  gift card. */
-export const CONSENT_VERSION = "2026-10-16-course-credit";
+ *  university door says what the Florida Tech consent submitted to the IRB on 14 October 2026 says (course credit, no
+ *  gift card; "2026-10-16-course-credit"), plus the "At Least 35 Minutes" request box sent to the IRB as a small change
+ *  the same day ("2026-10-16-take-your-time"). */
+export const CONSENT_VERSION = "2026-10-16-take-your-time";
 /** The Prolific door's wording (since 6 October 2026). Bump it whenever that wording changes. */
 export const PROLIFIC_CONSENT_VERSION = "2026-10-14-prolific-will-be-rejected";
 
@@ -164,6 +183,66 @@ function Highlight({
       </HStack>
       <VStack align="stretch" gap="2" fontSize="sm" color="fg.muted" lineHeight="tall">
         {children}
+      </VStack>
+    </Box>
+  );
+}
+
+/* -------------------------------------------------------------------- THE UNIVERSITY DOOR'S REQUEST BOX */
+
+/**
+ * "AT LEAST 35 MINUTES", A REQUEST AND NOT A RULE (16 October 2026, the researcher's "1-OK 2-yes").
+ *
+ * Why it exists: in the Prolific door careful work is part of being paid ("Answer thoughtfully", the attention checks);
+ * in the university door the course credit is given on completion, so careful work is optional. The box asks students
+ * for the same care in plain words, so the two groups are as comparable as a request can make them.
+ *
+ * What it must never do, each held by validate:attention T10:
+ *   - hint at the study's design before the main study: no positions, roles or who decides for whom, and nothing about
+ *     values, consistency, keeping or changing a choice (VCI, Stability and the keep/change choices must not be pushed);
+ *   - ask to "read all the options": the card order is a measured effect (hypothesis C7), so the box says "each page";
+ *   - read as a rule: a grey box like "You Can Stop and Come Back" (the orange box is the only one with rules), an
+ *     "A request" tag, and a last line saying the course credit is given on completion, as the IRB text says;
+ *   - say "one sitting": students may stop and come back (the next box).
+ * The reading-check line ("2-yes") tells students what the Prolific consent tells its participants: that the checks
+ * exist (never what they ask), so "an attention check answered wrongly" means the same in both groups.
+ */
+function TakeYourTime() {
+  const row = (icon: React.ReactNode, lead: string, rest: string) => (
+    <HStack align="start" gap="2.5">
+      <Icon boxSize="4" color="teal.fg" mt="1" flexShrink={0} aria-hidden="true">
+        {icon}
+      </Icon>
+      <Text>
+        <Text as="span" color="fg" fontWeight="semibold">
+          {lead}
+        </Text>{" "}
+        {rest}
+      </Text>
+    </HStack>
+  );
+  return (
+    <Box data-take-your-time borderWidth="1px" borderColor="border.emphasized" bg="bg.subtle" rounded="xl" p={{ base: "4", md: "5" }}>
+      <HStack gap="2.5" mb="3" align="center" wrap="wrap">
+        <Icon boxSize="4" color="fg">
+          <LuTimer />
+        </Icon>
+        <Heading size="sm" color="fg" letterSpacing="tight">
+          At Least 35 Minutes
+        </Heading>
+        <Badge colorPalette="teal" variant="subtle" rounded="full" px="2.5">
+          A request
+        </Badge>
+      </HStack>
+      <VStack align="stretch" gap="2.5" fontSize="sm" color="fg.muted" lineHeight="tall">
+        {row(<LuHourglass />, "Take your time.", "Please do not rush through the pages.")}
+        {row(<LuBookOpen />, "Read carefully.", "Read each page fully before you answer.")}
+        {row(<LuCompass />, "Answer as you genuinely would,", "not as you think you should.")}
+        {row(<LuEye />, "A few short questions check that you are reading.", "Please answer them as they ask.")}
+        <Text pt="1">
+          Careful, genuine answers are what make this research meaningful. This is only a request: your course credit
+          is given when you complete the study.
+        </Text>
       </VStack>
     </Box>
   );
@@ -493,6 +572,11 @@ export function ConsentPage({ onAgree, door = "university" }: {
                 {prolific ? ". Please complete it in one sitting — see below." : ". You do not have to finish in one sitting — see below."}
               </Text>
             </Section>
+
+            {/* The university door's request to take time and answer genuinely (since 16 October 2026; TakeYourTime above).
+                Right after the study's length, before "You Can Stop and Come Back". Not in the Prolific door, whose
+                payment rules already ask for the same care. */}
+            {!prolific && <TakeYourTime />}
 
             {/*
               ONE SENTENCE, AND NOT A WORD ABOUT THE EMAIL.

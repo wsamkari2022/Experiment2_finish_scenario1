@@ -6,9 +6,10 @@ The study now has two versions on one website:
 - **The university version** (https://moonlander.fit.edu): FIT students and employees, who sign in with their email. Since
   16 October 2026 its consent page is word for word the Florida Tech consent submitted to the IRB with the modification of
   14 October 2026: **course credit** for CSE4301/CSE5290 instead of the $5 Amazon gift card (version
-  `2026-10-16-course-credit`). It goes live only after the IRB approves the modification.
+  `2026-10-16-course-credit`), plus one request box the researcher sends to the IRB as a small change the same day,
+  "At Least 35 Minutes" (version `2026-10-16-take-your-time`; row 9 below). It goes live only after the IRB approves.
 - **The Prolific version** (https://moonlander.fit.edu/prolific): Prolific participants, paid through Prolific and
-  identified only by their Prolific ID. Its consent page is the same page with **eight parts changed**, because
+  identified only by their Prolific ID. Its consent page is the same page with **eight parts changed** (rows 1-8; row 9 is the students' request box), because
   Prolific's rules differ (version `2026-10-14-prolific-will-be-rejected`, saved with every agreement).
 
 **Approval is needed before the Prolific version is opened to participants:** recruitment through Prolific, the new
@@ -25,7 +26,7 @@ What You Will Do (the five parts and the guess about the participant), the time 
 to 55 minutes" in both versions until 7 October 2026, so the university version changed here too), Possible
 Risks, Possible Benefits, and Who to Contact With Questions (the researcher and the IRB).
 
-## The eight parts that differ
+## The nine parts that differ
 
 | # | University version (since 16 October 2026) | Prolific version | Why |
 |---|---|---|---|
@@ -37,6 +38,7 @@ Risks, Possible Benefits, and Who to Contact With Questions (the researcher and 
 | 6 | Your Right to Withdraw: "... If you take part for course credit, stopping does not affect your grade: you can complete the alternative assignment instead. If you would like your data removed after taking part, contact the researcher below and it will be deleted." | "You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific. If you would like your data removed after taking part, send the researcher a message through Prolific, or email the researcher below, with your Prolific ID, and it will be deleted." | The data is found by the Prolific ID |
 | 7 | Two tick-boxes: the agreement (the email collected so the person can return and receive the course credit), and "I understand that the course credit is given when I complete the study, and that I may complete an alternative assignment instead." | One tick-box: "I have read the information above. I voluntarily agree to take part, and I understand how the study is paid through Prolific and that the attention checks must be answered as asked." | No course credit, email or minutes to agree to |
 | 8 | No way to decline other than closing the page | An **"I do not agree"** button. It shows: "Thank you for considering the study. You have not agreed, so nothing has been recorded. Please go back to Prolific and return the study by choosing 'Stop without completing'. No completion code is needed." | Prolific's normal way out; the person is not left stuck |
+| 9 | **At Least 35 Minutes** (A request), right after the study's length: "Take your time. Please do not rush through the pages." / "Read carefully. Read each page fully before you answer." / "Answer as you genuinely would, not as you think you should." / "A few short questions check that you are reading. Please answer them as they ask." / "Careful, genuine answers are what make this research meaningful. This is only a request: your course credit is given when you complete the study." | No such box: the payment rules already ask for the same care ("Answer thoughtfully", the attention checks) | For students careful work is optional (the credit is given on completion), for Prolific people it is part of being paid; the box asks students for the same care, as a request |
 
 ## The attention checks in both versions (since 14 October 2026)
 

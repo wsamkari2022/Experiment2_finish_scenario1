@@ -34,10 +34,11 @@
  *       October 2026 all four checks count for Prolific's rule, two or more failed is the flag, a check never reached is
  *       not a failure; the database rows, quality and the major copy; the chance a random clicker fails two or more;
  *       the page draws every row
- *   T10 the consent page of each door: the university wording kept, the Prolific wording (paid through Prolific, one
- *       sitting, the Prolific ID instead of the email, "If you fail two or more of them, your submission will be
- *       rejected.", one box, "I do not agree" with the way to return the study), its own version stamp, and the flow
- *       passing the door
+ *   T10 the consent page of each door: the university wording = the Florida Tech consent submitted to the IRB plus the
+ *       "At Least 35 Minutes" request box (16 October 2026: its words, students only, no word about the design), the
+ *       Prolific wording (paid through Prolific, one sitting, the Prolific ID instead of the email, "If you fail two or
+ *       more of them, your submission will be rejected.", one box, "I do not agree" with the way to return the study),
+ *       its own version stamp, and the flow passing the door
  *   P1  the deleted pages' data: the new functions make exactly the files the pages made (the pages' own recipe,
  *       written out again here) for 300 pretend participants, and write nothing when an earlier block is missing
  *   P2  the deleted pages, from the source: the four files are gone, the flow derives the files when Block 3 and
@@ -510,7 +511,7 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   /* The university page (since 16 October 2026) = the Florida Tech consent submitted to the IRB on 14 October 2026: its key
      places, and every sentence that changed from the gift card, compared letter by letter (the page splits sentences
      across formatting tags). */
-  for (const kept of ['export const CONSENT_VERSION = "2026-10-16-course-credit";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
+  for (const kept of ['export const CONSENT_VERSION = "2026-10-16-take-your-time";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
     "Course Credit", "What completes the study:", "Tick both boxes above to continue.", "You do not have to finish in one sitting — see below."]) {
     if (!raw.includes(kept)) why.push(`the university page lost: ${kept.slice(0, 50)}`);
   }
@@ -551,10 +552,34 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   }
   if (!/door = "university"/.test(page) || !/const prolific = door === "prolific";/.test(page)) why.push("the page does not default to the university door");
   if (!/You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific\./.test(page) || !/with your Prolific ID, and it will be deleted\./.test(page)) why.push("the Prolific withdrawal does not go through Prolific with the ID");
+  /* THE "AT LEAST 35 MINUTES" REQUEST BOX (16 October 2026, the researcher's "1-OK 2-yes"; sent to the IRB as a small
+     change): the approved words letter by letter, in the university door only, right after the study's length and before
+     "You Can Stop and Come Back"; grey with an "A request" tag (the orange box is the only one with rules); the credit
+     still given on completion; and not one word that would tell a student about the study's design before the main study
+     (positions, roles, who decides for whom, values, consistency, keeping or changing a choice, the options, one sitting). */
+  const box = block("TakeYourTime");
+  const boxLetters = letters(box.replace(/<[^>]*>/g, " "));
+  for (const said of ["At Least 35 Minutes", "A request", "Take your time. Please do not rush through the pages.",
+    "Read carefully. Read each page fully before you answer.", "Answer as you genuinely would, not as you think you should.",
+    "A few short questions check that you are reading. Please answer them as they ask.",
+    "Careful, genuine answers are what make this research meaningful. This is only a request: your course credit is given when you complete the study."]) {
+    if (!box || !boxLetters.includes(letters(said))) why.push(`the request box does not say: ${said.slice(0, 50)}`);
+  }
+  const boxRows = [...box.matchAll(/row\(<\w+ \/>, "([^"]+)", "([^"]+)"\)/g)].map((m) => `${m[1]} ${m[2]}`);
+  if (boxRows.length !== 4) why.push(`the request box should have four lines, it has ${boxRows.length}`);
+  const boxShown = [...boxRows, ...(box.match(/>[^<>{}]+</g) ?? [])].join(" ");
+  const design = boxShown.match(/\b(positions?|roles?|yourself|others|other people|household|employers?|values?|keep|kept|change your|options?|one sitting|right answer|best)\b|consisten/i);
+  if (design) why.push(`the request box hints at the study's design: "${design[0]}"`);
+  if (!/borderColor="border\.emphasized" bg="bg\.subtle"/.test(box) || /orange/.test(box)) why.push("the request box is not the grey kind (the orange box is the only one with rules)");
+  if (!/<Badge[^>]*>\s*A request\s*<\/Badge>/.test(box)) why.push("the request box lost its \"A request\" tag");
+  const uni = consent.slice(consent.indexOf("export function ConsentPage"));
+  if ((uni.match(/<TakeYourTime \/>/g) ?? []).length !== 1 || !uni.includes("{!prolific && <TakeYourTime />}")) why.push("the request box is not shown exactly once, in the university door only");
+  const at = (t) => uni.indexOf(t);
+  if (!(at("at least 35 minutes") >= 0 && at("at least 35 minutes") < at("<TakeYourTime />") && at("<TakeYourTime />") < at('title="You Can Stop and Come Back"'))) why.push("the request box is not between the study's length and \"You Can Stop and Come Back\"");
   const flow = bare(src("ExperimentFlow.tsx"));
   if (!/<ConsentPage\s+door=\{door\}/.test(flow)) why.push("the flow does not tell the consent page its door");
   gate("T10", why.length === 0, why.slice(0, 5).join(" | ") ||
-    "the consent page: the university wording = the Florida Tech consent submitted on 14 October 2026 (course credit, its eight changed sentences letter by letter, no gift card, no minutes rule); the Prolific door says paid through Prolific, one sitting within Prolific's time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission will be rejected.\", withdrawal through Prolific with the ID, one box, \"I do not agree\" with \"Stop without completing\"; no gift card, email or minutes there; its own version stamp; the flow passes the door");
+    "the consent page: the university wording = the Florida Tech consent submitted on 14 October 2026 (course credit, its eight changed sentences letter by letter, no gift card, no minutes rule) plus the \"At Least 35 Minutes\" request box (its approved words, university door only, after the study's length, grey with \"A request\", the credit still on completion, no word about the study's design); the Prolific door says paid through Prolific, one sitting within Prolific's time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission will be rejected.\", withdrawal through Prolific with the ID, one box, \"I do not agree\" with \"Stop without completing\"; no gift card, email or minutes there; its own version stamp; the flow passes the door");
 }
 
 /* ------------------------------------------------------------------ P1 the deleted pages' data */

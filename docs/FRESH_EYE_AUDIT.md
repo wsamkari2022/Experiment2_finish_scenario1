@@ -2157,3 +2157,15 @@ thesis says so.
   three stored texts corrected. Then the documents: CLAUDE.md (a new section), HOW_TO_READ 8c, HOW_TO_ANALYZE (2, 4.9,
   9.8), PROLIFIC_CONSENT_FOR_ETHICS_BOARD (the university column), the new docs/COURSE_CREDIT_LIST.md, the two Word files.
   The Prolific door is untouched (its consent's Appendix 2 changes are the next step).
+- **2026-10-16 (later). "At Least 35 Minutes", a request box for students** (Waseem: students may answer less carefully
+  than Prolific people, for whom care is part of being paid; "make it general for everything", no hint of the position
+  effect before the main study; "1-OK 2-yes"). One grey box on the Florida Tech consent page only, after the study's
+  length: take your time, read carefully, answer as you genuinely would (not as you think you should), a few short
+  questions check that you are reading; "This is only a request: your course credit is given when you complete the study."
+  The plan's audit took out "read all of its options" from the first draft (the card order is hypothesis C7, and only one
+  group would have been told). `CONSENT_VERSION` "2026-10-16-take-your-time"; T10 holds the words, the place, the grey
+  "A request" style, students only and no design word; 13 breaks, 13 caught (the first version of the design-word check
+  read the wrong text and was fixed before the breaks). Live on port 5174 (restored exactly; nothing in the database):
+  dark, light, a 375px phone, none in the Prolific door, the stamp saved on agreeing. For the IRB: the clean form, the form
+  with the box highlighted (both PDF) and a note, in `Downloads/Consent forms/Ready to upload (16 October)`; Waseem sends
+  them. HOW_TO_READ's `consent` row now lists every version (it still named September's).
