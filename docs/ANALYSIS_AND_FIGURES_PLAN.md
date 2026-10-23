@@ -135,10 +135,12 @@ Blocks 1-4 profile of finishers and non-finishers: if the dropouts differ, say h
 
 **Everyone who completed the study by the end of data collection** (`status: "Study Completed"`); everyone who did
 not complete is excluded. No one who completed is removed for any other reason. The quality flags
-(`quality.met_time_requirement`, `quality.rushed_blocks`, `quality.scenarios_under_15_seconds`,
-`quality.straightlined_feedback`) are reported descriptively, and the checks of section 2.4 show each main result
-again without the flagged people, beside the result for everyone. `quality.compensation_eligible` is the payment
-rule and is not used to select anyone.
+(`quality.under_the_estimated_length`, `quality.rushed_blocks`, `quality.scenarios_under_15_seconds`,
+`quality.straightlined_feedback`, and `quality.careful_participation` with its four signs) are reported descriptively,
+and the checks of section 2.4 show each main result again without the flagged people, beside the result for everyone.
+Neither payment nor credit selects anyone: `quality.course_credit_earned` (university door, = finished) is the credit
+rule, and Prolific pay is the daily pay check's decision. (Corrected 23 October 2026: this paragraph still named
+`quality.met_time_requirement` and `quality.compensation_eligible`, the gift-card fields removed on 16 October 2026.)
 
 ### 2.3 Evidence of real engagement
 

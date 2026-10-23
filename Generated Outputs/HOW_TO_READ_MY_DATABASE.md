@@ -801,6 +801,13 @@ later in section 6c; earlier runs used a different weighting and are not compara
 `sensitivity_change_committed` · `choice_before_reflection` · `choice_after_reflection` ·
 `changed_their_choice` · `counted_as_a_stability_step` (since 1 October 2026)
 
+**`whose_view_was_shown`** is the code of the person who spoke after the reflection, picked from the
+participant's "Hearing someone's story" score, in reverse: `close` (under 40) = "someone you have known for
+twenty years", `group` (40-69) = "someone you have known for a year", `system` (70 or more) = "someone you
+have only just met". The three differ only in how well the participant knows them; `stakeholder_text_shown`
+holds the label exactly as written. (`system` does NOT mean an official: that was an earlier cast, replaced in
+September 2026.)
+
 **Since the four-condition audit (2 October 2026):** `fired` is true whenever the reflection was SHOWN in the scenario,
 also when the participant then went back (from the reflection, the person page, the APA page or condition 2's CVR
 Rejection page) and the final choice was a good fit; before, such a row read false. `second_lens_was_generated` is true

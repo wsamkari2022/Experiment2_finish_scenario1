@@ -46,8 +46,10 @@
  *                    and baselineGoodFitConfirmBackouts (a good fit's), secondViewOpened, numberOfSwitches, ...
  *
  * Alignment (v3.1): threshold-satisfaction — an option is only penalized when it falls
- * BELOW the participant's priority on a value; meeting/exceeding costs nothing. Bands
- * 85/75/55 give Aligned / Weakly aligned / Misaligned / Strongly misaligned.
+ * BELOW the participant's priority on a value; meeting/exceeding costs nothing. The labels go by
+ * RANK of that shortfall (block5CVR.ts, labelOptions): 1st Aligned, 2nd Weakly aligned, then the
+ * upper half Misaligned and the lower half Strongly misaligned. (Corrected 23 October 2026: this
+ * said "Bands 85/75/55", a score-band rule replaced long ago.)
  *
  * Top dashboard (issues 1 & 2): the participant's CUMULATIVE performance — a running
  * AVERAGE of the 5 metrics of the options confirmed so far (starts at 0, can never

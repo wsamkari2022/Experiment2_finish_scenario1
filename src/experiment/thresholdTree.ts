@@ -559,14 +559,15 @@ function rawDimensionsOf(
   // so the signals are event-based rather than threshold-based.
   //
   // KNOWN LIMITATION — this is the weakest-fed sensitivity in the instrument. decisionShift
-  // below is a rare, all-or-nothing event and carries half the weight, so in practice the
-  // stakeholder score is NEAR-BINARY: roughly 14 for anyone who does not change their decision,
-  // roughly 60 for the ~15% who do, with very little in between. Because chooseWho() slices this
-  // with absolute cutoffs at 40 and 70, the three stakeholder voices come out at about
-  // 81% / 13% / 6% — the ladder of "someone you have known twenty years / a year / just met" is
-  // mostly one rung. Re-anchoring the cutoffs does not fix it: three groups cannot be made from
-  // a two-valued variable. The fix is more signal in Block 4 — graded per-voice influence
-  // ratings rather than a single yes/no flip.
+  // below is a rare, all-or-nothing event and carries half the weight, so for anyone who does not
+  // change their decision the stakeholder score stays low (mostly under 30), and only the few who
+  // do change it reach the middle or top. Because chooseWho() slices this with absolute cutoffs at
+  // 40 and 70, the three voices ("someone you have known twenty years / a year / just met") come
+  // out at 85 / 6 / 9 in 100 for pretend participants who answer steadily, and 44 / 27 / 29 for
+  // random answerers (re-measured 23 October 2026; it said "near-binary, 81% / 13% / 6%", a
+  // reading from before the 24 September 2026 scoring changes). For steady answerers the ladder is
+  // mostly one rung. The fix is more signal in Block 4 — graded per-voice influence ratings rather
+  // than a single yes/no flip.
   const { initialDecision, midDecision, finalDecision, confidence } = block4;
   const hasDecisions = !!(initialDecision && finalDecision);
   /**

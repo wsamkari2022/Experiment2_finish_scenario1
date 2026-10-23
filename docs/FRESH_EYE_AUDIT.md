@@ -2169,3 +2169,27 @@ thesis says so.
   dark, light, a 375px phone, none in the Prolific door, the stamp saved on agreeing. For the IRB: the clean form, the form
   with the box highlighted (both PDF) and a note, in `Downloads/Consent forms/Ready to upload (16 October)`; Waseem sends
   them. HOW_TO_READ's `consent` row now lists every version (it still named September's).
+- **2026-10-23. The "Ranked N - why" box tells the truth** (found by the dissertation writer on a scenario 1 screenshot;
+  Waseem "1-A 2-A 3-A", the box and the fit line stay in conditions 1-3): the trade line claimed "that option is slightly
+  better on <#1>" whenever node 3 was ALLOWED to set #1 aside, also when the winner was ahead there (27-74 in 100 trade
+  lines false); now only when it changed the winner and names an option shown lower; two sentences reworded. Card order
+  unchanged (24,000 lists). Commit 3a20a23. CLAUDE.md "The "Ranked N - why" box tells the truth".
+- **2026-10-23. Old notes audit** (the writer found the speaker labels "a community member / a distant official" in the
+  dissertation pack, copied from a stale comment in `chooseWho`; Waseem "A": no screen change, correct the notes and tell
+  the writer). Searched the code comments (every quoted sentence not in the live code), the pack's comment-sourced claims
+  (re-run on pretend participants) and every document in the writer's folder (a list of retired facts). Corrected:
+  the `chooseWho` comment; "near-binary ... 81%" in block5CVR.ts and thresholdTree.ts (now 85 / 6 / 9 steady, 44 / 27 /
+  29 random); the "Bands 85/75/55" header of Block5PublicEmergencySimulation.tsx (labels are by rank); CLAUDE.md "never
+  shown ... the scoring arithmetic" (fit numbers ARE shown, on purpose); ANALYSIS_AND_FIGURES_PLAN.md 2.2 and
+  PREREGISTRATION_FREEZE.md (`compensation_eligible`, `met_time_requirement`, the gift card, removed 16 October);
+  HOW_TO_READ's `whose_view_was_shown` codes; the pack's E2, E4, F3, F6, G2, G7, C5 (second edition). No screen, score or
+  stored field changed. **Two OPEN screen questions, Waseem to decide (participants see them):**
+  - **R12. Five circles beside "6 scenarios"** in three places: the progress bar (`GlobalStepper`, `dots: 5`), the end
+    of Block 4 (`AdaptiveStakeholderReflectionBlock`, `[0,1,2,3,4]`) and the page before the main study
+    (`Block5IntroPage`, `[0,1,2,3,4]`, `aria-label="Five scenarios ahead"` beside "Six scenarios ahead"). The labels
+    were made to read the deck's length when scenario 6 landed; the circles were not.
+  - **R13. "See value & metric details" in Baseline and scenario 6.** The open card's details panel "How this option
+    fits your values" (the option's four numbers against "Your line", "Below your priority by N ... lowers alignment")
+    has no condition or scenario check, so Baseline (which hides the fit line and the ranking reasons since 3 October)
+    and scenario 6 (which hides the values panel and the MCF since 27 September, and whose performance part of this same
+    panel IS removed) show it. Opening it is counted (`optionExpands`).

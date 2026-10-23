@@ -384,17 +384,23 @@ export function framingSensitivityKey(framing: CVRFraming): FramingAdjust["sensi
 /**
  * Picks whose voice speaks in the CVR vignette — the VOICE group.
  *
- * WHAT: an INVERSE map of stakeholder sensitivity. Low → "close" (someone you have known twenty
- * years); middle → "group" (an affected community member); high → "system" (a distant official).
+ * WHAT: an INVERSE map of stakeholder sensitivity, by SOCIAL CLOSENESS only (block5CVRContent.ts,
+ * VOICE). Low → "close" ("someone you have known for twenty years"); middle → "group" ("someone you
+ * have known for a year"); high → "system" ("someone you have only just met"). The codes are the
+ * stored values (`whose_view_was_shown`); the participant reads the label in quotes.
+ * CORRECTED 23 October 2026: this comment still described an earlier cast ("an affected community
+ * member", "a distant official") that was replaced in September, and the dissertation pack copied it.
  *
  * WHY INVERSE: the point is to give each participant the voice most likely to actually reach
  * them. Someone barely moved by stakeholder perspectives needs the closest, most personal voice
  * to feel anything; someone already highly moved will register even a distant systemic one.
  *
- * KNOWN LIMITATION: the cutoffs assume the stakeholder score spreads across the range. It does
- * not — the underlying Block 4 measure is near-binary, so in practice this returns "close" for
- * about 81% of participants. The cutoffs are not the fault; the measure is. See the Block 4
- * notes in thresholdTree.ts.
+ * KNOWN LIMITATION: the cutoffs assume the stakeholder score spreads across the range. For people who
+ * answer Block 4 steadily it mostly does not: re-measured 23 October 2026 (4,000 pretend participants,
+ * the real scoring), this returns "close" for 85 in 100 steady answerers (group 6, system 9) and 44 in
+ * 100 random ones (27, 29). The cutoffs are not the fault; the measure is. See the Block 4 notes in
+ * thresholdTree.ts. (It said "near-binary ... about 81%", a reading from before the 24 September 2026
+ * scoring changes.)
  */
 export function chooseWho(profile: Block5UserProfile): SalienceWho {
   const s = scoreOf(profile, "stakeholderPerspectiveShiftSensitivity");

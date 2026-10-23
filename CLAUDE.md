@@ -2175,6 +2175,13 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
   badge under each option title in the compare-charts overlay, removed on 15 September 2026, so no
   live scenario prints one anywhere. The level is still computed and still stored — it is simply
   never shown while the participant is still choosing.
+  **But numbers about fit ARE shown, on purpose (corrected 23 October 2026; this note used to say "or the scoring
+  arithmetic" without exception):** the open card's fit line "Matches your earlier answers: N out of 100" (conditions
+  1-3, the researcher's choice, 23 October 2026), "Your values in this scenario" with the participant's four numbers
+  (scenarios 1-5), the APA page's "missed by N points", and, behind each card's "See value & metric details" button,
+  "How this option fits your values": the option's four numbers against "Your line" and "Below your priority by N ...
+  a shortfall that lowers alignment". That details panel has no condition or scenario check, so Baseline and scenario 6
+  show it too (found 23 October 2026; opening it is counted in `optionExpands`).
 - Scenario 5 is a wish rather than a decision. It is excluded from consistency, stability, the
   reflection measures and (since 25 September 2026) performance, but included in the position
   effect. See "Scenario 5 is only a wish" above.

@@ -79,12 +79,15 @@ Scores stay between 0 and 100; a step past an edge is cut off and recorded. Test
   the matched pair, without `decided_versus_wished.wish_was_hurried` (under 12 seconds); for the MPF calibration,
   without predictions whose top-two separation is under 5 ("none").
 - **Stability** is analysed among `stability_was_measured` = true; the share never measured is reported.
-- Payment is decided separately by `quality.compensation_eligible` (completed, 35 active minutes or more, not
-  straight-lined, fewer than 3 blocks under 30 seconds, and since 29 September 2026 all three attention checks right)
-  and is never used as an analysis rule.
+- Credit and pay are decided separately and are never used as an analysis rule: course credit
+  (`quality.course_credit_earned`, university door) is given on completion; Prolific pay is decided by the daily pay
+  check on Prolific's own valid reasons (two or more of the four attention checks failed = rejected). (Corrected
+  23 October 2026: this line described `quality.compensation_eligible`, the gift-card rule removed on 16 October 2026.)
 - **The attention checks do not remove anybody from the analysis** (the researcher, 30 September 2026: "all completed
-  sessions will be included in the analysis"). A missed check affects the gift card only
-  (`quality.passed_all_attention_checks`). Any further analysis rule is the researcher's to decide after the experiment.
+  sessions will be included in the analysis"). In the university door a check answered wrongly is one
+  careful-participation sign (`quality.careful_participation`), information only; it no longer affects anything else
+  (it affected the gift card until 16 October 2026). Any further analysis rule is the researcher's to decide after the
+  experiment.
 
 ## 5. The hypotheses and their tests
 
