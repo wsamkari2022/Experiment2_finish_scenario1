@@ -1238,10 +1238,19 @@ One more field sits beside `by_scenario` and `totals`, once per participant (**s
 |---|---|
 | `how_close_the_top_two_values_were` | The participant's #1 and #2 values in the planner's order (`first_value`, `second_value`), their whole-number scores in the profile brought into Block 5, `gap_in_points`, and `the_two_have_the_same_score`. The planner orders every scenario by this ranking and counts a 1-point lead like a 50-point one, so a small gap means the card order rests on a small difference. Read from `originalProfile`, so it exists for every record, old and new; the planner never reads it. See HOW_TO_ANALYZE_MY_DATA.md 4.7 |
 
-The three groups, in words: "inside every limit the participant set", "at the bottom of this
-scenario's range on the participant's #1 value", and "crosses a limit the participant refused
+The three groups, in words: "inside every limit the participant set", "near the bottom of this
+scenario's range on the participant's #1 value" (inside its lowest band, a sixth or an eighth of the
+range; not necessarily the lowest option), and "crosses a limit the participant refused
 outright in Blocks 1-3". The raw fields behind it (`plannerOrder`, `plannerBins`, `plannerWins`,
 `plannerInputs`, `plannerVersion`) stay in `blocks.block5_emergency_scenarios.scenarioResults[]`.
+
+**`choiceUsedTradeOff`** (on the same scenario row) is true when the chosen option beat, head to head,
+an option that is better on the participant's #1 value, because the gap there was small and the gap on
+their #2 value large (the planner set the #1 value aside for that pair). Head to head only: that other
+option may still be shown above it. **Since 23 October 2026.** Before, it was also true when the chosen
+option was itself ahead (or level) on the #1 value, so nothing was traded away (27-74 in 100 such pairs).
+The card order did not change, so `plannerVersion` did not move; no real participant was recorded under
+the old meaning.
 
 > ⚠️ **First place and best fit are often the same card.** With 4,000 pretend participants answering
 > Blocks 1-4 steadily (`npm run report:planner-overlap`), they were the same card for 50-62 out of

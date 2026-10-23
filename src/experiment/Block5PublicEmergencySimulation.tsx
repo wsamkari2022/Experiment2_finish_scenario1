@@ -3647,7 +3647,7 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
         ordering it is explaining, and a participant who notices that stops believing any of it.
 
         ABSENT IN SCENARIO 6. Every line of it describes a rank that scenario does not have: "beat
-        all 3 of the other options", "this is the option that stays inside every limit you set", and
+        all 3 of the other options", "this option stays inside every limit you set", and
         the fit score out of 100. The rules there are shuffled, and the fit score is the raw material
         the MPF's guess is built from - showing it beside the options and then showing the guess
         would be marking the participant's answer before they had given it.

@@ -1208,9 +1208,13 @@ export interface Block5ScenarioResult {
   /** Which values it crossed, and by how much, in normalized scenario units. */
   choiceBreaches?: { key: Block5PolicyDimKey; amount: number; hard: boolean }[];
   /**
-   * True when the chosen option outranked another option that beats it on the participant's own
-   * rank-1 value. In the LEAP paper this exact event is what TRIGGERS learning; here it is the
-   * observation — a person taking an option that trades away the value they ranked first.
+   * True when the chosen option beat, head to head, another option that is ahead of it on the
+   * participant's own rank-1 value - because the gap there was small and the gap on the rank-2 value
+   * large (the planner set the rank-1 value aside for that pair). In the LEAP paper this exact event is
+   * what TRIGGERS learning; here it is the observation - a person taking an option that trades away some
+   * of the value their earlier answers put first. Head to head only: the other option may still be shown
+   * above it. Since 23 October 2026; before, it was also true when the chosen option was ahead (or level)
+   * on the rank-1 value, so nothing was traded away (27-74 in 100 such pairs).
    */
   choiceUsedTradeOff?: boolean;
 

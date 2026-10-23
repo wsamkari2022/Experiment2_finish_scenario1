@@ -189,7 +189,14 @@ export interface PlannedOption {
   beatIds: string[];
   /** every floor this option falls below, worst first. Empty for a clear option. */
   breaches: BinBreach[];
-  /** pairs where this option won BECAUSE the rank-1 value was set aside (the IGNORE_A leaf). */
+  /**
+   * pairs where this option won BECAUSE the rank-1 value was set aside (the IGNORE_A leaf): the other
+   * option is ahead on the rank-1 value, and the pair went to this one only because the gap there was
+   * small and the gap on the rank-2 value was large. Head-to-head only: the other option may still be
+   * shown ABOVE this one, since the display order counts wins (block5PlannerText.ts checks that).
+   * Since 23 October 2026; before, a pair was listed whenever node 3 fired, even if this option was
+   * also ahead on the rank-1 value.
+   */
   ignoredTopValueAgainst: string[];
   /** two strongest and one weakest performance metric, ranked within the scenario. */
   perfChips: PerfChip[];
@@ -357,7 +364,10 @@ interface PairOutcome {
   winner: number;
   /** the value that actually decided it, or null when nothing separated them. */
   decidedOn: Block5PolicyDimKey | null;
-  /** true when the rank-1 value was set aside to reach the decision (the IGNORE_A leaf). */
+  /**
+   * true when the rank-1 value was set aside (the IGNORE_A leaf) AND that changed the winner: the other
+   * option is ahead on the rank-1 value, and this pair would have gone to it had the ranking been honored.
+   */
   ignoredTop: boolean;
 }
 
@@ -420,7 +430,14 @@ function comparePair(
   }
 
   const { winner, decidedOn } = lexical(x, y, useOrder);
-  return { winner, decidedOn, ignoredTop: ignoredTop && winner !== 0 };
+  /* FIXED 23 October 2026: node 3 is ALLOWED to set the top value aside whenever the gap on it is small,
+     but it only CHANGES the outcome when the other option is ahead on that top value. When the winner is
+     also ahead (or level) on it, honoring the ranking gives the same winner, so nothing was traded away.
+     The flag used to be set in both cases, and the card then told the participant "that option is
+     slightly better on <#1 value>" about an option that was in fact worse or equal there (27-74 in 100
+     trade lines, every decision scenario). Who wins is untouched, so no card order moves. */
+  const changedTheWinner = ignoredTop && winner !== 0 && winner !== lexical(x, y, order).winner;
+  return { winner, decidedOn, ignoredTop: changedTheWinner };
 }
 
 /* ------------------------------------------------------------------------- *

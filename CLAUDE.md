@@ -963,6 +963,37 @@ keep, and you can turn it into course credit verdict", "3- Yes" (the course-cred
   database): the box in place in dark and light mode and on a 375px phone (no sideways scroll); none in the Prolific door;
   agreeing saved `consent.version` "2026-10-16-take-your-time".
 
+## The "Ranked N - why" box tells the truth (23 October 2026)
+
+Found by the dissertation writer on a screenshot of scenario 1: card 1 (the community shuttle, helped 94, harm 62) said "This
+ranks above 'Drive out on the industrial service road' even though that option is slightly better on how many are helped" -
+the service road has 87 there. The researcher: keep the section and the fit score in conditions 1-3 (they are in the IRB and
+OSF texts), correct the text inside it; plan answers "1-A, 2-A, 3-A". **Participants in conditions 1-3 see it**
+(HOW_TO_ANALYZE 4.9). Baseline and scenario 6 never show the box.
+
+- **The cause** (`comparePair`, block5Planner.ts): node 3 may set the #1 value aside whenever the gap on it is small, and the
+  pair was noted as "won by setting #1 aside" every time - also when the winner was ahead (or level) on #1 too, so nothing was
+  traded away. The trade line always says "that option is slightly better on #1", so it was false in 27-74 in 100 trade
+  lines, in every decision scenario (4,000 pretend participants). Now the pair is noted only when honoring the ranking would
+  have given the other option the win (`ignoredTopValueAgainst`, and so `choiceUsedTradeOff`). **Who wins is computed exactly
+  as before: 24,000 card lists, old code against new, 0 orders, wins, bins, ranks or reference cards different**, so
+  `PLANNER_VERSION` did not move; `report:major-scores` changed only its stamp.
+- **The trade line** (block5PlannerText.ts) also names only an option shown LOWER on the list ("This ranks above"): the
+  display order counts wins, so a head-to-head win does not put a card above the one it beat (up to 1 trade line in 9 named an
+  option shown higher). With no such option there is no sentence; about half the cards that had one keep it, all true.
+- **Two sentences reworded** (the researcher's "2-A", "3-A"): the reference card (always card 1) "This option stays inside every
+  limit you set. The other cards are compared with it." (it said "This is the option that stays inside every limit you set",
+  as if it were the only one; several cards usually are); a card below a limit "sits near the bottom of this scenario's range
+  on X, the value your earlier answers put first" ("at the bottom" was false in 21-51 in 100 of these lines: the rule is the
+  lowest band, a sixth or an eighth of the range; and participants never ranked anything).
+- **Checked:** `test:planner` section 8 (new): every claim of the box on the raw numbers for 720 profiles (24 value orders x 5
+  exchange rates x 2 bands x 3 red-line settings) in scenarios 1-5, 21,600 cards - the note only when it changed the winner and
+  never missing, the trade line's three claims, the reference words, every "Against" direction, every limit line - plus the
+  screenshot case by name. 6 deliberate breaks, 6 caught. Live (port 5174, its storage restored exactly): condition 1, scenario
+  1, a gain-first test person - card 1 with the new reference sentence and the fit line, cards 5 and 6 with "near the bottom"
+  (card 5, Seal your apartment, gain 30, is not the lowest: card 6 has 20). **The dissertation's screenshot of that card shows
+  the old, false sentence: retake it.**
+
 ## Prolific: planned, not built (since 1 October 2026)
 
 **Decided 6 October 2026** (the researcher, after his advisor): TWO versions on one website - the email version as it

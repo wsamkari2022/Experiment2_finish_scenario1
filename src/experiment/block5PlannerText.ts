@@ -158,7 +158,11 @@ export function explainOption(
   /* --- comparison against the clean reference --- */
   let referenceLine: string | null = null;
   if (isReference) {
-    referenceLine = "This is the option that stays inside every limit you set.";
+    /* REWORDED 23 October 2026 (the researcher's "2-A"). It said "This is the option that stays inside
+       every limit you set", which reads as "the only one", while several cards usually stay inside every
+       limit (the reference is the HIGHEST-ranked of them). It now says what is true and why it matters:
+       the other cards' "Against ..." lines compare with this one. */
+    referenceLine = "This option stays inside every limit you set. The other cards are compared with it.";
   } else if (ref) {
     const refN = plan.byId[ref].normalized;
     const deltas = POLICY_DIM_KEYS.map((k) => ({ k, d: p.normalized[k] - refN[k] }));
@@ -173,9 +177,14 @@ export function explainOption(
   }
 
   /* --- the trade-off sentence: the advisor's example, in the participant's own numbers --- */
+  /* FIXED 23 October 2026. The sentence names an option that (a) is ahead on the #1 value and lost this
+     pair only because #1 was set aside - ignoredTopValueAgainst means exactly that since the planner fix of
+     the same day - and (b) is shown LOWER on the list, because the sentence says "This ranks above". The
+     display order counts wins, so beating an option head to head does not put a card above it; before
+     this, up to 1 trade line in 9 named an option shown higher. With no such option there is no sentence. */
   let tradeLine: string | null = null;
-  if (p.ignoredTopValueAgainst.length > 0) {
-    const otherId = p.ignoredTopValueAgainst[0];
+  const otherId = p.ignoredTopValueAgainst.find((id) => plan.byId[id].rank > p.rank);
+  if (otherId) {
     const other = plan.byId[otherId];
     const top = profile.order[0];
     const second = profile.order[1];
@@ -200,9 +209,14 @@ export function explainOption(
   if (p.breaches.length > 0) {
     const b = p.breaches[0];
     const what = POLICY_DIM_SHORT[b.key];
+    /* REWORDED 23 October 2026 (the researcher's "3-A"). "At the bottom" was too strong: an option is
+       flagged when it sits within the lowest band of the range (a sixth or an eighth of it), and in 21-51 in
+       100 of these lines another option was lower still. "The value you ranked first" claimed a ranking the
+       participant never made; the order comes from their earlier answers (the same correction the trade
+       line had on 24 September 2026). A soft breach is only ever on the #1 value (breachesOf). */
     const how = b.hard
-      ? `sits at the bottom of this scenario's range on ${what}, which you refused outright in the earlier questions`
-      : `sits at the bottom of this scenario's range on ${what}, the value you ranked first`;
+      ? `sits near the bottom of this scenario's range on ${what}, which you refused outright in the earlier questions`
+      : `sits near the bottom of this scenario's range on ${what}, the value your earlier answers put first`;
     let inReturn = "";
     if (ref && ref !== optionId) {
       const refN = plan.byId[ref].normalized;

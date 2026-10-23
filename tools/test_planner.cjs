@@ -321,7 +321,7 @@ assert("every option produces well-formed card text", textFails === 0,
 const refs = BLOCK5_SCENARIOS.map((scn) => {
   const r = plannerRank(scn, textProfile);
   return r.orderedIds.filter((id) =>
-    explainOption(scn, r, textProfile, id).referenceLine?.startsWith("This is the option that stays")).length;
+    explainOption(scn, r, textProfile, id).referenceLine?.startsWith("This option stays inside every limit")).length;
 });
 /* Expected shape is built from the deck, not written out: a literal [1, 1, 1, 1, 1] silently
    encoded "five scenarios" and failed the moment the deck changed size, for a reason that has
@@ -433,6 +433,114 @@ console.log("\n=== 7. Performance chips follow the tie rule (the distance from t
   const ur = plannerRank(unit, unitProfile);
   check("made-up table: the worst chip is the measure furthest below the average, not the first in the alphabet",
     explainOption(unit, ur, unitProfile, "a").chips.at(-1), "Least reliable");
+}
+
+/* =================================================================== *
+ * 8. Every sentence in the "Ranked N - why" box is true (since 23 October 2026)
+ *
+ *    Found by the dissertation writer on a real screenshot: card 1 (the community shuttle, helped 94,
+ *    harm 62) said "This ranks above 'Drive out on the industrial service road' even though that option
+ *    is slightly better on how many are helped" - the service road has 87 there. The planner noted "the
+ *    top value was set aside" whenever it was ALLOWED to set it aside, even when the winner was ahead on
+ *    it too. 27-74 in 100 trade lines were false, in every decision scenario. Every claim the box makes
+ *    is checked here against the raw option numbers, for 720 profiles (all 24 value orders x 5 exchange
+ *    rates x 2 notice bands x 3 red-line settings) in every scenario whose cards carry the box.
+ * =================================================================== */
+
+console.log("\n=== 8. Every sentence in the \"Ranked N - why\" box is true ===\n");
+{
+  const { POLICY_DIM_SHORT } = B("block5Types.js");
+  const KEYS = [GAIN, HARM, HELP, VULN];
+  const shortToKey = Object.fromEntries(KEYS.map((k) => [POLICY_DIM_SHORT[k], k]));
+  const permsOf = (a) => a.length <= 1 ? [a] : a.flatMap((x, i) => permsOf([...a.slice(0, i), ...a.slice(i + 1)]).map((p) => [x, ...p]));
+  const lexWinner = (x, y, order) => {
+    for (const k of order) { const d = x[k] - y[k]; if (Math.abs(d) > 1e-9) return d > 0 ? 1 : -1; }
+    return 0;
+  };
+  const tally = { profiles: 0, cards: 0, trade: 0, ref: 0, against: 0, breach: 0 };
+  const wrong = { tradeTop: [], tradeSecond: [], tradeAbove: [], flagNoChange: [], flagMissing: [], ref: [], against: [], breach: [] };
+  const note = (list, s) => { if (list.length < 3) list.push(s); list.n = (list.n ?? 0) + 1; };
+  const decks = BLOCK5_SCENARIOS.filter((s) => (s.decisionRole ?? "decider") !== "predicted");
+  for (const order of permsOf(KEYS)) for (const exchange of [1, 2, 3, 4, 6]) for (const tolerance of [1 / 8, 1 / 6])
+  for (const redLines of [[], [VULN], [HARM]]) {
+    const prof = profileOf(order, { tolerance, exchange, redLines });
+    tally.profiles++;
+    for (const scn of decks) {
+      const r = plannerRank(scn, prof);
+      const raw = (id) => scn.options.find((o) => o.id === id).fingerprint;
+      const idOfTitle = (t) => scn.options.find((o) => o.title === t)?.id;
+      const [top, second] = order;
+      for (const id of r.orderedIds) {
+        tally.cards++;
+        const p = r.byId[id];
+        const ex = explainOption(scn, r, prof, id);
+        const where = `${scn.id}/${id} [${order.map((k) => POLICY_DIM_SHORT[k]).join(" > ")}, x${exchange}]`;
+        /* The planner's note: every listed pair really changed the winner, and no such pair is left out. */
+        for (const other of p.beatIds) {
+          const honored = lexWinner(p.normalized, r.byId[other].normalized, order);
+          const listed = p.ignoredTopValueAgainst.includes(other);
+          if (listed && honored !== -1) note(wrong.flagNoChange, where);
+          if (!listed && honored === -1) note(wrong.flagMissing, where);
+        }
+        /* The trade line: "This ranks above <other> even though that option is slightly better on <#1> ...
+           while the gap on <#2> ..." - three claims, each checked on the raw numbers. */
+        if (ex.tradeLine) {
+          tally.trade++;
+          const other = idOfTitle(ex.tradeLine.match(/“([^”]+)”/)[1]);
+          if (!(raw(other)[top] > raw(id)[top])) note(wrong.tradeTop, `${where}: other ${raw(other)[top]} vs ${raw(id)[top]}`);
+          if (!(raw(id)[second] > raw(other)[second])) note(wrong.tradeSecond, where);
+          if (!(r.byId[other].rank > p.rank)) note(wrong.tradeAbove, where);
+        }
+        /* The reference card: it really stays inside every limit, in the approved words. */
+        if (id === r.cleanReferenceId) {
+          tally.ref++;
+          if (ex.referenceLine !== "This option stays inside every limit you set. The other cards are compared with it."
+              || p.bin !== "clear") note(wrong.ref, where);
+        } else if (ex.referenceLine) {
+          /* "Against <card>: clearly better on X, slightly worse on Y." - each direction on the raw numbers. */
+          tally.against++;
+          for (const m of ex.referenceLine.matchAll(/(better|worse) on ([a-z ]+?)(?=[,.])/g)) {
+            const d = raw(id)[shortToKey[m[2]]] - raw(r.cleanReferenceId)[shortToKey[m[2]]];
+            if ((m[1] === "better" && !(d > 0)) || (m[1] === "worse" && !(d < 0))) note(wrong.against, `${where}: ${m[0]}`);
+          }
+        }
+        /* The limit line: "near the bottom", inside the lowest band of the range, no ranking claimed. */
+        if (ex.breachLine) {
+          tally.breach++;
+          const b = p.breaches[0];
+          if (!ex.breachLine.includes("sits near the bottom of this scenario's range")
+              || /at the bottom|ranked first/.test(ex.breachLine)
+              || !(p.normalized[b.key] < tolerance)
+              || (!b.hard && (b.key !== top || !ex.breachLine.includes("the value your earlier answers put first"))))
+            note(wrong.breach, where);
+        }
+      }
+    }
+  }
+  const say = (list) => (list.n ? `${list.n} wrong, e.g. ${list.join("; ")}` : "0 wrong");
+  console.log(`  ${tally.profiles} profiles x ${decks.length} scenarios: ${tally.cards} cards, ${tally.trade} trade lines, `
+    + `${tally.ref} reference cards, ${tally.against} "Against" lines, ${tally.breach} limit lines\n`);
+  assert("the planner notes '#1 set aside' only when that changed the winner", !wrong.flagNoChange.n, say(wrong.flagNoChange));
+  assert("and never misses a pair where it did", !wrong.flagMissing.n, say(wrong.flagMissing));
+  assert("trade line: the other option really is better on the #1 value", !wrong.tradeTop.n, say(wrong.tradeTop));
+  assert("trade line: this option really is better on the #2 value", !wrong.tradeSecond.n, say(wrong.tradeSecond));
+  assert("trade line: \"This ranks above\" names an option shown lower on the list", !wrong.tradeAbove.n, say(wrong.tradeAbove));
+  assert("the trade line still appears where it is true", tally.trade > 0, `${tally.trade} cards`);
+  assert("the reference card stays inside every limit and says so in the approved words", !wrong.ref.n, say(wrong.ref));
+  assert("every \"Against\" line's better/worse holds on the raw numbers", !wrong.against.n, say(wrong.against));
+  assert("every limit line says \"near the bottom\", is in the lowest band, and claims no ranking", !wrong.breach.n, say(wrong.breach));
+
+  /* The screenshot case, by name: card 1 (the shuttle) for a helped > harm participant must not claim the
+     service road is better on how many are helped. */
+  /* Helped's gap shuttle-road is 7 of 69 points (0.10, inside a 1/8 band); harm's is 37 of 71 (0.52), more
+     than 3 times larger - so node 3 may fire, as it did on the screenshot ("about 5 times larger"). */
+  const shot = profileOf([HELP, HARM, VULN, GAIN], { tolerance: 1 / 8, exchange: 3 });
+  const scn1 = BLOCK5_SCENARIOS[0];
+  const r1 = plannerRank(scn1, shot);
+  const shuttle = explainOption(scn1, r1, shot, "chem_shuttle_loop");
+  assert("the screenshot case: the shuttle card no longer says the service road is better on how many are helped",
+    !(shuttle.tradeLine ?? "").includes("Drive out on the industrial service road"),
+    shuttle.tradeLine ?? "no trade line on the shuttle card");
 }
 
 console.log("\n  --- sample card, scenario 1, as a participant would read it ---");
