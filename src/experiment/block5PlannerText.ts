@@ -87,9 +87,8 @@ function ordinalSuffix(n: number): string {
 
 export interface CardExplanation {
   rank: number;
+  /** The planner's group for this card. Sorts the cards and is stored; never shown as a word (see below). */
   bin: PlannerBin;
-  /** Neutral marker for the bin, or null for a clear option (which needs no marker). */
-  binLabel: string | null;
   /** "Beat 4 of the other 5 options." */
   winsLine: string;
   /** "Decided on reducing harm." — null when nothing separated it from its opponents. */
@@ -105,26 +104,28 @@ export interface CardExplanation {
 }
 
 /*
- * REMOVED ON 24 SEPTEMBER 2026: the "Has a cost" tag.
+ * NO BIN WORD ON SCREEN, AND NO DIVIDER LINE IN THE LIST.
  *
- * It told a participant that an option was worse than the ones above it, in three words, before
- * they had read a line of the option. That is a nudge, not information - the card already says
- * what the option gives and what it gives up, in the participant's own terms, in the trade-off
- * panel. A short label that summarizes all of it as a penalty invites the reader to skip the
- * reasoning and take the verdict, which is the one thing this block must not let them do.
+ * REMOVED ON 24 SEPTEMBER 2026: the "Has a cost" tag and the divider "These cost you something on
+ * the value you ranked first". They told a participant that an option was worse than the ones above
+ * it, in three words, before they had read a line of the option. That is a nudge, not information -
+ * the card already says what the option gives and what it gives up, in the participant's own terms,
+ * in the trade-off panel.
  *
- * `blocked` keeps its label deliberately. A limit is something the participant SET, in Blocks 1
- * to 4, and choosing an option that crosses one only records a willingness to cross it if they
- * could see that it did. That is a fact about their own earlier answer, not a ranking of options.
+ * REMOVED ON 23 OCTOBER 2026 (the researcher's decision): the "Crosses a limit you set" label and the
+ * divider "These cross a limit you set earlier — still fully available". They had been kept on 24
+ * September so that choosing such an option could be read as a willingness to cross a limit. They
+ * showed only to a participant who refused every gain in a Block 3 ladder (about 31 in 100 steady
+ * pretend participants), so the researcher's own runs never met them, and the divider had two faults:
+ * it was drawn in Baseline, which shows no ranking reasons, and in scenario 6, whose shuffled list put
+ * it above rules that cross no limit and pointed at the participant's own value.
  *
- * The bin itself is untouched: the planner still sorts clear before costed before blocked, and
- * `bin` is still stored on every card in the database. Only the word on screen is gone.
+ * What stays: the `breachLine` ("This sits near the bottom of this scenario's range on X, which you
+ * refused outright in the earlier questions ... You can still choose it.") inside "Ranked N - why"
+ * (conditions 1-3, scenarios 1-5). It is the only place that still says it, in words, and only to a
+ * participant who opens the card. The bin itself is untouched: the planner still sorts clear before
+ * costed before blocked, and `bin` is still stored on every card in the database.
  */
-const BIN_LABEL: Record<PlannerBin, string | null> = {
-  clear: null,
-  costed: null,
-  blocked: "Crosses a limit you set",
-};
 
 const titleOf = (scenario: Block5Scenario, id: string): string =>
   scenario.options.find((o) => o.id === id)?.title ?? id;
@@ -232,7 +233,6 @@ export function explainOption(
   return {
     rank: p.rank,
     bin: p.bin,
-    binLabel: BIN_LABEL[p.bin],
     winsLine,
     decidedLine,
     referenceLine,
@@ -291,31 +291,10 @@ export function plannerPanelText(_profile: DecisionProfile): PlannerPanelText {
   return { noteLine };
 }
 
-/**
- * Heading shown on the divider before the first option of a bin.
- *
- * COSTED HAS NO DIVIDER ANY MORE (24 September 2026). "These cost you something on the value you
- * ranked first" drew a line across the list and told the participant that everything below it was
- * the losing half. Removed for the same reason as the tag above: it is a verdict delivered before
- * the reading, and the cards below it are fully available choices.
- *
- * Partial on purpose - a bin with no entry here simply draws no divider, so removing one is a
- * one-line change rather than a change to every call site.
+/*
+ * The bin dividers (BIN_DIVIDER) and the unused short bin names (BIN_SHORT) were deleted on 23 October
+ * 2026 with the label, so no bin word is left anywhere a page could draw it from. test:planner section 9
+ * fails if one comes back.
  */
-export const BIN_DIVIDER: Partial<Record<Exclude<PlannerBin, "clear">, string>> = {
-  blocked: "These cross a limit you set earlier — still fully available",
-};
-
-/**
- * Short name for a bin. NOTHING RENDERS THIS TODAY - it was written for a chosen-option
- * summary that no longer shows one, and it is kept only so a future summary has a single
- * place to take its wording from. If you are looking for what a participant actually reads,
- * it is BIN_LABEL above, where `costed` is deliberately null.
- */
-export const BIN_SHORT: Record<PlannerBin, string> = {
-  clear: "inside your limits",
-  costed: "has a cost",
-  blocked: "crosses a limit",
-};
 
 export type { PlannerBin } from "./block5Planner";

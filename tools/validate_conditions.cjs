@@ -924,7 +924,7 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (!part) why.push("the card's values part is not behind one switch");
     for (const [token, what] of [["Ranked {explanation.rank} — why", "the \"Ranked N - why\" title"], ["explanation.winsLine", "\"Beat N of the other options\""],
       ["explanation.decidedLine", "\"Most often decided on\""], ["explanation.referenceLine", "the \"Against ...\" line"], ["explanation.tradeLine", "the trade line"],
-      ["explanation.breachLine", "the limit line"], ["explanation.binLabel", "the limit label"], ["Matches your earlier answers: {option.matchScore} out of 100.", "the fit line"]]) {
+      ["explanation.breachLine", "the limit line"], ["Matches your earlier answers: {option.matchScore} out of 100.", "the fit line"]]) {
       if (!part.includes(token)) why.push(`${what} is not inside the switch`);
       if (sim.split(token).length - 1 !== part.split(token).length - 1) why.push(`${what} is drawn somewhere outside the switch too`);
     }

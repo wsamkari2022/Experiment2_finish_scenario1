@@ -1248,7 +1248,9 @@ One more field sits beside `by_scenario` and `totals`, once per participant (**s
 The three groups, in words: "inside every limit the participant set", "near the bottom of this
 scenario's range on the participant's #1 value" (inside its lowest band, a sixth or an eighth of the
 range; not necessarily the lowest option), and "crosses a limit the participant refused
-outright in Blocks 1-3". The raw fields behind it (`plannerOrder`, `plannerBins`, `plannerWins`,
+outright in Blocks 1-3". **None of the three is named on the screen** ("Has a cost" and its divider went on 24
+September 2026, "Crosses a limit you set" and its divider on 23 October 2026); the groups only sort the cards. The raw
+fields behind it (`plannerOrder`, `plannerBins`, `plannerWins`,
 `plannerInputs`, `plannerVersion`) stay in `blocks.block5_emergency_scenarios.scenarioResults[]`.
 
 **`choiceUsedTradeOff`** (on the same scenario row) is true when the chosen option beat, head to head,

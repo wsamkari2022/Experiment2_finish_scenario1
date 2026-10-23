@@ -1990,13 +1990,30 @@ and no score: these are reports.
   ratios and the prediction calibration, stamped with the code version. Never edit it by hand. `tools/behavior_sim.cjs`
   is the one simulated path it shares with the B3 report.
 
-## No "Has a cost" tag on costed cards, since 24 September 2026
+## No bin word on the cards: "Has a cost" since 24 September 2026, "Crosses a limit you set" since 23 October 2026
 
 The "Has a cost" tag and the divider "These cost you something on the value you ranked first" no
 longer show on costed cards (commit 60db800). The bin is still computed, still sorts the cards and is
 still stored. **Participants see this change**: records before 24 September 2026 saw both, so do not
 pool costed-card choices across that date. All the dated screen changes are listed in
 HOW_TO_ANALYZE_MY_DATA.md, section 4.9.
+
+**Since 23 October 2026 the blocked pair is gone too** (the researcher's decision): the label "Crosses a limit you set"
+(inside an opened card's "Ranked N - why" box) and the divider "These cross a limit you set earlier — still fully
+available" (above the last cards). On 24 September he had chosen to remove only the costed pair; the blocked pair
+showed only to a participant with a red line (refused every gain, up to $100 million, in a Block 3 ladder: about 31 in
+100 steady pretend participants, 2 in 100 random ones), so his own test runs never met it. A live run that refused
+everything in Block 3 showed both, and two faults: the divider was drawn in Baseline (which shows no ranking reasons)
+and in scenario 6, whose shuffled list put it above rules that cross no limit. `BIN_LABEL`, `BIN_DIVIDER`, the unused
+`BIN_SHORT` and `CardExplanation.binLabel` were deleted. **Unchanged:** the card order (blocked cards still last), the
+stored bins and `choiceCrossedOwnRedLine`, and the box's sentence "This sits near the bottom of this scenario's range
+on X, which you refused outright in the earlier questions ... You can still choose it." (conditions 1-3, scenarios
+1-5, an opened card), now the only place a participant can read it. **Participants with a red line see this change**
+(HOW_TO_ANALYZE 4.9). **Checked:** `test:planner` section 9 (no card explanation carries a bin word, the text module
+exports no divider, the limit group still last, none of the words left in `src/` outside comments); 4 deliberate
+breaks, 4 caught; `validate:conditions` N21 no longer looks for the label. Live (port 5174, storage restored): before,
+a test person who refused every Block 3 offer saw the divider above cards 5 and 6 of scenario 1 and the label in
+both cards, in Baseline the divider, in scenario 6 the divider above all four rules; after, none of them.
 
 ## Option cards start folded, since 23 September 2026
 

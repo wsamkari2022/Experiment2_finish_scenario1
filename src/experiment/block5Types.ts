@@ -1203,7 +1203,11 @@ export interface Block5ScenarioResult {
   choiceMatchedPlannerTop?: boolean;
   /** Did they take the option the alignment tier labeled best? */
   choiceMatchedAlignedTop?: boolean;
-  /** Did the chosen option cross a limit the participant themselves refused outright? */
+  /**
+   * Did the chosen option cross a limit the participant themselves refused outright? Since 23 October 2026 no
+   * label or line on the screen says so; only the "Ranked N - why" box of an opened card says it in words
+   * (conditions 1-3, scenarios 1-5).
+   */
   choiceCrossedOwnRedLine?: boolean;
   /** Which values it crossed, and by how much, in normalized scenario units. */
   choiceBreaches?: { key: Block5PolicyDimKey; amount: number; hard: boolean }[];

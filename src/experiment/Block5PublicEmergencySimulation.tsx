@@ -126,7 +126,7 @@ import {
 } from "./block5Types";
 import { plannerRank, PLANNER_VERSION, type PlannerResult } from "./block5Planner";
 import { deriveDecisionProfile, type DecisionProfile } from "./block5Thresholds";
-import { explainOption, plannerPanelText, BIN_DIVIDER, type CardExplanation } from "./block5PlannerText";
+import { explainOption, plannerPanelText, type CardExplanation } from "./block5PlannerText";
 import type { MoralProfile } from "./profileAnalysis";
 
 interface Props {
@@ -2362,26 +2362,12 @@ export function Block5PublicEmergencySimulation({ userProfile, moralProfile, onC
             </Text>
           </Box>
 
-          {displayOptions.map((opt, i) => {
+          {/* One plain numbered list: no divider line between the planner's groups (the last one,
+              "These cross a limit you set earlier", was removed on 23 October 2026; see block5PlannerText.ts). */}
+          {displayOptions.map((opt) => {
             const ex = explanations[opt.id];
-            const prev = i > 0 ? explanations[displayOptions[i - 1].id] : null;
-            // A divider is drawn the first time the bin changes, so the three groups read as one
-            // continuous numbered list rather than three separate lists.
-            const divider = ex && ex.bin !== "clear" && (!prev || prev.bin !== ex.bin)
-              ? BIN_DIVIDER[ex.bin]
-              : null;
             return (
               <Box key={opt.id}>
-                {divider && (
-                  <HStack gap="3" mb="4" mt="1" align="center">
-                    <Box flex="1" h="1px" bg={pal.separator} />
-                    <Text fontSize="2xs" color={pal.textFaint} textTransform="uppercase"
-                      letterSpacing="wider" textAlign="center" lineHeight="tall">
-                      {divider}
-                    </Text>
-                    <Box flex="1" h="1px" bg={pal.separator} />
-                  </HStack>
-                )}
                 <OptionCard option={opt} profile={shownProfile} accent={pal.accent} pal={pal}
                   explanation={ex ?? null}
                   standing={standings[opt.id] ?? null}
@@ -3579,12 +3565,10 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
           NOTHING WAS DELETED, ONLY MOVED. The performance placing now sits inside the
           "Ranked N — why" panel below, under a heading that says what it belongs to.
 
-          THE BIN IS A SEPARATE STORY. "Crosses a limit you set" is in that panel too, and has to
-          be visible somewhere: choosing an option that crosses a limit only records a willingness
-          to cross it if the participant could see that it did. Its partner, "Has a cost", was
-          removed entirely on 24 September 2026 — along with the divider that used to head the
-          costed group — because it passed a verdict on an option before the participant had read
-          it. See BIN_LABEL in block5PlannerText.ts for the full reasoning.
+          THE BIN IS NOT SHOWN AT ALL. "Has a cost" and its divider were removed on 24 September
+          2026, and "Crosses a limit you set" and its divider on 23 October 2026 (the researcher's
+          decision; block5PlannerText.ts has the reasons). The planner still sorts by bin and the
+          bin is still stored; only the words are gone.
         */}
       </Flex>
 
@@ -3657,7 +3641,7 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
       {/*
         NOT IN BASELINE EITHER (since 3 October 2026; `showValueReasons`, conditions.ts hidesFitAndRankingReasons): the
         researcher's advisor does not want the fit score or the ranking reasons shown there ("Q1-A"), so the whole values
-        part below - the title, every reason line, the limit label and the fit line - is left out, and only "How it
+        part below - the title, every reason line and the fit line - is left out, and only "How it
         performs" is drawn, without the rule above it.
       */}
       {explanation && showPerformance && (showValueReasons || explanation.chips.length > 0 || !!standing) && (
@@ -3697,16 +3681,6 @@ function OptionCard({ option, profile, accent, pal, explanation, standing, scena
             {explanation.breachLine && (
               <Text fontSize="xs" color={pal.textMuted} lineHeight="tall">{explanation.breachLine}</Text>
             )}
-            {/* The planner bin — moved down from the card corner, kept where the values live. */}
-            {explanation.binLabel && (
-              <Box>
-                <Badge bg="transparent" color={pal.textFaint} borderWidth="1px" borderColor={pal.separator}
-                  rounded="md" px="2" py="0.5" fontSize="2xs" fontWeight="semibold">
-                  {explanation.binLabel}
-                </Badge>
-              </Box>
-            )}
-
             {/*
               THE FIT SCORE, SAID QUIETLY.
 

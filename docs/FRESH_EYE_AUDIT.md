@@ -2193,3 +2193,14 @@ thesis says so.
     has no condition or scenario check, so Baseline (which hides the fit line and the ranking reasons since 3 October)
     and scenario 6 (which hides the values panel and the MCF since 27 September, and whose performance part of this same
     panel IS removed) show it. Opening it is counted (`optionExpands`).
+- **2026-10-23 (later). The "Crosses a limit you set" label and its divider removed** (Waseem: "consider remove it if you
+  see it"). The second-edition note to the writer said blocked cards show both; Waseem had never seen them. Both were
+  real, but only for a participant with a red line (refused every gain, up to $100 million, in a Block 3 ladder: about
+  31 in 100 steady pretend participants, 2 in 100 random). On 24 September he had chosen to remove only the costed pair
+  ("delete this line ... and the tag 'Has a cost' and nothing else"). A live run that refused everything in Block 3
+  showed the divider above cards 5 and 6 of scenario 1 and the label in both cards; in Baseline the divider (no label);
+  in scenario 6 the divider above all four shuffled rules. Two faults beyond his wish: the divider was drawn in Baseline,
+  and in scenario 6's shuffled list it could sit above rules that cross no limit (3 or 4 of the 4 rules are in the
+  limit group for a red-line person). Removed everywhere; the card order, the stored bins and the box's breach sentence
+  stay. `test:planner` section 9; 4 breaks, 4 caught. **My lesson:** the note's row was true but left out WHO sees it,
+  so it contradicted his screen; every "participants see X" line must say who and when.

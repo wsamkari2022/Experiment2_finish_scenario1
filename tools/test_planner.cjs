@@ -543,6 +543,61 @@ console.log("\n=== 8. Every sentence in the \"Ranked N - why\" box is true ===\n
     shuttle.tradeLine ?? "no trade line on the shuttle card");
 }
 
+/* =================================================================== *
+ * 9. No bin word and no divider line on the screen (since 23 October 2026)
+ *
+ *    The researcher removed "Crosses a limit you set" and the divider "These cross a limit you set
+ *    earlier - still fully available" ("Has a cost" and its divider went on 24 September 2026). They
+ *    showed only to a participant who refused every gain in a Block 3 ladder, the divider was drawn in
+ *    Baseline too, and in scenario 6's shuffled list it sat above rules that cross no limit. The planner
+ *    still sorts by bin and the bin is still stored; only the words are gone. This fails if a card
+ *    explanation carries a bin word again, if the text module exports a divider again, or if any of the
+ *    words comes back anywhere in src/.
+ * =================================================================== */
+
+console.log("\n=== 9. No bin word and no divider line on the screen ===\n");
+{
+  const text = B("block5PlannerText.js");
+  let cards = 0, blockedCards = 0, extraField = 0, blockedNotLast = 0;
+  for (const scn of BLOCK5_SCENARIOS) {
+    for (const redLines of [[], [VULN], [HARM], [VULN, HARM]]) {
+      const prof = profileOf([HARM, VULN, GAIN, HELP], { redLines });
+      const r = plannerRank(scn, prof);
+      let seenBlocked = false;
+      for (const id of r.orderedIds) {
+        const ex = explainOption(scn, r, prof, id);
+        cards++;
+        if (Object.keys(ex).some((k) => /label|divider/i.test(k))) extraField++;
+        if (ex.bin === "blocked") { blockedCards++; seenBlocked = true; } else if (seenBlocked) blockedNotLast++;
+      }
+    }
+  }
+  assert("no card explanation carries a bin word or a divider", extraField === 0, `${extraField} of ${cards} cards`);
+  assert("the text module exports no divider and no bin names", !("BIN_DIVIDER" in text) && !("BIN_SHORT" in text) && !("BIN_LABEL" in text),
+    Object.keys(text).join(", "));
+  assert("the planner still puts the limit group last (only the words were removed)", blockedCards > 0 && blockedNotLast === 0,
+    `${blockedCards} cards in the limit group, ${blockedNotLast} shown above a card outside it`);
+
+  const srcDir = path.join(__dirname, "..", "src");
+  const files = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p); else if (/\.(ts|tsx)$/.test(e.name)) files.push(p);
+    }
+  };
+  walk(srcDir);
+  /* The words as a participant would read them, outside comments: a comment may record the removal. */
+  const words = [/["'`]Crosses a limit you set["'`]/i, /["'`]These cross a limit you set earlier/i, /["'`]Has a cost["'`]/i,
+    /["'`]These cost you something/i, /\bbinLabel\b/, /\bBIN_DIVIDER\b/];
+  const hits = [];
+  for (const f of files) {
+    const code = fs.readFileSync(f, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    for (const re of words) if (re.test(code)) hits.push(`${path.relative(srcDir, f)}: ${re}`);
+  }
+  assert("none of the removed words or names is left in src/ (comments aside)", hits.length === 0, hits.join("; ") || `${files.length} files read`);
+}
+
 console.log("\n  --- sample card, scenario 1, as a participant would read it ---");
 {
   const scn = BLOCK5_SCENARIOS[0];
@@ -552,7 +607,7 @@ console.log("\n  --- sample card, scenario 1, as a participant would read it ---
   for (const id of r.orderedIds) {
     const ex = explainOption(scn, r, textProfile, id);
     const title = scn.options.find((o) => o.id === id).title;
-    console.log(`\n  [${ex.rank}] ${title}${ex.binLabel ? `   <${ex.binLabel}>` : ""}`);
+    console.log(`\n  [${ex.rank}] ${title}`);
     console.log(`      ${ex.winsLine} ${ex.decidedLine ?? ""}`);
     if (ex.referenceLine) console.log(`      ${ex.referenceLine}`);
     if (ex.tradeLine) console.log(`      ${ex.tradeLine}`);
