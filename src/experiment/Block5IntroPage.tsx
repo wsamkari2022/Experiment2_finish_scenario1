@@ -148,11 +148,17 @@ const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /**
  * THE FIVE STEPS, written as what the participant will DO rather than as what the study does.
  *
- * Every line here is checkable against the block: five scenarios in a fixed order, six options
- * each, all six selectable, ordered by the participant's own earlier answers (block5Planner), a
- * reflection stage after the choice, and a real chance to keep or change it. Nothing is promised
- * that the block does not deliver, and nothing is said about what is being measured — a
- * participant who is told "we are checking whether you stay consistent" will stay consistent.
+ * EVERY LINE IS TRUE FOR EVERY PARTICIPANT, in all four conditions and all six scenarios (since 23 October 2026, the
+ * researcher's "R14-A"). The page is the same for everybody, so it says only general true things and never names a
+ * page that some participants do not get. Until that date step 2 said "Look at six options" and "they are ordered
+ * using the preferences shown by your earlier answers" (scenario 6 has four rules, shuffled), and step 4 said "See it
+ * from another side: ... one of them will speak to you about it" (only conditions 1-2, only after a misaligned choice
+ * in scenarios 1-4). Now: every option in every scenario has what it gives up and its question (moralTension); every
+ * choice opens a page about it before it is final (the review page, or APA_Only's clarification page), where it can
+ * be kept or changed; the order sentence says "in most situations". Never add a condition, a scenario number or
+ * the word "misaligned" here (the researcher: "don't mention the thing that they will not see"); validate:journey
+ * J20 holds it. Nothing is said about what is being measured either — a participant who is told "we are checking
+ * whether you stay consistent" will stay consistent.
  */
 const HOW_IT_WORKS = [
   {
@@ -164,7 +170,7 @@ const HOW_IT_WORKS = [
     body: "What has happened, the numbers everyone is working from, and who you are in it. Your role in the story changes from one situation to the next.",
   },
   {
-    title: "Look at six options",
+    title: "Look at the options",
     /* "Ordered using the preferences shown by your earlier answers" rather than "put in order
        using your own earlier answers". The old wording named the source but not the mechanism, and
        a participant could reasonably read it as the study having ranked them somehow. This says
@@ -173,19 +179,19 @@ const HOW_IT_WORKS = [
     /* THE FOLD IS NAMED IN THE STEP ITSELF, not only in the panel below it. A participant who
        skims the five steps and starts reading has met six closed lines by then, and "click one to
        open it" has to have been said before that moment, not merely shown somewhere on the page. */
-    body: "They arrive as a list of six titles. Click one to open it and read what it does, what it costs, and the question it raises. Every one can be chosen, and they are ordered using the preferences shown by your earlier answers, not by which one we think is best.",
+    body: "They arrive as a list of titles. Click one to open it and read what it does, what it costs, and the question it raises. Every one can be chosen. In most situations they are ordered using the preferences shown by your earlier answers, not by which one we think is best.",
   },
   {
     title: "Choose one",
     body: "The one you would really choose if you were standing there. Take as long as you need.",
   },
   {
-    title: "See it from another side",
-    body: "After you choose, you will see what your choice means for the people it touches, and one of them will speak to you about it.",
+    title: "Look at it once more",
+    body: "After you choose, the next page shows your choice again before it is final. Take a moment with it.",
   },
   {
     title: "Keep it or change it",
-    body: "Both are fine. Neither is the right answer. Then the next situation begins.",
+    body: "Both are fine. Neither is the right answer. Then you move on.",
   },
 ];
 
@@ -660,9 +666,11 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
 
           Blocks 1-4 were one question at a time, so a participant arrives with no model of what a
           Block 5 scenario involves. Without one they cannot pace themselves: the commonest failure
-          is treating the first choice as the whole task, then being surprised by the reflection
-          stage and reading it as a correction. Saying the reflection is coming, and that changing
-          or keeping the choice are equally fine, removes that surprise before it can bias anything.
+          is treating the first choice as the whole task, then being surprised by the page after it
+          and reading it as a correction. Saying that a page about the choice comes next, and that
+          changing or keeping the choice are equally fine, removes that surprise before it can bias
+          anything - in words true for every condition (since 23 October 2026: it promised a person
+          speaking, which only some participants meet; see HOW_IT_WORKS).
         */}
         <Box>
           <SectionHeading n={1} icon={<LuRoute />} title="How the main study works">

@@ -39,6 +39,9 @@
  *   J17 (7 October 2026) the progress bar on the thank-you page: every step done and the flag "Done", not looping
  *   J18 (16 October 2026) the student door speaks of course credit: no participant-facing gift card, $5 or active-minutes
  *       rule anywhere, the four course-credit sentences in place, the thank-you line in the university door only
+ *   J20 (23 October 2026) the five steps on the page before the main study say only what is true for every participant:
+ *       no "six", no person speaking, no condition or scenario named, the approved words, and every option of every
+ *       scenario really has what it gives up and its question
  *   J19 (23 October 2026) one circle per scenario: the progress bar, the end of Block 4 and the page before the main
  *       study draw their circles from the scenario list (they drew five beside "6 scenarios"), and the screen-reader
  *       label says the same number
@@ -684,6 +687,39 @@ console.log("===================================================================
   if (BLOCK5_SCENARIOS.length !== 6) why.push(`the deck has ${BLOCK5_SCENARIOS.length} scenarios, not the six the study describes`);
   gate("J19", why.length === 0, why.length ? why.join(" | ")
     : `one circle per scenario (${BLOCK5_SCENARIOS.length}) on the progress bar, at the end of Block 4 and on the page before the main study, with the same number in the screen-reader label`);
+}
+
+/* ------------------------------------------------------------------------------------------- J20 */
+{
+  /* R14-A (23 October 2026): the page before the main study is the same for everybody, so its five steps must be true
+     in all four conditions and all six scenarios, and must never name a page some participants do not get. */
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const why = [];
+  const intro = src("Block5IntroPage.tsx");
+  const start = intro.indexOf("const HOW_IT_WORKS = [");
+  const steps = start >= 0 ? intro.slice(start, intro.indexOf("];", start)) : "";
+  const shown = steps.split("\n").filter((l) => /^\s*(title|body):/.test(l)).join("\n");
+  if (!shown) why.push("the five steps were not found");
+  const approved = [
+    ["title", "Look at the options"],
+    ["body", "They arrive as a list of titles. Click one to open it and read what it does, what it costs, and the question it raises. Every one can be chosen. In most situations they are ordered using the preferences shown by your earlier answers, not by which one we think is best."],
+    ["title", "Look at it once more"],
+    ["body", "After you choose, the next page shows your choice again before it is final. Take a moment with it."],
+    ["body", "Both are fine. Neither is the right answer. Then you move on."],
+  ];
+  for (const [k, words] of approved) if (!shown.includes(`${k}: "${words}"`)) why.push(`not the approved words: "${words.slice(0, 40)}..."`);
+  for (const [re, what] of [[/\bsix\b|\b6\b/i, "a count of six"], [/speak|people it touches|another side|stakeholder|reflect/i, "the person who speaks"],
+    [/condition|misalign|aligned|baseline|clarif|scenario \d|situation \d/i, "a condition, a fit word or a numbered scenario"],
+    [/next situation begins/i, "\"the next situation begins\" (the last one is followed by the results)"]]) {
+    if (re.test(shown)) why.push(`the steps mention ${what}`);
+  }
+  for (const sc of BLOCK5_SCENARIOS) {
+    const missing = sc.options.filter((o) => !o.givesUp || !o.moralTension).map((o) => o.id);
+    if (missing.length) why.push(`${sc.id}: ${missing.join(", ")} has no "what it costs" or no question, so step 2 is not true there`);
+  }
+  if (!/Each one runs the same \{HOW_IT_WORKS\.length\} steps\./.test(intro)) why.push("the step count is not read from the list");
+  gate("J20", why.length === 0, why.length ? why.join(" | ")
+    : "the five steps before the main study are true for every condition and scenario: no \"six\", no person speaking, no condition named, the approved words; every option has what it gives up and its question");
 }
 
 console.log("");

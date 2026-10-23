@@ -2219,3 +2219,14 @@ thesis says so.
     will see what your choice means for the people it touches, and one of them will speak to you about it" (only
     conditions 1-2, only after a misaligned choice in scenarios 1-4; never in APA_Only or Baseline, nor after a good fit),
     and "Each one runs the same 5 steps". Same page in all four conditions.
+- **2026-10-23 (night). R14 FIXED (Waseem: "R 14- Option A be careful, don't write to the user something about specific
+  details ... just general true information ... just don't mention the thing that they will not see").** The five steps
+  on the page before the main study now hold in every condition and scenario (CLAUDE.md, "The five steps before the main
+  study"); `validate:journey` J20, 4 breaks, 4 caught; live in Baseline and on a 375px phone. **New, OPEN (Waseem to
+  decide, participants see it):**
+  - **R15. Two more lines on the same page describe scenarios 1-5 only.** Section 3: "On every scenario page there is a
+    button marked 'Compare all options'. It draws all six options on these two shapes at once." (scenario 6: four rules,
+    one chart, `showPerformance` in Block5OptionCompare.tsx). Section 4: the performance gauge "At the top of every page"
+    and "The same five measure names appear three times on a scenario page" (scenario 6 has no gauge and no performance,
+    `scenarioShowsPerformance`). Suggested general words: "It draws all the options on these charts at once." and "At the
+    top of the page" / "... on most scenario pages".
