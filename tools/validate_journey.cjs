@@ -39,6 +39,9 @@
  *   J17 (7 October 2026) the progress bar on the thank-you page: every step done and the flag "Done", not looping
  *   J18 (16 October 2026) the student door speaks of course credit: no participant-facing gift card, $5 or active-minutes
  *       rule anywhere, the four course-credit sentences in place, the thank-you line in the university door only
+ *   J19 (23 October 2026) one circle per scenario: the progress bar, the end of Block 4 and the page before the main
+ *       study draw their circles from the scenario list (they drew five beside "6 scenarios"), and the screen-reader
+ *       label says the same number
  *   J14 (3 October 2026) the first page: the study's name as its heading (and, since 4 October, in the browser tab), never split at a hyphen, the welcome only
  *       while the email is asked for, "Start or continue" inside the card, the email check unchanged; and the
  *       performance panel's title row on a phone: the title asks for room before sharing the row and the controls
@@ -657,6 +660,30 @@ console.log("===================================================================
   if (!/\{!prolificId && \(\s*<Text[^>]*data-course-credit-line>\s*If you are taking part for course credit, your completion is recorded\.\s*<\/Text>\s*\)\}/.test(src("UserFeedbackPage.tsx"))) why.push("the thank-you line can show in the Prolific door");
   gate("J18", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : "the student door speaks of course credit: no page shows the gift card, its $5 or the active-minutes rule; the results card, the demographic and start pages' email help, and the thank-you line (university door only) say course credit");
+}
+
+/* ------------------------------------------------------------------------------------------- J19 */
+{
+  /* R12-A (23 October 2026): the three rows of circles said "five" beside "6 scenarios". Each must now draw one
+     circle per scenario, from the same list the words count, so the two can never disagree again. */
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const why = [];
+  const stepper = src("GlobalStepper.tsx");
+  const block4 = src("AdaptiveStakeholderReflectionBlock.tsx");
+  const intro = src("Block5IntroPage.tsx");
+  if (!/dots: BLOCK5_SCENARIOS\.length,/.test(stepper)) why.push("the progress bar's dots are not counted from the scenario list");
+  if (/dots: \d/.test(stepper)) why.push("the progress bar still has a typed number of dots");
+  const b4 = block4.slice(block4.indexOf("Main study next"), block4.indexOf("Main study next") + 600);
+  if (!/\{BLOCK5_SCENARIOS\.map\(\(sc\) => \(\s*<Box key=\{sc\.id\}/.test(b4)) why.push("the end of Block 4 does not draw one circle per scenario");
+  const hero = intro.slice(intro.indexOf("scenarios ahead`}>") - 200, intro.indexOf("scenarios ahead`}>") + 200);
+  if (!/aria-label=\{`\$\{sentenceCase\(scenarioCountWord\(BLOCK5_SCENARIOS\.length\)\)\} scenarios ahead`\}>\s*\{BLOCK5_SCENARIOS\.map\(\(sc\) => \(/.test(hero))
+    why.push("the page before the main study does not draw one circle per scenario with a label of the same number");
+  for (const [name, text] of [["GlobalStepper", stepper], ["AdaptiveStakeholderReflectionBlock", block4], ["Block5IntroPage", intro]]) {
+    if (/\[0, ?1, ?2, ?3, ?4\]|length: 5|"Five scenarios ahead"/.test(text)) why.push(`${name} still has a fixed five`);
+  }
+  if (BLOCK5_SCENARIOS.length !== 6) why.push(`the deck has ${BLOCK5_SCENARIOS.length} scenarios, not the six the study describes`);
+  gate("J19", why.length === 0, why.length ? why.join(" | ")
+    : `one circle per scenario (${BLOCK5_SCENARIOS.length}) on the progress bar, at the end of Block 4 and on the page before the main study, with the same number in the screen-reader label`);
 }
 
 console.log("");

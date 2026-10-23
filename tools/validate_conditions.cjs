@@ -423,7 +423,6 @@ function pretendStore(docs = [], { slow = 3, random = seeded(7) } = {}) {
     if (/\{[^}]*\.(type|urlName)\}/.test(landing.split("return (")[1] ?? "")) why.push("the landing page shows the condition's name");
     const resumeFiles = db.RESUME_FILES ?? [];
     if (resumeFiles.includes(C.CONDITION_KEY)) why.push("the condition file travels in resume_state (a new browser could merge over it)");
-    if (/KEEP_KEYS = new Set<string>\(\[[^\]]*vrds_condition/.test(src("src/components/dev/DevResetButton.tsx"))) why.push("the development reset keeps the condition file");
     gate("N9", "the flow: landing first, never saved; the two fields; both saves; a return keeps its own", why);
   }
 

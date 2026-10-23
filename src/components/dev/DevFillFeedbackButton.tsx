@@ -8,7 +8,7 @@
  *   2. delete the import and the <DevFillFeedbackButton … /> line in
  *      src/experiment/UserFeedbackPage.tsx
  *
- * It follows DevResetButton exactly, including the reason that file is shaped the way it is:
+ * It is shaped like the old DevResetButton (removed on 23 October 2026, the researcher's request), for this reason:
  * `import.meta.env.DEV` is replaced by the literal `false` at build time, so the guard below
  * becomes `if (true) return null` and everything after it — the control, its label, the filling
  * itself — is unreachable and is dropped from the bundle. Nothing here can reach a participant
@@ -16,9 +16,8 @@
  * for the word "Fill feedback": it is not there.
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * WHY IT SITS ON THE PAGE RATHER THAN IN App.tsx. The reset button belongs everywhere, so it is
- * mounted once, above the flow. This one needs the feedback page's own answer state, which only
- * that page has. It is handed a single callback and knows nothing else about the page.
+ * WHY IT SITS ON THE PAGE RATHER THAN IN App.tsx. It needs the feedback page's own answer state,
+ * which only that page has. It is handed a single callback and knows nothing else about the page.
  *
  * WHY IT DOES NOT SUBMIT. Filling and submitting are different things: the submit path writes a
  * real record, stops the clock and marks the study completed. A tester who wants that presses the

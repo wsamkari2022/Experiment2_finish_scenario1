@@ -358,8 +358,8 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
    * NO "FINISH" BUTTON ON THE THANK-YOU PAGE (removed 28 September 2026, the researcher's request).
    * It cleared this browser's copy of the run and reloaded to the start screen, which looked like an
    * invitation to take the study again. It never recorded anything: the study is marked complete when
-   * the feedback is submitted (onCompleted, ExperimentFlow), so removing it changes no data. For
-   * testing, the development-only "Restart from Block 1" button still resets a browser.
+   * the feedback is submitted (onCompleted, ExperimentFlow), so removing it changes no data. (The
+   * development-only "Restart from Block 1" button was removed too, on 23 October 2026.)
    */
 
   if (submitted) {

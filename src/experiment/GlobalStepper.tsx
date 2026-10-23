@@ -106,13 +106,15 @@ const PHASES: Phase[] = SHOW_INTER_BLOCK_PAGES
  * The rail now carries the ENTIRE session, so the main study is the large middle of the journey
  * rather than its terminus, and the flag sits where a flag belongs -- at the actual end:
  *
- *     (1)(2)(3)(4) ── (o o o o o) ── (.)(.)  ┈┈┈ (flag)
- *                      Main study    results  Finish
- *                      5 scenarios   feedback
+ *     (1)(2)(3)(4) ── (o o o o o o) ── (.)(.)  ┈┈┈ (flag)
+ *                      Main study      results  Finish
+ *                      6 scenarios     feedback
  *
- * The five empty circles are the load-bearing part. They say "five situations still to come"
- * without a sentence anyone has to read, and they are the same five the participant then sees
- * counted off as "Scenario 1 of 5" inside the block, so the promise matches the experience.
+ * The empty circles are the load-bearing part. They say how many situations are still to come
+ * without a sentence anyone has to read, and they are the same ones the participant then sees
+ * counted off as "Scenario 1 of 6" inside the block, so the promise matches the experience.
+ * ONE CIRCLE PER SCENARIO, COUNTED FROM THE DECK (since 23 October 2026): the bar drew five beside
+ * "6 scenarios" from the day scenario 6 was added until the researcher's "R12-A" (validate:journey J19).
  */
 type Stop =
   | { kind: "section"; label: string; stages: string[] }
@@ -129,7 +131,7 @@ const STOPS: Stop[] = [
     note: `${BLOCK5_SCENARIOS.length} scenarios`,
     /* block5_intro is the doorway page and block5 the scenarios themselves; both are "here". */
     stages: ["block5_intro", "block5"],
-    dots: 5,
+    dots: BLOCK5_SCENARIOS.length,
   },
   { kind: "tail", label: "Your results", stages: ["block5_summary"] },
   { kind: "tail", label: "Feedback", stages: ["feedback"] },
@@ -207,9 +209,9 @@ function PhaseNode({
 }
 
 /**
- * The main study, drawn as five circles in one capsule.
+ * The main study, drawn as one circle per scenario in one capsule.
  *
- * Deliberately the widest thing on the rail. A single node here would make five scenarios look
+ * Deliberately the widest thing on the rail. A single node here would make six scenarios look
  * like one more step the size of "Trolley", which is the misreading the whole change exists to
  * prevent. The dots do not fill in one at a time -- the bar is presentational and does not know
  * the scenario index -- so they are empty until the block is behind the participant. That is
@@ -397,7 +399,7 @@ function GoalMarker({ reached, afterNext, finished }: { reached: boolean; afterN
    * No countdown here any more.
    *
    * It used to read "After N more sections", which is now unsayable without lying in one
-   * direction or the other: the main study is ONE stop on the rail but five scenarios of work,
+   * direction or the other: the main study is ONE stop on the rail but six scenarios of work,
    * so any number either oversells how close the end is or undersells what is left. The rail
    * itself shows the distance, and it is drawn to scale. The flag just names the end.
    *
@@ -549,7 +551,7 @@ export function GlobalStepper({ stage, finished = false }: { stage: string; fini
                 data-stop={i}
                 gap={{ base: "2", md: "3" }}
                 align="flex-start"
-                /* The main study is allowed to take the room its five dots need; everything else
+                /* The main study is allowed to take the room its dots need; everything else
                    shares what is left, so the cluster stays legible on a narrow screen. */
                 flex={s.kind === "main" ? "0 0 auto" : "1"}
                 minW="fit-content"

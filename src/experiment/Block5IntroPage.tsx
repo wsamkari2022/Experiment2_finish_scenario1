@@ -573,13 +573,14 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           </Box>
 
           {/*
-            Five empty circles, at hero size. This is the one element on the page that a
-            participant who reads nothing at all still receives: five things are still to come.
+            One empty circle per scenario, at hero size, counted from the deck like the words under
+            them (five were drawn until 23 October 2026). This is the one element on the page that a
+            participant who reads nothing at all still receives: how many things are still to come.
           */}
-          <HStack gap="2" justify="center" aria-label="Five scenarios ahead">
-            {[0, 1, 2, 3, 4].map((i) => (
+          <HStack gap="2" justify="center" aria-label={`${sentenceCase(scenarioCountWord(BLOCK5_SCENARIOS.length))} scenarios ahead`}>
+            {BLOCK5_SCENARIOS.map((sc) => (
               <Box
-                key={i}
+                key={sc.id}
                 boxSize="2.5"
                 rounded="full"
                 borderWidth="2px"

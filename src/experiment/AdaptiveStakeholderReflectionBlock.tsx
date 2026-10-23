@@ -976,9 +976,10 @@ function Screen3FinalDecision({
             {/*
               WHAT HAPPENS NEXT, drawn rather than described.
 
-              Five empty circles is the load-bearing element: it states, without a sentence anyone
-              has to read, that five more situations are still ahead. A participant who reads only
-              the button still sees them sitting under it.
+              The empty circles are the load-bearing element: they state, without a sentence anyone
+              has to read, how many situations are still ahead - one per scenario, counted from the
+              deck like the words beside them (it drew five until 23 October 2026). A participant who
+              reads only the button still sees them sitting under it.
             */}
             <HStack gap="2.5" mt="4" pt="3" borderTopWidth="1px" borderColor="purple.muted" align="center">
               <Icon boxSize="3.5" color="purple.fg">
@@ -988,8 +989,8 @@ function Screen3FinalDecision({
                 Main study next
               </Text>
               <HStack gap="1" flexShrink={0}>
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <Box key={i} boxSize="2" rounded="full" borderWidth="1.5px" borderColor="purple.solid" />
+                {BLOCK5_SCENARIOS.map((sc) => (
+                  <Box key={sc.id} boxSize="2" rounded="full" borderWidth="1.5px" borderColor="purple.solid" />
                 ))}
               </HStack>
               <Text fontSize="xs" color="fg.muted" whiteSpace="nowrap">

@@ -2191,7 +2191,7 @@ thesis says so.
   - **R13. "See value & metric details" in Baseline and scenario 6.** The open card's details panel "How this option
     fits your values" (the option's four numbers against "Your line", "Below your priority by N ... lowers alignment")
     has no condition or scenario check, so Baseline (which hides the fit line and the ranking reasons since 3 October)
-    and scenario 6 (which hides the values panel and the MCF since 27 September, and whose performance part of this same
+    and scenario 6 (which has no values panel and no MCF since 27 September, and whose performance part of this same
     panel IS removed) show it. Opening it is counted (`optionExpands`).
 - **2026-10-23 (later). The "Crosses a limit you set" label and its divider removed** (Waseem: "consider remove it if you
   see it"). The second-edition note to the writer said blocked cards show both; Waseem had never seen them. Both were
@@ -2204,3 +2204,18 @@ thesis says so.
   limit group for a red-line person). Removed everywhere; the card order, the stored bins and the box's breach sentence
   stay. `test:planner` section 9; 4 breaks, 4 caught. **My lesson:** the note's row was true but left out WHO sees it,
   so it contradicted his screen; every "participants see X" line must say who and when.
+- **2026-10-23 (evening). R12 FIXED, R13 DECIDED, the restart button removed** (Waseem: "R13 question- Option B ... R12
+  question - Option A"; "Please remove the 'Restart from Block 1' button for the development environment ... I don't need
+  it anymore"). **R12-A:** the progress bar, the end of Block 4 and the page before the main study draw one circle per
+  scenario, counted from `BLOCK5_SCENARIOS` like the words beside them (6), and the page's screen-reader label reads the
+  same number ("Six scenarios ahead"); `validate:journey` J19, 3 breaks, 3 caught. **R13-B:** the "See value & metric
+  details" panel stays in every condition and scenario, described as part of the design (CLAUDE.md, the pack's F13).
+  Waseem's correction, kept here: scenario 6 has NO MCF at all (and no values panel); my words "hides the MCF" read as if it
+  had one. **DevResetButton deleted** (the file, App.tsx's two lines, N9's line that read it, the checklist's wording);
+  DevFillFeedbackButton stays. **New, OPEN (Waseem to decide, participants see it):**
+  - **R14. The page before the main study's "How a scenario runs" steps describe scenarios 1-4 of condition 1 only**
+    (`HOW_IT_WORKS`, Block5IntroPage.tsx): "Look at six options ... a list of six titles ... ordered using the preferences
+    shown by your earlier answers" (scenario 6 has four rules, shuffled), "See it from another side: After you choose, you
+    will see what your choice means for the people it touches, and one of them will speak to you about it" (only
+    conditions 1-2, only after a misaligned choice in scenarios 1-4; never in APA_Only or Baseline, nor after a good fit),
+    and "Each one runs the same 5 steps". Same page in all four conditions.
