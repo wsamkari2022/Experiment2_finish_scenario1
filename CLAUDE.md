@@ -2033,7 +2033,7 @@ condition, no "misaligned", no person speaking). Now: "Look at the options" ("Th
 it before it is final (the review page, or APA_Only's clarification page), and every option has what it gives up and its
 question (`moralTension`). **Participants see it** (HOW_TO_ANALYZE 4.9). `validate:journey` J20; 4 deliberate breaks, 4
 caught. Live (port 5174, storage restored): the new words in Baseline, a 375px phone without sideways scrolling.
-**Still on the same page, not changed (R15, the researcher to decide):** section 3 says "Compare all options" "draws all
+**Kept as they are (R15-B, the researcher, 24 October 2026):** section 3 says "Compare all options" "draws all
 six options on these two shapes at once" (scenario 6: four rules, one chart), and section 4 puts the performance gauge
 "At the top of every page" (scenario 6 has none).
 

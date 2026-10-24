@@ -1543,8 +1543,12 @@ Answer types:
 
 ## 8. `timings`
 
-Milliseconds per part: `block1Ms`, `block2Ms`, `block3Ms`, `block4Ms`, `block5TotalMs`,
-`summaryMs`, `feedbackMs`, and `totalExperimentMs`.
+`timings` is the raw stage clock: `firstStartedAt` and `lastEventAt` (epoch milliseconds: the start of Block 1 and the
+latest stage change) and, per stage, `stages.<stage>.durationMs` (the time that part was open in the tab; a stretch
+left open when the tab was closed is not counted). The ready-made milliseconds per part - `block1Ms`, `block2Ms`,
+`block3Ms`, `block4Ms`, `block5TotalMs`, `summaryMs`, `feedbackMs` - and `totalExperimentMs` are in
+`blocks.feedback_answers.timing`, made when the feedback is sent. (Corrected 24 October 2026: this paragraph used
+to list those names as if they were inside `timings`.)
 
 Useful for spotting participants who rushed. `headline.total_time_minutes` is the **sum of these
 stages** converted to minutes — not `totalExperimentMs`, and not the whole study. See the table
@@ -1569,7 +1573,7 @@ one of them**, and the correction matters more than the original claim:
 | Total | Changed? | Why |
 |---|---|---|
 | `active_time.total_active_minutes` | **No** | A separate ledger that counts on every page. The daily Prolific pay check reads it (it was the gift card's 35-minute rule until 16 October 2026; the course credit never reads it) |
-| `timings.totalExperimentMs` | **No** | The span from the first stage to the last event, so reading time is still inside it |
+| `blocks.feedback_answers.timing.totalExperimentMs` (= `timings.lastEventAt` - `timings.firstStartedAt`) | **No** | The span from the first stage to the last event, so reading time is still inside it. **It is elapsed time, not work:** across several visits it includes the hours away (a test run of 59 working minutes in 6 visits had a span of about 17 hours) |
 | `headline.total_time_minutes` | **Yes — it got smaller** | It is the *sum of the timed stages*, and two stages are no longer timed. Measured at about **5 minutes** on a typical run |
 
 `headline.total_time_minutes` was left as a sum because the alternatives are worse: a span is wrong

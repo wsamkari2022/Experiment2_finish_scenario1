@@ -2230,3 +2230,25 @@ thesis says so.
     and "The same five measure names appear three times on a scenario page" (scenario 6 has no gauge and no performance,
     `scenarioShowsPerformance`). Suggested general words: "It draws all the options on these charts at once." and "At the
     top of the page" / "... on most scenario pages".
+- **2026-10-24. R15 DECIDED: B, keep** (Waseem: "R15- Option B"): the two lines on the page before the main study stay
+  as they are. **The writer's round-30 questions** (Questions_for_Code_Agent_Round30_2026-10-24.md, on screenshots
+  of the current test version; answers in the writer's folder, ANSWERS_Round30_screens_2026-10-24.md). Every answer
+  was checked against the code and the screenshots. Two documentation gaps fixed: HOW_TO_READ section 8 put the
+  stage milliseconds and `totalExperimentMs` under `timings` (they are in `blocks.feedback_answers.timing`), and
+  the Source Pack left out scenario 6's "Were you surprised by the guess?" (Yes/No, required; since 14 September).
+  **New, OPEN (Waseem to decide; participants see them; no score or stored number involved):**
+  - **R16. The thank-you page's time chart** (Block5VisualizationsView, "Where your time went"): its last line "You
+    spent about 1032m 51s on the whole experiment" is `totalExperimentMs`, the elapsed span from Block 1 to the last
+    stage change, including the hours away between visits, written in minutes; the header beside it says "59
+    minutes of work" (`active_time.total_active_minutes`). And the longest bar's label is cut off ("6m 39"): the
+    chart's right margin (`padR` 48 in HBarChart, block5Charts.tsx) is too narrow for a time label.
+  - **R17. Two "too fast" lines:** the thank-you chart says "below about 2.5 seconds the question text cannot have
+    been read" (`HURRIED_SECONDS`, blocks123Consistency.ts); the careful-participation flag and the OSF registration
+    use 2 seconds (`FAST_ANSWER_SECONDS`, dbShape.ts). The two medians are also computed slightly differently.
+  - **R18. The results page's preview** of the thank-you charts lists four topics ("How your values moved", "Who
+    carried the cost (the position effect)", "What our software predicted", "Your time and your first answers");
+    the thank-you page has five tabs with other names.
+  - **R19. "moved the most" with a tie:** the line chart's caption names the first value in a fixed list when two
+    or more values moved the same amount (a test run: all four moved 10; it said "Protecting the vulnerable").
+  - **R20. A stale chart number:** the small print under "Your values against your performance, in each position"
+    says "the point distances in chart 5"; since the five tabs (29 September) that chart is chart 1 of its tab.
