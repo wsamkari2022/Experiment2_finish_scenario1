@@ -428,7 +428,7 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
           </Box>
 
           {results?.scenarioResults?.length ? (
-            <JourneyTabs results={results} />
+            <JourneyTabs results={results} workTime={{ minutes, visits }} />
           ) : (
             <Text fontSize="sm" color="fg.muted" textAlign="center">
               Your journey charts are kept in the browser where you finished the scenarios.

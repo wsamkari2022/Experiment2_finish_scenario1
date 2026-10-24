@@ -2259,3 +2259,8 @@ thesis says so.
   valueMoveCaption names every value in a tie. R20: the chart number is counted. The bar chart's right margin grows with
   its longest label. `validate:journey` J21-J23, 8 breaks, 8 caught; live to the thank-you page. **R16 still OPEN** (the
   time chart's last line: working time, or the elapsed span said honestly in hours; previews shown to Waseem).
+- **2026-10-24 (evening). R16 DECIDED and FIXED: "A and B both"** (Waseem: "add options A and B Both. so the time labels
+  will explain everything"). The time chart's last line is now two lines: the header's working time and visits, and the
+  saved span from the start of the first part to the last answer in hours and minutes, "including the time you were
+  away". The span is read back from the saved feedback record, so a reload of the thank-you page no longer stretches it.
+  `validate:journey` J24, 7 breaks, 7 caught. R12-R20 all closed.

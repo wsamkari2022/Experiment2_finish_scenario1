@@ -45,6 +45,8 @@
  *       number is counted, a bar's value label always has room, and two lines on the page before the main study are
  *       true in every scenario
  *   J23 (24 October 2026) "moved the most" names every value in a tie, in whole points
+ *   J24 (24 October 2026) the time chart's two lines: the header's working time and visits, then the span the
+ *       database saved (hours away included) in hours and minutes; never "You spent about" the span
  *   J20 (23 October 2026) the five steps on the page before the main study say only what is true for every participant:
  *       no "six", no person speaking, no condition or scenario named, the approved words, and every option of every
  *       scenario really has what it gives up and its question
@@ -413,9 +415,9 @@ console.log("===================================================================
   const why = [];
   if (/Block5VisualizationsView|JourneyTabs|View your results as charts|noteChartsOpened/.test(page)) why.push("the results page still opens the charts");
   const submitted = feedback.indexOf("if (submitted) {"), form = feedback.indexOf("return (", feedback.indexOf("return (", submitted) + 1);
-  const at = feedback.indexOf("<JourneyTabs results={results} />");
+  const at = feedback.indexOf("<JourneyTabs results={results} workTime={{ minutes, visits }} />");
   if (at < 0 || feedback.split("<JourneyTabs").length !== 2 || !(at > submitted && at < form)) why.push("the thank-you page does not draw the journey tabs, or they appear before the feedback is sent");
-  if (!tabs.includes("<Block5VisualizationsView results={results} tab={t.key} />") || !tabs.includes("lazyMount")) why.push("a tab does not draw its own cards");
+  if (!tabs.includes("<Block5VisualizationsView results={results} tab={t.key} workTime={workTime} />") || !tabs.includes("lazyMount")) why.push("a tab does not draw its own cards");
   /* Every card key the page can draw, in exactly one tab. */
   const J = B("block5Journey.js");
   const m = view.match(/const cardOrder = \[([\s\S]*?)\]\.filter\(Boolean\)/);
@@ -843,6 +845,51 @@ console.log("===================================================================
   if (/moverDelta/.test(view)) why.push("the old first-in-the-list rule is still in the page");
   gate("J23", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : "\"moved the most\" names every value in a tie (two, three, or \"All four of your values ended N points from where they started\"), compared in whole points; one value and \"held remarkably steady\" as before");
+}
+
+/* ------------------------------------------------------------------------------------------- J24 */
+{
+  /* R16, "A and B both" (24 October 2026): the line read "You spent about 1032m 51s on the whole experiment". */
+  const why = [];
+  const L = (w, v, ms) => J.timeChartLines({ workingMinutes: w, visits: v, spanMs: ms });
+  const cases = [
+    ["the screenshot run: 59 min of work, 6 visits, 1032m 51s", L(59, 6, (1032 * 60 + 51) * 1000), [
+      "Your working time for the whole study: about 59 minutes, in 6 visits (only the time you were active, on every page).",
+      "From the start of the first part to your last answer: about 17 hours 13 minutes, including the time you were away."]],
+    ["one visit (the header shows none)", L(41, null, 46 * 60000), [
+      "Your working time for the whole study: about 41 minutes (only the time you were active, on every page).",
+      "From the start of the first part to your last answer: about 46 minutes, including any pauses."]],
+    ["one visit given as 1, not null: still no visit count", L(41, 1, 46 * 60000), [
+      "Your working time for the whole study: about 41 minutes (only the time you were active, on every page).",
+      "From the start of the first part to your last answer: about 46 minutes, including any pauses."]],
+    ["no working minutes: the span only", L(null, null, 90 * 60000), [
+      "From the start of the first part to your last answer: about 1 hour 30 minutes, including any pauses."]],
+    ["no span: the working time only", L(72, 2, 0), [
+      "Your working time for the whole study: about 1 hour 12 minutes, in 2 visits (only the time you were active, on every page)."]],
+  ];
+  for (const [name, got, want] of cases)
+    if (JSON.stringify(got) !== JSON.stringify(want)) why.push(`${name}: ${JSON.stringify(got)}`);
+  const words = [[0, "less than a minute"], [29000, "less than a minute"], [31000, "1 minute"], [60000, "1 minute"],
+    [2 * 60000, "2 minutes"], [60 * 60000, "1 hour"], [61 * 60000, "1 hour 1 minute"], [120 * 60000, "2 hours"],
+    [(1032 * 60 + 51) * 1000, "17 hours 13 minutes"]];
+  for (const [ms, want] of words) if (J.spokenDuration(ms) !== want) why.push(`${ms} ms reads "${J.spokenDuration(ms)}"`);
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const view = src("Block5VisualizationsView.tsx");
+  if (/You spent about/.test(view.replace(/\/\*[\s\S]*?\*\//g, ""))) why.push("the old \"You spent about\" line is still drawn");
+  if (!/workingMinutes: workTime\?\.minutes \?\? null,\s*visits: workTime\?\.visits \?\? null,\s*spanMs: savedSpanMs\(results\) \?\? timing\.totalExperimentMs,/.test(view))
+    why.push("the time chart does not read the header's numbers and the saved span");
+  if (!/caption=\{timeLines\.length \?/.test(view)) why.push("the time chart does not draw the two lines");
+  if (!/<Block5VisualizationsView results=\{results\} tab=\{t\.key\} workTime=\{workTime\} \/>/.test(src("JourneyTabs.tsx")))
+    why.push("the tabs do not pass the header's numbers on");
+  const thanks = src("UserFeedbackPage.tsx");
+  if (!/<JourneyTabs results=\{results\} workTime=\{\{ minutes, visits \}\} \/>/.test(thanks)) why.push("the thank-you page does not pass its header's minutes and visits");
+  if (!/const minutes = activeSummary && activeSummary\.total_active_minutes > 0/.test(thanks) || !/const visits = activeSummary && activeSummary\.sittings > 1/.test(thanks))
+    why.push("the header's minutes or visits changed: check the time chart's line still says the same");
+  const fb = src("feedbackTypes.ts");
+  if (!/rec\?\.block5Full\?\.completedAt === results\.completedAt && typeof ms === "number" && ms > 0 \? ms : null/.test(fb))
+    why.push("the saved span is not matched to this run");
+  gate("J24", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : "the time chart's two lines: the header's working time and visits, then the saved span from the start of the first part to the last answer in hours and minutes (\"including the time you were away\" after more than one visit); no \"You spent about\"");
 }
 
 console.log("");

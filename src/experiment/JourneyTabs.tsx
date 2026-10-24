@@ -28,7 +28,11 @@ const TAB_LOOK: Record<JourneyTabKey, { icon: ReactNode; palette: string; line: 
   early: { icon: <LuHistory />, palette: "orange", line: "Before the scenarios" },
 };
 
-export function JourneyTabs({ results }: { results: Block5Results }) {
+export function JourneyTabs({ results, workTime }: {
+  results: Block5Results;
+  /** The header's working minutes and visits, for the time chart's line (R16). */
+  workTime?: { minutes: number | null; visits: number | null };
+}) {
   return (
     <Box w="full">
       <VStack gap="2" align="start" mb="5">
@@ -80,7 +84,7 @@ export function JourneyTabs({ results }: { results: Block5Results }) {
             <Box borderStartWidth="3px" borderColor={`${TAB_LOOK[t.key].palette}.solid`} ps="4" py="1" mb="6" maxW="3xl">
               <Text fontSize="sm" color="fg.muted" lineHeight="tall">{t.blurb}</Text>
             </Box>
-            <Block5VisualizationsView results={results} tab={t.key} />
+            <Block5VisualizationsView results={results} tab={t.key} workTime={workTime} />
           </Tabs.Content>
         ))}
       </Tabs.Root>

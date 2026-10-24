@@ -593,6 +593,23 @@ export function saveFeedbackRecord(record: FeedbackRecord): void {
   }
 }
 
+/**
+ * The span the database saved for THIS run (`timing.totalExperimentMs`: from the start of Block 1 to the feedback), read
+ * back from the record written when the feedback was sent; null when this browser holds no record of this run. The
+ * thank-you page shows it (since 24 October 2026, R16). Worked out again after a reload it would end at the reload,
+ * because opening the page marks the feedback stage again. The run is matched by its Block 5 completion time.
+ */
+export function savedSpanMs(results: Pick<Block5Results, "completedAt">): number | null {
+  try {
+    const raw = localStorage.getItem(FEEDBACK_KEY);
+    const rec = raw ? (JSON.parse(raw) as Partial<FeedbackRecord>) : null;
+    const ms = rec?.timing?.totalExperimentMs;
+    return rec?.block5Full?.completedAt === results.completedAt && typeof ms === "number" && ms > 0 ? ms : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Reads every archived feedback record on this device (for export to MongoDB later). */
 export function getFeedbackArchive(): FeedbackRecord[] {
   try {

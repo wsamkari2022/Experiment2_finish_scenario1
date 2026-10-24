@@ -97,6 +97,37 @@ export function valueMoveCaption(
   return `${names} moved the most across the journey (by ${most} points each).`;
 }
 
+/** A length of time in words, in whole minutes: "46 minutes", "1 hour", "17 hours 13 minutes", "less than a minute". */
+export function spokenDuration(ms: number): string {
+  const total = Math.round(Math.max(0, ms) / 60000);
+  if (total < 1) return "less than a minute";
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  const unit = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  if (!h) return unit(m, "minute");
+  return m ? `${unit(h, "hour")} ${unit(m, "minute")}` : unit(h, "hour");
+}
+
+/**
+ * The two lines under "Where your time went" (since 24 October 2026, the researcher's "R16: A and B both"). The line
+ * used to read "You spent about 1032m 51s on the whole experiment": "spent" reads as working time, but the number is the
+ * span from the start of Block 1 to the feedback, the hours away included, written in minutes. Now both, each named:
+ * the working time - the SAME minutes and visits the page's header shows ("59 minutes of work · 6 visits") - and the span
+ * (`timing.totalExperimentMs`, the database's own number), in hours. A visit count shows only when there was more than
+ * one, as in the header. Either line is left out when it has no number.
+ */
+export function timeChartLines(t: { workingMinutes: number | null; visits: number | null; spanMs: number }): string[] {
+  const lines: string[] = [];
+  const severalVisits = t.visits !== null && t.visits > 1;
+  if (t.workingMinutes !== null && t.workingMinutes > 0)
+    lines.push(`Your working time for the whole study: about ${spokenDuration(t.workingMinutes * 60000)}`
+      + `${severalVisits ? `, in ${t.visits} visits` : ""} (only the time you were active, on every page).`);
+  if (t.spanMs > 0)
+    lines.push(`From the start of the first part to your last answer: about ${spokenDuration(t.spanMs)}, `
+      + `${severalVisits ? "including the time you were away" : "including any pauses"}.`);
+  return lines;
+}
+
 /** The five positions the deck puts a participant in, in the order they meet them. The legend reads this. */
 export const DECK_POSITIONS: PositionKey[] = BLOCK5_SCENARIOS
   .map((s) => s.stakePosition)

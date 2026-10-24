@@ -42,12 +42,13 @@ import { readBlocks123, moneySentence, trolleySentence, workforceSentence, DELIB
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
 import {
-  DECK_POSITIONS, JOURNEY_TABS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, valueJourney, valueMoveCaption, veilRow,
+  DECK_POSITIONS, JOURNEY_TABS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, timeChartLines, valueJourney, valueMoveCaption, veilRow,
   type JourneyTabKey,
 } from "./block5Journey";
 import { computeStabilityAll } from "./block5StabilityAll";
 import { buildMpfPercentages, buildMpfPredictions } from "./dbShape";
 import { buildTimingSummary } from "./telemetry";
+import { savedSpanMs } from "./feedbackTypes";
 import {
   POLICY_DIM_KEYS,
   type Block5PolicyDimKey, type Block5Results, type Block5UserProfile,
@@ -62,6 +63,9 @@ interface Props {
    * page frames it.
    */
   tab?: JourneyTabKey;
+  /** The working minutes and visits the thank-you page's header shows (null when it shows none), so the time chart's
+   *  line says the same numbers (since 24 October 2026, R16). */
+  workTime?: { minutes: number | null; visits: number | null };
 }
 
 /** Clear, jargon-free names for the four policy values (no bare word like "total"). */
@@ -129,7 +133,7 @@ function ChartCard({ index, title, howTo, caption, children }: {
 
 /* ----------------------------------- the view ----------------------------------- */
 
-export function Block5VisualizationsView({ results, tab }: Props) {
+export function Block5VisualizationsView({ results, tab, workTime }: Props) {
   /*
    * TWO LISTS, AND WHICH CARD READS WHICH (revised 28 September 2026).
    *
@@ -595,8 +599,14 @@ export function Block5VisualizationsView({ results, tab }: Props) {
     .filter((b) => b.value > 0)
     .map((b) => ({ label: b.label, value: b.value, color: b.color, valueLabel: fmtDur(b.value) }));
   const timeMax = Math.max(1, ...timeBars.map((b) => b.value));
-  const totalMs = timing.totalExperimentMs;
-  const timeCaption = `You spent about ${fmtDur(totalMs)} on the whole experiment.`;
+  /* Two lines, each naming its own clock (since 24 October 2026, the researcher's "R16: A and B both"; block5Journey.ts,
+     timeChartLines): the header's working time and visits, then the span the database saved, hours away included. It
+     said "You spent about 1032m 51s on the whole experiment": the span, in minutes, read as working time. */
+  const timeLines = timeChartLines({
+    workingMinutes: workTime?.minutes ?? null,
+    visits: workTime?.visits ?? null,
+    spanMs: savedSpanMs(results) ?? timing.totalExperimentMs,
+  });
 
   /* Nothing in this tab for this run (an unfinished record, say). */
   if (inTab && shown.length === 0) {
@@ -1147,7 +1157,9 @@ export function Block5VisualizationsView({ results, tab }: Props) {
           {/* 6 · Time */}
           <ChartCard index={num("time")} title="Where your time went"
             howTo={<>Each bar is the time you spent in one part of the experiment. <b>Indigo</b> bars are the first four parts of the study, where your values were measured; <b>teal</b> bars are the six scenarios.</>}
-            caption={timeCaption}>
+            caption={timeLines.length ? <>{timeLines.map((line, i) => (
+              <Box as="span" display="block" key={i} mt={i ? "1.5" : undefined}>{line}</Box>
+            ))}</> : undefined}>
             <HBarChart bars={timeBars} max={timeMax} unitHint="time per stage" />
             <ChartLegend items={[
               { label: "The first four parts", color: PHASE_COLOR.profiling },
