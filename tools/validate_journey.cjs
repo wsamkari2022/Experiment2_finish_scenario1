@@ -43,7 +43,7 @@
  *       own median and calls it fast exactly when the careful-participation sign does, at the registered 2 seconds
  *   J22 (24 October 2026) words that cannot drift: the results page previews the five tab names, the "distance chart"
  *       number is counted, a bar's value label always has room, and two lines on the page before the main study are
- *       true in every scenario
+ *       true in every scenario, and no line of page text runs into the next across a code comment (a missing space)
  *   J23 (24 October 2026) "moved the most" names every value in a tie, in whole points
  *   J24 (24 October 2026) the time chart's two lines: the header's working time and visits, then the span the
  *       database saved (hours away included) in hours and minutes; never "You spent about" the span
@@ -813,11 +813,31 @@ console.log("===================================================================
   if (!intro.includes("It draws all the options on these charts at once.")) why.push("section 3's general words are missing");
   if (!intro.includes("On most scenario pages, the same five measure names appear three times. One is")) why.push("section 4's general words are missing");
   if (!intro.includes('where="At the top of the page"')) why.push("\"At the top of the page\" is missing");
+
+  /* A JSX comment between two lines of text removes the space between them (found on 24 October 2026 in a screenshot:
+     "options”.It draws", and "scale.They are"). Every such place must end its first line with {" "}. */
+  const glued = [];
+  const walk = (dir) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) walk(f); else if (f.endsWith(".tsx")) {
+      const L = fs.readFileSync(f, "utf8").split(/\r?\n/);
+      for (let i = 1; i < L.length; i++) {
+        if (!/^\s*\{\/\*/.test(L[i])) continue;
+        let j = i; while (j < L.length && !L[j].includes("*/}")) j++;
+        const prev = L[i - 1].trim(), next = (L[j + 1] || "").trim();
+        const endsText = (prev && !/[>{}(),;?:]$|=>$|\*\/$|&&$/.test(prev)) || /<\/[A-Za-z.]+>[.,;:!?)]$/.test(prev);
+        const startsText = /^[A-Za-z“"(]/.test(next) && !/^(const|let|return|if|for|import|export|function)\b/.test(next);
+        if (endsText && startsText && !prev.endsWith('{" "}')) glued.push(`${path.basename(f)}:${i}`);
+        i = j;
+      }
+    } } };
+  walk(path.join(ROOT, "src"));
+  if (glued.length) why.push(`text runs into the next line across a comment (no space): ${glued.join(", ")}`);
   const introCode = intro.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\s*\}/g, "");
   for (const old of ["all six options on these two shapes", "At the top of every page", "appear three times on a scenario page"])
     if (introCode.includes(old)) why.push(`the page before the main study still says "${old}"`);
   gate("J22", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
-    : "words that cannot drift: the results page previews the five tab names, the distance chart's number is counted, a value label of up to 14 characters always fits, and the page before the main study says \"all the options on these charts\" and \"On most scenario pages\"");
+    : "words that cannot drift: the results page previews the five tab names, the distance chart's number is counted, a value label of up to 14 characters always fits, the page before the main study says \"all the options on these charts\" and \"On most scenario pages\", and no line of text runs into the next across a code comment");
 }
 
 /* ------------------------------------------------------------------------------------------- J23 */

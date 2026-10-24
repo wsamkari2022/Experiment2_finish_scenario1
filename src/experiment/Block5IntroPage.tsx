@@ -709,7 +709,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
           <SectionHeading n={3} icon={<LuChartColumn />} title="The two charts, and how to open them">
             On every scenario page there is a button marked{" "}
-            <Text as="span" color="fg" fontWeight="semibold">“Compare all options”</Text>.
+            <Text as="span" color="fg" fontWeight="semibold">“Compare all options”</Text>.{" "}
             {/* General words, true in every scenario (since 24 October 2026, the researcher's "R15-A"): it said "all six
                 options on these two shapes", and scenario 6 has four rules and one chart. */}
             It draws all the options on these charts at once.

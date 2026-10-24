@@ -852,7 +852,7 @@ export function Block5VisualizationsView({ results, tab, workTime }: Props) {
                 ))}
                 <Text fontSize="2xs" color="fg.subtle" lineHeight="tall">
                   Scenario 6 is not here: behind the veil there was no position and no performance.{" "}
-                  Both bars answer “how much of what was available?”, which is why they share a scale.
+                  Both bars answer “how much of what was available?”, which is why they share a scale.{" "}
                   {/* The chart number is counted, not typed (since 24 October 2026, the researcher's "R20-A"): it said
                       "chart 5" from the days when every chart sat on one page; in its tab the distance chart is chart 1. */}
                   They are not the same as the point distances in {num("position") > 0 ? `chart ${num("position")}` : "the distance chart"}: an option can sit 23.8 points
