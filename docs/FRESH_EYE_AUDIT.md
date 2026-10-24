@@ -2252,3 +2252,10 @@ thesis says so.
     or more values moved the same amount (a test run: all four moved 10; it said "Protecting the vulnerable").
   - **R20. A stale chart number:** the small print under "Your values against your performance, in each position"
     says "the point distances in chart 5"; since the five tabs (29 September) that chart is chart 1 of its tab.
+- **2026-10-24 (later). R15 CHANGED TO A; R17-R20 FIXED; R16's bug part fixed** (Waseem: "I changed my mind, R15- Option A";
+  "R17-R20 ... choose option A"; "fix the bugs and errors ... first"). R15-A: the two intro lines now general ("It draws
+  all the options on these charts at once.", "On most scenario pages, ...", "At the top of the page"). R17: one pace rule
+  in answerPace.ts (2 seconds, the database's median, on the page too). R18: the preview lists the five tab names. R19:
+  valueMoveCaption names every value in a tie. R20: the chart number is counted. The bar chart's right margin grows with
+  its longest label. `validate:journey` J21-J23, 8 breaks, 8 caught; live to the thank-you page. **R16 still OPEN** (the
+  time chart's last line: working time, or the elapsed span said honestly in hours; previews shown to Waseem).

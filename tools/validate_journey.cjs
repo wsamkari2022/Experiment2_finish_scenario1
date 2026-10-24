@@ -39,6 +39,12 @@
  *   J17 (7 October 2026) the progress bar on the thank-you page: every step done and the flag "Done", not looping
  *   J18 (16 October 2026) the student door speaks of course credit: no participant-facing gift card, $5 or active-minutes
  *       rule anywhere, the four course-credit sentences in place, the thank-you line in the university door only
+ *   J21 (24 October 2026) one pace rule: the thank-you page's "How long you took over each answer" shows the database's
+ *       own median and calls it fast exactly when the careful-participation sign does, at the registered 2 seconds
+ *   J22 (24 October 2026) words that cannot drift: the results page previews the five tab names, the "distance chart"
+ *       number is counted, a bar's value label always has room, and two lines on the page before the main study are
+ *       true in every scenario
+ *   J23 (24 October 2026) "moved the most" names every value in a tie, in whole points
  *   J20 (23 October 2026) the five steps on the page before the main study say only what is true for every participant:
  *       no "six", no person speaking, no condition or scenario named, the approved words, and every option of every
  *       scenario really has what it gives up and its question
@@ -720,6 +726,123 @@ console.log("===================================================================
   if (!/Each one runs the same \{HOW_IT_WORKS\.length\} steps\./.test(intro)) why.push("the step count is not read from the list");
   gate("J20", why.length === 0, why.length ? why.join(" | ")
     : "the five steps before the main study are true for every condition and scenario: no \"six\", no person speaking, no condition named, the approved words; every option has what it gives up and its question");
+}
+
+/* ------------------------------------------------------------------------------------------- J21 */
+{
+  /* R17-A (24 October 2026): the participant's note and the database's careful-participation sign used 2.5 and 2
+     seconds and two medians. Both now come from answerPace.ts; the note must show the database's own median and call
+     it fast exactly when the database does, at the registered 2 seconds, for any click history. */
+  const why = [];
+  try { execFileSync("npx", ["tsc", "-p", "tools/tsconfig.dbshape.json"], { cwd: ROOT, encoding: "utf8", shell: true }); }
+  catch { /* type errors in files this check does not run are not its business */ }
+  const C = B("blocks123Consistency.js");
+  const D = B("dbShape.js");
+  const P = B("answerPace.js");
+  if (P.FAST_ANSWER_SECONDS !== 2) why.push(`the line is ${P.FAST_ANSWER_SECONDS} seconds, not the 2 registered on OSF`);
+  if (D.FAST_ANSWER_SECONDS !== P.FAST_ANSWER_SECONDS || C.DELIBERATION_LINE_SECONDS !== P.FAST_ANSWER_SECONDS)
+    why.push("the page's line and the database's line are not the same number");
+  let seed = 7;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const historyOf = (n) => {
+    let t = Date.parse("2026-10-24T10:00:00Z");
+    return { history: Array.from({ length: n }, () => {
+      const r = rnd();
+      t += r < 0.1 ? 0 : r < 0.5 ? Math.round(rnd() * 2500) : Math.round(800 + rnd() * 9000);
+      return { timestamp: new Date(t).toISOString() };
+    }) };
+  };
+  let runs = 0, fastRuns = 0;
+  for (let i = 0; i < 2000; i++) {
+    const money = rnd() < 0.05 ? null : historyOf(Math.floor(rnd() * 12));
+    const trolley = historyOf(Math.floor(rnd() * 14));
+    const work = historyOf(Math.floor(rnd() * 40));
+    const page = C.deliberationFrom(money, trolley, work);
+    const db = D.buildBlocks1to4Checks({ money: money ?? { history: [] }, trolley, aiWorkforce: work, participantRecord: null });
+    const dbMedian = db ? db.median_seconds_between_answers : null;
+    if (page === null || dbMedian === null) {
+      if ((page === null) !== (dbMedian === null)) why.push(`run ${i}: one side has a median and the other has none`);
+      continue;
+    }
+    runs += 1;
+    if (page.medianSeconds !== dbMedian) why.push(`run ${i}: the page shows ${page.medianSeconds}s, the database ${dbMedian}s`);
+    if (page.hurried !== db.answered_very_fast) why.push(`run ${i}: the page says fast = ${page.hurried}, the database ${db.answered_very_fast}`);
+    const blocksWithGaps = [money, trolley, work].filter((b) => b && b.history.length >= 2).length;
+    if (page.decisions !== db.answers_timed + blocksWithGaps) why.push(`run ${i}: ${page.decisions} answers counted, the database timed ${db.answers_timed} gaps in ${blocksWithGaps} blocks`);
+    if (page.hurried) fastRuns += 1;
+    if (why.length > 3) break;
+  }
+  const view = fs.readFileSync(path.join(ROOT, "src", "experiment", "Block5VisualizationsView.tsx"), "utf8");
+  if (!/below about \{DELIBERATION_LINE_SECONDS\} seconds the question text cannot have been read/.test(view))
+    why.push("the note does not read its line from the shared rule");
+  for (const f of ["Block5VisualizationsView.tsx", "blocks123Consistency.ts"]) {
+    const code = fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+    if (/2\.5 seconds|HURRIED_SECONDS/.test(code)) why.push(`${f} still has the old 2.5-second line`);
+  }
+  if (fastRuns === 0 || fastRuns === runs) why.push(`the pretend histories never test both sides (${fastRuns} fast of ${runs})`);
+  gate("J21", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : `one pace rule: over ${runs} pretend click histories the thank-you note shows the database's own median and calls it fast exactly when the careful-participation sign does (${fastRuns} fast), at the registered ${P.FAST_ANSWER_SECONDS} seconds`);
+}
+
+/* ------------------------------------------------------------------------------------------- J22 */
+{
+  /* R18-A, R20-A, R15-A and the cut-off bar label (24 October 2026): words and room that used to be typed by hand. */
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const why = [];
+  const summary = src("Block5SimulationSummaryPage.tsx");
+  const box = summary.slice(summary.indexOf("After your feedback: your journey in pictures"), summary.indexOf("After your feedback: your journey in pictures") + 900);
+  if (!/\{JOURNEY_TABS\.map\(\(tab\) => tab\.label\)\.map\(\(chip\) => \(/.test(box)) why.push("the results page's preview does not list the thank-you page's own tab names");
+  for (const old of ["How your values moved", "What our software predicted", "Your time and your first answers"])
+    if (summary.includes(`"${old}"`)) why.push(`the preview still names "${old}"`);
+  if (J.JOURNEY_TABS.length !== 5) why.push(`the thank-you page has ${J.JOURNEY_TABS.length} tabs`);
+  const view = src("Block5VisualizationsView.tsx");
+  if (/point distances in chart \d/.test(view)) why.push("a chart number is still typed by hand");
+  if (!/point distances in \{num\("position"\) > 0 \? `chart \$\{num\("position"\)\}` : "the distance chart"\}/.test(view))
+    why.push("the distance chart's number is not counted from the cards shown");
+  const tabOf = J.JOURNEY_TABS.find((t) => t.cards.includes("position") && t.cards.includes("tradeoff"));
+  if (!tabOf || tabOf.cards.indexOf("position") !== 0) why.push("the distance chart is not chart 1 of its tab any more (check the sentence)");
+  const charts = src("block5Charts.tsx");
+  if (!/const padR = Math\.max\(48, Math\.ceil\(longestLabel \* 6\.6\) \+ 10\);/.test(charts)) why.push("the bar chart's right margin does not grow with its longest label");
+  for (let len = 1; len <= 14; len += 1) {
+    const padR = Math.max(48, Math.ceil(len * 6.6) + 10);
+    if (480 - padR + 6 + len * 6.6 > 480) why.push(`a ${len}-character label runs past the chart`);
+  }
+  const intro = src("Block5IntroPage.tsx");
+  if (!intro.includes("It draws all the options on these charts at once.")) why.push("section 3's general words are missing");
+  if (!intro.includes("On most scenario pages, the same five measure names appear three times. One is")) why.push("section 4's general words are missing");
+  if (!intro.includes('where="At the top of the page"')) why.push("\"At the top of the page\" is missing");
+  const introCode = intro.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\s*\}/g, "");
+  for (const old of ["all six options on these two shapes", "At the top of every page", "appear three times on a scenario page"])
+    if (introCode.includes(old)) why.push(`the page before the main study still says "${old}"`);
+  gate("J22", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : "words that cannot drift: the results page previews the five tab names, the distance chart's number is counted, a value label of up to 14 characters always fits, and the page before the main study says \"all the options on these charts\" and \"On most scenario pages\"");
+}
+
+/* ------------------------------------------------------------------------------------------- J23 */
+{
+  /* R19-A (24 October 2026): a tie used to name the first value of a fixed list. */
+  const why = [];
+  const label = { vulnerabilityProtectionSensitivity: "Protecting the vulnerable", groupSizeSensitivity: "Reducing harm",
+    gainResponsivenessSensitivity: "How much is gained", outcomeAggregationSensitivity: "How many are helped" };
+  const say = (before, after) => J.valueMoveCaption({ before, after }, (k) => label[k], "across the 6 scenarios");
+  const V = (a, b, c, d) => ({ vulnerabilityProtectionSensitivity: a, groupSizeSensitivity: b, gainResponsivenessSensitivity: c, outcomeAggregationSensitivity: d });
+  const cases = [
+    ["the screenshot run: all four 10", V(36, 72, 29, 75), V(26, 62, 39, 85), "All four of your values ended 10 points from where they started."],
+    ["one value moved most", V(50, 50, 50, 50), V(50, 30, 55, 50), "“Reducing harm” moved the most across the journey (by 20 points)."],
+    ["two tied", V(50, 50, 50, 50), V(62, 50, 38, 51), "“Protecting the vulnerable” and “How much is gained” moved the most across the journey (by 12 points each)."],
+    ["three tied", V(50, 50, 50, 50), V(40, 60, 50, 40), "“Protecting the vulnerable”, “Reducing harm” and “How many are helped” moved the most across the journey (by 10 points each)."],
+    ["a tie in whole points (9.6 and 10.4)", V(50, 50, 50, 50), V(59.6, 50, 39.6, 50), "“Protecting the vulnerable” and “How much is gained” moved the most across the journey (by 10 points each)."],
+    ["steady", V(50, 50, 50, 50), V(52, 49, 50, 51), "Your four values held remarkably steady across the 6 scenarios."],
+  ];
+  for (const [name, b, a, want] of cases) {
+    const got = say(b, a);
+    if (got !== want) why.push(`${name}: "${got}"`);
+  }
+  const view = fs.readFileSync(path.join(ROOT, "src", "experiment", "Block5VisualizationsView.tsx"), "utf8");
+  if (!/const evoCaption = valueMoveCaption\(journey,/.test(view)) why.push("the line chart does not use valueMoveCaption");
+  if (/moverDelta/.test(view)) why.push("the old first-in-the-list rule is still in the page");
+  gate("J23", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
+    : "\"moved the most\" names every value in a tie (two, three, or \"All four of your values ended N points from where they started\"), compared in whole points; one value and \"held remarkably steady\" as before");
 }
 
 console.log("");

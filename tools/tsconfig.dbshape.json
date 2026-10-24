@@ -12,6 +12,7 @@
   },
   "files": [
     "../src/experiment/dbShape.ts",
+    "../src/experiment/answerPace.ts",
     "../src/experiment/storage.ts",
     "../src/experiment/sessionGuard.ts",
     "../src/experiment/block5Progress.ts",

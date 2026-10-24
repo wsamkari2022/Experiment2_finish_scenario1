@@ -710,7 +710,9 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           <SectionHeading n={3} icon={<LuChartColumn />} title="The two charts, and how to open them">
             On every scenario page there is a button marked{" "}
             <Text as="span" color="fg" fontWeight="semibold">“Compare all options”</Text>.
-            It draws all six options on these two shapes at once.
+            {/* General words, true in every scenario (since 24 October 2026, the researcher's "R15-A"): it said "all six
+                options on these two shapes", and scenario 6 has four rules and one chart. */}
+            It draws all the options on these charts at once.
           </SectionHeading>
 
           {/*
@@ -860,7 +862,8 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
         */}
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
           <SectionHeading n={4} icon={<LuGauge />} title="Performance shows up in three places, and they mean different things">
-            The same five measure names appear three times on a scenario page. One is{" "}
+            {/* "On most scenario pages" (R15-A, 24 October 2026): scenario 6 shows no performance at all. */}
+            On most scenario pages, the same five measure names appear three times. One is{" "}
             <Text as="span" color="fg" fontWeight="semibold">your running total</Text>, one is{" "}
             <Text as="span" color="fg" fontWeight="semibold">the option you are looking at</Text>, and
             one is a button that shows{" "}
@@ -875,7 +878,7 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
           >
             <ReadingColumn
               n={1}
-              where="At the top of every page"
+              where="At the top of the page"
               title="Your cumulative performance"
               icon={<LuGauge />}
               sample={

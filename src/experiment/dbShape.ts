@@ -92,6 +92,7 @@ import { ATTENTION_KEY, ATTENTION_STAGE, buildAttentionSection, scoreAttention }
 import type { RecruitmentSource } from "./recruitment";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
+import { FAST_ANSWER_SECONDS, medianOf, secondsBetweenAnswers } from "./answerPace";
 import { deriveCompanyValues, analyseStance, STANCE_LABEL, STANCE_BAND } from "./block5Company";
 import type { DecisionProfile, ValueThreshold } from "./block5Thresholds";
 import type {
@@ -811,13 +812,9 @@ export function buildQuality(
 
 /* ------------------------------------------------------------ blocks 1 to 4, the checks */
 
-/**
- * Below this median time between two answers in Blocks 1-3, the participant was answering faster
- * than a ladder step can be read. A STATED DEFAULT, not a finding: the medians themselves are stored,
- * so a different line can be drawn later over data already collected. Researcher's approval of the
- * flag, 24 September 2026; the 2-second line is Claude's proposal and is his to change.
- */
-export const FAST_ANSWER_SECONDS = 2;
+/* The 2-second line and the median live in answerPace.ts since 24 October 2026, so the thank-you page's own note reads
+   exactly the same numbers as this flag (the researcher's "R17-A"). Re-exported for the tools that read it here. */
+export { FAST_ANSWER_SECONDS };
 
 /** Where the four Blocks 1-4 sources live in the browser, so storage.ts need not know the keys. */
 export const BLOCKS_1_TO_4_KEYS = {
@@ -834,26 +831,7 @@ export interface Blocks1to4Sources {
   participantRecord: unknown;
 }
 
-/** The median of a list of numbers, or null when there is nothing to take one of. */
-function medianOf(values: number[]): number | null {
-  if (!values.length) return null;
-  const s = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-}
-
-/** Seconds between consecutive answers in one block's click history. The first answer has none. */
-function secondsBetweenAnswers(block: unknown): number[] {
-  const history = (block as { history?: { timestamp?: unknown }[] } | null)?.history;
-  if (!Array.isArray(history)) return [];
-  const times = history
-    .map((h) => (typeof h?.timestamp === "string" ? Date.parse(h.timestamp) : NaN))
-    .filter((t) => Number.isFinite(t))
-    .sort((a, b) => a - b);
-  const gaps: number[] = [];
-  for (let i = 1; i < times.length; i++) gaps.push((times[i] - times[i - 1]) / 1000);
-  return gaps;
-}
+/* medianOf and secondsBetweenAnswers: answerPace.ts (one rule for this flag and the thank-you page's note). */
 
 /**
  * THE IMPORTANT FACTS ABOUT HOW BLOCKS 1-4 WERE ANSWERED, in one place (24 September 2026).

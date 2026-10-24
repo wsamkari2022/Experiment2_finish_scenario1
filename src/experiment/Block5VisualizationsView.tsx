@@ -38,11 +38,11 @@ import { analysePosition, positionEffectLabel, POSITION_LABEL, POSITION_SHORT } 
 import { analyseStance, STANCE_LABEL } from "./block5Company";
 import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { ordinal } from "./block5Performance";
-import { readBlocks123, moneySentence, trolleySentence, workforceSentence } from "./blocks123Consistency";
+import { readBlocks123, moneySentence, trolleySentence, workforceSentence, DELIBERATION_LINE_SECONDS } from "./blocks123Consistency";
 import { BLOCK5_SCENARIOS } from "./block5Scenarios";
 import { ALIGNMENT_LABEL, stabilityLevel, isPredictionTest, resultCountsTowardsPerformance } from "./block5CVR";
 import {
-  DECK_POSITIONS, JOURNEY_TABS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, valueJourney, veilRow,
+  DECK_POSITIONS, JOURNEY_TABS, block4Reading, consistencyReading, guessReading, predictionReading, reconsiderBars, valueJourney, valueMoveCaption, veilRow,
   type JourneyTabKey,
 } from "./block5Journey";
 import { computeStabilityAll } from "./block5StabilityAll";
@@ -247,17 +247,9 @@ export function Block5VisualizationsView({ results, tab }: Props) {
     color: SERIES_COLORS[idx],
     values: [journey.before[k], ...journey.afterEach.map((v) => v[k])],
   }));
-  // biggest mover, for the caption
-  let moverLabel = ""; let moverDelta = 0;
-  for (const k of POLICY_DIM_KEYS) {
-    const d = Math.abs(journey.after[k] - journey.before[k]);
-    if (d > moverDelta) { moverDelta = d; moverLabel = VALUE_LABEL[k]; }
-  }
-  const evoCaption = moverDelta < 3
-    ? (journey.includesWishAndRule
-      ? `Your four values held remarkably steady across the ${allScenarios.length} scenarios.`
-      : `Your four values held remarkably steady across your ${decisionCount} decisions.`)
-    : `“${moverLabel}” moved the most across the journey (by ${Math.round(moverDelta)} points).`;
+  // biggest mover, for the caption; a tie names every value in it (block5Journey.ts, valueMoveCaption)
+  const evoCaption = valueMoveCaption(journey, (k) => VALUE_LABEL[k], journey.includesWishAndRule
+    ? `across the ${allScenarios.length} scenarios` : `across your ${decisionCount} decisions`);
 
   /* 7 · Line: how the two reflection views shifted across the journey. These only move when the
      participant generated and compared the second view inside a reflection.
@@ -851,7 +843,9 @@ export function Block5VisualizationsView({ results, tab }: Props) {
                 <Text fontSize="2xs" color="fg.subtle" lineHeight="tall">
                   Scenario 6 is not here: behind the veil there was no position and no performance.{" "}
                   Both bars answer “how much of what was available?”, which is why they share a scale.
-                  They are not the same as the point distances in chart 5: an option can sit 23.8 points
+                  {/* The chart number is counted, not typed (since 24 October 2026, the researcher's "R20-A"): it said
+                      "chart 5" from the days when every chart sat on one page; in its tab the distance chart is chart 1. */}
+                  They are not the same as the point distances in {num("position") > 0 ? `chart ${num("position")}` : "the distance chart"}: an option can sit 23.8 points
                   from your profile and still be the closest one that scenario had, which is 0% of the
                   room to move.
                 </Text>
@@ -1255,7 +1249,7 @@ export function Block5VisualizationsView({ results, tab }: Props) {
 
               {hasDeliberation && b123.deliberation && (
                 <ChartCard index={num("deliberation")} title="How long you took over each answer"
-                  howTo={<>The time between one answer and the next, across the first three parts, reported as a <b>median</b> so that one interruption cannot hide the rest. This is the only thing on this page that can be answered wrongly rather than differently: below about 2.5 seconds the question text cannot have been read.</>}
+                  howTo={<>The time between one answer and the next, across the first three parts, reported as a <b>median</b> so that one interruption cannot hide the rest. This is the only thing on this page that can be answered wrongly rather than differently: below about {DELIBERATION_LINE_SECONDS} seconds the question text cannot have been read.</>}
                   caption={b123.deliberation.hurried
                     ? `A median of ${b123.deliberation.medianSeconds}s per answer is quicker than the questions can be read. Worth knowing when you read everything else on this page.`
                     : `A median of ${b123.deliberation.medianSeconds}s per answer, across ${b123.deliberation.decisions} decisions — enough time to read and consider each one.`}>

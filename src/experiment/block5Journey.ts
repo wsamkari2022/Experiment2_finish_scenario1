@@ -74,6 +74,29 @@ export function valueJourney(
   return { before: start, afterEach, after, includesWishAndRule };
 }
 
+/**
+ * The sentence under "How your four values shifted along the way": which value ended furthest from where it started.
+ *
+ * A TIE NAMES EVERY VALUE IN IT (since 24 October 2026, the researcher's "R19-A"). The rule kept the first value of a fixed
+ * list on a tie, so a run where all four values ended exactly 10 points from where they started read "'Protecting the
+ * vulnerable' moved the most" (the dissertation writer's question Q4). Values are compared in whole points, the way the
+ * sentence prints them. Under 3 points for every value, the values "held remarkably steady" (unchanged).
+ */
+export function valueMoveCaption(
+  journey: Pick<ValueJourney, "before" | "after">,
+  labelOf: (k: Block5PolicyDimKey) => string,
+  steadyAcross: string,
+): string {
+  const moves = POLICY_DIM_KEYS.map((k) => ({ k, d: Math.round(Math.abs(journey.after[k] - journey.before[k])) }));
+  const most = Math.max(...moves.map((m) => m.d));
+  if (most < 3) return `Your four values held remarkably steady ${steadyAcross}.`;
+  const tied = moves.filter((m) => m.d === most).map((m) => `“${labelOf(m.k)}”`);
+  if (tied.length === POLICY_DIM_KEYS.length) return `All four of your values ended ${most} points from where they started.`;
+  if (tied.length === 1) return `${tied[0]} moved the most across the journey (by ${most} points).`;
+  const names = `${tied.slice(0, -1).join(", ")} and ${tied[tied.length - 1]}`;
+  return `${names} moved the most across the journey (by ${most} points each).`;
+}
+
 /** The five positions the deck puts a participant in, in the order they meet them. The legend reads this. */
 export const DECK_POSITIONS: PositionKey[] = BLOCK5_SCENARIOS
   .map((s) => s.stakePosition)

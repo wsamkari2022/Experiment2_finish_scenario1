@@ -43,6 +43,7 @@ import { AI_WORKFORCE_RESULTS_KEY, GAIN_OPTIONS } from "./aiWorkforceTypes";
 import type { MoneyBlockResults } from "./types";
 import type { TrolleyBlockResults } from "./trolleyTypes";
 import type { AIWorkforceBlockResults, WorkerGroupSizeKey } from "./aiWorkforceTypes";
+import { FAST_ANSWER_SECONDS, medianOf, secondsBetweenAnswers } from "./answerPace";
 
 /** Parses one LocalStorage entry, returning null on anything unexpected rather than throwing. */
 function readJson<T>(key: string): T | null {
@@ -235,40 +236,41 @@ export interface DeliberationReadout {
 /**
  * Median seconds per decision, from the timestamps every block already writes on each click.
  *
+ * ONE RULE WITH THE DATABASE (since 24 October 2026, the researcher's "R17-A"). This note used its own line (2.5
+ * seconds) and its own median (the upper middle gap, zero gaps left out), while the database's careful-participation
+ * sign used 2 seconds and the usual median: the dissertation writer found the two on one screen. Both now come from
+ * answerPace.ts: the line registered on OSF (FAST_ANSWER_SECONDS, 2 seconds) and the same median, so the number on
+ * this card is `analysis.blocks_1_to_4_checks.median_seconds_between_answers` (validate:journey J21).
+ *
  * MEDIAN, NOT MEAN, because one interruption — a participant who walks away mid-block and comes
  * back — would drag a mean upward far enough to hide genuine click-through. The median ignores it.
  *
  * Gaps ARE measured within a block only, never across the boundary between two blocks, since that
- * span includes whatever transition screen sat between them. The 2.5-second flag is a reading-speed
- * floor, not a quality judgment: the shortest scenario text in these blocks cannot be read in
- * that time, so anything below it means the text was not read.
+ * span includes whatever transition screen sat between them. Below the line the text was not read: it is a
+ * reading-speed floor, not a quality judgment.
  */
-const HURRIED_SECONDS = 2.5;
+export function deliberationFrom(money: unknown, trolley: unknown, work: unknown): DeliberationReadout | null {
+  const perBlock = [money, trolley, work].map((b) => secondsBetweenAnswers(b)).filter((g) => g.length > 0);
+  const gaps = perBlock.flat();
+  const median = medianOf(gaps);
+  if (median === null) return null;
+  return {
+    /* Every timed answer: a block with N gaps holds N + 1 answers. */
+    decisions: perBlock.reduce((n, g) => n + g.length + 1, 0),
+    medianSeconds: Math.round(median * 10) / 10,
+    hurried: median < FAST_ANSWER_SECONDS,
+  };
+}
+
+/** The line the note uses, for its own words. */
+export const DELIBERATION_LINE_SECONDS = FAST_ANSWER_SECONDS;
 
 function readDeliberation(): DeliberationReadout | null {
-  const stamps: number[][] = [];
-  const money = readJson<MoneyBlockResults>(SESSION_KEY_RESULTS);
-  const trolley = readJson<TrolleyBlockResults>(TROLLEY_RESULTS_STORAGE_KEY);
-  const work = readJson<AIWorkforceBlockResults>(AI_WORKFORCE_RESULTS_KEY);
-  for (const h of [money?.history, trolley?.history, work?.history]) {
-    if (!h || h.length < 2) continue;
-    stamps.push(h.map((x) => Date.parse(x.timestamp)).filter((n) => Number.isFinite(n)));
-  }
-  const gaps: number[] = [];
-  for (const block of stamps) {
-    for (let i = 1; i < block.length; i++) {
-      const d = block[i] - block[i - 1];
-      if (d > 0) gaps.push(d);
-    }
-  }
-  if (gaps.length === 0) return null;
-  gaps.sort((a, b) => a - b);
-  const median = gaps[Math.floor(gaps.length / 2)] / 1000;
-  return {
-    decisions: gaps.length + stamps.length,
-    medianSeconds: Math.round(median * 10) / 10,
-    hurried: median < HURRIED_SECONDS,
-  };
+  return deliberationFrom(
+    readJson<MoneyBlockResults>(SESSION_KEY_RESULTS),
+    readJson<TrolleyBlockResults>(TROLLEY_RESULTS_STORAGE_KEY),
+    readJson<AIWorkforceBlockResults>(AI_WORKFORCE_RESULTS_KEY),
+  );
 }
 
 /* ---------------------------------- the whole ---------------------------------- */

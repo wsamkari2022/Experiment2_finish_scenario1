@@ -67,7 +67,7 @@ import { PopoverArrow, PopoverBody, PopoverCloseTrigger, PopoverContent, Popover
 import { computeStabilityAll } from "./block5StabilityAll";
 import { secondViewWasOpened } from "./feedbackTypes";
 import { ROLE_BADGE } from "./block5RoleWords";
-import { valueJourney, type PolicyValues } from "./block5Journey";
+import { JOURNEY_TABS, valueJourney, type PolicyValues } from "./block5Journey";
 import { POLICY_DIM_KEYS } from "./block5Types";
 import type { AlignmentLevel, Block5Results, Block5ScenarioResult, StakePosition } from "./block5Types";
 import { FeedbackBar, LastStepCard } from "./Block5FeedbackNudge";
@@ -736,8 +736,9 @@ export function Block5SimulationSummaryPage({ results, onContinueToFeedback }: P
                 It opens on the thank-you page, right after the feedback questions.
               </Text>
               <HStack gap="2" wrap="wrap" mt="3">
-                {["How your values moved", "Who carried the cost (the position effect)", "What our software predicted",
-                  "Your time and your first answers"].map((chip) => (
+                {/* The thank-you page's own five tab names, read from JOURNEY_TABS (since 24 October 2026, the researcher's
+                    "R18-A"): four topics in other words did not match the five tabs participants then see. */}
+                {JOURNEY_TABS.map((tab) => tab.label).map((chip) => (
                   <Badge key={chip} variant="outline" colorPalette="purple" rounded="full" px="2.5" py="0.5" fontSize="xs"
                     fontWeight="medium">{chip}</Badge>
                 ))}

@@ -124,7 +124,11 @@ export interface HBar {
  * categories (per-scenario scores, time per stage). Axis starts at zero (honest scale).
  */
 export function HBarChart({ bars, max, unitHint }: { bars: HBar[]; max: number; unitHint?: string }) {
-  const rowH = 34, padT = unitHint ? 22 : 8, padB = 8, labelW = 116, padL = 8, padR = 48, apartH = 26;
+  /* The right margin holds the longest value label (since 24 October 2026): at a fixed 48 the longest bar of the time
+     chart cut "6m 39s" to "6m 39". About 6.6 units per bold 11px character, plus the 6-unit gap after the bar. */
+  const longestLabel = Math.max(0, ...bars.map((b) => String(b.valueLabel ?? b.value).length));
+  const rowH = 34, padT = unitHint ? 22 : 8, padB = 8, labelW = 116, padL = 8, apartH = 26;
+  const padR = Math.max(48, Math.ceil(longestLabel * 6.6) + 10);
   const W = 480;
   const plotW = W - labelW - padL - padR;
   /* Where each row starts: a bar drawn apart gets room above it for its dashed line and label. */
