@@ -123,12 +123,28 @@ export interface HBar {
  * Horizontal bar chart with left-aligned labels. Good for comparing a handful of
  * categories (per-scenario scores, time per stage). Axis starts at zero (honest scale).
  */
+/**
+ * How wide a value label is, in the chart's own units: measured in the page's real font (bold 11px, the label's size
+ * in the viewBox), or a generous 8.5 units per character where nothing can be measured (the checks run without a page).
+ */
+let measureCtx: CanvasRenderingContext2D | null | undefined;
+function valueLabelWidth(text: string): number {
+  if (measureCtx === undefined) {
+    try {
+      measureCtx = typeof document === "undefined" ? null : document.createElement("canvas").getContext("2d");
+      if (measureCtx) measureCtx.font = `700 11px ${getComputedStyle(document.body).fontFamily}`;
+    } catch { measureCtx = null; }
+  }
+  return measureCtx ? measureCtx.measureText(text).width : text.length * 8.5;
+}
+
 export function HBarChart({ bars, max, unitHint }: { bars: HBar[]; max: number; unitHint?: string }) {
-  /* The right margin holds the longest value label (since 24 October 2026): at a fixed 48 the longest bar of the time
-     chart cut "6m 39s" to "6m 39". About 6.6 units per bold 11px character, plus the 6-unit gap after the bar. */
-  const longestLabel = Math.max(0, ...bars.map((b) => String(b.valueLabel ?? b.value).length));
+  /* The right margin holds the longest value label. At a fixed 48 the time chart cut "6m 39s" to "6m 39"; a guess of
+     6.6 units a character (24 October 2026) still cut "14m 20s" to "14m 2" (the researcher's screenshot, 28 October
+     2026). Since then the label is MEASURED in the page's font, and the chart no longer clips at its edge. */
+  const longestLabel = Math.max(0, ...bars.map((b) => valueLabelWidth(String(b.valueLabel ?? b.value))));
   const rowH = 34, padT = unitHint ? 22 : 8, padB = 8, labelW = 116, padL = 8, apartH = 26;
-  const padR = Math.max(48, Math.ceil(longestLabel * 6.6) + 10);
+  const padR = Math.max(48, Math.ceil(longestLabel) + 12);
   const W = 480;
   const plotW = W - labelW - padL - padR;
   /* Where each row starts: a bar drawn apart gets room above it for its dashed line and label. */
@@ -142,7 +158,7 @@ export function HBarChart({ bars, max, unitHint }: { bars: HBar[]; max: number; 
   const H = cursor + padB;
   const scale = (v: number) => (max <= 0 ? 0 : Math.max(0, Math.min(1, v / max)) * plotW);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={SVG_STYLE}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ ...SVG_STYLE, overflow: "visible" }}>
       {unitHint && <text x={labelW + padL} y={12} fontSize={10} fill={AXIS} fillOpacity={0.5}>{unitHint}</text>}
       {bars.map((b, i) => {
         const y = tops[i];

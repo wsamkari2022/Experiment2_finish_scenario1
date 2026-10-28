@@ -2063,7 +2063,10 @@ or rule changed: the database's numbers are byte-for-byte the same (the pace hel
   point distances in chart 5" (true on one long page before 29 September); it now counts the distance chart's number in its
   tab (`num("position")`, chart 1). J22.
 - **The cut-off bar label (the bug part of R16):** `HBarChart` (block5Charts.tsx) had a fixed right margin of 48, so the
-  time chart's longest bar cut "6m 39s" to "6m 39". The margin now grows with the longest label. J22.
+  time chart's longest bar cut "6m 39s" to "6m 39". The margin now grows with the longest label. J22. **Since 28 October
+  2026 the label is MEASURED** (`valueLabelWidth`: canvas `measureText` in the page's font, 8.5 units a character where
+  nothing can be measured) and the chart no longer clips at its edge (`overflow: visible`): the 24 October guess of 6.6
+  units a character still cut "14m 20s" to "14m 2" (the researcher's screenshot). J22 (2 breaks, 2 caught).
 - **R16, the time chart's last line, "A and B both"** (the researcher, the same day, after previews of each): it said "You
   spent about 1032m 51s on the whole experiment" - the span from the start of Block 1 to the feedback, the hours away
   included, written in minutes, so "spent" read as working time. Now two lines (`timeChartLines` and `spokenDuration` in

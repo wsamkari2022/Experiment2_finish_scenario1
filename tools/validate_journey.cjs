@@ -804,11 +804,13 @@ console.log("===================================================================
   const tabOf = J.JOURNEY_TABS.find((t) => t.cards.includes("position") && t.cards.includes("tradeoff"));
   if (!tabOf || tabOf.cards.indexOf("position") !== 0) why.push("the distance chart is not chart 1 of its tab any more (check the sentence)");
   const charts = src("block5Charts.tsx");
-  if (!/const padR = Math\.max\(48, Math\.ceil\(longestLabel \* 6\.6\) \+ 10\);/.test(charts)) why.push("the bar chart's right margin does not grow with its longest label");
-  for (let len = 1; len <= 14; len += 1) {
-    const padR = Math.max(48, Math.ceil(len * 6.6) + 10);
-    if (480 - padR + 6 + len * 6.6 > 480) why.push(`a ${len}-character label runs past the chart`);
-  }
+  /* The longest label is MEASURED in the page's font (a guess of 6.6 units a character cut "14m 20s", 28 October 2026),
+     and the chart does not clip at its edge. */
+  if (!/valueLabelWidth\(String\(b\.valueLabel \?\? b\.value\)\)/.test(charts) || !/measureText\(text\)\.width/.test(charts))
+    why.push("the bar chart does not measure its value labels");
+  if (!/const padR = Math\.max\(48, Math\.ceil\(longestLabel\) \+ 12\);/.test(charts)) why.push("the bar chart's right margin does not hold its longest label");
+  if (!/style=\{\{ \.\.\.SVG_STYLE, overflow: "visible" \}\}/.test(charts)) why.push("the bar chart still clips a label at its edge");
+  if (!/text\.length \* 8\.5/.test(charts)) why.push("the bar chart's fallback width is not the generous 8.5 units a character");
   const intro = src("Block5IntroPage.tsx");
   if (!intro.includes("It draws all the options on these charts at once.")) why.push("section 3's general words are missing");
   if (!intro.includes("On most scenario pages, the same five measure names appear three times. One is")) why.push("section 4's general words are missing");
@@ -837,7 +839,7 @@ console.log("===================================================================
   for (const old of ["all six options on these two shapes", "At the top of every page", "appear three times on a scenario page"])
     if (introCode.includes(old)) why.push(`the page before the main study still says "${old}"`);
   gate("J22", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
-    : "words that cannot drift: the results page previews the five tab names, the distance chart's number is counted, a value label of up to 14 characters always fits, the page before the main study says \"all the options on these charts\" and \"On most scenario pages\", and no line of text runs into the next across a code comment");
+    : "words that cannot drift: the results page previews the five tab names, the distance chart's number is counted, every bar's value label is measured and never clipped, the page before the main study says \"all the options on these charts\" and \"On most scenario pages\", and no line of text runs into the next across a code comment");
 }
 
 /* ------------------------------------------------------------------------------------------- J23 */
