@@ -1,0 +1,75 @@
+# The text of the Prolific consent form sent to the IRB ("Informed Consent, Prolific version", 27 October 2026; the upload
+# folder of 9 November 2026). One piece per line. `npm run validate:attention` (T10) compares the consent page with this
+# file in both directions: every line must be on the page, and everything the page says must be here.
+# If the IRB changes a word: change it here AND in src/experiment/ConsentPage.tsx, and move PROLIFIC_CONSENT_VERSION.
+Please read before you decide
+Informed Consent
+This page explains what the study involves, what we collect, and what you get. Taking part is your choice.
+Study Title
+Human-AI Moral Value Study
+Purpose of the Study
+This study looks at how people make moral choices when every option costs something, and how a computer system can support those choices without pushing you toward an answer.
+We are interested in your own values and how you apply them when situations change. There are no right or wrong answers, and we are not testing your ability.
+What You Will Do
+The study runs in your web browser and has five parts:
+1. Short question blocks. A series of everyday choices that help the system learn what matters to you.
+2. Five emergency situations. In each one you see six possible actions and choose the one you would really take. Afterwards you see what your choice meant for the people it affected, and you may keep your choice or change it. Both are fine.
+3. One last situation, and a guess about you. This one is different. You write a rule before you know who you will be in the situation. After you choose, our Moral Prediction Function (MPF) shows you what it expected you to pick, as a percentage for each option. Then we ask whether the guess sounds like you, and you may keep your answer or change it. The MPF may well be wrong. It is a test of our software, not a test of you.
+4. Your results. A summary of the choices you made and the values behind them.
+5. Feedback questions. A few questions about your experience of taking part.
+The whole study takes at least 35 minutes. Please complete it in one sitting - see below.
+One Sitting, Within Prolific's Time Limit
+Please complete the study in one sitting, within the time limit Prolific shows you. If the page closes by accident, open the study again from Prolific: you will continue from where you stopped.
+Your Payment Through Prolific
+You will be paid through Prolific at a rate equivalent to US$12 per hour, based on the study's estimated completion time. The total reward is shown on Prolific before you begin. Every submission is reviewed before payment.
+What completes it:
+Reach the end. Answer the feedback questions and arrive at the final page. There you receive your completion code, and a button takes you back to Prolific.
+Answer the attention checks as asked. A few simple questions check that you are reading. If you fail two or more of them, your submission will be rejected.
+Answer thoughtfully. A submission that shows clear low effort throughout, such as the same answer to every question, may be rejected.
+How Prolific pays (Prolific's own rules):
+Everyone who completes the study receives the same reward, the amount shown in the study on Prolific, however long they take.
+If most people take much longer than the study's estimate, the reward is raised for everyone, as Prolific requires.
+We review each submission, normally within a few days. If we have not, Prolific approves it automatically after 22 days, and the reward goes to your Prolific account.
+If you stop early and return the study, you are not paid. If you finish after Prolific's time limit, we still approve and pay you when our records show that you completed the study.
+A submission is rejected if two or more of the attention checks are failed. Otherwise it may be rejected only for the other reasons Prolific allows: clear low effort throughout, or finishing exceptionally fast. It is never rejected for being slow or because of a technical problem.
+If a technical problem on our side stops you, we pay you for your time.
+More from Prolific:
+When will I be paid for a study?
+https://participant-help.prolific.com/en/articles/445059-when-will-i-be-paid-for-a-study
+Underpaying studies:
+https://participant-help.prolific.com/en/articles/445043-underpaying-studies
+Why does my submission show as timed-out?
+https://participant-help.prolific.com/en/articles/445044-why-does-my-submission-show-as-timed-out
+Privacy and Your Prolific ID
+We never ask for your name or your email.
+Your answers are stored with your Prolific ID, which we use only to pay you and to let you continue if the page closes. Your Prolific ID is seen only by the research team and is never shown to anyone else taking part.
+Your answers are analyzed and reported as group results, so no individual can be identified in anything we publish. Data is kept on secure, password-protected storage accessible only to the research team.
+Your answers are stored on a secure Florida Tech server in the United States and kept for five years after the study ends, then deleted. You may ask to see your data, or to have it deleted, at any time: send the researcher a message through Prolific with your Prolific ID.
+Possible Risks
+There are no known risks beyond normal computer use. Some of the situations describe difficult choices where somebody is worse off whatever you decide, and a few people may find this uncomfortable or tiring. You can pause or stop at any time, for any reason.
+Possible Benefits
+Taking part helps researchers design decision-support systems that respect a person's own values instead of overriding them. You may also find it interesting to see how your own choices and values are summarized at the end.
+Taking Part Is Voluntary
+Your participation is completely voluntary. There is no penalty for not taking part: if you decide not to, please return the study on Prolific.
+Your Right to Withdraw
+You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific. If you would like your data removed after taking part, send the researcher a message through Prolific, or email the researcher below, with your Prolific ID, and it will be deleted.
+Who to Contact With Questions
+About the study
+Waseem Samkari, Ph.D. Candidate
+College of Engineering and Science
+Florida Institute of Technology
+wsamkari2022@my.fit.edu
+About your rights as a research participant
+Samuel Monzem, Ph.D., Chair, Institutional Review Board
+Office of Sponsored Research, Florida Institute of Technology
+150 W. University Blvd., Melbourne, Florida 32901
+Email:
+smonzem@fit.edu
+Phone:
+321.674.7377
+Agreement
+I have read the information above. I voluntarily agree to take part, and I understand how the study is paid through Prolific and that the attention checks must be answered as asked.
+I agree - continue
+I do not agree
+Thank you for considering the study
+You have not agreed, so nothing has been recorded. Please go back to Prolific and return the study by choosing 'Stop without completing'. No completion code is needed.

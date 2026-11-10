@@ -1,8 +1,9 @@
 /**
- * ProlificStartScreen.tsx — the first page of the Prolific door (since 6 October 2026; recruitment.ts).
+ * ProlificStartScreen.tsx — the study's first page (since 6 October 2026; the only first page since 10 November 2026;
+ * recruitment.ts).
  *
- * The researcher's answers: "2-A" a welcome page with the participant's Prolific ID and a Start button (the same
- * welcome and study name as the university door's first page, StartScreen.tsx, so both doors look like one study).
+ * The researcher's answers: "2-A" a welcome page with the participant's Prolific ID and a Start button; "3-A" (9 November
+ * 2026) the main address shows this page too, with the paste box.
  * A returning participant continued with no question ("1-A") until the audit of 6 October 2026 (F2): a Prolific ID alone
  * then opened a record, and Prolific IDs travel in links. Since then ("1-B") somebody continuing on ANOTHER device gives
  * their age, which the server checks (signIn in storage.ts) before anything comes down. On their own device the run is
@@ -15,9 +16,8 @@
  *   KNOWN, FINISHED   -> "You have already finished"; their age (checked by the server, as above) shows the completion
  *                        code again (since 7 October 2026, Step 4, the researcher's "2-A": somebody who lost it can still
  *                        submit on Prolific)
- *   NO ID IN THE LINK -> a box to paste it (letters and digits); it is then written into the address, so a refresh keeps it
- *
- * The welcome's words are the university page's, word for word (validate:session C13 holds the two together).
+ *   NO ID IN THE LINK -> a box to paste it (letters and digits); it is then written into the address, so a refresh keeps
+ *                        it, and only then does the landing page give a condition (onIdPasted, since 10 November 2026)
  */
 
 import { useEffect, useState } from "react";
@@ -41,6 +41,7 @@ export function ProlificStartScreen({
   onNewParticipant,
   onResume,
   onFinishedSeen,
+  onIdPasted,
 }: {
   /** Prolific's three values from the link (pid null when missing or malformed). */
   params: ProlificParams;
@@ -50,6 +51,8 @@ export function ProlificStartScreen({
   onResume: (entry: DirectoryEntry, restored: number) => void;
   /** The ID has already finished: the condition this browser was just given is handed back (since 7 October 2026). */
   onFinishedSeen?: () => void;
+  /** The ID was pasted: if this browser has no condition yet, the landing page gives one now (since 10 November 2026). */
+  onIdPasted?: () => void;
 }) {
   const [pid, setPid] = useState<string | null>(params.pid);
   const [mode, setMode] = useState<Mode>(params.pid ? { kind: "checking" } : { kind: "paste" });
@@ -147,6 +150,7 @@ export function ProlificStartScreen({
     } catch { /* the address keeps its old form; the study still runs */ }
     setMode({ kind: "checking" });
     setPid(id);
+    onIdPasted?.();
   };
 
   const cardTitle =
@@ -167,7 +171,6 @@ export function ProlificStartScreen({
       data-prolific-start
     >
       <VStack gap={{ base: "6", md: "8" }} align="stretch" maxW="md" w="full" animationName="fade-in" animationDuration="moderate">
-        {/* The same welcome and study name as the university door's first page (StartScreen.tsx). */}
         <VStack gap="3" textAlign="center" px={{ base: "1", md: "2" }}>
           <HStack
             gap="1.5"
@@ -242,8 +245,7 @@ export function ProlificStartScreen({
           {mode.kind === "new" && (
             <VStack align="stretch" gap="5">
               <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-                Your Prolific ID came with the link from Prolific, so there is nothing to type. Press Start when you
-                are ready.
+                We have your Prolific ID, so there is nothing more to type. Press Start when you are ready.
               </Text>
               <Button
                 size="lg"

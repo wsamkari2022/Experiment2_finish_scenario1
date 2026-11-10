@@ -58,8 +58,6 @@ CHECKS = {
     "attention": "npm run validate:attention",
     # Since 7 October 2026: the daily Prolific pay check (tools/pay_check.cjs) on pretend files.
     "pay": "npm run validate:pay",
-    # Since 16 October 2026: the course-credit list for the instructor (tools/credit_list.cjs) on pretend records.
-    "credit": "npm run validate:credit",
     "conditions": "npm run validate:conditions",
     # Since 6 October 2026: the real server against a throw-away database on this computer (needs MongoDB running).
     "load": "npm run test:load",
@@ -113,13 +111,13 @@ VERSIONS = [
     ("PREDICTION_VERSION", const("block5Prediction.ts", "PREDICTION_VERSION"), "the MPF's prediction rule"),
     ("MCF_VERSION", const("block5MCF.ts", "MCF_VERSION"), "the Moral Commitment Function"),
     ("RUNNING_VERSION", const("block5VciAll.ts", "RUNNING_VERSION"), "the hidden running values behind VCI_all"),
-    ("Study length on the consent pages (minutes)", const("dbShape.ts", "STUDY_LENGTH_ESTIMATE_MINUTES"), "\"at least 35 minutes\"; information only: the course credit is completion only (since 16 October 2026)"),
+    ("Study length on the consent pages (minutes)", const("dbShape.ts", "STUDY_LENGTH_ESTIMATE_MINUTES"), "\"at least 35 minutes\"; information only, never pay"),
 ]
 
 # ------------------------------------------------------------------------------------------------ the content
 # Each item: (what is accurate now, why it can be trusted, [check keys], extra words for the "checked by" column)
 SECTIONS = [
-    ("1. Working time, visits and the course credit", [
+    ("1. Working time and visits", [
         ("Working time counts only real work.",
          "It grows only while the study tab is on screen AND the person moved, typed, clicked or scrolled in the last "
          "90 seconds. Example from the test: 15 minutes of work, then a 31-minute break, gives 16.4 minutes "
@@ -144,25 +142,10 @@ SECTIONS = [
         ("Two reading pages have no page time of their own.",
          "The insights page and the post-Block-4 profile page (both deleted on 29 September) were left out of the per-page "
          "times on purpose; the rule still holds for any older ledger.", ["dbshape"], "(D1-D6)"),
-        ("The course credit is given on completion (university version), exactly as the consent page says.",
-         "Since 16 October 2026 (your 1-yes to 4-yes; the $5 gift card and its five rules are gone). quality.course_credit_earned "
-         "= finished the study, and nothing else decides it. Careful participation (the four OSF robustness signs: very fast in "
-         "Blocks 1-3, two or more scenarios under 15 seconds, the same answer to every feedback rating, an attention check "
-         "answered wrongly) is saved for you only, each sign with its reason, and never takes the credit away. The thank-you "
-         "page says \"If you are taking part for course credit, your completion is recorded.\" (university version only). "
-         "Checked live.", ["attention", "journey"], "(T4, T10, J18)"),
-        ("Students are asked to take their time (a request box on their consent page only).",
-         "Since 16 October 2026 (your 1-OK, 2-yes). \"At Least 35 Minutes\" (A request): take your time, read carefully, answer "
-         "as you genuinely would (not as you think you should), and a few short questions check that you are reading; the course "
-         "credit is still given on completion. Not one word about positions, roles, values, choices or options. Grey, not "
-         "orange, so it reads as a request. Checked live on a computer and a phone; not in the Prolific version.",
-         ["attention"], "(T10)"),
-        ("The course-credit list for the instructor holds emails and nothing else.",
-         "Since 16 October 2026. npm run credit:list writes CREDIT_LIST.txt (Florida Tech emails of the students who finished "
-         "by the end of 12 December in Florida time) and CREDIT_CHECK.md (for you only: the dates, careful participation, the "
-         "late finishers and other addresses to look at, and who did not finish). Careful participation never takes anybody off "
-         "the list; the screen shows counts only, never an email; the folder \"Course credit/\" never goes to GitHub.",
-         ["credit"], "(Z1-Z5)"),
+        ("Careful participation is saved for you only and never decides pay.",
+         "Since 16 October 2026. The four OSF robustness signs (very fast in Blocks 1-3, two or more scenarios under 15 seconds, the "
+         "same answer to every feedback rating, an attention check answered wrongly), each with its reason. There is no course-credit "
+         "field since 10 November 2026: the IRB refused the student group.", ["attention", "journey"], "(T4, J18)"),
     ]),
     ("2. Saving the data and moving between computers", [
         ("A short break in the server never keeps a participant out of the database.",
@@ -222,44 +205,33 @@ SECTIONS = [
          "reading of the database: the slowest wait for a condition fell from 4.8 seconds to 0.14 (before, a third of each "
          "burst waited past the page's 3 seconds and got an uncounted random condition). Every person is counted exactly once "
          "while their record is being made (a burst could end 26 / 24 before).", ["conditions", "load"], "(N22, N24, L1-L4)"),
-        ("Two doors: the university version is unchanged, and the Prolific version keys everybody by their Prolific ID.",
-         "Since 6 October 2026 (your 1-A, 2-A, 4-A; Step 1). moonlander.fit.edu asks the email as before; /prolific takes the "
-         "Prolific ID from Prolific's link (a paste box if it is missing), stores it as prolific_pid and never as an email, "
-         "marks every new record with its door (recruitment_source) and balances the four conditions inside each door. A "
-         "returning Prolific person continues with no question on the same browser, and is asked their age on another "
-         "device (your 1-B, 7 October); \"A little about you\" asks four questions there. 100 students "
-         "and 100 Prolific people at once: 25 per condition inside each door. Checked live on the built site.",
-         ["session", "conditions", "load"], "(C13, N25, L5)"),
-        ("The database's \"one person\" rules work for both doors, and the swap is safe.",
-         "One email is one person, and one Prolific ID is one person, each on the records that have it. The old rule is replaced "
-         "when the server starts; tested on a copy with today's rule (every record kept). Without the swap the server could "
-         "not start on such a database, which is why the swap is there. Back up the database before that deploy.",
-         ["session", "load"], "(C13, L6)"),
-        ("A second student on a shared computer can start (\"Not you?\").",
-         "Since 6 October 2026 (your 4-Yes). When the university door opens with somebody's run in the browser, a small note "
-         "says \"This study is open for w•••@my.fit.edu. Not you?\" (the email partly hidden); after a confirmation the "
-         "browser forgets that run (it stays on the server) and the study starts afresh. Checked live.", ["session"], "(C14)"),
-        ("A key alone opens nothing: an email or a Prolific ID shows only \"finished or not\".",
+        ("Only a Prolific ID can have a record, and no email can reach the database.",
+         "Since 10 November 2026 (the IRB refused the student group). Every server route refuses anything else; every record is stored under "
+         "prolific_pid with recruitment_source \"prolific\". A returning person continues with no question on the same browser and is asked "
+         "their age on another device. 600 people through the real server: no email on any record, and an email refused on all 10 routes.",
+         ["session", "conditions", "load"], "(C13, C14, N25, L5)"),
+        ("One Prolific ID is one person.",
+         "A unique rule on the records that have a Prolific ID. Tested on a copy of the old database: every record kept. Back up the database "
+         "before the deploy.", ["session", "load"], "(C13, L6)"),
+        ("Nobody gets a condition before a Prolific ID exists.",
+         "Since 10 November 2026. The main address opens the paste page; the landing page runs only once an ID is known, so somebody who opens "
+         "the address and leaves is never counted. A browser holding an email run from an old test starts fresh.", ["session"], "(C14)"),
+        ("A Prolific ID alone opens nothing: it shows only \"finished or not\".",
          "Since 7 October 2026 (the audit's F2, your 2-A, 1-B, \"2 - no limits\"). The server checks the age before it hands "
          "back a person's details and saved run, and it never hands back their answers' analysis or any other section. A save "
          "without the browser's id is refused, and other websites cannot read the server's answers. Checked on the real "
          "server (a wrong age refused, the right age gives no analysis) and live in the browser.", ["session", "load"], "(C15, L7)"),
-        ("The Prolific version's consent page says Prolific's terms; the university page is unchanged.",
-         "Since 7 October 2026 (Step 2). Paid through Prolific (no gift card, no minutes rule), one sitting within Prolific's "
-         "time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission will be "
-         "rejected.\" (\"may be\" until 14 October 2026), withdrawal through Prolific, one tick-box, and \"I do not agree\" (return the study on Prolific). "
-         "The text for your ethics board: docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md.", ["attention"], "(T10)"),
-        ("Both consent pages say the study takes at least 35 minutes.",
-         "Since 7 October 2026 (your request). One shared sentence, \"The whole study takes at least 35 minutes\" (it said "
-         "\"about 40 to 55 minutes\"), the same as Prolific's listing (35 minutes, $8.75 = $15 an hour). Both consent version "
-         "stamps moved, so every record says which wording it agreed to. The university page changed too: ask your ethics "
-         "board. Checked live in both versions.", ["attention"], "(T10)"),
-        ("The Prolific version has two \"pick the number\" rows; the university version keeps its one.",
-         "Since 7 October 2026 (your 3-B, Step 3). One row in \"The tools & the experiment design\" and one in \"How this "
-         "experience was for you\", two different numbers two to five. Since 14 October 2026 (your 1-B) all FOUR checks count "
-         "for Prolific's rule (the two reading checks and the two number rows): two or more failed means the submission is "
-         "rejected, as the consent page says; one failed is never a reason. A random clicker fails two or more 765 times in "
-         "784; the daily pay check lists them in its Reject group.", ["attention", "pay"], "(T9, Y1)"),
+        ("The consent page is the form sent to the IRB, word for word.",
+         "Since 10 November 2026. US$12 an hour, how Prolific pays, the three help links, the five-year sentence, the IRB contact. Compared with "
+         "docs/PROLIFIC_CONSENT_FORM_TEXT.txt in both directions: every line of the form is on the page, and the page says nothing the form does not.",
+         ["attention"], "(T10)"),
+        ("The consent page says the study takes at least 35 minutes.",
+         "The same as Prolific's listing (35 minutes, $7.00 = $12 an hour). The version stamp moved, so every record says which wording it "
+         "agreed to.", ["attention"], "(T10)"),
+        ("Everybody has two \"pick the number\" rows and two reading checks.",
+         "One row in \"The tools & the experiment design\" and one in \"How this experience was for you\", two different numbers two to five. All "
+         "FOUR checks count: two or more failed means the submission is rejected, as the consent page says; one failed is never a reason. A random "
+         "clicker fails two or more 765 times in 784; the daily pay check lists them in its Reject group.", ["attention", "pay"], "(T9, Y1)"),
         ("The Prolific version ends with the completion code and a \"Return to Prolific\" button.",
          "Since 7 October 2026 (Step 4; your 1-A, 2-A, 3-A). The code lives only in the server's settings file (.env), never "
          "in the page's code or the database. The server gives it only to the browser holding a FINISHED Prolific record; the "
@@ -281,7 +253,7 @@ SECTIONS = [
          ["pay"], "(Y1-Y5)"),
         ("Only the six real parts can be called \"rushed\".",
          "Since 7 October 2026 (found in the Prolific rehearsal; your 1-A). Three parts finished in under 30 seconds put a "
-         "Prolific person in \"Look first\" (they also cost the gift card until 16 October 2026). Every timed page used to count, so the consent page, the "
+         "Prolific person in \"Look first\" . Every timed page used to count, so the consent page, the "
          "short \"about you\" page, the page before the main study, the results page and the 1-second pauses between parts "
          "could give an honest fast reader those strikes (a pause caught a 5-second working-time tick in 63 runs of 100). Now "
          "only Blocks 1-4, the main study and the feedback count; the other short pages are saved apart.",
@@ -289,7 +261,7 @@ SECTIONS = [
         ("APA_Only's box never seems to contradict the line under it.",
          "Since 7 October 2026 (your 2-A). When the chosen option falls short on the very value the box says it serves most, "
          "the box adds \"It still gives less on X than your earlier answers asked for.\" - exactly when the line under it "
-         "names that value too, in both versions (students and Prolific). Saved with the record. Checked by hand over every option "
+         "names that value too, for everybody. Saved with the record. Checked by hand over every option "
          "and 400 pretend profiles, and live in both versions.",
          ["conditions"], "(N27)"),
         ("The APA list says what it is: \"These options are built on X\".",
@@ -550,21 +522,15 @@ SECTIONS = [
 ]
 
 OPEN = [
-    ("The Prolific version",
-     "Decided 6 October 2026: two versions on one website (the email version for FIT students and employees, and "
-     "moonlander.fit.edu/prolific), conditions balanced per group, the second number check in the Prolific version only, "
-     "no pilot, the first batch 40 places, every submission manually reviewed with a daily pay check by Claude. Built: "
-     "Step 0 (many people at once), Step 1 (the two doors and the Prolific ID), the privacy fix, Step 2 (the Prolific "
-     "consent page), Step 3 (the second number row), Step 4 (the completion code and \"Return to Prolific\") and Step 5 "
-     "(the daily pay check, docs/DAILY_PAY_CHECK.md). A full local rehearsal of the Prolific version passed on 7 October "
-     "2026, and its three findings were fixed the same day. Left: back up the database, deploy with PROLIFIC_COMPLETION_CODE in "
-     "the server's .env (DEPLOYMENT.md, Part C), then one Prolific \"Preview as participant\" run to the very end, "
-     "pressing \"Return to Prolific\" to see Prolific accept the code (the plan, section 5, item 8).",
+    ("Prolific: what is left",
+     "The study is Prolific only since 10 November 2026. Left: the IRB's approval, the OSF Update, back up the database, deploy with "
+     "PROLIFIC_COMPLETION_CODE in the server's .env (DEPLOYMENT.md, Part C), delete the test records, then one Prolific \"Preview as participant\" run to "
+     "the very end, pressing \"Return to Prolific\" to see Prolific accept the code. The first batch is 40 places; read the median time before opening the "
+     "rest. Every submission is manually reviewed with the daily pay check, which you run yourself.",
      "Before Prolific"),
-    ("Your ethics board approves the Prolific consent text",
-     "docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md shows the Prolific version's consent page beside the university's: eight "
-     "parts differ (payment through Prolific, one sitting, the Prolific ID instead of the email, the attention rule "
-     "\"two or more failed: will be rejected\" (since 14 October 2026), one tick-box, \"I do not agree\"). The Prolific door must not open before the approval.", "Before Prolific"),
+    ("The IRB approves the Prolific-only application",
+     "The upload folder is Downloads/Consent forms/Ready to upload (9 November). If the IRB changes a word of the consent form, change "
+     "docs/PROLIFIC_CONSENT_FORM_TEXT.txt and the page together, and move PROLIFIC_CONSENT_VERSION.", "Before launch"),
     ("Fix 1, the very last fix before launch",
      "Done for Baseline on 3 October 2026; conditions 1-3 still wait. The open option cards still print the fit number, one card sentence can reveal the #1 value, scenario 5's wish "
      "page compares the wish with \"what you said matters most\", and the intro page says \"Each option will show you "
@@ -575,20 +541,12 @@ OPEN = [
     ("The test records in the remote database",
      "The database holds test runs, and a record carries no stamp of the code version. Decide before launch whether "
      "to delete them or mark them. When analysing, always filter on status \"Study Completed\" and date records by "
-     "completed_at. The rule for every test run, both doors and Prolific's \"Preview as participant\": add "
+     "completed_at. The rule for every test run, and Prolific's \"Preview as participant\": add "
      "?condition=CVR_APA (or CVR_Only, APA_Only, BSL4 for Baseline) to the address, so it is never counted for balance.", "Before launch"),
     ("One full click-through on the remote server",
-     "A fresh email, on a computer and on a phone, from consent to the thank-you page.", "Before launch"),
-    ("Look at the course-credit and careful-participation fields on one real record",
-     "Since 16 October 2026 both are checked on hand-made records (T4: credit = finished; careful participation from the "
-     "four signs, \"cannot tell\" when one cannot be read). Look at quality on one real finished university record, and "
-     "run npm run credit:list once on a test export.", "At the click-through"),
-    ("The university consent page is the Florida Tech consent submitted to the IRB on 14 October 2026",
-     "Course credit (50 points, an alternative assignment), what completes the study, the instructor told only whether "
-     "the student completed it. Deploy it only after the IRB approves the modification.", "After IRB approval"),
-    ("Send the \"At Least 35 Minutes\" box to the IRB office",
-     "A small change to the pending modification: the clean form, the form with the box highlighted (both PDF) and a note to "
-     "paste are in Downloads/Consent forms/Ready to upload (16 October).", "Before launch"),
+     "A made-up Prolific ID, on a computer and on a phone, from consent to the thank-you page.", "Before launch"),
+    ("Look at the careful-participation fields on one real record",
+     "Checked on hand-made records (T4). Look at quality on one finished record from the live server.", "At the click-through"),
 
     ("The one-browser rule is only as strong as the email-and-age check",
      "Anyone who knows a participant's key (email or Prolific ID) and age can take their record, exactly as they could "

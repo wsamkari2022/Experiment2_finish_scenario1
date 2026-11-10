@@ -62,7 +62,7 @@ async function replaceIfDifferent(collection, name, partialFilterExpression) {
   }
   if (existing && JSON.stringify(existing.partialFilterExpression ?? null) !== JSON.stringify(partialFilterExpression)) {
     await collection.dropIndex(name);
-    console.log(`[db] replaced the index ${name} with the two-door rule`);
+    console.log(`[db] replaced the index ${name} with the rule for records that have the field`);
   }
 }
 
@@ -78,7 +78,7 @@ export async function connect() {
     { key: { prolific_pid: 1 }, name: "prolific_pid_unique", unique: true, partialFilterExpression: PROLIFIC_RULE },
     { key: { participant_id: 1 }, name: "participant_id_unique", unique: true },
     { key: { status: 1 }, name: "status" },
-    /* The condition counts read these (since 1 October 2026; server/conditions.js); the door since 6 October 2026. */
+    /* The condition counts read these (since 1 October 2026; server/conditions.js); recruitment_source since 6 October 2026. */
     { key: { condition_type: 1 }, name: "condition_type" },
     { key: { recruitment_source: 1 }, name: "recruitment_source" },
   ]);

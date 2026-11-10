@@ -79,7 +79,7 @@ import { FEEDBACK_KEY } from "./feedbackTypes";
 import { BLOCK5_RESULTS_KEY } from "./block5Types";
 import { ATTENTION_KEY, buildFeedbackPatterns } from "./attentionChecks";
 import { CONDITION_KEY, type AssignedCondition, type SavedCondition } from "./conditions";
-import { browserParticipantKey, keyDoor, keyOfDemographics, type RecruitmentSource } from "./recruitment";
+import { keyOfDemographics } from "./recruitment";
 
 /* ------------------------------------------------------------------ the remote seam */
 
@@ -119,7 +119,7 @@ export interface RemoteBackend {
       the server has no code set. */
   getProlificCode(key: string): Promise<{ code: string; url: string } | null>;
   /** The landing page: which condition does this new arrival get? (since 1 October 2026; server/conditions.js) */
-  assignCondition?(arrivalId: string, recruitmentSource?: RecruitmentSource): Promise<AssignedCondition>;
+  assignCondition?(arrivalId: string): Promise<AssignedCondition>;
   /** The arrival was somebody returning with a condition of their own: stop counting it. */
   releaseArrival?(arrivalId: string): Promise<void>;
 }
@@ -170,10 +170,10 @@ export function serverCheckPlan(live: boolean): { pausesMs: readonly number[]; t
 }
 
 /**
- * Resolves once the page knows whether there is a server (or after `waitMs`). The Prolific door's first page looks the
+ * Resolves once the page knows whether there is a server (or after `waitMs`). The first page looks the
  * person up the moment it opens, so it waits for this first: opened straight onto that page (a refresh), it asked
  * before the server was switched on, found nobody in this browser and called a finished person "new" (found in the
- * live check, 6 October 2026). The university page looks up only after somebody types, by then the server is known.
+ * live check, 6 October 2026).
  */
 export function whenServerKnown(waitMs = 30_000): Promise<void> {
   return Promise.race([remoteKnownPromise, pause(waitMs)]);
@@ -194,15 +194,13 @@ export const CONDITION_RETRY_PAUSES_MS: readonly number[] = [1000, 2000, 4000];
  */
 export async function requestCondition(
   arrivalId: string,
-  { waitMs = 6000, pausesMs = CONDITION_RETRY_PAUSES_MS, recruitmentSource = "university" }:
-    { waitMs?: number; pausesMs?: readonly number[]; recruitmentSource?: RecruitmentSource } = {},
+  { waitMs = 6000, pausesMs = CONDITION_RETRY_PAUSES_MS }: { waitMs?: number; pausesMs?: readonly number[] } = {},
 ): Promise<AssignedCondition | null> {
   await Promise.race([remoteKnownPromise, pause(waitMs)]);
   for (let attempt = 0; ; attempt += 1) {
     if (!remote?.assignCondition) return null;
     try {
-      /* The door goes with the question: each door is balanced on its own (the researcher's "2-A"). */
-      return await remote.assignCondition(arrivalId, recruitmentSource);
+      return await remote.assignCondition(arrivalId);
     } catch (error) {
       if (isRefusal(error) || attempt >= pausesMs.length) return null;
       await pause(pausesMs[attempt]);
@@ -601,7 +599,7 @@ export function saveParticipant(input: {
   englishFirstLanguage?: boolean;
   /* Since 1 October 2026 (conditions.ts). Set once, here and on the server; a later value never replaces it. */
   condition?: SavedCondition | null;
-  /* The Prolific door's study and submission ids (since 6 October 2026); `email` then holds the Prolific ID. */
+  /* Prolific's study and submission ids; `email` is this entry's old name for the Prolific ID. */
   prolificStudyId?: string | null;
   prolificSessionId?: string | null;
   stage: string;
@@ -1050,7 +1048,6 @@ export function syncBlocks(email: string | null, opts?: { force?: boolean }): vo
       localStorage.getItem("vrds_status") ?? "",
       readKey(ATTENTION_KEY),
       blocks1to4,
-      keyDoor(browserParticipantKey() ?? ""),
     );
     if (quality) sendOrQueue({ op: "saveSection", path: "quality", data: quality });
 

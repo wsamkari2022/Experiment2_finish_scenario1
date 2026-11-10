@@ -13,6 +13,11 @@ paper, with the field for each, the test, and the hypotheses to freeze first.
 effect were absent. Most of the traps below are cases where the absent-effect version and the
 present-effect version produce the same number.
 
+> **Updated 10 November 2026: PROLIFIC ONLY.** The IRB refused the student group, so there is one sample: Prolific, 104 people who finish,
+> 26 per condition, paid $7.00 (35 minutes at $12 an hour). `recruitment_source` is always `"prolific"`, so never use it as a factor. There
+> is no `quality.course_credit_earned`. Older notes below about "the university door", "both doors", course credit or a gift card describe
+> test versions nobody took part in. **The hypotheses, power and sample size text is updated with the OSF Update, after the IRB approves.**
+
 > **Updated 16 October 2026.** The university door gives **course credit** for CSE4301/CSE5290 on completion (the IRB
 > modification of 14 October 2026), no longer a $5 gift card: `quality.course_credit_earned` = finished, and a separate
 > `quality.careful_participation` (the four OSF robustness signs, for the analysis only) replaces `compensation_eligible`
@@ -91,17 +96,17 @@ Then decide, in advance and in writing, what to do about `quality`:
 | `quality.straightlined_feedback` | Gave the same rating to everything |
 | `quality.blocks_under_30_seconds` | Parts finished impossibly fast: since 7 October 2026 only the six real parts (Blocks 1-4, the main study, the feedback); before, every timed page counted, pauses and short forms included (HOW_TO_READ 8c) |
 | `quality.scenarios_under_15_seconds` | Scenarios clicked through |
-| `quality.passed_all_attention_checks` | Every reading check answered as instructed (three; four in the Prolific door; the two inside the study are reading checks at random places since 14 October 2026, `analysis.attention_checks`) |
-| `quality.prolific_failed_two_or_more_attention_checks` | The Prolific door only: two or more of its four checks failed, Prolific's rejection reason (since 14 October 2026) |
+| `quality.passed_all_attention_checks` | Every reading check answered as instructed (four; the two inside the study are reading checks at random places since 14 October 2026, `analysis.attention_checks`) |
+| `quality.prolific_failed_two_or_more_attention_checks` | Two or more of its four checks failed, Prolific's rejection reason (since 14 October 2026) |
 | `analysis.blocks_1_to_4_checks.answered_very_fast` | The median time between answers in Blocks 1-3 (not 4) under 2 seconds |
-| `quality.course_credit_earned` | The university door only: exactly "finished" (the consent page's rule). Not an analysis variable. `compensation_eligible`, the old gift-card verdict, is gone since 16 October 2026 |
+| (gone) `quality.course_credit_earned`, `compensation_eligible` | Removed with the student group (10 November 2026). Pay is decided on Prolific, never from the record |
 
 **Group every comparison by `condition_type`** (section 9.2). `condition_source` says how the condition was given:
 `landing_page` (the balanced count), `address` (a tester who opened a condition on purpose) or `random_offline` (no
 server; since 6 October 2026 only in development - the live site never picks at random). A record with no condition was made before 1 October 2026 and ran condition 1.
 
-**`course_credit_earned` is a credit decision, not an analysis decision**, and so was `compensation_eligible` before it.
-Do not silently use either as an exclusion rule. The only exclusion is the preregistered one (not finishing); the robustness checks drop one
+**Pay is not an analysis decision.**
+Do not silently use a pay decision as an exclusion rule. The only exclusion is the preregistered one (not finishing); the robustness checks drop one
 sign at a time (`careful_participation_signs`); state them, and report how many participants each one removed. A paper that reports one
 N and no exclusion table invites the question of what was dropped.
 
@@ -396,6 +401,7 @@ on that point. Check each record's own dates (for example `completedAt` in
 | 23 October 2026 (night) | **All four conditions, the page before the main study, section 1 "How the main study works":** the five steps now say only what is true for everybody. Step 2 "Look at six options" is now "Look at the options" ("a list of titles"; "In most situations they are ordered using the preferences shown by your earlier answers"); step 4 "See it from another side ... one of them will speak to you about it" is now "Look at it once more: After you choose, the next page shows your choice again before it is final. Take a moment with it."; step 5 ends "Then you move on." Before, every participant was told a person would speak after the choice, which happens only in conditions 1-2 after a misaligned choice: if any record was made under the old words, that expectation differed by condition. No real data exists |
 | 24 October 2026 | **All four conditions, after every choice (no score or stored number changed):** the page before the main study, section 3, "It draws all the options on these charts at once." (was "all six options on these two shapes") and section 4, "On most scenario pages, the same five measure names appear three times." and "At the top of the page" (was "... on a scenario page", "At the top of every page"); the results page's preview of the thank-you charts names the five tabs; and on the thank-you page: "How long you took over each answer" says "below about 2 seconds" (was 2.5) and shows the database's own median, "moved the most" names every value in a tie, the small print under the position chart says "chart 1" (was "chart 5"), and a long bar label is no longer cut off |
 | 24 October 2026 (later) | **All four conditions, the thank-you page (no score or stored number changed):** the line under "Where your time went" said "You spent about {span in minutes} on the whole experiment"; it now says two things: "Your working time for the whole study: about N minutes{, in N visits} (only the time you were active, on every page)." and "From the start of the first part to your last answer: about {hours and minutes}, including the time you were away." ("including any pauses" after one visit). The span is `blocks.feedback_answers.timing.totalExperimentMs` |
+| 10 November 2026 | **All four conditions: the study is Prolific only** (no real data before this date). The consent page is the form sent to the IRB: US$12 an hour, "How Prolific pays", three help links, the five-year sentence, a new IRB contact (`consent.version` `"2026-11-10-prolific-only-12-an-hour"`). The main address opens the Prolific first page, with a box to paste the ID. A person gets a condition only once an ID exists. The first page says "We have your Prolific ID, so there is nothing more to type." No page, sentence or field of the student version is left. |
 | 6 October 2026 | **The university door, a browser reopened with somebody's run in it:** a thin strip at the top of the page, "This study is open for w•••@my.fit.edu. Not you?" (the email partly hidden); it goes once the person moves to another page or closes it. "Not you?" asks to confirm, then this browser forgets that run (it stays on the server) and the study starts afresh for the next person - for shared lab computers. Nothing recorded; the study itself is unchanged |
 | 1 October 2026 | **Condition 4 (Baseline) only:** a misaligned choice opens the confirmation page a good fit gets (no reflection, no person, no APA page), with its own first sentence, "Before you confirm, take a moment with what this option gives up." (a good fit still reads "This option fits your earlier priorities"), and "How sure are you about this choice?" (1-5), needed before keeping it. Keeping it moves the four values: +30 to the value the option serves most and -10 (misaligned) or -15 (strongly misaligned) to each other one, all x 0.6-1.0 by "how sure"; each such keep counts as a Stability step; the stakeholder, directness and context scores never move; the results page shows no reflection badge and says "This went against your usual values, and you kept it."; no CVR or APA feedback questions. Until this row, Baseline ran the full version (condition 1). Conditions 1, 2 and 3 unchanged |
 | 1 October 2026 | **Condition 3 (APA_Only) only:** a misaligned choice opens the APA page at once: no reflection page and no person speaking; the APA page shows only its value question (with "How sure"), the options built on that value and the confirm (no two-situations table, no "which view" question), and opens with its own sentence: "This step just helps the system represent your priorities the way you truly mean them. There are no right or wrong answers here." Under it, a box: "The option you chose serves X more than any of the other three values" (X saved as apa.mainValueShown); going back to all the options needs no confirmation (no "Go back and clear your answers?" warning) The stakeholder, directness and context scores never move; each APA visit counts as a Stability step; the results page says "Clarification shown"; the feedback asks the APA questions but never the CVR or two-views questions. Conditions 1, 2 and 4 unchanged |
@@ -851,19 +857,8 @@ researcher's decision after the experiment.
 | Baseline: "How sure" for good fits against misfits (since 3 October 2026) | Whether people are less sure when they choose against their values, on an identical page | Only a misfit's answer moves values |
 | APA_Only: named value against the box's value | How often the box was followed | Naming it is also the way to keep the option (9.5) |
 
-### 9.8 Two groups: the university door and the Prolific door (since 6 October 2026)
+### 9.8 One group: Prolific (since 10 November 2026)
 
-`recruitment_source` says where a participant came from: `"university"` (FIT students and employees, by email, course
-credit since 16 October 2026 and a $5 gift card before; also every record made before 6 October 2026, which has no `recruitment_source` at all) or `"prolific"` (paid by
-Prolific, keyed by `prolific_pid`). Treat it as a between-person factor, like the condition:
-
-- The conditions are balanced **within** each group (the researcher's "2-A"), so a condition comparison can be made inside
-  either group or across both with the group as a factor.
-- The groups differ in population, in pay, and (since 7 October 2026) in the consent page (`consent.version`) and in one
-  attention check (a second "pick the number" row in the Prolific version only, "3-B"; `analysis.attention_checks.door`
-  and `prolific_rule`; since 14 October 2026 Prolific's rule counts all four checks, two or more failed). The Prolific consent page asks for one sitting, so visits and breaks are not comparable between
-  the groups. Report each group's numbers; pool only when the question allows it, and say so.
-- `prolific_session_id` is Prolific's submission id, never the study's `participant_id`.
-- `quality.course_credit_earned` is the university door's course credit (completion only), null for Prolific records.
-  Prolific pay is decided by the daily pay check on Prolific's own valid reasons. (`quality.compensation_eligible`, the
-  university gift-card rule computed for every record, is gone since 16 October 2026.)
+The IRB refused the student group, so every participant came through Prolific and the two-door comparison no longer exists.
+`recruitment_source` is always `"prolific"`; never use it as a factor. `prolific_session_id` is Prolific's submission id, never the study's
+`participant_id`. Pay is decided by the daily pay check on Prolific's own valid reasons.

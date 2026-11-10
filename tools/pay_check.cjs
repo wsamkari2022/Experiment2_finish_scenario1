@@ -48,7 +48,7 @@ const RULES = {
   fastSds: 3,
   /** The speed rule is only read once this many submissions have a time (a smaller group gives no stable spread). */
   fastNeedsAtLeast: 10,
-  /** Clear low effort: this many blocks finished in under 30 seconds (the old university gift-card rule's own line). Since 7 October
+  /** Clear low effort: this many blocks finished in under 30 seconds. Since 7 October
       2026 only the six real parts count (Blocks 1-4, the main study, the feedback; REAL_BLOCK_STAGES in dbShape.ts):
       the record's quality.blocks_under_30_seconds already says so, and this tool reads that number. */
   rushedBlocks: 3,
@@ -59,9 +59,14 @@ const RULES = {
   clockShortSlackMin: 5,
   /** Our record began this many minutes before Prolific's clock started: an earlier attempt, or a mix-up. */
   clockLongSlackMin: 15,
-  /** Prolific approves a submission by itself on day 21; warn from this day. */
+  /** Prolific approves a submission by itself on day 21 (researcher-help, "Submission approval rules and timeframes"; the
+      participants' help page, and so the consent form, says 22 days: both are Prolific's own words). Warn from this day. */
   warnAfterDays: 18,
   autoApproveDay: 21,
+  /** The reward per finished person, in US dollars: 35 minutes at $12 an hour. --reward changes it for one run. */
+  rewardUsd: 7,
+  /** Prolific's minimum pay per hour, in US dollars. Under it the consent form's promise applies: the reward is raised for everyone. */
+  minHourlyUsd: 8,
 };
 
 /** The parts every finished record must hold (the study's own answers). */
@@ -225,6 +230,8 @@ function recordFacts(doc) {
 
 const DONE = new Set(["AWAITING REVIEW", "APPROVED", "REJECTED", "PARTIALLY APPROVED"]);
 const NOT_FINISHED = new Set(["RETURNED", "TIMED OUT", "ACTIVE", "SCREENED OUT", "RESERVED"]);
+/** Prolific's word for somebody past its time limit. The consent form promises to pay them when they finished the study. */
+const TIMED_OUT = "TIMED OUT";
 
 /** The mean and the sample standard deviation of Prolific's "Time taken" over finished submissions, and the fast line. */
 function speedLine(subs) {
@@ -250,7 +257,7 @@ function payCheck({ docs, submissions, today = new Date(), reward = null }) {
   for (const s of submissions) if (DONE.has(s.status) && s.code) codeCounts.set(s.code, (codeCounts.get(s.code) ?? 0) + 1);
   const commonCode = [...codeCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-  const groups = { pay: [], reject: [], look: [], problem: [], notFinished: [], decided: [], other: [] };
+  const groups = { pay: [], payTimedOut: [], reject: [], look: [], problem: [], notFinished: [], decided: [], other: [] };
   for (const s of submissions) {
     const doc = byPid.get(s.pid) ?? null;
     const facts = doc ? recordFacts(doc) : null;
@@ -263,6 +270,20 @@ function payCheck({ docs, submissions, today = new Date(), reward = null }) {
       reasons: [], wording: [], notes: [], decideBy: null,
     };
     if (s.status === "APPROVED" || s.status === "REJECTED" || s.status === "PARTIALLY APPROVED") { groups.decided.push(row); continue; }
+    /* FINISHED AFTER PROLIFIC'S TIME LIMIT. The consent form: "If you finish after Prolific's time limit, we still approve and
+       pay you when our records show that you completed the study." So our own record decides, not Prolific's status. Two or
+       more failed attention checks still stops the pay; that goes to the researcher's eyes, not to a list to pay. */
+    if (s.status === TIMED_OUT && doc && facts.finished && !facts.missing.length) {
+      if (facts.failedTwoOrMore) {
+        row.reasons.push(`finished after Prolific's time limit, and failed ${facts.checksFailed ?? "two or more"} of the 4 attention checks`);
+        row.wording.push(PROLIFIC_WORDING.failedChecks);
+        groups.look.push(row);
+      } else {
+        row.notes.push("finished after Prolific's time limit; our record shows the study complete");
+        groups.payTimedOut.push(row);
+      }
+      continue;
+    }
     if (NOT_FINISHED.has(s.status)) { groups.notFinished.push(row); continue; }
     if (s.status !== "AWAITING REVIEW") { row.reasons.push(`Prolific status "${s.status}" is not one this check knows`); groups.other.push(row); continue; }
 
@@ -322,7 +343,8 @@ function payCheck({ docs, submissions, today = new Date(), reward = null }) {
     pid: d.prolific_pid.toLowerCase(), status: d.status ?? null, stage: d.current_stage ?? null, study: d.prolific_study_id ?? null,
   }));
   const hourly = reward !== null && speed.median ? reward / (speed.median / 60) : null;
-  return { groups, notInProlific, speed, reward, hourly, approveIds: groups.pay.map((r) => r.pid) };
+  const underMinimum = hourly !== null && hourly < RULES.minHourlyUsd;
+  return { groups, notInProlific, speed, reward, hourly, underMinimum, approveIds: groups.pay.map((r) => r.pid) };
 }
 
 /* ------------------------------------------------------------------ the report */
@@ -331,7 +353,7 @@ const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
 const fmt = (x, unit = "") => (x === null || x === undefined ? "-" : `${x}${unit}`);
 
 function reportMarkdown(result, { date, files }) {
-  const { groups, notInProlific, speed, reward, hourly } = result;
+  const { groups, notInProlific, speed, reward, hourly, underMinimum } = result;
   const L = [];
   const table = (rows, cols) => {
     if (!rows.length) { L.push("_None._", ""); return; }
@@ -343,19 +365,24 @@ function reportMarkdown(result, { date, files }) {
   L.push(`Read: \`${files.db}\` (records with a Prolific ID only) and \`${files.prolific}\`. Nothing was changed anywhere; nobody was contacted.`, "");
   L.push("| Group | People | What to do |", "|---|---|---|");
   L.push(`| Pay | ${groups.pay.length} | Approve: paste approve_ids.txt into Prolific's bulk approve |`);
+  L.push(`| Pay: timed out | ${groups.payTimedOut.length} | They finished after Prolific's time limit. The consent form promises to pay them: approve each one on Prolific, or pay the reward as a bonus if Prolific does not offer that |`);
   L.push(`| Reject | ${groups.reject.length} | Failed two or more attention checks: reject on Prolific with the wording given (the consent page says these submissions will be rejected) |`);
   L.push(`| Look first | ${groups.look.length} | You decide; Prolific's wording is given |`);
   L.push(`| Problem | ${groups.problem.length} | Usually a message to the person through Prolific first |`);
-  L.push(`| Not finished | ${groups.notFinished.length} | Nothing to pay |`);
+  L.push(`| Not finished | ${groups.notFinished.length} | Nothing to pay, unless a technical problem on our side stopped them |`);
   L.push(`| Already decided | ${groups.decided.length} | Nothing to do |`);
   if (groups.other.length) L.push(`| Unknown status | ${groups.other.length} | Look at them on Prolific |`);
   L.push("");
-  const urgent = [...groups.pay, ...groups.reject, ...groups.look, ...groups.problem].filter((r) => r.decideBy);
+  if (underMinimum) L.push(`**WARNING: the pay is under ${RULES.minHourlyUsd} USD an hour.** At a reward of ${reward} and the median time of ${round1(speed.median)} minutes the pay is ${round1(hourly)} per hour. Prolific requires at least ${RULES.minHourlyUsd}, and the consent form promises the reward is raised for everyone in that case. Stop opening new places and decide before going on.`, "");
+  const urgent = [...groups.pay, ...groups.payTimedOut, ...groups.reject, ...groups.look, ...groups.problem].filter((r) => r.decideBy);
   if (urgent.length) L.push(`**Decide soon:** ${urgent.length} submission(s) are near day 21, when Prolific approves by itself (${urgent.map((r) => `${r.pid} by ${r.decideBy}`).join(", ")}).`, "");
 
   L.push(`## 1. Pay (${groups.pay.length})`, "");
   table(groups.pay, [["Prolific ID", (r) => r.pid], ["Prolific minutes", (r) => fmt(r.prolificMinutes)], ["Working minutes", (r) => fmt(r.workingMinutes)],
     ["Condition", (r) => fmt(r.condition)], ["Code typed", (r) => r.code], ["Notes", (r) => r.notes.join("; ") || "-"]]);
+  L.push(`## 1b. Pay: finished after Prolific's time limit (${groups.payTimedOut.length})`, "");
+  L.push("Not in approve_ids.txt: approve each one on Prolific, or pay the reward as a bonus if Prolific does not offer that. Each one is extra money: the reward plus Prolific's fee.", "");
+  table(groups.payTimedOut, [["Prolific ID", (r) => r.pid], ["Working minutes", (r) => fmt(r.workingMinutes)], ["Condition", (r) => fmt(r.condition)], ["Notes", (r) => r.notes.join("; ") || "-"]]);
   L.push(`## 2. Reject: failed two or more attention checks (${groups.reject.length})`, "");
   table(groups.reject, [["Prolific ID", (r) => r.pid], ["Why", (r) => r.reasons.join("; ")], ["Prolific's wording", (r) => r.wording.join(" ")],
     ["Prolific minutes", (r) => fmt(r.prolificMinutes)], ["Notes", (r) => r.notes.join("; ") || "-"]]);
@@ -366,6 +393,7 @@ function reportMarkdown(result, { date, files }) {
   table(groups.problem, [["Prolific ID", (r) => r.pid], ["What does not match", (r) => r.reasons.join("; ")], ["Prolific minutes", (r) => fmt(r.prolificMinutes)],
     ["Our minutes", (r) => fmt(r.ourMinutes)], ["Notes", (r) => r.notes.join("; ") || "-"]]);
   L.push(`## 5. Not finished (${groups.notFinished.length})`, "");
+  L.push("If somebody here wrote to you about a technical problem on our side, the consent form promises to pay them for their time (docs/DAILY_PAY_CHECK.md, \"Participant requests\").", "");
   table(groups.notFinished, [["Prolific ID", (r) => r.pid], ["Prolific status", (r) => r.status], ["Our record stopped at", (r) => fmt(r.stage)]]);
   L.push(`## 6. Already decided (${groups.decided.length})`, "");
   table(groups.decided, [["Prolific ID", (r) => r.pid], ["Prolific status", (r) => r.status]]);
@@ -402,7 +430,7 @@ function main(argv) {
     throw new Error(`give the day's folder holding participants.json and prolific.csv (or --db and --prolific). Looked for: ${dbFile ?? "?"} and ${csvFile ?? "?"}`);
   }
   const rewardText = arg(argv, "--reward");
-  const reward = rewardText === null ? null : Number(rewardText);
+  const reward = rewardText === null ? RULES.rewardUsd : Number(rewardText);
   if (reward !== null && !(reward > 0)) throw new Error("--reward must be a positive number");
   const todayText = arg(argv, "--today");
   const today = todayText ? new Date(`${todayText}T12:00:00Z`) : new Date();

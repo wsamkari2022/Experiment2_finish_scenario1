@@ -3,7 +3,7 @@
  * docs/PROLIFIC_CONVERSION_PLAN.md).
  *
  * The researcher's "1-A": a button, never an automatic jump, so the journey charts stay below and nobody is moved on
- * before they have the code. Shown on the final page of the Prolific door (UserFeedbackPage) and, after the age check, on
+ * before they have the code. Shown on the final page (UserFeedbackPage) and, after the age check, on
  * the Prolific first page of somebody who already finished on another device ("2-A", ProlificStartScreen).
  *
  * THE CODE IS NEVER IN THE PAGE'S CODE. Anyone can read a web page's JavaScript, so the code (and Prolific's completion

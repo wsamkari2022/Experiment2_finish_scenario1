@@ -152,8 +152,8 @@ PROLIFIC_COMPLETION_CODE=THE_CODE_FROM_PROLIFIC
 
 The last line (since 7 October 2026) is the Prolific completion code: copy it from the study's completion path on Prolific
 (it is also in your `Prolific docs/` folder). Letters and digits only. It is shown to a Prolific participant only after
-their completion is saved, and it is never written anywhere else. Without it the university version works as before;
-`./build-and-run.sh` prints a warning, and the Prolific version's final page cannot show the code. After the start,
+their completion is saved, and it is never written anywhere else. **Without it `./build-and-run.sh` stops and the study is not
+started** (since 10 November 2026: nobody could get their code). After the start,
 `https://moonlander.fit.edu/api/health` must say `"prolific_code_configured": true`. Then do one Prolific "Preview as
 participant" run to the very end and press "Return to Prolific" (docs/PROLIFIC_CONVERSION_PLAN.md, section 5, item 8).
 The daily pay check during collection: docs/DAILY_PAY_CHECK.md.
@@ -351,14 +351,16 @@ counts now (finished, working, just arrived) and every record ever by source. Nu
 **Good to know while testing:**
 
 - The two development buttons (Reset, Fill feedback) are not in the server build, so every test is a full run.
-- The same email on a second browser asks for the email and age again and then takes the run over; the first browser
+- The same Prolific ID on a second browser asks for the age again and then takes the run over; the first browser
   shows "This study is open somewhere else". That is the one-browser rule, not an error.
+- **To test, use a made-up Prolific ID in the link:** `/prolific?PROLIFIC_PID=<24 letters a-f and digits>&condition=CVR_APA`. Tests by
+  address are never counted for balance. Delete every test record before launch.
 - `https://moonlander.fit.edu/api/health` should show `"ok":true` and `"database":"VRDS2"`.
 - Opening the count page or the health page never gives anybody a condition; only the study's own address does.
-- **Since 6 October 2026, two doors.** The university version stays at `https://moonlander.fit.edu`; the Prolific version is
-  `https://moonlander.fit.edu/prolific` (that is the URL to give Prolific, with "URL parameters" for the IDs). The count
-  page shows one table per door. **The researcher's "3-A": put this on the server only after Step 4** (the Prolific
-  door's consent, code and "Return to Prolific" are not built yet).
+- **Prolific only since 10 November 2026** (the IRB refused the student group). The URL to give Prolific is
+  `https://moonlander.fit.edu/prolific` with "URL parameters" for the IDs. Every address of the site opens the same first page; with
+  no ID in the link it asks the person to paste it. The server refuses anything that is not a Prolific ID. **Deploy only after the
+  IRB approves.** The count page shows one table, of Prolific people only.
 - **Back up the database before that deploy.** The first start of the new server replaces the "one email = one person"
   rule on `participants` with two rules that cover only the records that have an email or a Prolific ID (a database
   with the old rule would refuse the second Prolific person). The swap keeps every record and was tested on a copy

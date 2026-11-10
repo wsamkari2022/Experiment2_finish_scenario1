@@ -1,29 +1,26 @@
 /**
- * recruitment.ts — the two doors into the study, and the participant's KEY (since 6 October 2026).
+ * recruitment.ts — who may take the study, and the participant's KEY.
  *
- * The researcher's decision ("1-A"): one website, two doors.
- *   - https://moonlander.fit.edu            the university door: FIT students and employees, exactly as before
- *                                            (the email is the key; course credit since 16 October 2026, the $5 gift card before);
- *   - https://moonlander.fit.edu/prolific   the Prolific door: Prolific opens it with the participant's Prolific ID in
- *                                            the link (PROLIFIC_PID, STUDY_ID, SESSION_ID), and nobody types an email.
+ * PROLIFIC ONLY (since 10 November 2026). The IRB refused the student group on 9 November 2026, so there is one way in.
+ * Every address of the site opens the same first page (ProlificStartScreen): Prolific's link brings the participant's
+ * Prolific ID (PROLIFIC_PID, STUDY_ID, SESSION_ID); without it the page asks them to paste the ID (the researcher's "3-A").
+ * The student version is kept in the Git tag before-prolific-only.
  *
  * THE KEY. Everything that belongs to one participant (the browser's directory, every progress file's owner, the
- * condition's owner, the server's routes) is filed under one string: their email (university door) or their Prolific
- * ID (Prolific door). The browser keeps carrying that string where it always carried the email (the `email` slot of a
- * directory entry, `vrds_pending_email`); the SERVER stores a Prolific ID under its true name, `prolific_pid`, never in
- * `email` (server/recruitment.js holds the same rule and validate:session C13 checks the two agree). An email always
- * has an @, a Prolific ID never does, so the two can never be mistaken for each other.
+ * condition's owner, the server's routes) is filed under their Prolific ID. The browser keeps carrying it where it always
+ * carried the key (the `email` slot of a directory entry, `vrds_pending_email`: old names, kept on purpose, the
+ * researcher's decision 4-A); the SERVER stores it under its true name, `prolific_pid`, and refuses anything else
+ * (server/recruitment.js holds the same rule and validate:session C13 checks the two agree). An email has an @, a Prolific
+ * ID never does, so an email can never pass for one.
  *
  * THE FORMAT. Prolific's help pages do not state it; in practice a Prolific ID is 24 letters a-f and digits. The study
  * accepts letters and digits only, 8 to 64 of them, so a future change at Prolific (or what its Preview sends) never
  * locks anybody out. Kept in lower case, like every key (Prolific's IDs are lower-case hexadecimal).
  */
 
-export type RecruitmentSource = "university" | "prolific";
-export const RECRUITMENT_SOURCES: readonly RecruitmentSource[] = ["university", "prolific"];
+/** What every record and arrival says about where its person came from. Stored as `recruitment_source`. */
+export const RECRUITMENT_SOURCE = "prolific" as const;
 
-/** The Prolific door's address. */
-export const PROLIFIC_PATH = "/prolific";
 /** The names Prolific gives its three link values. */
 export const PROLIFIC_PARAM = { pid: "PROLIFIC_PID", study: "STUDY_ID", session: "SESSION_ID" } as const;
 
@@ -41,9 +38,6 @@ export function normalizeProlificId(raw: unknown): string | null {
 export const isProlificKey = (key: string | null | undefined): boolean =>
   typeof key === "string" && !key.includes("@") && PROLIFIC_ID.test(key.trim().toLowerCase());
 
-/** Which door a key belongs to. */
-export const keyDoor = (key: string): RecruitmentSource => (isProlificKey(key) ? "prolific" : "university");
-
 export interface ProlificParams {
   pid: string | null;
   studyId: string | null;
@@ -58,13 +52,6 @@ export function prolificParamsFrom(search: string): ProlificParams {
     studyId: normalizeProlificId(params.get(PROLIFIC_PARAM.study)),
     sessionId: normalizeProlificId(params.get(PROLIFIC_PARAM.session)),
   };
-}
-
-/** The door an address opens: /prolific, or a Prolific ID in the link, is the Prolific door; anything else the university's. */
-export function doorFromAddress(pathname: string, search: string): RecruitmentSource {
-  if (pathname.toLowerCase().replace(/\/+$/, "") === PROLIFIC_PATH) return "prolific";
-  if (pathname.toLowerCase().startsWith(`${PROLIFIC_PATH}/`)) return "prolific";
-  return prolificParamsFrom(search).pid ? "prolific" : "university";
 }
 
 /** The same address with this Prolific ID in it (the paste box writes it there, so a refresh keeps it). */
@@ -109,7 +96,7 @@ export function readProlificFile(owner: string | null | undefined): ProlificFile
 
 /*
  * ANOTHER PROLIFIC ID IN THE LINK. When the link names a Prolific ID and this browser holds a DIFFERENT person's run (a
- * shared computer, or somebody who did the university version here), that run is set aside before the page reads
+ * shared computer), that run is set aside before the page reads
  * anything, so the newcomer never sees or continues it: every file is removed except these. The person before keeps
  * everything on the server, and their unsent saves stay queued, each naming its owner (storage.ts), so they still
  * reach the right record. A new session id is made for the newcomer (two records may not share one).
@@ -123,7 +110,7 @@ export const KEPT_WHEN_ANOTHER_PERSON_ARRIVES: ReadonlySet<string> = new Set([
   "vrds_feedback_archive",
 ]);
 
-/** The key of the run this browser holds (email or Prolific ID), or null. */
+/** The Prolific ID of the run this browser holds, or null. */
 export function browserParticipantKey(): string | null {
   try {
     return localStorage.getItem("vrds_pending_email")
@@ -157,28 +144,24 @@ export function makeRoomForAnotherProlificId(search: string): boolean {
 }
 
 /*
- * "NOT YOU?" ON THE UNIVERSITY DOOR (the audit of 6 October 2026; the researcher's "4-Yes"). On a shared computer the
- * browser reopens the first student's run, or their thank-you page, and the next student had no way to start. When a
- * browser OPENS with a university run in it, NotYouLink shows whose it is (masked) and offers to start as someone else:
- * the run is set aside like this (their answers stay on the server; they continue later with their email and age).
+ * A RUN FROM BEFORE THE STUDY WAS PROLIFIC ONLY. Only a test browser can hold one (no student ever took the study): its key
+ * is an email, which the server now refuses. It is set aside before the page reads anything, so the page starts fresh
+ * and never tries to continue a run it cannot save.
  */
-
-/** The university door's key, partly hidden for a person who may not be its owner: "w•••@my.fit.edu". */
-export function maskEmail(email: string): string {
-  const at = email.indexOf("@");
-  if (at < 1) return "•••";
-  return `${email[0]}•••${email.slice(at)}`;
+export function setAsideRunWithoutProlificId(): boolean {
+  try {
+    const pending = localStorage.getItem("vrds_pending_email");
+    const demo = JSON.parse(localStorage.getItem("vrds_demographics") ?? "null") as { email?: unknown } | null;
+    const held = pending ?? (typeof demo?.email === "string" ? demo.email : null);
+    if (!held || isProlificKey(held)) return false;
+    setAsideThisBrowsersRun();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-/** The university run this browser holds when the page opens (an email key), or null (none, or a Prolific ID). */
-export function universityRunHeld(): string | null {
-  const key = browserParticipantKey();
-  return key && key.includes("@") && !isProlificKey(key) ? key : null;
-}
-
-/** The key a saved demographic record belongs to: its email (university door) or its Prolific ID. */
-export function keyOfDemographics(demo: { email?: unknown; prolificPid?: unknown } | null | undefined): string | null {
-  if (typeof demo?.email === "string" && demo.email) return demo.email;
-  if (typeof demo?.prolificPid === "string" && demo.prolificPid) return demo.prolificPid;
-  return null;
+/** The Prolific ID a saved demographic record belongs to. */
+export function keyOfDemographics(demo: { prolificPid?: unknown } | null | undefined): string | null {
+  return typeof demo?.prolificPid === "string" && demo.prolificPid ? demo.prolificPid : null;
 }

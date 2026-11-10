@@ -1,11 +1,11 @@
 /*
  * validate_attention.cjs — the attention checks, and the two deleted between-block pages (29 September 2026).
  *
- * The researcher asked for simple attention checks during the study and "Pick the number four" in the feedback, all
- * needed for the gift card; and for the "insights" and post-Block-4 pages to be deleted, as long as the data stays safe.
- * Since 14 October 2026 the two checks inside the study are READING checks (his advisor: test reading, not memory, and
- * place them "(somewhat) randomly"), after Block 1, 2 or 3 and after scenario 1, 2 or 3, drawn per participant; and in
- * the Prolific door all four checks count, two or more failed being the rejection reason ("1-B"). These gates run the
+ * The researcher asked for simple attention checks during the study and "Pick the number four" in the feedback; and for
+ * the "insights" and post-Block-4 pages to be deleted, as long as the data stays safe. Since 14 October 2026 the two checks
+ * inside the study are READING checks (his advisor: test reading, not memory, and place them "(somewhat) randomly"), after
+ * Block 1, 2 or 3 and after scenario 1, 2 or 3, drawn per participant; and all four checks count, two or more failed being
+ * the rejection reason ("1-B"). Prolific only since 10 November 2026. These gates run the
  * real code (src/experiment/attentionChecks.ts, interBlockData.ts, dbShape.ts) and read the pages' source:
  *
  *   T1  the plan: the two reading checks carry the researcher's approved words (the instruction names the right answer)
@@ -15,9 +15,8 @@
  *   T2  the plan is drawn once and saved: the same participant always gets the same checks (a refresh or another
  *       device), another email gets its own, and an answered check stays answered
  *   T3  scoring: right only when the answer is what was asked; a miss or a check never reached has its own reason
- *   T4  course credit and careful participation (quality, since 16 October 2026; the gift card until then): credit =
- *       completion, the university door only, never taken away by behaviour; careful participation = none of the four OSF
- *       robustness signs; the check's own screen is never a rushed block; the copy in major_info_and_scores matches
+ *   T4  careful participation (quality): none of the four OSF robustness signs; there is no course-credit field since 10
+ *       November 2026; the check's own screen is never a rushed block; the copy in major_info_and_scores matches
  *   T5  the feedback row stays out of the feedback record: never in a scored list, saved in the attention file on
  *       submit, only in the tools or well-being sections, answered correctly by the development fill button
  *   T6  the two answer-pattern flags (Q4) count runs and steps of one exactly, and say they are not for pay
@@ -29,16 +28,13 @@
  *       never again once answered); the flow asks the rule at the end of Blocks 1, 2 and 3 and goes on to the right
  *       next block; Block 5 asks it before each scenario and restarts the next scenario's clock; the consent page
  *       names the rule
- *   T9  (since 7 October 2026) the Prolific door's two number rows: one in each section at every place about equally,
- *       two different numbers two to five; the university plan's fingerprint; the door follows the key; since 14
- *       October 2026 all four checks count for Prolific's rule, two or more failed is the flag, a check never reached is
- *       not a failure; the database rows, quality and the major copy; the chance a random clicker fails two or more;
- *       the page draws every row
- *   T10 the consent page of each door: the university wording = the Florida Tech consent submitted to the IRB plus the
- *       "At Least 35 Minutes" request box (16 October 2026: its words, students only, no word about the design), the
- *       Prolific wording (paid through Prolific, one sitting, the Prolific ID instead of the email, "If you fail two or
- *       more of them, your submission will be rejected.", one box, "I do not agree" with the way to return the study),
- *       its own version stamp, and the flow passing the door
+ *   T9  (since 7 October 2026) the two number rows: one in each section at every place about equally, two different
+ *       numbers two to five; the plan's fingerprint; since 14 October 2026 all four checks count for Prolific's rule, two or
+ *       more failed is the flag, a check never reached is not a failure; the database rows, quality and the major copy; the
+ *       chance a random clicker fails two or more; the page draws every row
+ *   T10 the consent page against docs/PROLIFIC_CONSENT_FORM_TEXT.txt (the form sent to the IRB), in both directions: every
+ *       line of the form is on the page, and the page says nothing the form does not; its version stamp, one box, the
+ *       three links, the IRB contact, no student word
  *   P1  the deleted pages' data: the new functions make exactly the files the pages made (the pages' own recipe,
  *       written out again here) for 300 pretend participants, and write nothing when an earlier block is missing
  *   P2  the deleted pages, from the source: the four files are gone, the flow derives the files when Block 3 and
@@ -97,7 +93,7 @@ console.log("===================================================================
 
 /* ------------------------------------------------------------------ T1 the plan, and the approved words */
 const N = 4000;
-const plans = Array.from({ length: N }, (_, i) => A.planAttentionChecks(`pretend-session-${i}|person${i}@example.test`));
+const plans = Array.from({ length: N }, (_, i) => A.planAttentionChecks(`pretend-session-${i}|pid${String(i).padStart(20, "0")}`));
 const READING = ["between_blocks", "between_scenarios"];
 {
   const why = [];
@@ -131,17 +127,17 @@ const READING = ["between_blocks", "between_scenarios"];
   }
   if (new Set(plans.map((p) => `${p.between_blocks.after}-${p.between_scenarios.after}`)).size !== 9) why.push("not every pair of places is used");
   if (plans.some((p) => p.between_scenarios.after >= 4)) why.push("a scenario check between scenarios 4 and 5, or before scenario 6");
-  if (A.ATTENTION_CHECK_IDS.join() !== "between_blocks,between_scenarios,number") why.push("the checks are not the three approved ones");
+  if (A.ATTENTION_CHECK_IDS.join() !== "between_blocks,between_scenarios,number,number_2") why.push("the checks are not the four approved ones");
   for (const n of [2, 3, 4, 5]) if (!within(share(plans, (p) => p.number.target, n), 0.25, 0.03)) why.push(`number ${n} not about 1 in 4`);
   if (plans.some((p) => ![2, 3, 4, 5].includes(p.number.target) || A.NUMBER_WORDS[p.number.target] !== p.number.word)) why.push("a number outside two to five, or the wrong word");
   const slotKeys = new Set(plans.map((p) => `${p.number.list}:${p.number.after}`));
-  if (slotKeys.size !== A.NUMBER_SLOTS.length) why.push(`only ${slotKeys.size} of ${A.NUMBER_SLOTS.length} feedback places used`);
+  if (slotKeys.size !== A.TOOLS_SLOTS.length) why.push(`only ${slotKeys.size} of ${A.TOOLS_SLOTS.length} feedback places used`);
   if (plans.some((p) => !["tools", "wellbeing_a", "wellbeing_b"].includes(p.number.list))) why.push("the number row in a reflection or clarification section");
   if (plans.some((p) => p.number.after < 1 || p.number.after > A.NUMBER_LIST_LENGTHS[p.number.list])) why.push("the number row first in a section, or past its end");
   const toolLikerts = FB.TOOL_RATINGS.filter((q) => q.type === "likert").length;
   if (A.NUMBER_LIST_LENGTHS.tools !== toolLikerts || A.NUMBER_LIST_LENGTHS.wellbeing_a + A.NUMBER_LIST_LENGTHS.wellbeing_b !== FB.WELLBEING_ITEMS.length) why.push("the three lists do not match the feedback's own questions");
   gate("T1", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
-    : `the two reading checks carry the researcher's approved words (the instruction names the right answer and says it is a check); over ${N} pretend participants each of their four answers comes first about 1 time in 4, the block check sits after Block 1, 2 or 3 and the scenario check after scenario 1, 2 or 3, each about 1 time in 3 (all 9 pairs used, never between scenarios 4 and 5 or before 6); the feedback number is two to five, about equally, over all ${A.NUMBER_SLOTS.length} places, never first in a section, never among the reflection or clarification questions`);
+    : `the two reading checks carry the researcher's approved words (the instruction names the right answer and says it is a check); over ${N} pretend participants each of their four answers comes first about 1 time in 4, the block check sits after Block 1, 2 or 3 and the scenario check after scenario 1, 2 or 3, each about 1 time in 3 (all 9 pairs used, never between scenarios 4 and 5 or before 6); the feedback number is two to five, about equally, over all ${A.TOOLS_SLOTS.length} places of the first row, never first in a section, never among the reflection or clarification questions`);
 }
 
 /* ------------------------------------------------------------------ T2 drawn once, saved, per participant */
@@ -149,47 +145,53 @@ const READING = ["between_blocks", "between_scenarios"];
   const ans0 = (answer) => ({ answer, correct: true, answeredAt: "2026-09-30T09:00:00.000Z", secondsToAnswer: 2, timesChanged: 0 });
   const why = [];
   if (JSON.stringify(A.planAttentionChecks("same")) !== JSON.stringify(A.planAttentionChecks("same"))) why.push("the same seed gave two plans");
-  store = { vrds_session_id: "s-1", vrds_pending_email: "Ana@Example.test" };
+  store = { vrds_session_id: "s-1", vrds_pending_email: "AnaProlific01" };
   const first = A.readAttention();
   if (JSON.stringify(A.readAttention().plan) !== JSON.stringify(first.plan)) why.push("a second read drew a new plan");
-  if (first.owner !== "ana@example.test" || first.version !== A.ATTENTION_VERSION) why.push("the owner or the version is wrong");
+  if (first.owner !== "anaprolific01" || first.version !== A.ATTENTION_VERSION) why.push("the owner or the version is wrong");
   const travelled = store[A.ATTENTION_KEY];
-  store = { vrds_session_id: "s-1", vrds_pending_email: "ana@example.test", [A.ATTENTION_KEY]: travelled };
+  store = { vrds_session_id: "s-1", vrds_pending_email: "anaprolific01", [A.ATTENTION_KEY]: travelled };
   if (JSON.stringify(A.readAttention().plan) !== JSON.stringify(first.plan)) why.push("another device drew a new plan");
   if (A.readAttention().plan.between_blocks.after !== first.plan.between_blocks.after || A.readAttention().plan.between_scenarios.after !== first.plan.between_scenarios.after) why.push("the places moved between two reads");
   A.recordAttentionAnswer("between_blocks", A.READING_CHECKS.between_blocks.right, 3.2, 1);
   if (!A.isAttentionAnswered("between_blocks") || A.isAttentionAnswered("between_scenarios")) why.push("answered / not answered is wrong");
-  store.vrds_pending_email = "ben@example.test";
+  store.vrds_pending_email = "benprolific01";
   const ben = A.readAttention();
-  if (ben.owner !== "ben@example.test" || Object.keys(ben.answers).length !== 0) why.push("a second person inherited the first person's checks");
+  if (ben.owner !== "benprolific01" || Object.keys(ben.answers).length !== 0) why.push("a second person inherited the first person's checks");
   /* A file saved under the old colour-and-letter version is drawn again, not misread. */
-  store = { vrds_pending_email: "cy@example.test", [A.ATTENTION_KEY]: JSON.stringify({ version: "2026-09-29-a", owner: "cy@example.test",
+  store = { vrds_pending_email: "cyprolific01", [A.ATTENTION_KEY]: JSON.stringify({ version: "2026-09-29-a", owner: "cyprolific01",
     plan: { colour: { slot: "after_block1", target: "green", options: [] }, letter: {}, number: { list: "tools", after: 1, target: 2, word: "two" } }, answers: { colour: { answer: "green" } } }) };
   const cy = A.readAttention();
   if (cy.version !== A.ATTENTION_VERSION || !Array.isArray(cy.plan.between_blocks?.options) || Object.keys(cy.answers).length !== 0) why.push("an old-version file is not drawn again");
   /* And a file shaped exactly like today's but stamped with an older version: only the version can tell. */
-  const lookalike = { version: "2026-09-29-a", owner: "dee@example.test", plan: A.planAttentionChecks("dee"), answers: { between_blocks: ans0(A.READING_CHECKS.between_blocks.right) } };
-  store = { vrds_pending_email: "dee@example.test", [A.ATTENTION_KEY]: JSON.stringify(lookalike) };
+  const lookalike = { version: "2026-09-29-a", owner: "deeprolific01", plan: A.planAttentionChecks("dee"), answers: { between_blocks: ans0(A.READING_CHECKS.between_blocks.right) } };
+  store = { vrds_pending_email: "deeprolific01", [A.ATTENTION_KEY]: JSON.stringify(lookalike) };
   const dee = A.readAttention();
   if (dee.version !== A.ATTENTION_VERSION || Object.keys(dee.answers).length !== 0) why.push("a file with an older version stamp is kept");
   /* The two memory-question versions (30 September and 7 October 2026) are no longer read: their questions are gone, so a
      test run saved under them is drawn again, answers and all (nobody had taken the study; STILL_READ_VERSIONS is empty). */
   if (A.STILL_READ_VERSIONS.length !== 0) why.push("an older version is still read as it is");
-  for (const [version, door] of [["2026-09-30-topics", "university"], ["2026-10-07-two-doors", "university"], ["2026-10-07-two-doors", "prolific"]]) {
-    const owner = door === "prolific" ? "5f8a9b0c1d2e3f4a5b6c7d80" : "eve@example.test";
-    const memory = { version, owner, plan: { ...(door === "prolific" ? { door } : {}), after_block3: { options: ["a", "b", "c", "d"] }, after_scenario3: { options: ["a", "b", "c", "d"] },
-      number: { list: "tools", after: 1, target: 2, word: "two" }, ...(door === "prolific" ? { number_2: { list: "wellbeing_a", after: 1, target: 3, word: "three" } } : {}) },
+  for (const version of ["2026-09-30-topics", "2026-10-07-two-doors", "2026-10-14-reading-checks"]) {
+    const owner = "5f8a9b0c1d2e3f4a5b6c7d80";
+    const memory = { version, owner, plan: { after_block3: { options: ["a", "b", "c", "d"] }, after_scenario3: { options: ["a", "b", "c", "d"] },
+      number: { list: "tools", after: 1, target: 2, word: "two" }, number_2: { list: "wellbeing_a", after: 1, target: 3, word: "three" } },
       answers: { after_block3: ans0("a") } };
     store = { vrds_pending_email: owner, [A.ATTENTION_KEY]: JSON.stringify(memory) };
     const redrawn = A.readAttention();
-    if (redrawn.version !== A.ATTENTION_VERSION || "after_block3" in redrawn.plan || Object.keys(redrawn.answers).length !== 0 || A.planDoor(redrawn.plan) !== door) why.push(`a ${version} ${door} file is kept`);
+    if (redrawn.version !== A.ATTENTION_VERSION || "after_block3" in redrawn.plan || Object.keys(redrawn.answers).length !== 0 || !redrawn.plan.number_2) why.push(`a ${version} file is kept`);
     if (A.scoreAttention(memory) !== null || A.buildAttentionSection(memory) !== null) why.push(`a ${version} file is still scored`);
+  }
+  /* A plan without the second number row is never read: there is only the four-check plan now. */
+  {
+    const three = { version: A.ATTENTION_VERSION, owner: "x", plan: { ...A.planAttentionChecks("three") }, answers: {} };
+    delete three.plan.number_2;
+    if (A.scoreAttention(three) !== null) why.push("a plan with only three checks is read");
   }
   /* A file with a place outside 1-3 is never read (it would put the check where it must never be). */
   const bad = { ...A.readAttention(), plan: { ...A.readAttention().plan, between_scenarios: { after: 4, options: A.readAttention().plan.between_scenarios.options } } };
   if (A.scoreAttention(bad) !== null) why.push("a plan with the scenario check after scenario 4 is read");
   gate("T2", why.length === 0, why.length ? why.join(" | ")
-    : "the plan is drawn once and saved: the same participant gets the same places and answer orders after a refresh or on another device, an answered check stays answered, another email gets its own, an old-version file is drawn again (also the two memory-question versions, in both doors), and a plan with a place outside 1-3 is never read");
+    : "the plan is drawn once and saved: the same participant gets the same places and answer orders after a refresh or on another device, an answered check stays answered, another ID gets its own, an old-version file is drawn again (also every earlier version), and a plan with a place outside 1-3 is never read");
 }
 
 /* ------------------------------------------------------------------ T3 scoring */
@@ -200,20 +202,20 @@ const at = "2026-09-30T10:00:00.000Z";
 const ans = (answer) => ({ answer, correct: false, answeredAt: at, secondsToAnswer: 2, timesChanged: 0 });
 const P = plans[7];
 const RB = A.READING_CHECKS.between_blocks.right, WB = A.READING_CHECKS.between_blocks.wrong[1], RS = A.READING_CHECKS.between_scenarios.right;
-const allRight = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans(RS), number: ans(P.number.target) });
-const oneWrong = fileWith(P, { between_blocks: ans(WB), between_scenarios: ans(RS), number: ans(P.number.target) });
-const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans(RS) });
+const allRight = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans(RS), number: ans(P.number.target), number_2: ans(P.number_2.target) });
+const oneWrong = fileWith(P, { between_blocks: ans(WB), between_scenarios: ans(RS), number: ans(P.number.target), number_2: ans(P.number_2.target) });
+const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans(RS), number: ans(P.number.target) });
 {
   const why = [];
   const s1 = A.scoreAttention(allRight), s2 = A.scoreAttention(oneWrong), s3 = A.scoreAttention(oneMissing);
-  if (!s1.passedAll || s1.passedCount !== 3 || s1.misses.length) why.push("all right does not pass");
-  if (s2.passedAll || s2.passedCount !== 2 || !(s2.misses[0] ?? "").startsWith(`missed the reading check after Block ${P.between_blocks.after}`) || !(s2.misses[0] ?? "").includes(WB)) why.push(`a wrong answer reads wrong: ${JSON.stringify(s2)}`);
-  if (s3.passedAll || s3.answeredCount !== 2 || s3.misses[0] !== "did not answer the feedback check") why.push("a check never reached does not count as missed");
-  const textFour = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans(RS), number: ans(String(P.number.target)) });
+  if (!s1.passedAll || s1.passedCount !== 4 || s1.misses.length) why.push("all right does not pass");
+  if (s2.passedAll || s2.passedCount !== 3 || !(s2.misses[0] ?? "").startsWith(`missed the reading check after Block ${P.between_blocks.after}`) || !(s2.misses[0] ?? "").includes(WB)) why.push(`a wrong answer reads wrong: ${JSON.stringify(s2)}`);
+  if (s3.passedAll || s3.answeredCount !== 3 || s3.misses[0] !== "did not answer the second feedback check") why.push("a check never reached does not count as missed");
+  const textFour = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans(RS), number: ans(String(P.number.target)), number_2: ans(P.number_2.target) });
   if (A.scoreAttention(textFour).passedAll) why.push("the number check accepted text for a number");
   if (A.scoreAttention(null) !== null || A.buildAttentionSection({}) !== null) why.push("no file should give no verdict");
   const sec = A.buildAttentionSection(oneWrong);
-  if (sec.passed_all !== false || sec.checks.length !== 3 || sec.checks[0].correct !== false || sec.checks[1].correct !== true
+  if (sec.passed_all !== false || sec.checks.length !== 4 || sec.checks[0].correct !== false || sec.checks[1].correct !== true
       || sec.checks[0].right_answer !== RB || sec.checks[1].asked !== `${A.READING_CHECKS.between_scenarios.question} ${A.READING_CHECKS.between_scenarios.instruction}`
       || JSON.stringify(sec.checks[0].options_in_the_order_shown) !== JSON.stringify(P.between_blocks.options)
       || sec.checks[0].shown_after_block !== P.between_blocks.after || sec.checks[0].shown_after_scenario !== null
@@ -224,11 +226,10 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
     : "right only when the answer is exactly the right one (a number as a number); a wrong pick names the check's place, the right answer and the pick; a check never reached counts as missed; the rows keep where each check was shown (in words and as a number), the question with its instruction, the answer order and the answer");
 }
 
-/* ------------------------------------------------------------------ T4 course credit, and careful participation */
+/* ------------------------------------------------------------------ T4 careful participation */
 {
-  /* Since 16 October 2026 (the researcher's "1-yes, 2-yes"): course credit = completion, the university door only (the
-     consent page: "the course credit is given when I complete the study"); careful participation = none of the four OSF
-     robustness signs, for the researcher only, never taking credit away. */
+  /* Careful participation = none of the four OSF robustness signs, for the researcher only (since 16 October 2026). There
+     is no course-credit field since 10 November 2026. */
   const why = [];
   const ledger = { totalMs: 2_400_000, sittings: 1, longestIdleMs: 0, byStage: { money: 300_000, block5: 900_000, attention_check: 5_000 } };
   const varied = { feedback: { decisionSupport: { TOOL_optionCards: 3, TOOL_consequences: 6 }, wellbeing: { items: { LI1: 5, LI2: 2, LI3: 7, LI4: 4, DS1: 5, DS2: 3, DS4: 6, DR1: 2 } } } };
@@ -237,9 +238,9 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   const steady = { answered_very_fast: false, median_seconds_between_answers: 3.4 };
   const hasty = { answered_very_fast: true, median_seconds_between_answers: 1.2 };
   const q = (over = {}) => db.buildQuality(over.ledger ?? ledger, "b5" in over ? over.b5 : b5(0), "fb" in over ? over.fb : varied,
-    over.status ?? "Study Completed", "att" in over ? over.att : allRight, "b14" in over ? over.b14 : steady, over.door ?? "university");
+    over.status ?? "Study Completed", "att" in over ? over.att : allRight, "b14" in over ? over.b14 : steady);
   const ok = q();
-  if (ok.course_credit_earned !== true || ok.careful_participation !== true || ok.careful_participation_reasons.length !== 0
+  if ("course_credit_earned" in ok || ok.careful_participation !== true || ok.careful_participation_reasons.length !== 0
       || ok.careful_participation_cannot_tell.length !== 0 || ok.careful_participation_signs.length !== 4 || ok.passed_all_attention_checks !== true) why.push(`a careful finisher reads wrong: ${JSON.stringify(ok).slice(0, 200)}`);
   const cases = [
     ["an attention check answered wrongly", { att: oneWrong }, /answered 1 attention check wrongly/],
@@ -250,31 +251,28 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   for (const [label, over, reason] of cases) {
     const r = q(over);
     if (r.careful_participation !== false || !r.careful_participation_reasons.some((x) => reason.test(x))) why.push(`${label}: careful ${r.careful_participation}, ${r.careful_participation_reasons}`);
-    if (r.course_credit_earned !== true) why.push(`${label} took the course credit away`);
   }
   if (q({ b5: b5(1) }).careful_participation !== true) why.push("one fast scenario counts as a sign");
   const unknown = q({ b14: null });
-  if (unknown.careful_participation !== null || !unknown.careful_participation_cannot_tell.includes("Blocks 1-3 timing not on record") || unknown.course_credit_earned !== true) why.push("a sign that cannot be read does not give null");
+  if (unknown.careful_participation !== null || !unknown.careful_participation_cannot_tell.includes("Blocks 1-3 timing not on record")) why.push("a sign that cannot be read does not give null");
   if (q({ att: null }).careful_participation !== null || !q({ att: null }).attention_check_misses.includes("no attention checks on record")) why.push("no attention file does not give null");
-  if (q({ status: "Study Not Completed" }).course_credit_earned !== false) why.push("an unfinished student earned the credit");
-  if (q({ door: "prolific" }).course_credit_earned !== null) why.push("the Prolific door got a course credit");
   const slow = q({ ledger: { ...ledger, totalMs: 600_000 } });
-  if (slow.course_credit_earned !== true || slow.under_the_estimated_length !== true || slow.careful_participation !== true) why.push("ten working minutes changed the credit or the careful verdict");
+  if (slow.under_the_estimated_length !== true || slow.careful_participation !== true) why.push("ten working minutes changed the careful verdict");
   const rushed = q({ ledger: { ...ledger, byStage: { money: 10_000, trolley: 9_000, product: 8_000, block5: 900_000 } } });
-  if (rushed.blocks_under_30_seconds !== 3 || rushed.careful_participation !== true || rushed.course_credit_earned !== true) why.push("three rushed parts became a careful sign (it is the pay check's, not the OSF's)");
+  if (rushed.blocks_under_30_seconds !== 3 || rushed.careful_participation !== true) why.push("three rushed parts became a careful sign (it is the pay check's, not the OSF's)");
   if (ok.blocks_under_30_seconds !== 0 || ok.rushed_blocks.some((b) => b.stage === "attention_check")) why.push("the check's screen counted as a rushed block");
-  for (const gone of ["compensation_eligible", "reasons", "rule", "required_active_minutes", "met_time_requirement"]) if (gone in ok) why.push(`the gift-card field ${gone} is still saved`);
-  /* The page passes what the verdict reads: the Blocks 1-3 speed flag (built first) and the participant's door. */
+  for (const gone of ["compensation_eligible", "reasons", "rule", "required_active_minutes", "met_time_requirement", "course_credit_earned"]) if (gone in ok) why.push(`the old field ${gone} is still saved`);
+  /* The page passes what the verdict reads: the Blocks 1-3 speed flag (built first). */
   const storage = bare(src("storage.ts"));
   const iB14 = storage.indexOf("const blocks1to4 = buildBlocks1to4Checks({"), iQ = storage.indexOf("const quality = buildQuality(");
-  if (!(iB14 > 0 && iQ > iB14) || !/const quality = buildQuality\(\s*readKey\(ACTIVE_TIME_KEY\),\s*readKey\(BLOCK5_RESULTS_KEY\),\s*readKey\(FEEDBACK_KEY\),\s*localStorage\.getItem\("vrds_status"\) \?\? "",\s*readKey\(ATTENTION_KEY\),\s*blocks1to4,\s*keyDoor\(browserParticipantKey\(\) \?\? ""\),\s*\);/.test(storage)) why.push("the page does not pass the speed flag and the door to the verdict");
-  if (!/course_credit_earned \(the university door only; null in the Prolific door\) is exactly completed_the_study/.test(ok.how_to_read)) why.push("how_to_read does not say what decides the credit");
+  if (!(iB14 > 0 && iQ > iB14) || !/const quality = buildQuality\(\s*readKey\(ACTIVE_TIME_KEY\),\s*readKey\(BLOCK5_RESULTS_KEY\),\s*readKey\(FEEDBACK_KEY\),\s*localStorage\.getItem\("vrds_status"\) \?\? "",\s*readKey\(ATTENTION_KEY\),\s*blocks1to4,\s*\);/.test(storage)) why.push("the page does not pass the speed flag to the verdict");
+  if (!/careful_participation is for the researcher only/.test(ok.how_to_read) || /course.credit/i.test(ok.how_to_read)) why.push("how_to_read does not say what careful participation is, or still names the course credit");
   const block5 = { scenarioResults: [], originalProfile: { dimensions: [] } };
   const major = db.buildMajorScores(block5, null, null, null, null, null, oneWrong);
-  if (!major || JSON.stringify(major.attention_checks) !== JSON.stringify({ passed_all: false, passed_count: 2, answered_count: 3, misses: A.scoreAttention(oneWrong).misses })) why.push("the copy in major_info_and_scores is wrong");
+  if (!major || JSON.stringify(major.attention_checks) !== JSON.stringify({ passed_all: false, passed_count: 3, answered_count: 4, misses: A.scoreAttention(oneWrong).misses, attention_checks_failed: 1, failed_two_or_more_attention_checks: false })) why.push("the copy in major_info_and_scores is wrong");
   if (!/analysis\.attention_checks/.test(major?.where_each_number_lives?.attention_checks ?? "")) why.push("where_each_number_lives does not name the source");
   gate("T4", why.length === 0, why.length ? why.join(" | ")
-    : "course credit = completion in the university door (null in the Prolific door), never taken away by behaviour; careful participation false with its reason for each of the four OSF signs (an attention check wrong, very fast in Blocks 1-3, two scenarios under 15 s, the same answer to every rating), null when a sign cannot be read, unmoved by ten working minutes or three rushed parts; the gift-card fields gone; the check's screen never a rushed block; major_info_and_scores copies the checks");
+    : "careful participation false with its reason for each of the four OSF signs (an attention check wrong, very fast in Blocks 1-3, two scenarios under 15 s, the same answer to every rating), null when a sign cannot be read, unmoved by ten working minutes or three rushed parts; the gift-card and course-credit fields gone; the check's screen never a rushed block; major_info_and_scores copies the checks");
 }
 
 /* ------------------------------------------------------------------ T5 the feedback row */
@@ -337,11 +335,11 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   const R = 200_000;
   let passAll = 0;
   for (let i = 0; i < R; i++) {
-    const colour = rand() < 0.25, letter = rand() < 0.25, number = Math.floor(rand() * 7) + 1 === 4;
-    if (colour && letter && number) passAll += 1;
+    const first = rand() < 0.25, second = rand() < 0.25, row1 = Math.floor(rand() * 7) + 1 === 4, row2 = Math.floor(rand() * 7) + 1 === 4;
+    if (first && second && row1 && row2) passAll += 1;
   }
   const rate = passAll / R;
-  if (Math.abs(rate - 1 / 112) > 0.001) why.push(`random clickers pass ${(rate * 100).toFixed(2)}%, not about 0.89%`);
+  if (Math.abs(rate - 1 / 784) > 0.0005) why.push(`random clickers pass ${(rate * 100).toFixed(2)}%, not about 0.13%`);
   /* A same-number answerer passes the number check only when the number asked is theirs. */
   const sameRate = (c) => plans.filter((p) => p.number.target === c).length / plans.length;
   if (sameRate(1) !== 0 || sameRate(6) !== 0 || sameRate(7) !== 0 || Math.abs(sameRate(4) - 0.25) > 0.03) why.push("same-number answerers are not caught as planned");
@@ -351,7 +349,7 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   const diagPass = plans.filter((p) => (before(p) % 7) + 1 === p.number.target).length / plans.length;
   if (diagPass > 0.2) why.push(`diagonal clickers pass the number check ${(diagPass * 100).toFixed(0)}% of the time`);
   gate("T7", why.length === 0, why.length ? why.join(" | ")
-    : `a random clicker passes all three ${(rate * 100).toFixed(2)}% of the time (1 in 112 = 0.89%); a same-number answerer on 1, 6 or 7 always fails the number check, on 4 passes it ${(sameRate(4) * 100).toFixed(0)}%; a diagonal clicker passes it ${(diagPass * 100).toFixed(0)}%`);
+    : `a random clicker passes all four ${(rate * 100).toFixed(2)}% of the time (1 in 784 = 0.13%); a same-number answerer on 1, 6 or 7 always fails the number check, on 4 passes it ${(sameRate(4) * 100).toFixed(0)}%; a diagonal clicker passes it ${(diagPass * 100).toFixed(0)}%`);
 }
 
 /* ------------------------------------------------------------------ T8 the screens, from the source */
@@ -388,7 +386,6 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   if (!sim.includes("const [attentionFile] = useState(() => readAttention());")
       || !/if \(!scenarioCheckDone && readingCheckBeforeScenario\(attentionFile, progress\.currentScenarioIndex\)\)[\s\S]{0,300}check="between_scenarios"[\s\S]{0,120}telRef\.current = newTelemetryAccum\(\);[\s\S]{0,120}scenarioStartTime: Date\.now\(\)[\s\S]{0,80}setScenarioCheckDone\(true\)/.test(sim)) why.push("the scenario check is not asked before each scenario by the rule, or does not restart the next scenario's clock");
   const consent = bare(src("ConsentPage.tsx"));
-  /* Since 16 October 2026 only the Prolific page names an attention rule (the university page: course credit on completion). */
   if (!/Answer the attention checks as asked\./.test(consent) || !/the attention checks must be answered as asked/.test(consent) || /Answer the quick attention checks as asked/.test(consent)) why.push("the consent pages do not name the rule where they should");
   const telemetry = bare(src("telemetry.ts"));
   if (/"attention_check"/.test(telemetry.slice(telemetry.indexOf("const TIMED_STAGES"), telemetry.indexOf("];", telemetry.indexOf("const TIMED_STAGES"))))) why.push("the check's screen is timed as a stage");
@@ -396,22 +393,17 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
     : `the screens say it is an attention check, ask the approved question and its instruction once (no repeated line), never say right or wrong, keep the drawn answer order and continue after any pick; over ${N} pretend plans the block check follows exactly the drawn one of Blocks 1-3 and the scenario check comes before exactly the drawn one of scenarios 2-4, never again once answered; the end of Blocks 1, 2 and 3 asks the rule and goes on to its own next pause, Block 4 goes straight on; Block 5 asks the rule before each scenario and restarts the next scenario's clock; the consent page names the rule`);
 }
 
-/* ------------------------------------------------------------------ T9 the Prolific door's two number rows */
+/* ------------------------------------------------------------------ T9 the two number rows, and Prolific's rule */
 {
   const why = [];
   const within = (x, target, tol) => Math.abs(x - target) <= tol;
-  const pro = Array.from({ length: N }, (_, i) => A.planAttentionChecks(`pretend-session-${i}|pid${String(i).padStart(20, "0")}`, "prolific"));
-  /* The university plan: the default door, no second row. */
-  if (plans.some((p, i) => JSON.stringify(A.planAttentionChecks(`pretend-session-${i}|person${i}@example.test`, "university")) !== JSON.stringify(p))
-      || plans.some((p) => "door" in p || "number_2" in p)) why.push("the university plan changed");
-  /* ...drawn exactly as the reading-check version draws it (14 October 2026): the fingerprint of 200 plans. A change to
-     the draw moves every participant's places and orders, so it must be deliberate (and ATTENTION_VERSION moved). */
+  const pro = plans;
+  /* The fingerprint of 200 plans: a change to the draw moves every participant's places and orders, so it must be
+     deliberate (and ATTENTION_VERSION moved). */
   const fingerprint = require("node:crypto").createHash("sha256")
     .update(JSON.stringify(Array.from({ length: 200 }, (_, i) => A.planAttentionChecks(`fingerprint-${i}`)))).digest("hex");
-  if (fingerprint !== "8c27c70d8c771a4e7fd026df4efbf7adc67796ccfffa324b310d80af663be859") why.push(`the university plan is not drawn as the reading-check version draws it (${fingerprint})`);
-  /* The two reading checks are drawn the same way in both doors: the same seed gives the same places and orders. */
-  if (pro.some((p, i) => JSON.stringify([p.between_blocks, p.between_scenarios]) !== JSON.stringify((() => { const u = A.planAttentionChecks(`pretend-session-${i}|pid${String(i).padStart(20, "0")}`); return [u.between_blocks, u.between_scenarios]; })()))) why.push("the reading checks are drawn differently in the two doors");
-  if (pro.some((p) => p.door !== "prolific" || !p.number_2)) why.push("a Prolific plan has no second row");
+  if (fingerprint !== "769653fb28815296e8f45f222f5224203db7ba870423aed7b1e4b436152ef299") why.push(`the plan is not drawn as it was (${fingerprint})`);
+  if (pro.some((p) => !p.number_2 || "door" in p)) why.push("a plan has no second row, or still names a door");
   if (pro.some((p) => p.number.list !== "tools")) why.push("the first row is not in the tools section");
   if (pro.some((p) => !["wellbeing_a", "wellbeing_b"].includes(p.number_2.list))) why.push("the second row is not in the well-being section");
   if (pro.some((p) => p.number.target === p.number_2.target)) why.push("the two rows ask the same number");
@@ -424,13 +416,10 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   if (toolsUsed.size !== A.TOOLS_SLOTS.length || wbUsed.size !== A.WELLBEING_SLOTS.length) why.push(`places used: ${toolsUsed.size}/${A.TOOLS_SLOTS.length} tools, ${wbUsed.size}/${A.WELLBEING_SLOTS.length} well-being`);
   for (const sl of A.TOOLS_SLOTS) if (!within(pro.filter((p) => p.number.after === sl.after).length / N, 1 / A.TOOLS_SLOTS.length, 0.03)) why.push(`tools place ${sl.after} not about equally likely`);
   for (const sl of A.WELLBEING_SLOTS) if (!within(pro.filter((p) => p.number_2.list === sl.list && p.number_2.after === sl.after).length / N, 1 / A.WELLBEING_SLOTS.length, 0.015)) why.push(`well-being place ${sl.list}:${sl.after} not about equally likely`);
-  /* The key decides the door: a Prolific ID draws the Prolific plan, an email the university's. */
+  /* A Prolific ID draws the plan, and it is saved whole. */
   store = { vrds_session_id: "s-9", vrds_pending_email: "5f8a9b0c1d2e3f4a5b6c7d8e" };
   const pf = A.readAttention();
-  if (A.planDoor(pf.plan) !== "prolific" || !pf.plan.number_2) why.push("a Prolific ID did not draw the Prolific plan");
-  store = { vrds_session_id: "s-9", vrds_pending_email: "gil@example.test", [A.ATTENTION_KEY]: JSON.stringify({ ...pf, owner: "gil@example.test" }) };
-  const gil = A.readAttention();
-  if (A.planDoor(gil.plan) !== "university" || gil.plan.number_2) why.push("a Prolific plan was kept for an email");
+  if (!pf.plan.number_2 || A.numberRowsOf(pf.plan).length !== 2) why.push("a Prolific ID did not draw the two number rows");
   /* Scoring (since 14 October 2026, "1-B"): all four checks count for Prolific's rule; two or more failed is the flag;
      a check never reached is not a failure. */
   const pp = pro[3], t1 = pp.number.target, t2 = pp.number_2.target, wrong = (t) => (t === 7 ? 1 : 7);
@@ -453,30 +442,28 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   ];
   for (const [label, answers, passed, failed, flag] of cases) {
     const sc = A.scoreAttention(pfile(answers));
-    if (!sc || sc.door !== "prolific" || sc.asked !== 4 || sc.passedCount !== passed || sc.prolific?.counted !== 4 || sc.prolific?.failed !== failed
+    if (!sc || sc.asked !== 4 || sc.passedCount !== passed || sc.prolific?.counted !== 4 || sc.prolific?.failed !== failed
         || sc.prolific?.answered !== Object.keys(answers).length || sc.prolific?.failedTwoOrMore !== flag) why.push(`${label}: ${JSON.stringify(sc).slice(0, 160)}`);
   }
   if (A.PROLIFIC_FAILS_TO_REJECT !== 2) why.push("the Prolific line is not two failed checks");
   const bothWrong = pfile(cases[4][1]);
   const sec = A.buildAttentionSection(bothWrong);
-  if (sec.door !== "prolific" || sec.checks.length !== 4 || sec.checks[3].check !== "number_2" || sec.checks[3].right_answer !== t2 || sec.checks[3].correct !== false
+  if (sec.checks.length !== 4 || sec.checks[3].check !== "number_2" || sec.checks[3].right_answer !== t2 || sec.checks[3].correct !== false
       || !/How this experience was for you/.test(sec.checks[3].where_it_was_shown) || !/The tools & the experiment design/.test(sec.checks[2].where_it_was_shown)
       || sec.prolific_rule?.failed_two_or_more_attention_checks !== true || sec.prolific_rule?.attention_checks_failed !== 2 || sec.prolific_rule?.attention_checks_counted !== 4
       || "topic_checks_count_for_pay" in (sec.prolific_rule ?? {}) || !/will be rejected/.test(sec.prolific_rule?.how_to_read ?? "")
-      || !sec.misses.some((m) => m.startsWith("missed the first feedback check")) || !sec.misses.some((m) => m.startsWith("missed the second feedback check"))) why.push("analysis.attention_checks for the Prolific door is wrong");
+      || !sec.misses.some((m) => m.startsWith("missed the first feedback check")) || !sec.misses.some((m) => m.startsWith("missed the second feedback check"))) why.push("analysis.attention_checks is wrong");
   const readingWrong = A.buildAttentionSection(pfile(cases[5][1]));
   if (readingWrong.prolific_rule?.failed_two_or_more_attention_checks !== true || !readingWrong.misses.some((m) => m.startsWith(`missed the reading check after Block ${pp.between_blocks.after}`))) why.push("two failed reading checks are not the flag");
-  const uniSec = A.buildAttentionSection(allRight);
-  if (uniSec.door !== "university" || uniSec.checks.length !== 3 || "prolific_rule" in uniSec) why.push("the university section gained the Prolific rule");
+  if ("door" in sec) why.push("analysis.attention_checks still names a door");
   const ledger = { totalMs: 2_400_000, sittings: 1, longestIdleMs: 0, byStage: { money: 300_000 } };
   const varied = { feedback: { decisionSupport: { TOOL_optionCards: 3, TOOL_consequences: 6 }, wellbeing: { items: { LI1: 5, LI2: 2, LI3: 7 } } } };
-  const qp = db.buildQuality(ledger, null, varied, "Study Completed", bothWrong), qu = db.buildQuality(ledger, null, varied, "Study Completed", allRight);
+  const qp = db.buildQuality(ledger, null, varied, "Study Completed", bothWrong);
   if (qp.prolific_failed_two_or_more_attention_checks !== true || qp.prolific_attention_checks_failed !== 2 || qp.attention_checks_asked !== 4) why.push("quality does not carry the Prolific rule");
-  if (qu.prolific_failed_two_or_more_attention_checks !== null || qu.prolific_attention_checks_failed !== null || qu.attention_checks_asked !== 3) why.push("the university quality gained Prolific fields");
   if (Object.keys(qp).some((k) => /instruction_checks|failed_both/.test(k))) why.push("quality still carries the two-row rule's fields");
   const block5 = { scenarioResults: [], originalProfile: { dimensions: [] } };
   const mp = db.buildMajorScores(block5, null, null, null, null, null, bothWrong)?.attention_checks;
-  if (mp?.door !== "prolific" || mp?.failed_two_or_more_attention_checks !== true || mp?.attention_checks_failed !== 2) why.push("the major copy does not carry the Prolific rule");
+  if ("door" in (mp ?? {}) || mp?.failed_two_or_more_attention_checks !== true || mp?.attention_checks_failed !== 2) why.push("the major copy does not carry the Prolific rule");
   /* Chance: a random clicker passes a reading check 1 time in 4 and a number row 1 in 7, so fails two or more of the four
      765 times in 784 (97.6%): 1 - (1/4)^2 (1/7)^2 - [2 (3/4)(1/4)(1/7)^2 + (1/4)^2 2 (6/7)(1/7)] = 1 - 1/784 - 18/784.
      Someone who gives one number everywhere can never pass both rows (the two numbers differ). */
@@ -497,89 +484,50 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   const page = bare(src("UserFeedbackPage.tsx"));
   if (!page.includes("const at = attentionRows.find((a) => a.row.list === list && a.row.after === after);")
       || !page.includes("for (const a of here) out.splice(a.row.after, 0, a.code);")) why.push("the page does not draw and require every row");
-  const rows = A.numberRowsOf(pp), uniRows = A.numberRowsOf(plans[0]);
-  if (rows.map((r) => r.code).join() !== `${A.ATTENTION_FEEDBACK_CODE},${A.ATTENTION_FEEDBACK_CODE_2}` || uniRows.length !== 1 || rows[1].check !== "number_2") why.push("the rows or their codes are wrong");
+  const rows = A.numberRowsOf(pp);
+  if (rows.map((r) => r.code).join() !== `${A.ATTENTION_FEEDBACK_CODE},${A.ATTENTION_FEEDBACK_CODE_2}` || rows[1].check !== "number_2") why.push("the rows or their codes are wrong");
   gate("T9", why.length === 0, why.slice(0, 5).join(" | ") ||
-    `the Prolific door: over ${N} pretend participants one row in "The tools & the experiment design" (all ${A.TOOLS_SLOTS.length} places) and one in "How this experience was for you" (all ${A.WELLBEING_SLOTS.length}), each place and each number two to five about equally, never the same number twice; the reading checks drawn the same way in both doors; the university plan's fingerprint; the key decides the door; all four checks count for Prolific's rule, two or more failed is the flag (both rows, both reading checks, one of each, three, four), one failed is not, a check never reached is not a failure; the database rows, quality and the major copy; a random clicker fails two or more ${(failBoth / 1000).toFixed(1)}% (765 in 784), one number everywhere never passes both rows; the page draws and saves every row`);
+    `over ${N} pretend participants one row in "The tools & the experiment design" (all ${A.TOOLS_SLOTS.length} places) and one in "How this experience was for you" (all ${A.WELLBEING_SLOTS.length}), each place and each number two to five about equally, never the same number twice; the plan's fingerprint; all four checks count for Prolific's rule, two or more failed is the flag (both rows, both reading checks, one of each, three, four), one failed is not, a check never reached is not a failure; the database rows, quality and the major copy; a random clicker fails two or more ${(failBoth / 1000).toFixed(1)}% (765 in 784), one number everywhere never passes both rows; the page draws and saves every row`);
 }
 
-/* ------------------------------------------------------------------ T10 the consent page of each door */
+/* ------------------------------------------------------------------ T10 the consent page against the form sent to the IRB */
 {
   const why = [];
   const raw = src("ConsentPage.tsx");
   const consent = bare(raw);
-  /* The university page (since 16 October 2026) = the Florida Tech consent submitted to the IRB on 14 October 2026: its key
-     places, and every sentence that changed from the gift card, compared letter by letter (the page splits sentences
-     across formatting tags). */
-  for (const kept of ['export const CONSENT_VERSION = "2026-10-16-take-your-time";', 'title="You Can Stop and Come Back"', 'title="Privacy and Your Email"',
-    "Course Credit", "What completes the study:", "Tick both boxes above to continue.", "You do not have to finish in one sitting — see below."]) {
-    if (!raw.includes(kept)) why.push(`the university page lost: ${kept.slice(0, 50)}`);
-  }
-  const letters = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const pageLetters = letters(raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/<[^>]*>/g, " "));
-  for (const said of [
-    "If you are taking part for CSE4301/CSE5290 Introduction to Artificial Intelligence: when you complete the study, you receive 50 points averaged into your assignments grade for the course. Taking part is your choice. If you prefer not to take part, or you start and decide to stop, you can complete an alternative assignment for the same 50 points; ask your instructor. Your instructor is told only whether you completed the study, never your answers.",
-    "Answer the feedback questions and arrive at the thank-you page. That is the point at which the study counts as complete.",
-    "We collect your email address for two reasons only: so you can return and finish the study, and to give your course credit.",
-    "Your email is stored with your answers so that you can continue later, and it is seen only by the research team. It is never shared, never sold, and never shown to anyone else taking part. If you take part for course credit, your instructor is told only that you completed the study, never your answers. Your answers are analyzed and reported as group results, so no individual can be identified in anything we publish.",
-    "Your participation is completely voluntary. There is no penalty for not taking part. Questions with answer choices need an answer before you can move on (the written answers at the end are optional); if you do not wish to answer a question, you may stop at any time.",
-    "You may stop at any time, without giving a reason and without consequence. If you take part for course credit, stopping does not affect your grade: you can complete the alternative assignment instead. If you would like your data removed after taking part, contact the researcher below and it will be deleted.",
-    "I have read the procedure described above. I voluntarily agree to take part, and I understand that my email address will be collected so I can return to finish the study and receive my course credit.",
-    "I understand that the course credit is given when I complete the study, and that I may complete an alternative assignment instead.",
-  ]) if (!pageLetters.includes(letters(said))) why.push(`the university page does not say: ${said.slice(0, 60)}`);
-  if ((raw.match(/<Rule title="Reach the end\.">/g) ?? []).length !== 2) why.push("the university page lost its rule \"Reach the end.\" (one in each door)");
-  if (/gift card|Amazon|\$5|REQUIRED_ACTIVE_MINUTES|skip questions|stored separately/i.test(consent)) why.push("the consent page still names the gift card, the minutes rule, skipping questions or a separate email");
-  if (!/export const PROLIFIC_CONSENT_VERSION = "2026-10-14-prolific-will-be-rejected";/.test(consent)) why.push("the Prolific wording has no version stamp of its own, or the stamp did not move with the attention sentence");
-  /* The study's length, the same sentence in both doors (the researcher, 7 October 2026: "the minimum time for this study is
-     35 minutes"; Prolific's listing says 35): not inside a door switch, and the old "40 to 55 minutes" gone. */
-  if (!/The whole study takes\{" "\}\s*<Text[^>]*>\s*at least 35 minutes\s*<\/Text>\s*\{prolific \? "\. Please complete it in one sitting — see below\." : "\. You do not have to finish in one sitting — see below\."\}/.test(consent)) why.push("the consent page does not say \"at least 35 minutes\" in both doors");
-  if (/40 to 55/.test(consent)) why.push("the old \"40 to 55 minutes\" is still on the consent page");
-  const block = (name) => consent.slice(consent.indexOf(`function ${name}(`), consent.indexOf("\nfunction ", consent.indexOf(`function ${name}(`) + 10) > 0 ? consent.indexOf("\nfunction ", consent.indexOf(`function ${name}(`) + 10) : consent.indexOf("export function ConsentPage"));
-  const prolificText = ["ProlificSitting", "ProlificPayment", "ProlificPrivacy", "ProlificAgreement"].map(block).join("\n").replace(/\s+/g, " ");
-  for (const said of ["One Sitting, Within Prolific's Time Limit", "open the study again from Prolific", "Your Payment Through Prolific",
-    "If you fail two or more of them, your submission will be rejected.", "We never ask for your name or your email.",
-    "Your answers are stored with your Prolific ID", "I do not agree", "Stop without completing", "No completion code is needed.",
-    "version: PROLIFIC_CONSENT_VERSION"]) {
-    if (!prolificText.includes(said)) why.push(`the Prolific page does not say: ${said}`);
-  }
-  if (/gift card|Amazon|\$5|REQUIRED_ACTIVE_MINUTES|active minutes|your email address/i.test(prolificText)) why.push("the Prolific page names the gift card, the email or the minutes rule");
-  if (/two or more of them, your submission may be rejected/.test(prolificText)) why.push("the Prolific page still says \"may be rejected\" for the attention checks");
-  if ((block("ProlificAgreement").match(/<Checkbox\b/g) ?? []).length !== 1) why.push("the Prolific agreement does not have exactly one box");
-  if (!/disabled=\{!checked\}/.test(block("ProlificAgreement"))) why.push("the Prolific button works before the box is ticked");
-  const page = consent.slice(consent.indexOf("export function ConsentPage"));
-  for (const sw of ["{prolific ? <ProlificSitting /> : (", "{prolific ? <ProlificPayment /> : (", "{prolific ? <ProlificPrivacy /> : (", "{prolific ? <ProlificAgreement onAgree={onAgree} /> : ("]) {
-    if (!page.includes(sw)) why.push(`the page does not switch: ${sw}`);
-  }
-  if (!/door = "university"/.test(page) || !/const prolific = door === "prolific";/.test(page)) why.push("the page does not default to the university door");
-  if (!/You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific\./.test(page) || !/with your Prolific ID, and it will be deleted\./.test(page)) why.push("the Prolific withdrawal does not go through Prolific with the ID");
-  /* THE "AT LEAST 35 MINUTES" REQUEST BOX (16 October 2026, the researcher's "1-OK 2-yes"; sent to the IRB as a small
-     change): the approved words letter by letter, in the university door only, right after the study's length and before
-     "You Can Stop and Come Back"; grey with an "A request" tag (the orange box is the only one with rules); the credit
-     still given on completion; and not one word that would tell a student about the study's design before the main study
-     (positions, roles, who decides for whom, values, consistency, keeping or changing a choice, the options, one sitting). */
-  const box = block("TakeYourTime");
-  const boxLetters = letters(box.replace(/<[^>]*>/g, " "));
-  for (const said of ["At Least 35 Minutes", "A request", "Take your time. Please do not rush through the pages.",
-    "Read carefully. Read each page fully before you answer.", "Answer as you genuinely would, not as you think you should.",
-    "A few short questions check that you are reading. Please answer them as they ask.",
-    "Careful, genuine answers are what make this research meaningful. This is only a request: your course credit is given when you complete the study."]) {
-    if (!box || !boxLetters.includes(letters(said))) why.push(`the request box does not say: ${said.slice(0, 50)}`);
-  }
-  const boxRows = [...box.matchAll(/row\(<\w+ \/>, "([^"]+)", "([^"]+)"\)/g)].map((m) => `${m[1]} ${m[2]}`);
-  if (boxRows.length !== 4) why.push(`the request box should have four lines, it has ${boxRows.length}`);
-  const boxShown = [...boxRows, ...(box.match(/>[^<>{}]+</g) ?? [])].join(" ");
-  const design = boxShown.match(/\b(positions?|roles?|yourself|others|other people|household|employers?|values?|keep|kept|change your|options?|one sitting|right answer|best)\b|consisten/i);
-  if (design) why.push(`the request box hints at the study's design: "${design[0]}"`);
-  if (!/borderColor="border\.emphasized" bg="bg\.subtle"/.test(box) || /orange/.test(box)) why.push("the request box is not the grey kind (the orange box is the only one with rules)");
-  if (!/<Badge[^>]*>\s*A request\s*<\/Badge>/.test(box)) why.push("the request box lost its \"A request\" tag");
-  const uni = consent.slice(consent.indexOf("export function ConsentPage"));
-  if ((uni.match(/<TakeYourTime \/>/g) ?? []).length !== 1 || !uni.includes("{!prolific && <TakeYourTime />}")) why.push("the request box is not shown exactly once, in the university door only");
-  const at = (t) => uni.indexOf(t);
-  if (!(at("at least 35 minutes") >= 0 && at("at least 35 minutes") < at("<TakeYourTime />") && at("<TakeYourTime />") < at('title="You Can Stop and Come Back"'))) why.push("the request box is not between the study's length and \"You Can Stop and Come Back\"");
+  const noComments = raw.replace(/\/\*[\s\S]*?\*\//g, " ");
+  const letters = (t) => t.replace(/&apos;/g, "'").replace(/&ldquo;|&rdquo;/g, "'").toLowerCase().replace(/[^a-z0-9$]/g, "");
+  const formLines = fs.readFileSync(path.join(ROOT, "docs", "PROLIFIC_CONSENT_FORM_TEXT.txt"), "utf8").split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+  /* 1. Every line of the form is on the page. */
+  const pageLetters = letters(noComments.replace(/title="([^"]*)"/g, ">$1<").replace(/\{" "\}/g, " ").replace(/<[^>]*>/g, " "));
+  for (const said of formLines) if (!pageLetters.includes(letters(said))) why.push(`the page does not say: ${said.slice(0, 70)}`);
+  /* 2. The page says nothing the form does not: every text between tags, every title, every line of the two lists. */
+  const formLetters = letters(formLines.join(" "));
+  const MAY_ADD = ["Tick the box above to continue.", "Go back to the information"]; // a hint and a way back; no promise in either
+  const shown = [
+    ...[...noComments.slice(noComments.indexOf("function Section(")).matchAll(/>([^<>{}]*[A-Za-z][^<>{}]*)</g)].map((m) => m[1]),
+    ...[...noComments.matchAll(/title="([^"]+)"/g)].map((m) => m[1]),
+    ...[...noComments.slice(noComments.indexOf("const HOW_PROLIFIC_PAYS"), noComments.indexOf("function ProlificPayment")).matchAll(/"([^"\n]{12,})"/g)].map((m) => m[1]),
+  ].map((t) => t.replace(/\s+/g, " ").trim()).filter((t) => letters(t).length >= 8 && !/=>|\(\(|\)\)|&&|\|\|/.test(t));
+  for (const t of shown) if (!formLetters.includes(letters(t)) && !MAY_ADD.includes(t)) why.push(`the page says what the form does not: ${t.slice(0, 70)}`);
+  if (shown.length < 40) why.push(`only ${shown.length} pieces of the page were read: the comparison is not reading the page`);
+  /* 3. What cannot be read as words. */
+  if (!/export const PROLIFIC_CONSENT_VERSION = "2026-11-10-prolific-only-12-an-hour";/.test(consent)) why.push("the version stamp did not move with the words");
+  if (/\bCONSENT_VERSION = /.test(consent.replace("PROLIFIC_CONSENT_VERSION", ""))) why.push("a second consent version is still there");
+  if ((consent.match(/<Checkbox\b/g) ?? []).length !== 1) why.push("the agreement does not have exactly one box");
+  if (!/disabled=\{!checked\}/.test(consent)) why.push("the button works before the box is ticked");
+  if (!/version: PROLIFIC_CONSENT_VERSION/.test(consent)) why.push("the record does not carry the version");
+  if (/compensation_rules_agreed|course credit|gift card|Amazon|\$5\b|active minutes|TakeYourTime|your email address/i.test(consent)) why.push("a student word is left on the page");
+  if (/40 to 55/.test(consent)) why.push("the old \"40 to 55 minutes\" is back");
+  if ((consent.match(/<Rule title="Reach the end\.">/g) ?? []).length !== 1) why.push("\"Reach the end.\" is not there exactly once");
+  for (const name of ["ProlificSitting", "ProlificPayment", "ProlificPrivacy"]) if ((consent.match(new RegExp(`<${name} />`, "g")) ?? []).length !== 1) why.push(`${name} is not drawn exactly once`);
+  if ((consent.match(/<ProlificAgreement onAgree=\{onAgree\} \/>/g) ?? []).length !== 1) why.push("the agreement is not drawn exactly once");
+  /* The three help links open in a new tab, each with its address shown; a link would otherwise lose the study's page. */
+  if (!/<Link href=\{item\.url\} target="_blank" rel="noopener noreferrer"/.test(consent) || (consent.match(/url: "https:\/\/participant-help\.prolific\.com\/en\/articles\/4450\d\d-[a-z-]+"/g) ?? []).length !== 3) why.push("the three Prolific help links are not there, or do not open in a new tab");
   const flow = bare(src("ExperimentFlow.tsx"));
-  if (!/<ConsentPage\s+door=\{door\}/.test(flow)) why.push("the flow does not tell the consent page its door");
+  if (!/<ConsentPage\s+onAgree=/.test(flow) || /door=\{door\}/.test(flow)) why.push("the flow still tells a page its door");
   gate("T10", why.length === 0, why.slice(0, 5).join(" | ") ||
-    "the consent page: the university wording = the Florida Tech consent submitted on 14 October 2026 (course credit, its eight changed sentences letter by letter, no gift card, no minutes rule) plus the \"At Least 35 Minutes\" request box (its approved words, university door only, after the study's length, grey with \"A request\", the credit still on completion, no word about the study's design); the Prolific door says paid through Prolific, one sitting within Prolific's time limit, the Prolific ID instead of the email, \"If you fail two or more of them, your submission will be rejected.\", withdrawal through Prolific with the ID, one box, \"I do not agree\" with \"Stop without completing\"; no gift card, email or minutes there; its own version stamp; the flow passes the door");
+    `the consent page against the form sent to the IRB, both ways: all ${formLines.length} lines of the form are on the page, and none of the ${shown.length} pieces of text on the page is missing from the form (but the hint under the button and "Go back to the information"); the version stamp, one box, the three links opening in a new tab, no student word`);
 }
 
 /* ------------------------------------------------------------------ P1 the deleted pages' data */

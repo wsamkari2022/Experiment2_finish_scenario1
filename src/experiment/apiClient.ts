@@ -26,15 +26,13 @@ import type { RemoteBackend } from "./storage";
 import { browserId } from "./sessionLog";
 import type { DirectoryEntry } from "./participantDirectory";
 import { conditionByNumber, type AssignedCondition, type SavedCondition } from "./conditions";
-import { isProlificKey, keyOfDemographics, type RecruitmentSource } from "./recruitment";
+import { keyOfDemographics } from "./recruitment";
 
 /*
- * THE KEY UNDER ITS TRUE NAME (since 6 October 2026; recruitment.ts). The participant's key is an email (the university
- * door) or a Prolific ID (the Prolific door). It is sent as `email` or as `prolificPid`, and the server stores it the same
- * way (`email` or `prolific_pid`), so a Prolific ID never lands in an email field.
+ * THE KEY UNDER ITS TRUE NAME (recruitment.ts). The participant's key is their Prolific ID. It is sent as `prolificPid` and
+ * the server stores it as `prolific_pid`.
  */
-const identity = (key: string): { email: string } | { prolificPid: string } =>
-  (isProlificKey(key) ? { prolificPid: key } : { email: key });
+const identity = (key: string): { prolificPid: string } => ({ prolificPid: key });
 
 /** Same origin: Vite proxies /api to the API server in development. */
 const BASE = "/api";
@@ -85,8 +83,8 @@ async function request<T>(path: string, init?: RequestInit, timeoutMs = TIMEOUT_
 function toDirectoryEntry(doc: Record<string, unknown> | null): DirectoryEntry | null {
   if (!doc) return null;
   return {
-    /* The key: the email, or the Prolific ID of a Prolific record (recruitment.ts). */
-    email: String(doc.email ?? doc.prolific_pid ?? ""),
+    /* The key: the record's Prolific ID ("email" is the directory's old name for it; recruitment.ts). */
+    email: String(doc.prolific_pid ?? ""),
     ...(typeof doc.prolific_study_id === "string" ? { prolificStudyId: doc.prolific_study_id } : {}),
     ...(typeof doc.prolific_session_id === "string" ? { prolificSessionId: doc.prolific_session_id } : {}),
     /* The document calls it participant_id now; the browser's own directory still calls it
@@ -133,7 +131,7 @@ export const apiClient: RemoteBackend = {
       method: "POST",
       body: JSON.stringify({
         ...identity(entry.email),
-        /* The Prolific door's two ids, sent only when known: the server never erases them (since 6 October 2026). */
+        /* Prolific's two ids, sent only when known: the server never erases them (since 6 October 2026). */
         ...(entry.prolificStudyId ? { prolificStudyId: entry.prolificStudyId } : {}),
         ...(entry.prolificSessionId ? { prolificSessionId: entry.prolificSessionId } : {}),
         sessionId: entry.sessionId,
@@ -193,11 +191,10 @@ export const apiClient: RemoteBackend = {
     return answer?.active !== false;
   },
 
-  async assignCondition(arrivalId, recruitmentSource?: RecruitmentSource): Promise<AssignedCondition> {
+  async assignCondition(arrivalId): Promise<AssignedCondition> {
     const given = await request<AssignedCondition>("/conditions/assign", {
       method: "POST",
-      /* The door: each is balanced on its own (since 6 October 2026). */
-      body: JSON.stringify({ arrivalId, recruitmentSource: recruitmentSource ?? "university" }),
+      body: JSON.stringify({ arrivalId }),
     });
     const condition = conditionByNumber(given?.number);
     if (!condition || condition.type !== given.type) throw new Error("the server named no known condition");
@@ -221,7 +218,7 @@ export const apiClient: RemoteBackend = {
   },
 };
 
-/** The key (email or Prolific ID) of the participant currently running, used to address block writes. */
+/** The Prolific ID of the participant currently running, used to address block writes. */
 function currentEmail(): string | null {
   try {
     return (

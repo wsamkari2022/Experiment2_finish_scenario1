@@ -5,6 +5,12 @@
 > build, read **`HOW_TO_ANALYZE_MY_DATA.md`** next. This one tells you what a number *is*; that one
 > tells you what it is *for*.
 
+> **Updated 10 November 2026: PROLIFIC ONLY.** The IRB refused the student group, so the study has one way in. **Every record is
+> keyed by `prolific_pid`, has `recruitment_source: "prolific"`, and has no `email`** (the server refuses anything else). `quality.course_credit_earned`
+> is gone, and so are `analysis.attention_checks.door` and `linked_email` in `condition_arrivals`. Every participant has FOUR attention
+> checks. Older text below that mentions "the university door", "both doors", course credit or a gift card describes test
+> versions nobody took part in. `SHAPE_VERSION` "2026-11-10-prolific-only", `consent.version` "2026-11-10-prolific-only-12-an-hour".
+
 **For:** anyone — human or AI — analyzing the data from the Human-AI Moral Value Study.
 **Written:** 11 September 2026. **Last updated:** 19 September 2026 (VCI: the notes under
 `per_scenario_consistency_0_to_1` in section 6d and `consistency_score` in section 4. Stability and
@@ -70,8 +76,8 @@ raw and which are calculated, and which fields look similar but are not.
 **One document per person.** There are no joins. Everything about one participant is in one
 document.
 
-The key is **`email`**, which is always stored trimmed and lower-cased. `Waseem@X.com` and
-`waseem@x.com` are the same person, and the database enforces this with a unique index.
+The key is **`prolific_pid`**, which is always stored trimmed and lower-cased. The database enforces one record per Prolific ID with a
+unique index.
 
 ---
 
@@ -82,7 +88,7 @@ of number it is.
 
 ```
 {
-  participant_id, email, age, gender,          <- who
+  participant_id, prolific_pid, age, gender,   <- who
   status, current_stage, consent, timestamps
 
   headline    { ... }  <- the few numbers you probably came for
@@ -120,11 +126,11 @@ correlating the two will produce impressive and meaningless results.
 | Field | Meaning |
 |---|---|
 | `participant_id` | Unique id for the run (a UUID). **The only id in the database.** |
-| `email` | The key of a **university-door** participant. Lower-cased. Also how they return to finish. **Absent on a Prolific record** (since 6 October 2026). |
-| `prolific_pid` | Since 6 October 2026, **Prolific-door** participants only: their Prolific ID, the key of their record (lower-cased). Never in `email`. One Prolific ID is one person (a unique rule on the records that have it). |
+| `email` | **Never on a record** since 10 November 2026 (the server refuses it). A test record from before may still have it: those are deleted before launch. |
+| `prolific_pid` | Their Prolific ID, the key of their record (lower-cased). Never in `email`. One Prolific ID is one person (a unique rule on the records that have it). |
 | `prolific_code_given_at`, `prolific_code_last_given_at`, `prolific_code_given_times` | Since 7 October 2026, Prolific door only: when the server first and last gave this person the completion code (after their completion was saved), and how many times (a reload on the same browser shows the kept code without asking, so more than 1 means another device or an emptied browser). **The code itself is never stored.** Absent = never given (not finished, or finished before a code was set on the server). For the daily pay check: a finished Prolific record without `prolific_code_given_at` never saw its code. |
 | `prolific_study_id`, `prolific_session_id` | Since 6 October 2026, Prolific door only: Prolific's STUDY_ID and SESSION_ID from the link (the submission). `prolific_session_id` is Prolific's, NOT the study's own `participant_id`. Set only when the page sent them. |
-| `recruitment_source` | Since 6 October 2026: which door they came through - `"university"` (moonlander.fit.edu, email; course credit since 16 October 2026, a $5 gift card before) or `"prolific"` (moonlander.fit.edu/prolific, paid by Prolific). **Absent on every record made before that date: those are all university-door records.** The four conditions are balanced inside each door on its own. |
+| `recruitment_source` | Always `"prolific"` since 10 November 2026. A test record from before may say `"university"` or nothing: it never counts for balance. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
 | `country`, `country_code` | Since 30 September 2026, from the demographic form's Country question (asked as "Where are you from?" since 4 October 2026): the English name as listed (e.g. "Saudi Arabia") and its ISO 3166-1 alpha-2 code ("SA"; Kosovo "XK"), or "Prefer not to say" with a null code. Group by `country_code`, never by the name. Absent on records made before that date. |
 | `english_first_language` | Since 4 October 2026: the demographic form's "Is English your first language?" - **true** = Yes, **false** = No. Required, no default, so every record from that date has it; absent on records made before. Also in `blocks…vrds_demographics.englishFirstLanguage` |
@@ -135,7 +141,7 @@ correlating the two will produce impressive and meaningless results.
 | `status` | `"Study Not Completed"` or `"Study Completed"` — nothing else. |
 | `current_stage` | The screen they last reached, e.g. `money`, `block5`, `feedback`. |
 | `active_browser` | Since 29 September 2026: `{ id, claimed_at }`, the one browser allowed to write this record (a random id, naming nothing but that browser). The newest browser that passed the email-and-age check. Not data about the participant; never analyse it. |
-| `consent` | `{ agreed, timestamp, version }`. The version records which wording they agreed to. **University door:** `"2026-10-16-take-your-time"` (since 16 October 2026: the Florida Tech consent submitted to the IRB, course credit, plus the "At Least 35 Minutes" request box), with `compensation_rules_agreed: true` (the name is from the gift-card days; it now records the second tick-box, "I understand that the course credit is given when I complete the study ..."). Earlier university versions, test runs only: `"2026-09-14b"`, `"2026-10-07-35-minutes"` (both the $5 gift card), `"2026-10-16-course-credit"` (course credit without the box, never live). **Prolific door:** `"2026-10-14-prolific-will-be-rejected"` (paid through Prolific, one tick-box, no `compensation_rules_agreed`); earlier, test runs only: `"2026-10-06-prolific"`, `"2026-10-07-prolific-35-minutes"`. |
+| `consent` | `{ agreed, timestamp, version }`. The version records which wording they agreed to: `"2026-11-10-prolific-only-12-an-hour"`, the form sent to the IRB after it refused the student group. |
 | `created_at` | First time this person was seen. Never rewritten. |
 | `updated_at` | Last write of any kind. |
 | `completed_at` | When they finished, or `null`. Set once, never overwritten. |
@@ -196,12 +202,11 @@ run can be followed across machines without reading UUIDs.
 ### The `condition_arrivals` collection (since 1 October 2026)
 
 A second, small collection beside `participants`: one row per condition the landing page gave (`arrival_id`,
-`condition_number`, `condition_type`, `assigned_at`, `browser`, `linked_email` (or, for the Prolific door,
-`linked_prolific_pid`) once the person reached the demographic page, `recruitment_source` (since 6 October 2026: the door it
-was counted in; absent = university), `released` when they turned out to be somebody returning with a condition of their own, or - since 7 October 2026 -
+`condition_number`, `condition_type`, `assigned_at`, `browser`, `linked_prolific_pid` once the person reached the demographic page,
+`recruitment_source` (`"prolific"`; only those rows count for balance), `released` when they turned out to be somebody returning with a condition of their own, or - since 7 October 2026 -
 somebody who had already finished). It exists only so the
 balance can count people who just arrived; it holds no answers. **Not data about participants; never analyse it.**
-The live counts are at `/api/conditions/report`: since 6 October 2026 one table per door.
+The live counts are at `/api/conditions/report`: one table, of Prolific people only.
 
 ## 3c. `major_info_and_scores` — every major score in one room
 
@@ -1430,7 +1435,7 @@ is not timed), `times_changed`, `answered_at`. A copy of the verdict is in `majo
 
 ### The Prolific door: four checks, and Prolific's rule (since 7 October 2026; all four count since 14 October 2026)
 
-`door` says which door the plan was drawn for (`"university"` or `"prolific"`). In the **Prolific door** there is a
+Every participant has the four checks (`door` went on 10 November 2026). There is a
 fourth check, `number_2`, and the two number rows sit apart:
 
 | Check | Where (Prolific door) |
@@ -1616,20 +1621,16 @@ never included, and the rule itself is stored in the record as `counting_rule`.
 
 ---
 
-## 8c. `quality` — the course credit, careful participation and engagement checks
+## 8c. `quality` — careful participation and engagement checks
 
 Time alone cannot tell a genuine run from one done for the payment: somebody can reach 35 minutes
 by nudging a mouse on one page. What they cannot fake is the *shape* of the run.
 
-**Since 16 October 2026 (the IRB modification of 14 October; the researcher's "1-yes" to "4-yes") the university door
-gives COURSE CREDIT, not a gift card.** The Florida Tech consent page says "the course credit is given when I complete the
-study", so the credit is completion and nothing else. How carefully somebody took part is a separate verdict, for the
-researcher only, which never takes the credit away and is never shown. `npm run credit:list` reads both (see the end of this
-section).
+**How carefully somebody took part is a verdict for the researcher only**: it is never shown and never used for pay. Pay is decided on
+Prolific, with the daily pay check (docs/DAILY_PAY_CHECK.md).
 
 | Field | What it catches |
 |---|---|
-| `course_credit_earned` | **The university door only** (null in the Prolific door): exactly `completed_the_study`. Since 16 October 2026 |
 | `completed_the_study` | `status` is "Study Completed" (they reached the thank-you page) |
 | `careful_participation` | For the researcher only, since 16 October 2026: **false** when any of the four OSF robustness signs is present, **null** when a sign cannot be read from what was saved, **true** otherwise. Never used for credit or pay |
 | `careful_participation_reasons` | Each sign present, in words (e.g. `2 scenarios decided in under 15 seconds`) |
@@ -1643,8 +1644,8 @@ section).
 | `scenarios_under_15_seconds` | Block 5 choices made without reading |
 | `straightlined_feedback` | The same rating to every question |
 | `longest_idle_minutes`, `sittings` | How the work was spread |
-| `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The three attention checks (since 29 September 2026; section 6p); four in the Prolific door |
-| `prolific_attention_checks_failed`, `prolific_failed_two_or_more_attention_checks` | The Prolific door only (null in the university door). Since 14 October 2026: how many of the FOUR attention checks were answered against their instruction, and whether two or more were (Prolific's rejection reason, "will be rejected" on the Prolific consent page; `npm run pay:check` lists them as Reject). From 7 to 13 October 2026 these were `prolific_instruction_checks_failed` / `prolific_failed_both_instruction_checks` over the two number rows only; nobody took the study then |
+| `attention_checks_asked`, `attention_checks_passed`, `passed_all_attention_checks` | The four attention checks (section 6p) |
+| `prolific_attention_checks_failed`, `prolific_failed_two_or_more_attention_checks` | Null only when no attention file is on record. Since 14 October 2026: how many of the FOUR attention checks were answered against their instruction, and whether two or more were (Prolific's rejection reason, "will be rejected" on the Prolific consent page; `npm run pay:check` lists them as Reject). From 7 to 13 October 2026 these were `prolific_instruction_checks_failed` / `prolific_failed_both_instruction_checks` over the two number rows only; nobody took the study then |
 | `how_to_read` | The rules above, in words, stored with the record |
 
 **Gone since 16 October 2026:** `compensation_eligible` (the gift-card verdict: finished, 35 working minutes, not
@@ -1653,14 +1654,6 @@ and `met_time_requirement`. No real participant took the study under them (only 
 
 **Every raw number is kept, not just the verdicts.** A different rule can be applied later to data
 already collected. `careful_participation_reasons` says why somebody did not count as careful, sign by sign.
-
-**The course-credit list.** After the window closes (12 December 2026), export `participants` from Compass into
-`Course credit/<date>/participants.json` and run `npm run credit:list -- "Course credit/<date>"`. It writes
-`CREDIT_LIST.txt` (for the instructor: the Florida Tech emails of the students who finished by the end of the deadline
-day in Florida time, nothing else) and `CREDIT_CHECK.md` (for the researcher only: the finishing time and careful
-participation of each, the late finishers and other addresses to look at, and who did not finish). Records with a
-Prolific ID are skipped. Both files hold emails: `Course credit/` never goes to GitHub, and neither file goes to an AI
-tool.
 
 > `scenarios_under_15_seconds` uses Block 5's own per-scenario timer, which is **clock** time and
 > therefore generous. A scenario flagged here was rushed even on the kindest reading.
@@ -1840,11 +1833,8 @@ db.participants.aggregate([
    deck. Do not write analysis code that assumes one row per position forever.
 10. **`lowbuffer` / `highbuffer` are dead names.** If you see them, the data predates 11 Sept 2026.
 11. **Never use `timings` for effort.** It includes idle time. `active_time` is the real one.
-12. **The course credit is `quality.course_credit_earned`, and it is completion only** (university door, since 16
-    October 2026; `compensation_eligible`, the old $5 gift-card verdict, is gone). Never take credit away because
-    `quality.careful_participation` is false: the consent page promises the credit on completion, and careful
-    participation is for the analysis (the OSF robustness check). In the Prolific door `course_credit_earned` is null and
-    pay is decided by the daily pay check (Step 5 of docs/PROLIFIC_CONVERSION_PLAN.md) on Prolific's own valid reasons.
+12. **Pay is decided on Prolific**, with the daily pay check (docs/DAILY_PAY_CHECK.md), on Prolific's own valid reasons. There is no pay or
+    credit field in the record. `quality.careful_participation` is for the analysis (the OSF robustness check) and never for pay.
 13. **`resume_state` is not data.** If present, the participant is unfinished.
 14. **The two lifted scenarios are copies.** `blocks.block5_scenario_5_wish_on_the_receiving_end`
     and `blocks.block5_scenario_6_veil_of_ignorance` hold the same answers as the rows inside

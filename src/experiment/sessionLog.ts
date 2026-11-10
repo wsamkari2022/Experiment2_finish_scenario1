@@ -49,8 +49,7 @@ export const SESSION_LOG_KEY = "vrds_session_log";
  * arriving on a machine that had to download them.
  */
 export type SessionStart =
-  | "typed_their_email"
-  /* The Prolific door (since 6 October 2026): their Prolific ID came in Prolific's link, or they pasted it. */
+  /* Their Prolific ID came in Prolific's link, or they pasted it. */
   | "arrived_with_their_prolific_id"
   | "continued_in_this_browser"
   | "restored_from_another_device";
@@ -231,24 +230,13 @@ export function markNextLoginAs(how: SessionStart): void {
   }
 }
 
-/** Is there such a note for this load (read without clearing it)? The "Not you?" strip uses it: a page reloaded right
-    after somebody proved who they are does not ask them "Not you?" (since 6 October 2026). */
-export function loginKindNoted(): boolean {
-  try {
-    return localStorage.getItem(LOGIN_KIND_KEY) !== null;
-  } catch {
-    return false;
-  }
-}
-
 /** Reads that note and clears it, so it can never describe a second load as well. */
 export function consumeLoginKind(): SessionStart | null {
   try {
     const value = localStorage.getItem(LOGIN_KIND_KEY);
     if (!value) return null;
     localStorage.removeItem(LOGIN_KIND_KEY);
-    return value === "typed_their_email"
-      || value === "arrived_with_their_prolific_id"
+    return value === "arrived_with_their_prolific_id"
       || value === "continued_in_this_browser"
       || value === "restored_from_another_device"
       ? value

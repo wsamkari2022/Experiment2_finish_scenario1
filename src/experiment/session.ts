@@ -6,7 +6,7 @@
  * the field name `session_id`. It is the natural primary/foreign key when these records
  * are later moved to MongoDB — every collection joins on `session_id`.
  *
- * Privacy: this is a random UUID only. No name, email, phone, or student id is ever stored.
+ * Privacy: this is a random UUID only. No name, email or phone is ever stored.
  *
  * Lifetime note: the id lives in LocalStorage (not sessionStorage), so it persists across
  * tab/refresh — giving ONE stable id per participant for the whole experiment. A new

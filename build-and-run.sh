@@ -211,12 +211,13 @@ if [ -n "$ENV_PERMS" ] && [ "$ENV_PERMS" != "600" ] && [ "$ENV_PERMS" != "400" ]
   echo "      WARNING: .env permissions are $ENV_PERMS - run: chmod 600 .env"
 fi
 echo "      Database: $MONGO_DB"
-# The Prolific completion code (since 7 October 2026): warn, never fail - the university version works without it.
-# Its value is never printed.
+# The Prolific completion code: since the study became Prolific only (10 November 2026) the deploy STOPS without it,
+# because every person who finished would wait for a code that never comes. Its value is never printed.
 case "${PROLIFIC_COMPLETION_CODE:-}" in
   ""|*CHANGE_ME*)
-    echo "      WARNING: PROLIFIC_COMPLETION_CODE is not set in .env - the Prolific version's final page"
-    echo "               cannot show the completion code until it is (see .env.example)." ;;
+    echo "      ERROR: PROLIFIC_COMPLETION_CODE is not set in .env. Nobody could get their completion code, so the"
+    echo "             study was not started. Add the code from Prolific to .env (see .env.example) and run this again."
+    exit 1 ;;
   *)
     echo "      Prolific completion code: set" ;;
 esac

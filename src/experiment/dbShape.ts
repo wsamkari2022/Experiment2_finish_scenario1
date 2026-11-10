@@ -18,8 +18,8 @@
  * ============================================================================
  * WHAT A PARTICIPANT DOCUMENT LOOKS LIKE AFTERWARDS
  * ============================================================================
- *   participant_id, email (the university door) or prolific_pid + prolific_study_id + prolific_session_id (the Prolific
- *   door, since 6 October 2026), recruitment_source ("university" / "prolific"; absent before 6 October 2026), age, gender,
+ *   participant_id, prolific_pid, prolific_study_id, prolific_session_id, recruitment_source (always "prolific" since 10
+ *   November 2026, when the student group was refused by the IRB; the server refuses any other key), age, gender,
  *   country, country_code (since 30 September 2026), english_first_language (true / false, since 4 October 2026), status,
  *   current_stage, consent, timestamps
  *   headline  { the few numbers an analyst actually asks for }
@@ -89,7 +89,7 @@ import { analyseMirror, responsibilityGapLabel } from "./block5Mirror";
 import { rebuildRunningFits, vciAllLevel, RUNNING_VERSION, VCI_ALL_LEVELS } from "./block5VciAll";
 import { computeStabilityAll, computeTopValueChoices, STABILITY_ALL_VERSION } from "./block5StabilityAll";
 import { ATTENTION_KEY, ATTENTION_STAGE, buildAttentionSection, scoreAttention } from "./attentionChecks";
-import type { RecruitmentSource } from "./recruitment";
+import { RECRUITMENT_SOURCE } from "./recruitment";
 import { POLICY_DIM_KEYS, POLICY_DIM_SHORT, METRIC_LABELS } from "./block5Types";
 import { plannerRank } from "./block5Planner";
 import { FAST_ANSWER_SECONDS, medianOf, secondsBetweenAnswers } from "./answerPace";
@@ -118,7 +118,7 @@ import type {
  * moved. Raising this version clears the fingerprints, so the next sync re-sends everything and
  * builds the new sections from data that was already there.
  */
-export const SHAPE_VERSION = "2026-10-16-course-credit";
+export const SHAPE_VERSION = "2026-11-10-prolific-only";
 
 /* ------------------------------------------------------------------ where each source goes */
 
@@ -581,7 +581,7 @@ const RUSHED_BLOCK_SECONDS = 30;
  * finishes the four questions in 20 seconds), the page before the main study, the results page, and the 0.9-second
  * pauses between the parts. Working time is added every 5 seconds to the page on screen at that moment, so a pause
  * caught a tick about 1 time in 5.5 and was then "a block finished in 5 seconds": an honest participant got at least
- * one such strike in 63 runs of 100 and two in 22, and three strikes cost the gift card and put a Prolific person in
+ * one such strike in 63 runs of 100 and two in 22, and three strikes put a Prolific person in
  * "Look first" (found in the Prolific rehearsal of 7 October 2026). The left-out pages' times are still saved, in
  * `active_time.by_stage_minutes` and, when under 30 seconds, in `short_pages_not_counted`.
  */
@@ -589,9 +589,7 @@ export const REAL_BLOCK_STAGES = ["money", "trolley", "product", "block4", "bloc
 /** Below this, a Block 5 scenario was not considered — six options and a trade-off in that time. */
 const RUSHED_SCENARIO_SECONDS = 15;
 /**
- * The study's stated length: both consent pages say "The whole study takes at least 35 minutes". Since 16 October 2026
- * it is information only: it was the gift card's bar of 35 active minutes, and there is no gift card any more (course
- * credit on completion, Prolific's own rules). `quality.under_the_estimated_length` compares the working time with it.
+ * The study's stated length: the consent page says "The whole study takes at least 35 minutes". Information only. `quality.under_the_estimated_length` compares the working time with it.
  */
 export const STUDY_LENGTH_ESTIMATE_MINUTES = 35;
 
@@ -627,14 +625,10 @@ function isStraightlined(feedbackRecord: unknown): boolean {
 }
 
 /**
- * The signals that separate a genuine run from a careless one, and the two verdicts built on them (since 16 October 2026;
- * before, one gift-card verdict).
+ * The signals that separate a genuine run from a careless one, and the verdict built on them.
  *
- * COURSE CREDIT IS GIVEN ON COMPLETION, AND NOTHING ELSE DECIDES IT. The Florida Tech consent page says "I understand that
- * the course credit is given when I complete the study" (the IRB modification of 14 October 2026, 6.3 and 6.4), so
- * `course_credit_earned` is exactly "reached the thank-you page" in the university door (null in the Prolific door,
- * which Prolific pays by its own rule). Behaviour never withholds credit: that would need a new consent sentence and a
- * new IRB modification.
+ * THERE IS NO COURSE-CREDIT VERDICT SINCE 10 NOVEMBER 2026 (the student group was refused by the IRB; `course_credit_earned`
+ * went with it, and the gift-card verdict before it). Pay is decided on Prolific, with the daily check (tools/pay_check.cjs).
  *
  * CAREFUL PARTICIPATION IS FOR THE RESEARCHER ONLY (the researcher's "2-yes": the same four signs the OSF preregistration
  * names as robustness checks, so the verdict and the paper use one definition): answering very fast in Blocks 1-3,
@@ -662,8 +656,6 @@ export function buildQuality(
   attention?: unknown,
   /* analysis.blocks_1_to_4_checks (since 16 October 2026): its answered_very_fast is a careful-participation sign. */
   blocks1to4Checks?: unknown,
-  /* The participant's door (since 16 October 2026); without it, the attention plan's door, else the university's. */
-  door?: RecruitmentSource | null,
 ): Record<string, unknown> | null {
   if (!activeLedger || typeof activeLedger !== "object") return null;
   const a = activeLedger as {
@@ -674,7 +666,7 @@ export function buildQuality(
    * ONLY THE SIX REAL PARTS ARE ELIGIBLE TO BE CALLED RUSHED (REAL_BLOCK_STAGES, since 7 October 2026).
    *
    * `rushed_blocks` counts parts finished in under 30 seconds; three of them puts a Prolific person in the daily pay
-   * check's "Look first" (it cost the university gift card until 16 October 2026; the course credit never reads it).
+   * check's "Look first".
    * A page to read, a short form or a 0.9-second pause is not a block: somebody who takes it in
    * quickly has done nothing wrong. The same reasoning first took out the insights and final analysis pages and
    * the attention check's own screen; the list of the six now keeps out every such page, including any added later.
@@ -709,11 +701,9 @@ export function buildQuality(
   const activeMinutes = typeof a.totalMs === "number" ? Math.round((a.totalMs / 60000) * 10) / 10 : 0;
   const straightlined = isStraightlined(feedbackRecord);
   const completed = status === "Study Completed";
-  /* Every attention check right: three in the university door, four in the Prolific door. Information since 16
-     October 2026 (it was part of the gift-card verdict); a check answered wrongly is a careful-participation sign. */
+  /* All four attention checks right. A check answered wrongly is a careful-participation sign. */
   const attentionScore = scoreAttention(attention);
   const passedAttention = attentionScore?.passedAll ?? false;
-  const theDoor: RecruitmentSource = door ?? attentionScore?.door ?? "university";
 
   /* THE FOUR CAREFUL-PARTICIPATION SIGNS (the OSF robustness checks). flagged: true = present, false = absent,
      null = cannot be read from what was saved. */
@@ -758,8 +748,6 @@ export function buildQuality(
   const careful = signs.some((x) => x.flagged === true) ? false : signs.some((x) => x.flagged === null) ? null : true;
 
   return {
-    /* COURSE CREDIT: completion only, the university door only (the consent page's own rule). */
-    course_credit_earned: theDoor === "university" ? completed : null,
     completed_the_study: completed,
 
     /* CAREFUL PARTICIPATION: the four OSF robustness signs, for the researcher only. */
@@ -787,26 +775,22 @@ export function buildQuality(
 
     straightlined_feedback: straightlined,
 
-    attention_checks_asked: attentionScore?.asked ?? 3,
+    attention_checks_asked: attentionScore?.asked ?? 4,
     attention_checks_passed: attentionScore?.passedCount ?? 0,
     passed_all_attention_checks: passedAttention,
     attention_check_misses: attentionScore ? attentionScore.misses : ["no attention checks on record"],
-    /* The Prolific door's rule (since 14 October 2026, the researcher's "1-B"): all four reading checks count, and
-       failing two or more is the rejection reason the Prolific consent page names ("will be rejected"); npm run
-       pay:check lists those people. null in the university door. */
-    prolific_attention_checks_failed: attentionScore?.prolific?.failed ?? null,
-    prolific_failed_two_or_more_attention_checks: attentionScore?.prolific ? attentionScore.prolific.failedTwoOrMore : null,
+    /* Prolific's rule (since 14 October 2026, the researcher's "1-B"): all four reading checks count, and failing two
+       or more is the rejection reason the consent page names ("will be rejected"); npm run pay:check lists those people.
+       null when no attention file is on record. */
+    prolific_attention_checks_failed: attentionScore?.prolific.failed ?? null,
+    prolific_failed_two_or_more_attention_checks: attentionScore ? attentionScore.prolific.failedTwoOrMore : null,
 
     how_to_read:
-      "course_credit_earned (the university door only; null in the Prolific door) is exactly completed_the_study: the "
-      + "Florida Tech consent page says the course credit is given when the study is complete, and nothing else decides "
-      + "it. careful_participation is for the researcher only, never shown and never used for credit or pay: false when "
-      + "any of the four OSF robustness signs is present (answered very fast in Blocks 1-3; two or more scenarios under "
-      + "15 seconds; the same answer to every feedback rating; an attention check answered wrongly), each with its "
-      + "reason; null when a sign cannot be read; true otherwise. Since 16 October 2026; before, one gift-card verdict "
-      + "(compensation_eligible: completed, 35 active minutes, not straightlined, fewer than 3 rushed parts, every "
-      + "attention check right), which no participant took the study under. Raw numbers are kept so another line can "
-      + "be drawn later. The Prolific door's own rule is prolific_failed_two_or_more_attention_checks.",
+      "careful_participation is for the researcher only, never shown and never used for pay: false when any of the four "
+      + "OSF robustness signs is present (answered very fast in Blocks 1-3; two or more scenarios under 15 seconds; the "
+      + "same answer to every feedback rating; an attention check answered wrongly), each with its reason; null when a "
+      + "sign cannot be read; true otherwise. Raw numbers are kept so another line can be drawn later. Prolific's own "
+      + "rejection rule is prolific_failed_two_or_more_attention_checks.",
   };
 }
 
@@ -1028,7 +1012,7 @@ export function buildProfileChange(block5: unknown): Record<string, unknown> | n
  * name, which is the thing that was asked to stop. So the number narrowed and says so: the
  * companion field below states what it covers, and nothing that matters rests on it —
  * `active_time.total_active_minutes` is a separate ledger, still counts every page, and is the
- * working time the daily Prolific pay check reads (the course credit never reads it, since 16 October 2026).
+ * working time the daily Prolific pay check reads.
  */
 function totalTimeMs(timings: unknown): number | null {
   if (!timings || typeof timings !== "object") return null;
@@ -3154,9 +3138,7 @@ export function conditionCopy(file: unknown): Record<string, unknown> | null {
     source,
     counted_for_balance: source === "landing_page",
     assigned_at: typeof f.assignedAt === "string" ? f.assignedAt : null,
-    /* The door it was given at, and counted in (since 6 October 2026; recruitment.ts): a file from before has none
-       and was the university's. */
-    recruitment_source: f.recruitmentSource === "prolific" ? "prolific" : "university",
+    recruitment_source: RECRUITMENT_SOURCE,
   };
 }
 
@@ -3375,8 +3357,7 @@ export function buildMajorScores(
       active_minutes: active?.total_active_minutes ?? null,
       active_minutes_note:
         "Real working time: counted only while the tab was visible and something was moved, typed "
-        + "or scrolled within the previous 90 seconds. The daily Prolific pay check reads it; the course credit "
-        + "never does (since 16 October 2026: completion only).",
+        + "or scrolled within the previous 90 seconds. The daily Prolific pay check reads it.",
       timed_stage_minutes: headline?.total_time_minutes ?? null,
       timed_stage_minutes_note: headline?.total_time_minutes_covers ?? null,
       by_stage_minutes: active?.by_stage_minutes ?? null,
@@ -3458,18 +3439,15 @@ export function buildMajorScores(
     blocks_1_to_4: buildBlocks1to4Checks(blocks1to4),
 
     /* 13b --------------------------------------------------------------- the attention checks */
-    /* The verdict of the checks, lifted from analysis.attention_checks by the same builder (since 29 September 2026);
-       information only in the university door since 16 October 2026 (the course credit is completion only; a check
-       answered wrongly is a careful-participation sign). validate:attention T4 and T9 check the copy. */
+    /* The verdict of the checks, lifted from analysis.attention_checks by the same builder (since 29 September 2026).
+       validate:attention T4 and T9 check the copy. */
     attention_checks: (() => {
       const a = buildAttentionSection(attention);
       if (!a) return null;
-      const base = { passed_all: a.passed_all, passed_count: a.passed_count, answered_count: a.answered_count, misses: a.misses };
-      /* The Prolific door adds its own rule (since 14 October 2026: all four checks, two or more failed); the
-         university door's copy is unchanged. */
-      const rule = a.prolific_rule as { attention_checks_failed: number; failed_two_or_more_attention_checks: boolean } | undefined;
-      return rule ? { ...base, door: "prolific", attention_checks_failed: rule.attention_checks_failed,
-        failed_two_or_more_attention_checks: rule.failed_two_or_more_attention_checks } : base;
+      const rule = a.prolific_rule as { attention_checks_failed: number; failed_two_or_more_attention_checks: boolean };
+      return { passed_all: a.passed_all, passed_count: a.passed_count, answered_count: a.answered_count, misses: a.misses,
+        attention_checks_failed: rule.attention_checks_failed,
+        failed_two_or_more_attention_checks: rule.failed_two_or_more_attention_checks };
     })(),
 
     /* 14 ----------------------------------------------------------------- the company's value */

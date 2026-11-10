@@ -45,12 +45,11 @@ const DIRECTORY_KEY = PARTICIPANT_DIRECTORY_KEY;
 /** One person. Mirrors the MongoDB document planned in CONSENT_DEMOGRAPHICS_MONGODB_PLAN.md. */
 export interface DirectoryEntry {
   /**
-   * THE PARTICIPANT'S KEY: their email (the university door) or, since 6 October 2026, their Prolific ID (the Prolific
-   * door; recruitment.ts). Still called `email` because it was only ever one before; the server stores a Prolific ID
-   * as `prolific_pid`, never in `email` (server/recruitment.js). `isProlificKey` tells the two apart (an @ or not).
+   * THE PARTICIPANT'S KEY: their Prolific ID (recruitment.ts). Still called `email` because it was one once (the
+   * researcher's decision 4-A: an inside name nobody sees); the server stores it as `prolific_pid` (server/recruitment.js).
    */
   email: string;
-  /** Prolific's study and submission ids (the Prolific door only), kept once known. */
+  /** Prolific's study and submission ids, kept once known. */
   prolificStudyId?: string | null;
   prolificSessionId?: string | null;
   sessionId: string;
@@ -122,7 +121,7 @@ export function upsertParticipant(input: {
   countryCode?: string | null;
   /* Optional for the same reason as the country (since 4 October 2026). */
   englishFirstLanguage?: boolean;
-  /* The Prolific door's two ids (since 6 October 2026); optional, and never erased by a save without them. */
+  /* Prolific's two ids (since 6 October 2026); optional, and never erased by a save without them. */
   prolificStudyId?: string | null;
   prolificSessionId?: string | null;
   condition?: SavedCondition | null;

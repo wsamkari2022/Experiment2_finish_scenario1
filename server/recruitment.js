@@ -1,27 +1,29 @@
 /**
- * server/recruitment.js — the two doors on the server's side (since 6 October 2026).
+ * server/recruitment.js — who may have a record (Prolific only since 10 November 2026).
  *
- * A participant's key is their email (the university door) or their Prolific ID (the Prolific door). Every route
- * receives the key and finds the record with `whoIs(key)`: `{ email }` or `{ prolific_pid }`. A Prolific ID is stored
- * under `prolific_pid` and NEVER in `email`, so the database reads truthfully. The same rule lives in
+ * The IRB refused the student group on 9 November 2026. A participant's key is their Prolific ID, and it is the only key
+ * the server accepts: every route with a key refuses anything else (`isProlificKey`; an email is refused with 400), so no
+ * email can reach the database. Every route finds the record with `whoIs(key)`, `{ prolific_pid }`. The same rule lives in
  * src/experiment/recruitment.ts (this file cannot import TypeScript); validate:session C13 fails if the two differ.
+ * The student version is kept in the Git tag before-prolific-only.
  */
 
-export const RECRUITMENT_SOURCES = ["university", "prolific"];
+/** What every record and arrival says about where its person came from. */
+export const RECRUITMENT_SOURCE = "prolific";
 
 /** A Prolific ID (or study / session id), after lower-casing: letters and digits, 8-64. */
 export const PROLIFIC_ID = /^[a-z0-9]{8,64}$/;
 
-/** Every key, either kind, trimmed and lower-cased (the email rule since September 2026). */
+/** Every key, trimmed and lower-cased. */
 export const normalizeKey = (value) => String(value ?? "").trim().toLowerCase();
 
 export const isProlificKey = (key) => typeof key === "string" && !key.includes("@") && PROLIFIC_ID.test(normalizeKey(key));
 
 /** The filter that finds this participant's record. */
-export const whoIs = (key) => (isProlificKey(key) ? { prolific_pid: normalizeKey(key) } : { email: normalizeKey(key) });
+export const whoIs = (key) => ({ prolific_pid: normalizeKey(key) });
 
-/** The key a request names: a Prolific ID when one is sent, otherwise the email. */
-export const keyFromBody = (body) => normalizeKey(body?.prolificPid ?? body?.email);
+/** The key a request names: the Prolific ID it sent ("" when none). */
+export const keyFromBody = (body) => normalizeKey(body?.prolificPid);
 
 /** A study or session id from the page, or null. */
 export const prolificIdOrNull = (value) => {
@@ -29,10 +31,8 @@ export const prolificIdOrNull = (value) => {
   return PROLIFIC_ID.test(id) ? id : null;
 };
 
-/** The facts that belong to the FIRST time this person is seen: their key under its true name, and their door. */
-export const identityOnInsert = (key) => (isProlificKey(key)
-  ? { prolific_pid: normalizeKey(key), recruitment_source: "prolific" }
-  : { email: normalizeKey(key), recruitment_source: "university" });
+/** The facts that belong to the FIRST time this person is seen. */
+export const identityOnInsert = (key) => ({ prolific_pid: normalizeKey(key), recruitment_source: RECRUITMENT_SOURCE });
 
 /** Prolific's study and session ids, set only when the page sent them (a resume that does not know them never erases them). */
 export const prolificIdsFrom = (body) => {
@@ -41,10 +41,5 @@ export const prolificIdsFrom = (body) => {
   return { ...(study ? { prolific_study_id: study } : {}), ...(session ? { prolific_session_id: session } : {}) };
 };
 
-/** The landing page's door, as the page sent it; anything else is the university door. */
-export const recruitmentSourceOf = (value) => (RECRUITMENT_SOURCES.includes(value) ? value : "university");
-
-/** How an arrival is linked to its person: `linked_email` or `linked_prolific_pid`. */
-export const arrivalLink = (key) => (isProlificKey(key)
-  ? { linked_prolific_pid: normalizeKey(key) }
-  : { linked_email: normalizeKey(key) });
+/** How an arrival is linked to its person. */
+export const arrivalLink = (key) => ({ linked_prolific_pid: normalizeKey(key) });

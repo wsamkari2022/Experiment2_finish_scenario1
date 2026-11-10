@@ -1,5 +1,7 @@
 # The Prolific version's consent page, for the ethics board
 
+> **Updated 10 November 2026:** replaced. The text on the page now is `docs/PROLIFIC_CONSENT_FORM_TEXT.txt`, the form sent to the IRB after it refused the student group. What follows is history.
+
 Written 7 October 2026; the attention checks and their rule updated 14 October 2026; the university column 16 October 2026.
 The study now has two versions on one website:
 

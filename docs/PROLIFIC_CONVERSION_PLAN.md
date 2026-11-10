@@ -1,5 +1,7 @@
 # Prolific conversion plan (written 1 October 2026, revised 6 October 2026; Step 0 built, the rest NOT built)
 
+> **Updated 10 November 2026:** the IRB refused the student group, so the study is Prolific only and pays $7.00 (35 minutes at $12 an hour; 104 people). This plan is history where it speaks of two versions, $8.75 or the student door.
+
 > **6 October 2026: read section 1b first.** The researcher decided on TWO versions on one website (the email version
 > stays for FIT students and employees), NO pilot, and "Manually review" for every Prolific submission with a daily pay
 > check. Where the sections below still speak of a pilot, two completion paths or one version, section 1b wins.

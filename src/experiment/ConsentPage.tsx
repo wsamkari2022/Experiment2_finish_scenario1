@@ -1,55 +1,20 @@
 /**
  * ConsentPage.tsx — informed consent, shown once, before anything else.
  *
- * WHAT CHANGED FROM THE PREVIOUS STUDY'S CONSENT
- * The wording is carried over from the earlier experiment's DemographicPage, but three things
- * had to change and one of them is not cosmetic:
+ * PROLIFIC ONLY (since 10 November 2026). The IRB refused the student group on 9 November 2026, so there is one consent
+ * page, and it says word for word what the Prolific consent form sent to the IRB says ("Informed Consent, Prolific
+ * version", 27 October 2026; docs/PROLIFIC_CONSENT_FORM_TEXT.txt holds its text and validate:attention T10 compares the page
+ * with it, sentence by sentence). If the IRB changes a word, change it in both places and move PROLIFIC_CONSENT_VERSION.
+ * Deploy only after the IRB approves. The student page is in the Git tag before-prolific-only.
  *
- *   1. THE STUDY IS DIFFERENT. The old text described wildfire scenarios and five AI expert
- *      agents. This study is four short question blocks, five emergency situations with six
- *      options each, a results page and a feedback page.
+ * WHY THE PAGE IS LONG. The study is confidential, not anonymous (the Prolific ID is stored with the answers), and the
+ * payment part carries promises a participant relies on: $12 an hour, how Prolific pays, when a submission can be rejected
+ * and when it never is, and what happens after a technical problem. The daily pay check (tools/pay_check.cjs) keeps those
+ * promises, so a change here may need a change there.
  *
- *   2. IT IS NO LONGER ANONYMOUS. The old text promised "No names, emails, or identifiable
- *      information will be collected." This study collects an email address, so that promise
- *      would now be false. The study is CONFIDENTIAL, not anonymous, and the Privacy section
- *      says so in those words. Saying it plainly is not optional: a participant who later
- *      discovers an unmentioned identifier has been collected has been misled, whatever the
- *      intention was.
- *
- *   3. COMPENSATION IS PART OF THE CONSENT. The email exists for two reasons — returning to an
- *      unfinished session, and the course credit (the gift card until 16 October 2026) — and a
- *      participant has to know both before they hand it over, not after.
- *
- * CONSENT_VERSION
- * Stamped onto every consent record. If this text is ever edited, bump it. Without a version you
- * cannot say which wording a given participant actually agreed to, which is the first question
- * asked when a consent form changes mid-study.
- *
- * THE PROLIFIC DOOR (since 6 October 2026; Step 2 of docs/PROLIFIC_CONVERSION_PLAN.md, section 4.B). The same page and
- * design, with Prolific's terms where the university's differ, because Prolific's rules differ:
- *   - paid through Prolific (the amount shown there), not a $5 gift card by email;
- *   - no "35 active minutes" rule: Prolific does not allow refusing pay for time or for the researcher's own measures
- *     (active time is still measured, for the analysis);
- *   - one sitting, within Prolific's time limit (a page closed by accident continues from Prolific's link);
- *   - no email: the answers are stored with the Prolific ID;
- *   - the attention rule in Prolific's terms: failing two or more checks means a rejected submission ("will be
- *     rejected" since 14 October 2026, the researcher: it said "may be rejected"; all four checks count);
- *   - one agreement box, and "I do not agree", which says how to return the study on Prolific;
- *   - withdrawal through a Prolific message (or the researcher's email) with the Prolific ID.
- * Its own version stamp (PROLIFIC_CONSENT_VERSION). The study's length changed in both doors together on 7 October 2026
- * ("at least 35 minutes", was "about 40 to 55 minutes"; CONSENT_VERSION "2026-10-07-35-minutes", PROLIFIC_CONSENT_VERSION
- * "2026-10-07-prolific-35-minutes"), and the Prolific attention sentence on 14 October 2026 (PROLIFIC_CONSENT_VERSION
- * "2026-10-14-prolific-will-be-rejected"). The ethics board must approve this text before the Prolific door opens to
- * participants.
- *
- * THE UNIVERSITY DOOR SINCE 16 OCTOBER 2026 (the researcher's "1-yes" to "4-yes"): word for word the Florida Tech consent
- * submitted to the IRB with the modification of 14 October 2026 - course credit for CSE4301/CSE5290 (50 points, or an
- * alternative assignment), "What completes the study: Reach the end.", the instructor told only whether the student
- * completed the study; no gift card and none of its five rules. CONSENT_VERSION "2026-10-16-course-credit". validate:
- * attention T10 compares it with the submitted text. Deploy it only after the IRB approves the modification.
- * The same day the researcher added one box for students, "At Least 35 Minutes" (TakeYourTime: take your time, read
- * carefully, answer as you genuinely would, the reading checks exist; a request, the credit still given on completion),
- * which he sends to the IRB as a small change (CONSENT_VERSION "2026-10-16-take-your-time").
+ * PROLIFIC_CONSENT_VERSION
+ * Stamped onto every consent record. If this text is ever edited, move it. Without a version you cannot say which wording
+ * a given participant actually agreed to, which is the first question asked when a consent form changes mid-study.
  *
  * THE BUTTON IS DISABLED UNTIL THE BOX IS TICKED
  * Deliberate, and not merely a validation convenience: the tick is the consent record. A page
@@ -58,7 +23,6 @@
 
 import { useState } from "react";
 import {
-  Badge,
   Box,
   Button,
   Heading,
@@ -72,37 +36,24 @@ import {
 } from "@chakra-ui/react";
 import {
   LuArrowRight,
-  LuBookOpen,
   LuCheck,
   LuClock,
-  LuCompass,
-  LuEye,
-  LuGraduationCap,
-  LuHourglass,
   LuLock,
   LuShieldCheck,
-  LuTimer,
   LuUndo2,
   LuWallet,
 } from "react-icons/lu";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { RecruitmentSource } from "./recruitment";
 
-/** Bump whenever the consent wording below changes. Stored with every consent record. Since 16 October 2026 the
- *  university door says what the Florida Tech consent submitted to the IRB on 14 October 2026 says (course credit, no
- *  gift card; "2026-10-16-course-credit"), plus the "At Least 35 Minutes" request box sent to the IRB as a small change
- *  the same day ("2026-10-16-take-your-time"). */
-export const CONSENT_VERSION = "2026-10-16-take-your-time";
-/** The Prolific door's wording (since 6 October 2026). Bump it whenever that wording changes. */
-export const PROLIFIC_CONSENT_VERSION = "2026-10-14-prolific-will-be-rejected";
+/** Move this whenever the wording below changes. Stored with every consent record. "2026-11-10-prolific-only-12-an-hour" is
+ *  the form sent to the IRB after it refused the student group. */
+export const PROLIFIC_CONSENT_VERSION = "2026-11-10-prolific-only-12-an-hour";
 
 /** What a participant agreed to, and when. Written to storage by the caller. */
 export interface ConsentRecord {
   agreed: boolean;
   timestamp: string;
   version: string;
-  /** True when the participant also ticked the payment-rules box. */
-  compensation_rules_agreed?: boolean;
 }
 
 /** Contact details, kept in one place so the page and any later document cannot drift apart. */
@@ -114,9 +65,11 @@ const CONTACT = {
     email: "wsamkari2022@my.fit.edu",
   },
   irb: {
-    name: "Dr. Jignya Patel, IRB Chairperson",
-    address: "150 West University Blvd., Melbourne, FL 32901",
-    email: "FIT_IRB@fit.edu",
+    name: "Samuel Monzem, Ph.D., Chair, Institutional Review Board",
+    unit: "Office of Sponsored Research, Florida Institute of Technology",
+    address: "150 W. University Blvd., Melbourne, Florida 32901",
+    email: "smonzem@fit.edu",
+    phone: "321.674.7377",
   },
 } as const;
 
@@ -188,67 +141,7 @@ function Highlight({
   );
 }
 
-/* -------------------------------------------------------------------- THE UNIVERSITY DOOR'S REQUEST BOX */
-
-/**
- * "AT LEAST 35 MINUTES", A REQUEST AND NOT A RULE (16 October 2026, the researcher's "1-OK 2-yes").
- *
- * Why it exists: in the Prolific door careful work is part of being paid ("Answer thoughtfully", the attention checks);
- * in the university door the course credit is given on completion, so careful work is optional. The box asks students
- * for the same care in plain words, so the two groups are as comparable as a request can make them.
- *
- * What it must never do, each held by validate:attention T10:
- *   - hint at the study's design before the main study: no positions, roles or who decides for whom, and nothing about
- *     values, consistency, keeping or changing a choice (VCI, Stability and the keep/change choices must not be pushed);
- *   - ask to "read all the options": the card order is a measured effect (hypothesis C7), so the box says "each page";
- *   - read as a rule: a grey box like "You Can Stop and Come Back" (the orange box is the only one with rules), an
- *     "A request" tag, and a last line saying the course credit is given on completion, as the IRB text says;
- *   - say "one sitting": students may stop and come back (the next box).
- * The reading-check line ("2-yes") tells students what the Prolific consent tells its participants: that the checks
- * exist (never what they ask), so "an attention check answered wrongly" means the same in both groups.
- */
-function TakeYourTime() {
-  const row = (icon: React.ReactNode, lead: string, rest: string) => (
-    <HStack align="start" gap="2.5">
-      <Icon boxSize="4" color="teal.fg" mt="1" flexShrink={0} aria-hidden="true">
-        {icon}
-      </Icon>
-      <Text>
-        <Text as="span" color="fg" fontWeight="semibold">
-          {lead}
-        </Text>{" "}
-        {rest}
-      </Text>
-    </HStack>
-  );
-  return (
-    <Box data-take-your-time borderWidth="1px" borderColor="border.emphasized" bg="bg.subtle" rounded="xl" p={{ base: "4", md: "5" }}>
-      <HStack gap="2.5" mb="3" align="center" wrap="wrap">
-        <Icon boxSize="4" color="fg">
-          <LuTimer />
-        </Icon>
-        <Heading size="sm" color="fg" letterSpacing="tight">
-          At Least 35 Minutes
-        </Heading>
-        <Badge colorPalette="teal" variant="subtle" rounded="full" px="2.5">
-          A request
-        </Badge>
-      </HStack>
-      <VStack align="stretch" gap="2.5" fontSize="sm" color="fg.muted" lineHeight="tall">
-        {row(<LuHourglass />, "Take your time.", "Please do not rush through the pages.")}
-        {row(<LuBookOpen />, "Read carefully.", "Read each page fully before you answer.")}
-        {row(<LuCompass />, "Answer as you genuinely would,", "not as you think you should.")}
-        {row(<LuEye />, "A few short questions check that you are reading.", "Please answer them as they ask.")}
-        <Text pt="1">
-          Careful, genuine answers are what make this research meaningful. This is only a request: your course credit
-          is given when you complete the study.
-        </Text>
-      </VStack>
-    </Box>
-  );
-}
-
-/* ------------------------------------------------------------------------------------- THE PROLIFIC DOOR */
+/* ------------------------------------------------------------------------------------- PROLIFIC'S TERMS */
 
 /** One sitting, within Prolific's time limit (it replaces "You Can Stop and Come Back"). */
 function ProlificSitting() {
@@ -262,7 +155,22 @@ function ProlificSitting() {
   );
 }
 
-/** The payment through Prolific, and what completes the study (it replaces the gift-card panel). */
+/** The payment through Prolific, what completes the study, and how Prolific pays. */
+const HOW_PROLIFIC_PAYS = [
+  "Everyone who completes the study receives the same reward, the amount shown in the study on Prolific, however long they take.",
+  "If most people take much longer than the study's estimate, the reward is raised for everyone, as Prolific requires.",
+  "We review each submission, normally within a few days. If we have not, Prolific approves it automatically after 22 days, and the reward goes to your Prolific account.",
+  "If you stop early and return the study, you are not paid. If you finish after Prolific's time limit, we still approve and pay you when our records show that you completed the study.",
+  "A submission is rejected if two or more of the attention checks are failed. Otherwise it may be rejected only for the other reasons Prolific allows: clear low effort throughout, or finishing exceptionally fast. It is never rejected for being slow or because of a technical problem.",
+  "If a technical problem on our side stops you, we pay you for your time.",
+] as const;
+
+const MORE_FROM_PROLIFIC = [
+  { title: "When will I be paid for a study?", url: "https://participant-help.prolific.com/en/articles/445059-when-will-i-be-paid-for-a-study" },
+  { title: "Underpaying studies:", url: "https://participant-help.prolific.com/en/articles/445043-underpaying-studies" },
+  { title: "Why does my submission show as timed-out?", url: "https://participant-help.prolific.com/en/articles/445044-why-does-my-submission-show-as-timed-out" },
+] as const;
+
 function ProlificPayment() {
   return (
     <Box data-prolific-payment borderWidth="2px" borderColor="orange.solid" bg="orange.subtle" rounded="xl" p={{ base: "4", md: "5" }}>
@@ -275,18 +183,19 @@ function ProlificPayment() {
         </Heading>
       </HStack>
       <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-        Everyone who completes the study is paid{" "}
+        You will be paid through Prolific at a rate equivalent to{" "}
         <Text as="span" color="fg" fontWeight="semibold">
-          through Prolific
+          US$12 per hour
         </Text>
-        , the amount shown in the study on Prolific. Every submission is reviewed before it is paid.
+        , based on the study&apos;s estimated completion time. The total reward is shown on Prolific before you begin. Every
+        submission is reviewed before payment.
       </Text>
       <HStack gap="2.5" mt="4" mb="3" align="center">
         <Icon boxSize="4" color="orange.fg">
           <LuCheck />
         </Icon>
         <Text fontSize="xs" fontWeight="bold" color="orange.fg" textTransform="uppercase" letterSpacing="wider">
-          What completes it
+          What completes it:
         </Text>
       </HStack>
       <VStack align="stretch" gap="3" fontSize="sm" color="fg.muted" lineHeight="tall">
@@ -303,11 +212,34 @@ function ProlificPayment() {
           rejected.
         </Rule>
       </VStack>
+      <Text mt="4" mb="2" fontSize="xs" fontWeight="bold" color="orange.fg" textTransform="uppercase" letterSpacing="wider">
+        How Prolific pays (Prolific&apos;s own rules):
+      </Text>
+      <Box as="ul" data-how-prolific-pays listStyleType="disc" pl="5" fontSize="sm" color="fg.muted" lineHeight="tall">
+        {HOW_PROLIFIC_PAYS.map((line) => (
+          <Box as="li" key={line} mb="1.5">
+            {line}
+          </Box>
+        ))}
+      </Box>
+      <Text mt="3" fontSize="sm" color="fg" fontWeight="semibold">
+        More from Prolific:
+      </Text>
+      <VStack data-more-from-prolific align="stretch" gap="1.5" mt="1" fontSize="sm" color="fg.muted" lineHeight="tall">
+        {MORE_FROM_PROLIFIC.map((item) => (
+          <Text key={item.url}>
+            {item.title}{" "}
+            <Link href={item.url} target="_blank" rel="noopener noreferrer" color="fg" textDecoration="underline" wordBreak="break-all">
+              {item.url}
+            </Link>
+          </Text>
+        ))}
+      </VStack>
     </Box>
   );
 }
 
-/** Privacy without an email (it replaces "Privacy and Your Email"). */
+/** Privacy: the Prolific ID, how long the data is kept, and how to see or delete it. */
 function ProlificPrivacy() {
   return (
     <Highlight icon={<LuLock />} title="Privacy and Your Prolific ID">
@@ -322,11 +254,16 @@ function ProlificPrivacy() {
         Your answers are analyzed and reported as group results, so no individual can be identified in anything we
         publish. Data is kept on secure, password-protected storage accessible only to the research team.
       </Text>
+      <Text>
+        Your answers are stored on a secure Florida Tech server in the United States and kept for five years after the
+        study ends, then deleted. You may ask to see your data, or to have it deleted, at any time: send the researcher a
+        message through Prolific with your Prolific ID.
+      </Text>
     </Highlight>
   );
 }
 
-/** The agreement for the Prolific door: one box, and a way to decline that says how to return the study. */
+/** The agreement: one box, and a way to decline that says how to return the study. */
 function ProlificAgreement({ onAgree }: { onAgree: (record: ConsentRecord) => void }) {
   const [checked, setChecked] = useState(false);
   const [declined, setDeclined] = useState(false);
@@ -395,7 +332,7 @@ function ProlificAgreement({ onAgree }: { onAgree: (record: ConsentRecord) => vo
           onAgree({ agreed: true, timestamp: new Date().toISOString(), version: PROLIFIC_CONSENT_VERSION });
         }}
       >
-        I agree — continue
+        I agree - continue
         <Icon boxSize="4">
           <LuArrowRight />
         </Icon>
@@ -412,32 +349,7 @@ function ProlificAgreement({ onAgree }: { onAgree: (record: ConsentRecord) => vo
   );
 }
 
-export function ConsentPage({ onAgree, door = "university" }: {
-  onAgree: (record: ConsentRecord) => void;
-  /** Which door (since 6 October 2026): the Prolific door gets Prolific's terms; the university's is unchanged. */
-  door?: RecruitmentSource;
-}) {
-  const prolific = door === "prolific";
-  const [checked, setChecked] = useState(false);
-  /*
-   * Deliberately a SECOND tick, not folded into the first. The credit rule (since 16 October 2026: course credit on
-   * completion, or the alternative assignment) is the part a participant is most likely to skim and most likely to
-   * dispute later, so agreement to it is recorded as its own deliberate act rather than bundled into a general "I agree".
-   */
-  const [rulesChecked, setRulesChecked] = useState(false);
-  const bothAgreed = checked && rulesChecked;
-
-  const handleContinue = () => {
-    if (!bothAgreed) return;
-    onAgree({
-      agreed: true,
-      timestamp: new Date().toISOString(),
-      version: CONSENT_VERSION,
-      /* Recorded separately, because it answers a different question than "did they consent":
-         it answers "were they told the credit rule before they started" (the name is kept from the gift-card days). */
-      compensation_rules_agreed: true,
-    });
-  };
+export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => void }) {
 
   return (
     <Box
@@ -562,119 +474,20 @@ export function ConsentPage({ onAgree, door = "university" }: {
                   A few questions about your experience of taking part.
                 </Text>
               </VStack>
-              {/* "At least 35 minutes" in both doors (the researcher, 7 October 2026: "the minimum time for this study is 35
-                  minutes"; it said "about 40 to 55 minutes"). Prolific's listing says 35 minutes. Both version stamps moved. */}
               <Text>
                 The whole study takes{" "}
                 <Text as="span" color="fg" fontWeight="semibold">
                   at least 35 minutes
                 </Text>
-                {prolific ? ". Please complete it in one sitting — see below." : ". You do not have to finish in one sitting — see below."}
+                . Please complete it in one sitting - see below.
               </Text>
             </Section>
 
-            {/* The university door's request to take time and answer genuinely (since 16 October 2026; TakeYourTime above).
-                Right after the study's length, before "You Can Stop and Come Back". Not in the Prolific door, whose
-                payment rules already ask for the same care. */}
-            {!prolific && <TakeYourTime />}
+            <ProlificSitting />
 
-            {/*
-              ONE SENTENCE, AND NOT A WORD ABOUT THE EMAIL.
-              This panel used to explain that the email is what lets the study recognize a
-              returning participant. "Privacy and Your Email" below already gives the complete
-              reason the address is collected, and saying it twice made the shorter version read as
-              a second, separate purpose. The address is explained in exactly one place.
-            */}
-            {prolific ? <ProlificSitting /> : (
-            <Highlight icon={<LuArrowRight />} title="You Can Stop and Come Back">
-              <Text>
-                You may close the study at any time and return later to continue from where you
-                stopped. Your answers are saved, and you can even continue on a different computer.
-              </Text>
-            </Highlight>
-            )}
+            <ProlificPayment />
 
-            {/*
-              THE COURSE CREDIT, AND WHAT COMPLETES THE STUDY, IN ONE PANEL (since 16 October 2026; it was the $5 Amazon
-              gift card with five rules, among them 35 active minutes). The words are the Florida Tech consent submitted to
-              the IRB on 14 October 2026: only students of CSE4301/CSE5290 take part in this door, the credit is given on
-              completion, and the alternative assignment gives the same points. It keeps the strong border and its own
-              tick-box below, because it is the section a participant could later say they had not seen.
-            */}
-            {prolific ? <ProlificPayment /> : (
-            <Box
-              borderWidth="2px"
-              borderColor="orange.solid"
-              bg="orange.subtle"
-              rounded="xl"
-              p={{ base: "4", md: "5" }}
-            >
-              <HStack gap="2.5" mb="3" align="center">
-                <Icon boxSize="5" color="orange.fg">
-                  <LuGraduationCap />
-                </Icon>
-                <Heading size="sm" color="fg" letterSpacing="tight">
-                  Course Credit
-                </Heading>
-              </HStack>
-
-              <Text fontSize="sm" color="fg.muted" lineHeight="tall">
-                If you are taking part for CSE4301/CSE5290 Introduction to Artificial Intelligence: when you complete
-                the study, you receive{" "}
-                <Text as="span" color="fg" fontWeight="semibold">
-                  50 points averaged into your assignments grade
-                </Text>{" "}
-                for the course. Taking part is your choice. If you prefer not to take part, or you start and decide to
-                stop, you can complete an alternative assignment for the same 50 points; ask your instructor. Your
-                instructor is told only whether you completed the study, never your answers.
-              </Text>
-
-              <HStack gap="2.5" mt="4" mb="3" align="center">
-                <Icon boxSize="4" color="orange.fg">
-                  <LuCheck />
-                </Icon>
-                <Text
-                  fontSize="xs"
-                  fontWeight="bold"
-                  color="orange.fg"
-                  textTransform="uppercase"
-                  letterSpacing="wider"
-                >
-                  What completes the study:
-                </Text>
-              </HStack>
-
-              <VStack align="stretch" gap="3" fontSize="sm" color="fg.muted" lineHeight="tall">
-                <Rule title="Reach the end.">
-                  Answer the feedback questions and arrive at the thank-you page. That is the point
-                  at which the study counts as complete.
-                </Rule>
-              </VStack>
-            </Box>
-            )}
-
-            {prolific ? <ProlificPrivacy /> : (
-            <Highlight icon={<LuLock />} title="Privacy and Your Email">
-              <Text color="fg" fontWeight="semibold">
-                This study is confidential, not anonymous.
-              </Text>
-              <Text>
-                We collect your email address for two reasons only: so you can return and finish
-                the study, and to give your course credit.
-              </Text>
-              <Text>
-                Your email is stored with your answers so that you can continue later, and it is seen
-                only by the research team. It is never shared, never sold, and never shown to anyone
-                else taking part. If you take part for course credit, your instructor is told only that
-                you completed the study, never your answers. Your answers are analyzed and reported as
-                group results, so no individual can be identified in anything we publish.
-              </Text>
-              <Text>
-                Data is kept on secure, password-protected storage accessible only to the research
-                team.
-              </Text>
-            </Highlight>
-            )}
+            <ProlificPrivacy />
 
             <Section title="Possible Risks">
               <Text>
@@ -695,17 +508,16 @@ export function ConsentPage({ onAgree, door = "university" }: {
 
             <Section title="Taking Part Is Voluntary">
               <Text>
-                {prolific
-                  ? "Your participation is completely voluntary. There is no penalty for not taking part: if you decide not to, please return the study on Prolific."
-                  : "Your participation is completely voluntary. There is no penalty for not taking part. Questions with answer choices need an answer before you can move on (the written answers at the end are optional); if you do not wish to answer a question, you may stop at any time."}
+                Your participation is completely voluntary. There is no penalty for not taking part: if you decide not to,
+                please return the study on Prolific.
               </Text>
             </Section>
 
             <Section title="Your Right to Withdraw">
               <Text>
-                {prolific
-                  ? "You may stop at any time, without giving a reason and without consequence, by returning the study on Prolific. If you would like your data removed after taking part, send the researcher a message through Prolific, or email the researcher below, with your Prolific ID, and it will be deleted."
-                  : "You may stop at any time, without giving a reason and without consequence. If you take part for course credit, stopping does not affect your grade: you can complete the alternative assignment instead. If you would like your data removed after taking part, contact the researcher below and it will be deleted."}
+                You may stop at any time, without giving a reason and without consequence, by returning the study on
+                Prolific. If you would like your data removed after taking part, send the researcher a message through
+                Prolific, or email the researcher below, with your Prolific ID, and it will be deleted.
               </Text>
             </Section>
 
@@ -742,16 +554,20 @@ export function ConsentPage({ onAgree, door = "university" }: {
                       {CONTACT.irb.name}
                     </Text>
                     <Text fontSize="sm" color="fg.muted">
+                      {CONTACT.irb.unit}
+                    </Text>
+                    <Text fontSize="sm" color="fg.muted">
                       {CONTACT.irb.address}
                     </Text>
-                    <Link
-                      href={`mailto:${CONTACT.irb.email}`}
-                      fontSize="sm"
-                      color="fg"
-                      textDecoration="underline"
-                    >
-                      {CONTACT.irb.email}
-                    </Link>
+                    <Text fontSize="sm" color="fg.muted">
+                      Email:{" "}
+                      <Link href={`mailto:${CONTACT.irb.email}`} color="fg" textDecoration="underline">
+                        {CONTACT.irb.email}
+                      </Link>
+                    </Text>
+                    <Text fontSize="sm" color="fg.muted">
+                      Phone: {CONTACT.irb.phone}
+                    </Text>
                   </VStack>
                 </Stack>
               </Box>
@@ -759,81 +575,7 @@ export function ConsentPage({ onAgree, door = "university" }: {
           </Stack>
         </Box>
 
-        {/* Agreement - the Prolific door's own (one box, and "I do not agree") */}
-        {prolific ? <ProlificAgreement onAgree={onAgree} /> : (
-        <Box
-          borderWidth="2px"
-          borderColor={checked ? "green.solid" : "border.emphasized"}
-          bg="bg.panel"
-          rounded="2xl"
-          p={{ base: "5", md: "6" }}
-          transition="border-color 0.2s ease"
-        >
-          <HStack gap="2.5" mb="3" align="center">
-            <Icon boxSize="4" color={checked ? "green.fg" : "fg.subtle"}>
-              <LuShieldCheck />
-            </Icon>
-            <Heading size="sm" color="fg" letterSpacing="tight">
-              Agreement
-            </Heading>
-          </HStack>
-
-          <Checkbox
-            checked={checked}
-            onCheckedChange={(e) => setChecked(!!e.checked)}
-            colorPalette="green"
-            alignItems="flex-start"
-            cursor="pointer"
-          >
-            <Text fontSize="sm" color="fg" lineHeight="tall">
-              I have read the procedure described above. I voluntarily agree to take part, and I
-              understand that my email address will be collected so I can return to finish the
-              study and receive my course credit.
-            </Text>
-          </Checkbox>
-
-          <Box mt="4" pt="4" borderTopWidth="1px" borderColor="border.subtle">
-            <Checkbox
-              checked={rulesChecked}
-              onCheckedChange={(e) => setRulesChecked(!!e.checked)}
-              colorPalette="orange"
-              alignItems="flex-start"
-              cursor="pointer"
-            >
-              <Text fontSize="sm" color="fg" lineHeight="tall">
-                I understand that the course credit is given when I complete the study, and that I may
-                complete an alternative assignment instead.
-              </Text>
-            </Checkbox>
-          </Box>
-
-          <Button
-            mt="5"
-            size="lg"
-            w="full"
-            colorPalette="green"
-            bg={bothAgreed ? "green.solid" : "bg.muted"}
-            color={bothAgreed ? "green.contrast" : "fg.subtle"}
-            _hover={bothAgreed ? { opacity: 0.92 } : {}}
-            rounded="lg"
-            fontWeight="semibold"
-            gap="2"
-            disabled={!bothAgreed}
-            onClick={handleContinue}
-          >
-            I agree — continue
-            <Icon boxSize="4">
-              <LuArrowRight />
-            </Icon>
-          </Button>
-
-          {!bothAgreed && (
-            <Text mt="2.5" fontSize="xs" color="fg.subtle" textAlign="center">
-              Tick both boxes above to continue.
-            </Text>
-          )}
-        </Box>
-        )}
+        <ProlificAgreement onAgree={onAgree} />
       </VStack>
     </Box>
   );

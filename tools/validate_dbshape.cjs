@@ -1794,7 +1794,7 @@ for (const [who, block5] of PEOPLE) {
   const honest = db.buildQuality(ledger({
     money: 240_000, trolley: 200_000, product: 260_000, block4: 300_000, block5: 1_200_000, feedback: 400_000,
   }), PEOPLE[0][1], null, "Study Completed", passing);
-  if (honest.course_credit_earned !== true) why.push("an honest fast reader lost the course credit");
+  if ("course_credit_earned" in honest) why.push("the course-credit field is still saved");
   if (honest.blocks_under_30_seconds !== 0 || honest.rushed_blocks.length !== 0) {
     why.push(`an honest fast reader got ${honest.blocks_under_30_seconds} strikes (${honest.rushed_blocks.map((b) => b.stage).join(", ")})`);
   }
@@ -1813,7 +1813,6 @@ for (const [who, block5] of PEOPLE) {
   if (rusher.blocks_under_30_seconds !== 3 || JSON.stringify(rusher.rushed_blocks.map((b) => b.stage)) !== JSON.stringify(["money", "trolley", "product"])) {
     why.push(`a rusher of Blocks 1-3 got ${rusher.blocks_under_30_seconds} strikes`);
   }
-  if (rusher.course_credit_earned !== true) why.push("three rushed parts took the course credit away (it is given on completion)");
   gate("D70", why.length === 0, why.length === 0
     ? "only Blocks 1-4, the main study and the feedback can be called rushed: an honest fast reader (consent, the four questions, the pauses, the page before the main study and the results page all under 30 s) has no strike, those pages are kept apart; three rushed real parts are three strikes (the pay check's number) and keep the course credit"
     : `the rushed-blocks rule is wrong: ${why.slice(0, 3).join(" | ")}`);

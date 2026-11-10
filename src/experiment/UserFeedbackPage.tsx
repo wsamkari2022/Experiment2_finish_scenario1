@@ -63,8 +63,8 @@ interface Props {
    */
   alreadyCompleted?: boolean;
   /**
-   * The Prolific ID of a Prolific-door participant (since 7 October 2026, Step 4): the thank-you screen then shows their
-   * completion code and "Return to Prolific" (ProlificCompletionCard). Null in the university door, which has no code.
+   * The participant's Prolific ID (since 7 October 2026, Step 4): the thank-you screen shows their completion code and
+   * "Return to Prolific" (ProlificCompletionCard).
    */
   prolificId?: string | null;
 }
@@ -194,9 +194,9 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
    * (same scale, same end labels). It is required like them, but its answer is saved in the attention file on
    * submit, never in the feedback record, so it cannot move any score or the "same answer everywhere" flag.
    *
-   * THE PROLIFIC DOOR HAS TWO (since 7 October 2026; the researcher's "3-B"): one in "The tools & the experiment
-   * design" and one in "How this experience was for you", each with its own number, the same words. The university
-   * door keeps its one row. `numberRowsOf` gives the rows the plan drew, each with its own answer code.
+   * THERE ARE TWO (since 7 October 2026; the researcher's "3-B"): one in "The tools & the experiment design" and one in
+   * "How this experience was for you", each with its own number, the same words. `numberRowsOf` gives the rows the plan
+   * drew, each with its own answer code.
    */
   const [attentionRows] = useState(() => numberRowsOf(readAttention().plan));
   const attentionChanges = useRef<Record<string, number>>({});
@@ -394,16 +394,8 @@ export function UserFeedbackPage({ results, sessionId, onBack, onCompleted, alre
                 Your answers are saved. We are grateful for the time and thought you gave: it helps us understand
                 how people make hard choices. Below is the story of yours.
               </Text>
-              {/* The Prolific door's completion code and the way back (since 7 October 2026, Step 4; "1-A": a button,
-                  never an automatic jump). The university door has no code. */}
+              {/* The completion code and the way back (since 7 October 2026, Step 4; "1-A": a button, never an automatic jump). */}
               {prolificId && <ProlificCompletionCard prolificId={prolificId} />}
-              {/* The university door (since 16 October 2026, the researcher's "3-yes"): one reassuring line, nothing the
-                  consent page does not already promise ("the course credit is given when I complete the study"). */}
-              {!prolificId && (
-                <Text color="fg" fontSize={{ base: "sm", md: "md" }} fontWeight="medium" data-course-credit-line>
-                  If you are taking part for course credit, your completion is recorded.
-                </Text>
-              )}
               {(minutes !== null || visits !== null) && (
                 <HStack gap="3" wrap="wrap" justify="center" pt="1">
                   {minutes !== null && (

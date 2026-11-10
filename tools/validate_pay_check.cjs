@@ -61,7 +61,7 @@ function record(n, over = {}) {
       block5_emergency_scenarios: { scenarioResults: Array.from({ length: 6 }, (_, i) => ({ scenarioId: i + 1 })) },
       feedback_answers: { feedback: { wellbeing: { items: { LI1: 4 } } } },
     },
-    analysis: { attention_checks: { door: "prolific", prolific_rule: { attention_checks_failed: over.checksFailed ?? 0, failed_two_or_more_attention_checks: (over.checksFailed ?? 0) >= 2 } } },
+    analysis: { attention_checks: { prolific_rule: { attention_checks_failed: over.checksFailed ?? 0, failed_two_or_more_attention_checks: (over.checksFailed ?? 0) >= 2 } } },
     quality: { active_minutes: over.working ?? 40, straightlined_feedback: !!over.straight, blocks_under_30_seconds: over.rushed ?? 0 },
     active_time: { total_active_minutes: over.working ?? 40 },
   };
@@ -109,6 +109,7 @@ function csvFor(people, { crlf = true, bom = true } = {}) {
 }
 const prolificDocs = PEOPLE.filter(([, , , , opts]) => opts).map(([n, , , , opts]) => record(n, opts));
 const extra = record(30); // in our database, not in Prolific's file (a test run)
+/* A test record from the time of the two doors: it holds an email and must never be read. */
 const university = [{ email: "student.one@my.fit.edu", status: "Study Completed", recruitment_source: "university" },
   { email: "staff.two@fit.edu", status: "Study Not Completed" }];
 const allDocs = [...university, ...prolificDocs, extra];
@@ -226,6 +227,36 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
   }
   gate("Y5", why.length === 0, why.length ? why.join(" | ")
     : "the command writes PAY_CHECK.md and approve_ids.txt in the day's folder (the approve line exactly the PAY group), prints the summary, gives the hourly pay from --reward and counts day 21 from --today; a missing folder stops with a clear message");
+}
+
+
+/* ------------------------------------------------------------------ Y6 the consent form's promises */
+{
+  const why = [];
+  const csv = (rows) => ["Participant id,Status,Completed at,Time taken,Completion code", ...rows.map(([n, status, minutes]) => `${pidOf(n)},${status},2026-10-20 10:00:00.000000,${minutes === null ? "" : minutes * 60},${status === "AWAITING REVIEW" ? COMMON : ""}`)].join("\n");
+  const run = (rows, recs, reward = 7) => P.payCheck({ docs: P.readParticipants(JSON.stringify(recs)), submissions: P.readSubmissions(csv(rows)), today: TODAY, reward });
+  /* "If you finish after Prolific's time limit, we still approve and pay you when our records show that you completed the study." */
+  const unfinished = (d) => { d.status = "Study Not Completed"; d.current_stage = "block5"; };
+  const r1 = run([[40, "TIMED-OUT", null], [41, "TIMED-OUT", null], [42, "TIMED-OUT", null], [43, "TIMED-OUT", null], [44, "AWAITING REVIEW", 50]],
+    [record(40), record(41, { checksFailed: 2 }), record(42, { mutate: unfinished }), record(44)]);
+  const ids = (g) => r1.groups[g].map((r) => r.pid).join();
+  if (ids("payTimedOut") !== pidOf(40)) why.push(`a timed-out person who finished is not in "Pay: timed out" (${ids("payTimedOut")})`);
+  if (ids("look") !== pidOf(41)) why.push("a timed-out person who failed two checks is not for the researcher's eyes");
+  if (ids("notFinished") !== `${pidOf(42)},${pidOf(43)}`) why.push(`a timed-out person who did not finish, or has no record, is to be paid (${ids("notFinished")})`);
+  if (r1.approveIds.join() !== pidOf(44)) why.push("a timed-out person is in the bulk-approve list (Prolific's bulk approve is for submissions awaiting review)");
+  /* The $8 line: 35 minutes is $12 an hour; 52.5 minutes is exactly $8. */
+  const atMinutes = (m) => run(Array.from({ length: 3 }, (_, i) => [50 + i, "AWAITING REVIEW", m]), Array.from({ length: 3 }, (_, i) => record(50 + i)));
+  if (Math.abs(atMinutes(35).hourly - 12) > 1e-9 || atMinutes(35).underMinimum) why.push("35 minutes is not $12 an hour with no warning");
+  if (atMinutes(52.5).underMinimum) why.push("exactly $8 an hour was warned about");
+  if (!atMinutes(55).underMinimum) why.push("$7.64 an hour was not warned about");
+  const md = P.reportMarkdown(atMinutes(55), { date: "2026-10-20", files: { db: "a", prolific: "b" } });
+  if (!/\*\*WARNING: the pay is under 8 USD an hour\.\*\*/.test(md)) why.push("the report does not warn about the pay");
+  if (/WARNING: the pay/.test(P.reportMarkdown(atMinutes(35), { date: "2026-10-20", files: { db: "a", prolific: "b" } }))) why.push("the report warns at $12 an hour");
+  if (!/## 1b\. Pay: finished after Prolific's time limit/.test(md) || !/technical problem on our side/.test(md)) why.push("the report lacks the timed-out section or the technical-problem note");
+  /* The reward by default is the study's, and day 21 is Prolific's day for researchers (the consent form's 22 is Prolific's day for participants). */
+  if (P.RULES.rewardUsd !== 7 || P.RULES.minHourlyUsd !== 8 || P.RULES.autoApproveDay !== 21 || P.RULES.warnAfterDays >= 21) why.push("the reward, the minimum or the approval day changed");
+  gate("Y6", why.length === 0, why.length ? why.slice(0, 5).join(" | ")
+    : "the consent form's promises: somebody who finished after Prolific's time limit is listed to pay (apart from the bulk-approve list), unless two or more checks failed; who did not finish is not; the report warns under $8 an hour (35 minutes = $12, 52.5 = $8 no warning, 55 = warning); the reward defaults to $7");
 }
 
 console.log("");

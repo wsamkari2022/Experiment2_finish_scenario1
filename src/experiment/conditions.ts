@@ -99,7 +99,7 @@
  * fails if the two ever differ.
  */
 
-import type { RecruitmentSource } from "./recruitment";
+import { RECRUITMENT_SOURCE } from "./recruitment";
 
 /*
  * BASELINE'S ADDRESS WORD IS "BSL4" (since 14 October 2026, the researcher's choice for the OSF blinding answer): a
@@ -137,10 +137,10 @@ export interface ConditionFile {
   assignedAt: string;
   /** The landing page's arrival id when the server gave it; null otherwise. */
   arrivalId: string | null;
-  /** The participant's key (email or Prolific ID), lower case; "" until the start screen or the demographic page knows it. */
+  /** The participant's Prolific ID, lower case; "" until the first page knows it. */
   owner: string;
-  /** The door this condition was given at (since 6 October 2026; recruitment.ts); absent = the university door. */
-  recruitmentSource?: RecruitmentSource;
+  /** Always "prolific" since 10 November 2026 (recruitment.ts). A file without it comes from before and is dropped. */
+  recruitmentSource?: typeof RECRUITMENT_SOURCE;
 }
 
 /** What the server answers when it gives a condition. */
@@ -237,7 +237,6 @@ export function writeConditionFile(file: ConditionFile): void {
 
 export function makeConditionFile(
   condition: Condition, source: ConditionSource, arrivalId: string | null, owner: string, assignedAt?: string,
-  recruitmentSource?: RecruitmentSource,
 ): ConditionFile {
   return {
     version: CONDITION_FILE_VERSION,
@@ -247,7 +246,7 @@ export function makeConditionFile(
     assignedAt: assignedAt || new Date().toISOString(),
     arrivalId,
     owner: owner.trim().toLowerCase(),
-    ...(recruitmentSource ? { recruitmentSource } : {}),
+    recruitmentSource: RECRUITMENT_SOURCE,
   };
 }
 

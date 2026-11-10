@@ -5,11 +5,10 @@
  * THE RESEARCHER'S REQUEST (29 September 2026). Simple attention checks during the study, plus a feedback row, "This
  * question is just to check your attention. Pick the number four." (the number only two, three, four or five, at a
  * random place among the design or learning-insight questions, never among the CVR or APA questions); all of them
- * answered as asked was needed for the university gift card, among the other rules (no gift card since 16 October 2026:
- * course credit on completion; a check answered wrongly is now one of the four careful-participation signs in `quality`,
- * information for the researcher). Plan answers of 29 September: Q2 yes
- * (the consent page says so), Q3 A (the gift card only; all completed sessions are analysed), Q4 yes (two answer-pattern
- * flags, for analysis only).
+ * answered as asked was part of the pay rule then. Since the study became Prolific only (10 November 2026) failing two or
+ * more of the four is the rejection reason, and a check answered wrongly is one of the four careful-participation signs in
+ * `quality`, information for the researcher. Plan answers of 29 September: Q2 yes (the consent page says so), all completed
+ * sessions are analysed, Q4 yes (two answer-pattern flags, for analysis only).
  *
  * READING CHECKS, NOT MEMORY CHECKS (14 October 2026). The researcher's advisor: an attention check should test whether
  * the participant is really READING, not what they remember; and the checks "should be (somewhat) randomly placed in the
@@ -18,7 +17,7 @@
  * became an everyday question with the instruction inside it, in the researcher's approved words:
  *   between_blocks     its own short screen after Block 1, 2 or 3 (drawn at random per participant), before the next block
  *   between_scenarios  its own short screen after scenario 1, 2 or 3 (drawn at random), before the next scenario
- *   number             one rating row in the feedback, as before (random place, random number)
+ *   number, number_2   two rating rows in the feedback (random place, random number)
  * A reading check asks nothing about the study, so it can sit anywhere: never between scenarios 4 and 5 (scenario 5 must
  * follow scenario 4 directly) and never before scenario 6 (the prediction test). Four answers each, in a random order per
  * participant. Any pick continues, and nobody is told whether they were right: telling them would teach them to watch
@@ -30,24 +29,23 @@
  * same way, and an answered check is never asked again. A file made for another participant, or under another version,
  * is replaced.
  *
- * THE PROLIFIC DOOR (since 7 October 2026; Prolific's rule since 14 October 2026). A Prolific participant gets a SECOND
- * number row: the first ("number") always in "The tools & the experiment design", the second ("number_2") always in "How
+ * FOUR CHECKS, PROLIFIC'S RULE (since 7 October 2026; the rule since 14 October 2026; the only plan since 10 November
+ * 2026). There are two number rows: the first ("number") always in "The tools & the experiment design", the second ("number_2") always in "How
  * this experience was for you", each at its own random place and with its own number two to five (never the same number
  * twice, so one answer given everywhere cannot pass both). All FOUR checks are reading checks of the kind Prolific
  * accepts, and all four count (the researcher's "1-B", 14 October 2026): failing TWO OR MORE of them is Prolific's
  * rejection reason ("If you fail two or more of them, your submission will be rejected", the Prolific consent page). A
- * check never reached is not a failure (a person who did not finish is handled by Prolific on its own). The university
- * door keeps its three checks (since 16 October 2026 information only: course credit is given on completion).
+ * check never reached is not a failure (a person who did not finish is handled by Prolific on its own).
  *
  * WHAT IT FEEDS. `analysis.attention_checks` (every check, where it was shown, what was asked, the answer order, the
  * answer, right or wrong), `quality.passed_all_attention_checks` and `quality.careful_participation` (a check answered
- * wrongly is one of its four signs; information only, never credit or pay), the Prolific rule in `quality` and `analysis.attention_checks.prolific_rule`, and a copy in
+ * wrongly is one of its four signs; information only, never pay), the Prolific rule in `quality` and `analysis.attention_checks.prolific_rule`, and a copy in
  * `major_info_and_scores`. The feedback check's answer is kept HERE, never in the feedback record, so it cannot move a
  * well-being score, a tool rating or the "same answer to every rating" flag. `analysis.feedback_answer_patterns` (Q4) is
  * built from the feedback record and is never used for pay. Checked by `npm run validate:attention`.
  */
 
-import { keyDoor, keyOfDemographics, type RecruitmentSource } from "./recruitment";
+import { keyOfDemographics } from "./recruitment";
 import { SESSION_ID_KEY } from "./session";
 import {
   APA_QUESTIONS, CVR_QUESTIONS, DUAL_VIEW_QUESTIONS, TOOL_CLOSERS, TOOL_RATINGS, WELLBEING_ITEMS,
@@ -57,7 +55,7 @@ import {
 export const ATTENTION_KEY = "vrds_attention_checks";
 /** Move whenever the checks, their places or their scoring change; stamped on every saved file. A file under another
  *  version is drawn again (no real data existed when it moved). */
-export const ATTENTION_VERSION = "2026-10-14-reading-checks";
+export const ATTENTION_VERSION = "2026-11-10-prolific-only";
 /** Older versions whose files are still read as they are. None since 14 October 2026: the files before it hold the two
  *  memory questions, which no longer exist, so they are drawn again (nobody had taken the study yet). */
 export const STILL_READ_VERSIONS: readonly string[] = [];
@@ -65,16 +63,14 @@ export const STILL_READ_VERSIONS: readonly string[] = [];
 export const ATTENTION_STAGE = "attention_check";
 /** The feedback page's answer code for the number check. Not a feedback question: never in the feedback record. */
 export const ATTENTION_FEEDBACK_CODE = "ATTN_number";
-/** The second number row's answer code (the Prolific door only, since 7 October 2026). Never in the feedback record. */
+/** The second number row's answer code (since 7 October 2026). Never in the feedback record. */
 export const ATTENTION_FEEDBACK_CODE_2 = "ATTN_number_2";
 
 export type ReadingCheckId = "between_blocks" | "between_scenarios";
 export type NumberCheckId = "number" | "number_2";
 export type AttentionCheckId = ReadingCheckId | NumberCheckId;
-/** The university door's three checks. */
-export const ATTENTION_CHECK_IDS: AttentionCheckId[] = ["between_blocks", "between_scenarios", "number"];
-/** The Prolific door's four: the same three, and the second number row. All four count for Prolific's rule. */
-export const PROLIFIC_ATTENTION_CHECK_IDS: AttentionCheckId[] = ["between_blocks", "between_scenarios", "number", "number_2"];
+/** The four checks. All four count for Prolific's rule. */
+export const ATTENTION_CHECK_IDS: AttentionCheckId[] = ["between_blocks", "between_scenarios", "number", "number_2"];
 /** Prolific's rule: this many failed checks (or more) is the rejection reason the Prolific consent page names. */
 export const PROLIFIC_FAILS_TO_REJECT = 2;
 
@@ -131,7 +127,7 @@ export const NUMBER_LIST_WORDS: Record<NumberList, string> = {
 /** Every place the number check may sit: after row 1, 2, ... of each list, so never first in a section. */
 export const NUMBER_SLOTS: { list: NumberList; after: number }[] = (["tools", "wellbeing_a", "wellbeing_b"] as NumberList[])
   .flatMap((list) => Array.from({ length: NUMBER_LIST_LENGTHS[list] }, (_, i) => ({ list, after: i + 1 })));
-/** The Prolific door's places: the first row in the tools section, the second in the well-being section. */
+/** The two rows' places: the first in the tools section, the second in the well-being section. */
 export const TOOLS_SLOTS = NUMBER_SLOTS.filter((s) => s.list === "tools");
 export const WELLBEING_SLOTS = NUMBER_SLOTS.filter((s) => s.list !== "tools");
 
@@ -140,27 +136,19 @@ export interface NumberRow { list: NumberList; after: number; target: number; wo
 export interface ReadingPlan { after: number; options: string[] }
 
 export interface AttentionPlan {
-  /** Which door the plan was drawn for; absent = the university door. */
-  door?: RecruitmentSource;
   /** Each reading check: where it is shown (after Block 1, 2 or 3; after scenario 1, 2 or 3) and its four answers in
    *  the order this participant sees them. */
   between_blocks: ReadingPlan;
   between_scenarios: ReadingPlan;
   number: NumberRow;
-  /** The second number row: the Prolific door only. */
-  number_2?: NumberRow;
+  number_2: NumberRow;
 }
 
-/** A plan's door. */
-export const planDoor = (plan: AttentionPlan): RecruitmentSource => (plan.door === "prolific" ? "prolific" : "university");
-/** The checks a plan asks: three in the university door, four in the Prolific door. */
-export const checksOf = (plan: AttentionPlan): AttentionCheckId[] =>
-  planDoor(plan) === "prolific" ? PROLIFIC_ATTENTION_CHECK_IDS : ATTENTION_CHECK_IDS;
 /** The number rows a plan puts in the feedback, with their answer codes, in page order. */
 export function numberRowsOf(plan: AttentionPlan): { check: NumberCheckId; code: string; row: NumberRow }[] {
   return [
     { check: "number" as const, code: ATTENTION_FEEDBACK_CODE, row: plan.number },
-    ...(planDoor(plan) === "prolific" && plan.number_2 ? [{ check: "number_2" as const, code: ATTENTION_FEEDBACK_CODE_2, row: plan.number_2 }] : []),
+    { check: "number_2" as const, code: ATTENTION_FEEDBACK_CODE_2, row: plan.number_2 },
   ];
 }
 
@@ -176,7 +164,7 @@ export interface AttentionAnswer {
 
 export interface AttentionFile {
   version: string;
-  /** The email it was made for, lower case ("" when the study runs without one). */
+  /** The Prolific ID it was made for, lower case ("" when the study runs without one). */
   owner: string;
   plan: AttentionPlan;
   answers: Partial<Record<AttentionCheckId, AttentionAnswer>>;
@@ -213,37 +201,30 @@ function shuffled<T extends string>(items: readonly T[], seed: string, what: str
 const answersOf = (id: ReadingCheckId) => [READING_CHECKS[id].right, ...READING_CHECKS[id].wrong];
 
 /**
- * The whole plan from one seed: pure, so the checks can hold it to its rules over thousands of seeds. The two places and
- * the two answer orders are drawn the same way in both doors; the feedback rows are drawn as they were before.
+ * The whole plan from one seed: pure, so the checks can hold it to its rules over thousands of seeds.
  */
-export function planAttentionChecks(seed: string, door: RecruitmentSource = "university"): AttentionPlan {
+export function planAttentionChecks(seed: string): AttentionPlan {
   const topics = {
     between_blocks: { after: pick(BLOCK_CHECK_PLACES, seed, "block-check-place"), options: shuffled(answersOf("between_blocks"), seed, "block-check-order") },
     between_scenarios: { after: pick(SCENARIO_CHECK_PLACES, seed, "scenario-check-place"), options: shuffled(answersOf("between_scenarios"), seed, "scenario-check-order") },
   };
   const target = pick(NUMBER_TARGETS, seed, "number");
-  if (door !== "prolific") {
-    const slot = pick(NUMBER_SLOTS, seed, "number-place");
-    return { ...topics, number: { list: slot.list, after: slot.after, target, word: NUMBER_WORDS[target] } };
-  }
-  /* The Prolific door: one row in each section, two different numbers. */
+  /* One row in each section, two different numbers. */
   const first = pick(TOOLS_SLOTS, seed, "number-place-tools");
   const second = pick(WELLBEING_SLOTS, seed, "number-2-place");
   const target2 = pick(NUMBER_TARGETS.filter((n) => n !== target), seed, "number-2");
   return {
-    door: "prolific",
     ...topics,
     number: { list: first.list, after: first.after, target, word: NUMBER_WORDS[target] },
     number_2: { list: second.list, after: second.after, target: target2, word: NUMBER_WORDS[target2] },
   };
 }
 
-/** The participant this browser is working for: the email the flow keeps (the same one it saves under). */
+/** The participant this browser is working for: the Prolific ID the flow keeps (the same one it saves under). */
 function currentOwner(): string {
   try {
     const pending = localStorage.getItem("vrds_pending_email");
     if (pending) return pending.trim().toLowerCase();
-    /* The demographic record names the key as `email`, or as `prolificPid` in the Prolific door (since 6 October 2026). */
     return String(keyOfDemographics(JSON.parse(localStorage.getItem("vrds_demographics") ?? "null")) ?? "").trim().toLowerCase();
   } catch {
     return "";
@@ -253,13 +234,12 @@ function currentOwner(): string {
 function isFile(value: unknown): value is AttentionFile {
   const f = value as AttentionFile | null;
   if (!f || typeof f !== "object") return false;
-  /* An older version still read is read only as the university plan it was (no door, no second row). */
-  const versionOk = f.version === ATTENTION_VERSION || (STILL_READ_VERSIONS.includes(f.version) && f.plan?.door === undefined && !f.plan?.number_2);
+  const versionOk = f.version === ATTENTION_VERSION || STILL_READ_VERSIONS.includes(f.version);
   const reading = (r: ReadingPlan | undefined, places: readonly number[]) =>
     !!r && Array.isArray(r.options) && r.options.length === 4 && places.includes(r.after);
   return versionOk
     && reading(f.plan?.between_blocks, BLOCK_CHECK_PLACES) && reading(f.plan?.between_scenarios, SCENARIO_CHECK_PLACES) && !!f.plan?.number
-    && (planDoor(f.plan) !== "prolific" || !!f.plan?.number_2)
+    && !!f.plan?.number_2
     && typeof f.answers === "object" && f.answers !== null;
 }
 
@@ -271,13 +251,12 @@ export function readAttention(): AttentionFile {
   const owner = currentOwner();
   try {
     const saved = JSON.parse(localStorage.getItem(ATTENTION_KEY) ?? "null") as unknown;
-    /* The owner's key decides the door; a file drawn for the other door is drawn again. */
-    if (isFile(saved) && saved.owner === owner && planDoor(saved.plan) === keyDoor(owner)) return saved;
+    if (isFile(saved) && saved.owner === owner) return saved;
   } catch { /* unreadable: made again below */ }
   let session = "";
   try { session = localStorage.getItem(SESSION_ID_KEY) ?? ""; } catch { /* ignore */ }
   const file: AttentionFile = {
-    version: ATTENTION_VERSION, owner, plan: planAttentionChecks(`${session}|${owner}`, keyDoor(owner)), answers: {},
+    version: ATTENTION_VERSION, owner, plan: planAttentionChecks(`${session}|${owner}`), answers: {},
   };
   try { localStorage.setItem(ATTENTION_KEY, JSON.stringify(file)); } catch { /* the run goes on */ }
   return file;
@@ -328,42 +307,40 @@ export function recordAttentionAnswer(
 /* ------------------------------------------------------------------ scoring and the database */
 
 export interface AttentionScore {
-  door: RecruitmentSource;
-  /** How many checks this door asks (three, or four in the Prolific door). */
+  /** How many checks there are (four). */
   asked: number;
   passedAll: boolean;
   passedCount: number;
   answeredCount: number;
   /** One sentence per check that was missed or never answered, for the pay reasons. */
   misses: string[];
-  /** Prolific's rule (the Prolific door only; null in the university door): all four checks count, and failing two or
-   *  more is the rejection reason. */
-  prolific: { counted: number; answered: number; failed: number; failedTwoOrMore: boolean } | null;
+  /** Prolific's rule: all four checks count, and failing two or more is the rejection reason. */
+  prolific: { counted: number; answered: number; failed: number; failedTwoOrMore: boolean };
 }
 
-/** Each check in words, for the misses and the pay reasons: a reading check by where it was shown; in the Prolific door
- *  the two number rows by their order. */
+/** Each check in words, for the misses and the pay reasons: a reading check by where it was shown, the two number rows
+ *  by their order. */
 function checkWords(plan: AttentionPlan, id: AttentionCheckId): string {
   if (id === "between_blocks") return `the reading check after Block ${plan.between_blocks.after}`;
   if (id === "between_scenarios") return `the reading check after scenario ${plan.between_scenarios.after}`;
   if (id === "number_2") return "the second feedback check";
-  return planDoor(plan) === "prolific" ? "the first feedback check" : "the feedback check";
+  return "the first feedback check";
 }
 
 /** What the check asked, in words, for the database and the pay reasons. */
 function asked(plan: AttentionPlan, id: AttentionCheckId): string {
   if (id === "number") return `pick the number ${plan.number.word}`;
-  if (id === "number_2") return `pick the number ${plan.number_2?.word ?? "?"}`;
+  if (id === "number_2") return `pick the number ${plan.number_2.word}`;
   return `${READING_CHECKS[id].question} ${READING_CHECKS[id].instruction}`;
 }
 
-/** The verdict over every check the door asks. A check never reached counts as not passed. */
+/** The verdict over the four checks. A check never reached counts as not passed. */
 export function scoreAttention(raw: unknown): AttentionScore | null {
   if (!isFile(raw)) return null;
   const misses: string[] = [];
   let passed = 0;
   let answered = 0;
-  const ids = checksOf(raw.plan);
+  const ids = ATTENTION_CHECK_IDS;
   for (const id of ids) {
     const a = raw.answers[id];
     if (!a) {
@@ -375,16 +352,12 @@ export function scoreAttention(raw: unknown): AttentionScore | null {
     if (right) passed += 1;
     else misses.push(`missed ${checkWords(raw.plan, id)} (the right answer was "${attentionTarget(raw.plan, id)}", picked "${a.answer}")`);
   }
-  const door = planDoor(raw.plan);
   /* Prolific's rule (the researcher's "1-B", 14 October 2026): all four checks count, and a check "failed" is one
      ANSWERED against its instruction (a check never reached is a person who did not finish, which Prolific handles on
-     its own). Two or more failed is the rejection reason the Prolific consent page names. */
-  let prolific: AttentionScore["prolific"] = null;
-  if (door === "prolific") {
-    const failed = answered - passed;
-    prolific = { counted: ids.length, answered, failed, failedTwoOrMore: failed >= PROLIFIC_FAILS_TO_REJECT };
-  }
-  return { door, asked: ids.length, passedAll: passed === ids.length, passedCount: passed, answeredCount: answered, misses, prolific };
+     its own). Two or more failed is the rejection reason the consent page names. */
+  const failed = answered - passed;
+  const prolific = { counted: ids.length, answered, failed, failedTwoOrMore: failed >= PROLIFIC_FAILS_TO_REJECT };
+  return { asked: ids.length, passedAll: passed === ids.length, passedCount: passed, answeredCount: answered, misses, prolific };
 }
 
 /** analysis.attention_checks: every check in full, and the verdict. Nothing here was on screen but the checks. */
@@ -412,10 +385,8 @@ export function buildAttentionSection(raw: unknown): Record<string, unknown> | n
     };
   };
   const numberWhere = (r: NumberRow) => `the feedback, in ${NUMBER_LIST_WORDS[r.list]}, after rating row ${r.after}`;
-  const prolific = score.door === "prolific";
   return {
     version: raw.version,
-    door: score.door,
     passed_all: score.passedAll,
     passed_count: score.passedCount,
     answered_count: score.answeredCount,
@@ -425,37 +396,27 @@ export function buildAttentionSection(raw: unknown): Record<string, unknown> | n
       row("between_blocks", readingCheckWhere("between_blocks", plan.between_blocks.after), plan.between_blocks.options),
       row("between_scenarios", readingCheckWhere("between_scenarios", plan.between_scenarios.after), plan.between_scenarios.options),
       row("number", numberWhere(plan.number), [1, 2, 3, 4, 5, 6, 7]),
-      ...(prolific && plan.number_2 ? [row("number_2", numberWhere(plan.number_2), [1, 2, 3, 4, 5, 6, 7])] : []),
+      row("number_2", numberWhere(plan.number_2), [1, 2, 3, 4, 5, 6, 7]),
     ],
-    ...(prolific && score.prolific ? {
-      prolific_rule: {
-        attention_checks_counted: score.prolific.counted,
-        attention_checks_answered: score.prolific.answered,
-        attention_checks_failed: score.prolific.failed,
-        failed_two_or_more_attention_checks: score.prolific.failedTwoOrMore,
-        how_to_read:
-          "Prolific's rule (since 14 October 2026, the researcher's '1-B'): all four checks are reading checks of the kind "
-          + "Prolific accepts (an explicit instruction, said to be a check, no memory needed), and all four count. Failing "
-          + "two or more of them is the rejection reason the Prolific consent page names ('If you fail two or more of "
-          + "them, your submission will be rejected'); failed_two_or_more_attention_checks says so. A check never "
-          + "answered is not counted as failed. The researcher rejects on Prolific himself (npm run pay:check lists them).",
-      },
-    } : {}),
-    how_to_read: prolific
-      ? "The Prolific door: two reading checks on their own screens (one after Block 1, 2 or 3, one after scenario 1, 2 "
-        + "or 3, each place drawn at random per participant; shown_after_block / shown_after_scenario) and two 'Pick the "
-        + "number ...' rows in the feedback. All four count for Prolific's rule (prolific_rule above); passed_all says "
-        + "whether all four were right. Participants were never told whether they were right."
-      :
-      "Three very simple reading checks: one on its own screen after Block 1, 2 or 3, one after scenario 1, 2 or 3 (each "
-      + "place drawn at random per participant; shown_after_block / shown_after_scenario), each an everyday question with "
-      + "the instruction inside it ('please choose ...') and four answers in a random order, and 'Pick the number ...' on "
-      + "the 1-7 scale at a random place in the feedback. passed_all is information (quality.passed_all_attention_checks); "
-      + "a check answered wrongly is one of the four careful-participation signs (quality.careful_participation), which "
-      + "never affects course credit: the credit is given on completion. Participants were never told whether they were "
-      + "right. All completed sessions are analysed (the researcher, 30 September 2026). Until 16 October 2026 passed_all "
-      + "was part of a gift-card verdict. Before 14 October 2026 the two screens asked what the part just finished was "
-      + "about (after Block 3 and after scenario 3); no participant took the study under that version.",
+    prolific_rule: {
+      attention_checks_counted: score.prolific.counted,
+      attention_checks_answered: score.prolific.answered,
+      attention_checks_failed: score.prolific.failed,
+      failed_two_or_more_attention_checks: score.prolific.failedTwoOrMore,
+      how_to_read:
+        "Prolific's rule (since 14 October 2026, the researcher's '1-B'): all four checks are reading checks of the kind "
+        + "Prolific accepts (an explicit instruction, said to be a check, no memory needed), and all four count. Failing "
+        + "two or more of them is the rejection reason the consent page names ('If you fail two or more of them, your "
+        + "submission will be rejected'); failed_two_or_more_attention_checks says so. A check never answered is not "
+        + "counted as failed. The researcher rejects on Prolific himself (npm run pay:check lists them).",
+    },
+    how_to_read:
+      "Two reading checks on their own screens (one after Block 1, 2 or 3, one after scenario 1, 2 or 3, each place drawn "
+      + "at random per participant; shown_after_block / shown_after_scenario) and two 'Pick the number ...' rows in the "
+      + "feedback. All four count for Prolific's rule (prolific_rule above); passed_all says whether all four were right. "
+      + "A check answered wrongly is also one of the four careful-participation signs (quality.careful_participation). "
+      + "Participants were never told whether they were right. All completed sessions are analysed (the researcher, 30 "
+      + "September 2026).",
   };
 }
 

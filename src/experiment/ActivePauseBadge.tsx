@@ -7,7 +7,7 @@
  * they thought they had never existed. Saying nothing would be cheaper and less honest.
  *
  * WHY IT SAYS SO LITTLE
- * It deliberately does NOT mention minutes, the clock, or the gift card. "You have been idle; this
+ * It deliberately does NOT mention minutes, the clock, or the pay. "You have been idle; this
  * time is not counted toward your 35 minutes" is not a notice, it is an instruction manual for
  * cheating — it tells somebody exactly what to do and how often. This says only that the study is
  * waiting, which is true, useful, and reveals no target.

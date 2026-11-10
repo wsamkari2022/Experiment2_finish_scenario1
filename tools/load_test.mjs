@@ -16,9 +16,8 @@
  *   L3  the four conditions exactly even inside every wave (and every arrival linked to its person)
  *   L4  nobody waited 3 seconds or more for their condition (until 6 October 2026: 33 of 100 did, and the page then
  *       gave them a random condition that was never counted; now the page also waits longer and asks again)
- *   L5  (the two doors, since 6 October 2026) 100 students and 100 Prolific people in the same instant: each door 25 per
- *       condition, every Prolific record under prolific_pid with NO email and its door and Prolific's ids, every
- *       university record under its email and marked university
+ *   L5  (Prolific only since 10 November 2026) 200 more people in the same instant: 50 per condition; every record under
+ *       prolific_pid with NO email and with Prolific's ids; an email is refused on every route and reaches no record
  *   L7  (the audit's F2) privacy on the real server: a lookup reveals only the status, a wrong age is refused, the right
  *       age brings back the person's details and run but none of their analysis, the create/update route answers only
  *       "ok", a write without the browser's id is refused, and another website gets no permission to read answers
@@ -59,8 +58,8 @@ const WAVES = [
   { label: "wave1", people: 100, rounds: 15 },
   { label: "wave2", people: 100, rounds: 15 },
   { label: "wave3", people: 200, rounds: 5 },
-  /* Both doors at once (since 6 October 2026): every second person comes from Prolific with a Prolific ID. */
-  { label: "doors", people: 200, rounds: 5, mixed: true },
+  /* A bigger crowd, on the database that already holds the three waves. */
+  { label: "big", people: 200, rounds: 5 },
 ];
 if (!DB_NAME.startsWith("vrds_load_test_")) throw new Error("refusing to run against a database that is not a load test");
 
@@ -68,7 +67,7 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const filler = (kb) => "x".repeat(kb * 1024);
 const q = (arr, p) => { const s = [...arr].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 
-async function runWave({ label, people, rounds, mixed = false }) {
+async function runWave({ label, people, rounds }) {
   const lat = {};
   const errors = [];
   async function call(name, method, route, body, browser) {
@@ -90,17 +89,14 @@ async function runWave({ label, people, rounds, mixed = false }) {
   }
   async function person(i) {
     const browser = randomUUID();
-    const door = mixed && i % 2 === 1 ? "prolific" : "university";
     /* A Prolific ID looks like Prolific's: 24 letters a-f and digits. */
-    const key = door === "prolific" ? randomBytes(12).toString("hex") : `${label}-${i}@loadtest.invalid`;
-    const identity = door === "prolific"
-      ? { prolificPid: key, prolificStudyId: "loadteststudy0001", prolificSessionId: randomBytes(12).toString("hex") }
-      : { email: key };
+    const key = randomBytes(12).toString("hex");
+    const identity = { prolificPid: key, prolificStudyId: "loadteststudy0001", prolificSessionId: randomBytes(12).toString("hex") };
     const sessionId = randomUUID(); // what session.ts makes with crypto.randomUUID()
     await call("health", "GET", "/health", null, browser);
     const arrivalId = randomUUID();
-    const given = await call("condition", "POST", "/conditions/assign", { arrivalId, recruitmentSource: door }, browser);
-    if (!given?.type) return { sessionId, key, door };
+    const given = await call("condition", "POST", "/conditions/assign", { arrivalId }, browser);
+    if (!given?.type) return { sessionId, key };
     await call("record", "POST", "/participants", {
       ...identity, sessionId, age: 30, gender: "Female", country: "Ireland", countryCode: "IE", englishFirstLanguage: true,
       consent: { agreed: true }, stage: "demographics",
@@ -117,13 +113,13 @@ async function runWave({ label, people, rounds, mixed = false }) {
       ]);
     }
     await call("complete", "PATCH", `/participants/${who}/complete`, {}, browser);
-    return { sessionId, key, door };
+    return { sessionId, key };
   }
 
   const t0 = performance.now();
   const persons = await Promise.all(Array.from({ length: people }, (_, i) => person(i)));
   const seconds = (performance.now() - t0) / 1000;
-  return { label, people, rounds, mixed, lat, errors, persons, sessionIds: persons.map((p) => p.sessionId), seconds };
+  return { label, people, rounds, lat, errors, persons, sessionIds: persons.map((p) => p.sessionId), seconds };
 }
 
 async function waitForServer(server) {
@@ -183,9 +179,8 @@ try {
       const over = name === "condition" ? arr.filter((ms) => ms >= CONDITION_LIMIT_MS).length : null;
       console.log(`  ${name.padEnd(9)} ${String(arr.length).padStart(5)} requests   median ${q(arr, 0.5).toFixed(0).padStart(5)} ms   95% under ${q(arr, 0.95).toFixed(0).padStart(5)} ms   slowest ${Math.max(...arr).toFixed(0).padStart(5)} ms${over === null ? "" : `   3 s or more: ${over}`}`);
     }
-    const emails = w.persons.filter((p) => p.door === "university").map((p) => p.key);
-    const pids = w.persons.filter((p) => p.door === "prolific").map((p) => p.key);
-    const docs = await db.collection("participants").find({ $or: [{ email: { $in: emails } }, { prolific_pid: { $in: pids } }] },
+    const pids = w.persons.map((p) => p.key);
+    const docs = await db.collection("participants").find({ prolific_pid: { $in: pids } },
       { projection: { participant_id: 1, condition_type: 1, status: 1, blocks: 1, email: 1, prolific_pid: 1, recruitment_source: 1, prolific_study_id: 1, prolific_session_id: 1 } }).toArray();
     w.docs = docs;
     w.records = docs.length;
@@ -194,14 +189,11 @@ try {
     w.finished = docs.filter((d) => d.status === "Study Completed").length;
     w.allSaves = docs.filter((d) => Object.keys(d.blocks ?? {}).length === w.rounds).length;
     w.byCondition = {};
-    w.byDoor = { university: {}, prolific: {} };
     for (const d of docs) {
       w.byCondition[d.condition_type] = (w.byCondition[d.condition_type] ?? 0) + 1;
-      const door = d.recruitment_source === "prolific" ? "prolific" : "university";
-      w.byDoor[door][d.condition_type] = (w.byDoor[door][d.condition_type] ?? 0) + 1;
     }
-    w.linked = await db.collection("condition_arrivals").countDocuments({ $or: [{ linked_email: { $in: emails } }, { linked_prolific_pid: { $in: pids } }] });
-    console.log(`  saved ${w.records} of ${w.people}; own session ids ${w.uniqueIds}; finished ${w.finished}; every save landed for ${w.allSaves}; conditions ${w.mixed ? `university ${JSON.stringify(w.byDoor.university)}, Prolific ${JSON.stringify(w.byDoor.prolific)}` : JSON.stringify(w.byCondition)}\n`);
+    w.linked = await db.collection("condition_arrivals").countDocuments({ linked_prolific_pid: { $in: pids } });
+    console.log(`  saved ${w.records} of ${w.people}; own session ids ${w.uniqueIds}; finished ${w.finished}; every save landed for ${w.allSaves}; conditions ${JSON.stringify(w.byCondition)}`);
   }
 
   const requests = all.reduce((n, w) => n + Object.values(w.lat).reduce((m, a) => m + a.length, 0), 0);
@@ -211,19 +203,31 @@ try {
   const dataOk = all.every((w) => w.records === w.people && w.uniqueIds === w.people && w.sentIdsMatch && w.finished === w.people && w.allSaves === w.people);
   gate("L2", dataOk, `${people} people: every one saved with their own session id, every save landed, every one finished`);
   const evenIn = (byCondition, n) => { const counts = Object.values(byCondition); return counts.length === 4 && counts.every((c) => c === n / 4); };
-  const single = all.filter((w) => !w.mixed);
+  const single = all;
   const even = single.every((w) => evenIn(w.byCondition, w.people) && w.linked === w.people);
   gate("L3", even, `the four conditions exactly even in every wave (${single.map((w) => `${w.people}: ${w.people / 4} each`).join("; ")}), every arrival linked to its person`);
-  /* L5: both doors at once. */
-  const doors = all.find((w) => w.mixed);
-  const proDocs = doors.docs.filter((d) => d.prolific_pid);
-  const uniDocs = doors.docs.filter((d) => d.email);
-  const doorsOk = evenIn(doors.byDoor.university, doors.people / 2) && evenIn(doors.byDoor.prolific, doors.people / 2)
-    && doors.linked === doors.people
-    && proDocs.length === doors.people / 2
-    && proDocs.every((d) => d.email === undefined && d.recruitment_source === "prolific" && d.prolific_study_id === "loadteststudy0001" && /^[a-f0-9]{24}$/.test(d.prolific_session_id ?? ""))
-    && uniDocs.length === doors.people / 2 && uniDocs.every((d) => d.prolific_pid === undefined && d.recruitment_source === "university");
-  gate("L5", doorsOk, `both doors at once (${doors.people / 2} + ${doors.people / 2}): university ${JSON.stringify(doors.byDoor.university)}, Prolific ${JSON.stringify(doors.byDoor.prolific)}; Prolific records under prolific_pid with no email (${proDocs.filter((d) => d.email === undefined).length} of ${proDocs.length}), every arrival linked`);
+  /* L5: every record is a Prolific person's, with no email; and an email cannot get in by any route. */
+  const proDocs = all.flatMap((w) => w.docs);
+  const big = all.find((w) => w.label === "big");
+  const recordsOk = proDocs.length === people
+    && proDocs.every((d) => d.email === undefined && d.recruitment_source === "prolific" && /^[a-f0-9]{24}$/.test(d.prolific_pid) && d.prolific_study_id === "loadteststudy0001" && /^[a-f0-9]{24}$/.test(d.prolific_session_id ?? ""));
+  const emailKey = "student@loadtest.invalid";
+  const refusals = [];
+  for (const [method, route, body] of [
+    ["POST", "/participants/lookup", { email: emailKey }], ["POST", "/participants/lookup", { prolificPid: emailKey }],
+    ["POST", "/participants", { email: emailKey, sessionId: randomUUID(), age: 30, gender: "Male", stage: "money" }],
+    ["POST", "/participants", { prolificPid: emailKey, sessionId: randomUUID(), age: 30, gender: "Male", stage: "money" }],
+    ["PATCH", `/participants/${encodeURIComponent(emailKey)}/stage`, { stage: "money" }], ["PATCH", `/participants/${encodeURIComponent(emailKey)}/complete`, {}],
+    ["PATCH", `/participants/${encodeURIComponent(emailKey)}/section`, { path: "blocks.x", data: {} }], ["POST", `/participants/${encodeURIComponent(emailKey)}/claim`, { age: 30 }],
+    ["POST", `/participants/${encodeURIComponent(emailKey)}/active`, {}], ["POST", `/participants/${encodeURIComponent(emailKey)}/prolific-code`, {}],
+  ]) {
+    const r = await fetch(BASE + route, { method, headers: { "content-type": "application/json", "x-vrds-browser": randomUUID() }, body: JSON.stringify(body) });
+    if (r.status !== 400) refusals.push(`${method} ${route} answered ${r.status}`);
+  }
+  const withEmail = await db.collection("participants").countDocuments({ email: { $exists: true }, participant_id: { $ne: "old-record-1" } });
+  const arrivalsWithEmail = await db.collection("condition_arrivals").countDocuments({ linked_email: { $exists: true } });
+  gate("L5", evenIn(big.byCondition, big.people) && big.linked === big.people && recordsOk && refusals.length === 0 && withEmail === 0 && arrivalsWithEmail === 0,
+    `${big.people} at once: ${JSON.stringify(big.byCondition)}; all ${proDocs.length} records under prolific_pid with no email and with Prolific's ids (${recordsOk}); an email was refused on all 10 routes (${refusals.length ? refusals.join(" | ") : "yes"}); records with an email ${withEmail}, arrivals naming an email ${arrivalsWithEmail}`);
   /* L6: the rule swap. */
   const swapOk = emailRule?.unique && JSON.stringify(emailRule.partialFilterExpression) === JSON.stringify({ email: { $type: "string" } })
     && pidRule?.unique && JSON.stringify(pidRule.partialFilterExpression) === JSON.stringify({ prolific_pid: { $type: "string" } })
@@ -234,32 +238,31 @@ try {
       const r = await fetch(BASE + route, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
       return { status: r.status, json: await r.json().catch(() => null), headers: r.headers };
     };
-    const uni = all[0].persons[0].key;
-    const pro = doors.persons.find((p) => p.door === "prolific").key;
+    const key = all[0].persons[0].key;
     const why = [];
-    for (const [label, body] of [["a university email", { email: uni }], ["a Prolific ID", { prolificPid: pro }]]) {
+    for (const [label, body] of [["a Prolific ID", { prolificPid: key }]]) {
       const look = await post("/participants/lookup", body);
       if (JSON.stringify(Object.keys(look.json ?? {})) !== JSON.stringify(["status"])) why.push(`the lookup of ${label} revealed ${Object.keys(look.json ?? {}).join(", ")}`);
     }
     const browser = { "x-vrds-browser": randomUUID() };
-    const wrongAge = await post(`/participants/${encodeURIComponent(uni)}/claim`, { age: 31 }, browser);
+    const wrongAge = await post(`/participants/${encodeURIComponent(key)}/claim`, { age: 31 }, browser);
     if (wrongAge.status !== 403 || wrongAge.json?.participant) why.push(`a wrong age answered ${wrongAge.status}`);
-    const rightAge = await post(`/participants/${encodeURIComponent(uni)}/claim`, { age: 30 }, browser);
+    const rightAge = await post(`/participants/${encodeURIComponent(key)}/claim`, { age: 30 }, browser);
     const handed = Object.keys(rightAge.json?.participant ?? {});
-    if (rightAge.status !== 200 || rightAge.json?.participant?.email !== uni || !("files" in (rightAge.json ?? {}))) why.push(`the right age answered ${rightAge.status}`);
+    if (rightAge.status !== 200 || rightAge.json?.participant?.prolific_pid !== key || "email" in (rightAge.json?.participant ?? {}) || !("files" in (rightAge.json ?? {}))) why.push(`the right age answered ${rightAge.status}`);
     for (const leak of ["blocks", "analysis", "headline", "major_info_and_scores", "resume_state", "active_browser"]) if (handed.includes(leak)) why.push(`signing in handed back ${leak}`);
-    const created = await post("/participants", { email: "privacy-check@loadtest.invalid", sessionId: randomUUID(), age: 40, gender: "Male", stage: "money" }, { "x-vrds-browser": randomUUID() });
+    const created = await post("/participants", { prolificPid: randomBytes(12).toString("hex"), sessionId: randomUUID(), age: 40, gender: "Male", stage: "money" }, { "x-vrds-browser": randomUUID() });
     if (JSON.stringify(created.json) !== JSON.stringify({ ok: true })) why.push(`the create/update route answered ${JSON.stringify(created.json).slice(0, 80)}`);
-    const noId = await fetch(`${BASE}/participants/${encodeURIComponent(uni)}/section`, {
+    const noId = await fetch(`${BASE}/participants/${encodeURIComponent(key)}/section`, {
       method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ path: "blocks.part_0", data: { overwritten: true } }),
     });
     if (noId.status !== 400) why.push(`a write without the browser's id answered ${noId.status}`);
     const fromElsewhere = await fetch(`${BASE}/participants/lookup`, {
-      method: "POST", headers: { "content-type": "application/json", origin: "https://somewhere-else.example" }, body: JSON.stringify({ email: uni }),
+      method: "POST", headers: { "content-type": "application/json", origin: "https://somewhere-else.example" }, body: JSON.stringify({ prolificPid: key }),
     });
     if (fromElsewhere.headers.get("access-control-allow-origin")) why.push("another website is allowed to read the answer");
     gate("L7", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
-      : "privacy on the real server: a lookup reveals only the status (both doors), a wrong age is refused, the right age brings the details and run without any analysis, the create/update route answers only \"ok\", a write without the browser's id is refused, no other website may read answers");
+      : "privacy on the real server: a lookup reveals only the status, a wrong age is refused, the right age brings the details and run without any analysis, the create/update route answers only \"ok\", a write without the browser's id is refused, no other website may read answers");
   }
   /* L8: the Prolific completion code (Step 4). */
   {
@@ -290,8 +293,8 @@ try {
     if (other.status !== 409 || JSON.stringify(other.json).includes(TEST_CODE)) why.push(`another browser got ${other.status}`);
     const noId = await send("POST", `/participants/${pid}/prolific-code`, {}, null);
     if (noId.status !== 400) why.push(`no browser id got ${noId.status}`);
-    const uni = await send("POST", `/participants/${encodeURIComponent(all[0].persons[1].key)}/prolific-code`, {}, mine);
-    if (uni.status !== 404 || JSON.stringify(uni.json).includes(TEST_CODE)) why.push(`a university key got ${uni.status}`);
+    const notAnId = await send("POST", `/participants/${encodeURIComponent("student@loadtest.invalid")}/prolific-code`, {}, mine);
+    if (notAnId.status !== 400 || JSON.stringify(notAnId.json).includes(TEST_CODE)) why.push(`an email got ${notAnId.status}`);
     await send("POST", `/participants/${pid}/prolific-code`, {}, mine);
     const look = await send("POST", "/participants/lookup", { prolificPid: pid }, null);
     const claim = await send("POST", `/participants/${pid}/claim`, { age: 27 }, theirs);
@@ -304,7 +307,7 @@ try {
     gate("L8", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
       : "the Prolific completion code: not before the completion is saved, nor for a finished record without the study's answers (or with five scenarios of six); then the code letter for letter and Prolific's address, to the browser holding the record only (another browser 409, no id 400), never for a university key, never in a lookup or sign-in answer; the first time, the last time and the count on the record, never the code; the health page says a code is set");
   }
-  gate("L6", !!swapOk, `the old "one email = one person" rule over every record was replaced at startup by the two-door rules; the old record kept; ${proDocs.length} Prolific records without an email accepted`);
+  gate("L6", !!swapOk, `the old "one email = one person" rule over every record was replaced at startup by the rules that cover only the records that have the field; the old record kept; ${proDocs.length} Prolific records without an email accepted`);
   const slow = all.reduce((n, w) => n + (w.lat.condition ?? []).filter((ms) => ms >= CONDITION_LIMIT_MS).length, 0);
   const slowest = Math.max(...all.flatMap((w) => w.lat.condition ?? [0]));
   gate("L4", slow === 0, `nobody waited 3 seconds for their condition (slowest ${(slowest / 1000).toFixed(2)} s; ${slow} of ${people} waited 3 s or more)`);

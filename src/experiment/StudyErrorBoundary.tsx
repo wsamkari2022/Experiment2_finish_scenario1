@@ -137,8 +137,8 @@ export class StudyErrorBoundary extends Component<Props, State> {
           </Button>
 
           <Text fontSize="xs" color="fg.subtle" textAlign="center" lineHeight="tall">
-            If this keeps happening, please contact the researcher at wsamkari2022@my.fit.edu and
-            mention what you were doing when it appeared.
+            If this keeps happening, please send the researcher a message through Prolific, or email
+            wsamkari2022@my.fit.edu, and mention what you were doing when it appeared.
           </Text>
 
           {/* Small print for the researcher. A participant has no reason to read it, and it is

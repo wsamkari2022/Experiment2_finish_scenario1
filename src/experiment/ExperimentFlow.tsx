@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { StartScreen } from "./StartScreen";
 import { ConsentPage } from "./ConsentPage";
 import { DemographicPage } from "./DemographicPage";
 import { STATUS_COMPLETED, STATUS_NOT_COMPLETED, type DirectoryEntry } from "./participantDirectory";
@@ -28,8 +27,8 @@ import { SessionLockScreen } from "./SessionLockScreen";
 import { LandingPage } from "./LandingPage";
 import { ProlificStartScreen } from "./ProlificStartScreen";
 import {
-  browserParticipantKey, doorFromAddress, isProlificKey, keyDoor, keyOfDemographics, makeRoomForAnotherProlificId, prolificParamsFrom,
-  readProlificFile, type RecruitmentSource,
+  browserParticipantKey, isProlificKey, keyOfDemographics, makeRoomForAnotherProlificId, prolificParamsFrom, readProlificFile,
+  setAsideRunWithoutProlificId,
 } from "./recruitment";
 import {
   CONDITION_KEY, clearConditionFromAddress, conditionByNumber, conditionFields, makeConditionFile, readConditionFile,
@@ -79,13 +78,13 @@ type Stage =
   /* The landing page (since 1 October 2026; LandingPage.tsx): a new browser gets one of the four conditions, the one
      with the fewest people, before anything else. Never saved as a stage: a refresh there simply asks again. */
   | "landing"
-  /* Asks the email, and decides whether this is a new participant or a returning one. Seen only
-     when the browser does not already recognise them. */
+  /* The first page: takes the Prolific ID (from the link, or pasted) and decides whether this is a new participant or a
+     returning one. Seen only when the browser does not already recognise them. */
   | "start"
   /* Informed consent. A participant who has already agreed never returns here: the restored
      stage, or their directory entry, carries them past it. See getRestoredStage. */
   | "consent"
-  /* Age, gender, country (since 30 September 2026) and the email that lets a participant return. Follows consent, once. */
+  /* Age, gender, country and first language. Follows consent, once. */
   | "demographics"
   | "money"
   | "transition_money_trolley"
@@ -150,7 +149,7 @@ const STORAGE_KEY_BLOCK4 = "block4_reflection_results";
  * later; until then this is the only copy, so nothing in the app may delete it.
  */
 const STORAGE_KEY_CONSENT = "vrds_consent";
-/** localStorage key for the demographic answers, including the return email. */
+/** localStorage key for the demographic answers. */
 const STORAGE_KEY_DEMOGRAPHICS = "vrds_demographics";
 /**
  * localStorage key for the completion status.
@@ -161,8 +160,8 @@ const STORAGE_KEY_DEMOGRAPHICS = "vrds_demographics";
  */
 const STORAGE_KEY_STATUS = "vrds_status";
 /**
- * The email of the participant currently being enrolled, held between the start screen and the
- * demographic form so the address is asked for once and confirmed rather than typed twice.
+ * The Prolific ID of the participant currently being enrolled, held between the first page and the demographic form.
+ * ("email" is the old name of this file, kept on purpose: recruitment.ts.)
  */
 const STORAGE_KEY_PENDING_EMAIL = "vrds_pending_email";
 
@@ -196,6 +195,15 @@ function stageAfterLanding(): Stage {
 }
 
 /**
+ * IS A PROLIFIC ID KNOWN YET? (since 10 November 2026). The landing page gives a condition, and the server counts it for
+ * balance, so it opens only for somebody with an ID: from the link, or already in this browser. Anybody else sees the
+ * paste page first, and a visitor who opens the address and leaves is never counted.
+ */
+function prolificIdKnown(): boolean {
+  return !!prolificParamsFrom(window.location.search).pid || isProlificKey(browserParticipantKey());
+}
+
+/**
  * Returns the stage to restore on mount. Rolls back to "money" if localStorage
  * held a transition stage (spinners should never be the restored landing point).
  */
@@ -211,18 +219,18 @@ function getRestoredStage(): Stage {
        *   consent only         -> they agreed and stopped mid-enrolment. Back to the FORM: asking
        *                           for consent a second time would record an agreement they have
        *                           already given.
-       *   nothing              -> a browser that does not know them. Ask for the email, which is
-       *                           the only thing that can tell a new participant from a returning
+       *   nothing              -> a browser that does not know them. The first page takes their Prolific
+       *                           ID, the only thing that can tell a new participant from a returning
        *                           one on a machine with no history.
        */
       if (localStorage.getItem(STORAGE_KEY_DEMOGRAPHICS)) return "money";
       /* No condition yet: the landing page first (since 1 October 2026), which then leads on (stageAfterLanding). */
-      if (!readConditionFile()) return "landing";
+      if (!readConditionFile()) return prolificIdKnown() ? "landing" : "start";
       if (localStorage.getItem(STORAGE_KEY_CONSENT)) return "demographics";
       return "start";
     }
     /* Somebody still on the way in (start, consent, the form) with no condition: the landing page first. */
-    if (ENTRY_STAGES.includes(saved) && !readConditionFile()) return "landing";
+    if (ENTRY_STAGES.includes(saved) && !readConditionFile()) return prolificIdKnown() ? "landing" : "start";
     /* A pause is never restored as itself: it leads to the part after it (flowStages.ts). This used to send the
        participant back to Block 1; since 30 September 2026 a pause is saved as that next part anyway. */
     if (isTransition(saved)) return stageToSave(saved) as Stage;
@@ -252,20 +260,13 @@ export function ExperimentFlow() {
    * storage, so the newcomer never sees or continues it and gets their own session id. Their unsent saves stay queued,
    * each naming its owner; the browser's list of people and the machine's id stay. Runs once, on the first render.
    */
-  useState(() => makeRoomForAnotherProlificId(window.location.search));
-  /*
-   * A CONDITION FROM THE OTHER DOOR THAT NOBODY OWNS YET (found in the live check, 6 October 2026). A browser that opened
-   * the university address got a condition counted among the university's people; if, before anybody was known, it
-   * then arrives through Prolific's link, that condition is not theirs to keep: it goes, and the landing page gives one
-   * counted among the Prolific people. (Its arrival stops counting after 30 minutes, as any unused arrival does.)
-   * BOTH WAYS since the audit of 6 October 2026: an unowned Prolific condition left on a shared computer is not the next
-   * student's either (they would have met a "paste your Prolific ID" box). The address's own ?condition= goes too, or
-   * the landing page would take it for a tester's choice.
-   */
   useState(() => {
+    /* A test run from before the study was Prolific only holds an email, which the server refuses: it starts fresh. */
+    setAsideRunWithoutProlificId();
+    makeRoomForAnotherProlificId(window.location.search);
+    /* A condition given before the study was Prolific only (a test browser) was counted among the students: it goes. */
     const file = readConditionFile();
-    if (!browserParticipantKey() && file && !file.owner
-        && (file.recruitmentSource ?? "university") !== doorFromAddress(window.location.pathname, window.location.search)) {
+    if (file && file.recruitmentSource !== "prolific") {
       try {
         localStorage.removeItem(CONDITION_KEY);
       } catch { /* ignore */ }
@@ -298,9 +299,9 @@ export function ExperimentFlow() {
   }, [stage]);
 
   /**
-   * The participant's email once it is known — from the start screen, the demographic form, or a
-   * previous visit to this browser. It is the key the participant directory is written under, so
-   * without it the run cannot be attached to a person and cannot be resumed elsewhere.
+   * The participant's Prolific ID once it is known — from the first page or a previous visit to this browser ("email" is
+   * the old name, kept on purpose: recruitment.ts). It is the key the participant directory is written under, so without
+   * it the run cannot be attached to a person and cannot be resumed elsewhere.
    */
   const [pendingEmail, setPendingEmail] = useState<string | null>(() => {
     try {
@@ -317,17 +318,6 @@ export function ExperimentFlow() {
   /** The feedback was sent on this page (since 7 October 2026): the progress bar then says "Done". A reload reads the
       saved status instead (see the feedback stage). */
   const [feedbackSentHere, setFeedbackSentHere] = useState(false);
-
-  /*
-   * WHICH DOOR (since 6 October 2026; recruitment.ts): the person's own key decides once it is known. Before that, an
-   * address that names the Prolific door (/prolific, or a Prolific ID in the link) wins; then the door the landing page
-   * counted them in (the condition file); otherwise the university's.
-   */
-  const door: RecruitmentSource = pendingEmail
-    ? keyDoor(pendingEmail)
-    : doorFromAddress(window.location.pathname, window.location.search) === "prolific"
-      ? "prolific"
-      : readConditionFile()?.recruitmentSource ?? "university";
 
   /**
    * WAS THIS PARTICIPANT ALREADY KNOWN WHEN THE PAGE LOADED?
@@ -384,8 +374,7 @@ export function ExperimentFlow() {
 
     const login = noteLogin(
       consumeLoginKind()
-        ?? (knownAtPageLoad.current ? "continued_in_this_browser"
-          : isProlificKey(pendingEmail) ? "arrived_with_their_prolific_id" : "typed_their_email"),
+        ?? (knownAtPageLoad.current ? "continued_in_this_browser" : "arrived_with_their_prolific_id"),
       stage,
     );
     /* Opening the study on a different machine is a new visit by the study's own rule, and the
@@ -664,29 +653,25 @@ export function ExperimentFlow() {
    * Consent comes before every other screen and before the progress rail: the rail describes the
    * study, and at this point the participant has not agreed to take part in it yet.
    *
-   * The demographic page (which collects the email) follows this one, and a start screen that
-   * asks for the email will eventually sit in FRONT of consent — that is what lets a returning
-   * participant be recognised before the consent page is reached, so they never see it twice.
-   * Until then, the consent record itself is what keeps them past it.
+   * The first page sits in FRONT of consent, which is what lets a returning participant be
+   * recognised before the consent page is reached, so they never see it twice.
    */
   /*
-   * The door. It asks the email and then decides: a new address goes on to consent, a known and
+   * The first page. It takes the Prolific ID and then decides: a new ID goes on to consent, a known and
    * unfinished one resumes after an identity check, and a finished one is stopped.
    *
-   * The address is parked in storage rather than only in React state, because the consent page
-   * sits between here and the form: a refresh in that gap would otherwise lose it and ask for it
-   * a second time.
+   * The ID is parked in storage rather than only in React state, because the consent page
+   * sits between here and the form: a refresh in that gap would otherwise lose it.
    */
   /*
    * LOCKED: THE STUDY IS OPEN SOMEWHERE NEWER (sessionGuard.ts). Nothing else renders, so nothing else can
-   * run or write. "Continue here instead" goes back through the email-and-age check (another browser or
+   * run or write. "Continue here instead" goes back through the first page's age check (another browser or
    * device), or claims the study for this tab and reloads (another tab of this browser).
    */
   if (lock) {
     return (
       <SessionLockScreen
         reason={lock}
-        prolificDoor={door === "prolific"}
         onContinueHere={() => {
           if (lock === "tab") {
             claimTab();
@@ -701,16 +686,15 @@ export function ExperimentFlow() {
   }
 
   if (stage === "landing") {
-    return <LandingPage onReady={handleLandingReady} door={door} />;
+    return <LandingPage onReady={handleLandingReady} />;
   }
 
   if (stage === "start") {
-    /* The two doors' first pages share these two steps (since 6 October 2026): the key is an email or a Prolific ID. */
     const onNewParticipant = (email: string) => {
       try {
         localStorage.setItem(STORAGE_KEY_PENDING_EMAIL, email);
       } catch {
-        /* Storage unavailable; the form will simply ask for the address again. */
+        /* Storage unavailable; the run goes on in this tab. */
       }
       setPendingEmail(email);
       /*
@@ -746,9 +730,7 @@ export function ExperimentFlow() {
       const saved = entry.condition ? conditionByNumber(entry.condition.number) : null;
       let condition: ConditionFile | null = null;
       if (entry.condition && saved) {
-        /* With the person's own door (the audit of 6 October 2026: without it, a Prolific person who moved device was
-           copied into major_info_and_scores.condition as "university"). */
-        condition = makeConditionFile(saved, entry.condition.source, null, owner, entry.condition.assignedAt, keyDoor(owner));
+        condition = makeConditionFile(saved, entry.condition.source, null, owner, entry.condition.assignedAt);
         if (provisional?.arrivalId && provisional.owner !== owner) releaseConditionArrival(provisional.arrivalId);
       } else if (provisional && (!provisional.owner || provisional.owner === owner)) {
         condition = { ...provisional, owner };
@@ -765,7 +747,8 @@ export function ExperimentFlow() {
         localStorage.setItem(
           STORAGE_KEY_DEMOGRAPHICS,
           JSON.stringify({
-            ...(isProlificKey(entry.email) ? { prolificPid: entry.email, recruitmentSource: "prolific" } : { email: entry.email }),
+            prolificPid: entry.email,
+            recruitmentSource: "prolific",
             age: entry.age, gender: entry.gender,
             ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
             ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
@@ -823,7 +806,7 @@ export function ExperimentFlow() {
           ...(entry.country !== undefined ? { country: entry.country, countryCode: entry.countryCode ?? null } : {}),
           ...(typeof entry.englishFirstLanguage === "boolean" ? { englishFirstLanguage: entry.englishFirstLanguage } : {}),
           condition: savedFrom(condition),
-          /* The Prolific door: this link's study and submission ids, else the record's (since 6 October 2026). */
+          /* This link's study and submission ids, else the record's. */
           prolificStudyId: readProlificFile(entry.email)?.studyId ?? entry.prolificStudyId ?? null,
           prolificSessionId: readProlificFile(entry.email)?.sessionId ?? entry.prolificSessionId ?? null,
           stage: entry.stage,
@@ -864,29 +847,32 @@ export function ExperimentFlow() {
       const file = readConditionFile();
       if (file?.arrivalId && !file.owner) releaseConditionArrival(file.arrivalId);
     };
-    /* The Prolific door's first page (the researcher's "2-A"): the ID from the link, Start, or - continuing on another
-       device - the age, checked by the server ("1-B", the audit of 6 October 2026). */
-    if (door === "prolific") {
-      /* The ID from the link; failing that, the Prolific ID this browser already knows (the audit of 6 October 2026:
-         a returning person whose address had lost it was asked to paste their own ID). */
-      const linkParams = prolificParamsFrom(window.location.search);
-      const knownId = isProlificKey(pendingEmail) ? pendingEmail : null;
-      return (
-        <ProlificStartScreen
-          params={{ ...linkParams, pid: linkParams.pid ?? knownId }}
-          onNewParticipant={onNewParticipant}
-          onResume={onResume}
-          onFinishedSeen={onFinishedSeen}
-        />
-      );
-    }
-    return <StartScreen onNewParticipant={onNewParticipant} onResume={onResume} onFinishedSeen={onFinishedSeen} />;
+    /* The Prolific ID came by the paste box and no condition exists yet: the landing page gives one now (since 10 November
+       2026, so nobody without an ID is ever counted), and then leads back to this page, which finds the ID in the address. */
+    const onIdPasted = () => {
+      if (readConditionFile()) return;
+      afterLanding.current = "start";
+      setStage("landing");
+    };
+    /* The first page (the researcher's "2-A"): the ID from the link or pasted, Start, or - continuing on another device -
+       the age, checked by the server ("1-B", the audit of 6 October 2026). The ID from the link; failing that, the one this
+       browser already knows (the audit of 6 October 2026: a returning person whose address had lost it was asked to paste it). */
+    const linkParams = prolificParamsFrom(window.location.search);
+    const knownId = isProlificKey(pendingEmail) ? pendingEmail : null;
+    return (
+      <ProlificStartScreen
+        params={{ ...linkParams, pid: linkParams.pid ?? knownId }}
+        onNewParticipant={onNewParticipant}
+        onResume={onResume}
+        onFinishedSeen={onFinishedSeen}
+        onIdPasted={onIdPasted}
+      />
+    );
   }
 
   if (stage === "consent") {
     return (
       <ConsentPage
-        door={door}
         onAgree={(record) => {
           try {
             localStorage.setItem(STORAGE_KEY_CONSENT, JSON.stringify(record));
@@ -905,32 +891,27 @@ export function ExperimentFlow() {
    * the details arrive, where the status is created as NOT COMPLETED, and where the entry in the
    * participant directory is written — the entry the start screen will find next time.
    *
-   * The address comes down from the start screen and is shown locked. It is asked for there, not
-   * here, because the start screen has to know it before consent in order to skip consent for
+   * The Prolific ID comes down from the first page, which has to know it before consent in order to skip consent for
    * somebody who has already agreed.
    */
   if (stage === "demographics") {
     return (
       <DemographicPage
-        initialEmail={door === "prolific" ? "" : pendingEmail ?? ""}
-        emailLocked={!!pendingEmail}
-        askEmail={door !== "prolific"}
         onSubmit={(submitted) => {
           /*
-           * THE KEY (since 6 October 2026): the email confirmed here, or in the Prolific door (no email question) the
-           * Prolific ID the first page brought. Its record names it truthfully (prolificPid, never email) with the door and
-           * Prolific's two ids. Without a key there is nobody to save: back to the first page.
+           * THE KEY: the Prolific ID the first page brought. The record names it truthfully (prolificPid) with Prolific's
+           * two ids. Without a key there is nobody to save: back to the first page.
            */
-          const key = submitted.email ?? pendingEmail;
-          if (!key) {
+          const key = pendingEmail;
+          if (!key || !isProlificKey(key)) {
             setStage("start");
             return;
           }
-          const prolific = isProlificKey(key) ? readProlificFile(key) : null;
-          const record = isProlificKey(key)
-            ? { ...submitted, prolificPid: key, recruitmentSource: "prolific" as const,
-                prolificStudyId: prolific?.studyId ?? null, prolificSessionId: prolific?.sessionId ?? null }
-            : submitted;
+          const prolific = readProlificFile(key);
+          const record = {
+            ...submitted, prolificPid: key, recruitmentSource: "prolific" as const,
+            prolificStudyId: prolific?.studyId ?? null, prolificSessionId: prolific?.sessionId ?? null,
+          };
           /*
            * "CONDITION NUMBER" AND "CONDITION TYPE" BESIDE THE ANSWERS (the researcher's request, 1 October 2026). Saved,
            * never asked: the participant does not see their condition. The browser's condition becomes theirs here if
@@ -1112,7 +1093,7 @@ export function ExperimentFlow() {
           results={block5Results}
           sessionId={participantId}
           onBack={handleBackToSummary}
-          /* The Prolific door's completion code (since 7 October 2026, Step 4): the key decides the door. */
+          /* The completion code (since 7 October 2026, Step 4). */
           prolificId={pendingEmail && isProlificKey(pendingEmail) ? pendingEmail : null}
           alreadyCompleted={alreadyCompleted}
           /*
