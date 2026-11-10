@@ -143,19 +143,33 @@ function Highlight({
 
 /* ------------------------------------------------------------------------------------- PROLIFIC'S TERMS */
 
-/** One sitting, within Prolific's time limit (it replaces "You Can Stop and Come Back"). */
+/*
+ * ONLY TWO BOXES ARE COLOURED (the researcher, 10 November 2026): "One Sitting" in blue and the payment box with "What
+ * completes it:" in orange. Everything else, "How Prolific pays" included, looks like the rest of the page.
+ * validate:attention T10 holds it.
+ */
+
+/** One sitting, within Prolific's time limit. */
 function ProlificSitting() {
   return (
-    <Highlight icon={<LuClock />} title="One Sitting, Within Prolific's Time Limit">
-      <Text>
+    <Box data-prolific-sitting borderWidth="2px" borderColor="blue.solid" bg="blue.subtle" rounded="xl" p={{ base: "4", md: "5" }}>
+      <HStack gap="2.5" mb="3" align="center">
+        <Icon boxSize="5" color="blue.fg">
+          <LuClock />
+        </Icon>
+        <Heading size="sm" color="fg" letterSpacing="tight">
+          One Sitting, Within Prolific&apos;s Time Limit
+        </Heading>
+      </HStack>
+      <Text fontSize="sm" color="fg.muted" lineHeight="tall">
         Please complete the study in one sitting, within the time limit Prolific shows you. If the page closes by
         accident, open the study again from Prolific: you will continue from where you stopped.
       </Text>
-    </Highlight>
+    </Box>
   );
 }
 
-/** The payment through Prolific, what completes the study, and how Prolific pays. */
+/** The words of "How Prolific pays" and its three help pages. */
 const HOW_PROLIFIC_PAYS = [
   "Everyone who completes the study receives the same reward, the amount shown in the study on Prolific, however long they take.",
   "If most people take much longer than the study's estimate, the reward is raised for everyone, as Prolific requires.",
@@ -171,6 +185,7 @@ const MORE_FROM_PROLIFIC = [
   { title: "Why does my submission show as timed-out?", url: "https://participant-help.prolific.com/en/articles/445044-why-does-my-submission-show-as-timed-out" },
 ] as const;
 
+/** The payment through Prolific, and what completes the study. */
 function ProlificPayment() {
   return (
     <Box data-prolific-payment borderWidth="2px" borderColor="orange.solid" bg="orange.subtle" rounded="xl" p={{ base: "4", md: "5" }}>
@@ -212,20 +227,25 @@ function ProlificPayment() {
           rejected.
         </Rule>
       </VStack>
-      <Text mt="4" mb="2" fontSize="xs" fontWeight="bold" color="orange.fg" textTransform="uppercase" letterSpacing="wider">
-        How Prolific pays (Prolific&apos;s own rules):
-      </Text>
-      <Box as="ul" data-how-prolific-pays listStyleType="disc" pl="5" fontSize="sm" color="fg.muted" lineHeight="tall">
+    </Box>
+  );
+}
+
+/** How Prolific pays, and its three help pages: plain, like the rest of the page. */
+function HowProlificPays() {
+  return (
+    <Section title="How Prolific pays (Prolific's own rules):">
+      <Box as="ul" data-how-prolific-pays listStyleType="disc" pl="5">
         {HOW_PROLIFIC_PAYS.map((line) => (
           <Box as="li" key={line} mb="1.5">
             {line}
           </Box>
         ))}
       </Box>
-      <Text mt="3" fontSize="sm" color="fg" fontWeight="semibold">
+      <Text color="fg" fontWeight="semibold">
         More from Prolific:
       </Text>
-      <VStack data-more-from-prolific align="stretch" gap="1.5" mt="1" fontSize="sm" color="fg.muted" lineHeight="tall">
+      <VStack data-more-from-prolific align="stretch" gap="1.5">
         {MORE_FROM_PROLIFIC.map((item) => (
           <Text key={item.url}>
             {item.title}{" "}
@@ -235,7 +255,7 @@ function ProlificPayment() {
           </Text>
         ))}
       </VStack>
-    </Box>
+    </Section>
   );
 }
 
@@ -486,6 +506,8 @@ export function ConsentPage({ onAgree }: { onAgree: (record: ConsentRecord) => v
             <ProlificSitting />
 
             <ProlificPayment />
+
+            <HowProlificPays />
 
             <ProlificPrivacy />
 

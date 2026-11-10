@@ -46,7 +46,7 @@ you?" or `credit:list` is history**; nobody ever took part under it. No score ch
   counted. The balance counts only rows that say `recruitment_source: "prolific"`, so a test record from before cannot move it.
 - **A browser holding an email run from an old test starts fresh** (`setAsideRunWithoutProlificId`).
 - **The consent page is the form sent to the IRB, word for word** (`docs/PROLIFIC_CONSENT_FORM_TEXT.txt`; `validate:attention` T10 compares both
-  ways). If the IRB changes a word, change both and move `PROLIFIC_CONSENT_VERSION`. Participants see the new payment part and IRB contact.
+  ways). If the IRB changes a word, change both and move `PROLIFIC_CONSENT_VERSION`. Participants see the new payment part and IRB contact. Only two boxes on it are coloured (the researcher, 10 November 2026): "One Sitting" blue and the payment box with "What completes it:" orange; "How Prolific pays" and everything else look like the rest of the page (T10).
 - **Four attention checks for everybody** (`ATTENTION_CHECK_IDS`). `quality.course_credit_earned`, `analysis.attention_checks.door` and
   `linked_email` are gone. `SHAPE_VERSION` and `ATTENTION_VERSION` "2026-11-10-prolific-only".
 - **The pay check keeps the consent form's promises:** "Pay: timed out", a bold warning under $8 an hour, the reward $7 by default. Waseem runs

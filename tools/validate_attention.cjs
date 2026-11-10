@@ -520,14 +520,27 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   if (/compensation_rules_agreed|course credit|gift card|Amazon|\$5\b|active minutes|TakeYourTime|your email address/i.test(consent)) why.push("a student word is left on the page");
   if (/40 to 55/.test(consent)) why.push("the old \"40 to 55 minutes\" is back");
   if ((consent.match(/<Rule title="Reach the end\.">/g) ?? []).length !== 1) why.push("\"Reach the end.\" is not there exactly once");
-  for (const name of ["ProlificSitting", "ProlificPayment", "ProlificPrivacy"]) if ((consent.match(new RegExp(`<${name} />`, "g")) ?? []).length !== 1) why.push(`${name} is not drawn exactly once`);
+  for (const name of ["ProlificSitting", "ProlificPayment", "HowProlificPays", "ProlificPrivacy"]) if ((consent.match(new RegExp(`<${name} />`, "g")) ?? []).length !== 1) why.push(`${name} is not drawn exactly once`);
+  /* Only two boxes are coloured (the researcher, 10 November 2026): "One Sitting" blue, the payment box with "What completes
+     it:" orange. "How Prolific pays" and its links look like the rest of the page, and the form's order is kept. */
+  {
+    const fn = (name) => { const i = consent.indexOf(`function ${name}(`); return i < 0 ? "" : consent.slice(i, consent.indexOf("\nfunction ", i + 10)); };
+    const sitting = fn("ProlificSitting"), pay = fn("ProlificPayment"), how = fn("HowProlificPays");
+    if (!/borderColor="blue\.solid" bg="blue\.subtle"/.test(sitting)) why.push("\"One Sitting\" is not the blue box");
+    if (!/borderColor="orange\.solid" bg="orange\.subtle"/.test(pay) || !pay.includes("What completes it:")) why.push("\"What completes it:\" is not in the orange box");
+    if (/How Prolific pays|More from Prolific|HOW_PROLIFIC_PAYS|MORE_FROM_PROLIFIC/.test(pay)) why.push("\"How Prolific pays\" is still inside the orange box");
+    if (!/<Section title="How Prolific pays \(Prolific's own rules\):">/.test(how) || /orange|blue\.|borderColor|bg="/.test(how)) why.push("\"How Prolific pays\" does not look like the rest of the page");
+    if ((consent.match(/borderColor="(?:[a-z]+)\.solid"/g) ?? []).filter((m) => !m.includes("green")).length !== 2) why.push("more or fewer than two coloured boxes (the agreement's green border aside)");
+    const at = (t) => consent.indexOf(t);
+    if (!(at("<ProlificSitting />") < at("<ProlificPayment />") && at("<ProlificPayment />") < at("<HowProlificPays />") && at("<HowProlificPays />") < at("<ProlificPrivacy />"))) why.push("the sections are not in the form's order");
+  }
   if ((consent.match(/<ProlificAgreement onAgree=\{onAgree\} \/>/g) ?? []).length !== 1) why.push("the agreement is not drawn exactly once");
   /* The three help links open in a new tab, each with its address shown; a link would otherwise lose the study's page. */
   if (!/<Link href=\{item\.url\} target="_blank" rel="noopener noreferrer"/.test(consent) || (consent.match(/url: "https:\/\/participant-help\.prolific\.com\/en\/articles\/4450\d\d-[a-z-]+"/g) ?? []).length !== 3) why.push("the three Prolific help links are not there, or do not open in a new tab");
   const flow = bare(src("ExperimentFlow.tsx"));
   if (!/<ConsentPage\s+onAgree=/.test(flow) || /door=\{door\}/.test(flow)) why.push("the flow still tells a page its door");
   gate("T10", why.length === 0, why.slice(0, 5).join(" | ") ||
-    `the consent page against the form sent to the IRB, both ways: all ${formLines.length} lines of the form are on the page, and none of the ${shown.length} pieces of text on the page is missing from the form (but the hint under the button and "Go back to the information"); the version stamp, one box, the three links opening in a new tab, no student word`);
+    `the consent page against the form sent to the IRB, both ways: all ${formLines.length} lines of the form are on the page, and none of the ${shown.length} pieces of text on the page is missing from the form (but the hint under the button and "Go back to the information"); the version stamp, one box, the three links opening in a new tab, no student word; only "One Sitting" (blue) and "What completes it:" (orange) are coloured`);
 }
 
 /* ------------------------------------------------------------------ P1 the deleted pages' data */
