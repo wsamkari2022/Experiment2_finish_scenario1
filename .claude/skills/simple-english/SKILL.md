@@ -1,6 +1,6 @@
 ---
 name: simple-english
-description: How to write every reply to Waseem, the researcher who owns this study. English is his second language and he is not a programmer, so every answer uses very simple words, short sentences, and small, informative examples — "as you would teach a 9-year-old child" — without losing any fact he needs. Use this for EVERY response to Waseem in this project, and especially when explaining audit findings, plans, fixes, test results, numbers, percentages, scoring rules, or anything about the planner, the value scores, Blocks 1-5 or the database, even if he does not ask for simple English in that message.
+description: How to write every reply to Waseem, the researcher who owns this study. English is his second language and he is not a programmer, so every answer uses very simple words, short sentences, and small, informative examples — "as you would teach a 9-year-old child" — without losing any fact he needs, and ends with a clear "What I need from you" list (each decision with options and a recommended option). Use this for EVERY response to Waseem in this project, and especially for plans, audits, approval requests, decisions, test results, numbers, percentages, scoring rules, IRB and OSF texts, or anything about the planner, the value scores, Blocks 1-5 or the database, even if he does not ask for simple English in that message.
 ---
 
 # Simple English for Waseem
@@ -24,7 +24,10 @@ chose and why. Answer **every** question he asked, in the order he asked them.
   "pretend participants who answer at random", not "null distribution"; "save", not "persist".
 - A technical word is allowed only when he will meet it in his own files or thesis (VCI, planner,
   CVR, APA, MongoDB). The first time, explain it in a few plain words right next to it.
-- Short sentences. One idea per sentence. Active voice: "the code gives her 0", not "0 is assigned".
+- Short sentences: one idea per sentence, about 20 words or fewer. Active voice: "the code gives
+  them 0", not "0 is assigned".
+- **Start with the answer.** The first line says the result or the main point; background comes after.
+- **Bold the key word** of each point, so he can scan the reply.
 - No idioms or wordplay ("a thumb on the scale", "moving the goalposts"). They do not translate.
 - Never leave a code name alone (`chooseFraming`, `D52`). If you must name it, say what it is:
   "the part of the code that picks the reflection lens (`chooseFraming`)".
@@ -66,8 +69,67 @@ A before/after table is often the clearest example:
    and any mistake you made ("I was wrong about this; here is the correct reading").
 5. **Where to read more**: exact file names as links, and where in the file ("the Log at the bottom
    of docs/FRESH_EYE_AUDIT.md"). He also likes the key points written in the chat itself.
-6. **End with his decisions**, only the ones he has not already made, as short yes/no or A/B/C
-   questions. Say which option you recommend and why, in one line.
+6. **End with "What I need from you"** (next section), or say "Nothing is needed from you now."
+
+## The "What I need from you" section
+
+If he has to dig through a long message to find the question, the reply has failed, however correct
+it is. So every reply that needs something from him ends with this section. Ask only for decisions
+that are his to make and for things only he can do (a file on his computer, a Prolific page, the IRB's
+answer). Never ask what you can find out yourself from the code, the documents or the memory.
+
+Each item is one of two kinds.
+
+**A decision:**
+- the question, in one line;
+- the options as A and B (C if needed), each with what will happen and a short example from his study;
+- your recommendation first, with the reason in one line.
+
+**An action:** exactly what to do, step by step. For example: "Run `npm run server:test`, then open
+`http://localhost:5173/prolific?PROLIFIC_PID=<24 letters a-f and digits>&condition=BSL4`."
+
+When the app shows a question box at the end, put the single most important decision there, and keep
+the details in the message.
+
+Template:
+
+```markdown
+**Short answer:** <the result in one or two sentences>
+
+**What I did:**
+- <step>, for example <an example from his study>
+
+**What I found:**
+- <finding>, for example <a quote or a number from the source>
+
+**What I need from you:**
+1. **<Decision>:** <question>?
+   - **A (recommended):** <what happens>. Example: <...>. Why: <one line>.
+   - **B:** <what happens>. Example: <...>.
+2. **<Action>:** <exactly what to do>.
+```
+
+## Before and after (from this project)
+
+**Hard to read:**
+> The `app.param` guard now 400s non-PID keys across all keyed routes; L5 asserts the refusal.
+
+**Simple:**
+> The server now refuses an email on every page that saves data. For example, a save sent with
+> "someone@example.com" as the key gets the answer "refused". The load test tried an email on all
+> 10 such pages: all 10 refused it.
+>
+> **What I need from you:** nothing.
+
+**Hard to read:**
+> The card polls `/prolific-code`; the route 503s because `PROLIFIC_COMPLETION_CODE` is unset in the dev env.
+
+**Simple:**
+> This is not a bug. The thank-you page asks the server for the completion code every 3 seconds.
+> Your test server was started without a code, so it had nothing to give. Started with
+> `npm run server:test`, it gives the made-up code LOCALTEST1.
+>
+> **What I need from you:** run the test again with `npm run server:test`.
 
 ## Check before sending
 
@@ -76,3 +138,5 @@ A before/after table is often the clearest example:
 - Is there an example for every idea that is not obvious?
 - Did I answer every question he asked, and not re-ask anything he already decided?
 - Is anything important missing just to make it short? Simple is not the same as incomplete.
+- Does the reply end with "What I need from you" (or "Nothing is needed from you now")?
+- Did I say what is done, what is NOT done, and what is not yet checked?
