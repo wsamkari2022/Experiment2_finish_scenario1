@@ -6,7 +6,7 @@ Prolific IDs.**
 
 ## Your part (about 2 minutes)
 
-1. **Make today's folder:** `Prolific docs/daily/2026-10-20/` (today's date). `Prolific docs/` never goes to GitHub.
+1. **Make today's folder:** `Prolific docs/daily/2026-12-01/` (today's date). `Prolific docs/` never goes to GitHub.
 2. **Our database, from Compass:** connect to the server (DEPLOYMENT.md, Part F) → database `VRDS2` → collection
    `participants` → **Export Data** → **Export the full collection** → **JSON** → save it in today's folder as
    **`participants.json`**.
@@ -15,7 +15,7 @@ Prolific IDs.**
 4. **Run the check yourself**, in the project folder (the reward is $7.00: 35 minutes at $12 an hour):
 
 ```bash
-npm run pay:check -- "Prolific docs/daily/2026-10-20" --reward 7
+npm run pay:check -- "Prolific docs/daily/2026-12-01" --reward 7
 ```
 
 and two files appear in today's folder:
@@ -35,6 +35,9 @@ and two files appear in today's folder:
 | **Not finished** | Returned, timed out without finishing, or still working | Nothing, unless a technical problem on our side stopped them ("Participant requests" below) |
 | **Already decided** | Approved or rejected on Prolific | Nothing |
 
+**Pay is not the analysis.** The groups decide money only. A person in **Reject** or in **Pay: timed out** who finished is
+still analysed like everybody else (HOW_TO_ANALYZE_MY_DATA.md, section 2).
+
 Failing **one** attention check, being slow, a wrong code, or the study's own measures are **never** reasons to reject on
 Prolific. A **Problem** comes first: a record that is not finished is never judged on its attention checks. A **Problem** usually means somebody submitted without really doing the study (for example with a code
 somebody else shared), or a technical fault: ask before deciding.
@@ -53,6 +56,8 @@ The consent form promises three things a person can ask for. Each one is done by
   through Prolific.
 - **"Delete my data."** In Compass, delete that one document and any row in `condition_arrivals` with their `linked_prolific_pid`.
   Note the date and their Prolific ID in your private `Prolific docs/` folder. Their place in the balance opens again by itself.
+  Their record is also inside every earlier `participants.json` in your daily and analysis folders, and in any AI-safe copy:
+  delete it there too (search for their Prolific ID; in an AI-safe copy, find their code in `key.csv`).
 - **A technical problem on our side stopped them.** The consent form promises to pay them for their time. Check their record (how
   far they got and for how long), and pay through Prolific as a bonus. It is not in the budget.
 
@@ -64,7 +69,7 @@ date in your calendar on the day the study ends, and delete the `participants` a
 
 The check reads only the records with a Prolific
 ID, refuses to write a report that would contain an email, and never prints the completion code. Keep the daily
-folders private, and delete them when the study's data plan says so.
+folders private, and delete them on the five-year date (above).
 
 ## If it stops
 

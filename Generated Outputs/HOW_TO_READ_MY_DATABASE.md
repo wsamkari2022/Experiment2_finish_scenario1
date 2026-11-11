@@ -12,7 +12,8 @@
 > versions nobody took part in. `SHAPE_VERSION` "2026-11-10-prolific-only", `consent.version` "2026-11-10-prolific-only-12-an-hour".
 
 **For:** anyone — human or AI — analyzing the data from the Human-AI Moral Value Study.
-**Written:** 11 September 2026. **Last updated:** 19 September 2026 (VCI: the notes under
+**Written:** 11 September 2026. **Last updated:** 11 November 2026; every change is dated where it is
+described. (On 19 September 2026: VCI: the notes under
 `per_scenario_consistency_0_to_1` in section 6d and `consistency_score` in section 4. Stability and
 the three sensitivity stabilities: section 4. The decision against the wish: section 6b,
 `decided_versus_wished`).
@@ -129,7 +130,7 @@ correlating the two will produce impressive and meaningless results.
 | `email` | **Never on a record** since 10 November 2026 (the server refuses it). A test record from before may still have it: those are deleted before launch. |
 | `prolific_pid` | Their Prolific ID, the key of their record (lower-cased). Never in `email`. One Prolific ID is one person (a unique rule on the records that have it). |
 | `prolific_code_given_at`, `prolific_code_last_given_at`, `prolific_code_given_times` | Since 7 October 2026, Prolific door only: when the server first and last gave this person the completion code (after their completion was saved), and how many times (a reload on the same browser shows the kept code without asking, so more than 1 means another device or an emptied browser). **The code itself is never stored.** Absent = never given (not finished, or finished before a code was set on the server). For the daily pay check: a finished Prolific record without `prolific_code_given_at` never saw its code. |
-| `prolific_study_id`, `prolific_session_id` | Since 6 October 2026, Prolific door only: Prolific's STUDY_ID and SESSION_ID from the link (the submission). `prolific_session_id` is Prolific's, NOT the study's own `participant_id`. Set only when the page sent them. |
+| `prolific_study_id`, `prolific_session_id` | Since 6 October 2026: Prolific's STUDY_ID and SESSION_ID from the link (the submission). `prolific_session_id` is Prolific's, NOT the study's own `participant_id`. Set only when the page sent them. |
 | `recruitment_source` | Always `"prolific"` since 10 November 2026. A test record from before may say `"university"` or nothing: it never counts for balance. |
 | `age`, `gender` | From the demographic form. Gender is one of Male / Female / Other / Prefer not to say. |
 | `country`, `country_code` | Since 30 September 2026, from the demographic form's Country question (asked as "Where are you from?" since 4 October 2026): the English name as listed (e.g. "Saudi Arabia") and its ISO 3166-1 alpha-2 code ("SA"; Kosovo "XK"), or "Prefer not to say" with a null code. Group by `country_code`, never by the name. Absent on records made before that date. |
@@ -140,7 +141,7 @@ correlating the two will produce impressive and meaningless results.
 | `condition_arrival_id` | Since 6 October 2026, only for `landing_page`: the id of the landing page's arrival (`condition_arrivals.arrival_id`) that gave this condition, written together with the condition so the balance count never sees the person twice. Bookkeeping, not a finding; absent on older records. |
 | `status` | `"Study Not Completed"` or `"Study Completed"` — nothing else. |
 | `current_stage` | The screen they last reached, e.g. `money`, `block5`, `feedback`. |
-| `active_browser` | Since 29 September 2026: `{ id, claimed_at }`, the one browser allowed to write this record (a random id, naming nothing but that browser). The newest browser that passed the email-and-age check. Not data about the participant; never analyse it. |
+| `active_browser` | Since 29 September 2026: `{ id, claimed_at }`, the one browser allowed to write this record (a random id, naming nothing but that browser). The newest browser that passed the Prolific-ID-and-age check. Not data about the participant; never analyse it. |
 | `consent` | `{ agreed, timestamp, version }`. The version records which wording they agreed to: `"2026-11-10-prolific-only-12-an-hour"`, the form sent to the IRB after it refused the student group. |
 | `created_at` | First time this person was seen. Never rewritten. |
 | `updated_at` | Last write of any kind. |
@@ -177,10 +178,10 @@ Thursday has two logins on two browsers, and this is where that shows.
 | `first_login_at`, `last_login_at`, `days_between_first_and_last_login` | The span of the run |
 | `list[]` | `number`, `started_at`, `last_seen_at`, `minutes_open`, `how_it_started`, `stage_at_start`, `stage_at_last_seen`, `browser_number`, `browser_id` |
 
-`how_it_started` is one of four words: `typed_their_email` (they entered the study from the start
-screen), `arrived_with_their_prolific_id` (the Prolific door, since 6 October 2026: the ID came in Prolific's link, or they
+`how_it_started` is one of three words: `arrived_with_their_prolific_id` (the ID came in Prolific's link, or they
 pasted it), `continued_in_this_browser` (the study was reopened where their answers already were), or
-`restored_from_another_device` (their answers were downloaded onto this machine first).
+`restored_from_another_device` (their answers were downloaded onto this machine first). A test record from before 10
+November 2026 may also say `typed_their_email` (the university door's start screen, gone since).
 
 > ⚠️ **`sessions.total_logins` is not `active_time.sittings`.** A sitting is a gap of more than
 > thirty minutes between activity, which happens while a tab sits open over lunch. A login is the
@@ -218,7 +219,7 @@ source is right and this is wrong — gate D49 checks they agree on every build.
 
 | Field | What it holds |
 |---|---|
-| `condition` | Since 1 October 2026: `condition_number`, `condition_type`, `source`, `counted_for_balance` (true only for `landing_page`), `assigned_at` and, since 6 October 2026, `recruitment_source` (the door; `"university"` for a file from before), copied from the browser's condition file (the same values as the document's top-level fields) |
+| `condition` | Since 1 October 2026: `condition_number`, `condition_type`, `source`, `counted_for_balance` (true only for `landing_page`), `assigned_at` and, since 6 October 2026, `recruitment_source` (always `"prolific"` since 10 November 2026; a test file from before may say `"university"`), copied from the browser's condition file (the same values as the document's top-level fields) |
 | `vci` | `overall_score` and label, plus `when_deciding_scenario_4`, `when_wishing_scenario_5` and the gap between them, and (since 25 September 2026) `what_the_wish_changed_by_value` and `what_the_wish_changed_in_words`, copied from `decided_versus_wished` |
 | `stability` | The score and label, plus the directness, context and stakeholder stabilities, and (since 26 September 2026) `was_measured`, `conflict_steps_counted` and `how_to_read_was_measured`, copied from the headline |
 | `performance` | `score`, `captured`, `captured_label`, and (since 25 September 2026) `what_the_wish_changed_in_performance_by_metric` and `..._in_words`, copied from `decided_versus_wished` |
@@ -838,7 +839,7 @@ other of the change:
 | what naming a value does | +30 to it, −20 to whichever value was on top | +30 to it, −10 to each of the other three |
 
 **Do not pool the two.** `value_they_prioritized` looks identical across the change and means the
-same thing, but it moves the profile by a different rule, so `policy_snapshot_after` and everything
+same thing, but it moves the profile by a different rule, so `policySnapshotAfter` (on each scenario row) and everything
 derived from it — stability, the position effect, later alignment scores — are not comparable.
 **The document carries no stamp of the study code's version** (found 27 September 2026: `SHAPE_VERSION` is kept
 only in the browser's sync state, never written to MongoDB), so an earlier version of this line was wrong. Tell
@@ -1396,7 +1397,7 @@ about 2.7 of 6, because the best fit balances all four values. A copy of the cou
 
 ---
 
-## 6p. `analysis.attention_checks` — three simple reading checks
+## 6p. `analysis.attention_checks` — four attention checks
 
 Added **29 September 2026** (the researcher's request); the two checks inside the study **rewritten 14 October 2026** as
 reading checks at random places (his advisor: an attention check must test READING, not memory, and the checks should be
@@ -1407,11 +1408,13 @@ place and number, are drawn once per participant and saved, so a refresh or anot
 |---|---|---|
 | `between_blocks` | its own screen right after Block 1, 2 or 3 (drawn at random per participant), before the next block | "How do you usually get to work or class? This question checks that you are reading: please choose 'By boat', whatever your real answer is." Answers, in a random order: By car, By bus or train, On foot or by bike, By boat (right) |
 | `between_scenarios` | its own screen right after scenario 1, 2 or 3 (drawn at random), before the next scenario; never between scenarios 4 and 5, never before scenario 6 | "Which of these do you enjoy most on a free afternoon? This question checks that you are reading: please choose 'Reading a book', whatever your real answer is." Answers: Listening to music, Reading a book (right), Walking outside, Watching a film |
-| `number` | one row in the feedback, after any row of "The tools & the experiment design" or "How this experience was for you" | "This question is just to check your attention. Pick the number four." (two, three, four or five; the 1-7 scale) |
+| `number` | one row in the feedback section "The tools & the experiment design", after any of its rating rows | "This question is just to check your attention. Pick the number four." (two, three, four or five, drawn per participant; the 1-7 scale) |
+| `number_2` | one row in the feedback section "How this experience was for you", after any of its rating rows | the same question with a different number from `number` (two to five) |
 
-Participants were told it is an attention check and never whether they were right. `passed_all` (all three right) was
-what the gift card needed until 16 October 2026 (`quality.passed_all_attention_checks`); since then a check answered wrongly
-is one of the four careful-participation signs (`quality.careful_participation`, section 8c), information only; `passed_count`, `answered_count`, `misses` (in words,
+Participants were told it is an attention check and never whether they were right. **Every participant has the four
+checks** (since 10 November 2026; history at the end of this section). `passed_all` is true when all four were answered
+as instructed, and is information only; a check answered wrongly is also one of the four careful-participation signs
+(`quality.careful_participation`, section 8c), information only. `checks_asked` is 4; `passed_count`, `answered_count`, `misses` (in words,
 e.g. `missed the reading check after scenario 1 (the right answer was "Reading a book", picked "Watching a film")`)
 and `checks[]`: `where_it_was_shown` (in words), `shown_after_block` (1-3, the between-blocks check only, else null),
 `shown_after_scenario` (1-3, the between-scenarios check only, else null), `asked` (the question with its instruction),
@@ -1422,8 +1425,8 @@ is not timed), `times_changed`, `answered_at`. A copy of the verdict is in `majo
 > a well-being score, a tool rating or `quality.straightlined_feedback`.
 
 > **A miss does not leave anybody out of the analysis:** all completed sessions are analysed (the researcher, 30
-> September 2026). In the university door it affected the gift card only, and since 16 October 2026 it affects nothing but
-> the careful-participation verdict (never the course credit); in the Prolific door, Prolific's rule below.
+> September 2026). A miss counts toward Prolific's rule below, which decides pay only, and is one of the
+> careful-participation signs, which are information only.
 
 > **The place is a variable.** Because each person met the two reading checks at a different place, `shown_after_block`
 > and `shown_after_scenario` say where. A check right after a long block may be missed more often than one after a short
@@ -1433,31 +1436,27 @@ is not timed), `times_changed`, `answered_at`. A copy of the verdict is in `majo
 > Block 3; `after_scenario3`, always after scenario 3; version `"2026-09-30-topics"` or `"2026-10-07-two-doors"`). Nobody
 > took the study under those versions; a file saved under them is drawn again (`STILL_READ_VERSIONS` is empty).
 
-### The Prolific door: four checks, and Prolific's rule (since 7 October 2026; all four count since 14 October 2026)
-
-Every participant has the four checks (`door` went on 10 November 2026). There is a
-fourth check, `number_2`, and the two number rows sit apart:
-
-| Check | Where (Prolific door) |
-|---|---|
-| `number` | one row in "The tools & the experiment design" (after any of its rating rows) |
-| `number_2` | one row in "How this experience was for you" (after any of its rating rows); a different number from `number` |
+### Prolific's rule (all four count since 14 October 2026)
 
 All four checks are reading checks of the kind Prolific accepts (an explicit instruction, said to be a check, nothing to
-remember), and **all four count** (the researcher's "1-B", 14 October 2026). The section adds `prolific_rule`:
+remember), and **all four count** (the researcher's "1-B", 14 October 2026). The section holds `prolific_rule`:
 `attention_checks_counted` (4), `attention_checks_answered`, `attention_checks_failed` (a check ANSWERED against its
 instruction; a check never reached is not a failure) and `failed_two_or_more_attention_checks` (true at two or more: the
 rejection reason the Prolific consent page names, "If you fail two or more of them, your submission will be rejected";
-`npm run pay:check` puts those people in its Reject group). `passed_all` there means all four right and is information
-only. `checks_asked` is 4. `version` is `"2026-10-14-reading-checks"`.
+`npm run pay:check` puts those people in its Reject group). Pay is decided on Prolific; it never selects who is
+analysed. `version` is `"2026-11-10-prolific-only"` (`ATTENTION_VERSION` in `src/experiment/attentionChecks.ts`).
+
+> **History.** The `number_2` row and Prolific's rule began on 7 October 2026 in the Prolific door only; until 10
+> November 2026 the test versions of the university door had three checks (no `number_2`), and the section said which
+> door it was (`door`, gone since). Nobody took part under those versions.
 
 ## 6q. `analysis.feedback_answer_patterns` — two answer-pattern flags (analysis only)
 
 Added **29 September 2026** (the researcher's Q4). Over the feedback's 1-7 ratings in the order they were on screen (the
 attention row is not among them): `longest_run_of_the_same_answer` (e.g. 8 for eight 5s in a row), `most_common_answer`
 and `share_of_the_most_common_answer`, `share_of_steps_of_exactly_one` and `longest_run_of_steps_of_exactly_one` (1.0
-for a diagonal like 1,2,3,4,5,6,7,6,5). `used_for_pay` is always false: these never touched the gift-card verdict and never touch the course credit or the
-careful-participation verdict (which reads `quality.straightlined_feedback`). Any
+for a diagonal like 1,2,3,4,5,6,7,6,5). `used_for_pay` is always false: these never decide pay, and never touch the careful-participation verdict (which
+reads `quality.straightlined_feedback`). Any
 cut-off must be fixed before the data is opened.
 
 ---
@@ -1577,7 +1576,7 @@ one of them**, and the correction matters more than the original claim:
 
 | Total | Changed? | Why |
 |---|---|---|
-| `active_time.total_active_minutes` | **No** | A separate ledger that counts on every page. The daily Prolific pay check reads it (it was the gift card's 35-minute rule until 16 October 2026; the course credit never reads it) |
+| `active_time.total_active_minutes` | **No** | A separate ledger that counts on every page. The daily Prolific pay check reads it (it was the gift card's 35-minute rule in test versions until 16 October 2026) |
 | `blocks.feedback_answers.timing.totalExperimentMs` (= `timings.lastEventAt` - `timings.firstStartedAt`) | **No** | The span from the first stage to the last event, so reading time is still inside it. **It is elapsed time, not work:** across several visits it includes the hours away (a test run of 59 working minutes in 6 visits had a span of about 17 hours) |
 | `headline.total_time_minutes` | **Yes — it got smaller** | It is the *sum of the timed stages*, and two stages are no longer timed. Measured at about **5 minutes** on a typical run |
 
@@ -1612,7 +1611,7 @@ never included, and the rule itself is stored in the record as `counting_rule`.
 
 > ⚠️ **`by_stage_minutes` does not add up to `total_active_minutes`,** and the gap is exactly the
 > time spent on the insights page and the final-analysis page. Those two are no longer broken out
-> (section 8), while the total still includes them because it is the real working time (the daily Prolific pay check reads it; the course credit never does).
+> (section 8), while the total still includes them because it is the real working time (the daily Prolific pay check reads it).
 > Shortening somebody's total would have been a different decision from deciding what is worth
 > measuring, and it was not the one taken.
 
@@ -1632,7 +1631,7 @@ Prolific, with the daily pay check (docs/DAILY_PAY_CHECK.md).
 | Field | What it catches |
 |---|---|
 | `completed_the_study` | `status` is "Study Completed" (they reached the thank-you page) |
-| `careful_participation` | For the researcher only, since 16 October 2026: **false** when any of the four OSF robustness signs is present, **null** when a sign cannot be read from what was saved, **true** otherwise. Never used for credit or pay |
+| `careful_participation` | For the researcher only, since 16 October 2026: **false** when any of the four OSF robustness signs is present, **null** when a sign cannot be read from what was saved, **true** otherwise. Never used for pay |
 | `careful_participation_reasons` | Each sign present, in words (e.g. `2 scenarios decided in under 15 seconds`) |
 | `careful_participation_cannot_tell` | Each sign that could not be read, in words (e.g. `feedback not on record`) |
 | `careful_participation_signs` | The four signs, each with `sign`, `flagged` (true / false / null) and `detail`: `answered_very_fast_in_blocks_1_to_3` (`analysis.blocks_1_to_4_checks.answered_very_fast`: median under 2 seconds between answers), `two_or_more_scenarios_under_15_seconds`, `same_answer_to_every_feedback_rating` (`straightlined_feedback`), `an_attention_check_answered_wrongly` (a check never reached is not wrong) |

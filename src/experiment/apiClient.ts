@@ -161,7 +161,7 @@ export const apiClient: RemoteBackend = {
   },
 
   async signIn(key, age) {
-    /* The server checks the age (both doors) and only then answers with the details and the run's files. */
+    /* The server checks the age and only then answers with the details and the run's files. */
     const answer = await request<{ participant?: Record<string, unknown>; files?: Record<string, unknown> | null }>(
       `/participants/${encodeURIComponent(key)}/claim`,
       { method: "POST", body: JSON.stringify({ age }) },

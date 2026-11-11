@@ -1,5 +1,7 @@
 # Experiment Documentation
 
+> **Background, last changed 20 June 2026, and not kept up to date** (note added 11 November 2026). Much of it describes an older version of the study (five blocks, no conditions, no Prolific). For the study as it is, read `CLAUDE.md` and the two HOW_TO files in `Generated Outputs/`.
+
 ## Overview
 
 This is a moral-values assessment experiment built as a React/TypeScript single-page app. It guides a participant through five sequential decision blocks, derives a moral profile from the first three blocks, uses that profile to personalise a reflective fourth block, builds a 7-dimension sensitivity tree, and then presents personalised public-emergency policy scenarios in a fifth block that tests how the participant applies their moral values to real-world crises.

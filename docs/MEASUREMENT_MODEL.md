@@ -1,5 +1,7 @@
 # The VRDS measurement model — how four blocks become seven sensitivities
 
+> **Background, last changed 27 September 2026, and not kept up to date** (note added 11 November 2026). The Blocks 1-4 scoring it describes has not changed since (the scoring code has had only comment changes since that date, by its git history); it was written before the four conditions (1 October 2026) and the Prolific-only study (10 November 2026). For the study as it is, read `CLAUDE.md` and the two HOW_TO files in `Generated Outputs/`.
+
 This document is the map. It explains **what** every equation computes, **why** that particular
 equation and not another, **where** it lives in the code, and **how** the numbers travel from a
 participant's first click to the alignment scores that drive Block 5.

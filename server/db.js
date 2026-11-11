@@ -43,7 +43,8 @@ let db = null;
  * TWO DOORS, TWO RULES (since 6 October 2026; server/recruitment.js). A Prolific participant has no email: their
  * key is their Prolific ID (`prolific_pid`). A unique index on `email` that covers every record treats "no email" as
  * one shared value, so the SECOND Prolific person would be refused. Both rules now cover only the records that have
- * that field ("partial" indexes): one email is one person, one Prolific ID is one person.
+ * that field ("partial" indexes): one email is one person, one Prolific ID is one person. Since 10 November 2026 no new
+ * record has an email (the server refuses one), so the Prolific rule is the one in use; the email rule stays for old test records.
  *
  * THE SWAP IS SAFE ON A DATABASE THAT ALREADY HAS THE OLD RULE. MongoDB refuses to create an index under an existing
  * name with different options, and the server would stop at startup (PM2 restarting it again and again). So the old
@@ -83,7 +84,7 @@ export async function connect() {
     { key: { recruitment_source: 1 }, name: "recruitment_source" },
   ]);
   /* The landing page's arrivals: one row per condition it gave, until the person reaches the demographic page
-     (linked_email) or turns out to be somebody returning (released). server/conditions.js has the rule. */
+     (linked_prolific_pid) or turns out to be somebody returning (released). server/conditions.js has the rule. */
   await db.collection("condition_arrivals").createIndexes([
     { key: { arrival_id: 1 }, name: "arrival_id_unique", unique: true },
     { key: { assigned_at: 1 }, name: "assigned_at" },

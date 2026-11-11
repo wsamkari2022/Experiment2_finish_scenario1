@@ -24,7 +24,7 @@
  *   L8  (Step 4, since 7 October 2026) the Prolific completion code, with a made-up code in the server's settings: not
  *       before the completion is saved, nor for a finished record without the study's answers (a script's three requests;
  *       the audit of 7 October 2026), then the code letter for letter and Prolific's address, only to the browser holding the record,
- *       never for a university key, never in a lookup or sign-in answer; the time and count written on the record, never
+ *       never for an email key (refused), never in a lookup or sign-in answer; the time and count written on the record, never
  *       the code; the health page says a code is set
  *   L6  the database rule swap: the throw-away database is first made with TODAY'S rule ("one email = one person" over
  *       every record) and an old record; the new server must replace the rule, keep the record, and accept the many
@@ -305,7 +305,7 @@ try {
     const health = await send("GET", "/health", null, null);
     if (health.json?.prolific_code_configured !== true || JSON.stringify(health.json).includes(TEST_CODE)) why.push(`the health page said ${JSON.stringify(health.json?.prolific_code_configured)}`);
     gate("L8", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
-      : "the Prolific completion code: not before the completion is saved, nor for a finished record without the study's answers (or with five scenarios of six); then the code letter for letter and Prolific's address, to the browser holding the record only (another browser 409, no id 400), never for a university key, never in a lookup or sign-in answer; the first time, the last time and the count on the record, never the code; the health page says a code is set");
+      : "the Prolific completion code: not before the completion is saved, nor for a finished record without the study's answers (or with five scenarios of six); then the code letter for letter and Prolific's address, to the browser holding the record only (another browser 409, no id 400), never for an email key (refused), never in a lookup or sign-in answer; the first time, the last time and the count on the record, never the code; the health page says a code is set");
   }
   gate("L6", !!swapOk, `the old "one email = one person" rule over every record was replaced at startup by the rules that cover only the records that have the field; the old record kept; ${proDocs.length} Prolific records without an email accepted`);
   const slow = all.reduce((n, w) => n + (w.lat.condition ?? []).filter((ms) => ms >= CONDITION_LIMIT_MS).length, 0);

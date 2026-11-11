@@ -1,73 +1,45 @@
-# React + TypeScript + Vite
+# VRDS Experiment 2: Human-AI Moral Value Decision-making Study
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A PhD study. Participants, recruited on Prolific, answer four short blocks that measure
+their values, then decide in six emergency scenarios, then see their results, then give feedback. Each participant is
+given one of four conditions (CVR+APA, CVR only, APA only, Baseline), balanced by the server.
 
-Currently, two official plugins are available:
+Built with React 19, Chakra UI v3, Vite and TypeScript; the server is Express with MongoDB.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run it on this computer
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev          # the study, on http://localhost:5173
+npm run server       # the API that saves to the local MongoDB, on port 4000
+npm run server:test  # instead of "server": a test database and a made-up completion code
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open the study with a made-up Prolific ID (24 letters a-f and digits):
+`http://localhost:5173/prolific?PROLIFIC_PID=<made-up id>&condition=CVR_APA` (or `CVR_Only`, `APA_Only`, `BSL4`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Before changing anything
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
+
+Every check must print its PASS line. After any change to a document, also run `npm run validate:docs`.
+
+## Where to read more
+
+| File | What it is |
+|---|---|
+| `CLAUDE.md` | The project's rules and every dated change; read it first |
+| `Generated Outputs/HOW_TO_READ_MY_DATABASE.md` | The data dictionary: every field in the database and what it means |
+| `Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md` | How to analyse the data, the traps, and the first day with real data |
+| `docs/ANALYSIS_AND_FIGURES_PLAN.md` | The analysis plan: the 23 hypotheses, their fields and tests, and the figures |
+| `docs/DAILY_PAY_CHECK.md` | The daily Prolific pay check |
+| `DEPLOYMENT.md` | How the study is put on the server |
+| `docs/HISTORY_OF_CHANGES.md` | Older sections of CLAUDE.md that describe versions nobody took part in |
+
+## Privacy
+
+- `.env` holds the database password and the Prolific completion code. It is never committed, printed or sent.
+- `Prolific docs/` holds Prolific IDs and the daily exports. It is never committed, and its files never go to an AI tool;
+  use the AI-safe copy (`npm run data:ai-copy`) instead.

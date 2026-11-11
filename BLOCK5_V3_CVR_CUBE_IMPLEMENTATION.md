@@ -1,5 +1,7 @@
 # Block 5 — CVR Cube (v3) Implementation Record
 
+> **Background, last changed 19 September 2026, and not kept up to date** (note added 11 November 2026). Block 5 has changed much since (the four conditions on 1 October 2026, among others). For the study as it is, read `CLAUDE.md` and the two HOW_TO files in `Generated Outputs/`.
+
 This documents the changes made to Block 5 to implement the Scenario 1 CVR Cube spec
 (see the `Claude Output` master spec). It is the source-of-truth for the code so we can
 keep track of changes and later replicate the pattern to Scenarios 2–5.

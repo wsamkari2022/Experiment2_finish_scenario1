@@ -324,21 +324,22 @@ server routes (`/api/conditions/...`) and a new collection (`condition_arrivals`
 Nothing new goes into `.env`. Deploy it exactly as in Part D; `./build-and-run.sh` restarts the server (Node never
 reloads new code by itself).
 
-**What a test run looks like.** Open the site. For about a second it says "Preparing your study…", then the start
-screen opens and the address ends in `?condition=...` (the condition this browser was given). Use a **new email for
-every test run**, and a private window (or a browser you have not used for the study before), so no older test run is
-continued.
+**What a test run looks like** (Prolific only since 10 November 2026). Open the study's link with a made-up Prolific ID
+(24 letters a-f and digits), for example `https://moonlander.fit.edu/prolific?PROLIFIC_PID=<made-up id>&condition=CVR_APA`.
+The page may say "Preparing your study…" for a moment; then the first page shows the Prolific ID and Start, and the
+address ends in `condition=...` (the condition this browser was given). The plain address without an ID opens the page
+that asks for the Prolific ID; no condition is given before an ID exists. Use a **new made-up ID for every test run**, and
+a private window (or a browser you have not used for the study before), so no older test run is continued.
 
 **Two ways to test, and which one counts for balance:**
 
 | You open | What happens | Counted for balance? |
 |---|---|---|
-| The plain address | The landing page gives the condition with the fewest people, exactly as for a real participant | **Yes.** A finished run counts forever; an unfinished one for 2 hours |
+| The link with a made-up Prolific ID and no condition (or the plain address, then a made-up ID pasted) | The landing page gives the condition with the fewest people, exactly as for a real participant | **Yes.** A finished run counts forever; an unfinished one for 2 hours |
 | The address plus `?condition=CVR_APA`, `CVR_Only`, `APA_Only` or `BSL4` (Baseline; the word `Baseline` also works) | That condition, on purpose (saved with source `address`) | **No, never** |
 
-So test a particular condition with its address. A run started on the plain address is a real test of the landing page,
-but it stays in the counts. **The same for the Prolific door and Prolific's "Preview as participant"** (since 6 October
-2026): add `&condition=…` to the test link (for example `https://moonlander.fit.edu/prolific?PROLIFIC_PID=…&condition=BSL4`),
+So test a particular condition with its address. A run started without a condition is a real test of the landing page,
+but it stays in the counts. **The same for Prolific's "Preview as participant"**: add `&condition=…` to the test link (for example `https://moonlander.fit.edu/prolific?PROLIFIC_PID=…&condition=BSL4`),
 or the test counts as a real Prolific participant. **Before the first real participant, the test records must be deleted or marked** (an open
 item in `docs/VRDS_Accuracy_Checklist.docx`), so the four counts start equal.
 
@@ -350,7 +351,8 @@ counts now (finished, working, just arrived) and every record ever by source. Nu
 
 **Good to know while testing:**
 
-- The two development buttons (Reset, Fill feedback) are not in the server build, so every test is a full run.
+- The development button (Fill feedback) is not in the server build, so every test is a full run. (Reset was deleted on
+  23 October 2026.)
 - The same Prolific ID on a second browser asks for the age again and then takes the run over; the first browser
   shows "This study is open somewhere else". That is the one-browser rule, not an error.
 - **To test, use a made-up Prolific ID in the link:** `/prolific?PROLIFIC_PID=<24 letters a-f and digits>&condition=CVR_APA`. Tests by

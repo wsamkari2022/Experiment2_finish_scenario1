@@ -21,10 +21,16 @@ inside `blocks.block5_emergency_scenarios.scenarioResults[]` unless another sect
 is `VRDS2` (from `MONGO_URL` in `.env`, never printed); the local development database is `vrds_experiment2`. Same
 collection (`participants`), same shape.
 
-**The main hypotheses since 14 October 2026 are the 23 of section 11.1 (A1-D5)**, still awaiting the advisor's
-approval. The hypotheses of 27 September 2026 (H1-H13, section 11.2) are kept for possible future use. This plan
-was written before the four conditions existed (1 October 2026); its other sections have not yet been brought up
-to date for them.
+**The main hypotheses since 14 October 2026 are the 23 of section 11.1 (A1-D5)**, approved by Dr. Eskridge (the
+researcher, 11 November 2026). The hypotheses of 27 September 2026 (H1-H13, section 11.2) are kept for possible
+future use.
+
+> **Updated 11 November 2026.** The study is Prolific only since 10 November 2026: one group, 104 who finish, 26 per
+> condition (the IRB text of 9 November 2026). This plan was written on 27 September, before the four conditions
+> (1 October 2026); since 11 November it is brought up to date for them: **section 3.0 maps each of the 23
+> hypotheses to its rows, fields, test and figure**, and rules 6 and 11 describe the four conditions. Sections
+> 3.1-3.5 are the earlier research questions, kept as an idea bank; where they differ from 3.0, 3.0 wins. Section
+> 11.1 keeps its registered words until the OSF Update (the note there).
 
 ---
 
@@ -49,7 +55,9 @@ to date for them.
 5. **Decisions only for VCI, Stability, performance and the reflection measures:** filter per-scenario rows on
    `decisionRole` (absent = `decider`) or `analysis.alignment_records.by_scenario[].counts_towards_consistency_and_stability`.
    Scenario 5 is a wish; scenario 6 is a test of the model.
-6. **Draw the baseline, always:** 50 for VCI (blind picking), 16.7% / 25% for the MPF, the pretend-participant
+6. **Draw the baseline, always:** 50 for VCI under blind picking, and each condition's own random level (57, 60,
+   63 and 60 in CVR+APA, CVR only, APA only and Baseline: a random chooser who also answers its condition's page at
+   random; hypothesis D3; docs/MAJOR_SCORES_BY_CONDITION.md), 16.7% / 25% for the MPF, the pretend-participant
    kinds for every score (docs/MAJOR_SCORES_DISTRIBUTION.md). A number without its reference invites the reader to
    supply a flattering one.
 7. **Groups, not verdicts on people.** One person's VCI, Stability or performance is rough (same pretend person
@@ -61,9 +69,15 @@ to date for them.
    families. Say how many tests each family had.
 10. **Flags are robustness checks, not silent exclusions:** run the main result with and without each flag
     (section 2.4) and report both.
-11. **No control group without reflection.** The reflection (CVR) fires only after a misaligned choice, for
-    everyone. Reflection results are within-person before/after descriptions, not causal effects against a
-    no-reflection condition (section 3.2). Say so in the limitations.
+11. **What each comparison between conditions changes** (rewritten 11 November 2026; until then this rule said
+    there was no group without reflection, true only before the four conditions). The conditions are randomized,
+    and the pages that differ are known (HOW_TO_ANALYZE 9.1): CVR+APA against APA only (A2) differs in the
+    reflection, and in three small parts of APA only's APA page (its opening sentence, the box naming the value the
+    chosen option serves most, no warning when going back); CVR+APA against CVR only (A3) differs in the
+    clarification page (in CVR only a refusal opens the CVR Rejection page); CVR+APA against Baseline (A1, A4)
+    differs in the reflection and clarification pages and in Baseline's own confirmation page with "How sure",
+    **and Baseline has no fit score and no "Ranked N - why" section on its cards** (HOW_TO_ANALYZE 9.6). Inside one
+    condition, what people do after the reflection is a before/after pattern (section 3.2).
 
 ---
 
@@ -138,9 +152,11 @@ not complete is excluded. No one who completed is removed for any other reason. 
 (`quality.under_the_estimated_length`, `quality.rushed_blocks`, `quality.scenarios_under_15_seconds`,
 `quality.straightlined_feedback`, and `quality.careful_participation` with its four signs) are reported descriptively,
 and the checks of section 2.4 show each main result again without the flagged people, beside the result for everyone.
-Neither payment nor credit selects anyone: `quality.course_credit_earned` (university door, = finished) is the credit
-rule, and Prolific pay is the daily pay check's decision. (Corrected 23 October 2026: this paragraph still named
-`quality.met_time_requirement` and `quality.compensation_eligible`, the gift-card fields removed on 16 October 2026.)
+Pay never selects anyone. Prolific pay is the daily pay check's decision (docs/DAILY_PAY_CHECK.md), and a person
+whose submission was rejected, or who finished after Prolific's time limit, is analysed like everybody else when
+their record says `"Study Completed"`. (History: until 10 November 2026 this paragraph also named
+`quality.course_credit_earned`, the student group's credit rule, removed with that group; until 23 October 2026 it
+named the gift-card fields `quality.met_time_requirement` and `quality.compensation_eligible`, removed on 16 October.)
 
 ### 2.3 Evidence of real engagement
 
@@ -178,13 +194,60 @@ that holds only in the full sample is a warning.
 
 ### 2.5 Versions and screen changes
 
-A supplementary table of every version stamp (rule 3) with the count of records under each. If all real records
-share one set, one sentence says so; if not, analyse the groups apart.
+A supplementary table of every version stamp (rule 3) with the count of records under each. A record made by the
+launch version carries `consent.version` `"2026-11-10-prolific-only-12-an-hour"` and `analysis.attention_checks.version`
+`"2026-11-10-prolific-only"` (11 November 2026; check them against the launch commit), with
+`headline.stability_rule_version`, `analysis.scenario6_mpf_test.rule_version`,
+`analysis.participant_record.calibrationVersion`, `blocks.feedback_answers.schemaVersion` and `fitScoreScale` on
+each scenario row. If all real records share one set, one sentence says so; if not, analyse the records of each
+version apart.
 
 ---
 
 ## 3. The research questions and their primary analyses
 
+### 3.0 The 23 hypotheses, one by one (since 11 November 2026)
+
+The main analyses are the 23 hypotheses of section 11.1 (approved by Dr. Eskridge). This table says where each one's
+data are and which rows it uses. **The words of each hypothesis are those of 11.1; the exact test, as registered, is
+on page 6 of the OSF answers ("Statistical models").** Every field below was checked against a full pretend record and
+the code that writes records (11 November 2026). "Computed" means the number is not stored and is worked out in the
+analysis from the stored fields named, with the formula of the OSF answers' Variables page (Indices). Decision rows
+are the per-scenario rows of scenarios 1-4 (`analysis.alignment_records.by_scenario[]` where
+`counts_towards_consistency_and_stability` is true). Every comparison uses only `status: "Study Completed"` records,
+grouped by `condition_type`. Option numbers (each option's four values and five performance numbers) come from the
+code: `node tools/export_block5_content.cjs <file>.json`.
+
+| H | Rows | Where the data are | Test (as registered) | Figure |
+|---|---|---|---|---|
+| A1 | one per participant; CVR+APA and Baseline | `headline.consistency_score` (VCI), `condition_type` | one-sided Mann-Whitney U; the 2 × 2 ANOVA (CVR × APA) beside it as description | VCI by condition (HOW_TO_ANALYZE 9.7) |
+| A2 | CVR+APA and APA_Only | as A1 | one-sided Mann-Whitney U | as A1 |
+| A3 | CVR+APA and CVR_Only | as A1 | one-sided Mann-Whitney U | as A1 |
+| A4 | decision rows whose FIRST pick was Misaligned or Strongly misaligned; all four conditions | first pick: `analysis.mpf_prediction_percentages.by_scenario[].their_first_choice_option_id`; its label computed from its rank in `points_short_of_what_they_asked_for_every_option` (the same opening profile as the row; ranks 1 / 2 / 3-4 / 5-6); final label: `alignment_label` | mixed logistic regression, participant as a random effect; help step = CVR+APA, CVR_Only or APA_Only | one funnel per condition (HOW_TO_ANALYZE 9.7) |
+| B1 | one per participant; scenarios 4 and 5 | `analysis.position_effect.by_scenario[].departure_share` (`scenario_id` tells the scenario); `authority_vs_receiving` holds the difference | two-sided Wilcoxon signed-rank on 5 minus 4 | Figure 3 |
+| B2-B4 | scenarios 1, 2, 3, 4 | `analysis.position_effect.by_scenario[].departure_share`; the menu-adjusted departure is computed (departure minus the mean departure share of all options on that menu) | one-sided Wilcoxon signed-rank | Figure 5 |
+| B5 | scenarios 1, 2 and 6 | scenarios 1-2 as above; scenario 6 computed: the departure share of `analysis.scenario6_mpf_test.participant.rule_chosen_before_seeing_the_guess` on the four-rule menu, from `blocks.block5_emergency_scenarios.originalProfile` (scenario 6 is never in `position_effect`) | one-sided Wilcoxon signed-rank | Figure 24 |
+| B6 | one per participant | `analysis.position_effect.decided_versus_wished.responsibility_gap` (`vci_wished` minus `vci_acted`, both on the values scenario 4 opened with) | one-sided Wilcoxon signed-rank, zeros kept (Pratt), a sign test beside it | Figure 3d |
+| B7 | one per participant | Block 1 place spread computed from `blocks.block1_money.thresholds.threshold_sidewalk`, `.threshold_wealthy`, `.threshold_shelter` (`thresholdAmountIndex`, 0-7; 8 when `accepted` is false); position spread: `analysis.position_effect.overall_effect`; VCI | one-sided Spearman, and the partial Spearman controlling for VCI; both needed | a scatter of the two spreads |
+| C1 | one per participant; scenario 6 | `analysis.scenario6_mpf_test.participant.mpf_guessed_right` (about the rule chosen before the guess) | one-sided exact binomial against 25% | Figure 10 |
+| C2 | first picks in scenarios 1-4 | `analysis.mpf_predictions_every_scenario.by_scenario[].participant`: `mpf_named_their_first_choice`, `mpf_chance_of_their_first_choice_percent` (rounded; exact values from `profile_used_values` and the unrounded `sharpness_setting`) | one-sided hit rate above 1/6 and log loss below ln 6, bootstrap over participants; both needed | Figure 10 |
+| C3 | scenario 6 | the percentage of `analysis.scenario6_mpf_test.mpf_prediction.most_expected_rule` in `mpf_prediction.by_rule`, and `participant.mpf_guessed_right`; `condition_type` | logistic regression, one-sided on the slope; a calibration plot beside it | Figure 10 |
+| C4 | scenario 6 | `participant.does_this_sound_like_me_1_to_7` by `participant.mpf_guessed_right` | one-sided Mann-Whitney U | the rating by hit and miss |
+| C5 | scenario 6, people whose first rule was not the top rule and who changed | `participant.rule_chosen_before_seeing_the_guess`, `rule_chosen_in_the_end`, `what_happened_after_the_guess`, `mpf_prediction.most_expected_rule` | one-sided exact binomial against 1/3, only with 20 or more such people | the scenario-6 reactivity chart |
+| C6 | first picks in scenarios 2-4 | per row: `participant.mpf_chance_of_their_first_choice_percent` against `using_profile_before_block5.mpf_chance_of_their_first_choice_percent` (and `mpf_named_their_first_choice` in both) | one-sided bootstrap on the mean difference in log loss | Figure 10 |
+| C7 | first picks in scenarios 1-4, one stratum per scenario with its six options | card place: `analysis.card_order_by_scenario.by_scenario[].cards_from_first_to_last[]` (`position`, `option_title`); fit to the profile measured before the scenarios: computed from `blocks.block5_emergency_scenarios.originalProfile` and the option numbers (`points_short_of_what_they_asked_for_every_option` is on each scenario's OPENING profile, the same only in scenario 1); performance captured per option: computed from the option numbers | conditional logit, likelihood-ratio test of fit added to position and performance | Figures 13 and 16 |
+| D1 | decision rows whose first pick was Misaligned or Strongly misaligned and where the condition's page followed | final: `blocks.block5_emergency_scenarios.scenarioResults[].performanceCaptured`; first pick: computed as 100 × (its composite − `performanceMenu.worst`) / (`performanceMenu.best` − `performanceMenu.worst`), its composite being the mean of its five performance numbers | TOST, margin ±5 points, per participant's mean | Figure 9 |
+| D2 | decision rows whose choice changed after a help step | first pick's shortfall from `points_short_of_what_they_asked_for_every_option`; final: `points_short_of_what_they_asked_for` | one-sided Wilcoxon signed-rank on the per-participant mean (first minus final) | Figure 7 |
+| D3 | one per participant | `headline.consistency_score` minus the condition's random level (57, 60, 63, 60; rule 6) | one-sided one-sample Wilcoxon | Figure 2 with each condition's random line |
+| D4 | one per participant | `blocks.feedback_answers.feedback.wellbeing.wellbeingComposite` and `.subscales.decisionSatisfaction`; `headline.consistency_score`, `headline.stability_score`, `headline.performance_captured`; `age`, `gender`, `active_time.total_active_minutes`, `condition_type` (controls: 11.1 and its note) | two linear regressions, one-sided on VCI; both needed | Figure 14 / 18 |
+| D5 | one per participant | `blocks.feedback_answers.feedback.wellbeing.subscales.valueCongruence`, `headline.consistency_score` | one-sided Spearman | Figure 19 |
+
+Before any of these: the manipulation checks of the OSF answers (each condition's page appears only in that
+condition) and the three positive controls in Blocks 1-3 (OSF answers, page 6).
+
+### The earlier research questions (3.1-3.5)
+
+These are the questions the study started from, kept as an idea bank. Where they differ from 3.0, 3.0 wins.
 The study asks two questions (docs/VRDS_EXPERIMENT_GUIDE.md, section 1): **do people hold the same moral priorities
 when the cost lands on someone else?**, and **does making a person look at the consequences of their own choice
 change what they choose?** A third comes from the prior paper: **does reflection cost performance?** A fourth
@@ -240,8 +303,10 @@ one small panel per chair.
 
 ### 3.2 RQ2 — reflection: does looking at the consequences change the choice?
 
-The reflection (CVR) fires after a misaligned first choice; the participant keeps the choice (firmly or less
-firmly) or goes to the clarification (APA), names the value they want weighted and chooses again.
+The reflection (CVR) fires after a misaligned first choice in CVR+APA and CVR only (conditions 1 and 2); the
+participant keeps the choice (firmly or less firmly) or goes on: in CVR+APA to the clarification (APA), where they
+name the value they want weighted and choose again, in CVR only to the CVR Rejection page and back to all the
+options. APA only and Baseline have no reflection (rule 11).
 
 | Analysis | Field | Statistic |
 |---|---|---|
@@ -264,10 +329,10 @@ improves on the moving ruler only, the model learned the person; if it improves 
 `cvr.lens_the_participant_picked`, `cvr.what_picking_it_meant`; `cvr.whose_view_was_shown`,
 `apa.the_stakeholder_influenced_them`, `stakeholderGuided`. These test the sensitivities (section 4.3).
 
-**What may not be claimed:** that reflection *caused* better choices compared with no reflection. There is no group
-without it (rule 11), the reflection only reaches misaligned choices (a selected group; HOW_TO_READ trap 4), and a
-change after reflection can also be ordinary second thoughts. Claim the within-person before/after pattern, and name
-a randomized no-reflection arm as the design for a future study.
+**What may not be claimed from this section:** that reflection *caused* better choices, from the before/after
+pattern alone. The reflection only reaches misaligned choices (a selected group; HOW_TO_READ trap 4), and a change
+after reflection can also be ordinary second thoughts. Claim the within-person before/after pattern here; the
+comparison with no reflection is between the randomized conditions (A2, rule 11).
 
 ### 3.3 H3 of the prior paper — does reflection cost performance?
 
@@ -327,8 +392,9 @@ section in one table (section 10).
   docs/MAJOR_SCORES_DISTRIBUTION.md (always the best fit 100, true to their top value 85, random 57, a new value
   every scenario 34, the worst fit 10). **Figure 2a:** the real participants' histogram with the pretend kinds as
   labelled reference lines. It shows at a glance whether real people behave like value-followers or like chance.
-- **Better than chance:** real VCI against 50 (Wilcoxon), and against 56-57, the random chooser who also answers
-  the reflection at random.
+- **Better than chance:** real VCI against 50 (Wilcoxon), and against each condition's own random level, the random
+  chooser who also answers its condition's page at random (57, 60, 63 and 60 in CVR+APA, CVR only, APA only and
+  Baseline; hypothesis D3, section 3.0).
 - **Convergent validity:** Spearman with the self-reported value congruence (`blocks.feedback_answers.feedback.wellbeing.subscales.valueCongruence`,
   items VC1 "My final decisions reflected what I truly value", VC2).
 - **Internal consistency:** the four decisions' `vciScore` as four items (McDonald's omega, or Cronbach's alpha);
@@ -763,10 +829,10 @@ quotes per theme. Word clouds are not evidence; do not use them.
 
 | # | Figure | Shows | Built from |
 |---|---|---|---|
-| 1 | The study at a glance: Blocks 1-4 → seven sensitivities → five scenarios (with each chair) → CVR / APA / MCF → the scores | the design, the contributions and the data flow in one picture | a schematic |
+| 1 | The study at a glance: Blocks 1-4 → seven sensitivities → six scenarios (five chairs, then the veil) → each condition's page (reflection, clarification, CVR Rejection or confirmation) / MCF → the scores | the design, the contributions and the data flow in one picture | a schematic |
 | 2 | Real participants against the pretend kinds, for VCI, Stability (measured) and performance | the measures discriminate, and where real people sit | table P + docs/MAJOR_SCORES_DISTRIBUTION.md |
 | 3 | The matched pair: paired slopes of departure share (a), the four-value wish shift with CIs (b) | RQ1's cleanest answer | `authority_vs_receiving`, `decided_versus_wished` |
-| 7 | The reflection Sankey | what happens after a misaligned choice | `cvrOutcome`, `changed_their_choice`, APA |
+| 7 | The reflection Sankey, one per condition (HOW_TO_ANALYZE 9.7) | what happens after a misaligned choice | `cvrOutcome`, `changed_their_choice`, APA |
 | 8 | Fit over the four decisions on two rulers | the person changing against the model learning | `alignmentLevel`, frozen fit |
 | 10 | The MPF reliability diagram with the chance lines | the model's predictive honesty | `mpf_predictions_every_scenario` |
 | 13 | The profile predicts the choices: four coefficients | the seven-sensitivity profile is valid | the conditional logit |
@@ -826,6 +892,9 @@ Spearman rho, skill scores (MPF), all with CIs.
 For the MPF and the choice model, estimate power by simulation: `tools/validate_prediction.cjs` already simulates
 choosers; run it at the planned sample size.
 
+**This study's planned sample:** 104 participants who finish, 26 per condition, all recruited on Prolific (the IRB
+text of 9 November 2026).
+
 ---
 
 ## 10. How to show the strength of the experiment (Table 5 of the paper)
@@ -853,7 +922,13 @@ figures are benchmarks, not findings.
 
 ### 11.1 The main hypotheses: 23 in four families (since 14 October 2026)
 
-**Status: draft 2, awaiting Dr. Eskridge's approval.** Word for word the same as the IRB application's Hypothesis box, `VRDS2_Hypotheses_Draft.docx` (project folder; it adds each hypothesis's power, the reason it is attainable and the limit to state) and the OSF preregistration answers (`OSF_PREREGISTRATION_ANSWERS.md`). Change them in all four places together, or in none. Each one's measure and database field: `docs/PREREGISTRATION_FREEZE.md`, section 5.1.
+**Status: approved by Dr. Eskridge** (the researcher, 11 November 2026). Word for word the same as the IRB application's Hypothesis box, `VRDS2_Hypotheses_Draft.docx` (project folder; it adds each hypothesis's power, the reason it is attainable and the limit to state) and the OSF preregistration answers (`OSF_PREREGISTRATION_ANSWERS.md`). Change them in all four places together, or in none. Each one's measure and database field: `docs/PREREGISTRATION_FREEZE.md`, section 5.1.
+
+> **Pending (the IRB text of 9 November 2026, Prolific only):** D4's controls without "group", and the analysis rules
+> below without the sentence "Prolific participants and students are analysed together, with the group as a
+> covariate, and every primary result is also reported for the Prolific participants alone." Both change in every
+> copy at once (this section, `docs/PREREGISTRATION_FREEZE.md` 5.1, `VRDS2_Hypotheses_Draft.docx`, the OSF answers)
+> at the OSF Update, after the IRB approves. The registered words below are unchanged until then.
 
 The study tests 23 hypotheses in four families. Each family has one primary hypothesis; the four primary hypotheses are Holm-corrected together, and the secondary hypotheses are Holm-corrected within their family. Directional hypotheses are tested one-sided; all others two-sided, α = .05.
 
@@ -979,7 +1054,7 @@ H11) and the links of 4B.4).
 6. The measurement evidence (section 4) and the correlation map with its mechanical links (section 5).
 7. The feedback analyses (section 6), and the Blocks 1-4 analyses (section 4B).
 8. Regenerate `docs/MAJOR_SCORES_DISTRIBUTION.md` from the final code, so the benchmarks match the data.
-9. Write the limitations from HOW_TO_ANALYZE 8 and rule 11 of this file.
+9. Write the limitations from HOW_TO_ANALYZE 8.
 
 ---
 
@@ -993,4 +1068,7 @@ H11) and the links of 4B.4).
   battery has 24 items in 8 subscales and its composite averages 7 of them.
 - **Traps looked for:** derived against raw, scores built from each other (5.2), selection (reflection, MCF readers,
   conditional feedback sections), position confounded with content, per-person unreliability, versions, many tests,
-  and the missing no-reflection control.
+  and what each comparison between conditions changes (rule 11, rewritten 11 November 2026).
+- **11 November 2026:** every field name in section 3.0 was checked against a full pretend record
+  (`node tools/validate_dbshape.cjs --dump`) and the code that writes records (`npm run validate:docs`), and the 23
+  hypotheses of 11.1 against the IRB text of 9 November 2026 (22 the same word for word; D4, see the note in 11.1).

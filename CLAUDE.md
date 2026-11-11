@@ -17,8 +17,14 @@ results, then give feedback. React 19 + Chakra UI v3 + Vite + TypeScript.
    tables to build, every analysis and figure with its database field and test, how the measures relate, the
    feedback links, and the hypotheses to freeze in `docs/PREREGISTRATION_FREEZE.md` before the data is opened.
    **The main hypotheses since 14 October 2026 are the 23 A1-D5** (section 11.1 there, section 5.1 of the freeze note;
-   draft 2, awaiting the advisor's approval; the same words as the IRB, `VRDS2_Hypotheses_Draft.docx` and the OSF answers).
+   approved by Dr. Eskridge, the researcher told on 11 November 2026; the same words as the IRB, `VRDS2_Hypotheses_Draft.docx`
+   and the OSF answers, except "group" in D4, which leaves every copy at the OSF Update). Section 3.0 there maps each one to
+   its rows, fields, test and figure (since 11 November 2026).
    The earlier H1-H13 are kept for possible future use; each one's place in the main set is in the mapping table there.
+
+**On the first day with real data** follow `Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md` section 2, "The first day with real
+data" (export, `npm run data:ai-copy` before any AI tool sees the data, the records that are not Prolific participants, the
+version table, the counts). Pay is decided with `docs/DAILY_PAY_CHECK.md`, never in the analysis.
 
 **The document carries no stamp of the study code's version** (`SHAPE_VERSION` lives only in the browser's sync
 state; found 27 September 2026). Date records by `completed_at`.
@@ -54,8 +60,10 @@ you?" or `credit:list` is history**; nobody ever took part under it. No score ch
   researchers and 22 days to participants: both numbers are right.
 - **`build-and-run.sh` stops without the completion code** (it only warned while the student door could run without it).
 - **Testing:** use a made-up Prolific ID in the link: `/prolific?PROLIFIC_PID=<24 letters a-f and digits>&condition=CVR_APA`.
-- **Not done on purpose:** the OSF answers, hypotheses, freeze note and analysis plan wait for the IRB's approval (docs/ANALYSIS_AND_FIGURES_PLAN.md and
-  docs/PREREGISTRATION_FREEZE.md still mention students). The full plan: `PLAN_Prolific_only_code_change.md`.
+- **Not done on purpose:** the OSF answers, `VRDS2_Hypotheses_Draft.docx`, `VRDS2_OSF_Preregistration.docx` and the freeze note
+  (`docs/PREREGISTRATION_FREEZE.md`) wait for the IRB's approval and change at the OSF Update (they still mention students and
+  "group"). The code documentation and the data files were brought up to date on 11 November 2026 (`PLAN_Documentation_after_Prolific_only.md`):
+  the analysis plan keeps its registered hypothesis words with a dated "pending" note. The full code plan: `PLAN_Prolific_only_code_change.md`.
 - **Checked:** `validate:session` C13-C16, `validate:attention` T4, T9, T10, `validate:conditions` N25, N26, `validate:journey` J14, J18, `validate:pay`
   Y6, `npm run test:load` L5 (600 people, no email on any record, an email refused on all 10 routes).
 
@@ -567,81 +575,9 @@ answer "implement Step 0". No score, stored field or screen of a working run cha
   every answer, the condition and the stage. Throw-away databases dropped; the test browser's own address not used.
 - **Deploying:** restart the server (build-and-run.sh does): the grouped turns are server code.
 
-## Two doors (6 October to 10 November 2026; HISTORY: see "Prolific only" above)
+## Two doors (6 October to 10 November 2026): history, moved
 
-The researcher: two versions, "the first version is as it is right now (log in through email), and the other one will be
-the Prolific version", because he also wants FIT students and employees. Plan answers "1-A" (one website, two doors),
-"2-A" (each door balanced on its own), "4-A" (the Prolific demographic page without the email), and for Step 1 "1-A" (a
-returning Prolific person continues with no question; **since 7 October 2026 "1-B": on ANOTHER device they are asked their
-age**, see the next section), "2-A" (a welcome page with the ID and Start), "3-A" (deploy only
-after Step 4, with a database backup first). **Participants see it** (HOW_TO_ANALYZE 4.9, 9.8).
-
-- **The doors** (`recruitment.ts`; the server's twin `server/recruitment.js`, C13 holds them together):
-  https://moonlander.fit.edu is the university door, **unchanged**; `/prolific`, or a `PROLIFIC_PID` in the link, is the
-  Prolific door. Once somebody is known, their key decides; before that a Prolific address wins over a condition nobody
-  owns yet (the live check found an unowned university condition keeping a Prolific arrival at the wrong door).
-- **The key.** The browser carries "the participant's key" where it always carried the email (`DirectoryEntry.email`,
-  `vrds_pending_email`, every owner): an email, or a Prolific ID (letters and digits, 8-64; Prolific's help pages do not
-  state the format, in practice 24 hex; an email always has an @, so the two never mix). The SERVER stores a Prolific ID
-  as `prolific_pid`, never in `email`: `whoIs(key)` in every route (`/:key/...`), `identityOnInsert` on a new record
-  (with `recruitment_source`), `prolificIdsFrom` for Prolific's `STUDY_ID` / `SESSION_ID` (`prolific_study_id`,
-  `prolific_session_id`; never the study's own `participant_id`). The API client sends `prolificPid`, never `email`.
-- **The Prolific first page** (`ProlificStartScreen.tsx`): the university page's welcome and study name word for word,
-  "Your Prolific ID" with the ID, and Start (new), "Welcome back" + Continue where I stopped (no question), or "You have
-  already finished" (since 7 October 2026 with "Your age" to see the completion code again: "The Prolific completion code"); a paste box when the link has no ID (written into the address). It waits
-  for the server check before looking the person up (the live check: asked earlier, a finished person read "new").
-- **"A little about you"** in the Prolific door: four questions, no email (`askEmail={false}`); the record names its key
-  as `prolificPid` with the door and Prolific's two ids. The university door: five questions, as before.
-- **Balance per door** (`server/conditions.js`): `tally(..., door)`; the landing page sends its door, the arrival row
-  keeps it (`recruitment_source`), a Prolific arrival is linked by `linked_prolific_pid`; a record or arrival from before
-  has no door and counts as the university's. The count page shows one table per door.
-- **The database rules** (`server/db.js`): "one email = one person" now covers only records WITH an email (a partial
-  index; the old one treated "no email" as one shared value and would refuse the second Prolific person), plus "one
-  Prolific ID = one person". The old index is replaced at startup, before the server listens; **without that swap the
-  server could not start** on a database with the old rule (a deliberate break proved it).
-- **Found and fixed on the way:** a queued save found its owner only when it was SENT, so a save waiting for the server
-  could land on whoever started next on that computer (now stamped when made: `sendOrQueue`, `saveSection(path, data,
-  owner)`); a second person on a shared computer would have reused the first one's session id, refused by the unique
-  `participant_id` rule - a DIFFERENT Prolific ID in the link now sets the other person's run aside before the page reads
-  anything (`makeRoomForAnotherProlificId`; the machine's files, the list of people and the unsent saves stay).
-- **"Not you?" on the university door** (the audit, the researcher's "4-Yes"; `NotYouLink.tsx` in App): on a shared
-  computer the browser reopened the first student's run or thank-you page and a second student could not start. When the
-  page OPENS with a university run in the browser, a thin strip at the top (above the progress bar, so it covers
-  nothing; floating at the bottom it covered Block 1's first button in the live check) says "This study is open for
-  w•••@my.fit.edu. Not you?" (`maskEmail`); it goes once the person moves to another page (the stage changes) or with ×.
-  "Not you?" asks to confirm, then `setAsideThisBrowsersRun()` (the rule a different Prolific ID uses: the machine's files,
-  the list of people and the unsent saves stay) and the plain university address opens afresh; the first student
-  continues later with their email and age. Not shown on the page that reloads right after somebody proved who they are
-  (`loginKindNoted()`, read before the flow clears it). Never in the Prolific door. Nothing recorded.
-- **The audit of 6 October 2026** (the researcher: "fully audit your work ... from several perspectives"): seven findings,
-  answers "1-Yes, 2-A, 3-Yes, 4-Yes". Fixed: a resumed Prolific person's condition file lost its door (F1; the record was
-  right, `major_info_and_scores.condition` said "university"); `quality.compensation_eligible` is documented as the
-  university gift-card rule, never a Prolific pay verdict (F3); the Prolific first page uses the ID the browser knows when
-  the link lost it (F4); `connectLate` reads the entry again after its wait, so a completion made meanwhile is sent (F5);
-  an unowned condition from the other door is dropped either way and the address forgets it (F6); every test run, also
-  Prolific's Preview, uses `?condition=` and test records are deleted before launch (F7, the launch list). **F2 was the
-  next step, fixed on 7 October 2026** (the next section): `/api/participants/lookup` returned the WHOLE record (answers,
-  age) to anyone who knew a key, so "email and age" was weaker than it looked and a Prolific ID alone opened a record. C12 and C13 extended, C14 new;
-  12 breaks, 12 caught. Live: the doors both ways, "Not you?" (start afresh, the first student's record intact, a new
-  session id, the first student back in with email and age), the strip gone on moving on, a resumed Prolific person's
-  condition file "prolific", a link without the ID recognised; three found and fixed in that check: the floating note
-  covered Block 1's first button (now a strip above the progress bar), it asked "Not you?" right after a sign-in, and a
-  phone broke the masked email mid-word.
-- **All five steps built on 7 October 2026** (Steps 2-3, the consent page and the second number row; Step 4, the end page
-  with the code; Step 5, the daily pay check): the next three sections. Left before Prolific: the ethics board, the
-  deploy with the code in the server's `.env`, and one Prolific Preview run to the end (docs/PROLIFIC_CONVERSION_PLAN.md 5). The visit log says
-  `arrived_with_their_prolific_id` in the Prolific door. `SHAPE_VERSION` "2026-10-06-two-doors"
-  (`major_info_and_scores.condition.recruitment_source`).
-- **Checked:** `validate:session` C13 (new) with C2, C8 and C11 taught the new routes and page; `validate:conditions` N25
-  (new) with N3, N6, N9, N10, N23 and N24 taught the doors; `npm run test:load` L5 (100 students and 100 Prolific people
-  at once: 25 per condition inside each door; every Prolific record under `prolific_pid` with no email) and L6 (the rule
-  swap on a copy with today's rule; the old record kept). 17 deliberate breaks, 17 caught. Live on the built site with a
-  throw-away database: the university door unchanged; a Prolific link opened the Prolific first page; Start, consent,
-  four questions, Block 1, and a record with `prolific_pid`, no email, the door and both ids; a refresh continued; a
-  second browser with the same ID continued with no question and the first one locked ("Your newest answers will be
-  brought here."); a different Prolific ID on that browser started fresh (new session id, the machine's files kept); the
-  paste box (a wrong ID refused calmly); a finished ID read "You have already finished"; a 375px phone, light and dark; the
-  count page with both doors. All test storage and databases removed.
+Moved word for word to `docs/HISTORY_OF_CHANGES.md` on 11 November 2026; nothing in it describes today's study.
 
 ## Privacy, the Prolific consent page and the second number row (since 7 October 2026)
 
@@ -834,24 +770,9 @@ code) worked end to end and found three things, all fixed. **Participants see 2 
   did not (both saved as shown), the bar said "After the feedback", "You are nearly there", then "Done" after sending,
   after a reload and on a 375px phone; the record's rushed list held only real parts and the short pages apart.
 
-## The study's length and the Prolific price (7 October 2026)
+## The study's length and the Prolific price (7 October 2026): history, moved
 
-**Since 9 November 2026 the price is $7.00 ($12 an hour, 104 people; see "Prolific only"); the figures below are history.** The researcher: "make the consent form in both doors that the minimum time for this study is 35 minutes", and on
-Prolific's page he set **35 minutes and $8.75 ($15.00 an hour)**; with the 33.3% academic fee each finished person costs
-$11.67 (80 people = $933.33 on Prolific's page, no VAT), and the budget is **$1,000** (at most 85 people).
-**Participants see it** (HOW_TO_ANALYZE 4.9).
-
-- **Both consent pages** say "The whole study takes **at least 35 minutes**" (one shared sentence; it said "about 40 to 55
-  minutes"). `CONSENT_VERSION` "2026-10-07-35-minutes", `PROLIFIC_CONSENT_VERSION` "2026-10-07-prolific-35-minutes"
-  (stored with every consent record). docs/PROLIFIC_CONSENT_FOR_ETHICS_BOARD.md updated; **the university consent changed
-  too, so ask the ethics board** whether that change needs approval. The university gift-card rule (35 active minutes)
-  was unchanged; since 16 October 2026 there is no gift card and no minutes rule (course credit on completion).
-- Prolific shows a maximum time of 67 minutes at a 35-minute estimate and asks for an additional payment when the real
-  median exceeds the estimate: the Preview run and the first batch should be read for the median.
-- **Checked:** `validate:attention` T10 (the sentence in both doors, "40 to 55" gone, both stamps moved); 4 deliberate
-  breaks, 4 caught. Live on the built site: both doors' consent pages, and the record saved the new stamp.
-- **Pay by progress** (the advisor's idea, 7 October 2026): analysed, not built; the researcher's concerns and the options
-  are in the deck for his advisor. Nothing in the study pays partial amounts.
+Moved word for word to `docs/HISTORY_OF_CHANGES.md` on 11 November 2026; nothing in it describes today's study.
 
 ## Reading checks at random places, and Prolific's two-or-more rule (14 October 2026)
 
@@ -887,7 +808,7 @@ no attention sentence repeated), "4-yes", and the Prolific consent says "will be
   `prolific_failed_two_or_more_attention_checks`, and the major copy (the two-row fields `instruction_checks_failed` /
   `failed_both_instruction_checks` are gone; nobody took the study under them). The university door: three checks, all
   needed for the gift card until 16 October 2026; since then a check answered wrongly is a careful-participation sign only
-  (see "The university door: course credit instead of the gift card").
+  (see docs/HISTORY_OF_CHANGES.md, "The university door: course credit").
 - **The daily pay check** (`tools/pay_check.cjs`): a new **REJECT** group, after PROBLEM (a record not finished is never
   judged on its checks) and before LOOK FIRST: two or more failed, with Prolific's wording "Failed attention checks: two
   or more of the study's four attention checks (each said exactly which answer to choose) were not answered as
@@ -917,80 +838,9 @@ no attention sentence repeated), "4-yes", and the Prolific consent says "will be
 - **Deploying:** the page only (the server does not read the checks); the IRB attachments and the OSF text describe the
   new checks (the researcher's IRB modification of 14 October 2026).
 
-## The university door: course credit (16 October to 10 November 2026; HISTORY: see "Prolific only" above)
+## The university door: course credit (16 October to 10 November 2026): history, moved
 
-The IRB modification of 14 October 2026 (submitted the same day; the OSF preregistration too) replaced the university door's
-$5 gift card with course credit for CSE4301/CSE5290. The researcher: "modify the Student door first", plan answers "1-yes"
-(credit is given on completion; behaviour is recorded for the researcher only), "2-yes" (careful participation = the four
-OSF robustness signs), "3-yes" (the thank-you line), "4-yes" (late finishers and non-Florida Tech emails are kept off the
-instructor's list and shown to the researcher), and earlier "1-A" (build now, **deploy only after the IRB approves**), "2-Yes
-keep, and you can turn it into course credit verdict", "3- Yes" (the course-credit email tool). **Participants see it**
-(HOW_TO_ANALYZE 4.9). No score changed. The Prolific door is untouched (its consent changes are the next step).
-
-- **The consent page, university door** (`ConsentPage.tsx`, `CONSENT_VERSION` "2026-10-16-course-credit"): word for word the
-  Florida Tech consent submitted to the IRB - a "Course Credit" panel (50 points averaged into the assignments grade, an
-  alternative assignment for the same 50 points, "Your instructor is told only whether you completed the study, never your
-  answers."), "What completes the study: Reach the end." (the gift card's five rules are gone, the 35 active minutes among
-  them), the email "to give your course credit", "Questions with answer choices need an answer before you can move on ...
-  you may stop at any time." (it said "you may skip questions", untrue), withdrawal "does not affect your grade", and two tick
-  boxes ("... receive my course credit." and "I understand that the course credit is given when I complete the study, and
-  that I may complete an alternative assignment instead."). `compensation_rules_agreed` keeps its name (it now records the
-  second box). `validate:attention` T10 compares the page with the submitted text; live, all 33 paragraphs and 12 headings of
-  the submitted .docx were found on the page.
-- **Other words participants see:** the start page "Please use your Florida Tech email address. It is used only to save your
-  place and to give your course credit."; the demographic page's email help (shown only when the start page did not ask)
-  "... to give your course credit when you finish. Nothing else."; the results page's "One last step" card "Answering them
-  completes the study, which you need for your course credit."; and on the thank-you page, **university door only**, "If you
-  are taking part for course credit, your completion is recorded." (`data-course-credit-line`; the Prolific door shows its
-  code card instead). No "$5", "gift card" or "active minutes" is left on any page a participant sees (J18).
-- **The verdicts** (`buildQuality` in dbShape.ts, now also given `blocks1to4` and the door by storage.ts):
-  `quality.course_credit_earned` = `completed_the_study` in the university door (null in the Prolific door) and NOTHING else
-  decides it; `quality.careful_participation` (for the researcher only, never shown, never used for credit or pay) is false
-  when any of the four OSF robustness signs is present - answered very fast in Blocks 1-3 (`blocks_1_to_4_checks.
-  answered_very_fast`), two or more scenarios under 15 seconds, the same answer to every feedback rating, an attention check
-  answered wrongly - null when a sign cannot be read, true otherwise; `careful_participation_reasons`, `_cannot_tell` and
-  `_signs` (each sign with `flagged` true / false / null and a detail). `active_minutes`, `study_length_estimate_minutes` (35,
-  `STUDY_LENGTH_ESTIMATE_MINUTES`, was `REQUIRED_ACTIVE_MINUTES`) and `under_the_estimated_length` are information. **Gone:**
-  `compensation_eligible`, `reasons`, `rule`, `required_active_minutes`, `met_time_requirement` (no real data was made under
-  them). The rushed parts, the attention fields and the Prolific fields are unchanged. `SHAPE_VERSION`
-  "2026-10-16-course-credit".
-- **The course-credit list** (`npm run credit:list -- "Course credit/<date>" [--deadline 2026-12-12]`, `tools/credit_list.cjs`;
-  it reads `participants.json` with the pay check's own reader): `CREDIT_LIST.txt` for the instructor, the emails of the
-  students who finished ("Study Completed") by the end of the deadline day in Melbourne, Florida (EST or EDT, whichever
-  applies) with a Florida Tech address (@fit.edu or a subdomain), one per line and NOTHING else (it stops, writing nothing,
-  if a line would hold anything but one email); `CREDIT_CHECK.md` for the researcher only: each student's finishing time and
-  careful participation, the ones to LOOK AT (finished late, or not a Florida Tech address: he decides), and who did not
-  finish. Careful participation never takes anybody off the list. Records with a Prolific ID are skipped; the console prints
-  counts only, never an email; `Course credit/` is git-ignored. Never run it through an AI tool: the files hold emails.
-- **Checked:** `validate:attention` T4 (credit = completion only, in the university door only; each sign and its reason; "cannot
-  tell"; the gift-card fields gone; storage.ts passes `blocks1to4` and the door) and T10 (the submitted consent text, the
-  version stamp); `validate:dbshape` D70 (the rushed rule never touches the credit); `validate:journey` J9, J14 and new J18 (no
-  gift card, $5 or active minutes on any page a participant sees; the four sentences; the thank-you line in the university
-  door only); `validate:session` C16; new **`npm run validate:credit`** (`tools/validate_credit_list.cjs`, Z1-Z5: the groups,
-  the Florida deadline in winter and summer time, the list holding emails only, no email on the screen, the command end to
-  end; in the chain before `validate:position`; a check that stops is a failed gate, never a crash). 19 deliberate breaks,
-  19 caught (two only after Z2 and Z3 learned to turn a crash into a failure). Live on a separate test address (port 5174,
-  its storage restored exactly, nothing written to the database): the start page, the consent page against the submitted
-  .docx, the demographic page, and the thank-you page in both doors (the line in the university door only; a 375px phone,
-  no sideways scroll).
-- **Deploying:** only after the IRB approves the modification. The page only (the server does not read these fields).
-- **The "At Least 35 Minutes" request box** (the same day; the researcher: "make a new separate box ... ask the student not
-  to rush ... answer genuinely", then "make it general for everything", "1-OK 2-yes"): in the Prolific door careful work is
-  part of being paid; in the university door it is optional, so one grey box asks students for the same care
-  (`TakeYourTime` in ConsentPage.tsx, `data-take-your-time`, right after "The whole study takes at least 35 minutes" and
-  before "You Can Stop and Come Back"; **university door only**): "At Least 35 Minutes" with an "A request" tag, four short
-  lines with their own icons - "Take your time. Please do not rush through the pages." / "Read carefully. Read each page fully before you answer." / "Answer as you genuinely would, not as you think you should." / "A few short questions check that you are reading. Please answer them as they ask." / "Careful, genuine answers are what make this research meaningful. This is only a request: your course credit is given when you complete the study." The reading-check line ("2-yes") tells students what Prolific's consent
-  tells its people (that the checks exist, never what they ask), so "an attention check answered wrongly" means the same in
-  both groups. **Never in the box:** positions, roles or who decides for whom (the researcher: no hint of the position
-  effect before the main study), values, consistency, keeping or changing a choice, the options ("read all the options"
-  would change the card-order effect, hypothesis C7, in one group only), "one sitting". `CONSENT_VERSION`
-  "2026-10-16-take-your-time"; nothing new is recorded. **The researcher sends it to the IRB as a small change to the pending
-  modification** (`Downloads/Consent forms/Ready to upload (16 October)`: the clean form, the form with the box highlighted,
-  both as PDF, and a note for the IRB office). Checked: T10 (the words letter by letter, four lines, grey with "A request",
-  shown once and in the university door only, between the length and "You Can Stop and Come Back", the credit line, no
-  design word); 13 deliberate breaks, 13 caught. Live (port 5174, storage restored exactly, nothing written to the
-  database): the box in place in dark and light mode and on a 375px phone (no sideways scroll); none in the Prolific door;
-  agreeing saved `consent.version` "2026-10-16-take-your-time".
+Moved word for word to `docs/HISTORY_OF_CHANGES.md` on 11 November 2026; nothing in it describes today's study.
 
 ## The "Ranked N - why" box tells the truth (23 October 2026)
 
@@ -1023,28 +873,9 @@ OSF texts), correct the text inside it; plan answers "1-A, 2-A, 3-A". **Particip
   (card 5, Seal your apartment, gain 30, is not the lowest: card 6 has 20). **The dissertation's screenshot of that card shows
   the old, false sentence: retake it.**
 
-## Prolific: planned, not built (since 1 October 2026)
+## Prolific: how it was planned (1 to 7 October 2026): history, moved
 
-**Decided 6 October 2026** (the researcher, after his advisor): TWO versions on one website - the email version as it
-is for FIT students and employees at https://moonlander.fit.edu, and a Prolific version at
-https://moonlander.fit.edu/prolific ("1-A"); the conditions balanced within each group on its own ("2-A"); the second
-"pick the number" row in the Prolific version only ("3-B"); the Prolific demographic page without the email only
-("4-A"); `Prolific docs/` in .gitignore ("5-yes", done); the first Prolific batch 40 places ("6-40"). **No pilot**
-(budget: every participant's data is kept). **Every Prolific submission is "Manually review"** (one completion code,
-on the server only); every day the researcher exports the participants collection (Compass, JSON) and Prolific's
-submissions file into `Prolific docs/daily/`, and Claude says which Prolific IDs to pay, which to look at and which did
-not finish, by Prolific's own valid reasons only. Build order: Step 0 (done, above), Step 1 the two doors and the
-Prolific ID (done, "Two doors" above; it took the demographic page without the email), Step 2 the consent page and Step 3
-the number row (both done 7 October 2026, with the privacy fix), Step 4 the end page with the code and Step 5 the daily pay check
-(both done the same day: "The Prolific completion code", "The daily Prolific pay check").
-
-The study will be recruited on Prolific, but only AFTER the four conditions are built and tested (the researcher's
-order, 1 October 2026). The full plan - Prolific's rules with their sources, the answers for Prolific's study form,
-every place the email is the participant's key, the consent, demographics, completion-code and attention-check changes,
-the checks to add, the audit and the decisions still open - is `docs/PROLIFIC_CONVERSION_PLAN.md`. Read it before
-changing identity, consent, the demographic page, the thank-you page, attention checks or any payment wording, and
-build the conditions so they read "the participant's key" rather than the email. Never commit `Prolific docs/`: it
-holds the Prolific completion code.
+Moved word for word to `docs/HISTORY_OF_CHANGES.md` on 11 November 2026; nothing in it describes today's study.
 
 ## One folder, two environments (since 23 September 2026)
 
@@ -1139,7 +970,7 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 ```
 
 `validate:block5` must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED`
-(since 24 September 2026), `ALL DATABASE GATES PASSED`, `ALL VCI_ALL GATES PASSED`, `ALL JOURNEY GATES PASSED` (both since 28 September 2026), `ALL SESSION GATES PASSED` and `ALL ATTENTION GATES PASSED` (both since 29 September 2026), `ALL CONDITION GATES PASSED` (since 1 October 2026), `ALL PAY CHECK GATES PASSED` (since 7 October 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
+(since 24 September 2026), `ALL DATABASE GATES PASSED`, `ALL VCI_ALL GATES PASSED`, `ALL JOURNEY GATES PASSED` (both since 28 September 2026), `ALL SESSION GATES PASSED` and `ALL ATTENTION GATES PASSED` (both since 29 September 2026), `ALL CONDITION GATES PASSED` (since 1 October 2026), `ALL PAY CHECK GATES PASSED` (since 7 October 2026), `ALL AI-SAFE COPY GATES PASSED` (since 11 November 2026). Since 23 September 2026 `validate:position` runs LAST in that chain: it failed on purpose
 until 26 September 2026 (it passes since Fix 6, see below), and while it ran in the middle the `&&` stopped everything after it, so the three lines
 above were never printed and four suites never ran. It is the guard on the scoring model and on what reaches MongoDB; treat a failure there as
 a blocker, not a warning.
@@ -2212,14 +2043,16 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | Command | What it guards |
 |---|---|
 | `validate:block5` | The scoring model end to end. Runs the chain below and must print `ALL TESTS PASS`, `ALL APA CHECKS PASS`, `ALL PROFILE GATES PASSED` and `ALL DATABASE GATES PASSED` |
-| `validate:dbshape` | What reaches MongoDB. 70 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6), VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65), which button took them from the results page to the feedback (D66), and Stability_all with the top-value choices, recounted by hand (D67), and the profile after every scenario tracked like VCI_all, in one place (D68, since 30 September 2026), and Stability's two parts recounted by hand (D69, since 2 October 2026), and only the six real parts called rushed, never touching the course credit (D70, since 7 October 2026). `--dump` writes a full simulated document |
+| `validate:dbshape` | What reaches MongoDB. 70 gates, including the position rows and the prediction rows recomputed by hand (D45–D48), the gathered copy (D49), the stored MCF (D50), the per-scenario profile (D51), the Blocks 1-4 checks (D52), the readable card order (D53), the two fit scales kept apart (D54), every value move (D55), the saved shortfall (D56), performance over the decisions only (D57), what the wish changed in values (D58) and in performance (D59), the company value shown (D60), the company stance (D61), whether Stability measured anything (D62), how close the top two values were (D63) and whether an MCF reading could be opened in that scenario (D64, false in scenario 6), VCI_all with its running fits, saved against rebuilt and recomputed by hand (D65), which button took them from the results page to the feedback (D66), and Stability_all with the top-value choices, recounted by hand (D67), and the profile after every scenario tracked like VCI_all, in one place (D68, since 30 September 2026), and Stability's two parts recounted by hand (D69, since 2 October 2026), and only the six real parts called rushed, never touching pay (D70, since 7 October 2026). `--dump` writes a full simulated document |
 | `validate:vciall` | VCI_all and the hidden running values (since 28 September 2026): the keep rule unchanged by the refactor (A1), the running rule (A2), running values = the study's through scenario 4 (A3), no choice judged on its own move (A4), blind 50 (A5), derived level edges (A6), a value-follower scores 100 (A7), decisions' running fit = the study's fit and the wish and veil move only the running values (A8); since 29 September 2026 Stability_all: its decisions' part equals Stability's swaps (A9), which steps count (A10), a best-fit picker 100 and not measured, the kinds in order (A11), the top-value choices recounted by hand (A12); since 2 October 2026 Stability_all's difference part recounted by hand (A13). Prints the echo and the screen-against-yardstick shares, and Stability / Stability_all / top-value choices by kind |
-| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, an honest gift-card line, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12); since 4 October 2026 the results page explains itself: the scores taught, the 4-decisions / 6-scenarios box, traffic-light level badges on level bars built from the code's own levels, no random mark (J15); an ⓘ beside every level badge opening its own level ladder (J16); since 3 October 2026 the first page's study name and welcome, and the performance panel's title row on a phone (J14); since 7 October 2026 the progress bar on the thank-you page says "Done" (J17); since 16 October 2026 no gift card, "$5" or active-minutes rule on any page a participant sees, the course-credit sentences, and the thank-you line in the university door only (J18); since 23 October 2026 one circle per scenario on the progress bar, at the end of Block 4 and on the page before the main study, counted from the scenario list, with the same number in the screen-reader label (J19); the five steps on the page before the main study true for every condition and scenario, never naming a page some participants do not get (J20); since 24 October 2026 one pace rule for the thank-you note and the database's careful-participation sign, at the registered 2 seconds (J21), the results page previewing the five tab names, a counted chart number, room for every bar label and two general lines on the page before the main study (J22), and "moved the most" naming every value in a tie (J23), and the time chart's two lines, the header's working time and the saved span in hours (J24) |
-| `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9); since 4 October 2026 "Is English your first language?" (Yes / No, required, kept through a resume) and the country asked as "Where are you from?" (C11); since 6 October 2026 the server check (once in development, live again and again), a server that answers late getting the participant's record first, the queue that no longer leaves a save for the 15-second retry, and the 10 s / 5 s waiting limits (C12); the two doors: the address, the Prolific ID never an email (page and server agree), sent as prolificPid and stored as prolific_pid, every save to the owner it was made for, another person's run set aside, the Prolific first page and the four-question page, the database rules swapped safely (C13); "Not you?" on a shared computer (C14); since 7 October 2026 privacy: the lookup gives only the status, the claim checks the age before it hands back the details and the run, no write without the browser's id, no cross-site access, the age never compared on the page (C15); the Prolific completion code: only for a finished Prolific record to the browser holding it, from .env only, never in the page's code, a button and never a jump, after the age on another device (C16) |
-| `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): since 14 October 2026 the two reading checks in the researcher's approved words with each answer order and each place (after Block 1-3, after scenario 1-3) about equally over 4,000 pretend participants, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); until 16 October 2026 the gift card needed all three, and since then the course credit is completion only, in the university door only, with careful participation read from the four OSF signs, each with a reason or "cannot tell"; each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens (no repeated line), the placement rules over every pretend plan, the flow and Block 5, and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2); since 7 October 2026 the Prolific door's two number rows, one per section, two different numbers, the university plan's fingerprint, and since 14 October 2026 all four checks counting, two or more failed the flag (T9), and the consent page of each door, "will be rejected", and since 16 October 2026 the university page word for word the Florida Tech consent submitted to the IRB, plus the "At Least 35 Minutes" request box (its words, students only, its place, grey with "A request", no word about the study's design) (T10) |
-| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20); since 3 October 2026 Baseline's cards without the fit line and the ranking reasons, and one confirmation page with "How sure" for every choice (N21); since 6 October 2026 many people at once: a burst served from one reading in turns, person by person equal to one at a time (N22), the landing page asking four times with one arrival id and never picking at random on the live site (N23), every person counted once while their record is being made (N24), and each door balanced on its own (N25); since 7 October 2026 somebody who already finished gives back the condition their browser was just given (N26), and APA_Only's box saying the option still gives less on the value it serves most exactly when it does (N27), and the APA list heading "These options are built on X", always true (N28) |
-| `test:load` | Many people at once, on the REAL server (since 6 October 2026; not in the chain: needs MongoDB on this computer). Starts `server/index.js` itself on port 4100 against a throw-away `vrds_load_test_<time>` database (always deleted), sends 100, 100 and 200 pretend people in the same instant and checks no request refused (L1), everybody saved with their own session id and every save landed (L2), the conditions exactly even in every burst (L3), nobody waited 3 s for a condition (L4), and since the two doors 100 students and 100 Prolific people at once, 25 per condition inside each door with every Prolific record under prolific_pid and no email (L5), and the database rule swap on a copy with today's rule (L6), and since 7 October 2026 privacy on the real server: the lookup gives only the status, a wrong age is refused, the right age brings no analysis, the create route answers "ok", a write without the browser's id is refused, no cross-site header (L7), and the Prolific completion code with a made-up code: not before the completion, only to the holding browser, never for a university key or in another answer, never stored (L8). Run after any change to the server or the landing page |
+| `validate:journey` | The charts page's numbers (since 28 September 2026): consistency points = VCI_all's parts and average to it (J1), the fallback for old runs (J2), the veil row by the final rule and the study's distance (J3), the guess card (J4), reconsidering with scenario 6 split (J5), the deck's five positions (J6), Block 4 (J7), and from the source: every card reads all six, no Finish button, a finished participant opens on the thank-you screen (J8); the way on to the feedback: "1 step left" instead of "Complete", the card under the score boxes, the bar on the results page (the charts page, now after the feedback, has no way to it), every button recorded, no leave warning, Feedback "next" in the progress bar and the rail sliding to it on a phone (J9); the MPF card: the database's own numbers, the gap, a first choice only when it changed, scenario 6 as shown, the favourite = the best fit, and scenario 6 a slate bar apart from the positions (J10); since 30 September 2026 the value line moves in scenarios 5 and 6 on the running values, with one shared "after" for the line, the radar and the results page (J13); the results page's three score families in order and in their colors, each "all six" beside its "four decisions", the "not tested" notes, and the top-value choices on no page (J11); since 29 September 2026 the charts after the feedback: none on the results page, the thank-you page's five tabs after the feedback is sent, every chart card in exactly one tab, and plain words on the results page (J12); since 4 October 2026 the results page explains itself: the scores taught, the 4-decisions / 6-scenarios box, traffic-light level badges on level bars built from the code's own levels, no random mark (J15); an ⓘ beside every level badge opening its own level ladder (J16); since 3 October 2026 the first page's study name and welcome, and the performance panel's title row on a phone (J14); since 7 October 2026 the progress bar on the thank-you page says "Done" (J17); since 16 October 2026 (Prolific only since 10 November 2026) no gift card, "$5", active-minutes rule or course credit on any page a participant sees, the results card naming the completion code, and no course-credit line on the thank-you page (J18); since 23 October 2026 one circle per scenario on the progress bar, at the end of Block 4 and on the page before the main study, counted from the scenario list, with the same number in the screen-reader label (J19); the five steps on the page before the main study true for every condition and scenario, never naming a page some participants do not get (J20); since 24 October 2026 one pace rule for the thank-you note and the database's careful-participation sign, at the registered 2 seconds (J21), the results page previewing the five tab names, a counted chart number, room for every bar label and two general lines on the page before the main study (J22), and "moved the most" naming every value in a tie (J23), and the time chart's two lines, the header's working time and the saved span in hours (J24) |
+| `validate:session` | Continue where you left off, and one place at a time (since 29 September 2026): the server's one-browser rule (C1), every write route asks it and the claim checks the age (C2), Block 5's progress comes back exactly with the same fit numbers (C3) and only for its owner and profile (C4), a failed save waits and is sent once, in order, even with saves arriving as the queue drains (C5), a 409 from another browser locks the page and sets the queue aside (C6), the tab rule and the progress sends (C7), and from the source: Blocks 2, 3 and 5 save and restore with an owner, the claim comes first, the lock screen before any page (C8); since 30 September 2026 a pause after a block is saved as the part it leads to, so a refresh there never restarts the finished block (C10), and the country question: the list, the ranking, the bold part, and the country kept through a resume (C9); since 4 October 2026 "Is English your first language?" (Yes / No, required, kept through a resume) and the country asked as "Where are you from?" (C11); since 6 October 2026 the server check (once in development, live again and again), a server that answers late getting the participant's record first, the queue that no longer leaves a save for the 15-second retry, and the 10 s / 5 s waiting limits (C12); Prolific's link read, a Prolific ID never an email (page and server agree), sent as prolificPid and stored as prolific_pid, every save to the owner it was made for, another person's run set aside, the first page and the four-question page, the database rules swapped safely (C13); since 10 November 2026 only a Prolific ID: the server refuses anything else on every route, no email reaches the database, a browser holding an email run starts fresh, no condition before an ID exists, the main address opens the paste page, no student page or word left in the code (C14; until then C14 checked "Not you?"); since 7 October 2026 privacy: the lookup gives only the status, the claim checks the age before it hands back the details and the run, no write without the browser's id, no cross-site access, the age never compared on the page (C15); the Prolific completion code: only for a finished Prolific record to the browser holding it, from .env only, never in the page's code, a button and never a jump, after the age on another device (C16) |
+| `validate:attention` | The attention checks and the two deleted between-block pages (since 29 September 2026): since 14 October 2026 the two reading checks in the researcher's approved words with each answer order and each place (after Block 1-3, after scenario 1-3) about equally over 4,000 pretend participants, the feedback number only two to five and never among CVR/APA (T1); drawn once, saved, per participant (T2); right means exactly what was asked (T3); careful participation read from the four OSF signs, each with a reason or "cannot tell", and no course-credit field since 10 November 2026; each miss with a reason, the check's screen never a rushed block, the major copy (T4); the feedback row never in the feedback record (T5); the two pattern flags, not for pay (T6); chance 1 in 112 (T7); the screens (no repeated line), the placement rules over every pretend plan, the flow and Block 5, and the consent page from the source (T8); the deleted pages' files made exactly as the pages made them for 300 pretend participants (P1) and still written, sent and carried (P2); since 7 October 2026 the two number rows, one per section, two different numbers, the plan's fingerprint, and since 14 October 2026 all four checks counting, two or more failed the flag (T9), and since 10 November 2026 the consent page against docs/PROLIFIC_CONSENT_FORM_TEXT.txt (the form sent to the IRB) in both directions, its version stamp, one box, the three links, the IRB contact, the two coloured boxes, no student word (T10) |
+| `validate:conditions` | The four conditions and the landing page (since 1 October 2026): one list on the page and the server (N1), the fewest wins and ties are fair (N2), who counts - finished, working 2 h, arrived 30 min; drop-outs, tests by address and offline runs never (N3), 40 arrivals at once give 10 each (N4), the same arrival gets the same answer (N5), the server sets the condition once and links the arrival (N6), every spelling of the address and the rest of it kept (N7), the browser file, the first condition kept, the arrival id sent once (N8), the flow from the source: landing first, never saved, the two demographic fields, a return keeps its own (N9), and the copy in major_info_and_scores (N10); since the same day condition 2's CVR Rejection page: its automatic moves (N11), the page and the flow from the source, APA unchanged for the others (N12), and its database rows (N13); condition 3's straight-to-APA flow: its rules (N14), the flow and the page from the source (N15), and the database (N16); condition 4's confirmation page: its rule (N17), the flow and the page from the source (N18), and the database and the feedback (N19); the four-condition audit of 2 October 2026 (N20); since 3 October 2026 Baseline's cards without the fit line and the ranking reasons, and one confirmation page with "How sure" for every choice (N21); since 6 October 2026 many people at once: a burst served from one reading in turns, person by person equal to one at a time (N22), the landing page asking four times with one arrival id and never picking at random on the live site (N23), every person counted once while their record is being made (N24), and since 10 November 2026 only Prolific people counted: a record or arrival from the time of the two doors never counts, one table on the count page (N25); since 7 October 2026 somebody who already finished gives back the condition their browser was just given (N26), and APA_Only's box saying the option still gives less on the value it serves most exactly when it does (N27), and the APA list heading "These options are built on X", always true (N28) |
+| `test:load` | Many people at once, on the REAL server (since 6 October 2026; not in the chain: needs MongoDB on this computer). Starts `server/index.js` itself on port 4100 against a throw-away `vrds_load_test_<time>` database (always deleted), sends 100, 100 and 200 pretend people in the same instant and checks no request refused (L1), everybody saved with their own session id and every save landed (L2), the conditions exactly even in every burst (L3), nobody waited 3 s for a condition (L4), and 200 more people in the same instant, 50 per condition, every record under prolific_pid with no email, and an email refused on every route (L5; Prolific only since 10 November 2026), and the database rule swap on a copy with today's rule (L6), and since 7 October 2026 privacy on the real server: the lookup gives only the status, a wrong age is refused, the right age brings no analysis, the create route answers "ok", a write without the browser's id is refused, no cross-site header (L7), and the Prolific completion code with a made-up code: not before the completion, only to the holding browser, never for a key that is not a finished Prolific record's, never in another answer, never stored (L8). Run after any change to the server or the landing page |
 | `validate:pay` | The daily Prolific pay check (since 7 October 2026; `tools/pay_check.cjs`, run as `npm run pay:check`): every group with a pretend person each, the Reject group (two or more failed attention checks) since 14 October 2026 (Y1), exceptionally fast recounted by hand (Y2), the two files in every shape they come in (Y3), no email and no code in the output (Y4), the command end to end (Y5) |
+| `validate:aicopy` | The AI-safe copy of the real data (since 11 November 2026; `tools/ai_safe_copy.cjs`, run as `npm run data:ai-copy`): every Prolific ID, study id, session id and email replaced everywhere, in any letter case, inside saved files and object keys, nothing else changed (Q1); the private key, in or not in Prolific's file (Q2); a copy that still holds an identifier is refused (Q3); Compass's export shapes (Q4); the command end to end, no ID on the screen, a folder outside `Prolific docs/` refused (Q5). In the chain; prints `ALL AI-SAFE COPY GATES PASSED` |
+| `validate:docs` | The documents (since 11 November 2026; `tools/validate_docs.cjs`; NOT in the chain): no sentence describes a removed feature (the student door, course credit, a gift card, two doors) as today, in CLAUDE.md's undated sections, README, DEPLOYMENT, the pay check guide, the analysis plan and the two HOW_TO files (K1); every field name in the four data documents is written by the code (K2); every `npm run` command exists (K3); the 23 hypotheses have the same words in the analysis plan 11.1 and the freeze note 5.1 (K4). Run after every change to a document and before launch |
 | `validate:twins` | Scenarios 4 and 5 are the same six options, and scenario 5 is only a wish: performance counts the decisions only, scenario 5 is shown on scenario 4's opening values, the same wish gives 0, a different one reads as the options' difference, in values and in performance (W1-W5) |
 | `validate:visits` | Working time and visits: one sitting, a 31-minute break, a reload after lunch, a second participant at the same machine, the same participant on a second machine |
 | `validate:resume` | Carrying a run to another computer. Replays the run that sent a finished participant back to Block 1 |
@@ -2235,6 +2068,14 @@ npm run typecheck && npm run lint && npm run validate:block5 && npm run build
 | `make_accuracy_checklist_docx.py` | Builds `docs/VRDS_Accuracy_Checklist.docx` (since 29 September 2026, for the researcher and Claude): what is accurate now, each item with the check that stands over it, what is still open, and the limits to state. It RUNS every check first (about five minutes) and ticks each row from that run, stamped with the date and commit; a failed check turns its rows red. When something is fixed or opened, update its lists (`SECTIONS`, `OPEN`, `LIMITS`) and rebuild: `python tools/make_accuracy_checklist_docx.py docs/VRDS_Accuracy_Checklist.docx` |
 | `make_feedback_questions_docx.py` | Builds `docs/VRDS_Experiment2_Feedback_Questions.docx` (every feedback question, word for word, with a column for comments) straight from `src/experiment/feedbackTypes.ts`; it stops if a question list changes size, so a new question cannot be left out silently |
 | `build_rater_sheet.cjs` / `build_rater_room.cjs` / `compare_ratings.cjs` | The blind option-value review (audit Fix 3 Step B, 26 September 2026): shuffled sheets and answer keys in `Generated Outputs/rater_study`, one rater folder per model OUTSIDE this project (a rater run here would read this file, which quotes option numbers), and the comparison with the study's numbers. Round 2 (only the scenarios whose words changed): `--scenarios 2,3,4 --round 2`, `--study <dir> --raters opus,sonnet,haiku`. Round 2 also rates the five PERFORMANCE numbers of every option in scenarios 1-4 (the researcher's request): `--measures` on the sheet builder and on the comparison (REPORT_MEASURES.md), a second no-tools rater in each folder |
+
+## Skills for this project (since 11 November 2026)
+
+Three skills in `.claude/skills/`, adapted from the researcher's dissertation skills: `simple-english` (every reply to him:
+simple words, examples, and a "What I need from you" ending), `waseem_skills_plan_audit` (plan first, audit the plan from
+several perspectives, criticize your own work, wait for approval) and `waseem_skills_strong_study_files` (the code, the
+documents, the IRB and OSF texts say the same true things; limitations go to the chat and the dissertation, never into
+the code documentation or the analysis plan).
 
 ## Two files that carry rules rather than code
 

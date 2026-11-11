@@ -1,5 +1,7 @@
 # VRDS Experiment 2 — Complete Guide
 
+> **Background, last changed 27 September 2026, and not kept up to date** (note added 11 November 2026). It was written before the four conditions (1 October 2026) and the Prolific-only study (10 November 2026). For the study as it is, read `CLAUDE.md` and the two HOW_TO files in `Generated Outputs/`.
+
 **Value-Reflective Decision Support · Waseem Samkari · last updated 5 September 2026**
 
 This is the single document that explains what the study measures, how every number is produced,

@@ -1,5 +1,7 @@
 # The User Value Profile — how Blocks 1–4 build the seven sensitivities
 
+> **Background, last changed 20 June 2026, and not kept up to date** (note added 11 November 2026). Much of it describes an older version: the Blocks 1-4 scoring changed on 24 September 2026 (CLAUDE.md, "Blocks 1-4 scoring, revised 24 September 2026"); `docs/MEASUREMENT_MODEL.md` is the newer map. For the study as it is, read `CLAUDE.md` and the two HOW_TO files in `Generated Outputs/`.
+
 **Audience:** the researcher + advisor. This document explains the scoring model so it
 can be defended in the dissertation/paper. It reflects the code after the June 2026
 refactor (Approved Changes 1–10). It is the companion to `BLOCK5_V3_CVR_CUBE_IMPLEMENTATION.md`.

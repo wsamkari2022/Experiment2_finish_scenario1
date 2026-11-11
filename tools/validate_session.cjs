@@ -45,7 +45,7 @@
  *       the database, a browser holding an email run starts fresh, no condition before an ID exists, the main address opens
  *       the paste page, and no student page, word or default is left in the code
  *   C15 (the audit's F2, 6 October 2026; the researcher's "1-B, 2 - no limits") privacy: the lookup answers only the status,
- *       the create/update route only "ok"; the claim checks the age (both doors) before it hands back the person's
+ *       the create/update route only "ok"; the claim checks the age before it hands back the person's
  *       details and run; no write without a browser id; no cross-site access; the start screens never compare the age
  *       themselves; signing in sets aside only that person's old saves
  *   C16 (Step 4, since 7 October 2026; the researcher's "1-A, 2-A, 3-A") the Prolific completion code: the server gives it

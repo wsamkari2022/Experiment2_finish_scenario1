@@ -29,8 +29,8 @@
  * list, and a summary in the chat. Plus the audit's three additions: every answer present, the two clocks compared, and
  * the code each person typed (information only: a wrong code is not a valid reason to reject).
  *
- * Privacy: only records with a Prolific ID are read (the Compass file also holds university participants, with their
- * emails); the report is refused if an email address would appear in it, and the completion code itself is never printed.
+ * Privacy: only records with a Prolific ID are read (since 10 November 2026 no new record has an email; an old test record
+ * may); the report is refused if an email address would appear in it, and the completion code itself is never printed.
  * Both output files stay in the folder given (keep it inside `Prolific docs/`, which never goes to GitHub).
  *
  * Run:  npm run pay:check -- "Prolific docs/daily/2026-10-20" [--reward 10] [--today 2026-10-20]

@@ -62,7 +62,7 @@ against the code as it is then, because the four conditions will have added code
 
 **Step 1 built 6 October 2026** (plan answers "1-A, 2-A, 3-A": a returning Prolific person continues with no question;
 the Prolific first page is a welcome with the ID and Start; deploy only after Step 4, with a database backup first).
-What it does: CLAUDE.md, "Two doors". It also took "A little about you" without the email from Step 2.
+What it does: docs/HISTORY_OF_CHANGES.md, "Two doors" (moved there from CLAUDE.md on 11 November 2026). It also took "A little about you" without the email from Step 2.
 
 **Built 7 October 2026:** the privacy fix (the audit's F2; "1-B": a Prolific person continuing on ANOTHER device is asked
 their age, checked by the server; "2 - no limits": no lock after wrong ages), Step 2 (the Prolific consent page, section

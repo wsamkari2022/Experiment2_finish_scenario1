@@ -91,7 +91,7 @@ Then decide, in advance and in writing, what to do about `quality`:
 
 | Field | What it flags |
 |---|---|
-| `quality.careful_participation` | Since 16 October 2026: false when any of the four OSF robustness signs is present (the next four rows, plus `analysis.blocks_1_to_4_checks.answered_very_fast`), each in `careful_participation_reasons`; null when one cannot be read. Information only: it never takes the course credit away. **The preregistered robustness checks drop each sign on its own** (the main analysis keeps everybody who finished; each robustness analysis leaves out the people with ONE sign): read the sign you need in `careful_participation_signs`, never the combined verdict, for those. The combined verdict is the quick look (and the course-credit check file) |
+| `quality.careful_participation` | Since 16 October 2026: false when any of the four OSF robustness signs is present (the next four rows, plus `analysis.blocks_1_to_4_checks.answered_very_fast`), each in `careful_participation_reasons`; null when one cannot be read. Information only: it never decides pay or who is analysed. **The preregistered robustness checks drop each sign on its own** (the main analysis keeps everybody who finished; each robustness analysis leaves out the people with ONE sign): read the sign you need in `careful_participation_signs`, never the combined verdict, for those. The combined verdict is the quick look |
 | `quality.under_the_estimated_length` | Worked fewer than the consent page's "at least 35 minutes" (information only since 16 October 2026; it was the gift card's 35-minute rule, `met_time_requirement`) |
 | `quality.straightlined_feedback` | Gave the same rating to everything |
 | `quality.blocks_under_30_seconds` | Parts finished impossibly fast: since 7 October 2026 only the six real parts (Blocks 1-4, the main study, the feedback); before, every timed page counted, pauses and short forms included (HOW_TO_READ 8c) |
@@ -109,6 +109,30 @@ server; since 6 October 2026 only in development - the live site never picks at 
 Do not silently use a pay decision as an exclusion rule. The only exclusion is the preregistered one (not finishing); the robustness checks drop one
 sign at a time (`careful_participation_signs`); state them, and report how many participants each one removed. A paper that reports one
 N and no exclusion table invites the question of what was dropped.
+
+### The first day with real data (since 11 November 2026)
+
+Do these steps in this order, before any analysis. **None of them is an analysis rule:** the sample stays every participant
+who completed the study.
+
+1. **Export** the `participants` collection (and `condition_arrivals`) from Compass as JSON, the same way as for the daily
+   pay check (docs/DAILY_PAY_CHECK.md), into a new folder inside `Prolific docs/` (never in Git), for example
+   `Prolific docs/analysis/2026-12-20/participants.json`. Put Prolific's submissions file beside it as `prolific.csv`.
+2. **Make the AI-safe copy** before any AI tool sees the data: `npm run data:ai-copy -- "Prolific docs/analysis/2026-12-20"`.
+   It writes `participants_ai_safe.json`, where every Prolific ID is a code (P001, P002, ...), and `key.csv` (code to
+   Prolific ID), which stays in the private folder. Only the AI-safe copy goes to an AI tool.
+3. **Find the records that are not Prolific participants.** The same command counts the records whose Prolific ID is not
+   in Prolific's submissions file (`key.csv` says which: a test run, a Prolific Preview run, or a made-up ID typed into
+   the paste box). They are not participants of the study; the researcher decides what to do with them.
+4. **The version table** (docs/ANALYSIS_AND_FIGURES_PLAN.md 2.5): every record of the launch version carries the same
+   stamps.
+5. **The count per condition** (`condition_type`, finished records): about 26 each is expected; a few more is normal,
+   because Prolific opens the place of somebody who returns or times out to somebody new.
+6. **The careful-participation table:** for each of the four signs (`quality.careful_participation_signs`), how many
+   participants have it.
+
+Then the analyses, in the order of docs/ANALYSIS_AND_FIGURES_PLAN.md section 12, starting with the 23 hypotheses
+(its section 3.0).
 
 ---
 
@@ -655,7 +679,8 @@ differ without checking what changed.**
 | `headline.stability_rule_version` | Since 2 October 2026: the Stability rule (the order part and the difference part averaged); absent before |
 | `condition_type`, `condition_source` | Since 1 October 2026: the condition and how it was given (section 9) |
 | `blocks.feedback_answers.schemaVersion` | Which feedback questions existed |
-| `consent.version` | Which consent text they agreed to |
+| `consent.version` | Which consent text they agreed to (the launch version: `"2026-11-10-prolific-only-12-an-hour"`) |
+| `analysis.attention_checks.version` | Which attention checks they met (the launch version: `"2026-11-10-prolific-only"`, four checks) |
 
 These commands regenerate the study's own figures from the real scoring code:
 
