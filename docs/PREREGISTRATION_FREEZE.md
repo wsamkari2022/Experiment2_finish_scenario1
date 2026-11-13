@@ -6,10 +6,16 @@ that adds this file**. Fix 1 (what participants see while choosing) is still to 
 the very last change before launch. **At launch:** re-check every value below against the launch commit, fill in the
 two lines at the end, and do not change this file afterwards except by an appended, dated "Deviations" entry.
 
-**Since 14 October 2026 the MAIN hypotheses are the 23 in section 5.1 (A1-D5)**, still awaiting the advisor's
-approval. The earlier hypotheses of 27 September 2026 (H1-H13) are kept in section 5.2 for possible future use.
+**Since 14 October 2026 the MAIN hypotheses are the 23 in section 5.1 (A1-D5)**, approved by Dr. Eskridge (11 November
+2026). The earlier hypotheses of 27 September 2026 (H1-H13) are kept in section 5.2 for possible future use.
+
+> **Updated 13 November 2026.** The IRB determined the study exempt on 13 November 2026 (modification of IRB-CY2025-68,
+> 45 CFR 46.104, category 3(i)(B)) and removed the course-student group: the study is Prolific only (104 who finish, 26
+> per condition). The plan is registered again on OSF Registries for that study (`OSF_PREREGISTRATION_ANSWERS.md`;
+> the registration of 14 October 2026 is replaced and will be withdrawn). The new registration's date and link:
+> `__________`. Sections 1-6 below were brought up to date the same day; section 7 is filled in at launch.
 Sections 1-4 and 6 were written on 27 September 2026 and have not yet been brought up to date for the four
-conditions (to be done once the advisor has approved the hypotheses).
+conditions (done on 13 November 2026, with the Prolific-only study).
 
 **Why it exists.** Every number here was chosen by the researcher or derived from simulation, not estimated from the
 data. Freezing them, dated, before the data is opened is what answers the question "were these tuned after you saw
@@ -24,10 +30,13 @@ of hypotheses as section 5 below (the main 23, and the earlier set kept for poss
 |---|---|---|
 | Blocks 1-4 scoring (the seven sensitivities) | `null-cdf-2026-09-24-recipe-donation-share` | `SENSITIVITY_CALIBRATION_VERSION`, sensitivityCalibration.ts; saved as `analysis.participant_record.calibrationVersion` |
 | Card order (planner) | `2026-09-24-a` | `PLANNER_VERSION`, block5Planner.ts; saved per scenario |
-| Prediction rule (MPF) | `2026-09-19-e` | `PREDICTION_VERSION`, block5Prediction.ts; saved as `rule_version` |
+| Prediction rule (MPF) | `2026-10-02-f` | `PREDICTION_VERSION`, block5Prediction.ts; saved as `rule_version` |
 | Moral Commitment Function | `2026-09-23-a` | `MCF_VERSION`, block5MCF.ts; saved as `analysis.mcf.rule_version` |
 | Running values and VCI_all | `2026-09-28-a` | `RUNNING_VERSION`, block5VciAll.ts; saved on every running fit and as `analysis.vci_all.rule_version` |
-| Stability_all and the top-value choices | `2026-09-29-a` | `STABILITY_ALL_VERSION`, block5StabilityAll.ts; saved as `analysis.stability_all.rule_version` and `analysis.top_value_choices.rule_version` |
+| Stability_all and the top-value choices | `2026-10-02-b` | `STABILITY_ALL_VERSION`, block5StabilityAll.ts; saved as `analysis.stability_all.rule_version` and `analysis.top_value_choices.rule_version` |
+| Stability (its order and difference parts) | `2026-10-02-order-and-difference` | `STABILITY_VERSION`, block5CVR.ts; saved as `headline.stability_rule_version` |
+| Attention checks (four for everybody) | `2026-11-10-prolific-only` | `ATTENTION_VERSION`, attentionChecks.ts; saved as `analysis.attention_checks.version` |
+| Consent form | `2026-11-10-prolific-only-12-an-hour` | `PROLIFIC_CONSENT_VERSION`, ConsentPage.tsx; saved as `consent.version` |
 | Fit score scale | `share-of-what-they-asked-for-2026-09-24` | `FIT_SCORE_SCALE`, block5CVR.ts; saved as `fitScoreScale` per row |
 | Feedback questions | schema 4 | `FEEDBACK_SCHEMA_VERSION`, feedbackTypes.ts; saved as `blocks.feedback_answers.schemaVersion` |
 | Option numbers and words | as of the launch commit (after Fix 7, 7b, 7c) | block5Scenarios.ts. **At launch, save the export** `node tools/export_block5_content.cjs` beside this file, so the exact content is frozen with it |
@@ -49,6 +58,9 @@ Every scenario runs at stakes weight 1. `w` below is the weight of one step.
 | They name a value on the APA page | +30 × w to the named value, −10 × w to each of the other three; w = the confidence weight 0.6, 0.7, 0.8, 0.9, 1.0 for confidence 1-5 | `applyApaUpdates`, `confidenceWeight`. A cap of 30 × w on any value's net move exists and never binds under this rule |
 | After every reflection | stakeholder sensitivity +25 if the other person's story guided them, −25 if not (never scaled by confidence) | both paths |
 | When a reflection view is answered | directness or context ±20 (× w on the APA path) | both paths |
+| CVR only: the CVR Rejection page (the first visit in a scenario) | stakeholder +25 if the person's story changed their mind, −25 if not; the last view seen +20 when both views were seen; the four policy values never | `applyCvrRejectionUpdatesWithMoves` |
+| Baseline: a Misaligned or Strongly misaligned choice kept on the confirmation page | +30 × w to the value the option serves most, −10 × w (Misaligned) or −15 × w (Strongly misaligned) to each of the other three | `applyBaselineConfirmUpdatesWithMoves` |
+| APA only and Baseline | stakeholder, directness and context never move | `freezesReflectionScores` |
 
 Scores stay between 0 and 100; a step past an edge is cut off and recorded. Tested at half and double size
 (`docs/BLOCK5_STEP_SIZE_SENSITIVITY.md`): every conclusion held; Stability's absolute level did not.
@@ -58,7 +70,7 @@ Scores stay between 0 and 100; a step past an edge is cut off and recorded. Test
 | Score | Rule | Levels / cut-offs |
 |---|---|---|
 | **VCI** (`consistency_score`) | the mean over the four decisions of the chosen option's label weight: Aligned 1.00, Weakly aligned 0.80, Misaligned 0.50, Strongly misaligned 0.10 (six options), judged on the profile the scenario opened with, × 100 | Highly Consistent 90+, Mostly Consistent 80-89, Moderate 65-79, Low 50-64, Very Low 30-49, Highly Inconsistent below 30 |
-| **Stability** (`stability_score`) | 100 × (1 − min(1, swaps / 6)), swaps counted among the four policy values at conflict steps only (a decision where the reflection ran), a tie opening or closing counts half | Held steady 100, Mostly steady 83-99, Shifted a little 50-82, Shifted a lot 17-49, Changed substantially 0-16. `stability_was_measured` false = no conflict step |
+| **Stability** (`stability_score`) | round((order part + difference part) / 2), over the counted steps (a Misaligned or Strongly misaligned choice kept after the reflection, a choice confirmed on the APA page, or Baseline's kept misfit). Order part = 100 × (1 − min(1, swaps / 6)), swaps among the four policy values, a tie opening or closing counts half; difference part = round(100 − the mean over the four values of the absolute sum of their moves at those steps) | Held steady 94-100, Mostly steady 85-93, Shifted a little 63-84, Shifted a lot 49-62, Changed substantially 0-48 (`COMBINED_STABILITY_EDGES`). `stability_was_measured` false = no counted step |
 | **Performance** (`performance_captured`) | per decision 100 × (chosen − worst option) / (best − worst), on the mean of the five metrics; averaged over the four decisions | 0 = the weakest option every time, 100 = the strongest |
 | **Fit** | 100 × (1 − shortfall ÷ the most this participant could lose); labels by rank within the scenario | the raw `points_short_of_what_they_asked_for` compares across people |
 | **Position** | `departure_share` against the frozen pre-Block-5 profile; the matched pair `authority_vs_receiving.difference` | company stance: `pull_toward_the_company` above +8 adopted, below −8 resisted, between compromised |
@@ -79,21 +91,19 @@ Scores stay between 0 and 100; a step past an edge is cut off and recorded. Test
   the matched pair, without `decided_versus_wished.wish_was_hurried` (under 12 seconds); for the MPF calibration,
   without predictions whose top-two separation is under 5 ("none").
 - **Stability** is analysed among `stability_was_measured` = true; the share never measured is reported.
-- Credit and pay are decided separately and are never used as an analysis rule: course credit
-  (`quality.course_credit_earned`, university door) is given on completion; Prolific pay is decided by the daily pay
-  check on Prolific's own valid reasons (two or more of the four attention checks failed = rejected). (Corrected
-  23 October 2026: this line described `quality.compensation_eligible`, the gift-card rule removed on 16 October 2026.)
+- Pay is decided separately and is never used as an analysis rule: Prolific pay is decided by the daily pay check on
+  Prolific's own valid reasons (two or more of the four attention checks failed = rejected). (History: until 10
+  November 2026 this line also named `quality.course_credit_earned`, the student group's rule.)
 - **The attention checks do not remove anybody from the analysis** (the researcher, 30 September 2026: "all completed
-  sessions will be included in the analysis"). In the university door a check answered wrongly is one
-  careful-participation sign (`quality.careful_participation`), information only; it no longer affects anything else
-  (it affected the gift card until 16 October 2026). Any further analysis rule is the researcher's to decide after the
+  sessions will be included in the analysis"). A check answered wrongly is one careful-participation
+  sign (`quality.careful_participation`), information only. Any further analysis rule is the researcher's to decide after the
   experiment.
 
 ## 5. The hypotheses and their tests
 
 ### 5.1 The main hypotheses: 23 in four families (since 14 October 2026)
 
-**Status: draft 2, awaiting Dr. Eskridge's approval.** Word for word the same as the IRB application's Hypothesis box, `VRDS2_Hypotheses_Draft.docx` (project folder; it adds each hypothesis's power, the reason it is attainable and the limit to state) and the OSF preregistration answers (`OSF_PREREGISTRATION_ANSWERS.md`). Change them in all four places together, or in none.
+**Status: approved by Dr. Eskridge (11 November 2026); registered again on 13 November 2026 for the Prolific-only study.** Word for word the same as the IRB application's Hypothesis box, `VRDS2_Hypotheses_Draft.docx` (project folder; it adds each hypothesis's power, the reason it is attainable and the limit to state) and the OSF preregistration answers (`OSF_PREREGISTRATION_ANSWERS.md`). Change them in all four places together, or in none.
 
 The study tests 23 hypotheses in four families. Each family has one primary hypothesis; the four primary hypotheses are Holm-corrected together, and the secondary hypotheses are Holm-corrected within their family. Directional hypotheses are tested one-sided; all others two-sided, α = .05.
 
@@ -104,7 +114,7 @@ The study tests 23 hypotheses in four families. Each family has one primary hypo
 | A1 (conditions) | Participants in the full CVR+APA condition will have a higher Value Consistency Index (VCI: how well their four decisions fit their own values) than participants in the Baseline condition. | VCI (headline.consistency_score), one score per participant. | one-sided Mann-Whitney U. |
 | B1 (position) | How far a choice departs from the participant's own values will differ between deciding the care-visit cuts inside an employer's rules (scenario 4) and receiving the same cuts decided by someone else (scenario 5); the two scenarios are identical except for the participant's position. Measure: departure share (0 = the option closest to the values they brought into the main study, 100 = the farthest). | Departure share in scenario 5 minus scenario 4 (analysis.position_effect.authority_vs_receiving; by_scenario[].departure_share). Both are measured from the same values (those brought into the main study). | two-sided Wilcoxon signed-rank. |
 | C1 (prediction) | The Moral Prediction Function's top pick will match the rule each participant chooses behind the veil of ignorance (scenario 6, before seeing the prediction) more often than chance (25%). | analysis.scenario6_mpf_test.participant.mpf_guessed_right; the chance level in mpf_prediction.chance_if_guessing_percent. | one-sided exact binomial. |
-| D1 (performance) | In decisions where the first pick went against the participant's values and a reflection, clarification or confirmation step followed, the performance of the final choice will be equivalent to that of the first choice, within ±5 points on a 0-100 scale. | performanceCaptured of the first pick and of the final choice, per decision where the step ran (scenarios 1-4). | paired two one-sided tests (TOST). |
+| D1 (performance) | In decisions where the first pick went against the participant's values and a reflection, clarification or confirmation step followed, the performance of the final choice will be equivalent to that of the first choice, within ±5 points on a 0-100 scale. | Performance captured of the first pick and of the final choice, per decision where the step ran (scenarios 1-4): the final choice's is `performanceCaptured` on the scenario row; the first pick's is computed from its five performance numbers and the row's `performanceMenu` (the analysis plan, 3.0). | paired two one-sided tests (TOST). |
 
 **Family A, the conditions (measure: VCI unless stated)** (Holm-corrected within the family):
 
@@ -134,7 +144,7 @@ The study tests 23 hypotheses in four families. Each family has one primary hypo
 | C4 | Participants rate the prediction as sounding more like them (1-7) when the MPF named the rule they chose than when it did not. | does_this_sound_like_me_1_to_7, by mpf_guessed_right. | one-sided Mann-Whitney U. |
 | C5 | Participants who change their rule after seeing the prediction move to the MPF's top rule more often than chance (one in three of the other rules). | rule_chosen_before_seeing_the_guess, rule_chosen_in_the_end, changed_after_seeing_the_guess, most_expected_rule; wavering separates real reactivity from earlier doubt. | one-sided exact binomial, only if at least 20 participants change; otherwise reported as description. |
 | C6 | Predictions made from the value profile as it is updated during the study beat predictions made from the profile measured before the study's main part. | mpf_predictions_every_scenario: the main columns against using_profile_before_block5. | paired difference in log loss and hit rate, bootstrap over participants, one-sided. |
-| C7 | The values measured in the first four blocks predict the choices in the four decisions beyond each option's position on the screen and its performance. | Per decision and option: the option's fit to the values brought into the main study (points_short_of_what_they_asked_for_every_option), its place in the card order, and its performance. | conditional logit regression, likelihood-ratio test of the value terms. |
+| C7 | The values measured in the first four blocks predict the choices in the four decisions beyond each option's position on the screen and its performance. | Per decision and option: the option's fit to the values brought into the main study (computed from `originalProfile` and the option's numbers; `points_short_of_what_they_asked_for_every_option` uses each scenario's opening values, the same only in scenario 1), its place in the card order, and its performance. | conditional logit regression, likelihood-ratio test of the value terms. |
 
 **Family D, reflection and experience** (Holm-corrected within the family):
 
@@ -142,10 +152,10 @@ The study tests 23 hypotheses in four families. Each family has one primary hypo
 |---|---|---|---|
 | D2 | When a choice changes after a help step, the final choice fits the participant's values better than the first choice, on the same values. | points_short_of_what_they_asked_for_every_option for the first and the final choice (analysis.alignment_records). | one-sided paired Wilcoxon signed-rank on the shortfall. |
 | D3 | VCI is above the level a random chooser reaches in the participant's own condition (57, 60, 63 and 60 in CVR+APA, CVR only, APA only and Baseline). | VCI minus the random line of the participant's condition. | one-sided one-sample Wilcoxon. |
-| D4 | Holding Stability and performance fixed, the well-being composite and decision satisfaction rise with VCI (controls: age, gender, active minutes, condition, group). | wellbeingComposite and decisionSatisfaction; predictors VCI, Stability, performance; controls age, gender, active minutes, condition, group. | linear regression, one-sided on VCI. |
+| D4 | Holding Stability and performance fixed, the well-being composite and decision satisfaction rise with VCI (controls: age, gender, active minutes, condition). | wellbeingComposite and decisionSatisfaction; predictors VCI, Stability, performance; controls age, gender, active minutes, condition. | linear regression, one-sided on VCI. |
 | D5 | Self-reported value congruence rises with VCI. | subscales.valueCongruence and VCI. | one-sided Spearman correlation. |
 
-**Analysis rules.** The sample is every participant who completes the study; people who do not complete are excluded, and no one who completes is removed for any other reason. Prolific participants and students are analysed together, with the group as a covariate, and every primary result is also reported for the Prolific participants alone. Every test is reported with an effect size and a 95% bootstrap confidence interval. All other analyses are labelled exploratory. All hypotheses, measures, tests and the sample plan are preregistered on OSF Registries before data collection begins.
+**Analysis rules.** The sample is every participant who completes the study; people who do not complete are excluded, and no one who completes is removed for any other reason. Every test is reported with an effect size and a 95% bootstrap confidence interval. All other analyses are labelled exploratory. All hypotheses, measures, tests and the sample plan are preregistered on OSF Registries before data collection begins.
 
 ### 5.2 The earlier hypotheses (27 September 2026), kept for possible future use
 
@@ -207,7 +217,10 @@ feedback-behavior links, the known-effect replications of Blocks 1-3, the choose
 ## 6. What is known in advance and stated, not tested
 
 - Position is confounded with scenario content in the five-scenario reading; only the 4/5 pair holds content constant.
-- There is no no-reflection control group; reflection results are within-person descriptions.
+- The conditions separate the help steps: CVR+APA against APA only differs in the reflection (A2), against CVR only in
+  the clarification page (A3). **Baseline differs from the other three in two ways: no help steps, and no fit score and
+  no "Ranked N - why" section on its cards**, so A1 and A4 compare the full system with Baseline as a whole. Within one
+  condition, what people do after the reflection is a before/after pattern.
 - The MPF's sharpness uses the participant's end-of-block VCI and Stability, including a never-tested Stability of
   100 (audit R6, kept and stated by the researcher on 27 September 2026); top-pick accuracy is free of it.
 - One person's scores are rough; results are reported for groups.

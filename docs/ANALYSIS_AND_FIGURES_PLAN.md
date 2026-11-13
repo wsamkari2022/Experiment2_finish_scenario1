@@ -30,7 +30,7 @@ future use.
 > (1 October 2026); since 11 November it is brought up to date for them: **section 3.0 maps each of the 23
 > hypotheses to its rows, fields, test and figure**, and rules 6 and 11 describe the four conditions. Sections
 > 3.1-3.5 are the earlier research questions, kept as an idea bank; where they differ from 3.0, 3.0 wins. Section
-> 11.1 keeps its registered words until the OSF Update (the note there).
+> 11.1 has the words of the new OSF registration (13 November 2026).
 
 ---
 
@@ -239,7 +239,7 @@ code: `node tools/export_block5_content.cjs <file>.json`.
 | D1 | decision rows whose first pick was Misaligned or Strongly misaligned and where the condition's page followed | final: `blocks.block5_emergency_scenarios.scenarioResults[].performanceCaptured`; first pick: computed as 100 × (its composite − `performanceMenu.worst`) / (`performanceMenu.best` − `performanceMenu.worst`), its composite being the mean of its five performance numbers | TOST, margin ±5 points, per participant's mean | Figure 9 |
 | D2 | decision rows whose choice changed after a help step | first pick's shortfall from `points_short_of_what_they_asked_for_every_option`; final: `points_short_of_what_they_asked_for` | one-sided Wilcoxon signed-rank on the per-participant mean (first minus final) | Figure 7 |
 | D3 | one per participant | `headline.consistency_score` minus the condition's random level (57, 60, 63, 60; rule 6) | one-sided one-sample Wilcoxon | Figure 2 with each condition's random line |
-| D4 | one per participant | `blocks.feedback_answers.feedback.wellbeing.wellbeingComposite` and `.subscales.decisionSatisfaction`; `headline.consistency_score`, `headline.stability_score`, `headline.performance_captured`; `age`, `gender`, `active_time.total_active_minutes`, `condition_type` (controls: 11.1 and its note) | two linear regressions, one-sided on VCI; both needed | Figure 14 / 18 |
+| D4 | one per participant | `blocks.feedback_answers.feedback.wellbeing.wellbeingComposite` and `.subscales.decisionSatisfaction`; `headline.consistency_score`, `headline.stability_score`, `headline.performance_captured`; `age`, `gender`, `active_time.total_active_minutes`, `condition_type` (controls: 11.1) | two linear regressions, one-sided on VCI; both needed | Figure 14 / 18 |
 | D5 | one per participant | `blocks.feedback_answers.feedback.wellbeing.subscales.valueCongruence`, `headline.consistency_score` | one-sided Spearman | Figure 19 |
 
 Before any of these: the manipulation checks of the OSF answers (each condition's page appears only in that
@@ -922,13 +922,13 @@ figures are benchmarks, not findings.
 
 ### 11.1 The main hypotheses: 23 in four families (since 14 October 2026)
 
-**Status: approved by Dr. Eskridge** (the researcher, 11 November 2026). Word for word the same as the IRB application's Hypothesis box, `VRDS2_Hypotheses_Draft.docx` (project folder; it adds each hypothesis's power, the reason it is attainable and the limit to state) and the OSF preregistration answers (`OSF_PREREGISTRATION_ANSWERS.md`). Change them in all four places together, or in none. Each one's measure and database field: `docs/PREREGISTRATION_FREEZE.md`, section 5.1.
+**Status: approved by Dr. Eskridge** (the researcher, 11 November 2026); registered again on OSF on 13 November 2026 for the Prolific-only study. Word for word the same as the IRB application's Hypothesis box, `VRDS2_Hypotheses_Draft.docx` (project folder; it adds each hypothesis's power, the reason it is attainable and the limit to state) and the OSF preregistration answers (`OSF_PREREGISTRATION_ANSWERS.md`). Change them in all four places together, or in none. Each one's measure and database field: `docs/PREREGISTRATION_FREEZE.md`, section 5.1.
 
-> **Pending (the IRB text of 9 November 2026, Prolific only):** D4's controls without "group", and the analysis rules
-> below without the sentence "Prolific participants and students are analysed together, with the group as a
-> covariate, and every primary result is also reported for the Prolific participants alone." Both change in every
-> copy at once (this section, `docs/PREREGISTRATION_FREEZE.md` 5.1, `VRDS2_Hypotheses_Draft.docx`, the OSF answers)
-> at the OSF Update, after the IRB approves. The registered words below are unchanged until then.
+> **Changed on 13 November 2026, in every copy at once** (this section, `docs/PREREGISTRATION_FREEZE.md` 5.1,
+> `VRDS2_Hypotheses_Draft.docx`, the OSF answers), for the new OSF registration made after the IRB determined the study
+> exempt: D4's controls lost "group", and the analysis rules lost the sentence "Prolific participants and students are
+> analysed together, with the group as a covariate, and every primary result is also reported for the Prolific
+> participants alone." The words below are now the IRB's approved text, word for word.
 
 The study tests 23 hypotheses in four families. Each family has one primary hypothesis; the four primary hypotheses are Holm-corrected together, and the secondary hypotheses are Holm-corrected within their family. Directional hypotheses are tested one-sided; all others two-sided, α = .05.
 
@@ -970,10 +970,10 @@ The study tests 23 hypotheses in four families. Each family has one primary hypo
 
 - **D2.** When a choice changes after a help step, the final choice fits the participant's values better than the first choice, on the same values. Test: one-sided paired Wilcoxon signed-rank on the shortfall.
 - **D3.** VCI is above the level a random chooser reaches in the participant's own condition (57, 60, 63 and 60 in CVR+APA, CVR only, APA only and Baseline). Test: one-sided one-sample Wilcoxon.
-- **D4.** Holding Stability and performance fixed, the well-being composite and decision satisfaction rise with VCI (controls: age, gender, active minutes, condition, group). Test: linear regression, one-sided on VCI.
+- **D4.** Holding Stability and performance fixed, the well-being composite and decision satisfaction rise with VCI (controls: age, gender, active minutes, condition). Test: linear regression, one-sided on VCI.
 - **D5.** Self-reported value congruence rises with VCI. Test: one-sided Spearman correlation.
 
-**Analysis rules.** The sample is every participant who completes the study; people who do not complete are excluded, and no one who completes is removed for any other reason. Prolific participants and students are analysed together, with the group as a covariate, and every primary result is also reported for the Prolific participants alone. Every test is reported with an effect size and a 95% bootstrap confidence interval. All other analyses are labelled exploratory. All hypotheses, measures, tests and the sample plan are preregistered on OSF Registries before data collection begins.
+**Analysis rules.** The sample is every participant who completes the study; people who do not complete are excluded, and no one who completes is removed for any other reason. Every test is reported with an effect size and a 95% bootstrap confidence interval. All other analyses are labelled exploratory. All hypotheses, measures, tests and the sample plan are preregistered on OSF Registries before data collection begins.
 
 ### 11.2 The earlier hypotheses (27 September 2026), kept for possible future use
 

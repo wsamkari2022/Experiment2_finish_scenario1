@@ -18,8 +18,8 @@ results, then give feedback. React 19 + Chakra UI v3 + Vite + TypeScript.
    feedback links, and the hypotheses to freeze in `docs/PREREGISTRATION_FREEZE.md` before the data is opened.
    **The main hypotheses since 14 October 2026 are the 23 A1-D5** (section 11.1 there, section 5.1 of the freeze note;
    approved by Dr. Eskridge, the researcher told on 11 November 2026; the same words as the IRB, `VRDS2_Hypotheses_Draft.docx`
-   and the OSF answers, except "group" in D4, which leaves every copy at the OSF Update). Section 3.0 there maps each one to
-   its rows, fields, test and figure (since 11 November 2026).
+   and the OSF answers, word for word: 23 of 23 in every copy, checked by a script on 13 November 2026). Section 3.0
+   there maps each one to its rows, fields, test and figure (since 11 November 2026).
    The earlier H1-H13 are kept for possible future use; each one's place in the main set is in the mapping table there.
 
 **On the first day with real data** follow `Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md` section 2, "The first day with real
@@ -41,7 +41,8 @@ Two of those traps matter enough to repeat here:
 The IRB refused the student group (9 November 2026), so the study has one group: Prolific, 104 people who finish, 26 per condition,
 $7.00 for 35 minutes ($12 an hour). The researcher: "1-A" (consent pay sentence as in his form), "2-No" (keep "without
 consequence"), "3-A" (the main address shows the paste page), "4-A" (remove everything a student could touch and every path to it; the inside
-name `email` stays on the box that holds the Prolific ID). **Deploy only after the IRB approves.** The student version is the Git tag
+name `email` stays on the box that holds the Prolific ID). **The IRB determined the study exempt on 13 November 2026; open it to
+participants only after the new OSF registration is made** (below). The student version is the Git tag
 `before-prolific-only`. **Every section below that speaks of two doors, the university door, course credit, a gift card, `StartScreen`, "Not
 you?" or `credit:list` is history**; nobody ever took part under it. No score changed.
 
@@ -60,10 +61,14 @@ you?" or `credit:list` is history**; nobody ever took part under it. No score ch
   researchers and 22 days to participants: both numbers are right.
 - **`build-and-run.sh` stops without the completion code** (it only warned while the student door could run without it).
 - **Testing:** use a made-up Prolific ID in the link: `/prolific?PROLIFIC_PID=<24 letters a-f and digits>&condition=CVR_APA`.
-- **Not done on purpose:** the OSF answers, `VRDS2_Hypotheses_Draft.docx`, `VRDS2_OSF_Preregistration.docx` and the freeze note
-  (`docs/PREREGISTRATION_FREEZE.md`) wait for the IRB's approval and change at the OSF Update (they still mention students and
-  "group"). The code documentation and the data files were brought up to date on 11 November 2026 (`PLAN_Documentation_after_Prolific_only.md`):
-  the analysis plan keeps its registered hypothesis words with a dated "pending" note. The full code plan: `PLAN_Prolific_only_code_change.md`.
+- **The IRB's decision (13 November 2026): "Exempt"**, category 3(i)(B) of 45 CFR 46.104, for the modification of
+  IRB-CY2025-68. Write "determined exempt", never "approved". **OSF: a NEW registration** (the researcher's D0-B,
+  `PLAN_OSF_Update_after_IRB.md`): `OSF_PREREGISTRATION_ANSWERS.md` and `VRDS2_OSF_Preregistration.docx` hold its text
+  (the 14 October texts are kept as `..._registered_2026-10-14`), with the IRB-approved 9 November files attached. The
+  registration of 14 October 2026 stays embargoed and is withdrawn after data collection, with a note naming the new one
+  (an embargoed registration must be made public before it can be withdrawn). The hypotheses file, the freeze note and
+  the analysis plan 11.1 changed with it (D4 without "group"). The code documentation and the data files: 11 November 2026
+  (`PLAN_Documentation_after_Prolific_only.md`). The full code plan: `PLAN_Prolific_only_code_change.md`.
 - **Checked:** `validate:session` C13-C16, `validate:attention` T4, T9, T10, `validate:conditions` N25, N26, `validate:journey` J14, J18, `validate:pay`
   Y6, `npm run test:load` L5 (600 people, no email on any record, an email refused on all 10 routes).
 

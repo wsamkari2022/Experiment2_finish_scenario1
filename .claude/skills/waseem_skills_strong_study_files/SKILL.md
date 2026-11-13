@@ -15,10 +15,11 @@ not forgive a contradiction it discovers, for example an IRB text that says "one
 plan that adds "group" as a control. So accuracy is the source of the strength, not a cost to it.
 
 **Where the study stands** (update this paragraph when it changes): Experiment 2 is Prolific only since
-10 November 2026 (the IRB refused the student group on 9 November). The IRB modification with the Prolific-
-only text is waiting for approval. The OSF registration still describes the two groups and changes through
-OSF's Update after the IRB approves. Dr. Eskridge approved the 23 hypotheses A1-D5 (Waseem, 11 November
-2026). No participant data exist yet. Nothing is deployed before the IRB approves.
+10 November 2026 (the IRB refused the student group on 9 November). The IRB **determined the study exempt**
+on 13 November 2026 (category 3(i)(B) of 45 CFR 46.104): write "determined exempt", never "approved". OSF: a
+new registration replaces the one of 14 October 2026 (which stays embargoed and is withdrawn after data
+collection). Dr. Eskridge approved the 23 hypotheses A1-D5 (Waseem, 11 November 2026). No participant data
+exist yet. Nobody takes part before the new OSF registration is made.
 
 ## The rules, and why each one matters
 
