@@ -87,7 +87,7 @@ when it is "none", with the evidence.
 | Type | Ask | An example from this project |
 |---|---|---|
 | **Contradiction** | Does anything disagree with the code, another document, the IRB text, the OSF text, the consent form or an approved decision? | The analysis plan's D4 lists "group" as a control; the IRB text of 9 November does not |
-| **Does not make sense** | Do the numbers add up? Do counts, totals, ranges, levels and check names still hold? | "$7.00 for 104 people with the fee is $970.67, leaving $29.33 of $1,000": recompute it, never copy it |
+| **Does not make sense** | Do the numbers add up? Do counts, totals, ranges, levels and check names still hold? | "7.00 dollars for 104 people with the fee is 970.67 dollars, leaving 29.33 of the 1,000-dollar budget": recompute it, never copy it (dollar signs are written as words here because the skill loader reads a dollar sign before a number as a placeholder) |
 | **Ambiguous** | Could a reader understand it two ways? Is "it", "this", "the group" or "the door" clear? | "Analyse the two groups apart" in the Stability method means measured and not-measured people, not two recruitment groups |
 | **Missing** | Is a file, a field, a condition, a step (commit, check, live test, document, memory) missing? | The first documentation plan forgot README.md, which is still the Vite template |
 | **Misleading** | Could a true sentence leave a wrong impression? | "Stability 100" for somebody never tested; a pretend-participant number that reads like a finding |
