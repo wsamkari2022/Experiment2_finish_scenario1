@@ -382,7 +382,7 @@ function FoldedCardDemo() {
       <HStack gap="2" justify="center" my="3">
         <Icon boxSize="4" color="teal.fg"><LuChevronsRight /></Icon>
         <Text fontSize="xs" fontStyle="italic" color="fg.muted">
-          clicking the first one opens it
+          clicking the first one's arrow opens it
         </Text>
       </HStack>
 
@@ -696,8 +696,8 @@ export function Block5IntroPage({ onStart }: { onStart: () => void }) {
         <Box bg="bg.panel" borderWidth="1px" borderColor="border" rounded="2xl" p={{ base: "5", md: "6" }} shadow="sm">
           <SectionHeading n={2} icon={<LuChevronsDownUp />} title="How the option cards open">
             Each option arrives folded — its place in the list and its title, nothing more. Click
-            the line, or the arrow, and it opens. Click again and it folds away, so the ones you
-            have finished with stop taking up the page.
+            the arrow at its right edge, and it opens. Click the arrow again and it folds away, so
+            the ones you have finished with stop taking up the page.
           </SectionHeading>
           <FoldedCardDemo />
         </Box>

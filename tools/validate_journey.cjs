@@ -47,6 +47,7 @@
  *   J23 (24 October 2026) "moved the most" names every value in a tie, in whole points
  *   J24 (24 October 2026) the time chart's two lines: the header's working time and visits, then the span the
  *       database saved (hours away included) in hours and minutes; never "You spent about" the span
+ *   J25 (14 November 2026) the page before the main study says a card opens with its arrow, which is how it works
  *   J20 (23 October 2026) the five steps on the page before the main study say only what is true for every participant:
  *       no "six", no person speaking, no condition or scenario named, the approved words, and every option of every
  *       scenario really has what it gives up and its question
@@ -903,6 +904,30 @@ console.log("===================================================================
     why.push("the saved span is not matched to this run");
   gate("J24", why.length === 0, why.length ? why.slice(0, 4).join(" | ")
     : "the time chart's two lines: the header's working time and visits, then the saved span from the start of the first part to the last answer in hours and minutes (\"including the time you were away\" after more than one visit); no \"You spent about\"");
+}
+
+/* ------------------------------------------------------------------------------------------- J25 */
+/* How a card opens, said as it is (14 November 2026, the researcher's "R1-B"). A folded option card opens only with
+   the arrow at its right edge; the page before the main study used to say "Click the line, or the arrow", and a click
+   on the line did nothing (found in the launch rehearsal). The sentence now names the arrow only. If the line is ever
+   made clickable, change this check and the sentence together. */
+{
+  const why = [];
+  const src = (f) => fs.readFileSync(path.join(ROOT, "src", "experiment", f), "utf8");
+  const flat = (s) => s.replace(/\s+/g, " ");
+  const intro = flat(src("Block5IntroPage.tsx"));
+  if (!intro.includes("Click the arrow at its right edge, and it opens. Click the arrow again and it folds away, so the ones you have finished with stop taking up the page."))
+    why.push("the approved sentence is missing");
+  if (/Click the line|the line, or the arrow/.test(intro)) why.push("the page still says a click on the line opens a card");
+  if (!intro.includes("clicking the first one's arrow opens it")) why.push("the example's caption does not name the arrow");
+  const sim = src("Block5PublicEmergencySimulation.tsx");
+  const folded = sim.slice(sim.indexOf("if (folded) {"), sim.indexOf("if (folded) {") + 1600);
+  const box = folded.slice(folded.indexOf("<Box data-card-open=\"0\""), folded.indexOf("<Flex align=\"center\""));
+  if (!box || /onClick/.test(box)) why.push("the folded card's line has a click of its own: the sentence must say so");
+  if (!/\{foldButton\}/.test(folded)) why.push("the folded card has no arrow");
+  if (!/onClick=\{\(e\) => \{ e\.stopPropagation\(\); onFoldToggle\(\); \}\}/.test(sim)) why.push("the arrow does not open the card");
+  gate("J25", why.length === 0, why.length ? why.join(" | ")
+    : "the page before the main study says a card opens with the arrow at its right edge, which is how the cards work (the line has no click of its own)");
 }
 
 console.log("");
