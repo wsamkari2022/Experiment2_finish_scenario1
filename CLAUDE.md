@@ -1448,7 +1448,8 @@ but the insights and post-Block-4 pages ("delete them entirely ... if all the da
   **the hash needs its finishing mix** - plain FNV-1a gave only 2 of every 4 options to 4,000 pretend participants
   (T1 caught it before anybody saw it).
 - **The feedback row's answer never enters the feedback record** (saved to the attention file on submit), so no
-  well-being score, tool rating or straightlining flag can move. The dev fill button answers it correctly.
+  well-being score, tool rating or straightlining flag can move. (The dev fill button answered it correctly; the button
+  was deleted on 14 November 2026, and T5 now checks that no such shortcut is back.)
 - **The gift card** (`quality`, `buildQuality`; replaced on 16 October 2026 by the course credit, completion only, and the
   careful-participation verdict, in which a wrong attention check is one sign): `compensation_eligible` now also needs `passed_all_attention_checks`;
   each miss, a check never reached, or no file gives its own reason. The check's own stage is never a rushed block.
@@ -2024,20 +2025,16 @@ stands over every rule. Background and evidence: `docs/FRESH_EYE_AUDIT.md`, grou
   `major_info_and_scores.blocks_1_to_4`. `FAST_ANSWER_SECONDS` (2) in `dbShape.ts` is a stated
   default; the medians are stored so another line can be drawn later.
 
-## The development-only control
+## The development-only controls: none left (since 14 November 2026)
 
-It lives in `src/components/dev/` and disappears from a production build because
-`import.meta.env.DEV` becomes the literal `false`, which makes the whole control unreachable and
-drops it from the bundle:
-
-- **DevFillFeedbackButton** — answers every feedback question the page is currently asking, so a
-  run can be finished without refilling the form. It fills from the page's own `requiredCodes`, so
-  it cannot drift from what is on screen, and it does not submit.
-
-**DevResetButton ("Restart from Block 1") was deleted on 23 October 2026** (the researcher: "I don't need it anymore").
-To start a test run again, clear the browser's site data for the study's address. To remove the last control before
-launch: delete `src/components/dev/`, its import and the line that renders it (`src/experiment/UserFeedbackPage.tsx`).
-Checked after every build: "Fill feedback" appears zero times in `dist/`.
+There were two, in `src/components/dev/`, both folded out of every production build (`import.meta.env.DEV`), so no
+participant ever saw them. **DevResetButton ("Restart from Block 1") was deleted on 23 October 2026** (the researcher:
+"I don't need it anymore"). **DevFillFeedbackButton ("Fill feedback", which answered every feedback question on the
+page) was deleted on 14 November 2026, before launch** (PLAN_Prolific_only_code_change.md section 3, approved;
+PLAN_Prolific_launch.md A1.1), with the folder and `devFillEveryAnswer` in `UserFeedbackPage.tsx`. A test run now
+answers the feedback page by hand. To start a test run again, use a new made-up Prolific ID, or clear the browser's
+site data for the study's address. The accuracy checklist still checks that "Fill feedback" appears zero times in
+`dist/`.
 
 ## Every check, and what each one stands over
 

@@ -1,4 +1,10 @@
-# Prolific conversion plan (written 1 October 2026, revised 6 October 2026; Step 0 built, the rest NOT built)
+# Prolific conversion plan (written 1 October 2026, revised 6 October 2026; HISTORY: every step was built by 10 November 2026)
+
+> **History, 14 November 2026.** Everything this plan asked for was built (Steps 0-5 by 7 October 2026, Prolific only on
+> 10 November 2026). The pilot of 10, the 160 people, $8.75, a country filter and "Nothing in this file has been built"
+> below are October's words, not today's. Today's Prolific settings and the launch steps are in
+> `PLAN_Prolific_launch.md` (project root), section 3; the registered values (40 then 64 places, $7.00 for 35 minutes,
+> fluent English, approval 95%+, no country filter, desktop only, no pilot) are in `OSF_PREREGISTRATION_ANSWERS.md`.
 
 > **Updated 10 November 2026:** the IRB refused the student group, so the study is Prolific only and pays $7.00 (35 minutes at $12 an hour; 104 people). This plan is history where it speaks of two versions, $8.75 or the student door.
 
@@ -300,7 +306,10 @@ memory.
    and Prolific's "Preview as participant"): open the study with `?condition=CVR_APA` (or `CVR_Only`, `APA_Only`,
    `BSL4` for Baseline) in the address, so the run is never counted for balance** (the audit of 6 October 2026: a Preview through
    the plain Prolific link would count as a real Prolific participant). Delete or mark every test record before launch.
-6. Fix 1 (the option cards' fit numbers; kept for "just before real participants") is done.
+6. Fix 1 (the option cards' fit numbers; kept for "just before real participants"). **Closed on 14 November 2026 with
+   nothing changed on screen** (the researcher's decision of 23 October 2026 keeps the fit line and the "Ranked N - why"
+   box in conditions 1-3, as the IRB and OSF texts describe; **Baseline has no fit score and no "Ranked N - why"
+   section**).
 7. `docs/PREREGISTRATION_FREEZE.md` is final.
 8. The completion code is in the server's `.env` (`PROLIFIC_COMPLETION_CODE`, exactly as Prolific shows it) and
    `https://moonlander.fit.edu/api/health` says `"prolific_code_configured": true`. Then **one Prolific "Preview as

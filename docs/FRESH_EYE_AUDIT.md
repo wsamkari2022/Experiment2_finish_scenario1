@@ -48,13 +48,13 @@ where noted, thresholds came from the REAL `deriveDecisionProfile` fed random la
 
 | ID | Problem (short) | Severity | Status |
 |---|---|---|---|
-| A1 | Open cards print the fit score out of 100 | Critical | **Deferred to before launch** (Fix 1) |
-| A2 | Card text reveals the participant's #1 value | High | **Deferred to before launch** (Fix 1) |
+| A1 | Open cards print the fit score out of 100 | Critical | **Closed 14 November 2026: kept, as registered** (the researcher's decision of 23 October 2026 keeps the fit line and the "Ranked N - why" box in conditions 1-3, as the IRB and OSF texts describe; **Baseline has no fit score and no "Ranked N - why" section**) |
+| A2 | Card text reveals the participant's #1 value | High | **Closed 14 November 2026: kept, as registered** (the researcher's decision of 23 October 2026 keeps the fit line and the "Ranked N - why" box in conditions 1-3, as the IRB and OSF texts describe; **Baseline has no fit score and no "Ranked N - why" section**) |
 | A3 | The order is presented as a judgment, so "position" is really "recommendation" | High | Open |
 | A4 | Reflection pages show the participant's value numbers | Medium, decision | **Half fixed**: the confirm-keep number removed (option A); APA's "missed by N points" still shown |
 | A5 | Compare chart draws the participant's values over the options | Low, note | Open |
-| A6 | CLAUDE.md says no verdict or arithmetic is shown; not true | High (docs) | **Deferred to before launch** (Fix 1) |
-| A8 | Scenario 5's wish page says how close the wish is to "what you said matters most" | Medium | Open (Fix 1 territory) |
+| A6 | CLAUDE.md says no verdict or arithmetic is shown; not true | High (docs) | **Fixed (docs)** 23 October 2026: CLAUDE.md says which fit numbers are shown, on purpose ("Things that are deliberate"); Fix 1 closed 14 November 2026 |
+| A8 | Scenario 5's wish page says how close the wish is to "what you said matters most" | Medium | **Closed 14 November 2026: kept in conditions 1-3** (Fix 1 closed, the researcher's "D1-A"; the sentence says in words what the same card's fit line shows there). Baseline has its own sentence since 3 October 2026 |
 | A9 | The participant's own four value numbers are on screen in every scenario while they choose (the sidebar card, since 26 Sept the values panel), the same kind of number removed from the confirm-keep question | Medium, decision | **Kept for now** (Waseem, 26 Sept); he will check with his advisor |
 | A10 | Scenario 6 shows those four numbers although its four options ARE the four values (the meanings are hidden there for exactly that reason) | Medium, decision | **Closed** 27 Sept (Waseem: "scenario 6 no MCF and no 'Your values in this scenario' section. Hide both"): the whole panel is gone from scenario 6, and so is the MCF (R13); gate M11 |
 | A7 | The "Has a cost" removal (24 Sept) is not yet dated in CLAUDE.md / HOW_TO_ANALYZE | Medium (docs) | **Fixed (docs)** 25 Sept: dated in CLAUDE.md and HOW_TO_ANALYZE 4.9 |
@@ -193,7 +193,10 @@ planner wording Waseem said to keep; see the status board)
     flag exists since E5; decide how to report those people), E6 (an exchange-rate idea).
 13. B7: only four scenarios can move the profile (framing in the thesis).
 
-**Phase 4 - just before real participants (Fix 1, deferred by Waseem)**
+**Phase 4 - just before real participants (Fix 1, deferred by Waseem). CLOSED 14 November 2026, before launch:** the
+researcher's decision of 23 October 2026 keeps the fit line and the "Ranked N - why" box in conditions 1-3, as the IRB
+and OSF texts describe, and his "D1-A" of 14 November 2026 closes the rest of Fix 1 (nothing changes on screen;
+PLAN_Prolific_launch.md). Baseline got Fix 1's card part on 3 October 2026. The list below is history.
 14. A1 (the fit number on cards), A2 (#1-value text on cards), A6 (CLAUDE.md claim), A8 (scenario
     5's wish page "close to what you said matters most"), A4 second half (APA "missed by N points"),
     A3 (the order reads as a recommendation), A5 (compare chart draws the person's values).
@@ -321,7 +324,7 @@ change to what participants see, of the same kind CLAUDE.md dates ("Option cards
 since 23 September"). Records before 24 September saw both. Add a dated line to CLAUDE.md and
 HOW_TO_ANALYZE so no one pools across it for costed-card choices.
 
-### Fix 1 plan (written 24 September, deferred)
+### Fix 1 plan (written 24 September, deferred; closed 14 November 2026, see Phase 4)
 
 Remove from the open-card panel in scenarios 1-5: the fit line, `decidedLine`, `tradeLine`, and the
 costed `breachLine`. Keep `winsLine`, `referenceLine`, the blocked `breachLine` and its label, and

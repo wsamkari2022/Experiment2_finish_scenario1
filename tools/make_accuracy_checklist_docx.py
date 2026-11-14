@@ -458,7 +458,8 @@ SECTIONS = [
         ("The reflection views and stories pass their checks.",
          "The two ways of seeing a choice (CVR lenses) and the affected people's stories.", ["lenses", "people"], ""),
         ("The development button is not in the participant version.",
-         "\"Fill feedback\" exists only on your computer (\"Restart from Block 1\" was removed on 23 October 2026).", ["devbuttons"], ""),
+         "No development button is left: \"Restart from Block 1\" was removed on 23 October 2026 and \"Fill feedback\" "
+         "on 14 November 2026, before launch. The build is still searched for it.", ["devbuttons"], ""),
         ("The code is clean.",
          "No type errors and no lint errors.", ["typecheck", "lint"], ""),
     ]),

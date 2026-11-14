@@ -113,31 +113,33 @@ Under `authenticatedUserRoles` you should see `readWrite` on `VRDS2`. `exit` to 
 
 ## Part B — Upload the project
 
-Upload the folder **`Experiment VRDS 2`** (the one containing `package.json`) to the server.
+**Every version goes into its own folder on the server, `~/experiment2-vN`** (for example `~/experiment2-v9`). The
+folder before it stays, so you can go back to it (only until the study is published on Prolific: an older version has no
+Prolific ID and no completion code).
 
-**Skip** these when uploading. They are rebuilt on the server, and `node_modules` from Windows
-contains Windows-only files:
-
-- `node_modules/`
-- `dist/`
-- `.git/` (optional)
-- `Prolific docs/` — it holds the Prolific completion code. The server never needs it, and the code
-  must not sit on a machine that serves web pages. (Later, the code goes into the server's `.env`
-  only; see `docs/PROLIFIC_CONVERSION_PLAN.md`.)
-- `.sim-build/` (the checks' compiled copy; not needed on the server)
-
-The folder name contains spaces, so always quote it on the server, for example:
+**The package is made on the laptop from the commit being deployed** (since 14 November 2026), not from the folder:
 
 ```bash
-cd ~/"Experiment VRDS 2"
+git -c core.autocrlf=false archive --format=tar.gz --prefix=experiment2-vN/ -o ../experiment2-vN-deploy.tar.gz <commit> -- . ":(exclude)scenarios_images"
+```
+
+It holds exactly the files Git keeps for that commit, so it never carries `.env`, `node_modules/`, `dist/`,
+`.sim-build/`, or `Prolific docs/`, which holds the Prolific completion code (the code must not sit on a machine that
+serves web pages; it goes only into the server's `.env`). `scenarios_images/` (source photos the site never loads) is
+left out. `core.autocrlf=false` keeps the shell scripts' Linux line endings. Copy the package to the server and unpack it:
+
+```bash
+cd ~ && tar -xzf experiment2-vN-deploy.tar.gz
 ```
 
 ---
 
 ## Part C — Create `.env` on the server
 
+The first time only (a later version copies the `.env` of the live folder, Part D):
+
 ```bash
-cd ~/"Experiment VRDS 2"
+cd ~/experiment2-vN
 cp .env.example .env
 nano .env
 ```
@@ -169,7 +171,7 @@ chmod 600 .env
 ## Part D — Start Experiment 2
 
 ```bash
-cd ~/"Experiment VRDS 2"
+cd ~/experiment2-vN
 chmod +x build-and-run.sh stop-project.sh
 ./build-and-run.sh
 ```
@@ -214,12 +216,13 @@ The password always shows as `***`, both here and in the logs.
 You can now close SSH. To stop the site later:
 
 ```bash
-cd ~/"Experiment VRDS 2"
+cd ~/experiment2-vN
 ./stop-project.sh
 ```
 
-To deploy a newer version: upload it, keep the **same `.env`** (copy it across on the server),
-and run `./build-and-run.sh` again.
+To deploy a newer version: unpack it in its own folder, copy the **same `.env`** across from the live folder
+(`cp ~/experiment2-v<old>/.env ~/experiment2-v<new>/.env && chmod 600 ~/experiment2-v<new>/.env`), and run
+`./build-and-run.sh` in the new folder. To see which folder is live: `pm2 describe experiment2-4000 | grep "exec cwd"`.
 
 ---
 
@@ -351,8 +354,8 @@ counts now (finished, working, just arrived) and every record ever by source. Nu
 
 **Good to know while testing:**
 
-- The development button (Fill feedback) is not in the server build, so every test is a full run. (Reset was deleted on
-  23 October 2026.)
+- There is no development button: "Restart from Block 1" was deleted on 23 October 2026 and "Fill feedback" on 14
+  November 2026, before launch. Every test is a full run, with the feedback page answered by hand.
 - The same Prolific ID on a second browser asks for the age again and then takes the run over; the first browser
   shows "This study is open somewhere else". That is the one-browser rule, not an error.
 - **To test, use a made-up Prolific ID in the link:** `/prolific?PROLIFIC_PID=<24 letters a-f and digits>&condition=CVR_APA`. Tests by

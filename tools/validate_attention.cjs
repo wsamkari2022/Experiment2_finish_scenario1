@@ -18,7 +18,7 @@
  *   T4  careful participation (quality): none of the four OSF robustness signs; there is no course-credit field since 10
  *       November 2026; the check's own screen is never a rushed block; the copy in major_info_and_scores matches
  *   T5  the feedback row stays out of the feedback record: never in a scored list, saved in the attention file on
- *       submit, only in the tools or well-being sections, answered correctly by the development fill button
+ *       submit, only in the tools or well-being sections; no development fill button (deleted 14 November 2026)
  *   T6  the two answer-pattern flags (Q4) count runs and steps of one exactly, and say they are not for pay
  *   T7  chance: a random clicker passes all three about 1 time in 112; a same-number answerer and a diagonal
  *       clicker are caught as the plan said
@@ -295,14 +295,17 @@ const oneMissing = fileWith(P, { between_blocks: ans(RB), between_scenarios: ans
   if (calls.sort().join() !== "tools,wellbeing_a,wellbeing_b") why.push(`the row can appear in: ${calls.join(", ")}`);
   const cvrCard = page.slice(page.indexOf('method="cvr"'), page.indexOf('eyebrow="Decision-support tools"'));
   if (/attentionAfter|ATTENTION_FEEDBACK_CODE|attentionRows/.test(cvrCard)) why.push("the row can appear in the reflection or clarification sections");
-  if (!page.includes("for (const a of attentionRows) filled[a.code] = a.row.target;")) why.push("the development fill button answers it wrong");
+  /* The development fill button answered these rows for a tester; it was deleted before launch (14 November 2026), so
+     no page may hold a shortcut that answers the attention rows. */
+  if (/DevFillFeedbackButton|devFillEveryAnswer|filled\[a\.code\]/.test(page) || fs.existsSync(path.join(ROOT, "src", "components", "dev")))
+    why.push("a development fill button is back");
   if (!/text: `This question is just to check your attention\. Pick the number \$\{at\.row\.word\}\.`/.test(page)) why.push("the wording is not the researcher's");
   if (!page.includes("const [attentionRows] = useState(() => numberRowsOf(readAttention().plan));")) why.push("the page does not draw the rows the plan drew");
   /* The feedback record never sees it: the ratings read back from a record carry only real questions. */
   const record = { feedback: { decisionSupport: { TOOL_optionCards: 4, [A.ATTENTION_FEEDBACK_CODE]: 4, [A.ATTENTION_FEEDBACK_CODE_2]: 5 }, wellbeing: { items: { LI1: 4, [A.ATTENTION_FEEDBACK_CODE_2]: 3 } } } };
   if (A.feedbackRatingsInOrder(record).length !== 2) why.push("a stray check answer would be read as a rating");
   gate("T5", why.length === 0, why.length ? why.join(" | ")
-    : "the row is never collected into the feedback record (so no score or 'same answer' flag can move), is saved in the attention file before the record, sits only in the tools or well-being sections, uses the researcher's words, and the dev fill answers it right");
+    : "the row is never collected into the feedback record (so no score or 'same answer' flag can move), is saved in the attention file before the record, sits only in the tools or well-being sections, uses the researcher's words, and no development fill button can answer it (deleted 14 November 2026)");
 }
 
 /* ------------------------------------------------------------------ T6 answer patterns */

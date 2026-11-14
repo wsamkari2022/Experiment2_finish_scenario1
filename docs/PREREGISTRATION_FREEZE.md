@@ -2,8 +2,10 @@
 
 **Status: DRAFT, written 27 September 2026** at the researcher's request ("Q2-Yes": write the note that fixes the
 numbers before any real data). It records every constant, rule and analysis choice **as the code stands at the commit
-that adds this file**. Fix 1 (what participants see while choosing) is still to come, by the researcher's decision
-the very last change before launch. **At launch:** re-check every value below against the launch commit, fill in the
+that adds this file**. Fix 1 (what participants see while choosing) was planned as the very last change before launch;
+**it was closed on 14 November 2026 with nothing changed on screen**: the researcher's decision of 23 October 2026 keeps
+the fit line and the "Ranked N - why" box in conditions 1-3, as the IRB and OSF texts describe, and **Baseline has no fit
+score and no "Ranked N - why" section** (since 3 October 2026). **At launch:** re-check every value below against the launch commit, fill in the
 two lines at the end, and do not change this file afterwards except by an appended, dated "Deviations" entry.
 
 **Since 14 October 2026 the MAIN hypotheses are the 23 in section 5.1 (A1-D5)**, approved by Dr. Eskridge (11 November

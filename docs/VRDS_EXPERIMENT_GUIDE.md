@@ -948,9 +948,8 @@ state plainly in the write-up that it is set by hand. **Anything that changes it
 `npm run verify:apa` then `npm run validate:block5` and `npm run report:stability` — the
 stakeholder stability is made of these steps.**
 
-**1 · Delete the dev restart button before launch.**
-`src/components/dev/` and two lines in `src/App.tsx`. It cannot ship (`import.meta.env.DEV` folds
-it out of a production build, verified by grepping `dist/`), but delete it anyway.
+**1 · Delete the dev buttons before launch. Done:** the restart button on 23 October 2026, and the
+last one, "Fill feedback", with the whole `src/components/dev/` folder on 14 November 2026.
 
 **2 · Export the archive to a file, not just localStorage.**
 Right now the archive lives in one browser. A lost browser profile is lost data, and localStorage
