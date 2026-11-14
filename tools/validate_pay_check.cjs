@@ -21,6 +21,8 @@
  *       email is refused); the code itself never printed
  *   Y5  the command: the two files written in the day's folder, the approve line exactly the PAY group, the summary, the
  *       hourly pay from --reward, day 21 counted from --today, a missing file stops with a clear message
+ *   Y7  the page PAY_CHECK.html (since 14 November 2026): every person once, in the report's group; the tiles, the approve
+ *       list and each checklist line say what the decision rests on; no email, no code, no score; everything escaped
  *
  * Run:  npm run validate:pay
  */
@@ -61,7 +63,7 @@ function record(n, over = {}) {
       block5_emergency_scenarios: { scenarioResults: Array.from({ length: 6 }, (_, i) => ({ scenarioId: i + 1 })) },
       feedback_answers: { feedback: { wellbeing: { items: { LI1: 4 } } } },
     },
-    analysis: { attention_checks: { prolific_rule: { attention_checks_failed: over.checksFailed ?? 0, failed_two_or_more_attention_checks: (over.checksFailed ?? 0) >= 2 } } },
+    analysis: { attention_checks: { prolific_rule: { attention_checks_counted: 4, attention_checks_answered: over.answered ?? 4, attention_checks_failed: over.checksFailed ?? 0, failed_two_or_more_attention_checks: (over.checksFailed ?? 0) >= 2 } } },
     quality: { active_minutes: over.working ?? 40, straightlined_feedback: !!over.straight, blocks_under_30_seconds: over.rushed ?? 0 },
     active_time: { total_active_minutes: over.working ?? 40 },
   };
@@ -214,6 +216,9 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
     const out = execFileSync(process.execPath, [path.join(__dirname, "pay_check.cjs"), dir, "--reward", "10", "--today", "2026-10-20"], { encoding: "utf8" });
     const md = fs.readFileSync(path.join(dir, "PAY_CHECK.md"), "utf8");
     const approve = fs.readFileSync(path.join(dir, "approve_ids.txt"), "utf8").trim();
+    const page = fs.existsSync(path.join(dir, "PAY_CHECK.html")) ? fs.readFileSync(path.join(dir, "PAY_CHECK.html"), "utf8") : "";
+    if (!page.startsWith("<!doctype html>") || !page.includes(`<textarea id="approve" readonly rows="2">${approve}</textarea>`)) why.push("PAY_CHECK.html is not written, or its approve list differs from approve_ids.txt");
+    if (!/PAY_CHECK\.html \(open it in your browser\)/.test(out)) why.push("the summary does not name the page");
     if (approve !== [1, 2, 15, 16].map(pidOf).join(",")) why.push(`approve_ids.txt holds ${approve}`);
     if (!/^Pay check 2026-10-20: pay 4, reject 2, look first 4, problem 8, not finished 3, already decided 2; in our database but not in Prolific's file 1\./m.test(out)) why.push(`the summary reads: ${out.split("\n")[0]}`);
     if (!/## 1\. Pay \(4\)/.test(md) || !/## 2\. Reject: failed two or more attention checks \(2\)/.test(md) || !/## 3\. Look first \(4\)/.test(md) || !/## 4\. Problem \(8\)/.test(md)
@@ -226,7 +231,7 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
     fs.rmSync(dir, { recursive: true, force: true });
   }
   gate("Y5", why.length === 0, why.length ? why.join(" | ")
-    : "the command writes PAY_CHECK.md and approve_ids.txt in the day's folder (the approve line exactly the PAY group), prints the summary, gives the hourly pay from --reward and counts day 21 from --today; a missing folder stops with a clear message");
+    : "the command writes PAY_CHECK.html, PAY_CHECK.md and approve_ids.txt in the day's folder (the approve line exactly the PAY group), prints the summary, gives the hourly pay from --reward and counts day 21 from --today; a missing folder stops with a clear message");
 }
 
 
@@ -257,6 +262,53 @@ for (const [g, rows] of Object.entries(result.groups)) for (const r of rows) gro
   if (P.RULES.rewardUsd !== 7 || P.RULES.minHourlyUsd !== 8 || P.RULES.autoApproveDay !== 21 || P.RULES.warnAfterDays >= 21) why.push("the reward, the minimum or the approval day changed");
   gate("Y6", why.length === 0, why.length ? why.slice(0, 5).join(" | ")
     : "the consent form's promises: somebody who finished after Prolific's time limit is listed to pay (apart from the bulk-approve list), unless two or more checks failed; who did not finish is not; the report warns under $8 an hour (35 minutes = $12, 52.5 = $8 no warning, 55 = warning); the reward defaults to $7");
+}
+
+/* ------------------------------------------------------------------ Y7 the page (PAY_CHECK.html), since 14 November 2026 */
+{
+  const why = [];
+  const date = "2026-10-20";
+  const files = { db: "participants.json", prolific: "prolific.csv" };
+  let html = "";
+  try { html = P.reportHtml(result, { date, files }); } catch (e) { why.push(`the page refused itself (${e.message})`); }
+  /* Every person sits in the same group on the page as in the result (the report's groups), exactly once. */
+  const cards = [...html.matchAll(/<article class="card t-\w+" data-pid="([^"]+)" data-group="(\w+)">/g)].map((m) => [m[1], m[2]]);
+  for (const [n, want] of PEOPLE) {
+    const mine = cards.filter(([pid]) => pid === pidOf(n));
+    if (mine.length !== 1 || mine[0][1] !== want) why.push(`person ${n}: ${mine.map((c) => c[1]).join("+") || "no card"} on the page (wanted ${want})`);
+  }
+  const tile = (g) => (html.match(new RegExp(`href="#g-${g}"><span class="n">(\\d+)</span>`)) || [])[1];
+  for (const [g, rows] of Object.entries(result.groups)) if ((rows.length || g !== "other") && tile(g) !== String(rows.length)) why.push(`the ${g} tile says ${tile(g)}, the group has ${rows.length}`);
+  if (!html.includes(`<textarea id="approve" readonly rows="2">${result.approveIds.join(",")}</textarea>`)) why.push("the approve list on the page is not exactly the PAY group");
+  if (!html.includes(`data-pid="${pidOf(30)}"`)) why.push("the record missing from Prolific's file is not on the page");
+  /* The checklist says what the decision rests on. */
+  const card = (n) => { const i = html.indexOf(`data-pid="${pidOf(n)}" data-group`); return i < 0 ? "" : html.slice(i, html.indexOf("</article>", i)); };
+  const item = (n, label) => { const c = card(n); const i = c.indexOf(`<span class="label">${label}`); return i < 0 ? "" : c.slice(c.lastIndexOf("<li class=", i), c.indexOf("</li>", i)); };
+  const expect = [
+    [1, "Attention checks", "s-ok", "passed 4 of 4"], [2, "Attention checks", "s-warn", "passed 3 of 4, failed 1"], [3, "Attention checks", "s-bad", "passed 2 of 4, failed 2"],
+    [4, "Same answer to every feedback rating", "s-warn", "yes"], [5, "Parts finished in under 30 seconds", "s-warn", "3 of 6"], [6, "Exceptionally fast", "s-warn", "yes"],
+    [7, "Record in our database", "s-bad", "no record"], [8, "Finished the study", "s-bad", "no"], [9, "All answers saved", "s-bad", "5 of 6 scenarios"],
+    [11, "Completion code shown", "s-bad", "no"], [12, "Working time", "s-bad", "0.4 min"], [13, "Time on Prolific", "s-bad", "far shorter"],
+    [14, "Time on Prolific", "s-warn", "began long before"], [15, "Completion code typed on Prolific", "s-warn", "different from most"], [1, "Working time", "s-ok", "40 min"],
+  ];
+  for (const [n, label, cls, words] of expect) { const li = item(n, label); if (!li.includes(cls) || !li.includes(words)) why.push(`person ${n}, "${label}": wanted ${cls} "${words}", got ${li.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90) || "nothing"}`); }
+  if (!card(3).includes("Failed attention checks: two or more") || !card(16).includes("Decide by <b>2026-10-22</b>")) why.push("a card lacks Prolific's wording or the day-21 date");
+  /* Private and fair: no email (refused), never the code, never a score of the study; everything read is escaped. */
+  if (P.EMAIL.test(html) || html.includes(COMMON) || html.includes("WRONG99")) why.push("an email or a typed completion code is on the page");
+  if (/\bVCI\b|Stability|consistency index|headline|alignment score/i.test(html)) why.push("a score of the study is on the page");
+  const nf = result.groups.notFinished[0];
+  const evil = { ...result, groups: { ...result.groups, notFinished: [{ ...nf, stage: "<script>alert(1)</script>", notes: ["<img src=x onerror=alert(1)>"], check: { ...nf.check, stage: "<script>alert(1)</script>" } }] } };
+  const evilHtml = P.reportHtml(evil, { date, files });
+  if (/<script>alert|<img src=x/.test(evilHtml) || !evilHtml.includes("&lt;script&gt;")) why.push("a value read from a file is not escaped");
+  let refused = false;
+  try { P.reportHtml({ ...result, groups: { ...result.groups, pay: [{ ...result.groups.pay[0], notes: ["write to student.one@my.fit.edu"] }] } }, { date, files }); } catch { refused = true; }
+  if (!refused) why.push("a page carrying an email is not refused");
+  if (!/prefers-color-scheme:dark/.test(html) || !/name="viewport"/.test(html) || !/id="find"/.test(html)) why.push("the page lacks dark mode, the phone setting or the search box");
+  /* The page decides nothing of its own: the groups are payCheck's, unchanged by the checklist. */
+  const plainResult = P.payCheck({ docs, submissions: subs, today: TODAY, reward: 10 });
+  if (JSON.stringify(Object.fromEntries(Object.entries(plainResult.groups).map(([g, r]) => [g, r.map((x) => x.pid)]))) !== JSON.stringify(Object.fromEntries(Object.entries(result.groups).map(([g, r]) => [g, r.map((x) => x.pid)])))) why.push("the groups changed between runs");
+  gate("Y7", why.length === 0, why.length ? why.slice(0, 6).join(" | ")
+    : "PAY_CHECK.html: every person once, in the same group as the report; each tile's number and the approve list equal the groups; the checklist marks what each decision rests on (attention checks passed 4, 3 or 2 of 4, the same answer everywhere, 3 rushed parts, exceptionally fast, no record, not finished, 5 of 6 scenarios, no code shown, 0.4 working minutes, the clocks, a different code typed), Prolific's wording and the day-21 date; no email (refused), no completion code, no score of the study; every value escaped; dark mode, phone width and a search box");
 }
 
 console.log("");

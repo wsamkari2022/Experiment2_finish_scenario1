@@ -18,10 +18,52 @@ Prolific IDs.**
 npm run pay:check -- "Prolific docs/daily/2026-12-01" --reward 7
 ```
 
-and two files appear in today's folder:
+and three files appear in today's folder:
 
-- **`PAY_CHECK.md`** — everybody, in groups, with the reason in words.
+- **`PAY_CHECK.html`** (since 14 November 2026) — **open this one**: double-click it, and it opens in your browser. The same
+  groups as the report, in color, with a checklist for every Prolific ID (below).
+- **`PAY_CHECK.md`** — everybody, in groups, with the reason in words (the same groups, as text).
 - **`approve_ids.txt`** — one line of Prolific IDs, separated by commas: paste it into Prolific's **bulk approve**.
+
+5. **Act on Prolific**, group by group (the page says what to do under each group's title):
+   - **Pay:** press **Copy the approve list** on the page, then on Prolific → Submissions → bulk approve → paste.
+   - **Pay: timed out:** approve each one by hand on Prolific (they are not in the approve list).
+   - **Reject:** on Prolific, reject each one; press **Copy the wording** on the person's card and paste it as the reason.
+   - **Look first** and **Problem:** read the card's "Why" and checklist, then decide (for a Problem, usually send the
+     person a message through Prolific first).
+   - **Not finished**, **Already decided**: nothing to do.
+
+## The page, `PAY_CHECK.html`
+
+- **At the top:** one colored tile per group with its number (click a tile to jump to that group), and a box with the
+  median time and the **pay per hour** (a red warning appears if it falls under $8).
+- **Find a Prolific ID:** type or paste part of an ID (for example from a Prolific message), and only that person stays
+  on the page.
+- **One card per Prolific ID**, with a **Copy ID** button and, when there is one, the "Why", Prolific's wording to copy,
+  and a "Decide by" date (day 21). Then the **checklist**:
+
+  | Line | What it means |
+  |---|---|
+  | Prolific status | What Prolific says: awaiting review, timed out, returned... |
+  | Record in our database | Their Prolific ID is in our database |
+  | Finished the study | Our record says "Study Completed" (if not, where it stopped) |
+  | All answers saved | Blocks 1-4, all 6 scenarios, the feedback and the attention checks are in the record |
+  | Completion code shown on our last page | Our study gave them the code |
+  | Attention checks | How many of the 4 they passed; **one** failed is a note only, **two or more** = Reject |
+  | Working time | Active minutes on the study (at least 5 expected; a real run is about 35-40) |
+  | Time on Prolific / in our record | Prolific's clock and ours; far apart is a warning |
+  | Exceptionally fast | Prolific's rule (more than 3 standard deviations faster than the mean), judged once 10 have finished |
+  | Same answer to every feedback rating | One sign of low effort |
+  | Parts finished in under 30 seconds | Out of 6; 3 or more is a sign of low effort |
+  | Completion code typed on Prolific | Same as most people's, or different (information only, never a reason to reject) |
+
+  Each line has a mark: **✓** green fine · **!** amber look at it · **✗** red a problem · **•** information · **–** not
+  judged yet. A card where every line is ✓ shows one summary line ("everything fine · click to see"); a card with any !
+  or ✗ is open.
+- **What the page never shows:** any score of the study (no VCI, no Stability...). Your OSF plan promises you look only at
+  time, technical problems and Prolific's payment rules while data are collected. It never shows the completion code.
+- **Private:** the page holds Prolific IDs. Keep it in today's folder in `Prolific docs/`; never send it to an AI tool or to
+  anybody else.
 
 ## The groups
 

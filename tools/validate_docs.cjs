@@ -131,7 +131,7 @@ console.log("\n  THE DOCUMENTS CHECK (tools/validate_docs.cjs)\n");
         const tok = m[1];
         if (!/^[A-Za-z_][A-Za-z0-9_.[\]]*$/.test(tok)) continue;
         if (!/[_.]|[a-z][A-Z]/.test(tok)) continue;                       // a plain word, not a field
-        if (/\.(md|ts|tsx|js|cjs|mjs|json|csv|txt|docx|py|sh)$/.test(tok)) continue;   // a file name
+        if (/\.(md|ts|tsx|js|cjs|mjs|json|csv|txt|docx|py|sh|html)$/.test(tok)) continue;   // a file name
         const parts = tok.split(/[.[\]]+/).filter((p) => p && !/^\d+$/.test(p));
         checked += 1;
         if (parts.every((p, i) => known(p, i === parts.length - 1))) continue;

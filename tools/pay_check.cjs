@@ -7,7 +7,9 @@
  * and this tool sorts every Prolific person into groups, using ONLY reasons Prolific accepts (researcher-help.prolific.com,
  * "Who should I reject?"): failed attention checks (two or more, in a study over 5 minutes), clear low effort throughout,
  * exceptionally fast (more than 3 standard deviations below the mean). It never rejects, never contacts anybody, and never
- * touches the database: it reads the two files and writes two files beside them.
+ * touches the database: it reads the two files and writes three files beside them: PAY_CHECK.html (since 14 November
+ * 2026, the researcher's "A": the same groups as a colored page with a checklist per Prolific ID, opened in his own
+ * browser), PAY_CHECK.md and approve_ids.txt.
  *
  *   PAY          Prolific "Awaiting review", our record finished with every answer, and nothing below applies
  *   REJECT       failed TWO OR MORE of the four attention checks (since 14 October 2026, the researcher's "1-B": the
@@ -31,7 +33,7 @@
  *
  * Privacy: only records with a Prolific ID are read (since 10 November 2026 no new record has an email; an old test record
  * may); the report is refused if an email address would appear in it, and the completion code itself is never printed.
- * Both output files stay in the folder given (keep it inside `Prolific docs/`, which never goes to GitHub).
+ * All three output files stay in the folder given (keep it inside `Prolific docs/`, which never goes to GitHub).
  *
  * Run:  npm run pay:check -- "Prolific docs/daily/2026-10-20" [--reward 10] [--today 2026-10-20]
  *       (or --db <participants.json> --prolific <prolific.csv> --out <folder>)
@@ -218,6 +220,8 @@ function recordFacts(doc) {
     workingMinutes: typeof working === "number" ? working : null,
     ourMinutes: minutesBetween(doc.created_at, doc.completed_at),
     /* Prolific's rule (since 14 October 2026): all four attention checks count; two or more failed is REJECT. */
+    checksCounted: typeof rule?.attention_checks_counted === "number" ? rule.attention_checks_counted : 4,
+    checksAnswered: typeof rule?.attention_checks_answered === "number" ? rule.attention_checks_answered : null,
     checksFailed: typeof rule?.attention_checks_failed === "number" ? rule.attention_checks_failed
       : (typeof quality.prolific_attention_checks_failed === "number" ? quality.prolific_attention_checks_failed : null),
     failedTwoOrMore: rule?.failed_two_or_more_attention_checks === true || quality.prolific_failed_two_or_more_attention_checks === true,
@@ -268,6 +272,20 @@ function payCheck({ docs, submissions, today = new Date(), reward = null }) {
       condition: facts?.condition ?? null, stage: facts?.stage ?? null,
       code: !s.code ? "none typed" : commonCode && s.code === commonCode ? "same as most" : "different from most",
       reasons: [], wording: [], notes: [], decideBy: null,
+    };
+    /* The facts behind the decision, one by one, for the page's checklist (PAY_CHECK.html). Read only: the groups below
+       are decided exactly as before, from `facts`. Never a score of the study (the OSF plan: during collection the team
+       looks only at time, technical problems and Prolific's payment rules), and never the code itself. */
+    row.check = {
+      status: s.status, record: !!doc, finished: facts ? facts.finished : null, stage: facts ? facts.stage : null, missing: facts ? facts.missing : null,
+      codeGiven: facts ? facts.codeGiven : null, checksCounted: facts ? facts.checksCounted : null,
+      checksAnswered: facts ? facts.checksAnswered : null, checksFailed: facts ? facts.checksFailed : null,
+      workingMinutes: round1(facts?.workingMinutes), prolificMinutes: round1(prolificMinutes), ourMinutes: round1(facts?.ourMinutes),
+      clockShort: !!(facts && facts.ourMinutes !== null && prolificMinutes !== null
+        && facts.ourMinutes < RULES.clockShortShare * prolificMinutes - RULES.clockShortSlackMin),
+      clockLong: !!(facts && facts.ourMinutes !== null && prolificMinutes !== null && facts.ourMinutes > prolificMinutes + RULES.clockLongSlackMin),
+      straightlined: facts ? facts.straightlined : null, rushedBlocks: facts ? facts.rushedBlocks : null,
+      fast: speed.active && prolificMinutes !== null ? prolificMinutes < speed.line : null, code: row.code,
     };
     if (s.status === "APPROVED" || s.status === "REJECTED" || s.status === "PARTIALLY APPROVED") { groups.decided.push(row); continue; }
     /* FINISHED AFTER PROLIFIC'S TIME LIMIT. The consent form: "If you finish after Prolific's time limit, we still approve and
@@ -414,6 +432,184 @@ function reportMarkdown(result, { date, files }) {
   return text;
 }
 
+/* ------------------------------------------------------------------ the page (since 14 November 2026) */
+
+/*
+ * PAY_CHECK.html: the same groups as PAY_CHECK.md (the researcher's "A", 14 November 2026), drawn as a page he opens in
+ * his own browser from the day's folder: a tile per group, the approve list with a copy button, and a card per Prolific
+ * ID with every fact behind the decision as a checklist. It decides nothing of its own: every group comes from payCheck.
+ * Private by construction: it is a file in `Prolific docs/` (never on the server, never on GitHub); every value read
+ * from a file is escaped; no email (refused, like the report); never the completion code; never a score of the study.
+ */
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const PAGE_GROUPS = [
+  { key: "pay", title: "Pay", tone: "green", mark: "✓", short: "Approve with the list below", todo: "Approve them: copy the approve list below and paste it into Prolific's bulk approve." },
+  { key: "payTimedOut", title: "Pay: timed out", tone: "teal", mark: "⏱", short: "Finished late: approve each by hand", todo: "They finished after Prolific's time limit. The consent form promises to pay them: approve each one on Prolific (they are not in the approve list), or pay the reward as a bonus." },
+  { key: "reject", title: "Reject", tone: "red", mark: "✗", short: "2+ attention checks failed", todo: "Two or more of the four attention checks failed. Reject on Prolific with the wording shown: the consent page says these submissions will be rejected." },
+  { key: "look", title: "Look first", tone: "amber", mark: "!", short: "You decide", todo: "You decide. If you reject, use Prolific's wording shown on the card." },
+  { key: "problem", title: "Problem", tone: "violet", mark: "?", short: "Data and submission do not match", todo: "The data does not match the submission. Usually send the person a message through Prolific first." },
+  { key: "notFinished", title: "Not finished", tone: "slate", mark: "…", short: "Nothing to pay", todo: "Nothing to pay, unless a technical problem on our side stopped them." },
+  { key: "decided", title: "Already decided", tone: "blue", mark: "✔", short: "Nothing to do", todo: "Nothing to do." },
+  { key: "other", title: "Unknown status", tone: "slate", mark: "?", short: "Look on Prolific", todo: "Look at them on Prolific." },
+];
+
+/** The checklist of one card: [label, value, state]; state is ok, warn, bad, info or na (not judged). */
+function checkItems(c) {
+  const out = [];
+  const add = (label, value, state) => out.push({ label, value, state });
+  const awaiting = c.status === "AWAITING REVIEW";
+  add("Prolific status", c.status.toLowerCase(), awaiting ? "ok" : c.status === TIMED_OUT ? "warn" : "info");
+  add("Record in our database", c.record ? "found" : "no record with this Prolific ID", c.record ? "ok" : awaiting ? "bad" : "info");
+  if (c.record) {
+    add("Finished the study", c.finished ? "yes" : `no${c.stage ? ` (stopped at "${c.stage}")` : ""}`, c.finished ? "ok" : awaiting ? "bad" : "info");
+    add("All answers saved", c.missing.length ? `missing: ${c.missing.join(", ")}` : "Blocks 1-4, all 6 scenarios, the feedback, the attention checks",
+      c.missing.length ? (awaiting ? "bad" : "info") : "ok");
+    add("Completion code shown on our last page", c.codeGiven ? "yes" : "no", c.codeGiven ? "ok" : c.finished ? "bad" : "info");
+    if (c.checksFailed === null) add("Attention checks", "not recorded", "na");
+    else {
+      const counted = c.checksCounted ?? 4;
+      const passed = c.checksAnswered !== null ? c.checksAnswered - c.checksFailed : null;
+      const notReached = c.checksAnswered !== null && c.checksAnswered < counted ? `, ${counted - c.checksAnswered} not reached` : "";
+      const text = passed !== null ? `passed ${passed} of ${counted}${c.checksFailed ? `, failed ${c.checksFailed}` : ""}${notReached}` : `failed ${c.checksFailed} of ${counted}`;
+      add("Attention checks", c.checksFailed === 1 ? `${text} (one failed is a note only; two or more = reject)` : text, c.checksFailed === 0 ? "ok" : c.checksFailed === 1 ? "warn" : "bad");
+    }
+    add("Working time (active minutes)", c.workingMinutes === null ? "not recorded" : `${c.workingMinutes} min (at least ${RULES.minWorkingMinutes} expected)`,
+      c.workingMinutes === null ? "na" : c.workingMinutes < RULES.minWorkingMinutes ? "bad" : "ok");
+  }
+  add("Time on Prolific / in our record", `${c.prolificMinutes ?? "-"} min on Prolific · ${c.ourMinutes ?? "-"} min in our record`
+    + (c.clockShort ? " (our record is far shorter)" : c.clockLong ? " (our record began long before Prolific's clock)" : ""),
+    c.clockShort ? "bad" : c.clockLong ? "warn" : c.prolificMinutes === null ? "info" : "ok");
+  add("Exceptionally fast (Prolific's rule)", c.fast === null ? `not judged yet (needs ${RULES.fastNeedsAtLeast} finished submissions)` : c.fast ? "yes: under the line" : "no",
+    c.fast === null ? "na" : c.fast ? "warn" : "ok");
+  if (c.record) {
+    add("Same answer to every feedback rating", c.straightlined ? "yes" : "no", c.straightlined ? "warn" : "ok");
+    add("Parts finished in under 30 seconds", `${c.rushedBlocks} of 6 (${RULES.rushedBlocks} or more = low effort)`, c.rushedBlocks >= RULES.rushedBlocks ? "warn" : "ok");
+  }
+  add("Completion code typed on Prolific", c.code === "different from most" ? "different from most people's (information only, never a reason to reject)" : c.code,
+    c.code === "same as most" ? "ok" : c.code === "different from most" ? "warn" : "info");
+  return out;
+}
+
+const MARK = { ok: "✓", warn: "!", bad: "✗", info: "•", na: "–" };
+
+function cardHtml(row, g) {
+  const list = (title, items, cls) => (items.length ? `<div class="${cls}"><b>${title}</b><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "");
+  const wording = row.wording.length
+    ? `<div class="wording"><b>Prolific's wording${g.key === "reject" ? "" : " if you reject"}</b><p>${esc(row.wording.join(" "))}</p><button type="button" class="copy" data-copy="${esc(row.wording.join(" "))}">Copy the wording</button></div>` : "";
+  /* A card whose every line is fine shows one summary line and opens on a click; any ! or x keeps it open. */
+  let checks = "";
+  if (row.check) {
+    const items = checkItems(row.check);
+    const n = (st) => items.filter((i) => i.state === st).length;
+    const clean = !n("bad") && !n("warn");
+    const c = row.check;
+    const att = c.checksFailed === null ? "" : ` · attention ${c.checksAnswered !== null ? c.checksAnswered - c.checksFailed : "?"}/${c.checksCounted ?? 4}`;
+    const brief = `${n("ok")} ✓${n("warn") ? ` · ${n("warn")} !` : ""}${n("bad") ? ` · ${n("bad")} ✗` : ""}${att}${c.workingMinutes !== null ? ` · ${c.workingMinutes} working min` : ""}${c.prolificMinutes !== null ? ` · ${c.prolificMinutes} min on Prolific` : ""}`;
+    checks = `<details class="checklist"${clean ? "" : " open"}><summary><span class="sum-t">Checklist</span> <span class="sum-b">${esc(brief)}</span>${clean ? ' <span class="sum-ok">everything fine · click to see</span>' : ""}</summary><ul class="checks">${items.map((i) => `<li class="s-${i.state}"><span class="mark" aria-hidden="true">${MARK[i.state]}</span><span class="label">${esc(i.label)}</span><span class="value">${esc(i.value)}</span></li>`).join("")}</ul></details>`;
+  }
+  return `<article class="card t-${g.tone}" data-pid="${esc(row.pid)}" data-group="${g.key}">
+  <div class="card-head"><span class="badge">${g.mark} ${esc(g.title)}</span><code class="pid">${esc(row.pid)}</code><button type="button" class="copy" data-copy="${esc(row.pid)}">Copy ID</button>${row.condition ? `<span class="cond">${esc(row.condition)}</span>` : ""}</div>
+  ${row.decideBy ? `<div class="urgent">Decide by <b>${esc(row.decideBy)}</b>: Prolific approves it by itself on that day.</div>` : ""}
+  ${list("Why", row.reasons, "why")}${wording}${list("Notes", row.notes, "notes")}
+  ${checks}
+</article>`;
+}
+
+function reportHtml(result, { date, files }) {
+  const { groups, notInProlific, speed, reward, hourly, underMinimum, approveIds } = result;
+  const shown = PAGE_GROUPS.filter((g) => g.key !== "other" || groups.other.length);
+  const urgent = [...groups.pay, ...groups.payTimedOut, ...groups.reject, ...groups.look, ...groups.problem].filter((r) => r.decideBy);
+  const tiles = shown.map((g) => `<a class="tile t-${g.tone}" href="#g-${g.key}"><span class="n">${groups[g.key].length}</span><span class="t">${g.mark} ${esc(g.title)}</span><span class="d">${esc(g.short)}</span></a>`).join("");
+  const sections = shown.map((g) => `<section class="group t-${g.tone}" id="g-${g.key}">
+  <h2><span class="badge">${g.mark} ${esc(g.title)}</span> <span class="count">${groups[g.key].length}</span></h2>
+  <p class="todo">${esc(g.todo)}</p>
+  ${g.key === "pay" ? `<div class="approve"><label for="approve"><b>Approve list</b> (${approveIds.length} Prolific ID${approveIds.length === 1 ? "" : "s"}, the Pay group only)</label><textarea id="approve" readonly rows="2">${esc(approveIds.join(","))}</textarea><button type="button" class="copy big" data-copy-from="approve">Copy the approve list</button></div>` : ""}
+  ${groups[g.key].length ? `<div class="cards">${groups[g.key].map((r) => cardHtml(r, g)).join("\n")}</div>` : `<p class="none">Nobody.</p>`}
+</section>`).join("\n");
+  const fmtM = (x) => (x === null || x === undefined ? "-" : `${round1(x)} min`);
+  const extraRows = notInProlific.map((r) => `<tr data-pid="${esc(r.pid)}"><td><code>${esc(r.pid)}</code></td><td>${esc(r.status ?? "-")}</td><td>${esc(r.stage ?? "-")}</td></tr>`).join("");
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pay check ${esc(date)}</title>
+<style>
+:root{--bg:#f6f7fb;--panel:#fff;--fg:#1c2230;--muted:#5d6678;--line:#dfe3ec;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--info:#475569;--na:#8a93a3;
+--green:#16a34a;--teal:#0d9488;--red:#dc2626;--amber:#d97706;--violet:#7c3aed;--slate:#64748b;--blue:#2563eb;--tint:8%}
+@media (prefers-color-scheme:dark){:root{--bg:#10141c;--panel:#181e29;--fg:#e8ecf3;--muted:#a2abbb;--line:#2b3445;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--info:#94a3b8;--na:#6b7485;--tint:16%}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}h1{font-size:26px;margin:0 0 4px}h2{font-size:20px;margin:0;display:flex;align-items:center;gap:10px}
+.sub{color:var(--muted);margin:0 0 16px}.private{border:1px solid var(--line);border-left:5px solid var(--slate);background:var(--panel);padding:10px 14px;border-radius:10px;margin:0 0 16px;color:var(--muted)}
+.alert{border-radius:10px;padding:12px 14px;margin:0 0 12px;font-weight:600}.alert.bad{background:color-mix(in srgb,var(--red) var(--tint),var(--panel));border:1px solid var(--red)}
+.alert.warn{background:color-mix(in srgb,var(--amber) var(--tint),var(--panel));border:1px solid var(--amber)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:0 0 18px}
+.tile{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c);border-radius:12px;padding:12px 14px}
+.tile .n{font-size:30px;font-weight:800;color:var(--c);line-height:1.1}.tile .t{font-weight:700}.tile .d{font-size:13px;color:var(--muted)}
+.t-green{--c:var(--green)}.t-teal{--c:var(--teal)}.t-red{--c:var(--red)}.t-amber{--c:var(--amber)}.t-violet{--c:var(--violet)}.t-slate{--c:var(--slate)}.t-blue{--c:var(--blue)}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 18px}
+.facts div{display:flex;flex-direction:column}.facts span{color:var(--muted);font-size:13px}.facts b{font-size:17px}
+.find{display:flex;gap:8px;align-items:center;margin:0 0 18px}.find input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit}
+.group{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:14px;padding:16px;margin:0 0 18px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--c);color:#fff;font-weight:700;border-radius:999px;padding:3px 12px;font-size:14px;white-space:nowrap}
+.count{color:var(--muted);font-weight:700}.todo{margin:6px 0 12px;color:var(--muted)}.none{color:var(--muted);font-style:italic;margin:0}
+.cards{display:grid;gap:12px}.card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:color-mix(in srgb,var(--c) var(--tint),var(--panel))}
+.card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}.pid{font:600 15px/1.3 ui-monospace,Consolas,monospace;word-break:break-all}
+.cond{margin-left:auto;font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--panel)}
+.copy{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:8px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer}.copy:hover{border-color:var(--c,var(--slate))}
+.copy.big{padding:8px 14px;font-weight:700;background:var(--green);border-color:var(--green);color:#fff}
+.why,.notes,.wording,.urgent{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:0 0 8px}.why{border-left:4px solid var(--c)}
+.why ul,.notes ul{margin:4px 0 0;padding-left:20px}.wording p{margin:4px 0 6px;font-style:italic}.urgent{border-left:4px solid var(--amber)}
+.checklist summary{cursor:pointer;padding:6px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--line);list-style-position:inside}.checklist[open] summary{margin-bottom:8px}.sum-t{font-weight:700}.sum-b{font-weight:600}.sum-ok{color:var(--ok);font-size:13px}
+.checks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
+.checks li{display:grid;grid-template-columns:26px 1fr;grid-template-rows:auto auto;column-gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.checks .mark{grid-row:1/3;display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-weight:800;color:#fff}
+.checks .label{font-size:13px;color:var(--muted)}.checks .value{font-weight:600;overflow-wrap:anywhere}
+.s-ok .mark{background:var(--ok)}.s-warn .mark{background:var(--warn)}.s-bad .mark{background:var(--bad)}.s-info .mark{background:var(--info)}.s-na .mark{background:var(--na)}
+.s-bad{border-color:var(--bad)!important}.s-warn{border-color:var(--warn)!important}
+.approve{display:grid;gap:8px;margin:0 0 12px}.approve textarea{width:100%;font:13px/1.4 ui-monospace,Consolas,monospace;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:13px}
+.rules{color:var(--muted);font-size:14px}.hidden{display:none!important}
+</style></head>
+<body><main>
+<h1>Prolific pay check · ${esc(date)}</h1>
+<p class="sub">Read: <code>${esc(files.db)}</code> (records with a Prolific ID only) and <code>${esc(files.prolific)}</code>. Nothing was changed anywhere; nobody was contacted.</p>
+<p class="private"><b>Private.</b> This page holds Prolific IDs. Keep it in <code>Prolific docs/</code>; never send it to an AI tool or to anybody else. It shows no scores of the study, and never the completion code.</p>
+${underMinimum ? `<div class="alert bad">WARNING: the pay is under ${RULES.minHourlyUsd} USD an hour. At a reward of ${esc(reward)} and the median time of ${esc(round1(speed.median))} minutes, the pay is ${esc(round1(hourly))} USD an hour. Prolific requires at least ${RULES.minHourlyUsd}, and the consent form promises the reward is raised for everyone. Stop opening new places and decide before going on.</div>` : ""}
+${urgent.length ? `<div class="alert warn">Decide soon: ${urgent.length} submission(s) are near day 21, when Prolific approves by itself. Their cards say the date.</div>` : ""}
+<div class="tiles">${tiles}</div>
+<div class="facts">
+  <div><span>Finished submissions with a time</span><b>${speed.n}</b></div>
+  <div><span>Median time on Prolific</span><b>${fmtM(speed.median)}</b></div>
+  <div><span>Pay per hour at the median</span><b>${hourly === null ? "-" : `$${esc(round1(hourly))}`}</b><span>reward $${esc(reward ?? "-")}; Prolific minimum $${RULES.minHourlyUsd}, recommended $12</span></div>
+  <div><span>Exceptionally fast line</span><b>${speed.active ? fmtM(speed.line) : "not judged yet"}</b><span>${speed.active ? `mean ${fmtM(speed.mean)} - 3 × ${fmtM(speed.sd)}` : `needs at least ${RULES.fastNeedsAtLeast} finished submissions`}</span></div>
+</div>
+<div class="find"><label for="find"><b>Find a Prolific ID</b></label><input id="find" type="search" placeholder="Type or paste part of an ID"></div>
+${sections}
+<section class="group t-slate" id="g-extra"><h2><span class="badge">• In our database, not in Prolific's file</span> <span class="count">${notInProlific.length}</span></h2>
+<p class="todo">Usually test runs, Prolific previews, or a different Prolific study. Nothing to pay from this file.</p>
+${notInProlific.length ? `<table><thead><tr><th>Prolific ID</th><th>Our status</th><th>Stage</th></tr></thead><tbody>${extraRows}</tbody></table>` : `<p class="none">Nobody.</p>`}
+</section>
+<section class="rules"><h2>How this was decided</h2><p>Only Prolific's valid reasons are used. Failing <b>two or more</b> of the four attention checks is the rejection rule the Prolific consent page states. Failing <b>one</b> attention check, being slow, a wrong or missing code, or the study's own measures are never reasons to reject. Problem cards mean the data and the submission do not match: ask the person first. The same groups are in <code>PAY_CHECK.md</code>; made by <code>tools/pay_check.cjs</code> (<code>npm run pay:check</code>).</p></section>
+</main>
+<script>
+(function(){
+  function copied(btn){var o=btn.textContent;btn.textContent="Copied";setTimeout(function(){btn.textContent=o;},1200);}
+  function copy(text,btn){
+    function fallback(){var t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();try{document.execCommand("copy");copied(btn);}catch(e){}t.remove();}
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(function(){copied(btn);},fallback);}else{fallback();}
+  }
+  document.addEventListener("click",function(e){var b=e.target.closest("[data-copy],[data-copy-from]");if(!b)return;
+    var text=b.hasAttribute("data-copy")?b.getAttribute("data-copy"):document.getElementById(b.getAttribute("data-copy-from")).value;copy(text,b);});
+  var find=document.getElementById("find");
+  find.addEventListener("input",function(){var q=find.value.trim().toLowerCase();
+    document.querySelectorAll("[data-pid]").forEach(function(el){el.classList.toggle("hidden",q!==""&&el.getAttribute("data-pid").indexOf(q)<0);});});
+})();
+</script>
+</body></html>
+`;
+  if (EMAIL.test(html)) throw new Error("the page would contain an email address; nothing was written");
+  return html;
+}
+
 /* ------------------------------------------------------------------ the command */
 
 function arg(argv, name) {
@@ -436,18 +632,21 @@ function main(argv) {
   const today = todayText ? new Date(`${todayText}T12:00:00Z`) : new Date();
   const result = payCheck({ docs: readParticipants(fs.readFileSync(dbFile, "utf8")), submissions: readSubmissions(fs.readFileSync(csvFile, "utf8")), today, reward });
   const date = today.toISOString().slice(0, 10);
-  const md = reportMarkdown(result, { date, files: { db: path.basename(dbFile), prolific: path.basename(csvFile) } });
+  const files = { db: path.basename(dbFile), prolific: path.basename(csvFile) };
+  const md = reportMarkdown(result, { date, files });
+  const html = reportHtml(result, { date, files });
   const approve = result.approveIds.join(",");
   if (EMAIL.test(approve)) throw new Error("the approve list would contain an email address; nothing was written");
   fs.writeFileSync(path.join(outDir, "PAY_CHECK.md"), md);
+  fs.writeFileSync(path.join(outDir, "PAY_CHECK.html"), html);
   fs.writeFileSync(path.join(outDir, "approve_ids.txt"), approve + (approve ? "\n" : ""));
   const g = result.groups;
   console.log(`Pay check ${date}: pay ${g.pay.length}, reject ${g.reject.length}, look first ${g.look.length}, problem ${g.problem.length}, not finished ${g.notFinished.length}, already decided ${g.decided.length}${g.other.length ? `, unknown status ${g.other.length}` : ""}; in our database but not in Prolific's file ${result.notInProlific.length}.`);
-  console.log(`Written: ${path.join(outDir, "PAY_CHECK.md")} and ${path.join(outDir, "approve_ids.txt")}`);
+  console.log(`Written: ${path.join(outDir, "PAY_CHECK.html")} (open it in your browser), ${path.join(outDir, "PAY_CHECK.md")} and ${path.join(outDir, "approve_ids.txt")}`);
   return result;
 }
 
-module.exports = { RULES, NEEDED_PARTS, PROLIFIC_WORDING, parseGmt, plain, readParticipants, parseCsv, readSubmissions, seconds, recordFacts, speedLine, payCheck, reportMarkdown, main, EMAIL };
+module.exports = { RULES, NEEDED_PARTS, PROLIFIC_WORDING, parseGmt, plain, readParticipants, parseCsv, readSubmissions, seconds, recordFacts, speedLine, payCheck, reportMarkdown, reportHtml, checkItems, main, EMAIL };
 
 if (require.main === module) {
   try {
