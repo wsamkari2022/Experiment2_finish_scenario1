@@ -25,6 +25,16 @@ and three files appear in today's folder:
 - **`PAY_CHECK.md`** — everybody, in groups, with the reason in words (the same groups, as text).
 - **`approve_ids.txt`** — one line of Prolific IDs, separated by commas: paste it into Prolific's **bulk approve**.
 
+   Then, from the same project folder, the **data check** (since 16 November 2026; section "Is every record complete?"
+   below):
+
+```bash
+node tools/data_check.cjs "Prolific docs/daily/2026-12-01"
+```
+
+   It writes **`DATA_CHECK.html`** in the same folder. (The `node` form works the same in every terminal, PowerShell
+   included; `npm run data:check -- "..."` is the same command.)
+
 5. **Act on Prolific**, group by group (the page says what to do under each group's title):
    - **Pay:** press **Copy the approve list** on the page, then on Prolific → Submissions → bulk approve → paste.
    - **Pay: timed out:** approve each one by hand on Prolific (they are not in the approve list).
@@ -64,6 +74,49 @@ and three files appear in today's folder:
   time, technical problems and Prolific's payment rules while data are collected. It never shows the completion code.
 - **Private:** the page holds Prolific IDs. Keep it in today's folder in `Prolific docs/`; never send it to an AI tool or to
   anybody else.
+
+## Is every record complete? `DATA_CHECK.html` (since 16 November 2026)
+
+The pay check reads six parts of a record (Blocks 1-4, the six scenarios, the feedback, the attention checks). The data
+check reads **everything a finished record carries**, so you know nothing was lost on the way to the database. It reads
+only `participants.json` and changes nothing. Run it every day after the pay check, and always before you open more
+places on Prolific.
+
+- **At the top:** a green line when every finished record is complete (or a red one saying how many are not); tiles
+  **Complete**, **Something missing**, **Not finished**; finished people per condition; and **"Missing or different,
+  across everyone"**: each problem found, how many records, in which conditions, with no Prolific ID and no value.
+- **One card per Prolific ID**, with this checklist (a clean card folds to one line; a card with ✗ or ! is open):
+
+  | Line | What it means |
+  |---|---|
+  | Prolific ID, with Prolific's study and session ids | The ids are saved. Without Prolific's study and session ids (somebody who pasted their ID instead of using Prolific's link) it is a note **!**, not missing data |
+  | Finished the study | "Study Completed", or the stage where the person stopped |
+  | The four "about you" answers | Age, gender, country, English first language are saved (never shown) |
+  | Consent | Agreed, with today's consent version |
+  | Condition | One of the four, given by the landing page, and the same in `major_info_and_scores` |
+  | The answers (8) | Blocks 1-4, the main study, scenarios 5 and 6, the feedback |
+  | The analysis parts (22) | Everything the study works out from the answers |
+  | The summary parts (6) | `headline`, `quality`, `major_info_and_scores`, `timings`, `active_time`, `sessions` |
+  | Rows for every scenario | 6 of 6 in every per-scenario part (5 of 5 for the position effect, which has no row for scenario 6) |
+  | Main scores saved (11) | VCI, VCI_all, Stability and Stability_all with their two parts, performance, captured, position effect: each a number from 0 to 100 |
+  | Reflection scores (3) | Directness, context, stakeholder: saved in CVR+APA and CVR_Only; empty **by design** in APA_Only and Baseline, where the study does not measure them |
+  | Each score the same in its places | The main study's own record, the `headline` and `major_info_and_scores` hold the same number |
+  | The study's own self-checks | The checks the study writes into the record itself (it rebuilds some numbers and compares them) all agree |
+  | Completion code shown on our last page | The code reached the person |
+  | Half-finished copy removed | The finished record no longer carries its in-progress copy (`resume_state`) |
+  | No email in the record | If a person typed an email somewhere (for example in a feedback comment), the place is named, never the email |
+
+  Marks: **✓** fine · **!** a note, nothing missing · **✗** missing or different · **•** information · **–** not judged (the
+  study is not finished, so parts are expected to be missing).
+- **"Complete" means every part is in the database.** It says nothing about how good the answers are.
+- **What it never shows:** any value: no score, no age, no answer, no code. Only "there" or "missing", "the same" or
+  "different". Your OSF plan allows looking at technical problems during data collection, never at a measure.
+- **If something is missing or different:** tell Claude the line from "Missing or different, across everyone" (it has no
+  Prolific ID), or the card's ✗ line and the condition, never the Prolific ID. If one line is true for every record in a
+  condition, the check may expect something that condition does not have.
+- **Export when nobody is working:** a record that finished a minute before the export may still be sending its last parts.
+- **Private:** the page shows Prolific IDs, so it stays in `Prolific docs/`, like `PAY_CHECK.html`. The lines the command
+  prints in the terminal have counts and part names only.
 
 ## The groups
 

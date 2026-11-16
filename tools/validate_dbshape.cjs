@@ -2012,6 +2012,97 @@ if (process.argv.some((a) => a.startsWith("--dump"))) {
   console.log("");
 }
 
+/*
+ * `--dump-full=<path>` (since 16 November 2026, for tools/validate_data_check.cjs) writes COMPLETE pretend participant
+ * documents, one in each of the four conditions, with every section a finished record carries. Every section made from
+ * the main study is built by the real builders from the pretend runs above, exactly as storage.ts sends it; the sections
+ * copied from other browser files (Blocks 1-4, the feedback, the attention checks, the two between-block files, the
+ * results page) are pretend placeholders. The data check must call each of them "Complete", which proves it expects the
+ * field names, row counts and self-checks the code really writes. The made-up Prolific IDs are not real.
+ */
+const fullArg = process.argv.find((a) => a.startsWith("--dump-full="));
+if (fullArg) {
+  const { averagePerformance } = B("block5CVR.js");
+  const { overallCaptured, capturedLabel } = B("block5Performance.js");
+  const TYPES = ["CVR+APA", "CVR_Only", "APA_Only", "Baseline"];
+  const sum = (rs, k) => rs.reduce((s, r) => s + (r.telemetry?.[k] ?? 0), 0);
+  const placeholder = (what) => ({ pretend_placeholder: what });
+  const sessionsRaw = { dropped: 0, sessions: [{ browserId: "aaa", startedAt: 1_000_000, lastSeenAt: 1_600_000,
+    stageAtStart: "money", stageAtLastSeen: "feedback", how: "typed_their_email" }] };
+  const activeRaw = { totalMs: 2_400_000, byStage: { block5: 1_500_000, money: 400_000 }, sittings: 1,
+    longestIdleMs: 45_000, firstSeenAt: 1, lastActiveAt: 2, lastInputAt: 2, stopped: true };
+  /* [pretend run, condition number]; APA_Only and Baseline carry reflectionScoresFrozen, as the page saves it there. */
+  const runs = [[PEOPLE[0][1], 1], [PEOPLE[1][1], 2], [PEOPLE[2][1], 3], [PEOPLE[0][1], 4]];
+  const docs = runs.map(([run, number], i) => {
+    const results = run.scenarioResults;
+    const b5 = {
+      ...run,
+      ...(number >= 3 ? { reflectionScoresFrozen: true } : {}),
+      performance: averagePerformance(results),
+      performanceCaptured: overallCaptured(results),
+      performanceCapturedLevel: capturedLabel(overallCaptured(results)),
+      totalCvrVisits: sum(results, "cvrVisits"), totalApaVisits: sum(results, "apaVisits"), totalSwitches: sum(results, "numberOfSwitches"),
+    };
+    const condition = { number, type: TYPES[number - 1], source: "landing_page", assignedAt: "2026-11-16T13:30:00.000Z" };
+    const lifted = db.buildLiftedScenarios(b5);
+    const mpf = db.buildMpfPredictions(b5);
+    const profiles = db.buildProfileChange(b5);
+    return {
+      prolific_pid: `abcdefabcdefabcdefabcd${String(i).padStart(2, "0")}`,
+      prolific_study_id: "pretendstudyid000000001",
+      prolific_session_id: `pretendsession00000000${i}`,
+      recruitment_source: "prolific",
+      participant_id: `pretend-session-${i}`,
+      age: 30, gender: "Prefer not to say", country: "Prefer not to say", country_code: null, english_first_language: true,
+      consent: { agreed: true, timestamp: "2026-11-16T13:30:00.000Z", version: "(the consent page's version)" },
+      condition_number: number, condition_type: TYPES[number - 1], condition_source: "landing_page",
+      condition_assigned_at: "2026-11-16T13:30:00.000Z", condition_arrival_id: `pretend-arrival-${i}`,
+      status: "Study Completed", current_stage: "feedback",
+      created_at: "2026-11-16T13:31:00.000Z", updated_at: "2026-11-16T14:20:00.000Z", completed_at: "2026-11-16T14:15:00.000Z",
+      prolific_code_given_at: "2026-11-16T14:15:05.000Z",
+      blocks: {
+        block1_money: placeholder("Block 1"), block2_trolley: placeholder("Block 2"),
+        block3_ai_workforce: placeholder("Block 3"), block4_stakeholder_reflection: placeholder("Block 4"),
+        block5_emergency_scenarios: b5,
+        block5_scenario_5_wish_on_the_receiving_end: lifted.scenario5,
+        block5_scenario_6_veil_of_ignorance: lifted.scenario6,
+        feedback_answers: placeholder("the feedback"),
+      },
+      analysis: {
+        attention_checks: placeholder("the attention checks"),
+        participant_record: placeholder("the participant record"),
+        post_block3_insights: placeholder("after Block 3"),
+        post_block4_final_analysis: placeholder("after Block 4"),
+        results_page: placeholder("the results page"),
+        position_effect: db.buildPositionSection(b5),
+        scenario6_mpf_test: db.buildScenario6Section(b5),
+        alignment_records: db.buildAlignmentRecords(b5),
+        card_order_by_scenario: db.buildCardOrderSection(b5),
+        value_moves_asked_for_and_made: db.buildValueMovesSection(b5),
+        mpf_predictions_every_scenario: mpf,
+        mpf_prediction_percentages: db.buildMpfPercentages(mpf),
+        mcf: db.buildMcfSection(b5),
+        vci_all: db.buildVciAllSection(b5),
+        value_profile_by_scenario: db.buildValueProfileByScenario(b5),
+        stability_all: db.buildStabilityAllSection(b5),
+        top_value_choices: db.buildTopValueChoicesSection(b5),
+        value_profile_before_block5: profiles.before,
+        value_profile_after_block5: profiles.after,
+        value_profile_change: profiles.change,
+        feedback_answer_patterns: placeholder("the feedback patterns"),
+        blocks_1_to_4_checks: placeholder("the Blocks 1-4 checks"),
+      },
+      headline: db.buildHeadline(b5, ledger),
+      major_info_and_scores: db.buildMajorScores(b5, ledger, activeRaw, sessionsRaw, null, null, null, condition),
+      quality, timings, active_time: active,
+      sessions: db.SOURCE_MAP.find((s) => s.path === "sessions").transform(sessionsRaw),
+    };
+  });
+  fs.writeFileSync(fullArg.slice("--dump-full=".length), JSON.stringify(docs, null, 2));
+  console.log(`  ${docs.length} complete pretend documents written to ${fullArg.slice("--dump-full=".length)}`);
+  console.log("");
+}
+
 console.log("### ALL DATABASE GATES PASSED ###");
 console.log("========================================================================");
 console.log("");

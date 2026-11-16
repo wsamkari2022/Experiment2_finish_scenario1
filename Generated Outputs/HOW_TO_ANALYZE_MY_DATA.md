@@ -118,6 +118,10 @@ who completed the study.
 1. **Export** the `participants` collection (and `condition_arrivals`) from Compass as JSON, the same way as for the daily
    pay check (docs/DAILY_PAY_CHECK.md), into a new folder inside `Prolific docs/` (never in Git), for example
    `Prolific docs/analysis/2026-12-20/participants.json`. Put Prolific's submissions file beside it as `prolific.csv`.
+   Then run the data check on it (since 16 November 2026): `npm run data:check -- "Prolific docs/analysis/2026-12-20"`.
+   Its page, `DATA_CHECK.html`, should call every finished record "Complete": every saved part there, the main scores
+   saved and the same in their three places, the study's own self-checks agreeing (docs/DAILY_PAY_CHECK.md, "Is every
+   record complete?"). It reads presence only and changes nothing.
 2. **Make the AI-safe copy** before any AI tool sees the data: `npm run data:ai-copy -- "Prolific docs/analysis/2026-12-20"`.
    It writes `participants_ai_safe.json`, where every Prolific ID is a code (P001, P002, ...), and `key.csv` (code to
    Prolific ID), which stays in the private folder. Only the AI-safe copy goes to an AI tool.
