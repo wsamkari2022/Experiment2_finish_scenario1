@@ -38,7 +38,7 @@ Two of those traps matter enough to repeat here:
 
 ## LIVE since 16 November 2026: the study is open on Prolific
 
-Published on Prolific on 16 November 2026 (about 08:24 EST), first batch of **40 places**, after every line of the go / no-go
+Published on Prolific on 16 November 2026 at 08:23 EST, first batch of **40 places**, after every line of the go / no-go
 list in PLAN_Prolific_launch.md (IRB determined exempt; OSF https://osf.io/jvxcz/ registered 13 November 2026 and embargoed;
 the rehearsal; the server clean; the Prolific preview accepted the code; the settings; the funds). **The study software is
 frozen at commit `6e6a402` (tag `deploy-v9`, server folder `~/experiment2-v9`)**, recorded in docs/PREREGISTRATION_FREEZE.md
