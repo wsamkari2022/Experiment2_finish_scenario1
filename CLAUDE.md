@@ -36,6 +36,18 @@ Two of those traps matter enough to repeat here:
 - **`headline` and `analysis` are derived from `blocks`.** Correlating a derived field with the raw
   field it came from is not a finding.
 
+## LIVE since 16 November 2026: the study is open on Prolific
+
+Published on Prolific on 16 November 2026 (about 08:24 EST), first batch of **40 places**, after every line of the go / no-go
+list in PLAN_Prolific_launch.md (IRB determined exempt; OSF https://osf.io/jvxcz/ registered 13 November 2026 and embargoed;
+the rehearsal; the server clean; the Prolific preview accepted the code; the settings; the funds). **The study software is
+frozen at commit `6e6a402` (tag `deploy-v9`, server folder `~/experiment2-v9`)**, recorded in docs/PREREGISTRATION_FREEZE.md
+section 7. Do not change anything in `src/` or `server/` during data collection: only a fix for a technical problem, written
+down there as a dated deviation (what, when, who it touched). Every day: docs/DAILY_PAY_CHECK.md (`PAY_CHECK.html`), the
+count page, Prolific's messages; never look at the study's scores while collecting (the OSF plan). After the first 40:
+the median time and the money rule (OSF Sampling page) before opening the other 64. The registration of 14 October 2026
+is withdrawn after data collection, with the note in OSF_PREREGISTRATION_ANSWERS.md.
+
 ## Prolific only (since 10 November 2026): read this before any older section
 
 The IRB refused the student group (9 November 2026), so the study has one group: Prolific, 104 people who finish, 26 per condition,

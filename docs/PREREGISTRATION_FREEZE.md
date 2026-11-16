@@ -231,7 +231,9 @@ feedback-behavior links, the known-effect replications of Blocks 1-3, the choose
 
 ## 7. To fill in at launch
 
-- Launch commit: `__________`   Launch date: `__________`
+- Launch commit: `6e6a402` (Git tag `deploy-v9`; deployed to the server as `~/experiment2-v9`)   Launch date: **16 November 2026**,
+  published on Prolific at about 08:24 EST, first batch of 40 places (the researcher's message; OSF registration
+  https://osf.io/jvxcz/, embargoed). Commits after the launch commit change documents and tools only, never the study software.
 - End of data collection (the deadline that defines the sample): `__________`
 
 ## Deviations
