@@ -234,8 +234,16 @@ feedback-behavior links, the known-effect replications of Blocks 1-3, the choose
 - Launch commit: `6e6a402` (Git tag `deploy-v9`; deployed to the server as `~/experiment2-v9`)   Launch date: **16 November 2026**,
   published on Prolific at 08:23 EST, first batch of 40 places (the researcher's message; OSF registration
   https://osf.io/jvxcz/, embargoed). Commits after the launch commit change documents and tools only, never the study software.
-- End of data collection (the deadline that defines the sample): `__________`
+- End of data collection (the deadline that defines the sample): **16 November 2026, 18:05 EST** (the researcher's message;
+  Prolific shows the study "Completed", all 104 places filled). Between the two batches the registered money rule was
+  applied: after the first 40 the median time on Prolific was 44:02, so $7.00 paid $9.54 an hour, above Prolific's $8
+  minimum; no raise, and the other 64 places were opened. At the end the database held **113 records with
+  `status: "Study Completed"`** (CVR+APA 28, CVR_Only 28, APA_Only 28, Baseline 29) and 2 records not finished; the data
+  check of the same day (`tools/data_check.cjs`) found every finished record complete. Prolific's final median time
+  43:40 ($9.62 an hour).
 
 ## Deviations
 
-*(none yet; any change after launch is appended here with its date and reason)*
+None (checked 16 November 2026). The study software did not change between the launch and the end of data collection:
+`git diff deploy-v9 -- src server` is empty; the commits of that day changed documents and tools only (the pay check page,
+the data check). Participants who finished after Prolific's time limit were paid, as the consent form promises.
