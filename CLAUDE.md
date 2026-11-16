@@ -42,7 +42,9 @@ The IRB refused the student group (9 November 2026), so the study has one group:
 $7.00 for 35 minutes ($12 an hour). The researcher: "1-A" (consent pay sentence as in his form), "2-No" (keep "without
 consequence"), "3-A" (the main address shows the paste page), "4-A" (remove everything a student could touch and every path to it; the inside
 name `email` stays on the box that holds the Prolific ID). **The IRB determined the study exempt on 13 November 2026; open it to
-participants only after the new OSF registration is made** (below). The student version is the Git tag
+participants only after the new OSF registration is made** (below). **The new registration: https://osf.io/jvxcz/, registered on
+13 November 2026 (OSF's date), embargoed until 30 September 2027** (the embargo approved 16 November 2026; v9 deployed, commit
+`6e6a402`, tag `deploy-v9`; PLAN_Prolific_launch.md). The student version is the Git tag
 `before-prolific-only`. **Every section below that speaks of two doors, the university door, course credit, a gift card, `StartScreen`, "Not
 you?" or `credit:list` is history**; nobody ever took part under it. No score changed.
 

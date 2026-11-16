@@ -15,7 +15,8 @@ two lines at the end, and do not change this file afterwards except by an append
 > 45 CFR 46.104, category 3(i)(B)) and removed the course-student group: the study is Prolific only (104 who finish, 26
 > per condition). The plan is registered again on OSF Registries for that study (`OSF_PREREGISTRATION_ANSWERS.md`;
 > the registration of 14 October 2026 is replaced and will be withdrawn). The new registration's date and link:
-> `__________`. Sections 1-6 below were brought up to date the same day; section 7 is filled in at launch.
+> **https://osf.io/jvxcz/, registered on 13 November 2026** (the date OSF shows; embargoed until 30 September 2027;
+> the embargo was approved on 16 November 2026). Sections 1-6 below were brought up to date the same day; section 7 is filled in at launch.
 Sections 1-4 and 6 were written on 27 September 2026 and have not yet been brought up to date for the four
 conditions (done on 13 November 2026, with the Prolific-only study).
 
