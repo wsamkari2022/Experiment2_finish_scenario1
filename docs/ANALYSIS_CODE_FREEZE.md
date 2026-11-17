@@ -98,3 +98,9 @@ term is 0/0. That term is multiplied by exactly 0 in the variance of VCI's coeff
 them), so the registered HC3 error of VCI is well defined; R propagates the "not a number" through the multiplication.
 A one-off R check outside the frozen code (`d4_hc3_r_check.R`, kept with the results), with that single term set to 0,
 gives the same coefficients, standard errors and p-values as Python to 10 decimals. With it, all 42 numbers agree.
+
+**17 November 2026, the registered sample (113 participants).** The same frozen code on all who completed (the coded
+copy of the export of 16 November: 115 records, 2 not completed and left out as registered; CVR+APA 28, CVR only 28, APA
+only 28, Baseline 29). All 16 self-checks agreed for every participant. The same one participant is the only member of the
+gender category "other or prefer not to say", so D4's HC3 check in R was repeated with the same one-off script; Python and
+R then agree on all 42 numbers to 10 decimals. Kept with the first analysis's results; used as the advisor decides.
