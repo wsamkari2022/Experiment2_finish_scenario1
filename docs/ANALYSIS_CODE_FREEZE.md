@@ -104,3 +104,9 @@ copy of the export of 16 November: 115 records, 2 not completed and left out as 
 only 28, Baseline 29). All 16 self-checks agreed for every participant. The same one participant is the only member of the
 gender category "other or prefer not to say", so D4's HC3 check in R was repeated with the same one-off script; Python and
 R then agree on all 42 numbers to 10 decimals. Kept with the first analysis's results; used as the advisor decides.
+
+**17 November 2026, a correction to section 3, item 11 (found while building the exploratory analyses).** In the database,
+the tool, reflection and clarification ratings are saved with their question text (dbShape.ts, `attachFeedbackQuestions`),
+so the frozen code's check "the same answer to every feedback rating" counts the 24 well-being statements only, not every
+rating as item 11 says. Its self-check compares it with `analysis.feedback_answer_patterns`, which counts every rating: the
+two agreed for every participant in both runs (107 of 107; 113 of 113), and neither flagged anybody, so no result changes.
