@@ -1,0 +1,720 @@
+{
+  "what_this_is": "Every Block 5 option's four values and five performance numbers, as the launch code (deploy-v9) holds them. Made by tools/export_option_numbers.cjs from the compiled code; never edit by hand.",
+  "launch_tag": "deploy-v9",
+  "made_from_commit": "74bebb6b38d0a6ee63576f1884e79e4deeedc4a3",
+  "src_differs_from_launch_tag": false,
+  "policy_value_keys": [
+    "vulnerabilityProtectionSensitivity",
+    "groupSizeSensitivity",
+    "gainResponsivenessSensitivity",
+    "outcomeAggregationSensitivity"
+  ],
+  "metric_keys": [
+    "speed",
+    "resourceUse",
+    "reliability",
+    "durability",
+    "reversibility"
+  ],
+  "label_rule": {
+    "aligned_ranks": 1,
+    "weakly_aligned_ranks": 1,
+    "the_rest": "split in two, the first half (rounded up) Misaligned, the rest Strongly misaligned"
+  },
+  "label_weights": {
+    "4": {
+      "aligned": 1,
+      "weakly_aligned": 0.6666666666666666,
+      "misaligned": 0.3333333333333333,
+      "strongly_misaligned": 0
+    },
+    "6": {
+      "aligned": 1,
+      "weakly_aligned": 0.8,
+      "misaligned": 0.5,
+      "strongly_misaligned": 0.1
+    }
+  },
+  "prediction_temperature_flat": 60,
+  "prediction_temperature_sharp": 18,
+  "scenarios": [
+    {
+      "order": 1,
+      "id": "chemical_release_escape",
+      "title": "Six Hours to Clear the District",
+      "decision_role": "decider",
+      "stake_position": "self",
+      "stakes_weight": 1,
+      "scored": true,
+      "options": [
+        {
+          "id": "chem_registered_convoy",
+          "title": "Leave with the registered convoy at your assigned time",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 55,
+            "groupSizeSensitivity": 87,
+            "gainResponsivenessSensitivity": 70,
+            "outcomeAggregationSensitivity": 56
+          },
+          "metrics": {
+            "speed": 52,
+            "resourceUse": 73,
+            "reliability": 86,
+            "durability": 66,
+            "reversibility": 67
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "chem_reserved_respirator",
+          "title": "Take the sealed respirator the clinic had reserved",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 15,
+            "groupSizeSensitivity": 22,
+            "gainResponsivenessSensitivity": 94,
+            "outcomeAggregationSensitivity": 25
+          },
+          "metrics": {
+            "speed": 85,
+            "resourceUse": 18,
+            "reliability": 87,
+            "durability": 17,
+            "reversibility": 52
+          },
+          "built_on": "gainResponsivenessSensitivity"
+        },
+        {
+          "id": "chem_walk_out_on_foot",
+          "title": "Carry the respirator to the patient it was kept for, and walk them out",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 96,
+            "groupSizeSensitivity": 60,
+            "gainResponsivenessSensitivity": 20,
+            "outcomeAggregationSensitivity": 45
+          },
+          "metrics": {
+            "speed": 22,
+            "resourceUse": 88,
+            "reliability": 42,
+            "durability": 80,
+            "reversibility": 62
+          },
+          "built_on": "vulnerabilityProtectionSensitivity"
+        },
+        {
+          "id": "chem_shuttle_loop",
+          "title": "Drive the community shuttle for two loops before you go",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 62,
+            "groupSizeSensitivity": 62,
+            "gainResponsivenessSensitivity": 36,
+            "outcomeAggregationSensitivity": 94
+          },
+          "metrics": {
+            "speed": 24,
+            "resourceUse": 40,
+            "reliability": 38,
+            "durability": 72,
+            "reversibility": 37
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "chem_seal_and_shelter",
+          "title": "Seal your apartment, tell the district office you are staying, and shelter",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 50,
+            "groupSizeSensitivity": 93,
+            "gainResponsivenessSensitivity": 30,
+            "outcomeAggregationSensitivity": 30
+          },
+          "metrics": {
+            "speed": 18,
+            "resourceUse": 98,
+            "reliability": 23,
+            "durability": 82,
+            "reversibility": 25
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "chem_service_road_run",
+          "title": "Drive out on the industrial service road",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 43,
+            "groupSizeSensitivity": 25,
+            "gainResponsivenessSensitivity": 80,
+            "outcomeAggregationSensitivity": 87
+          },
+          "metrics": {
+            "speed": 89,
+            "resourceUse": 84,
+            "reliability": 76,
+            "durability": 45,
+            "reversibility": 20
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "id": "wildfire_household_evacuation",
+      "title": "Eight Hours Ahead of the Fire",
+      "decision_role": "decider",
+      "stake_position": "self_and_group",
+      "stakes_weight": 1,
+      "scored": true,
+      "options": [
+        {
+          "id": "fire_assigned_convoy_slot",
+          "title": "Take your household's assigned place in the staged convoy",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 60,
+            "groupSizeSensitivity": 83,
+            "gainResponsivenessSensitivity": 65,
+            "outcomeAggregationSensitivity": 53
+          },
+          "metrics": {
+            "speed": 48,
+            "resourceUse": 72,
+            "reliability": 92,
+            "durability": 82,
+            "reversibility": 62
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "fire_closed_ridge_road",
+          "title": "Take the closed ridge road",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 18,
+            "groupSizeSensitivity": 23,
+            "gainResponsivenessSensitivity": 92,
+            "outcomeAggregationSensitivity": 25
+          },
+          "metrics": {
+            "speed": 92,
+            "resourceUse": 18,
+            "reliability": 62,
+            "durability": 23,
+            "reversibility": 45
+          },
+          "built_on": "gainResponsivenessSensitivity"
+        },
+        {
+          "id": "fire_wait_accessible_bus",
+          "title": "Give your car seats to the two residents with walkers and wait for the lift bus",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 97,
+            "groupSizeSensitivity": 83,
+            "gainResponsivenessSensitivity": 19,
+            "outcomeAggregationSensitivity": 39
+          },
+          "metrics": {
+            "speed": 26,
+            "resourceUse": 58,
+            "reliability": 55,
+            "durability": 86,
+            "reversibility": 30
+          },
+          "built_on": "vulnerabilityProtectionSensitivity"
+        },
+        {
+          "id": "fire_fill_every_seat",
+          "title": "Fill every seat in the car with neighbors who have none",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 62,
+            "groupSizeSensitivity": 62,
+            "gainResponsivenessSensitivity": 40,
+            "outcomeAggregationSensitivity": 94
+          },
+          "metrics": {
+            "speed": 42,
+            "resourceUse": 88,
+            "reliability": 65,
+            "durability": 80,
+            "reversibility": 44
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "fire_shelter_hill_school",
+          "title": "Take your household to the concrete school on the hill",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 56,
+            "groupSizeSensitivity": 94,
+            "gainResponsivenessSensitivity": 26,
+            "outcomeAggregationSensitivity": 39
+          },
+          "metrics": {
+            "speed": 15,
+            "resourceUse": 93,
+            "reliability": 40,
+            "durability": 84,
+            "reversibility": 90
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "fire_early_highway_run",
+          "title": "Leave immediately on the main highway, before the staging starts",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 14,
+            "groupSizeSensitivity": 20,
+            "gainResponsivenessSensitivity": 95,
+            "outcomeAggregationSensitivity": 8
+          },
+          "metrics": {
+            "speed": 90,
+            "resourceUse": 22,
+            "reliability": 84,
+            "durability": 18,
+            "reversibility": 28
+          },
+          "built_on": "gainResponsivenessSensitivity"
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "id": "cancer_treatment_allocation",
+      "title": "Limited Cancer Treatment Allocation",
+      "decision_role": "decider",
+      "stake_position": "others",
+      "stakes_weight": 1,
+      "scored": true,
+      "options": [
+        {
+          "id": "cancer_max_total_lives",
+          "title": "Treat the 20 most likely to survive",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 30,
+            "groupSizeSensitivity": 23,
+            "gainResponsivenessSensitivity": 79,
+            "outcomeAggregationSensitivity": 94
+          },
+          "metrics": {
+            "speed": 69,
+            "resourceUse": 46,
+            "reliability": 90,
+            "durability": 70,
+            "reversibility": 32
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "cancer_prioritize_vulnerable",
+          "title": "Treat the 20 who are sickest",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 96,
+            "groupSizeSensitivity": 42,
+            "gainResponsivenessSensitivity": 20,
+            "outcomeAggregationSensitivity": 35
+          },
+          "metrics": {
+            "speed": 58,
+            "resourceUse": 52,
+            "reliability": 26,
+            "durability": 56,
+            "reversibility": 30
+          },
+          "built_on": "vulnerabilityProtectionSensitivity"
+        },
+        {
+          "id": "cancer_max_life_years",
+          "title": "Treat the 20 with the most years ahead",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 18,
+            "groupSizeSensitivity": 25,
+            "gainResponsivenessSensitivity": 92,
+            "outcomeAggregationSensitivity": 64
+          },
+          "metrics": {
+            "speed": 61,
+            "resourceUse": 24,
+            "reliability": 73,
+            "durability": 92,
+            "reversibility": 30
+          },
+          "built_on": "gainResponsivenessSensitivity"
+        },
+        {
+          "id": "cancer_weighted_lottery",
+          "title": "Draw the 20 names from the patients who cannot wait",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 56,
+            "groupSizeSensitivity": 94,
+            "gainResponsivenessSensitivity": 33,
+            "outcomeAggregationSensitivity": 38
+          },
+          "metrics": {
+            "speed": 92,
+            "resourceUse": 86,
+            "reliability": 38,
+            "durability": 55,
+            "reversibility": 78
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "cancer_reserve_underserved",
+          "title": "Hold some doses back for the patients nobody reaches",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 68,
+            "groupSizeSensitivity": 64,
+            "gainResponsivenessSensitivity": 30,
+            "outcomeAggregationSensitivity": 37
+          },
+          "metrics": {
+            "speed": 22,
+            "resourceUse": 34,
+            "reliability": 30,
+            "durability": 62,
+            "reversibility": 82
+          },
+          "built_on": "vulnerabilityProtectionSensitivity"
+        },
+        {
+          "id": "cancer_essential_workers",
+          "title": "Treat the 20 who others depend on",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 43,
+            "groupSizeSensitivity": 40,
+            "gainResponsivenessSensitivity": 70,
+            "outcomeAggregationSensitivity": 86
+          },
+          "metrics": {
+            "speed": 86,
+            "resourceUse": 88,
+            "reliability": 74,
+            "durability": 72,
+            "reversibility": 38
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "id": "care_rota_reduction",
+      "title": "The Care Visits You Have to Cut",
+      "decision_role": "decider",
+      "stake_position": "under_authority",
+      "stakes_weight": 1,
+      "scored": true,
+      "options": [
+        {
+          "id": "care_rebuild_rounds_by_travel",
+          "title": "Redraw the routes to cut the driving",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 41,
+            "groupSizeSensitivity": 76,
+            "gainResponsivenessSensitivity": 68,
+            "outcomeAggregationSensitivity": 81
+          },
+          "metrics": {
+            "speed": 38,
+            "resourceUse": 92,
+            "reliability": 80,
+            "durability": 84,
+            "reversibility": 30
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "care_equal_share",
+          "title": "Keep every care visit, and cut the check-in visits",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 35,
+            "groupSizeSensitivity": 43,
+            "gainResponsivenessSensitivity": 62,
+            "outcomeAggregationSensitivity": 88
+          },
+          "metrics": {
+            "speed": 75,
+            "resourceUse": 72,
+            "reliability": 60,
+            "durability": 50,
+            "reversibility": 82
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "care_cut_where_family_covers",
+          "title": "Cut only where a family member can cover",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 83,
+            "groupSizeSensitivity": 93,
+            "gainResponsivenessSensitivity": 30,
+            "outcomeAggregationSensitivity": 65
+          },
+          "metrics": {
+            "speed": 74,
+            "resourceUse": 64,
+            "reliability": 46,
+            "durability": 38,
+            "reversibility": 64
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "care_shorten_every_visit",
+          "title": "Shorten every visit so nobody is dropped",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 38,
+            "groupSizeSensitivity": 44,
+            "gainResponsivenessSensitivity": 35,
+            "outcomeAggregationSensitivity": 92
+          },
+          "metrics": {
+            "speed": 82,
+            "resourceUse": 42,
+            "reliability": 50,
+            "durability": 52,
+            "reversibility": 94
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "care_profitable_rounds",
+          "title": "Keep the town routes that pay, and drop the rural ones",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 16,
+            "groupSizeSensitivity": 15,
+            "gainResponsivenessSensitivity": 93,
+            "outcomeAggregationSensitivity": 25
+          },
+          "metrics": {
+            "speed": 55,
+            "resourceUse": 78,
+            "reliability": 72,
+            "durability": 90,
+            "reversibility": 14
+          },
+          "built_on": "gainResponsivenessSensitivity"
+        },
+        {
+          "id": "care_highest_need_first",
+          "title": "Protect full visits for the clients with nobody else",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 95,
+            "groupSizeSensitivity": 54,
+            "gainResponsivenessSensitivity": 22,
+            "outcomeAggregationSensitivity": 60
+          },
+          "metrics": {
+            "speed": 90,
+            "resourceUse": 40,
+            "reliability": 30,
+            "durability": 56,
+            "reversibility": 46
+          },
+          "built_on": "vulnerabilityProtectionSensitivity"
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "id": "care_rota_receiving",
+      "title": "The Same Cut, Decided Without You",
+      "decision_role": "recipient",
+      "stake_position": "receiving_end",
+      "stakes_weight": 1,
+      "scored": false,
+      "options": [
+        {
+          "id": "wish_rebuild_rounds_by_travel",
+          "title": "Redraw the routes to cut the driving",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 41,
+            "groupSizeSensitivity": 76,
+            "gainResponsivenessSensitivity": 68,
+            "outcomeAggregationSensitivity": 81
+          },
+          "metrics": {
+            "speed": 38,
+            "resourceUse": 92,
+            "reliability": 80,
+            "durability": 84,
+            "reversibility": 30
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "wish_equal_share",
+          "title": "Keep every care visit, and cut the check-in visits",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 35,
+            "groupSizeSensitivity": 43,
+            "gainResponsivenessSensitivity": 62,
+            "outcomeAggregationSensitivity": 88
+          },
+          "metrics": {
+            "speed": 75,
+            "resourceUse": 72,
+            "reliability": 60,
+            "durability": 50,
+            "reversibility": 82
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "wish_cut_where_family_covers",
+          "title": "Cut only where a family member can cover",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 83,
+            "groupSizeSensitivity": 93,
+            "gainResponsivenessSensitivity": 30,
+            "outcomeAggregationSensitivity": 65
+          },
+          "metrics": {
+            "speed": 74,
+            "resourceUse": 64,
+            "reliability": 46,
+            "durability": 38,
+            "reversibility": 64
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "wish_shorten_every_visit",
+          "title": "Shorten every visit so nobody is dropped",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 38,
+            "groupSizeSensitivity": 44,
+            "gainResponsivenessSensitivity": 35,
+            "outcomeAggregationSensitivity": 92
+          },
+          "metrics": {
+            "speed": 82,
+            "resourceUse": 42,
+            "reliability": 50,
+            "durability": 52,
+            "reversibility": 94
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "wish_profitable_rounds",
+          "title": "Keep the town routes that pay, and drop the rural ones",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 16,
+            "groupSizeSensitivity": 15,
+            "gainResponsivenessSensitivity": 93,
+            "outcomeAggregationSensitivity": 25
+          },
+          "metrics": {
+            "speed": 55,
+            "resourceUse": 78,
+            "reliability": 72,
+            "durability": 90,
+            "reversibility": 14
+          },
+          "built_on": "gainResponsivenessSensitivity"
+        },
+        {
+          "id": "wish_highest_need_first",
+          "title": "Protect full visits for the clients with nobody else",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 95,
+            "groupSizeSensitivity": 54,
+            "gainResponsivenessSensitivity": 22,
+            "outcomeAggregationSensitivity": 60
+          },
+          "metrics": {
+            "speed": 90,
+            "resourceUse": 40,
+            "reliability": 30,
+            "durability": 56,
+            "reversibility": 46
+          },
+          "built_on": "vulnerabilityProtectionSensitivity"
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "id": "veil_emergency_reserve_rule",
+      "title": "The Rule You Will Live Under",
+      "decision_role": "predicted",
+      "stake_position": "behind_the_veil",
+      "stakes_weight": 1,
+      "scored": false,
+      "options": [
+        {
+          "id": "veil_worst_off_first",
+          "title": "Help the people in the worst trouble first",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 95,
+            "groupSizeSensitivity": 25,
+            "gainResponsivenessSensitivity": 25,
+            "outcomeAggregationSensitivity": 25
+          },
+          "metrics": {
+            "speed": 50,
+            "resourceUse": 50,
+            "reliability": 50,
+            "durability": 50,
+            "reversibility": 50
+          },
+          "built_on": "vulnerabilityProtectionSensitivity"
+        },
+        {
+          "id": "veil_prevent_most_harm",
+          "title": "Keep the number of people badly hurt as low as possible",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 25,
+            "groupSizeSensitivity": 95,
+            "gainResponsivenessSensitivity": 25,
+            "outcomeAggregationSensitivity": 25
+          },
+          "metrics": {
+            "speed": 50,
+            "resourceUse": 50,
+            "reliability": 50,
+            "durability": 50,
+            "reversibility": 50
+          },
+          "built_on": "groupSizeSensitivity"
+        },
+        {
+          "id": "veil_reach_most_people",
+          "title": "Give power back to as many places as possible",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 25,
+            "groupSizeSensitivity": 25,
+            "gainResponsivenessSensitivity": 25,
+            "outcomeAggregationSensitivity": 95
+          },
+          "metrics": {
+            "speed": 50,
+            "resourceUse": 50,
+            "reliability": 50,
+            "durability": 50,
+            "reversibility": 50
+          },
+          "built_on": "outcomeAggregationSensitivity"
+        },
+        {
+          "id": "veil_greatest_total",
+          "title": "Use the crew where it does the most good",
+          "values": {
+            "vulnerabilityProtectionSensitivity": 25,
+            "groupSizeSensitivity": 25,
+            "gainResponsivenessSensitivity": 95,
+            "outcomeAggregationSensitivity": 25
+          },
+          "metrics": {
+            "speed": 50,
+            "resourceUse": 50,
+            "reliability": 50,
+            "durability": 50,
+            "reversibility": 50
+          },
+          "built_on": "gainResponsivenessSensitivity"
+        }
+      ]
+    }
+  ]
+}
