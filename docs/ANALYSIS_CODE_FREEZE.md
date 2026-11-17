@@ -87,3 +87,14 @@ reader can repeat the analysis exactly.
    participants; the dated deviation of 17 November 2026 in the freeze note). Waseem reads the results first.
 2. The same frozen code on all 113 who completed (the registered sample), reported beside the first.
 3. The exploratory analyses and the rest of the figure catalog, labelled exploratory, in a later plan.
+
+## 5. After the freeze (dated notes; no frozen file changed)
+
+**17 November 2026, the first run on the coded data (107 participants).** `run_on_real.py` ran the frozen code. All 16
+self-checks agreed for every participant; 38 of the 42 shared numbers agreed between Python and R at once. The other four
+were D4's two HC3 standard errors and their p-values, which R returned as "not a number": one participant is the only
+member of the gender category "other or prefer not to say", so that person's leverage is 1 and residual 0, and their HC3
+term is 0/0. That term is multiplied by exactly 0 in the variance of VCI's coefficient (the person's own gender term fits
+them), so the registered HC3 error of VCI is well defined; R propagates the "not a number" through the multiplication.
+A one-off R check outside the frozen code (`d4_hc3_r_check.R`, kept with the results), with that single term set to 0,
+gives the same coefficients, standard errors and p-values as Python to 10 decimals. With it, all 42 numbers agree.
