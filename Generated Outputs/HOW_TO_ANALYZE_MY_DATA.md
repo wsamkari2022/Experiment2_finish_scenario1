@@ -132,6 +132,10 @@ who completed the study.
    stamps.
 5. **The count per condition** (`condition_type`, finished records): about 26 each is expected; a few more is normal,
    because Prolific opens the place of somebody who returns or times out to somebody new.
+   **Since 17 November 2026 (the advisor's instruction, a dated deviation in the freeze note):** the first analysis uses the
+   107 participants paid from the study's budget (export `Prolific docs/analysis/2026-11-17_budget107`: CVR+APA 27,
+   CVR_Only 27, APA_Only 26, Baseline 27); the 113 who completed (`Prolific docs/analysis/2026-11-16`) are analysed
+   afterwards with the same frozen code, as registered, and both are reported.
 6. **The careful-participation table:** for each of the four signs (`quality.careful_participation_signs`), how many
    participants have it.
 

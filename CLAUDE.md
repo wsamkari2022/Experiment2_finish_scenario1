@@ -42,7 +42,11 @@ Two of those traps matter enough to repeat here:
 section 7, "Deviations: none"). The database holds 113 finished records (CVR+APA 28, CVR_Only 28, APA_Only 28, Baseline 29)
 and 2 unfinished ones; the data check found every finished record complete. Prolific's final median 43:40 ($9.62 an hour).
 Next: the first day with real data (`Generated Outputs/HOW_TO_ANALYZE_MY_DATA.md` section 2; `npm run data:ai-copy` before
-any AI tool sees the data), then the 23 hypotheses. The software stays frozen at `6e6a402`. What follows is the record of
+any AI tool sees the data), then the 23 hypotheses. **The first analysis uses 107 (the advisor, 17 November 2026):** the
+participants paid from the study's budget (104 approved + 3 who completed after the time limit), CVR+APA 27, CVR_Only 27,
+APA_Only 26, Baseline 27, all complete; recorded as a dated deviation in the freeze note before the data were opened; all
+113, as registered, afterwards with the same frozen code. The analysis code: `PLAN_Analysis_code.md`, tools in
+`analysis/` (written and run on simulated participants, then frozen, before the coded data are opened). The software stays frozen at `6e6a402`. What follows is the record of
 the day it was open.
 
 Published on Prolific on 16 November 2026 at 08:23 EST, first batch of **40 places**, after every line of the go / no-go

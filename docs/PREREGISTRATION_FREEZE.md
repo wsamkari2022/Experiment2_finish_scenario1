@@ -247,3 +247,13 @@ feedback-behavior links, the known-effect replications of Blocks 1-3, the choose
 None (checked 16 November 2026). The study software did not change between the launch and the end of data collection:
 `git diff deploy-v9 -- src server` is empty; the commits of that day changed documents and tools only (the pay check page,
 the data check). Participants who finished after Prolific's time limit were paid, as the consent form promises.
+
+**17 November 2026, before the data were opened: the sample of the first analysis.** On the advisor's instruction, the
+first analysis uses the 107 participants paid from the study's budget: the 104 approved submissions and the 3 participants
+who completed after Prolific's time limit and were paid from the remaining budget. The registered inclusion rule (every
+participant whose record has the status "Study Completed") gives 113; the analysis of all 113, as registered, is run
+afterwards with the same frozen analysis code and reported beside the first. Left out of the first analysis: 4
+participants who completed after Prolific's time limit and were paid from other funds, and 2 whose submissions were not
+approved under the attention-check rule. The 107 are a separate export (`Prolific docs/analysis/2026-11-17_budget107`,
+private): the data check found all 107 complete (CVR+APA 27, CVR_Only 27, APA_Only 26, Baseline 27), and the AI-safe copy
+found every one of them in Prolific's submissions file.
