@@ -96,7 +96,8 @@ def signed_rank(diff, name: str, alternative: str, zero_method: str = "wilcox", 
                          method="exact" if exact else "approx", correction=False)
     ranks = stats.rankdata(np.abs(nz))
     r_plus, r_minus = ranks[nz > 0].sum(), ranks[nz < 0].sum()
-    out.update({"W": float(res.statistic), "p": float(res.pvalue), "estimate": float(d.mean()),
+    out.update({"W": float(res.statistic), "T_plus": float(res.statistic) if zero_method == "pratt" and alternative != "two-sided"
+                else float(r_plus), "p": float(res.pvalue), "estimate": float(d.mean()),
                 "mean_difference": float(d.mean()), "median_difference": float(np.median(d)),
                 "rank_biserial_r": float((r_plus - r_minus) / (r_plus + r_minus)),
                 "cohens_dz": float(d.mean() / d.std(ddof=1)) if len(d) > 1 and d.std(ddof=1) > 0 else float("nan")})
@@ -205,7 +206,9 @@ def tost_paired(diff, margin: float = 5.0) -> dict:
         p_low = float(stats.t.sf((m + margin) / se, df))      # H0: mean <= -margin
         p_high = float(stats.t.cdf((m - margin) / se, df))    # H0: mean >= +margin
     q = stats.t.ppf(0.95, df)
-    return {"test": f"two one-sided t-tests (TOST), margin +/-{margin:g}", "n": n, "mean_difference": float(m),
+    return {"test": f"two one-sided t-tests (TOST), margin +/-{margin:g}", "n": n, "mean_difference": float(m), "df": df,
+            "t_lower": float((m + margin) / se) if se > 0 else float("nan"),
+            "t_upper": float((m - margin) / se) if se > 0 else float("nan"),
             "p_lower": p_low, "p_upper": p_high, "p": max(p_low, p_high), "estimate": float(m),
             "ci90_mean_difference": [float(m - q * se), float(m + q * se)],
             "cohens_dz": float(m / d.std(ddof=1)) if d.std(ddof=1) > 0 else float("nan")}

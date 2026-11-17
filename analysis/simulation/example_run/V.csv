@@ -1,0 +1,796 @@
+pid,condition,scenario_id,value,value_name,score_before_the_move,asked_for,made,cut_off_by,why
+P001,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,-25.0,-7.0,the floor (0),changed their mind: the other person's story did not move them
+P001,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,99.0,24.0,1.0,the ceiling (100),changed their mind: the value they named
+P001,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,28.0,-8.0,-8.0,,changed their mind: a value they did not name
+P001,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,32.0,-8.0,-8.0,,changed their mind: a value they did not name
+P001,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,82.0,-8.0,-8.0,,changed their mind: a value they did not name
+P001,CVR+APA,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,changed their mind: the other person's story moved them
+P001,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,20.0,27.0,27.0,,changed their mind: the value they named
+P001,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,24.0,-9.0,-9.0,,changed their mind: a value they did not name
+P001,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,-9.0,-9.0,,changed their mind: a value they did not name
+P001,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,74.0,-9.0,-9.0,,changed their mind: a value they did not name
+P002,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),80.0,25.0,20.0,the ceiling (100),CVR Rejection page: the other person's story changed their mind
+P002,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,79.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P002,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,13.0,-15.0,-13.0,the floor (0),kept a second-best option: where the best fit beat it most
+P002,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,4.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P002,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,99.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P002,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),100.0,25.0,0.0,the ceiling (100),the other person's story guided the choice
+P003,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P003,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P003,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,94.0,21.0,6.0,the ceiling (100),changed their mind: the value they named
+P003,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,45.0,-7.0,-7.0,,changed their mind: a value they did not name
+P003,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,49.0,-7.0,-7.0,,changed their mind: a value they did not name
+P003,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,20.0,-7.0,-7.0,,changed their mind: a value they did not name
+P004,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,35.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P004,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P004,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,55.0,27.0,27.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P004,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,49.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P004,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,0.0,-9.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P004,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,4.0,-9.0,-4.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P005,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),10.0,25.0,25.0,,changed their mind: the other person's story moved them
+P005,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,99.0,24.0,1.0,the ceiling (100),changed their mind: the value they named
+P005,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.0,-8.0,-8.0,,changed their mind: a value they did not name
+P005,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P005,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P006,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),88.0,-25.0,-25.0,,CVR Rejection page: the other person's story did not change their mind
+P006,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,19.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P006,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,96.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P006,CVR_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,75.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P006,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,81.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P007,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,86.0,20.0,14.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P007,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,79.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P007,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,100.0,21.0,0.0,the ceiling (100),changed their mind: the value they named
+P007,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,8.0,-7.0,-7.0,,changed their mind: a value they did not name
+P007,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,64.0,-7.0,-7.0,,changed their mind: a value they did not name
+P007,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,56.0,-7.0,-7.0,,changed their mind: a value they did not name
+P007,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,57.0,30.0,30.0,,changed their mind: the value they named
+P007,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,1.0,-10.0,-1.0,the floor (0),changed their mind: a value they did not name
+P007,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,100.0,-10.0,-10.0,,changed their mind: a value they did not name
+P007,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,49.0,-10.0,-10.0,,changed their mind: a value they did not name
+P008,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,76.0,30.0,24.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P008,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,79.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P008,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P008,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,66.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P008,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,69.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P008,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P009,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,-25.0,-7.0,the floor (0),changed their mind: the other person's story did not move them
+P009,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,27.0,27.0,,changed their mind: the value they named
+P009,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,51.0,-9.0,-9.0,,changed their mind: a value they did not name
+P009,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P009,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,12.0,-9.0,-9.0,,changed their mind: a value they did not name
+P009,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,42.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P009,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,91.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P009,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P009,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,62.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P010,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P010,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,94.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P010,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),2.0,25.0,25.0,,CVR Rejection page: the other person's story changed their mind
+P010,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P010,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,79.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P011,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,90.0,27.0,10.0,the ceiling (100),changed their mind: the value they named
+P011,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,48.0,-9.0,-9.0,,changed their mind: a value they did not name
+P011,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,72.0,-9.0,-9.0,,changed their mind: a value they did not name
+P011,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,66.0,-9.0,-9.0,,changed their mind: a value they did not name
+P011,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,24.0,0.0,the ceiling (100),changed their mind: the value they named
+P011,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,39.0,-8.0,-8.0,,changed their mind: a value they did not name
+P011,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,63.0,-8.0,-8.0,,changed their mind: a value they did not name
+P011,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,57.0,-8.0,-8.0,,changed their mind: a value they did not name
+P011,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,55.0,24.0,24.0,,changed their mind: the value they named
+P011,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,31.0,-8.0,-8.0,,changed their mind: a value they did not name
+P011,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,100.0,-8.0,-8.0,,changed their mind: a value they did not name
+P011,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,49.0,-8.0,-8.0,,changed their mind: a value they did not name
+P012,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,27.0,27.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P012,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,-9.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P012,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,99.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P012,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P012,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,90.0,20.0,10.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P012,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,27.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P013,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,50.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P013,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,100.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P013,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P013,CVR+APA,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,changed their mind: the other person's story moved them
+P013,CVR+APA,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,90.0,24.0,10.0,the ceiling (100),changed their mind: the value they named
+P013,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,59.0,-8.0,-8.0,,changed their mind: a value they did not name
+P013,CVR+APA,care_rota_reduction,groupSizeSensitivity,reducing harm,65.0,-8.0,-8.0,,changed their mind: a value they did not name
+P013,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P014,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P014,CVR_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,43.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P014,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),10.0,-25.0,-10.0,the floor (0),the other person's story did not guide the choice
+P014,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,30.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P014,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P014,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P014,CVR_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P014,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,23.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P015,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P015,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P016,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,18.0,18.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P016,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,91.0,-6.0,-6.0,,Baseline confirm: kept a misaligned option; another of the four values
+P016,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,37.0,-6.0,-6.0,,Baseline confirm: kept a misaligned option; another of the four values
+P016,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,35.0,-6.0,-6.0,,Baseline confirm: kept a misaligned option; another of the four values
+P016,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,29.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P016,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,85.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P016,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,18.0,30.0,30.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P016,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,70.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P016,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,31.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P016,Baseline,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,49.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P016,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,39.0,21.0,21.0,,Baseline confirm: kept a strongly misaligned option; the value it serves most
+P016,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,60.0,-10.5,-10.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P016,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,48.0,-10.5,-10.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P016,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,21.0,-10.5,-10.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P017,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,1.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P017,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,79.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P017,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,64.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P017,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P017,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P017,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,49.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P018,CVR_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,35.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P018,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,96.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P018,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,81.0,30.0,19.0,the ceiling (100),kept a misaligned option: the value it serves most
+P018,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,55.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P018,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P018,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,35.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P018,CVR_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P019,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,39.0,21.0,21.0,,changed their mind: the value they named
+P019,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,-7.0,0.0,the floor (0),changed their mind: a value they did not name
+P019,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,37.0,-7.0,-7.0,,changed their mind: a value they did not name
+P019,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,45.0,-7.0,-7.0,,changed their mind: a value they did not name
+P019,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,38.0,24.0,24.0,,changed their mind: the value they named
+P019,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,60.0,-8.0,-8.0,,changed their mind: a value they did not name
+P019,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P019,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,30.0,-8.0,-8.0,,changed their mind: a value they did not name
+P019,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,22.0,30.0,30.0,,changed their mind: the value they named
+P019,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,52.0,-10.0,-10.0,,changed their mind: a value they did not name
+P019,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P019,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,62.0,-10.0,-10.0,,changed their mind: a value they did not name
+P020,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P020,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,82.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P020,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,100.0,27.0,0.0,the ceiling (100),Baseline confirm: kept a strongly misaligned option; the value it serves most
+P020,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,39.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P020,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,84.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P020,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,67.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P021,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,50.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P021,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,19.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P021,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,13.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P021,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,70.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P021,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P021,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,55.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P022,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,50.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P022,CVR_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,93.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P022,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),2.0,25.0,25.0,,the other person's story guided the choice
+P022,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,73.0,30.0,27.0,the ceiling (100),kept a misaligned option: the value it serves most
+P022,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,80.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P022,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),27.0,-25.0,-25.0,,the other person's story did not guide the choice
+P022,CVR_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,60.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P022,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P023,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,4.0,18.0,18.0,,changed their mind: the value they named
+P023,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,4.0,-6.0,-4.0,the floor (0),changed their mind: a value they did not name
+P023,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-6.0,-6.0,,changed their mind: a value they did not name
+P023,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,98.0,-6.0,-6.0,,changed their mind: a value they did not name
+P023,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,58.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P023,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,92.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P023,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,77.0,27.0,23.0,the ceiling (100),changed their mind: the value they named
+P023,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P023,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,78.0,-9.0,-9.0,,changed their mind: a value they did not name
+P023,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,22.0,-9.0,-9.0,,changed their mind: a value they did not name
+P023,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,100.0,24.0,0.0,the ceiling (100),changed their mind: the value they named
+P023,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P023,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,69.0,-8.0,-8.0,,changed their mind: a value they did not name
+P023,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,13.0,-8.0,-8.0,,changed their mind: a value they did not name
+P024,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,100.0,21.0,0.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P024,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,50.0,-7.0,-7.0,,Baseline confirm: kept a misaligned option; another of the four values
+P024,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,50.0,-7.0,-7.0,,Baseline confirm: kept a misaligned option; another of the four values
+P024,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,-7.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P025,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P025,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P025,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,0.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P025,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,49.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P025,CVR+APA,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,25.0,25.0,,the other person's story guided the choice
+P025,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),32.0,-25.0,-25.0,,changed their mind: the other person's story did not move them
+P025,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,27.0,27.0,,changed their mind: the value they named
+P025,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,29.0,-9.0,-9.0,,changed their mind: a value they did not name
+P025,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,20.0,-9.0,-9.0,,changed their mind: a value they did not name
+P025,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,30.0,-9.0,-9.0,,changed their mind: a value they did not name
+P026,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,1.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P026,CVR_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,72.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P026,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P026,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P026,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P026,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,31.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P026,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,CVR Rejection page: the other person's story changed their mind
+P026,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,20.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P026,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,52.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P026,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),25.0,-25.0,-25.0,,the other person's story did not guide the choice
+P027,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,100.0,27.0,0.0,the ceiling (100),changed their mind: the value they named
+P027,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,48.0,-9.0,-9.0,,changed their mind: a value they did not name
+P027,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P027,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,45.0,-9.0,-9.0,,changed their mind: a value they did not name
+P027,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,20.0,0.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P027,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,36.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P027,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,30.0,0.0,the ceiling (100),changed their mind: the value they named
+P027,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,39.0,-10.0,-10.0,,changed their mind: a value they did not name
+P027,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P027,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,21.0,-10.0,-10.0,,changed their mind: a value they did not name
+P027,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P027,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P028,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,50.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P028,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P029,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P029,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P029,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,49.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P029,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P030,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,66.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P030,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,68.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P030,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),2.0,-25.0,-2.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P030,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,72.0,30.0,28.0,the ceiling (100),kept a misaligned option: the value it serves most
+P030,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,86.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P030,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,the other person's story guided the choice
+P031,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,4.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P031,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,32.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P032,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,100.0,27.0,0.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P032,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,66.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P032,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,-9.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P032,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,26.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P032,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,20.0,0.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P032,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,17.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P033,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,61.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P033,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P034,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,-25.0,-7.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P034,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P034,CVR_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,43.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P034,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P034,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,15.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P034,CVR_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P034,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,18.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P034,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,35.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P034,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P034,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P034,CVR_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,25.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P035,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,94.0,30.0,6.0,the ceiling (100),changed their mind: the value they named
+P035,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,84.0,-10.0,-10.0,,changed their mind: a value they did not name
+P035,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,17.0,-10.0,-10.0,,changed their mind: a value they did not name
+P035,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,35.0,-10.0,-10.0,,changed their mind: a value they did not name
+P035,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,100.0,20.0,0.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P035,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,74.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P035,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,7.0,27.0,27.0,,changed their mind: the value they named
+P035,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,59.0,-9.0,-9.0,,changed their mind: a value they did not name
+P035,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,100.0,-9.0,-9.0,,changed their mind: a value they did not name
+P035,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,25.0,-9.0,-9.0,,changed their mind: a value they did not name
+P036,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,1.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P036,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P036,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,0.0,27.0,27.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P036,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,41.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P036,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,2.0,-9.0,-2.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P036,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,21.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P036,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,32.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P036,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,27.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P037,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,86.0,30.0,14.0,the ceiling (100),kept a misaligned option: the value it serves most
+P037,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,72.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P037,CVR+APA,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P037,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,26.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P037,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P037,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P037,CVR+APA,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),changed their mind: the other person's story did not move them
+P037,CVR+APA,care_rota_reduction,groupSizeSensitivity,reducing harm,52.0,27.0,27.0,,changed their mind: the value they named
+P037,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,41.0,-9.0,-9.0,,changed their mind: a value they did not name
+P037,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,80.0,-9.0,-9.0,,changed their mind: a value they did not name
+P037,CVR+APA,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,56.0,-9.0,-9.0,,changed their mind: a value they did not name
+P038,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P038,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P038,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,85.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P038,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,94.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P038,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),26.0,-25.0,-25.0,,the other person's story did not guide the choice
+P038,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),1.0,-25.0,-1.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P038,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,20.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P038,CVR_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P039,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,91.0,27.0,9.0,the ceiling (100),changed their mind: the value they named
+P039,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,88.0,-9.0,-9.0,,changed their mind: a value they did not name
+P039,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,1.0,-9.0,-1.0,the floor (0),changed their mind: a value they did not name
+P039,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,7.0,-9.0,-7.0,the floor (0),changed their mind: a value they did not name
+P039,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,79.0,24.0,21.0,the ceiling (100),changed their mind: the value they named
+P039,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,100.0,-8.0,-8.0,,changed their mind: a value they did not name
+P039,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P039,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P039,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,100.0,20.0,0.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P039,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,92.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P040,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,50.0,27.0,27.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P040,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,68.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P040,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,-9.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P040,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,26.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P040,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,77.0,30.0,23.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P040,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,59.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P040,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P040,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,17.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P040,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P040,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,49.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P041,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,81.0,20.0,19.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P041,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,20.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P041,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,7.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P041,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P041,CVR+APA,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),45.0,-25.0,-25.0,,the other person's story did not guide the choice
+P041,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),20.0,-25.0,-20.0,the floor (0),changed their mind: the other person's story did not move them
+P041,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,32.0,18.0,18.0,,changed their mind: the value they named
+P041,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,5.0,-6.0,-5.0,the floor (0),changed their mind: a value they did not name
+P041,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,90.0,-6.0,-6.0,,changed their mind: a value they did not name
+P041,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,22.0,-6.0,-6.0,,changed their mind: a value they did not name
+P041,CVR+APA,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),changed their mind: the other person's story did not move them
+P041,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,21.0,21.0,,changed their mind: the value they named
+P041,CVR+APA,care_rota_reduction,groupSizeSensitivity,reducing harm,50.0,-7.0,-7.0,,changed their mind: a value they did not name
+P041,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,84.0,-7.0,-7.0,,changed their mind: a value they did not name
+P041,CVR+APA,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,16.0,-7.0,-7.0,,changed their mind: a value they did not name
+P042,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,56.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P042,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,72.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P042,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P042,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,76.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P042,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P042,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,86.0,20.0,14.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P042,CVR_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,57.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P043,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,45.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P043,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,32.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P043,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,65.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P043,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,75.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P045,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P045,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,82.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P046,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,81.0,30.0,19.0,the ceiling (100),kept a misaligned option: the value it serves most
+P046,CVR_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,94.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P046,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),26.0,-25.0,-25.0,,the other person's story did not guide the choice
+P046,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,0.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P046,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P046,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),1.0,-25.0,-1.0,the floor (0),the other person's story did not guide the choice
+P046,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P046,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,85.0,30.0,15.0,the ceiling (100),kept a misaligned option: the value it serves most
+P046,CVR_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,90.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P046,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,the other person's story guided the choice
+P047,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,68.0,30.0,30.0,,changed their mind: the value they named
+P047,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,50.0,-10.0,-10.0,,changed their mind: a value they did not name
+P047,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P047,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,26.0,-10.0,-10.0,,changed their mind: a value they did not name
+P048,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,30.0,30.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P048,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,53.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P048,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,86.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P048,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,100.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P048,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,90.0,20.0,10.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P048,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,94.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P048,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,100.0,30.0,0.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P048,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,43.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P048,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,79.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P048,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,76.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P049,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),10.0,-25.0,-10.0,the floor (0),changed their mind: the other person's story did not move them
+P049,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,27.0,27.0,,changed their mind: the value they named
+P049,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,39.0,-9.0,-9.0,,changed their mind: a value they did not name
+P049,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P049,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P049,CVR+APA,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,changed their mind: the other person's story moved them
+P049,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,27.0,27.0,27.0,,changed their mind: the value they named
+P049,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,30.0,-9.0,-9.0,,changed their mind: a value they did not name
+P049,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P049,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P049,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P049,CVR+APA,care_rota_reduction,groupSizeSensitivity,reducing harm,54.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P050,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),12.0,-25.0,-12.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P050,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P050,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,79.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P050,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,30.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P050,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P050,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,50.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P050,CVR_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,49.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P051,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P051,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P051,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P051,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,85.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P051,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,70.0,24.0,24.0,,changed their mind: the value they named
+P051,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,9.0,-8.0,-8.0,,changed their mind: a value they did not name
+P051,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,20.0,-8.0,-8.0,,changed their mind: a value they did not name
+P051,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,20.0,-8.0,-8.0,,changed their mind: a value they did not name
+P052,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,79.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P052,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P053,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,36.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P053,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,89.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P053,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),2.0,-25.0,-2.0,the floor (0),the other person's story did not guide the choice
+P053,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,29.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P053,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,79.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P053,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,changed their mind: the other person's story moved them
+P053,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,86.0,24.0,14.0,the ceiling (100),changed their mind: the value they named
+P053,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,51.0,-8.0,-8.0,,changed their mind: a value they did not name
+P053,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,49.0,-8.0,-8.0,,changed their mind: a value they did not name
+P053,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,64.0,-8.0,-8.0,,changed their mind: a value they did not name
+P053,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,41.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P053,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,43.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P054,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,86.0,20.0,14.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P054,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,37.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P054,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,22.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P054,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P054,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,26.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P054,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,85.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P054,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,-25.0,-7.0,the floor (0),the other person's story did not guide the choice
+P055,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,56.0,27.0,27.0,,changed their mind: the value they named
+P055,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,51.0,-9.0,-9.0,,changed their mind: a value they did not name
+P055,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,50.0,-9.0,-9.0,,changed their mind: a value they did not name
+P055,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P055,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P055,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,83.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P056,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,32.0,27.0,27.0,,Baseline confirm: kept a strongly misaligned option; the value it serves most
+P056,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,43.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P056,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,13.0,-13.5,-13.0,the floor (0),Baseline confirm: kept a strongly misaligned option; another of the four values
+P056,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,82.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P056,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,29.5,21.0,21.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P056,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,59.0,-7.0,-7.0,,Baseline confirm: kept a misaligned option; another of the four values
+P056,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-7.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P056,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,68.5,-7.0,-7.0,,Baseline confirm: kept a misaligned option; another of the four values
+P056,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,50.5,18.0,18.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P056,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,52.0,-6.0,-6.0,,Baseline confirm: kept a misaligned option; another of the four values
+P056,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,-6.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P056,Baseline,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,61.5,-6.0,-6.0,,Baseline confirm: kept a misaligned option; another of the four values
+P056,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,68.5,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P056,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,46.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P057,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,75.0,30.0,25.0,the ceiling (100),kept a misaligned option: the value it serves most
+P057,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,96.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P057,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),10.0,25.0,25.0,,the other person's story guided the choice
+P057,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,61.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P057,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,76.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P057,CVR+APA,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),35.0,25.0,25.0,,the other person's story guided the choice
+P058,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,72.0,30.0,28.0,the ceiling (100),kept a misaligned option: the value it serves most
+P058,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,90.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P058,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),69.0,-25.0,-25.0,,the other person's story did not guide the choice
+P058,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,68.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P058,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,100.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P058,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),44.0,-25.0,-25.0,,the other person's story did not guide the choice
+P058,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),19.0,25.0,25.0,,CVR Rejection page: the other person's story changed their mind
+P058,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,98.0,20.0,2.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P058,CVR_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,80.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P059,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,70.0,21.0,21.0,,changed their mind: the value they named
+P059,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-7.0,-7.0,,changed their mind: a value they did not name
+P059,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,1.0,-7.0,-1.0,the floor (0),changed their mind: a value they did not name
+P059,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,66.0,-7.0,-7.0,,changed their mind: a value they did not name
+P059,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,91.0,27.0,9.0,the ceiling (100),changed their mind: the value they named
+P059,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,57.0,-9.0,-9.0,,changed their mind: a value they did not name
+P059,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P059,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,59.0,-9.0,-9.0,,changed their mind: a value they did not name
+P060,Baseline,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,45.0,27.0,27.0,,Baseline confirm: kept a strongly misaligned option; the value it serves most
+P060,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,70.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P060,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-13.5,0.0,the floor (0),Baseline confirm: kept a strongly misaligned option; another of the four values
+P060,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,1.0,-13.5,-1.0,the floor (0),Baseline confirm: kept a strongly misaligned option; another of the four values
+P060,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,72.0,30.0,28.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P060,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.5,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P060,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,0.0,-10.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P060,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P061,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),2.0,-25.0,-2.0,the floor (0),changed their mind: the other person's story did not move them
+P061,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,100.0,27.0,0.0,the ceiling (100),changed their mind: the value they named
+P061,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,9.0,-9.0,-9.0,,changed their mind: a value they did not name
+P061,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-9.0,-9.0,,changed their mind: a value they did not name
+P061,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,97.0,-9.0,-9.0,,changed their mind: a value they did not name
+P061,CVR+APA,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),changed their mind: the other person's story did not move them
+P061,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,88.0,24.0,12.0,the ceiling (100),changed their mind: the value they named
+P061,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P061,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,55.0,-8.0,-8.0,,changed their mind: a value they did not name
+P061,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,-8.0,-8.0,,changed their mind: a value they did not name
+P061,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),changed their mind: the other person's story did not move them
+P061,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,92.0,30.0,8.0,the ceiling (100),changed their mind: the value they named
+P061,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P061,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,47.0,-10.0,-10.0,,changed their mind: a value they did not name
+P061,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,100.0,-10.0,-10.0,,changed their mind: a value they did not name
+P061,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,100.0,15.0,0.0,the ceiling (100),kept a misaligned option: the value it serves most
+P061,CVR+APA,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,90.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P061,CVR+APA,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,the other person's story guided the choice
+P062,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P062,CVR_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,19.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P062,CVR_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,59.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P062,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,20.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P063,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,88.0,21.0,12.0,the ceiling (100),changed their mind: the value they named
+P063,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,64.0,-7.0,-7.0,,changed their mind: a value they did not name
+P063,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,1.0,-7.0,-1.0,the floor (0),changed their mind: a value they did not name
+P063,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,82.0,-7.0,-7.0,,changed their mind: a value they did not name
+P064,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,97.0,30.0,3.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P064,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,4.0,-10.0,-4.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P064,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,97.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P064,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,66.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P064,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,30.0,30.0,,Baseline confirm: kept a strongly misaligned option; the value it serves most
+P064,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,100.0,-15.0,-15.0,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P064,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,87.0,-15.0,-15.0,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P064,Baseline,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,56.0,-15.0,-15.0,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P064,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,30.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P064,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,72.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P065,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P065,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,75.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P065,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),12.0,25.0,25.0,,changed their mind: the other person's story moved them
+P065,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,64.0,21.0,21.0,,changed their mind: the value they named
+P065,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,28.0,-7.0,-7.0,,changed their mind: a value they did not name
+P065,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,20.0,-7.0,-7.0,,changed their mind: a value they did not name
+P065,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,60.0,-7.0,-7.0,,changed their mind: a value they did not name
+P065,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,13.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P065,CVR+APA,care_rota_reduction,groupSizeSensitivity,reducing harm,85.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P066,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,50.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P066,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),39.0,-25.0,-25.0,,the other person's story did not guide the choice
+P067,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,94.0,27.0,6.0,the ceiling (100),changed their mind: the value they named
+P067,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,1.0,-9.0,-1.0,the floor (0),changed their mind: a value they did not name
+P067,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,79.0,-9.0,-9.0,,changed their mind: a value they did not name
+P067,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,1.0,-9.0,-1.0,the floor (0),changed their mind: a value they did not name
+P067,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P067,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,70.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P068,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,4.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P068,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P068,Baseline,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,24.0,24.0,24.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P068,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,24.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P068,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-8.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P068,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,85.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P068,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,77.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P068,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,48.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P069,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,12.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P069,CVR+APA,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,78.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P069,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,50.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P069,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,63.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P069,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),50.0,-25.0,-25.0,,the other person's story did not guide the choice
+P070,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),61.0,-25.0,-25.0,,CVR Rejection page: the other person's story did not change their mind
+P070,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,1.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P070,CVR_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,45.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P070,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),36.0,-25.0,-25.0,,CVR Rejection page: the other person's story did not change their mind
+P070,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,21.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P070,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,75.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P070,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),11.0,-25.0,-11.0,the floor (0),the other person's story did not guide the choice
+P070,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,55.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P070,CVR_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,51.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P071,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,72.0,30.0,28.0,the ceiling (100),changed their mind: the value they named
+P071,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,-10.0,-10.0,,changed their mind: a value they did not name
+P071,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P071,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,66.0,-10.0,-10.0,,changed their mind: a value they did not name
+P071,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,56.0,27.0,27.0,,changed their mind: the value they named
+P071,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,23.0,-9.0,-9.0,,changed their mind: a value they did not name
+P071,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,100.0,-9.0,-9.0,,changed their mind: a value they did not name
+P071,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P071,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,91.0,30.0,9.0,the ceiling (100),changed their mind: the value they named
+P071,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,14.0,-10.0,-10.0,,changed their mind: a value they did not name
+P071,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P071,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,83.0,-10.0,-10.0,,changed their mind: a value they did not name
+P072,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,94.0,20.0,6.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P072,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,61.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P073,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P073,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,97.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P073,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),32.0,-25.0,-25.0,,the other person's story did not guide the choice
+P073,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,52.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P073,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,87.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P073,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,-25.0,-7.0,the floor (0),the other person's story did not guide the choice
+P073,CVR+APA,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,77.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P073,CVR+APA,care_rota_reduction,groupSizeSensitivity,reducing harm,15.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P074,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),26.0,-25.0,-25.0,,CVR Rejection page: the other person's story did not change their mind
+P074,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,45.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P074,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,72.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P074,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),1.0,25.0,25.0,,the other person's story guided the choice
+P074,CVR_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,23.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P074,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,52.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P074,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),26.0,-25.0,-25.0,,the other person's story did not guide the choice
+P075,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,4.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P075,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,45.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P076,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P076,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P076,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,20.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P076,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,94.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P077,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P077,CVR+APA,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,94.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P077,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,20.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P077,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,72.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P077,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),32.0,-25.0,-25.0,,the other person's story did not guide the choice
+P078,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),39.0,-25.0,-25.0,,CVR Rejection page: the other person's story did not change their mind
+P078,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,39.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P078,CVR_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,96.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P078,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),14.0,-25.0,-14.0,the floor (0),the other person's story did not guide the choice
+P079,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,61.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P079,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,87.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P079,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,81.0,20.0,19.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P079,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,72.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P079,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,12.0,21.0,21.0,,changed their mind: the value they named
+P079,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,57.0,-7.0,-7.0,,changed their mind: a value they did not name
+P079,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,32.0,-7.0,-7.0,,changed their mind: a value they did not name
+P079,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,100.0,-7.0,-7.0,,changed their mind: a value they did not name
+P080,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,99.0,20.0,1.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P080,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P080,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,45.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P080,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P080,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,49.0,27.0,27.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P080,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,65.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P080,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,85.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P080,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P081,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P081,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,76.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P081,CVR+APA,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,25.0,25.0,,changed their mind: the other person's story moved them
+P081,CVR+APA,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,61.0,21.0,21.0,,changed their mind: the value they named
+P081,CVR+APA,care_rota_reduction,groupSizeSensitivity,reducing harm,20.0,-7.0,-7.0,,changed their mind: a value they did not name
+P081,CVR+APA,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,45.0,-7.0,-7.0,,changed their mind: a value they did not name
+P081,CVR+APA,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,0.0,-7.0,0.0,the floor (0),changed their mind: a value they did not name
+P082,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),17.0,-25.0,-17.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P082,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,26.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P082,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,78.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P082,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P082,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,56.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P082,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,58.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P082,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P083,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,72.0,24.0,24.0,,changed their mind: the value they named
+P083,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P083,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P083,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,35.0,-8.0,-8.0,,changed their mind: a value they did not name
+P083,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,96.0,24.0,4.0,the ceiling (100),changed their mind: the value they named
+P083,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P083,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),changed their mind: a value they did not name
+P083,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,27.0,-8.0,-8.0,,changed their mind: a value they did not name
+P083,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P083,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P084,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,72.0,24.0,24.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P084,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,45.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P084,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P084,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,26.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P085,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P085,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P086,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P086,CVR_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,79.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P086,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,25.0,25.0,,the other person's story guided the choice
+P086,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),32.0,-25.0,-25.0,,CVR Rejection page: the other person's story did not change their mind
+P086,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,69.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P086,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,79.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P086,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,-25.0,-7.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P087,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,1.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P087,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,32.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P087,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,17.0,27.0,27.0,,changed their mind: the value they named
+P087,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,9.0,-9.0,-9.0,,changed their mind: a value they did not name
+P087,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,21.0,-9.0,-9.0,,changed their mind: a value they did not name
+P087,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P087,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P087,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,44.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P087,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,20.0,27.0,27.0,,changed their mind: the value they named
+P087,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,29.0,-9.0,-9.0,,changed their mind: a value they did not name
+P087,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,12.0,-9.0,-9.0,,changed their mind: a value they did not name
+P087,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P088,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,79.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P088,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,8.0,-15.0,-8.0,the floor (0),kept a second-best option: where the best fit beat it most
+P088,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,36.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P088,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,99.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P088,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P088,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,84.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P088,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,0.0,24.0,24.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P088,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,76.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P088,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,69.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P088,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P089,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,97.0,15.0,3.0,the ceiling (100),kept a misaligned option: the value it serves most
+P089,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P089,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),7.0,-25.0,-7.0,the floor (0),the other person's story did not guide the choice
+P089,CVR+APA,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,100.0,30.0,0.0,the ceiling (100),kept a misaligned option: the value it serves most
+P089,CVR+APA,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,54.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P089,CVR+APA,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P089,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,34.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P089,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P089,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,25.0,25.0,,the other person's story guided the choice
+P090,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),32.0,25.0,25.0,,CVR Rejection page: the other person's story changed their mind
+P090,CVR_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P090,CVR_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,43.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P090,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,0.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P090,CVR_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,28.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P090,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),57.0,-25.0,-25.0,,the other person's story did not guide the choice
+P090,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,20.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P090,CVR_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,30.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P090,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),32.0,-25.0,-25.0,,the other person's story did not guide the choice
+P091,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,27.0,27.0,,changed their mind: the value they named
+P091,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P091,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,45.0,-9.0,-9.0,,changed their mind: a value they did not name
+P091,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P091,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,36.0,27.0,27.0,,changed their mind: the value they named
+P091,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P091,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,27.0,-9.0,-9.0,,changed their mind: a value they did not name
+P091,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P092,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,50.0,24.0,24.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P092,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,82.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P092,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P092,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,1.0,-8.0,-1.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P092,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,74.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P092,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,74.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P092,Baseline,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,0.0,27.0,27.0,,Baseline confirm: kept a strongly misaligned option; the value it serves most
+P092,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,59.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P092,Baseline,care_rota_reduction,groupSizeSensitivity,reducing harm,94.0,-13.5,-13.5,,Baseline confirm: kept a strongly misaligned option; another of the four values
+P092,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,-13.5,0.0,the floor (0),Baseline confirm: kept a strongly misaligned option; another of the four values
+P093,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),26.0,25.0,25.0,,changed their mind: the other person's story moved them
+P093,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,100.0,30.0,0.0,the ceiling (100),changed their mind: the value they named
+P093,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,20.0,-10.0,-10.0,,changed their mind: a value they did not name
+P093,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P093,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,12.0,-10.0,-10.0,,changed their mind: a value they did not name
+P094,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P094,CVR_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,75.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P094,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),17.0,-25.0,-17.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P094,CVR_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,68.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P094,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P094,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P094,CVR_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,88.0,20.0,12.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P094,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,60.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P095,APA_Only,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,33.0,30.0,30.0,,changed their mind: the value they named
+P095,APA_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P095,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,29.0,-10.0,-10.0,,changed their mind: a value they did not name
+P095,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,56.0,-10.0,-10.0,,changed their mind: a value they did not name
+P095,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,19.0,21.0,21.0,,changed their mind: the value they named
+P095,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,63.0,-7.0,-7.0,,changed their mind: a value they did not name
+P095,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,0.0,-7.0,0.0,the floor (0),changed their mind: a value they did not name
+P095,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,46.0,-7.0,-7.0,,changed their mind: a value they did not name
+P095,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,40.0,30.0,30.0,,changed their mind: the value they named
+P095,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,56.0,-10.0,-10.0,,changed their mind: a value they did not name
+P095,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P095,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,39.0,-10.0,-10.0,,changed their mind: a value they did not name
+P095,APA_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,0.0,30.0,30.0,,changed their mind: the value they named
+P095,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,46.0,-10.0,-10.0,,changed their mind: a value they did not name
+P095,APA_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,70.0,-10.0,-10.0,,changed their mind: a value they did not name
+P095,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,29.0,-10.0,-10.0,,changed their mind: a value they did not name
+P096,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,26.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P096,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,50.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P096,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,0.0,24.0,24.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P096,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,35.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P096,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-8.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P096,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,46.0,-8.0,-8.0,,Baseline confirm: kept a misaligned option; another of the four values
+P096,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,27.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P096,Baseline,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,38.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P096,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P096,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,24.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P097,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),2.0,-25.0,-2.0,the floor (0),changed their mind: the other person's story did not move them
+P097,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,78.0,27.0,22.0,the ceiling (100),changed their mind: the value they named
+P097,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,0.0,-9.0,0.0,the floor (0),changed their mind: a value they did not name
+P097,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,8.0,-9.0,-8.0,the floor (0),changed their mind: a value they did not name
+P097,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,7.0,-9.0,-7.0,the floor (0),changed their mind: a value they did not name
+P098,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P098,CVR_Only,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P098,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),10.0,-25.0,-10.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P098,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),CVR Rejection page: the other person's story did not change their mind
+P098,CVR_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,20.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P098,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,94.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P099,APA_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,36.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P099,APA_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,82.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P100,Baseline,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,27.0,27.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P100,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,20.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P100,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,32.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P100,Baseline,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,66.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P101,CVR+APA,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),80.0,-25.0,-25.0,,changed their mind: the other person's story did not move them
+P101,CVR+APA,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,53.0,30.0,30.0,,changed their mind: the value they named
+P101,CVR+APA,chemical_release_escape,groupSizeSensitivity,reducing harm,32.0,-10.0,-10.0,,changed their mind: a value they did not name
+P101,CVR+APA,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,17.0,-10.0,-10.0,,changed their mind: a value they did not name
+P101,CVR+APA,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P102,CVR_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,64.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P102,CVR_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,81.0,-20.0,-20.0,,kept a misaligned option: the value it gives up most
+P102,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),0.0,-25.0,0.0,the floor (0),the other person's story did not guide the choice
+P102,CVR_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,61.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P102,CVR_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,94.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P102,CVR_Only,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,81.0,20.0,19.0,the ceiling (100),kept a second-best option: where it beats the best fit most
+P102,CVR_Only,care_rota_reduction,groupSizeSensitivity,reducing harm,79.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P103,APA_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,4.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P103,APA_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P103,APA_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,85.0,30.0,15.0,the ceiling (100),changed their mind: the value they named
+P103,APA_Only,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,41.0,-10.0,-10.0,,changed their mind: a value they did not name
+P103,APA_Only,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,32.0,-10.0,-10.0,,changed their mind: a value they did not name
+P103,APA_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,24.0,-10.0,-10.0,,changed their mind: a value they did not name
+P103,APA_Only,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,31.0,21.0,21.0,,changed their mind: the value they named
+P103,APA_Only,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,22.0,-7.0,-7.0,,changed their mind: a value they did not name
+P103,APA_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,100.0,-7.0,-7.0,,changed their mind: a value they did not name
+P103,APA_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,14.0,-7.0,-7.0,,changed their mind: a value they did not name
+P104,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,17.0,27.0,27.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P104,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,86.0,-9.0,-9.0,,Baseline confirm: kept a misaligned option; another of the four values
+P104,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,8.0,-9.0,-8.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P104,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,4.0,-9.0,-4.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P104,Baseline,wildfire_household_evacuation,groupSizeSensitivity,reducing harm,77.0,30.0,23.0,the ceiling (100),Baseline confirm: kept a misaligned option; the value it serves most
+P104,Baseline,wildfire_household_evacuation,vulnerabilityProtectionSensitivity,protecting the vulnerable,44.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P104,Baseline,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P104,Baseline,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,0.0,-10.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P104,Baseline,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,34.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P104,Baseline,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,100.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P105,CVR+APA,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),80.0,-25.0,-25.0,,changed their mind: the other person's story did not move them
+P105,CVR+APA,cancer_treatment_allocation,vulnerabilityProtectionSensitivity,protecting the vulnerable,59.0,30.0,30.0,,changed their mind: the value they named
+P105,CVR+APA,cancer_treatment_allocation,groupSizeSensitivity,reducing harm,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P105,CVR+APA,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),changed their mind: a value they did not name
+P105,CVR+APA,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,1.0,-10.0,-1.0,the floor (0),changed their mind: a value they did not name
+P106,CVR_Only,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,3.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P106,CVR_Only,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,19.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P106,CVR_Only,chemical_release_escape,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),96.0,25.0,4.0,the ceiling (100),the other person's story guided the choice
+P106,CVR_Only,wildfire_household_evacuation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),100.0,-25.0,-25.0,,CVR Rejection page: the other person's story did not change their mind
+P106,CVR_Only,wildfire_household_evacuation,outcomeAggregationSensitivity,how many are helped,9.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P106,CVR_Only,wildfire_household_evacuation,gainResponsivenessSensitivity,how much is gained,18.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most
+P106,CVR_Only,cancer_treatment_allocation,gainResponsivenessSensitivity,how much is gained,3.0,15.0,15.0,,kept a misaligned option: the value it serves most
+P106,CVR_Only,cancer_treatment_allocation,outcomeAggregationSensitivity,how many are helped,29.0,-10.0,-10.0,,kept a misaligned option: the value it gives up most
+P106,CVR_Only,cancer_treatment_allocation,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),75.0,25.0,25.0,,the other person's story guided the choice
+P106,CVR_Only,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,18.0,30.0,30.0,,kept a misaligned option: the value it serves most
+P106,CVR_Only,care_rota_reduction,outcomeAggregationSensitivity,how many are helped,19.0,-20.0,-19.0,the floor (0),kept a misaligned option: the value it gives up most
+P106,CVR_Only,care_rota_reduction,stakeholderPerspectiveShiftSensitivity,moved by the other person's story (stakeholder),100.0,25.0,0.0,the ceiling (100),the other person's story guided the choice
+P107,Baseline,chemical_release_escape,groupSizeSensitivity,reducing harm,64.0,30.0,30.0,,Baseline confirm: kept a misaligned option; the value it serves most
+P107,Baseline,chemical_release_escape,vulnerabilityProtectionSensitivity,protecting the vulnerable,64.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P107,Baseline,chemical_release_escape,gainResponsivenessSensitivity,how much is gained,0.0,-10.0,0.0,the floor (0),Baseline confirm: kept a misaligned option; another of the four values
+P107,Baseline,chemical_release_escape,outcomeAggregationSensitivity,how many are helped,19.0,-10.0,-10.0,,Baseline confirm: kept a misaligned option; another of the four values
+P107,Baseline,care_rota_reduction,gainResponsivenessSensitivity,how much is gained,0.0,20.0,20.0,,kept a second-best option: where it beats the best fit most
+P107,Baseline,care_rota_reduction,vulnerabilityProtectionSensitivity,protecting the vulnerable,54.0,-15.0,-15.0,,kept a second-best option: where the best fit beat it most

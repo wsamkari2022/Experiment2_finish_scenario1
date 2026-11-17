@@ -1,0 +1,1533 @@
+{
+  "n_participants": 107,
+  "per_condition": {
+    "CVR+APA": 27,
+    "CVR_Only": 27,
+    "APA_Only": 26,
+    "Baseline": 27
+  },
+  "fidelity": {
+    "exceptions": [],
+    "exceptions_count": 0,
+    "exposure": {
+      "CVR+APA": {
+        "participants": 27,
+        "met_reflection_page": {
+          "n": 22,
+          "share": 0.8148148148148148
+        },
+        "met_clarification_page": {
+          "n": 16,
+          "share": 0.5925925925925926
+        }
+      },
+      "CVR_Only": {
+        "participants": 27,
+        "met_reflection_page": {
+          "n": 27,
+          "share": 1.0
+        },
+        "met_rejection_page": {
+          "n": 20,
+          "share": 0.7407407407407407
+        }
+      },
+      "APA_Only": {
+        "participants": 26,
+        "met_clarification_page": {
+          "n": 21,
+          "share": 0.8076923076923077
+        }
+      },
+      "Baseline": {
+        "participants": 27,
+        "met_confirm_misfit_page": {
+          "n": 26,
+          "share": 0.9629629629629629
+        },
+        "met_confirm_good_page": {
+          "n": 27,
+          "share": 1.0
+        }
+      }
+    }
+  },
+  "positive_controls": {
+    "push_vs_pull": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 46,
+      "W": 1518.0,
+      "T_plus": 1518.0,
+      "p": 1.428487591841078e-05,
+      "estimate": 0.6261682242990654,
+      "mean_difference": 0.6261682242990654,
+      "median_difference": 1.0,
+      "rank_biserial_r": 0.6054997355896351,
+      "cohens_dz": 0.36436728161500814,
+      "ci95_mean_difference": [
+        0.29906542056074764,
+        0.9439252336448598
+      ],
+      "ci95_rank_biserial_r": [
+        0.34099016276435656,
+        0.8537190963341855
+      ],
+      "claim": "more lives required before pushing than before pulling",
+      "left_out_missing": 0,
+      "present": true
+    },
+    "shelter_vs_sidewalk": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 29,
+      "W": 2718.5,
+      "T_plus": 2718.5,
+      "p": 1.4366012038949625e-09,
+      "estimate": 1.1682242990654206,
+      "mean_difference": 1.1682242990654206,
+      "median_difference": 1.0,
+      "rank_biserial_r": 0.7646867900032457,
+      "cohens_dz": 0.6401902610064144,
+      "ci95_mean_difference": [
+        0.822429906542056,
+        1.514018691588785
+      ],
+      "ci95_rank_biserial_r": [
+        0.5673274094326726,
+        0.9392434529823102
+      ],
+      "claim": "money kept less readily outside the shelter",
+      "left_out_missing": 0,
+      "present": true
+    },
+    "entry_level_vs_safety_net": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 22,
+      "W": 3019.5,
+      "T_plus": 3019.5,
+      "p": 7.953268000496642e-08,
+      "estimate": 0.4517133956386293,
+      "mean_difference": 0.4517133956386293,
+      "median_difference": 0.33333333333333304,
+      "rank_biserial_r": 0.6522571819425445,
+      "cohens_dz": 0.5212278871368872,
+      "ci95_mean_difference": [
+        0.28660436137071643,
+        0.6137071651090342
+      ],
+      "ci95_rank_biserial_r": [
+        0.46035215042954986,
+        0.8211736682093248
+      ],
+      "claim": "a higher gain before harming entry-level workers",
+      "left_out_missing": 0,
+      "present": true
+    }
+  },
+  "hypotheses": {
+    "A1": {
+      "test": "Mann-Whitney U (normal approximation, continuity correction)",
+      "n": [
+        27,
+        27
+      ],
+      "U": 431.0,
+      "p": 0.12603868948153812,
+      "estimate": 3.981481481481481,
+      "rank_biserial_r": 0.1824417009602195,
+      "cohens_d": 0.27071654315681215,
+      "mean_x": 81.38888888888889,
+      "mean_y": 77.4074074074074,
+      "median_x": 85.00000000000001,
+      "median_y": 77.5,
+      "ci95_rank_biserial_r": [
+        -0.1289780521262,
+        0.48559670781893005
+      ],
+      "ci95_mean_difference": [
+        -3.7037037037037095,
+        11.574074074074076
+      ],
+      "claim": "VCI higher in CVR+APA than in Baseline",
+      "left_out_missing": 0,
+      "beside_two_way_anova": {
+        "note": "description only, not used for the decision",
+        "CVR": {
+          "estimate": -3.238960113960133,
+          "t": -1.1161627949835478,
+          "p_two_sided": 0.26694961455366634
+        },
+        "APA": {
+          "estimate": 7.220441595441553,
+          "t": 2.488202382439931,
+          "p_two_sided": 0.014442409803154256
+        },
+        "CVR x APA": {
+          "estimate": 4.448005698005575,
+          "t": 0.7664031505961543,
+          "p_two_sided": 0.44518941587496313
+        }
+      },
+      "predicted_direction": true
+    },
+    "A2": {
+      "test": "Mann-Whitney U (normal approximation, continuity correction)",
+      "n": [
+        27,
+        26
+      ],
+      "U": 330.0,
+      "p": 0.6499061910713831,
+      "estimate": -1.0149572649572747,
+      "rank_biserial_r": -0.05982905982905984,
+      "cohens_d": -0.06451446829469602,
+      "mean_x": 81.38888888888889,
+      "mean_y": 82.40384615384616,
+      "median_x": 85.00000000000001,
+      "median_y": 86.25,
+      "ci95_rank_biserial_r": [
+        -0.3717948717948718,
+        0.25498575498575504
+      ],
+      "ci95_mean_difference": [
+        -9.277154558404549,
+        7.43990384615384
+      ],
+      "claim": "VCI higher in CVR+APA than in APA_Only",
+      "left_out_missing": 0,
+      "predicted_direction": false
+    },
+    "A3": {
+      "test": "Mann-Whitney U (normal approximation, continuity correction)",
+      "n": [
+        27,
+        27
+      ],
+      "U": 492.0,
+      "p": 0.013836673986156615,
+      "estimate": 9.444444444444443,
+      "rank_biserial_r": 0.34979423868312765,
+      "cohens_d": 0.6170140093085665,
+      "mean_x": 81.38888888888889,
+      "mean_y": 71.94444444444444,
+      "median_x": 85.00000000000001,
+      "median_y": 77.49999999999999,
+      "ci95_rank_biserial_r": [
+        0.04389574759945125,
+        0.6269204389574755
+      ],
+      "ci95_mean_difference": [
+        1.3888888888888857,
+        17.5
+      ],
+      "claim": "VCI higher in CVR+APA than in CVR_Only",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "A4": {
+      "claim": "after a first pick that went against their values, the final choice fits more often with a help step",
+      "decisions": 176,
+      "participants": 96,
+      "good_fit_share_help": 0.4338235294117647,
+      "good_fit_share_baseline": 0.275,
+      "left_out_missing": 0,
+      "mixed_model_tried": {
+        "model": "mixed logistic regression, random intercept per participant, adaptive Gauss-Hermite (25 nodes)",
+        "converged": true,
+        "singular": true,
+        "intercept": -0.9694005779456281,
+        "help": 0.7031325936598369,
+        "random_intercept_sd": 0.0,
+        "loglik": -116.6000888810996,
+        "decisions": 176,
+        "participants": 96,
+        "se_help": 0.3941167492760006
+      },
+      "model": {
+        "model": "logistic regression, participant-clustered robust standard errors (the registered fallback)",
+        "intercept": -0.9694005571881037,
+        "help": 0.7031325792401394,
+        "se_help": 0.3703513819837994,
+        "decisions": 176,
+        "participants": 96,
+        "why_the_fallback": "the mixed model did not converge or was singular (OSF page 6)"
+      },
+      "test": "logistic regression, participant-clustered robust standard errors (the registered fallback); one-sided Wald test",
+      "z": 1.8985553003036912,
+      "p": 0.028811485152754394,
+      "estimate": 0.7031325792401394,
+      "odds_ratio": 2.020070838252657,
+      "ci95_odds_ratio": [
+        0.9775138711403821,
+        4.174555791007041
+      ],
+      "predicted_direction": true
+    },
+    "B1": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 41,
+      "W": 940.5,
+      "T_plus": 940.5,
+      "p": 0.29186516144432173,
+      "estimate": -3.640669486582253,
+      "mean_difference": -3.640669486582253,
+      "median_difference": 0.0,
+      "rank_biserial_r": -0.14925373134328357,
+      "cohens_dz": -0.1000476339031077,
+      "ci95_mean_difference": [
+        -10.627424870210884,
+        3.269738158265404
+      ],
+      "ci95_rank_biserial_r": [
+        -0.42542058582160214,
+        0.13007761992178135
+      ],
+      "claim": "departure differs between receiving (5) and deciding under an employer (4)",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "B2": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 7,
+      "W": 2725.0,
+      "T_plus": 2725.0,
+      "p": 0.24583125246134396,
+      "estimate": 1.1100893447049618,
+      "mean_difference": 1.1100893447049618,
+      "median_difference": 4.71291866028708,
+      "rank_biserial_r": 0.07920792079207921,
+      "cohens_dz": 0.028546532977595945,
+      "ci95_mean_difference": [
+        -6.428518361889784,
+        8.26885613036505
+      ],
+      "ci95_rank_biserial_r": [
+        -0.15048567720849754,
+        0.30111859925488327
+      ],
+      "claim": "larger when their own safety is at stake (1, 2) than for others only (3)",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "B3": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 19,
+      "W": 2054.0,
+      "T_plus": 2054.0,
+      "p": 0.34478372396007495,
+      "estimate": 2.145836347261292,
+      "mean_difference": 2.145836347261292,
+      "median_difference": 0.0,
+      "rank_biserial_r": 0.049029622063329927,
+      "cohens_dz": 0.05699569052905586,
+      "ci95_mean_difference": [
+        -4.957443175582048,
+        9.225554124049435
+      ],
+      "ci95_rank_biserial_r": [
+        -0.19194906698878225,
+        0.2833957553058677
+      ],
+      "claim": "larger deciding for the household (2) than alone (1)",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "B4": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 15,
+      "W": 3077.5,
+      "T_plus": 3077.5,
+      "p": 0.00012886382640680974,
+      "estimate": 13.653991488689385,
+      "mean_difference": 13.653991488689385,
+      "median_difference": 10.489068621256159,
+      "rank_biserial_r": 0.43875642823749417,
+      "cohens_dz": 0.3325453739466195,
+      "ci95_mean_difference": [
+        5.763864731298588,
+        21.23244286819293
+      ],
+      "ci95_rank_biserial_r": [
+        0.22347061789873457,
+        0.6426272761055368
+      ],
+      "claim": "larger under an employer's rules (4) than deciding freely for others (3)",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "B5": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 13,
+      "W": 1470.0,
+      "T_plus": 1470.0,
+      "p": 0.9979820375397404,
+      "estimate": -13.487753869832494,
+      "mean_difference": -13.487753869832494,
+      "median_difference": -1.4563106796116472,
+      "rank_biserial_r": -0.341545352743561,
+      "cohens_dz": -0.32467849976297797,
+      "ci95_mean_difference": [
+        -21.386105053580373,
+        -5.467895833862894
+      ],
+      "ci95_rank_biserial_r": [
+        -0.5446546179162095,
+        -0.10865856651939142
+      ],
+      "claim": "smaller behind the veil (6, the rule chosen before the prediction) than in 1 and 2",
+      "left_out_missing": 0,
+      "predicted_direction": false
+    },
+    "B6": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros kept, Pratt)",
+      "n": 107,
+      "zero_differences": 42,
+      "W": 1839.0,
+      "T_plus": 1839.0,
+      "p": 0.9727565546963669,
+      "estimate": -6.635514018691588,
+      "mean_difference": -6.635514018691588,
+      "median_difference": 0.0,
+      "rank_biserial_r": -0.26433566433566436,
+      "cohens_dz": -0.17675369689113737,
+      "ci95_mean_difference": [
+        -13.83177570093458,
+        0.2803738317757009
+      ],
+      "ci95_rank_biserial_r": [
+        -0.5254637935641485,
+        0.0049755052051438115
+      ],
+      "claim": "the wish fits their values better than their own decision in scenario 4",
+      "left_out_missing": 0,
+      "beside_sign_test": {
+        "test": "sign test (exact binomial on the non-zero differences)",
+        "p": 0.9768232628335444,
+        "positive": 25,
+        "negative": 40,
+        "zero": 42
+      },
+      "predicted_direction": false
+    },
+    "B7": {
+      "claim": "a larger Block 1 place spread goes with a larger position spread, also with VCI held fixed",
+      "test": "intersection-union: one-sided Spearman and one-sided partial Spearman (VCI held fixed)",
+      "spearman": {
+        "test": "Spearman (t approximation), one-sided",
+        "n": 107,
+        "rho": 0.10161487262944612,
+        "p": 0.1488298576211483,
+        "estimate": 0.10161487262944612,
+        "ci95_rho": [
+          -0.09038529490145279,
+          0.28424452352803464
+        ]
+      },
+      "partial_spearman": {
+        "test": "partial Spearman (rank partial correlation, t with n - 3 df), one-sided",
+        "n": 107,
+        "rho_partial": 0.012173224336586252,
+        "p": 0.45071719878162464,
+        "estimate": 0.012173224336586252,
+        "ci95_rho_partial": [
+          -0.1787253045733824,
+          0.21926991729899073
+        ]
+      },
+      "p": 0.45071719878162464,
+      "n": 107,
+      "estimate": 0.10161487262944612,
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "C1": {
+      "test": "exact binomial, one-sided",
+      "n": 107,
+      "successes": 62,
+      "rate": 0.5794392523364486,
+      "chance": 0.25,
+      "p": 4.781616696796319e-13,
+      "estimate": 0.32943925233644855,
+      "ci95_clopper_pearson": [
+        0.4801360768541897,
+        0.6742310029250623
+      ],
+      "claim": "the MPF's top pick matches the rule chosen before the prediction more often than 25%",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "C2": {
+      "claim": "over the four decisions the MPF's top pick matches the first choice more than 1/6, and beats a uniform guess on log loss",
+      "test": "intersection-union of two one-sided bootstrap tests over participants",
+      "participants": 107,
+      "decisions": 428,
+      "uniform_log_loss": 1.791759469228055,
+      "left_out_missing": 0,
+      "hit_rate": 0.3598130841121495,
+      "mean_log_loss": 1.5311505153857436,
+      "estimate": 0.19314641744548286,
+      "p_hit": 9.999000099990002e-05,
+      "p_log_loss": 9.999000099990002e-05,
+      "ci95_hit_rate": [
+        0.31542056074766356,
+        0.40420560747663553
+      ],
+      "ci95_mean_log_loss": [
+        1.4662350243610016,
+        1.5979951137377035
+      ],
+      "p": 9.999000099990002e-05,
+      "predicted_direction": true
+    },
+    "C3": {
+      "claim": "the higher the probability the MPF gives its top rule, the more likely the participant chose it",
+      "test": "logistic regression hit ~ top-rule probability + condition; one-sided Wald test on the slope",
+      "n": 107,
+      "left_out_missing": 0,
+      "slope": 2.5770924029457873,
+      "se": 1.137384611234971,
+      "z": 2.2658055836957236,
+      "p": 0.011731644684199415,
+      "estimate": 2.5770924029457873,
+      "odds_ratio_per_10_points": 1.2939625317577994,
+      "ci95_odds_ratio_per_10_points": [
+        1.0353980592392176,
+        1.6170969403045947
+      ],
+      "calibration": [
+        {
+          "bin": "(0.0, 0.4]",
+          "n": 17,
+          "mean_predicted": 0.32927947757315745,
+          "observed_hit_rate": 0.4117647058823529
+        },
+        {
+          "bin": "(0.4, 0.5]",
+          "n": 15,
+          "mean_predicted": 0.4503990098541136,
+          "observed_hit_rate": 0.5333333333333333
+        },
+        {
+          "bin": "(0.5, 0.6]",
+          "n": 17,
+          "mean_predicted": 0.5459256921725527,
+          "observed_hit_rate": 0.47058823529411764
+        },
+        {
+          "bin": "(0.6, 0.7]",
+          "n": 14,
+          "mean_predicted": 0.6374510366705982,
+          "observed_hit_rate": 0.7142857142857143
+        },
+        {
+          "bin": "(0.7, 0.8]",
+          "n": 21,
+          "mean_predicted": 0.7515785444507176,
+          "observed_hit_rate": 0.5238095238095238
+        },
+        {
+          "bin": "(0.8, 1.0]",
+          "n": 23,
+          "mean_predicted": 0.8661661044608281,
+          "observed_hit_rate": 0.782608695652174
+        }
+      ],
+      "predicted_direction": true
+    },
+    "C4": {
+      "test": "Mann-Whitney U (normal approximation, continuity correction)",
+      "n": [
+        62,
+        45
+      ],
+      "U": 2063.0,
+      "p": 8.568261402362595e-06,
+      "estimate": 1.2222222222222223,
+      "rank_biserial_r": 0.47885304659498207,
+      "cohens_d": 0.8905454289640081,
+      "mean_x": 5.0,
+      "mean_y": 3.7777777777777777,
+      "median_x": 5.0,
+      "median_y": 4.0,
+      "ci95_rank_biserial_r": [
+        0.28350358422939087,
+        0.6634587813620069
+      ],
+      "ci95_mean_difference": [
+        0.6892473118279563,
+        1.7473566308243724
+      ],
+      "claim": "'sounds like me' is rated higher when the MPF named the chosen rule",
+      "left_out_missing": 0,
+      "beside_spearman": {
+        "test": "Spearman (t approximation), one-sided",
+        "n": 107,
+        "rho": 0.3499769557028086,
+        "p": 0.00010983767930940767,
+        "estimate": 0.3499769557028086,
+        "ci95_rho": [
+          0.17538316821994207,
+          0.5051720989265241
+        ]
+      },
+      "predicted_direction": true
+    },
+    "C5": {
+      "claim": "those who change after seeing the prediction move to the MPF's top rule more than 1 in 3",
+      "run": false,
+      "p": null,
+      "n": 7,
+      "moved_to_top": 2,
+      "note": "fewer than 20 such participants: reported as description, and C5 leaves family C's correction",
+      "predicted_direction": false
+    },
+    "C6": {
+      "claim": "predictions from the updated profile beat predictions from the profile before the scenarios (log loss)",
+      "test": "one-sided bootstrap test on the mean per-participant difference in log loss (updated minus before)",
+      "participants": 107,
+      "left_out_missing": 0,
+      "mean_difference_log_loss": -0.06143010061412787,
+      "estimate": -0.06143010061412787,
+      "p": 0.000999900009999,
+      "ci95_mean_difference_log_loss": [
+        -0.10088939853327444,
+        -0.024204919918341773
+      ],
+      "beside_hit_rate_difference": 0.024922118380062305,
+      "ci95_hit_rate_difference": [
+        -0.021806853582554516,
+        0.07165109034267912
+      ],
+      "predicted_direction": true
+    },
+    "C7": {
+      "claim": "the values from Blocks 1-4 predict the first choice beyond card position and performance",
+      "test": "conditional logit; likelihood-ratio test of fit added to position and performance (1 df), one-sided (the coefficient in the predicted direction: p is half the likelihood-ratio p when the coefficient is positive)",
+      "strata": 428,
+      "left_out_missing": 0,
+      "likelihood_ratio": 58.28467013763202,
+      "p_likelihood_ratio_two_sided": 2.2680454198078538e-14,
+      "fit_coefficient": 0.03783406809042522,
+      "p": 1.1340227099039269e-14,
+      "estimate": 0.03783406809042522,
+      "odds_ratio_per_10_fit_points": 1.4598602046617957,
+      "beside_clustered_wald": {
+        "z": 7.178469802285839,
+        "p_one_sided": 3.524797844392156e-13,
+        "se_clustered": 0.005270492059237712
+      },
+      "beside_position_fit_correlation": -0.732926624656733,
+      "m0_coefficients": {
+        "position_2": -0.3160154761761965,
+        "position_3": -0.737815625215809,
+        "position_4": -0.9139385223563418,
+        "position_5": -1.4670174270502492,
+        "position_6": -1.6253416667371892,
+        "captured": 0.00126266783982256
+      },
+      "m1_coefficients": {
+        "position_2": -0.1664595750777809,
+        "position_3": -0.3691281864025951,
+        "position_4": -0.2471542893364232,
+        "position_5": -0.3302311326386122,
+        "position_6": 0.12213608030561143,
+        "captured": 0.0013450308829485004,
+        "fit_before": 0.03783406809042522
+      },
+      "predicted_direction": true
+    },
+    "D1": {
+      "test": "two one-sided t-tests (TOST), margin +/-5",
+      "n": 96,
+      "mean_difference": -1.8847717735247587,
+      "df": 95,
+      "t_lower": 0.7750475676977737,
+      "t_upper": -1.712884331194622,
+      "p_lower": 0.22011823390567933,
+      "p_upper": 0.04499789651190827,
+      "p": 0.22011823390567933,
+      "estimate": -1.8847717735247587,
+      "ci90_mean_difference": [
+        -8.561207804658594,
+        4.791664257609076
+      ],
+      "cohens_dz": -0.047858781928968815,
+      "claim": "after a first pick against their values and the condition's page, performance stays within +/-5 points (equivalence)",
+      "participants_with_such_a_decision": 96,
+      "beside_changed_only": {
+        "test": "two one-sided t-tests (TOST), margin +/-5",
+        "n": 70,
+        "mean_difference": -4.03309832842558,
+        "df": 69,
+        "t_lower": 0.14226870713533057,
+        "t_upper": -1.329118832237441,
+        "p_lower": 0.4436411843495079,
+        "p_upper": 0.09409350042107859,
+        "p": 0.4436411843495079,
+        "estimate": -4.03309832842558,
+        "ci90_mean_difference": [
+          -15.36416172304471,
+          7.297965066193551
+        ],
+        "cohens_dz": -0.07092786122570732
+      },
+      "beside_wilcoxon": {
+        "test": "two one-sided Wilcoxon signed-rank tests, margin +/-5",
+        "n": 96,
+        "p_lower": 0.17417286395749465,
+        "p_upper": 0.0015754799705001478,
+        "p": 0.17417286395749465
+      },
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "D2": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 57,
+      "zero_differences": 5,
+      "W": 1292.0,
+      "T_plus": 1292.0,
+      "p": 1.993001421534704e-08,
+      "estimate": 12.466564327485381,
+      "mean_difference": 12.466564327485381,
+      "median_difference": 7.035,
+      "rank_biserial_r": 0.8751814223512336,
+      "cohens_dz": 0.7616583636564178,
+      "ci95_mean_difference": [
+        8.316697368421053,
+        16.732205409356723
+      ],
+      "ci95_rank_biserial_r": [
+        0.706821480406386,
+        0.9968627450980392
+      ],
+      "claim": "when a choice changes after a help step, the final choice fits better than the first (shortfall)",
+      "note": "'help step' as A4 defines it (CVR+APA, CVR only, APA only); Baseline has none",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "D3": {
+      "test": "Wilcoxon signed-rank (normal approximation, zeros dropped)",
+      "n": 107,
+      "zero_differences": 2,
+      "W": 5236.5,
+      "T_plus": 5236.5,
+      "p": 2.1368187273067864e-15,
+      "estimate": 18.27570093457944,
+      "mean_difference": 18.27570093457944,
+      "median_difference": 20.499999999999986,
+      "rank_biserial_r": 0.8819407008086253,
+      "cohens_dz": 1.1820141318096888,
+      "ci95_mean_difference": [
+        15.285046728971963,
+        21.186915887850468
+      ],
+      "ci95_rank_biserial_r": [
+        0.7797551032403792,
+        0.9613660981938181
+      ],
+      "claim": "VCI is above the random-chooser level of the participant's own condition (57, 60, 63, 60)",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    },
+    "D4": {
+      "claim": "with Stability and performance held fixed, well-being and satisfaction rise with VCI",
+      "test": "two OLS regressions with HC3 errors; one-sided on VCI; intersection-union",
+      "n": 107,
+      "left_out_missing": 0,
+      "stability_not_tested_flagged": 22,
+      "gender_reference": "male",
+      "vif": {
+        "vci_z": 3.162566630661819,
+        "stab_z": 3.1735679928385414,
+        "performance_z": 1.0581567861565013,
+        "age_z": 1.151976599162189,
+        "active_minutes_z": 1.2437657908791042,
+        "female": 1.0650524887304629,
+        "other_or_prefer_not": 1.143068202883002,
+        "CVR_Only": 1.7646579550546697,
+        "APA_Only": 1.5255506908779082,
+        "Baseline": 1.574758174503537
+      },
+      "wellbeing_composite": {
+        "standardized_beta_vci": 0.5499355602352373,
+        "se_hc3": 0.16943106766387264,
+        "t": 3.2457775767914767,
+        "p_one_sided": 0.0008065981299256235,
+        "ci95_beta": [
+          0.21361754903795022,
+          0.8862535714325244
+        ],
+        "r_squared": 0.24722833771772468
+      },
+      "decision_satisfaction": {
+        "standardized_beta_vci": 0.508381251928737,
+        "se_hc3": 0.17785944759569758,
+        "t": 2.8583314454251947,
+        "p_one_sided": 0.0026115954760422134,
+        "ci95_beta": [
+          0.1553330387952267,
+          0.8614294650622472
+        ],
+        "r_squared": 0.2232889778140731
+      },
+      "p": 0.0026115954760422134,
+      "estimate": 0.508381251928737,
+      "predicted_direction": true
+    },
+    "D5": {
+      "test": "Spearman (t approximation), one-sided",
+      "n": 107,
+      "rho": 0.3364376970044643,
+      "p": 0.00019770115628376511,
+      "estimate": 0.3364376970044643,
+      "ci95_rho": [
+        0.1545481780673679,
+        0.4980975731631311
+      ],
+      "claim": "self-reported value congruence rises with VCI",
+      "left_out_missing": 0,
+      "predicted_direction": true
+    }
+  },
+  "decisions": {
+    "A1": {
+      "group": "primary",
+      "p": 0.12603868948153812,
+      "p_holm_adjusted": 0.3781160684446144,
+      "supported": false
+    },
+    "B1": {
+      "group": "primary",
+      "p": 0.29186516144432173,
+      "p_holm_adjusted": 0.44023646781135867,
+      "supported": false
+    },
+    "C1": {
+      "group": "primary",
+      "p": 4.781616696796319e-13,
+      "p_holm_adjusted": 1.9126466787185275e-12,
+      "supported": true
+    },
+    "D1": {
+      "group": "primary",
+      "p": 0.22011823390567933,
+      "p_holm_adjusted": 0.44023646781135867,
+      "supported": false
+    },
+    "A2": {
+      "group": "family A",
+      "p": 0.6499061910713831,
+      "p_holm_adjusted": 0.6499061910713831,
+      "supported": false
+    },
+    "A3": {
+      "group": "family A",
+      "p": 0.013836673986156615,
+      "p_holm_adjusted": 0.041510021958469846,
+      "supported": true
+    },
+    "A4": {
+      "group": "family A",
+      "p": 0.028811485152754394,
+      "p_holm_adjusted": 0.05762297030550879,
+      "supported": false
+    },
+    "B2": {
+      "group": "family B",
+      "p": 0.24583125246134396,
+      "p_holm_adjusted": 1.0,
+      "supported": false
+    },
+    "B3": {
+      "group": "family B",
+      "p": 0.34478372396007495,
+      "p_holm_adjusted": 1.0,
+      "supported": false
+    },
+    "B4": {
+      "group": "family B",
+      "p": 0.00012886382640680974,
+      "p_holm_adjusted": 0.0007731829584408584,
+      "supported": true
+    },
+    "B5": {
+      "group": "family B",
+      "p": 0.9979820375397404,
+      "p_holm_adjusted": 1.0,
+      "supported": false
+    },
+    "B6": {
+      "group": "family B",
+      "p": 0.9727565546963669,
+      "p_holm_adjusted": 1.0,
+      "supported": false
+    },
+    "B7": {
+      "group": "family B",
+      "p": 0.45071719878162464,
+      "p_holm_adjusted": 1.0,
+      "supported": false
+    },
+    "C2": {
+      "group": "family C",
+      "p": 9.999000099990002e-05,
+      "p_holm_adjusted": 0.00029997000299970003,
+      "supported": true
+    },
+    "C3": {
+      "group": "family C",
+      "p": 0.011731644684199415,
+      "p_holm_adjusted": 0.011731644684199415,
+      "supported": true
+    },
+    "C4": {
+      "group": "family C",
+      "p": 8.568261402362595e-06,
+      "p_holm_adjusted": 3.427304560945038e-05,
+      "supported": true
+    },
+    "C6": {
+      "group": "family C",
+      "p": 0.000999900009999,
+      "p_holm_adjusted": 0.001999800019998,
+      "supported": true
+    },
+    "C7": {
+      "group": "family C",
+      "p": 1.1340227099039269e-14,
+      "p_holm_adjusted": 5.6701135495196343e-14,
+      "supported": true
+    },
+    "D2": {
+      "group": "family D",
+      "p": 1.993001421534704e-08,
+      "p_holm_adjusted": 5.979004264604112e-08,
+      "supported": true
+    },
+    "D3": {
+      "group": "family D",
+      "p": 2.1368187273067864e-15,
+      "p_holm_adjusted": 8.547274909227146e-15,
+      "supported": true
+    },
+    "D4": {
+      "group": "family D",
+      "p": 0.0026115954760422134,
+      "p_holm_adjusted": 0.0026115954760422134,
+      "supported": true
+    },
+    "D5": {
+      "group": "family D",
+      "p": 0.00019770115628376511,
+      "p_holm_adjusted": 0.00039540231256753023,
+      "supported": true
+    }
+  },
+  "robustness": {
+    "without_fast_blocks": {
+      "without": "answered very fast in Blocks 1-3 (median under 2 seconds between answers)",
+      "left_out": 2,
+      "p": {
+        "A1": 0.1400920932036145,
+        "A2": 0.6471968199834582,
+        "A3": 0.017855698449396298,
+        "A4": 0.02738841405336036,
+        "B1": 0.3466865226298024,
+        "B2": 0.282364009874923,
+        "B3": 0.46482987391082176,
+        "B4": 0.0002578381007986645,
+        "B5": 0.9970119814568202,
+        "B6": 0.9778641533145731,
+        "B7": 0.47161287258570606,
+        "C1": 6.260512674812358e-13,
+        "C2": 9.999000099990002e-05,
+        "C3": 0.014556066302500989,
+        "C4": 1.758407966638925e-05,
+        "C5": null,
+        "C6": 0.00039996000399960006,
+        "C7": 2.1185174752727564e-14,
+        "D1": 0.22272999649912545,
+        "D2": 3.0157658585186093e-08,
+        "D3": 4.439996888359311e-15,
+        "D4": 0.003617401854450819,
+        "D5": 0.0002662881083122905
+      },
+      "estimate": {
+        "A1": 3.8425925925925952,
+        "A2": -1.1538461538461604,
+        "A3": 9.230769230769226,
+        "A4": 0.7123554541982127,
+        "B1": -3.3076010851194346,
+        "B2": 0.8035260114277023,
+        "B3": 1.0576771624779435,
+        "B4": 13.038078753270879,
+        "B5": -13.092248379454153,
+        "B6": -6.9523809523809526,
+        "B7": 0.09572453104502789,
+        "C1": 0.330952380952381,
+        "C2": 0.19523809523809524,
+        "C3": 2.4771798504291613,
+        "C4": 1.188152011922504,
+        "C5": null,
+        "C6": -0.06139570136218179,
+        "C7": 0.03787706696781874,
+        "D1": -1.8544727999952477,
+        "D2": 12.266324404761905,
+        "D3": 18.261904761904763,
+        "D4": 0.4976047861460355,
+        "D5": 0.3323497613956614
+      }
+    },
+    "without_fast_scenarios": {
+      "without": "two or more scenarios decided in under 15 seconds",
+      "left_out": 7,
+      "p": {
+        "A1": 0.09122272517917562,
+        "A2": 0.668687903655303,
+        "A3": 0.010326880754948477,
+        "A4": 0.02066883960469236,
+        "B1": 0.38848543490358745,
+        "B2": 0.32477075572952496,
+        "B3": 0.5414216787101543,
+        "B4": 0.00016455225869086077,
+        "B5": 0.9980592619589835,
+        "B6": 0.9660565507807154,
+        "B7": 0.3326494986317281,
+        "C1": 1.0299705591385625e-11,
+        "C2": 9.999000099990002e-05,
+        "C3": 0.009988548526471006,
+        "C4": 4.5813583020478246e-05,
+        "C5": null,
+        "C6": 0.0014998500149985001,
+        "C7": 2.5604166295732197e-14,
+        "D1": 0.26097906515793345,
+        "D2": 7.549378001229183e-08,
+        "D3": 3.0235503454547057e-14,
+        "D4": 0.005186991403600396,
+        "D5": 0.0011200199325885035
+      },
+      "estimate": {
+        "A1": 4.599999999999994,
+        "A2": -1.1038461538461632,
+        "A3": 10.466666666666669,
+        "A4": 0.7783049889002517,
+        "B1": -3.3620368983962146,
+        "B2": 0.4360440789013691,
+        "B3": 0.37460511336075536,
+        "B4": 14.248321082040952,
+        "B5": -14.194058442286156,
+        "B6": -6.9,
+        "B7": 0.13199499047545182,
+        "C1": 0.31999999999999995,
+        "C2": 0.18583333333333332,
+        "C3": 2.685530979101771,
+        "C4": 1.1742146062831496,
+        "C5": null,
+        "C6": -0.05943859332988682,
+        "C7": 0.038418480722701265,
+        "D1": -2.3970182493208285,
+        "D2": 13.047625786163518,
+        "D3": 17.895,
+        "D4": 0.5050795646305941,
+        "D5": 0.3022586046452003
+      }
+    },
+    "without_straightliners": {
+      "without": "the same answer to every feedback rating (at least 8 ratings)",
+      "left_out": 0,
+      "p": {
+        "A1": 0.12603868948153812,
+        "A2": 0.6499061910713831,
+        "A3": 0.013836673986156615,
+        "A4": 0.028811485152754394,
+        "B1": 0.29186516144432173,
+        "B2": 0.24583125246134396,
+        "B3": 0.34478372396007495,
+        "B4": 0.00012886382640680974,
+        "B5": 0.9979820375397404,
+        "B6": 0.9727565546963669,
+        "B7": 0.45071719878162464,
+        "C1": 4.781616696796319e-13,
+        "C2": 9.999000099990002e-05,
+        "C3": 0.011731644684199415,
+        "C4": 8.568261402362595e-06,
+        "C5": null,
+        "C6": 0.000999900009999,
+        "C7": 1.1340227099039269e-14,
+        "D1": 0.22011823390567933,
+        "D2": 1.993001421534704e-08,
+        "D3": 2.1368187273067864e-15,
+        "D4": 0.0026115954760422134,
+        "D5": 0.00019770115628376511
+      },
+      "estimate": {
+        "A1": 3.981481481481481,
+        "A2": -1.0149572649572747,
+        "A3": 9.444444444444443,
+        "A4": 0.7031325792401394,
+        "B1": -3.640669486582253,
+        "B2": 1.1100893447049618,
+        "B3": 2.145836347261292,
+        "B4": 13.653991488689385,
+        "B5": -13.487753869832494,
+        "B6": -6.635514018691588,
+        "B7": 0.10161487262944612,
+        "C1": 0.32943925233644855,
+        "C2": 0.19314641744548286,
+        "C3": 2.5770924029457873,
+        "C4": 1.2222222222222223,
+        "C5": null,
+        "C6": -0.06143010061412787,
+        "C7": 0.03783406809042522,
+        "D1": -1.8847717735247587,
+        "D2": 12.466564327485381,
+        "D3": 18.27570093457944,
+        "D4": 0.508381251928737,
+        "D5": 0.3364376970044643
+      }
+    },
+    "without_attention_wrong": {
+      "without": "any attention check answered wrongly",
+      "left_out": 26,
+      "p": {
+        "A1": 0.38500300727126435,
+        "A2": 0.8311810186257547,
+        "A3": 0.10798928506607247,
+        "A4": 0.05713141641308661,
+        "B1": 0.3370955460861095,
+        "B2": 0.4060857967863791,
+        "B3": 0.6093920171443735,
+        "B4": 0.0015176976696267672,
+        "B5": 0.9769232604028179,
+        "B6": 0.935755481202533,
+        "B7": 0.1541273217103684,
+        "C1": 3.0618097078956454e-12,
+        "C2": 9.999000099990002e-05,
+        "C3": 0.06965927010914467,
+        "C4": 1.3091065204744137e-07,
+        "C5": null,
+        "C6": 0.0046995300469953,
+        "C7": 4.736604947226814e-12,
+        "D1": 0.20277718633042607,
+        "D2": 6.834696135740727e-07,
+        "D3": 1.1628993986512657e-14,
+        "D4": 0.012027600936474534,
+        "D5": 0.00014669856260513843
+      },
+      "estimate": {
+        "A1": 0.5514705882352899,
+        "A2": -5.69852941176471,
+        "A3": 6.05147058823529,
+        "A4": 0.6319364495150492,
+        "B1": -3.555613742419357,
+        "B2": 0.013261363115329114,
+        "B3": -0.6668389372234338,
+        "B4": 12.43593829319879,
+        "B5": -11.694109656901864,
+        "B6": -6.666666666666667,
+        "B7": 0.11461799388253852,
+        "C1": 0.3672839506172839,
+        "C2": 0.22222222222222224,
+        "C3": 1.9245800503592263,
+        "C4": 1.5961290322580646,
+        "C5": null,
+        "C6": -0.058041674835105375,
+        "C7": 0.04021332908154351,
+        "D1": 0.9593458985273353,
+        "D2": 14.293201754385965,
+        "D3": 20.814814814814813,
+        "D4": 0.42884542610152343,
+        "D5": 0.3921898182229584
+      }
+    },
+    "family_B_menu_adjusted": {
+      "p": {
+        "B1": 0.29186516144432173,
+        "B2": 0.24121156500038188,
+        "B3": 0.20068889012842556,
+        "B4": 2.7394436531138127e-05,
+        "B5": 0.8992681880780629,
+        "B7": 0.6976090001861781
+      },
+      "estimate": {
+        "B1": -3.640669486582253,
+        "B2": 0.19799735974291846,
+        "B3": 3.583228905544354,
+        "B4": 14.444874865600411,
+        "B5": -6.165668812426963,
+        "B7": 0.03705579760565437
+      }
+    }
+  },
+  "self_checks": {
+    "lines": [
+      "Records read: 107; included: 107.",
+      "OK   final label from the saved ranking = saved label: 642 of 642 agree.",
+      "OK   saved ranking = ranking recomputed from the opening profile: 642 of 642 agree.",
+      "OK   final shortfall recomputed = saved (2 decimals): 642 of 642 agree.",
+      "OK   performance captured recomputed = saved (rounded): 642 of 642 agree.",
+      "OK   departure recomputed = saved (rounded): 535 of 535 agree.",
+      "OK   first choice = mpf_prediction_percentages' first choice: 535 of 535 agree.",
+      "OK   prediction temperature recomputed = saved: 642 of 642 agree.",
+      "OK   prediction chances recomputed = saved (1 decimal): 642 of 642 agree.",
+      "OK   prediction top pick recomputed = saved: 642 of 642 agree.",
+      "OK   VCI recomputed = saved (rounded): 107 of 107 agree.",
+      "OK   wish gap recomputed = saved: 107 of 107 agree.",
+      "OK   the wish was scored on scenario 4's opening values: 107 of 107 agree.",
+      "OK   position spread recomputed = saved (within 1 point: the saved one is made of rounded parts): 107 of 107 agree.",
+      "OK   scenario 6: the saved test agrees with the row (first rule, top rule, hit): 107 of 107 agree.",
+      "OK   straightlining from the raw ratings = feedback_answer_patterns: 107 of 107 agree.",
+      "OK   scenarios under 15 s recounted = saved: 107 of 107 agree."
+    ],
+    "problems": [],
+    "unreadable": {},
+    "left_out": {},
+    "records_read": 107,
+    "records_included": 107
+  },
+  "simulated": true,
+  "two_programs": [
+    {
+      "what": "A1 p",
+      "python": 0.12603868948153812,
+      "R": 0.126038689481538,
+      "difference": 1.1102230246251565e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "A2 p",
+      "python": 0.6499061910713831,
+      "R": 0.649906191071383,
+      "difference": 1.1102230246251565e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "A3 p",
+      "python": 0.013836673986156615,
+      "R": 0.0138366739861566,
+      "difference": 1.5612511283791264e-17,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B1 p",
+      "python": 0.29186516144432173,
+      "R": 0.291865161444322,
+      "difference": 2.7755575615628914e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B2 p",
+      "python": 0.24583125246134396,
+      "R": 0.245831252461344,
+      "difference": 2.7755575615628914e-17,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B3 p",
+      "python": 0.34478372396007495,
+      "R": 0.344783723960075,
+      "difference": 5.551115123125783e-17,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B4 p",
+      "python": 0.00012886382640680974,
+      "R": 0.00012886382640681,
+      "difference": 2.710505431213761e-19,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B5 p",
+      "python": 0.9979820375397404,
+      "R": 0.99798203753974,
+      "difference": 3.3306690738754696e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B6 p",
+      "python": 0.9727565546963669,
+      "R": 0.972756554696367,
+      "difference": 1.1102230246251565e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C1 p",
+      "python": 4.781616696796319e-13,
+      "R": 4.78161669679629e-13,
+      "difference": 2.8272774843121063e-27,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C4 p",
+      "python": 8.568261402362595e-06,
+      "R": 8.56826140236259e-06,
+      "difference": 5.082197683525802e-21,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D2 p",
+      "python": 1.993001421534704e-08,
+      "R": 1.99300142153471e-08,
+      "difference": 5.955700410381799e-23,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D3 p",
+      "python": 2.1368187273067864e-15,
+      "R": 2.13681872730679e-15,
+      "difference": 3.549874073494553e-30,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D5 p",
+      "python": 0.00019770115628376511,
+      "R": 0.000197701156283765,
+      "difference": 1.0842021724855044e-19,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B7 Spearman rho",
+      "python": 0.10161487262944612,
+      "R": 0.101614872629446,
+      "difference": 1.1102230246251565e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B7 Spearman p",
+      "python": 0.1488298576211483,
+      "R": 0.148829857621148,
+      "difference": 3.0531133177191805e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B7 partial rho",
+      "python": 0.012173224336586252,
+      "R": 0.0121732243365863,
+      "difference": 4.85722573273506e-17,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "B7 partial p",
+      "python": 0.45071719878162464,
+      "R": 0.450717198781625,
+      "difference": 3.3306690738754696e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C1 Clopper-Pearson low",
+      "python": 0.4801360768541897,
+      "R": 0.48013607685419,
+      "difference": 3.3306690738754696e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C1 Clopper-Pearson high",
+      "python": 0.6742310029250623,
+      "R": 0.674231002925062,
+      "difference": 3.3306690738754696e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C3 slope",
+      "python": 2.5770924029457873,
+      "R": 2.57709240294262,
+      "difference": 3.1672442446506466e-12,
+      "tolerance": 0.001,
+      "agree": true
+    },
+    {
+      "what": "C3 p",
+      "python": 0.011731644684199415,
+      "R": 0.0117316208336536,
+      "difference": 2.385054581610646e-08,
+      "tolerance": 0.001,
+      "agree": true
+    },
+    {
+      "what": "C7 likelihood ratio",
+      "python": 58.28467013763202,
+      "R": 58.284670137632,
+      "difference": 2.1316282072803006e-14,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C7 fit coefficient",
+      "python": 0.03783406809042522,
+      "R": 0.0378340680904251,
+      "difference": 1.1796119636642288e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C7 p",
+      "python": 1.1340227099039269e-14,
+      "R": 1.13402270990393e-14,
+      "difference": 3.155443620884047e-29,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "C7 clustered standard error",
+      "python": 0.005270492059237712,
+      "R": 0.00527049205923771,
+      "difference": 1.734723475976807e-18,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D1 p",
+      "python": 0.22011823390567933,
+      "R": 0.220118233905679,
+      "difference": 3.3306690738754696e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D1 mean difference",
+      "python": -1.8847717735247587,
+      "R": -1.88477177352476,
+      "difference": 1.3322676295501878e-15,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D1 90% interval low",
+      "python": -8.561207804658594,
+      "R": -8.56120780465859,
+      "difference": 3.552713678800501e-15,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D4 wellbeing_composite beta",
+      "python": 0.5499355602352373,
+      "R": 0.549935560235237,
+      "difference": 2.220446049250313e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D4 wellbeing_composite HC3 standard error",
+      "python": 0.16943106766387264,
+      "R": 0.169431067663873,
+      "difference": 3.608224830031759e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D4 wellbeing_composite p",
+      "python": 0.0008065981299256235,
+      "R": 0.000806598129925636,
+      "difference": 1.2468324983583301e-17,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D4 decision_satisfaction beta",
+      "python": 0.508381251928737,
+      "R": 0.508381251928737,
+      "difference": 0.0,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D4 decision_satisfaction HC3 standard error",
+      "python": 0.17785944759569758,
+      "R": 0.177859447595698,
+      "difference": 4.163336342344337e-16,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "D4 decision_satisfaction p",
+      "python": 0.0026115954760422134,
+      "R": 0.00261159547604225,
+      "difference": 3.642919299551295e-17,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "control push_vs_pull p",
+      "python": 1.428487591841078e-05,
+      "R": 1.42848759184108e-05,
+      "difference": 2.0328790734103208e-20,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "control shelter_vs_sidewalk p",
+      "python": 1.4366012038949625e-09,
+      "R": 1.43660120389497e-09,
+      "difference": 7.444625512977249e-24,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "control entry_level_vs_safety_net p",
+      "python": 7.953268000496642e-08,
+      "R": 7.95326800049667e-08,
+      "difference": 2.779326858178173e-22,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "A4 fallback coefficient",
+      "python": 0.7031325792401394,
+      "R": 0.703132579237667,
+      "difference": 2.472355653537761e-12,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "A4 fallback clustered standard error",
+      "python": 0.3703513819837994,
+      "R": 0.370351381983526,
+      "difference": 2.733924198139448e-13,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "A4 p",
+      "python": 0.028811485152754394,
+      "R": 0.0288114851531016,
+      "difference": 3.4720490371675794e-13,
+      "tolerance": 1e-06,
+      "agree": true
+    },
+    {
+      "what": "A4 the mixed model was singular in both programs",
+      "python": true,
+      "R": true,
+      "agree": true
+    }
+  ]
+}

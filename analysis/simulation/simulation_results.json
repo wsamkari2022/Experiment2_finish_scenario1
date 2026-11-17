@@ -1,0 +1,333 @@
+{
+  "what_this_is": "SIMULATED: the analysis code run on pretend participants. Not data.",
+  "seed": 20261117,
+  "data_check": "Data check sim107: 107 Prolific records - complete 107, something missing 0, not finished 0.",
+  "S1": {
+    "ok": true,
+    "fields_missing": {},
+    "departures_missing": 0,
+    "unreadable": {},
+    "per_condition": {
+      "CVR+APA": 27,
+      "CVR_Only": 27,
+      "Baseline": 27,
+      "APA_Only": 26
+    },
+    "rows": {
+      "P": 107,
+      "S": 642,
+      "O": 2568,
+      "V": 795
+    }
+  },
+  "S2": {
+    "ok": true,
+    "lines": [
+      "Records read: 107; included: 107.",
+      "OK   final label from the saved ranking = saved label: 642 of 642 agree.",
+      "OK   saved ranking = ranking recomputed from the opening profile: 642 of 642 agree.",
+      "OK   final shortfall recomputed = saved (2 decimals): 642 of 642 agree.",
+      "OK   performance captured recomputed = saved (rounded): 642 of 642 agree.",
+      "OK   departure recomputed = saved (rounded): 535 of 535 agree.",
+      "OK   first choice = mpf_prediction_percentages' first choice: 535 of 535 agree.",
+      "OK   prediction temperature recomputed = saved: 642 of 642 agree.",
+      "OK   prediction chances recomputed = saved (1 decimal): 642 of 642 agree.",
+      "OK   prediction top pick recomputed = saved: 642 of 642 agree.",
+      "OK   VCI recomputed = saved (rounded): 107 of 107 agree.",
+      "OK   wish gap recomputed = saved: 107 of 107 agree.",
+      "OK   the wish was scored on scenario 4's opening values: 107 of 107 agree.",
+      "OK   position spread recomputed = saved (within 1 point: the saved one is made of rounded parts): 107 of 107 agree.",
+      "OK   scenario 6: the saved test agrees with the row (first rule, top rule, hit): 107 of 107 agree.",
+      "OK   straightlining from the raw ratings = feedback_answer_patterns: 107 of 107 agree.",
+      "OK   scenarios under 15 s recounted = saved: 107 of 107 agree."
+    ]
+  },
+  "S6": {
+    "ok": true,
+    "note": "results.json of two runs compared character by character"
+  },
+  "S7": {
+    "ok": true,
+    "raw_file_with_prolific_ids_refused": true,
+    "outputs_naming_an_id": [],
+    "runner_refuses_before_the_freeze": [
+      "the freeze tag analysis-v1 does not exist yet (the code has not been frozen)"
+    ]
+  },
+  "S8": {
+    "ok": true,
+    "numbers_compared": 42,
+    "disagreements": []
+  },
+  "breaks": [
+    {
+      "break": "S2: one saved label changed",
+      "caught": true
+    },
+    {
+      "break": "S2: one saved departure changed",
+      "caught": true
+    },
+    {
+      "break": "S2: one saved prediction chance changed",
+      "caught": true
+    },
+    {
+      "break": "S7: a 24-character Prolific ID in the file",
+      "caught": true
+    },
+    {
+      "break": "S7: an email address in the file",
+      "caught": true
+    },
+    {
+      "break": "S7: the real-data runner before the freeze",
+      "caught": true
+    },
+    {
+      "break": "S8: one Python p-value moved slightly",
+      "caught": true
+    }
+  ],
+  "S3": {
+    "studies": 2000,
+    "upper_band": 0.06462019151721345,
+    "per_test": {
+      "A1": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0475,
+        "within_band": true
+      },
+      "A2": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0525,
+        "within_band": true
+      },
+      "A3": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.049,
+        "within_band": true
+      },
+      "A4": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0505,
+        "within_band": true
+      },
+      "B1": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.041,
+        "within_band": true
+      },
+      "B2": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0395,
+        "within_band": true
+      },
+      "B3": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.052,
+        "within_band": true
+      },
+      "B4": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0465,
+        "within_band": true
+      },
+      "B5": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0455,
+        "within_band": true
+      },
+      "B6": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.042,
+        "within_band": true
+      },
+      "B7": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.033,
+        "within_band": true
+      },
+      "C1": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.047,
+        "within_band": true
+      },
+      "C2": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0,
+        "within_band": true
+      },
+      "C3": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.056,
+        "within_band": true
+      },
+      "C4": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0475,
+        "within_band": true
+      },
+      "C5": {
+        "studies_run": 0,
+        "false_claims_raw_alpha": null,
+        "within_band": true
+      },
+      "C6": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.055,
+        "within_band": true
+      },
+      "C7": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0505,
+        "within_band": true
+      },
+      "D1": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.001,
+        "within_band": true
+      },
+      "D2": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.049,
+        "within_band": true
+      },
+      "D3": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.0475,
+        "within_band": true
+      },
+      "D4": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.032,
+        "within_band": true
+      },
+      "D5": {
+        "studies_run": 2000,
+        "false_claims_raw_alpha": 0.048,
+        "within_band": true
+      }
+    },
+    "family_wise": {
+      "primary": {
+        "family_wise_false_claims": 0.034,
+        "within_band": true
+      },
+      "family A": {
+        "family_wise_false_claims": 0.0435,
+        "within_band": true
+      },
+      "family B": {
+        "family_wise_false_claims": 0.035,
+        "within_band": true
+      },
+      "family C": {
+        "family_wise_false_claims": 0.0375,
+        "within_band": true
+      },
+      "family D": {
+        "family_wise_false_claims": 0.0445,
+        "within_band": true
+      }
+    },
+    "c5_run_in": 0,
+    "c5_exact_false_claim_rate": {
+      "largest": 0.049785186831446816,
+      "at_size": 43,
+      "smallest": 0.021194388248421375,
+      "all_at_or_below_5_percent": true
+    },
+    "ok": true
+  },
+  "S4": {
+    "A1": {
+      "planted": "VCI 10 points higher in CVR+APA",
+      "planted_size": 10.0,
+      "found_in_share_of_studies": 0.744,
+      "mean_estimate": 9.975740740740742,
+      "sd_estimate": 4.4685452514643975
+    },
+    "B1": {
+      "planted": "departure 8 points higher in scenario 5",
+      "planted_size": 8.0,
+      "found_in_share_of_studies": 0.706,
+      "mean_estimate": 7.860118298218187,
+      "sd_estimate": 3.8390739822457243
+    },
+    "C1": {
+      "planted": "hit rate 40% in scenario 6",
+      "planted_size": 0.4,
+      "found_in_share_of_studies": 0.958,
+      "mean_estimate": 0.4003364485981308,
+      "sd_estimate": 0.048991991452737124,
+      "expected_share_exact_binomial": 0.9507001901026624
+    },
+    "D1": {
+      "planted": "true mean difference 0 (equivalent)",
+      "planted_size": 0.0,
+      "found_in_share_of_studies": 0.016,
+      "mean_estimate": -0.048564210371170126,
+      "sd_estimate": 3.2984703974426206
+    },
+    "D4": {
+      "planted": "standardized beta 0.3 for VCI",
+      "planted_size": 0.3,
+      "found_in_share_of_studies": 0.384,
+      "mean_estimate": 0.3033698786626787,
+      "sd_estimate": 0.14687416001207926
+    }
+  },
+  "S5": {
+    "replicates": 300,
+    "planted_log_odds_ratio": 0.6931471805599453,
+    "planted_random_intercept_sd": 1.0,
+    "mean_estimate": 0.7300936050179083,
+    "sd_estimate": 0.49899901671638974,
+    "ci95_coverage": 0.96,
+    "fallback_used": 19,
+    "agreement_with_lme4": [
+      {
+        "python_coefficient": 0.7062032632186961,
+        "R_coefficient": 0.7062095,
+        "python_se": 0.6077993417720228,
+        "R_se": 0.607799,
+        "agree": true
+      },
+      {
+        "python_coefficient": 0.736476465752715,
+        "R_coefficient": 0.7364718,
+        "python_se": 0.40642191135373534,
+        "R_se": 0.4064211,
+        "agree": true
+      },
+      {
+        "python_coefficient": 0.551235653047421,
+        "R_coefficient": 0.5512207,
+        "python_se": 0.4001800589189177,
+        "R_se": 0.4001791,
+        "agree": true
+      },
+      {
+        "python_coefficient": 1.6825541331272609,
+        "R_coefficient": 1.682551,
+        "python_se": 0.5687866958516912,
+        "R_se": 0.5687879,
+        "agree": true
+      },
+      {
+        "python_coefficient": 0.7601922539046981,
+        "R_coefficient": 0.7601929,
+        "python_se": 0.48029472970623194,
+        "R_se": 0.4802932,
+        "agree": true
+      }
+    ],
+    "no_variation_case": {
+      "fallback_used": true,
+      "random_intercept_sd_found": 0.0
+    },
+    "ok": true
+  },
+  "minutes": 28.1
+}

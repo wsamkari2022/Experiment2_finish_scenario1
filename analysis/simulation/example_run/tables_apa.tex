@@ -1,0 +1,127 @@
+% Tables of the registered analysis (SIMULATED: not data). Needs \usepackage{booktabs,threeparttable}.
+
+\begin{table}[htbp]
+\centering
+\begin{threeparttable}
+\caption{Tests of the Preregistered Hypotheses (SIMULATED: not data)}
+\label{tab:hypotheses}
+\footnotesize
+\begin{tabular}{llllllll}
+\toprule
+H & Test & $n$ & Statistic & Effect size [95\% CI] & $p$ & $p_{\text{Holm}}$ & Supported \\
+\midrule
+A1 & Mann-Whitney U & 27+27 & U = 431 & $r_{rb}$ = .18 [$-$.13, .49] & .126 & .378 & no \\
+A2 & Mann-Whitney U & 27+26 & U = 330 & $r_{rb}$ = $-$.06 [$-$.37, .25] & .650 & .650 & no \\
+A3 & Mann-Whitney U & 27+27 & U = 492 & $r_{rb}$ = .35 [.04, .63] & .014 & .042 & yes \\
+A4 & Mixed logistic regression & 176 (96) & z = 1.90 & OR = 2.02 [0.98, 4.17] & .029 & .058 & no \\
+B1 & Wilcoxon signed-rank (two-sided) & 107 & $T^{+}$ = 940 & $r_{rb}$ = $-$.15 [$-$.43, .13] & .292 & .440 & no \\
+B2 & Wilcoxon signed-rank & 107 & $T^{+}$ = 2725 & $r_{rb}$ = .08 [$-$.15, .30] & .246 & $>$ .999 & no \\
+B3 & Wilcoxon signed-rank & 107 & $T^{+}$ = 2054 & $r_{rb}$ = .05 [$-$.19, .28] & .345 & $>$ .999 & no \\
+B4 & Wilcoxon signed-rank & 107 & $T^{+}$ = 3078 & $r_{rb}$ = .44 [.22, .64] & $<$ .001 & $<$ .001 & yes \\
+B5 & Wilcoxon signed-rank & 107 & $T^{+}$ = 1470 & $r_{rb}$ = $-$.34 [$-$.54, $-$.11] & .998 & $>$ .999 & no \\
+B6 & Wilcoxon signed-rank (Pratt) & 107 & $T^{+}$ = 1839 & $r_{rb}$ = $-$.26 [$-$.53, .00] & .973 & $>$ .999 & no \\
+B7 & Spearman and partial Spearman & 107 & $\rho$ = .10; partial = .01 & $\rho$ = .10 [$-$.09, .28] & .451 & $>$ .999 & no \\
+C1 & Exact binomial & 107 & 62/107 & rate = .58 [.48, .67] & $<$ .001 & $<$ .001 & yes \\
+C2 & Bootstrap (hit rate, log loss) & 107 & hit = .36; log loss = 1.53 & hit = .36 [.32, .40] & $<$ .001 & $<$ .001 & yes \\
+C3 & Logistic regression & 107 & z = 2.27 & OR(10 pts) = 1.29 [1.04, 1.62] & .012 & .012 & yes \\
+C4 & Mann-Whitney U & 62+45 & U = 2063 & $r_{rb}$ = .48 [.28, .66] & $<$ .001 & $<$ .001 & yes \\
+C5 & Exact binomial & 7 & n = 7 (not run) & - & - & - & not run \\
+C6 & Bootstrap (log loss) & 107 & diff = $-$0.061 & diff = $-$0.061 [$-$0.101, $-$0.024] & $<$ .001 & .002 & yes \\
+C7 & Conditional logit (LR test) & 428 sets & $\chi^2$(1) = 58.28 & OR(10 pts) = 1.46 [1.32, 1.62] & $<$ .001 & $<$ .001 & yes \\
+D1 & TOST ($\pm$5 points) & 96 & t(95) = 0.78, $-$1.71 & M = $-$1.88 [$-$8.56, 4.79] (90\%) & .220 & .440 & no \\
+D2 & Wilcoxon signed-rank & 57 & $T^{+}$ = 1292 & $r_{rb}$ = .88 [.71, 1.00] & $<$ .001 & $<$ .001 & yes \\
+D3 & One-sample Wilcoxon & 107 & $T^{+}$ = 5236 & $r_{rb}$ = .88 [.78, .96] & $<$ .001 & $<$ .001 & yes \\
+D4 & Two OLS regressions (HC3) & 107 & t = 3.25; 2.86 & $\beta$ = .55 [.21, .89]; .51 [.16, .86] & .003 & .003 & yes \\
+D5 & Spearman & 107 & $\rho$ = .34 & $\rho$ = .34 [.15, .50] & $<$ .001 & $<$ .001 & yes \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item \textit{Note.} SIMULATED: not data. One-sided tests in the predicted direction, except B1 (two-sided) and D1 (equivalence within $\pm$5 points by two one-sided tests; its interval is 90\%). Holm correction: A1, B1, C1 and D1 together; the secondary hypotheses within their family (C5 leaves family C when fewer than 20 participants qualify). B7, C2 and D4 require both of their tests and use the larger p. Intervals are 95\% percentile bootstrap intervals over participants (10,000 resamples), exact Clopper-Pearson intervals for single proportions, and Wald intervals for odds ratios and regression coefficients (C7: participant-clustered). $r_{rb}$ = rank-biserial correlation; OR = odds ratio; OR(10 pts) = odds ratio per 10 points; $\rho$ = Spearman's correlation; $\beta$ = standardized coefficient (well-being; decision satisfaction). A4: decisions (participants).
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+\begin{table}[htbp]
+\centering
+\begin{threeparttable}
+\caption{Manipulation Checks and Exposure by Condition (SIMULATED: not data)}
+\label{tab:fidelity}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+Condition & $n$ & Participants who met their condition's page at least once \\
+\midrule
+CVR+APA & 27 & reflection 22 (81\%); clarification 16 (59\%) \\
+CVR Only & 27 & reflection 27 (100\%); rejection 20 (74\%) \\
+APA Only & 26 & clarification 21 (81\%) \\
+Baseline & 27 & confirm misfit 26 (96\%); confirm good 27 (100\%) \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item \textit{Note.} SIMULATED: not data. Pages seen outside their own condition: 0. CVR = the reflection step; APA = the clarification step; the rejection page returns to all options (CVR only); Baseline's confirmation page asks how sure the participant is.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+\begin{table}[htbp]
+\centering
+\begin{threeparttable}
+\caption{Positive Controls in Blocks 1-3 (SIMULATED: not data)}
+\label{tab:controls}
+\footnotesize
+\begin{tabular}{llllll}
+\toprule
+Known effect & $n$ & $M_{\text{diff}}$ (rungs) & Statistic & Effect size [95\% CI] & $p$ \\
+\midrule
+more lives required before pushing than before pulling & 107 & 0.63 & $T^{+}$ = 1518 & $r_{rb}$ = .61 [.34, .85] & $<$ .001 \\
+money kept less readily outside the shelter & 107 & 1.17 & $T^{+}$ = 2718 & $r_{rb}$ = .76 [.57, .94] & $<$ .001 \\
+a higher gain before harming entry-level workers & 107 & 0.45 & $T^{+}$ = 3020 & $r_{rb}$ = .65 [.46, .82] & $<$ .001 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item \textit{Note.} SIMULATED: not data. One-sided Wilcoxon signed-rank tests on the rung at which each answer turned (never = one past the last rung); Block 3 compares each participant's mean over the three group sizes.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+\begin{table}[htbp]
+\centering
+\begin{threeparttable}
+\caption{Robustness of Each Test (SIMULATED: not data)}
+\label{tab:robustness}
+\footnotesize
+\begin{tabular}{lllllll}
+\toprule
+H & Main & w/o fast Blocks 1-3 & w/o fast scenarios & w/o same answers & w/o attention misses & menu-adjusted (B) \\
+\midrule
+A1 & .126 & .140 & .091 & .126 & .385 &  \\
+A2 & .650 & .647 & .669 & .650 & .831 &  \\
+A3 & .014 & .018 & .010 & .014 & .108 &  \\
+A4 & .029 & .027 & .021 & .029 & .057 &  \\
+B1 & .292 & .347 & .388 & .292 & .337 & .292 \\
+B2 & .246 & .282 & .325 & .246 & .406 & .241 \\
+B3 & .345 & .465 & .541 & .345 & .609 & .201 \\
+B4 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 & .002 & $<$ .001 \\
+B5 & .998 & .997 & .998 & .998 & .977 & .899 \\
+B6 & .973 & .978 & .966 & .973 & .936 &  \\
+B7 & .451 & .472 & .333 & .451 & .154 & .698 \\
+C1 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 &  \\
+C2 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 &  \\
+C3 & .012 & .015 & .010 & .012 & .070 &  \\
+C4 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 &  \\
+C5 & - & - & - & - & - &  \\
+C6 & $<$ .001 & $<$ .001 & .001 & $<$ .001 & .005 &  \\
+C7 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 &  \\
+D1 & .220 & .223 & .261 & .220 & .203 &  \\
+D2 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 &  \\
+D3 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 & $<$ .001 &  \\
+D4 & .003 & .004 & .005 & .003 & .012 &  \\
+D5 & $<$ .001 & $<$ .001 & .001 & $<$ .001 & $<$ .001 &  \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item \textit{Note.} SIMULATED: not data. Uncorrected p-values of each test without each preregistered group of participants (w/o fast Blocks 1-3: 2 left out; w/o fast scenarios: 7 left out; w/o same answers: 0 left out; w/o attention misses: 26 left out), and family B on the menu-adjusted departure. Shown beside the main results, never replacing them.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
