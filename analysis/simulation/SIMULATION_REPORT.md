@@ -2,7 +2,7 @@
 
 The registration (OSF page 6) promises: "the analysis code is written and run on simulated participants before the data are opened." This is that run. The pretend participants were made by the study's own code (tools/simulate_records.cjs), so their records have exactly the shape of real ones. **No number here is a finding.**
 
-Seed 20261117; the whole run took 28.1 minutes.
+Seed 20261117; the whole run took 41.6 minutes.
 
 ## Summary
 

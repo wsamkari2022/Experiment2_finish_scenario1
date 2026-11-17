@@ -55,7 +55,7 @@ def _jitter(n, seed, width=0.16):
 def _ci_mean(v, seed=1):
     v = np.asarray(v, float)
     v = v[~np.isnan(v)]
-    b = v[np.random.default_rng(seed).integers(0, len(v), (4000, len(v)))].mean(1)
+    b = v[np.random.default_rng(seed).integers(0, len(v), (10_000, len(v)))].mean(1)   # 10,000 as registered
     return v.mean(), np.percentile(b, 2.5), np.percentile(b, 97.5)
 
 
@@ -77,7 +77,7 @@ def vci_by_condition(P, out, simulated):
     _save(fig, out, "fig_A1-A3_D3_vci_by_condition", simulated,
           "Value Consistency Index by Condition",
           "Dots are participants. Black points with bars are condition means with 95% bootstrap confidence intervals "
-          "(4,000 resamples). Dashed lines mark the level a random chooser reaches in each condition (57, 60, 63 and 60), "
+          "(10,000 resamples). Dashed lines mark the level a random chooser reaches in each condition (57, 60, 63 and 60), "
           "the reference of Hypothesis D3. Hypotheses A1-A3 compare CVR + APA with each other condition.")
 
 

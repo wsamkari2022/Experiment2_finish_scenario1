@@ -1,6 +1,6 @@
 # Figure captions (SIMULATED: not data)
 
-**fig_A1-A3_D3_vci_by_condition**: *Value Consistency Index by Condition*. Note. SIMULATED: not data. Dots are participants. Black points with bars are condition means with 95% bootstrap confidence intervals (4,000 resamples). Dashed lines mark the level a random chooser reaches in each condition (57, 60, 63 and 60), the reference of Hypothesis D3. Hypotheses A1-A3 compare CVR + APA with each other condition.
+**fig_A1-A3_D3_vci_by_condition**: *Value Consistency Index by Condition*. Note. SIMULATED: not data. Dots are participants. Black points with bars are condition means with 95% bootstrap confidence intervals (10,000 resamples). Dashed lines mark the level a random chooser reaches in each condition (57, 60, 63 and 60), the reference of Hypothesis D3. Hypotheses A1-A3 compare CVR + APA with each other condition.
 
 **fig_A4_final_fit_after_misfit_first_pick**: *Final Choices That Fit the Participant's Values After a First Pick Against Them*. Note. SIMULATED: not data. Decisions in Scenarios 1-4 whose first pick was Misaligned or Strongly misaligned. Bars show the share whose final choice was Aligned or Weakly aligned, with exact (Clopper-Pearson) 95% confidence intervals; counts are decisions. Hypothesis A4 compares the three conditions with a help step with Baseline.
 
