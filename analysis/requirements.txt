@@ -1,0 +1,9 @@
+# The analysis tools, exact versions (installed 16 November 2026 from pypi.org into analysis/.venv).
+# Install with:  python -m venv analysis/.venv  then  analysis/.venv/Scripts/python -m pip install -r analysis/requirements.txt
+scipy==1.18.1
+pandas==3.1.1
+statsmodels==0.15.0
+matplotlib==3.11.2
+jinja2==3.1.6
+# A helper of statsmodels (through formulaic): its rule "wrapt>=1.17.0rc1" lets pip pick a test version; pinned to the stable release.
+wrapt==2.5.2
