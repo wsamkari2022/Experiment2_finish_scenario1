@@ -118,8 +118,10 @@ def b1(T, docs, menus):
         pid = str(d.get("prolific_pid"))
         if pid not in keep:
             continue
-        dims = {x.get("key"): x.get("score") for x in (get(d, "blocks.block5_emergency_scenarios.originalProfile.dimensions") or [])}
-        top = max(POLICY, key=lambda k: (dims.get(k, -1)))
+        # the #1 value is the study's own rank (a tie at the top is broken by the participant's coin, as in the study), never
+        # the first of a tie in this list's order
+        dims = {x.get("key"): x for x in (get(d, "blocks.block5_emergency_scenarios.originalProfile.dimensions") or [])}
+        top = min(POLICY, key=lambda k: (dims.get(k) or {}).get("rank", 99))
         s = S[S["pid"] == pid]
         rule = s.loc[s["order"] == 6, "first_id"]
         if rule.empty:
@@ -525,7 +527,58 @@ def b9(T, docs, out, sim, caps):
             "clustered 95% intervals. Card position 1 is the reference; performance and fit per 10 points of their 0-100 scales; fit "
             "is to the values brought into the scenarios. MCF reading opened: the option's reading in the Compare overlay was "
             "opened at some time in that scenario, before or after the first pick.", caps)
-    return {"id": "B9", "models": models, "choice_sets": int(O["stratum"].nunique())}
+    res = {"id": "B9", "models": models, "choice_sets": int(O["stratum"].nunique())}
+    res.update(b9b(O, pos, out, sim, caps))
+    return res
+
+
+def b9b(O, pos, out, sim, caps):
+    """B9b, added on 17 November 2026 at Waseem's request after the first reading of round 2 (exploratory): is the link
+    between fit and the first pick the same where the cards show the fit line and the "Ranked N - why" reasons (CVR + APA,
+    CVR only, APA only) and where they do not (Baseline)? Each group gets its own position, performance and fit terms (one
+    conditional logit with every term allowed to differ); the difference in the fit term is tested with participant-
+    clustered errors (Wald) and by likelihood ratio."""
+    shown = (O["condition"] != "Baseline").to_numpy(float)
+    P, perf, fit = pos.to_numpy(), O[["captured"]].to_numpy(float) / 10, O[["fit_before"]].to_numpy(float) / 10
+    y, strata, pid = O["chosen"].to_numpy(), O["stratum"].to_numpy(), O["pid"].to_numpy()
+    groups = {}
+    for name, mask in (("fit line shown (CVR + APA, CVR only, APA only)", shown == 1), ("not shown (Baseline)", shown == 0)):
+        r = st.conditional_logit(np.column_stack([P[mask], perf[mask], fit[mask]]), y[mask], strata[mask], pid[mask])
+        bb, se = float(r["beta"][-1]), float(r["se_clustered"][-1])
+        groups[name] = {"choice_sets": int(len(set(strata[mask]))), "odds_ratio_fit_per_10": math.exp(bb),
+                        "ci95": [math.exp(bb - 1.959964 * se), math.exp(bb + 1.959964 * se)], "p": float(2 * stats.norm.sf(abs(bb / se)))}
+    base = np.column_stack([P, perf, P * shown[:, None], perf * shown[:, None], fit])
+    full = np.column_stack([base, fit * shown[:, None]])
+    r0 = st.conditional_logit(base, y, strata, pid)
+    r1 = st.conditional_logit(full, y, strata, pid)
+    bd, sd = float(r1["beta"][-1]), float(r1["se_clustered"][-1])
+    lr = 2 * (r1["loglik"] - r0["loglik"])
+    diff = {"ratio_of_odds_ratios": math.exp(bd), "ci95": [math.exp(bd - 1.959964 * sd), math.exp(bd + 1.959964 * sd)],
+            "p_wald_clustered": float(2 * stats.norm.sf(abs(bd / sd))), "lr": float(lr), "p_lr": float(stats.chi2.sf(lr, 1))}
+    fig, ax = plt.subplots(figsize=(fg.WIDTH * 0.75, 1.9))
+    names = list(groups)
+    for i, n in enumerate(names):
+        g = groups[n]
+        ax.errorbar(g["odds_ratio_fit_per_10"], i, xerr=[[g["odds_ratio_fit_per_10"] - g["ci95"][0]], [g["ci95"][1] - g["odds_ratio_fit_per_10"]]],
+                    fmt="o", color=fg.ACCENT if i == 0 else fg.INK2, ms=5, capsize=3)
+    ax.axvline(1, color=fg.INK2, lw=0.8)
+    ax.set_xscale("log")
+    from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
+    ax.xaxis.set_major_locator(FixedLocator([0.8, 1, 1.25, 1.5]))
+    ax.xaxis.set_minor_locator(NullLocator())
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.set_xlim(0.7, 1.7)
+    ax.set_yticks(range(len(names)), [n.replace(" (CVR + APA, CVR only, APA only)", "\n(CVR + APA, CVR only, APA only)") for n in names], fontsize=8)
+    ax.set_ylim(-0.6, len(names) - 0.4)
+    ax.invert_yaxis()
+    ax.grid(True, axis="x")
+    ax.grid(False, axis="y")
+    ax.set_xlabel("Odds ratio of being chosen first, per 10 points of fit (log scale)")
+    ex.save(fig, out, "xfig_B9b_fit_by_display", sim, "Fit and the First Pick, With and Without the Fit Line on the Cards",
+            "Conditional logit over the six options of each decision (Scenarios 1-4), first picks, with card position and "
+            "performance in each group's model; participant-clustered 95% intervals. Baseline cards show no fit line and no "
+            "\"Ranked N - why\" reasons; the other three conditions show both. Fit is to the values brought into the scenarios.", caps)
+    return {"b9b_by_display": groups, "b9b_difference": diff}
 
 
 def b10(X, out, sim, caps):
@@ -911,7 +964,7 @@ def write_report(R, out, sim, n):
           "| B3 | Which way the scenarios moved each value (3.5) |", "| B4 | Fast first picks against considered ones (3.5) |",
           "| B5 | Which reminder led to the feedback (3.5) |", "| B6 | Age and gender as moderators of the supported results (3.5) |",
           "| B7 | Real participants beside the pretend kinds (catalog 2) |", "| B8 | The correlation map (5.1-5.3) |",
-          "| B9 | The choice model (5.4) |", "| B10 | Well-being (6.2) |", "| B11 | Self-report against behaviour (6.3) |",
+          "| B9 | The choice model (5.4); B9b the same with and without the fit line on the cards |", "| B10 | Well-being (6.2) |", "| B11 | Self-report against behaviour (6.3) |",
           "| B12 | Reliability of the feedback scales (6.4) |", "| B13 | The remaining catalog figures (7, 8, 10, S3) |",
           "| B14 | Blocks 1-4 one by one (4B) |", ""]
     b = R["B1"]
@@ -991,7 +1044,21 @@ def write_report(R, out, sim, n):
     L += ["", "Odds ratios in the fullest model (card position 1 the reference; performance and fit per 10 points): " +
           "; ".join(f"{k} {f(v['odds_ratio'], 3)} {ci(v['ci95'], 3)}" for k, v in last["coefficients"].items()) + ".",
           "", "Note. MCF reading opened: the option's reading in the Compare overlay was opened at some time in that scenario, "
-          "before or after the first pick."]
+          "before or after the first pick. The model with fit is the registered C7 model; its fit term and likelihood-ratio "
+          "test are C7's."]
+    if "b9b_by_display" in b:
+        dd = b["b9b_difference"]
+        L += ["", "### B9b. Fit and the first pick, with and without the fit line on the cards (exploratory; added after the first "
+              "reading of round 2)", "",
+              "| Cards | Choice sets | Odds ratio per 10 points of fit [95% CI] | p |", "|---|---|---|---|"]
+        L += [f"| {k} | {g['choice_sets']} | {f(g['odds_ratio_fit_per_10'], 2)} {ci(g['ci95'], 2)} | {apa(g['p'])} |"
+              for k, g in b["b9b_by_display"].items()]
+        L += ["", f"Difference between the two (one model, every term allowed to differ): ratio of the odds ratios "
+              f"{f(dd['ratio_of_odds_ratios'], 2)} {ci(dd['ci95'], 2)}, p {apa(dd['p_wald_clustered'])} (participant-clustered "
+              f"Wald); likelihood ratio {f(dd['lr'], 2)}, p {apa(dd['p_lr'])}.", "",
+              "Note. **Baseline cards show no fit line and no \"Ranked N - why\" reasons**; the other three conditions show both, "
+              "and the conditions also differ in the help pages that follow a misfit choice. The first pick of a scenario comes "
+              "before that scenario's help page. Card position and performance are in each group's model."]
     b = R["B10"]
     L += ["", "## B10. Well-being (exploratory)", "", f"{b['n']} participants; standardized coefficients, HC3 errors; controls: Stability "
           "(tested; not tested flagged), age, gender, active minutes.", "", "| Outcome | Term | beta [95% CI] | p | q |", "|---|---|---|---|---|"]

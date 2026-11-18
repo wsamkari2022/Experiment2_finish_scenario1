@@ -46,7 +46,14 @@ any AI tool sees the data), then the 23 hypotheses. **The first analysis uses 10
 participants paid from the study's budget (104 approved + 3 who completed after the time limit), CVR+APA 27, CVR_Only 27,
 APA_Only 26, Baseline 27, all complete; recorded as a dated deviation in the freeze note before the data were opened; all
 113, as registered, afterwards with the same frozen code. The analysis code: `PLAN_Analysis_code.md`, tools in
-`analysis/` (written and run on simulated participants, then frozen, before the coded data are opened). The software stays frozen at `6e6a402`. What follows is the record of
+`analysis/` (written and run on simulated participants, then frozen, before the coded data are opened). Frozen as tag
+`analysis-v1` (docs/ANALYSIS_CODE_FREEZE.md, with dated notes on each run). **The exploratory analyses** (Waseem's "D1-A ...
+D4-A" on `PLAN_Exploratory_analysis.md`) live OUTSIDE the frozen folder: `exploratory/explore.py` (round 1, the nine the
+registration lists) and `exploratory/explore_round2.py` (round 2, the analysis plan's further analyses B1-B14, plus B9b,
+added on 17 November 2026 at his request: the fit term with and without the fit line on the cards); each reads the frozen
+modules read-only and labels every result exploratory. Results stay private in `Prolific docs/analysis/<folder>/`;
+`exploratory/make_writer_package.py` copies results only (never data) into the writer's folder and scans them. The writer
+may also get the AI-safe file of the 107 (his decision, 17 November 2026), which he places himself. The software stays frozen at `6e6a402`. What follows is the record of
 the day it was open.
 
 Published on Prolific on 16 November 2026 at 08:23 EST, first batch of **40 places**, after every line of the go / no-go
