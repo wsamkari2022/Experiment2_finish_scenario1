@@ -9,6 +9,9 @@ only, never a participant row. Reads the frozen analysis modules (tag analysis-v
 Run:
   analysis\\.venv\\Scripts\\python.exe exploratory\\posthoc_chiwork.py <participants_ai_safe.json> <output folder> \\
       [--registered <results.json of the registered analysis>] [--simulated]
+
+Round 5 (22 November 2026, later; Waseem's request): well-being and satisfaction across the veil of ignorance (Scenario 6)
+and the company's value scenarios (4 and 5), as two figures and EXPLORATORY_RESULTS_ROUND5.md (function p5).
 """
 from __future__ import annotations
 
@@ -708,6 +711,220 @@ def write_outputs(R, out, sim, n, caps):
                                                + "\n\n".join([T1, T2, T3, T4]) + "\n", encoding="utf8")
 
 
+# ------------------------------------------------------------------------------------------------- P5 (round 5)
+def p5_sections(T, X):
+    """The groups of Scenarios 6, 4 and 5, each a list of (label, mask)."""
+    menus = bt.Menus()
+    S = T["S"]
+    first = S[S["order"] == 6].set_index("pid")["first_id"]
+    rule = X["pid"].map(first).map(lambda i: VALUE_WORDS[menus.option[(VEIL, i)]["built_on"]] if isinstance(i, str) else None)
+    order = rule.value_counts().index.tolist()
+    top = X["s6_first_is_top"].astype(bool)
+    chg = X["s6_changed"].astype(bool)
+    wish = X["wish_same"]
+    return [
+        ("Behind the veil (Scenario 6): the rule chosen first", [(r, rule == r) for r in order]),
+        ("Behind the veil: the prediction", [("It named their rule", top), ("It named another rule", ~top)]),
+        ("Behind the veil: after seeing the prediction", [("Kept their first rule", ~chg), ("Changed their rule", chg)]),
+        ("The company's value (Scenario 4)", [(STANCE_WORDS[s], X["stance"] == s) for s in ("resisted", "compromised", "adopted")]),
+        ("The wish (Scenario 5)", [("Wished for the option they had decided", wish == True),     # noqa: E712
+                                   ("Wished for another option", wish == False)]),                 # noqa: E712
+    ]
+
+
+def p5_measure(X, sections, col, label):
+    v = pd.to_numeric(X[col], errors="coerce")
+    m_all, ci_all = ex.boot_mean(v.dropna().to_numpy(float), f"PH5:{col}:all")
+    groups, tests = [], []
+    for sec, parts in sections:
+        vals = []
+        for lab, mask in parts:
+            g = v[mask.fillna(False).astype(bool)].dropna()
+            m, ci = ex.boot_mean(g.to_numpy(float), f"PH5:{col}:{sec}:{lab}")
+            groups.append({"section": sec, "group": lab, "n": int(len(g)), "mean": m, "ci95": ci, "share_above_4": float((g > 4).mean())})
+            vals.append(g.to_numpy(float))
+        if len(vals) == 2:
+            u = stats.mannwhitneyu(vals[1], vals[0], alternative="two-sided")
+            r_rb = 2 * float(u.statistic) / (len(vals[0]) * len(vals[1])) - 1      # positive: the second group higher
+            tests.append({"section": sec, "measure": label, "test": "Mann-Whitney U", "statistic": float(u.statistic),
+                          "p": float(u.pvalue), "effect": r_rb, "effect_name": "r_rb (second group higher when positive)"})
+        else:
+            p, eps2 = ex.kruskal(vals)
+            tests.append({"section": sec, "measure": label, "test": "Kruskal-Wallis", "statistic": float("nan"), "p": p,
+                          "effect": eps2, "effect_name": "epsilon-squared"})
+    return {"measure": label, "column": col, "all": {"n": int(v.notna().sum()), "mean": m_all, "ci95": ci_all}, "groups": groups,
+            "tests": tests}
+
+
+def p5_figure(results, sections, out, name, sim, title, note, caps):
+    labels, ys, bold, y = [], [], [], 0
+    labels.append(f"All participants (n = {results[0]['all']['n']})")
+    ys.append(y)
+    y += 1
+    pos = {}
+    for sec, parts in sections:
+        y += 0.35
+        labels.append(sec)
+        ys.append(y)
+        bold.append(len(labels) - 1)
+        y += 1
+        for lab, _ in parts:
+            pos[(sec, lab)] = y
+            n = next(g["n"] for g in results[0]["groups"] if g["section"] == sec and g["group"] == lab)
+            labels.append(f"{lab} (n = {n})")
+            ys.append(y)
+            y += 1
+    fig, axes = plt.subplots(1, len(results), figsize=(fg.WIDTH, 0.27 * y + 1.0), sharey=True)
+    for ax, res in zip(np.atleast_1d(axes), results):
+        ax.grid(True, axis="x")
+        ax.grid(False, axis="y")
+        ax.axvline(4, color=fg.INK2, lw=0.8, ls=(0, (3, 2)))
+        ax.axvline(res["all"]["mean"], color="#bdbdbd", lw=0.8)
+        a = res["all"]
+        ax.errorbar(a["mean"], 0, xerr=[[a["mean"] - a["ci95"][0]], [a["ci95"][1] - a["mean"]]], fmt="D", color=fg.INK, ms=4.5, capsize=2)
+        for g in res["groups"]:
+            yy = pos[(g["section"], g["group"])]
+            if g["n"] == 0:
+                continue
+            ax.errorbar(g["mean"], yy, xerr=[[g["mean"] - g["ci95"][0]], [g["ci95"][1] - g["mean"]]], fmt="o", color=fg.ACCENT,
+                        ms=4, capsize=2, lw=1)
+            ax.text(7.08, yy, f"{g['mean']:.2f}", va="center", ha="left", fontsize=6.8, color=fg.INK2)
+        ax.set_xlim(3.5, 7)
+        ax.set_xticks([4, 5, 6, 7])
+        ax.set_title(res["measure"], fontsize=9)
+        ax.set_xlabel("Mean (1-7) with 95% interval")
+    ax0 = np.atleast_1d(axes)[0]
+    ax0.set_yticks(ys, labels, fontsize=7.4)
+    for i in bold:
+        ax0.get_yticklabels()[i].set_fontweight("bold")
+        ax0.get_yticklabels()[i].set_color(fg.INK)
+    ax0.invert_yaxis()
+    for ax in np.atleast_1d(axes):
+        ax.tick_params(axis="y", length=0)
+    fig.subplots_adjust(wspace=0.22)
+    save(fig, out, name, sim, title, note, caps)
+
+
+def p5(T, X, out, sim, caps):
+    """Round 5 (22 November 2026, later; Waseem's request): well-being and satisfaction across the veil of ignorance
+    (Scenario 6) and the company's value scenarios (Scenarios 4 and 5). Group means with 95% bootstrap intervals; per
+    section a Mann-Whitney U (two groups) or Kruskal-Wallis (more); Benjamini-Hochberg q within each figure."""
+    sections = p5_sections(T, X)
+    figs = {}
+    for key, cols, name, title in (
+            ("wellbeing", (("sub_overallWellbeing", "Overall well-being"), ("sub_wellbeingComposite", "Well-being composite")),
+             "pfig_P5_wellbeing_veil_and_company", "Well-Being Across the Veil of Ignorance and the Company's Value Scenarios"),
+            ("satisfaction", (("sub_decisionSatisfaction", "Decision satisfaction"), ("item_DS2", "Process satisfaction")),
+             "pfig_P5_satisfaction_veil_and_company", "Satisfaction Across the Veil of Ignorance and the Company's Value Scenarios")):
+        res = [p5_measure(X, sections, c, lab) for c, lab in cols]
+        tests = [t for r in res for t in r["tests"]]
+        add_q(tests)
+        notes = {"wellbeing": "Left: overall well-being (\"Overall, this was a positive experience\", \"I felt emotionally "
+                              "comfortable during the experiment\", \"I feel good about how I approached these decisions\"). Right: "
+                              "the well-being composite (the mean of the seven feedback scales, regret and burden reversed).",
+                 "satisfaction": "Left: decision satisfaction (with the final decisions, the process, and what the decisions "
+                                 "achieved). Right: process satisfaction, the item \"I am satisfied with the way I reached my "
+                                 "decisions (the process).\""}[key]
+        p5_figure(res, sections, out, name, sim, title,
+                  f"{notes} Each dot is a group mean with its 95% bootstrap interval, its value printed at the right; the "
+                  "diamond is all participants, and the gray line marks their mean; the dashed line is the scale midpoint "
+                  "(4). Groups: the rule chosen first behind the veil, whether the prediction named it, whether the "
+                  "participant kept or changed it after seeing the prediction (Scenario 6); what they did with the "
+                  "company's value (Scenario 4); and whether their wish matched their decision (Scenario 5).", caps)
+        figs[key] = {"measures": res, "tests": tests}
+    return figs
+
+
+def write_round5(R5, out, n, caps):
+    apa, no0, f = rp.apa_p, rp.no0, rp.num
+    ci = lambda c: rp.ci(c, rp.num, 2).strip()   # noqa: E731
+    L = ["# Post hoc: well-being and satisfaction across the veil of ignorance and the company's value scenarios", "",
+         "**Date:** 22 November 2026. **Every result in this file is post hoc** (computed after the registered and the "
+         "exploratory analyses, at Waseem's request for the CHIWORK 2027 paper). It adds two figures to "
+         "`EXPLORATORY_RESULTS_ROUND4.md`.", "",
+         f"**Data and code.** The AI-safe file of the first analysis ({n} participants), read with the frozen analysis code (Git "
+         "tag `analysis-v1`) without changing it; the script is `exploratory/posthoc_chiwork.py` (function `p5`). Group "
+         "means with 95% bootstrap intervals (10,000 resamples). In each section of a figure, a Mann-Whitney U test (two "
+         "groups) or a Kruskal-Wallis test (more than two); p-values raw and as Benjamini-Hochberg q-values within each "
+         "figure (ten tests). Group counts and test results only.", "",
+         "**How to write these results.** Write each as a post hoc result. A result with q below .05 holds within its "
+         "figure after the correction for the ten tests; a result with q of .05 or more is a pattern (\"tended to\"). "
+         "Every scale runs from 1 to 7, and 4 is the midpoint.", ""]
+    key = []
+    for k, word in (("wellbeing", "well-being"), ("satisfaction", "satisfaction")):
+        for res in R5[k]["measures"]:
+            lo = min(g["mean"] for g in res["groups"] if g["n"])
+            hi = max(g["mean"] for g in res["groups"] if g["n"])
+            key.append(f"| {res['measure']} | {f(res['all']['mean'])} {ci(res['all']['ci95'])} | {f(lo)} to {f(hi)} |")
+    L += ["## Key findings (post hoc)", "",
+          "Well-being and satisfaction were high in every group: whatever rule participants chose behind the veil, whether "
+          "the prediction named it, and whatever they did with the company's value, every group's mean sat well above the "
+          "scale midpoint.", "", "| Measure | All participants, M [95% CI] | Range of the group means |", "|---|---|---|"] + key + [""]
+    notable = []
+    for k in ("wellbeing", "satisfaction"):
+        for t in R5[k]["tests"]:
+            if t["p"] < 0.05:
+                notable.append(t)
+    if notable:
+        L += ["Differences between groups with raw p below .05:", ""]
+        for t in notable:
+            res = next(r for kk in ("wellbeing", "satisfaction") for r in R5[kk]["measures"] if r["measure"] == t["measure"])
+            gs = [g for g in res["groups"] if g["section"] == t["section"]]
+            desc = "; ".join(f"{g['group']} {f(g['mean'])} (n = {g['n']})" for g in gs)
+            label = "holds after the correction" if t["q"] < 0.05 else "a pattern after the correction"
+            L.append(f"- {t['measure']}, {t['section']}: {desc}; {t['test']} p {apa(t['p'])}, q {apa(t['q'])} ({label}).")
+        L.append("")
+    for k, title in (("wellbeing", "Figure: well-being"), ("satisfaction", "Figure: satisfaction")):
+        res = R5[k]["measures"]
+        L += [f"## {title} (post hoc)", "", f"| Group | n | {res[0]['measure']} M [95% CI] | {res[1]['measure']} M [95% CI] |",
+              "|---|---|---|---|", f"| All participants | {res[0]['all']['n']} | {f(res[0]['all']['mean'])} {ci(res[0]['all']['ci95'])} | "
+              f"{f(res[1]['all']['mean'])} {ci(res[1]['all']['ci95'])} |"]
+        sec = None
+        for g0, g1 in zip(res[0]["groups"], res[1]["groups"]):
+            if g0["section"] != sec:
+                sec = g0["section"]
+                L.append(f"| **{sec}** | | | |")
+            L.append(f"| {g0['group']} | {g0['n']} | {f(g0['mean'])} {ci(g0['ci95'])} | {f(g1['mean'])} {ci(g1['ci95'])} |")
+        L += ["", "| Section | Measure | Test | p | q | Effect size |", "|---|---|---|---|---|---|"]
+        L += [f"| {t['section']} | {t['measure']} | {t['test']} | {apa(t['p'])} | {apa(t['q'])} | "
+              f"{(no0(t['effect']) + ' (r_rb)') if t['test'].startswith('Mann') else (f(t['effect'], 3) + ' (epsilon-squared)')} |"
+              for t in R5[k]["tests"]]
+        L.append("")
+    L += ["Note. r_rb for two groups is positive when the second group listed is higher. The well-being composite is the mean "
+          "of the seven feedback scales with regret and burden reversed (higher = better). The prediction in Scenario 6 was "
+          "shown after the first choice; \"changed their rule\" means a change made after seeing it.", "",
+          "## Figures", ""] + [f"- `{n_}`: *{t}*. {nt}" for n_, t, nt in caps]
+    (out / "EXPLORATORY_RESULTS_ROUND5.md").write_text("\n".join(L) + "\n", encoding="utf8")
+    md = ["# Figure captions, post hoc round 5 (well-being and satisfaction across the veil and the company's value)", ""] + \
+         [f"**{n_}**: *{t}*. Note. {nt}" for n_, t, nt in caps]
+    (out / "figures" / "figure_captions_round5.md").write_text("\n\n".join(md) + "\n", encoding="utf8")
+    tex = ["% Post hoc figures for the CHIWORK paper (round 5). Each figure: \\includegraphics{figures/<name>.pdf}"]
+    for n_, t, nt in caps:
+        tex += [rf"% {n_}", r"\begin{figure}[htbp]", r"\centering", rf"\includegraphics[width=\linewidth]{{figures/{n_}.pdf}}",
+                rf"\caption{{\textit{{{texq(rp.tex_escape(t))}}}}}", rf"\label{{fig:{n_}}}",
+                rf"\par\smallskip{{\footnotesize \textit{{Note.}} {texq(rp.tex_escape(nt))}}}", r"\end{figure}", ""]
+    (out / "figures" / "figure_captions_round5.tex").write_text("\n".join(tex), encoding="utf8")
+    tables = []
+    for k, cap, lab in (("wellbeing", "Well-Being Across the Veil of Ignorance and the Company's Value Scenarios (Post Hoc)", "tab:posthoc_wb_groups"),
+                        ("satisfaction", "Satisfaction Across the Veil of Ignorance and the Company's Value Scenarios (Post Hoc)", "tab:posthoc_sat_groups")):
+        res = R5[k]["measures"]
+        rows = [["All participants", str(res[0]["all"]["n"]), f"{f(res[0]['all']['mean'])} {ci(res[0]['all']['ci95'])}",
+                 f"{f(res[1]['all']['mean'])} {ci(res[1]['all']['ci95'])}"]]
+        sec = None
+        for g0, g1 in zip(res[0]["groups"], res[1]["groups"]):
+            if g0["section"] != sec:
+                sec = g0["section"]
+                rows.append([sec, "", "", ""])
+            rows.append([f"\u2003{g0['group']}", str(g0["n"]), f"{f(g0['mean'])} {ci(g0['ci95'])}", f"{f(g1['mean'])} {ci(g1['ci95'])}"])
+        tests = "; ".join(f"{t['section']}, {t['measure']}: p {apa(t['p'])}, q {apa(t['q'])}" for t in R5[k]["tests"])
+        t_ = rp.tex_table(cap, lab, ["Group", "$n$", f"{res[0]['measure']} $M$ [95\\% CI]", f"{res[1]['measure']} $M$ [95\\% CI]"],
+                          rows, f"Post hoc. 1-7 scales; 95% bootstrap intervals. Tests within each section (Mann-Whitney U or "
+                          f"Kruskal-Wallis), Benjamini-Hochberg q within the table: {tests}.", "lccc")
+        tables.append(t_.replace("\u2003", "\\quad "))
+    (out / "tables_apa_round5.tex").write_text("% Post hoc tables for the CHIWORK paper (round 5). Needs \\usepackage{booktabs,threeparttable}.\n\n"
+                                               + "\n\n".join(tables) + "\n", encoding="utf8")
+
+
 def main(argv):
     if len(argv) < 3:
         print(__doc__)
@@ -731,7 +948,11 @@ def main(argv):
     R = pl.to_jsonable(R)
     (out / "posthoc_results_round4.json").write_text(json.dumps(R, indent=1), encoding="utf8")
     write_outputs(R, out, sim, len(keep), caps)
-    print(f"Post hoc round 4: {len(caps)} figures, {len(keep)} participants -> {out}")
+    caps5 = []
+    R5 = pl.to_jsonable(p5(T, X, figs, sim, caps5))
+    (out / "posthoc_results_round5.json").write_text(json.dumps(R5, indent=1), encoding="utf8")
+    write_round5(R5, out, len(keep), caps5)
+    print(f"Post hoc round 4: {len(caps)} figures; round 5: {len(caps5)} figures; {len(keep)} participants -> {out}")
     return 0
 
 
