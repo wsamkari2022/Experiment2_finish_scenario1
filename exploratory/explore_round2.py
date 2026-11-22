@@ -858,10 +858,10 @@ def b14(docs, keep, X, out, sim, caps):
     for i in range(1, len(ends)):          # keep the end labels at least 6 points apart
         ends[i][0] = max(ends[i][0], ends[i - 1][0] + 6)
     for y, place, color in ends:
-        ax.text(7.1, y, {"sidewalk": "public sidewalk", "wealthy": "wealthy home", "shelter": "homeless shelter"}[place],
+        ax.text(7.1, y, {"sidewalk": "public sidewalk", "wealthy": "wealthy district building", "shelter": "homeless shelter"}[place],
                 color=color, fontsize=8, va="center")
     ax.set_xticks(range(8), amounts, rotation=30, fontsize=7.5)
-    ax.set_xlim(-0.2, 9.6)
+    ax.set_xlim(-0.2, 10.9)   # room for the longest end label, "wealthy district building"
     ax.set_ylabel("Not yet keeping the money (%)")
     ex.save(fig, out, "xfig_B14_money_survival", sim, "Keeping Found Money, Amount by Amount, in Three Places",
             "The share of participants who had not yet kept the money at each amount (those who never kept it stay in at the end).", caps)

@@ -466,7 +466,7 @@ def a7x(T, docs, out, sim, caps):
                   "kendalls_w": float(fr.statistic / (len(w) * 2)),
                   "median_rungs": {k: float(w[f"money_{k}"].median()) for k in ("sidewalk", "wealthy", "shelter")}})
     r = st.signed_rank((w["money_sidewalk"] - w["money_wealthy"]).to_numpy(), "unused", "two-sided", boot=False)
-    tests.append({"what": "Block 1: sidewalk against wealthy home (Wilcoxon)", "p": r["p"], "mean_difference": r.get("mean_difference")})
+    tests.append({"what": "Block 1: sidewalk against wealthy district building (Wilcoxon)", "p": r["p"], "mean_difference": r.get("mean_difference")})
     acts = {}
     for d in docs:
         if str(d.get("prolific_pid")) in keep:
