@@ -391,6 +391,8 @@ def write_report(R, out, n):
          "`exploratory/posthoc_round6.py`. Rates: k / n, percent, Clopper-Pearson 95% interval. Comparisons over the four "
          "decisions: a bootstrap over participants (10,000 resamples); the two-sided p is twice the smaller share of resamples "
          "on either side of 0. Group counts, rates and test results only.", "",
+         "**How to report these results:** `../HOW_TO_PRESENT_THE_RESULTS_STRONGLY.md`, section 8 (what the checks confirm, "
+         "and the \"no free lunch\" trade-offs).", "",
          "**Self-checks.** The MPF's top option, rebuilt from the stored profile, equals the stored top option in "
          f"{t1['self_check_mpf_top_equals_stored']} of {t1['decisions']} decisions and in {s6['self_check_top_equals_stored']} of "
          f"{s6['n']} Scenario 6 predictions; the Scenario 6 probabilities shown to participants are reproduced for "
